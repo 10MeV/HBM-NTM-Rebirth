@@ -2,10 +2,11 @@
   "type": "hbm_ntm_rebirth:pyro_oven",
   "input_fluid": {
     "fluid": "SOURGAS",
-    "amount": 5700
+    "amount": 11000
   },
   "output_item": {
     "item": "hbm_ntm_rebirth:solid_fuel"
   },
-  "duration": 60
+  "duration": 60,
+  "source_order": 16
 }

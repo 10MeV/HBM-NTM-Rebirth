@@ -1,5 +1,27 @@
 package com.hbm.ntm.registry;
 
+import com.hbm.blocks.gas.BlockGasAsbestos;
+import com.hbm.blocks.gas.BlockGasClorine;
+import com.hbm.blocks.gas.BlockGasCoal;
+import com.hbm.blocks.gas.BlockGasMeltdown;
+import com.hbm.blocks.gas.BlockGasMonoxide;
+import com.hbm.blocks.gas.BlockGasRadon;
+import com.hbm.blocks.gas.BlockGasRadonDense;
+import com.hbm.blocks.gas.BlockGasRadonTomb;
+import com.hbm.blocks.generic.BlockAbsorber;
+import com.hbm.blocks.generic.BlockHazard;
+import com.hbm.blocks.generic.BlockHazardFalling;
+import com.hbm.blocks.generic.BlockHotHazard;
+import com.hbm.blocks.generic.BlockNetherCoal;
+import com.hbm.blocks.generic.BlockNuclearWaste;
+import com.hbm.blocks.generic.BlockOutgas;
+import com.hbm.blocks.generic.BlockSellafield;
+import com.hbm.blocks.generic.BlockSellafieldOre;
+import com.hbm.blocks.generic.BlockSellafieldSlaked;
+import com.hbm.blocks.generic.WasteEarth;
+import com.hbm.blocks.generic.WasteLeaves;
+import com.hbm.blocks.generic.WasteLog;
+import com.hbm.blocks.generic.YellowBarrel;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.AnnihilatorBlock;
 import com.hbm.ntm.block.AutocrafterBlock;
@@ -22,6 +44,7 @@ import com.hbm.ntm.block.BreedingReactorBlock;
 import com.hbm.ntm.block.BrickFurnaceBlock;
 import com.hbm.ntm.block.BombMultiBlock;
 import com.hbm.ntm.block.BoilerBlock;
+import com.hbm.ntm.block.CapacitorBlock;
 import com.hbm.ntm.block.CapacitorBusBlock;
 import com.hbm.ntm.block.CableDiodeBlock;
 import com.hbm.ntm.block.CargoElevatorBlock;
@@ -34,6 +57,7 @@ import com.hbm.ntm.block.CompressorBlock;
 import com.hbm.ntm.block.CombustionEngineBlock;
 import com.hbm.ntm.block.CombinationOvenBlock;
 import com.hbm.ntm.block.CondenserBlock;
+import com.hbm.ntm.block.ConveyorPressBlock;
 import com.hbm.ntm.block.CoolingTowerBlock;
 import com.hbm.ntm.block.CraneLogisticsBlock;
 import com.hbm.ntm.block.CraneSplitterBlock;
@@ -57,9 +81,11 @@ import com.hbm.ntm.block.ElectricHeaterBlock;
 import com.hbm.ntm.block.ElectricFurnaceBlock;
 import com.hbm.ntm.block.ElectricPressBlock;
 import com.hbm.ntm.block.ElectrolyserBlock;
+import com.hbm.ntm.block.EmpBombBlock;
 import com.hbm.ntm.block.ExposureChamberBlock;
 import com.hbm.ntm.block.FieldDisturberBlock;
 import com.hbm.ntm.block.FelBlock;
+import com.hbm.ntm.block.FloatBombBlock;
 import com.hbm.ntm.block.FloodlightBeamBlock;
 import com.hbm.ntm.block.ForceFieldBlock;
 import com.hbm.ntm.block.FractionSpacerBlock;
@@ -71,6 +97,8 @@ import com.hbm.ntm.block.LegacyChargeBlock;
 import com.hbm.ntm.block.LegacyDetCordBlock;
 import com.hbm.ntm.block.LegacyExplosiveChargeBlock;
 import com.hbm.ntm.block.LegacyFurnaceBlock;
+import com.hbm.ntm.block.NavalMineBlock;
+import com.hbm.ntm.block.ThermoBombBlock;
 import com.hbm.ntm.block.DigammaFlameBlock;
 import com.hbm.ntm.block.FalloutLayerBlock;
 import com.hbm.ntm.block.FensuBlock;
@@ -109,7 +137,9 @@ import com.hbm.ntm.block.ICFStructCoreBlock;
 import com.hbm.ntm.block.ICFStructureComponentBlock;
 import com.hbm.ntm.block.IntakeBlock;
 import com.hbm.ntm.block.KeyForgeBlock;
+import com.hbm.ntm.block.LauncherStructCoreBlock;
 import com.hbm.ntm.block.LargeLaunchPadBlock;
+import com.hbm.ntm.block.LegacyBarbedWireBlock;
 import com.hbm.ntm.block.LegacyChainBlock;
 import com.hbm.ntm.block.LegacyComplexShapeBlock;
 import com.hbm.ntm.block.LegacyConnectorBlock;
@@ -124,17 +154,17 @@ import com.hbm.ntm.block.LegacyFileCabinetBlock;
 import com.hbm.ntm.block.LegacyExplosiveBarrelBlock;
 import com.hbm.ntm.block.LegacyGasMeltdownBlock;
 import com.hbm.ntm.block.LegacyGasRadonBlock;
+import com.hbm.ntm.block.LegacyGlyphidBlock;
 import com.hbm.ntm.block.LegacyGlyphidSpawnerBlock;
 import com.hbm.ntm.block.LegacyGrateBlock;
 import com.hbm.ntm.block.LegacyHugeMushBlock;
+import com.hbm.ntm.block.LegacyBurningEarthBlock;
 import com.hbm.ntm.block.LegacyBasaltOreBlock;
-import com.hbm.ntm.block.LegacyNuclearWasteBlock;
+import com.hbm.ntm.block.LegacyImpactDirtBlock;
 import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMediumPylonBlock;
 import com.hbm.ntm.block.LegacyNtmFlowerBlock;
-import com.hbm.ntm.block.LegacyNetherCoalOreBlock;
 import com.hbm.ntm.block.LegacyOreBlock;
-import com.hbm.ntm.block.LegacyOutgasBlock;
 import com.hbm.ntm.block.OldBoilerBlock;
 import com.hbm.ntm.block.LegacyHotBlock;
 import com.hbm.ntm.block.LegacyLeavesLayerBlock;
@@ -142,8 +172,6 @@ import com.hbm.ntm.block.LegacyPlasticExplosiveBlock;
 import com.hbm.ntm.block.LegacyPoleSatelliteReceiverBlock;
 import com.hbm.ntm.block.LegacySmallPylonBlock;
 import com.hbm.ntm.block.LegacySpotlightBlock;
-import com.hbm.ntm.block.LegacyWasteLeavesBlock;
-import com.hbm.ntm.block.LegacyWasteLogBlock;
 import com.hbm.ntm.block.LegacySubstationBlock;
 import com.hbm.ntm.block.LegacyTapeRecorderBlock;
 import com.hbm.ntm.block.LegacyVolcanicLavaBlock;
@@ -161,6 +189,7 @@ import com.hbm.ntm.block.ParticleAcceleratorBlock;
 import com.hbm.ntm.block.LegacyLanternBlock;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyMachinePartRenderProperties;
+import com.hbm.ntm.block.LegacyPedestalBlock;
 import com.hbm.ntm.block.LegacyMachinePartRenderMode;
 import com.hbm.ntm.block.LegacyMachineRenderProfile;
 import com.hbm.ntm.block.LegacyMudBlock;
@@ -169,9 +198,7 @@ import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
 import com.hbm.ntm.block.LegacyGenericSelectorMachineBlock;
 import com.hbm.ntm.block.LegacyLargeTurbineBlock;
 import com.hbm.ntm.block.MachineBatteryBlock;
-import com.hbm.ntm.block.LegacyHazardSourceBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
-import com.hbm.ntm.block.LegacyRadiationBarrelBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
@@ -209,7 +236,6 @@ import com.hbm.ntm.block.PWRComponentBlock;
 import com.hbm.ntm.block.PWRControllerBlock;
 import com.hbm.ntm.block.PyroOvenBlock;
 import com.hbm.ntm.block.RadiolysisBlock;
-import com.hbm.ntm.block.RadiatingFallingBlock;
 import com.hbm.ntm.block.RadiatingHazardBlock;
 import com.hbm.ntm.block.RadarBlock;
 import com.hbm.ntm.block.RadGenBlock;
@@ -221,7 +247,6 @@ import com.hbm.ntm.block.RadarLargeBlock;
 import com.hbm.ntm.block.RadarScreenBlock;
 import com.hbm.ntm.block.RadioAutocalBlock;
 import com.hbm.ntm.block.RadioTelexBlock;
-import com.hbm.ntm.block.RadioactiveWasteEarthBlock;
 import com.hbm.ntm.block.RadioTorchControllerDeviceBlock;
 import com.hbm.ntm.block.RadioTorchCounterDeviceBlock;
 import com.hbm.ntm.block.RadioTorchLogicBlock;
@@ -339,6 +364,7 @@ import com.hbm.ntm.multiblock.DummyBlock;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.neutron.PileGraphiteInsertionPlanner;
+import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.blockentity.StorageCrateBlockEntity;
@@ -361,6 +387,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -391,6 +418,11 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public final class ModBlocks {
+    private static final Vec3 ORBUS_TRANSLATION_NORTH = new Vec3(0.5D, 0.0D, 0.5D);
+    private static final Vec3 ORBUS_TRANSLATION_WEST = new Vec3(0.5D, 0.0D, -0.5D);
+    private static final Vec3 ORBUS_TRANSLATION_EAST = new Vec3(-0.5D, 0.0D, 0.5D);
+    private static final Vec3 ORBUS_TRANSLATION_SOUTH = new Vec3(-0.5D, 0.0D, -0.5D);
+
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, HbmNtm.MOD_ID);
     private static final Map<String, RegistryObject<? extends Block>> BLOCKS_BY_LEGACY_NAME = new LinkedHashMap<>();
     private static final SoundType PIPE_SOUND = new ForgeSoundType(
@@ -444,6 +476,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_PRESS = pressMachine("machine_press");
     public static final RegistryObject<Block> PRESS_PREHEATER = pressPreheater("press_preheater");
     public static final RegistryObject<Block> MACHINE_EPRESS = electricPressMachine("machine_epress");
+    public static final RegistryObject<Block> MACHINE_CONVEYOR_PRESS = conveyorPressMachine("machine_conveyor_press");
     public static final RegistryObject<Block> MACHINE_DIFURNACE_OFF = diFurnaceMachine("machine_difurnace_off");
     public static final RegistryObject<Block> MACHINE_DIFURNACE_EXTENSION =
             diFurnaceExtension("machine_difurnace_extension");
@@ -474,6 +507,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_SIREN = siren("machine_siren");
     public static final RegistryObject<Block> FAN = fan("fan");
     public static final RegistryObject<Block> FILING_CABINET = filingCabinet("filing_cabinet");
+    public static final RegistryObject<Block> PEDESTAL = pedestal("pedestal");
     public static final RegistryObject<Block> DECO_TOASTER = decoToaster("deco_toaster");
     public static final RegistryObject<Block> ANVIL_IRON = anvil("anvil_iron", NTMAnvilBlock.TIER_IRON);
     public static final RegistryObject<Block> ANVIL_LEAD = anvil("anvil_lead", NTMAnvilBlock.TIER_IRON);
@@ -632,6 +666,16 @@ public final class ModBlocks {
             machineBattery("machine_schrabidium_battery", 25_000_000_000L);
     public static final RegistryObject<Block> MACHINE_DINEUTRONIUM_BATTERY =
             machineBattery("machine_dineutronium_battery", 1_000_000_000_000L);
+    public static final RegistryObject<Block> CAPACITOR_COPPER =
+            legacyCapacitor("capacitor_copper", "capacitor_copper_block", 1_000_000L, "copper");
+    public static final RegistryObject<Block> CAPACITOR_GOLD =
+            legacyCapacitor("capacitor_gold", "capacitor_gold_block", 5_000_000L, "gold");
+    public static final RegistryObject<Block> CAPACITOR_NIOBIUM =
+            legacyCapacitor("capacitor_niobium", "capacitor_niobium_block", 25_000_000L, "niobium");
+    public static final RegistryObject<Block> CAPACITOR_TANTALIUM =
+            legacyCapacitor("capacitor_tantalium", "capacitor_tantalium_block", 150_000_000L, "tantalium");
+    public static final RegistryObject<Block> CAPACITOR_SCHRABIDATE =
+            legacyCapacitor("capacitor_schrabidate", "capacitor_schrabidate_block", 50_000_000_000L, "schrabidate");
     public static final RegistryObject<Block> HEV_BATTERY =
             registerBlockWithItemName("hev_battery", "hev_battery_block",
                     () -> new HevBatteryBlock(BlockBehaviour.Properties.of()
@@ -680,6 +724,10 @@ public final class ModBlocks {
             soyuzLauncherDefinition());
     public static final RegistryObject<Block> STRUCT_LAUNCHER = launchStructureBlock("struct_launcher");
     public static final RegistryObject<Block> STRUCT_SCAFFOLD = launchStructureBlock("struct_scaffold");
+    public static final RegistryObject<Block> STRUCT_LAUNCHER_CORE =
+            launcherStructCoreBlock("struct_launcher_core", LauncherStructCoreBlock.Kind.COMPACT);
+    public static final RegistryObject<Block> STRUCT_LAUNCHER_CORE_LARGE =
+            launcherStructCoreBlock("struct_launcher_core_large", LauncherStructCoreBlock.Kind.LAUNCH_TABLE);
     public static final RegistryObject<Block> STRUCT_SOYUZ_CORE = soyuzStructCoreBlock("struct_soyuz_core");
     public static final RegistryObject<Block> LAUNCH_PAD = launchPad("launch_pad");
     public static final RegistryObject<Block> LAUNCH_PAD_LARGE = largeLaunchPad("launch_pad_large");
@@ -760,6 +808,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> STEEL_GRATE = steelGrate("steel_grate", false);
     public static final RegistryObject<Block> STEEL_GRATE_WIDE = steelGrate("steel_grate_wide", true);
     public static final RegistryObject<Block> CHAIN = chain("chain");
+    public static final RegistryObject<Block> BARBED_WIRE = barbedWire("barbed_wire");
     public static final RegistryObject<Block> POLE_TOP = poleTop("pole_top");
     public static final RegistryObject<Block> POLE_SATELLITE_RECEIVER =
             poleSatelliteReceiver("pole_satellite_receiver");
@@ -1004,6 +1053,22 @@ public final class ModBlocks {
                     .strength(5.0F, 10.0F)
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> SEAL_FRAME = decorativeDoorCarrier("seal_frame", 10.0F, 100.0F);
+    public static final RegistryObject<Block> SEAL_CONTROLLER = decorativeDoorCarrier("seal_controller", 10.0F, 100.0F);
+    public static final RegistryObject<Block> VAULT_DOOR = decorativeDoorCarrier("vault_door", 10.0F, 1_000.0F);
+    public static final RegistryObject<Block> BLAST_DOOR = decorativeDoorCarrier("blast_door", 10.0F, 1_000.0F);
+    public static final RegistryObject<Block> FIRE_DOOR = decorativeDoorCarrier("fire_door", 10.0F, 1_000.0F);
+    public static final RegistryObject<Block> TRANSITION_SEAL = decorativeDoorCarrier("transition_seal", 10.0F, 1_000.0F);
+    public static final RegistryObject<Block> SLIDING_BLAST_DOOR = decorativeDoorCarrier("sliding_blast_door", 10.0F, 750.0F);
+    public static final RegistryObject<Block> LARGE_VEHICLE_DOOR = decorativeDoorCarrier("large_vehicle_door", 10.0F, 1_000.0F);
+    public static final RegistryObject<Block> WATER_DOOR = decorativeDoorCarrier("water_door", 5.0F, 50.0F);
+    public static final RegistryObject<Block> QE_CONTAINMENT = decorativeDoorCarrier("qe_containment", 10.0F, 1_000.0F);
+    public static final RegistryObject<Block> QE_SLIDING_DOOR = decorativeDoorCarrier("qe_sliding_door", 10.0F, 1_000.0F);
+    public static final RegistryObject<Block> ROUND_AIRLOCK_DOOR = decorativeDoorCarrier("round_airlock_door", 10.0F, 1_000.0F);
+    public static final RegistryObject<Block> SECURE_ACCESS_DOOR = decorativeDoorCarrier("secure_access_door", 20.0F, 2_000.0F);
+    public static final RegistryObject<Block> SLIDING_SEAL_DOOR = decorativeDoorCarrier("sliding_seal_door", 10.0F, 1_000.0F);
+    public static final RegistryObject<Block> SILO_HATCH = decorativeDoorCarrier("silo_hatch", 10.0F, 100.0F);
+    public static final RegistryObject<Block> SILO_HATCH_LARGE = decorativeDoorCarrier("silo_hatch_large", 10.0F, 100.0F);
     public static final RegistryObject<Block> CAPACITOR_BUS = capacitorBus("capacitor_bus");
     public static final RegistryObject<Block> MACHINE_FURNACE_BRICK =
             brickFurnaceMachine("machine_furnace_brick_off");
@@ -1073,7 +1138,11 @@ public final class ModBlocks {
     public static final RegistryObject<Block> GLASS_LEAD = legacyGlass("glass_lead");
     public static final RegistryObject<Block> GLASS_URANIUM = luminousLegacyGlass("glass_uranium");
     public static final RegistryObject<Block> GLASS_POLONIUM = luminousLegacyGlass("glass_polonium");
+    public static final RegistryObject<Block> GLASS_POLARIZED = legacyGlass("glass_polarized");
     public static final RegistryObject<Block> GLASS_QUARTZ = quartzGlass("glass_quartz");
+    public static final RegistryObject<Block> REINFORCED_GLASS = reinforcedGlass("reinforced_glass");
+    public static final RegistryObject<Block> REINFORCED_GLASS_PANE =
+            reinforcedGlassPane("reinforced_glass_pane");
     public static final RegistryObject<Block> SAND_BORON = legacySandMix("sand_boron");
     public static final RegistryObject<Block> SAND_LEAD = legacySandMix("sand_lead");
     public static final RegistryObject<Block> SAND_URANIUM = legacySandMix("sand_uranium");
@@ -1093,6 +1162,8 @@ public final class ModBlocks {
     // Legacy 1.7.10 blockTab entries used as an early chunk-radiation test bed.
     public static final RegistryObject<Block> WASTE_EARTH = wasteEarth("waste_earth", false);
     public static final RegistryObject<Block> WASTE_MYCELIUM = wasteEarth("waste_mycelium", true);
+    public static final RegistryObject<Block> BURNING_EARTH = burningEarth("burning_earth");
+    public static final RegistryObject<Block> IMPACT_DIRT = impactDirt("impact_dirt");
     public static final RegistryObject<Block> MUSH = glowingMush("mush");
     public static final RegistryObject<Block> MUSH_BLOCK = hugeMush("mush_block");
     public static final RegistryObject<Block> MUSH_BLOCK_STEM = hugeMush("mush_block_stem");
@@ -1115,7 +1186,7 @@ public final class ModBlocks {
             PLANT_FLOWER_WEED,
             PLANT_FLOWER_CD0,
             PLANT_FLOWER_CD1);
-    public static final RegistryObject<Block> WASTE_LEAVES = registerBlockWithItem("waste_leaves", () -> new LegacyWasteLeavesBlock(BlockBehaviour.Properties.of()
+    public static final RegistryObject<Block> WASTE_LEAVES = registerBlockWithItem("waste_leaves", () -> new WasteLeaves(BlockBehaviour.Properties.of()
             .mapColor(MapColor.PLANT)
             .strength(0.1F)
             .sound(SoundType.GRASS)
@@ -1123,7 +1194,7 @@ public final class ModBlocks {
             .isValidSpawn((state, level, pos, type) -> false)
             .isSuffocating((state, level, pos) -> false)
             .isViewBlocking((state, level, pos) -> false)));
-    public static final RegistryObject<Block> WASTE_LOG = registerBlockWithItem("waste_log", () -> new LegacyWasteLogBlock(BlockBehaviour.Properties.of()
+    public static final RegistryObject<Block> WASTE_LOG = registerBlockWithItem("waste_log", () -> new WasteLog(BlockBehaviour.Properties.of()
             .mapColor(MapColor.WOOD)
             .strength(5.0F, 2.5F)
             .sound(SoundType.WOOD)));
@@ -1156,6 +1227,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> WASTE_TRINITITE = trinititeOre("waste_trinitite");
     public static final RegistryObject<Block> WASTE_TRINITITE_RED = trinititeOre("waste_trinitite_red");
     public static final RegistryObject<Block> GLASS_TRINITITE = trinititeGlass("glass_trinitite");
+    public static final RegistryObject<Block> GLASS_ASH = ashGlass("glass_ash");
     public static final RegistryObject<Block> ASH_DIGAMMA = ashDigamma("ash_digamma");
     public static final RegistryObject<Block> FIRE_DIGAMMA = fireDigamma("fire_digamma");
     public static final RegistryObject<Block> BALEFIRE = balefire("balefire");
@@ -1200,6 +1272,11 @@ public final class ModBlocks {
     public static final RegistryObject<Block> NUKE_CUSTOM = customNuke("nuke_custom");
     public static final RegistryObject<Block> NUKE_FSTBMB = balefireBomb("nuke_fstbmb");
     public static final RegistryObject<Block> BOMB_MULTI = bombMulti("bomb_multi");
+    public static final RegistryObject<Block> EMP_BOMB = empBomb("emp_bomb");
+    public static final RegistryObject<Block> FLOAT_BOMB = floatBomb("float_bomb");
+    public static final RegistryObject<Block> THERM_ENDO = thermoBomb("therm_endo", ThermoBombBlock.Kind.ENDO);
+    public static final RegistryObject<Block> THERM_EXO = thermoBomb("therm_exo", ThermoBombBlock.Kind.EXO);
+    public static final RegistryObject<Block> MINE_NAVAL = navalMine("mine_naval");
     public static final RegistryObject<Block> DYNAMITE = legacyTntBase("dynamite", LegacyTntBaseBlock.Kind.DYNAMITE);
     public static final RegistryObject<Block> TNT_NTM = legacyTntBase("tnt_ntm", LegacyTntBaseBlock.Kind.TNT);
     public static final RegistryObject<Block> SEMTEX = legacyTntBase("semtex", LegacyTntBaseBlock.Kind.SEMTEX);
@@ -1243,6 +1320,7 @@ public final class ModBlocks {
             MACHINE_PRESS,
             PRESS_PREHEATER,
             MACHINE_EPRESS,
+            MACHINE_CONVEYOR_PRESS,
             MACHINE_DIFURNACE_OFF,
             MACHINE_ELECTRIC_FURNACE_OFF,
             MACHINE_DIFURNACE_EXTENSION,
@@ -1497,6 +1575,23 @@ public final class ModBlocks {
             MACHINE_TURBINEGAS,
             MACHINE_AMMO_PRESS,
             MACHINE_TRANSFORMER,
+            SEAL_FRAME,
+            SEAL_CONTROLLER,
+            VAULT_DOOR,
+            BLAST_DOOR,
+            FIRE_DOOR,
+            TRANSITION_SEAL,
+            SLIDING_BLAST_DOOR,
+            LARGE_VEHICLE_DOOR,
+            WATER_DOOR,
+            QE_CONTAINMENT,
+            QE_SLIDING_DOOR,
+            ROUND_AIRLOCK_DOOR,
+            SECURE_ACCESS_DOOR,
+            SLIDING_SEAL_DOOR,
+            SILO_HATCH,
+            SILO_HATCH_LARGE,
+            CAPACITOR_COPPER,
             MACHINE_FURNACE_BRICK,
             MACHINE_DIFURNACE_RTG,
             FURNACE_IRON,
@@ -1552,6 +1647,7 @@ public final class ModBlocks {
             GLASS_LEAD,
             GLASS_URANIUM,
             GLASS_POLONIUM,
+            GLASS_POLARIZED,
             SAND_BORON,
             SAND_LEAD,
             SAND_URANIUM,
@@ -1578,6 +1674,8 @@ public final class ModBlocks {
             SOYUZ_LAUNCHER,
             STRUCT_LAUNCHER,
             STRUCT_SCAFFOLD,
+            STRUCT_LAUNCHER_CORE,
+            STRUCT_LAUNCHER_CORE_LARGE,
             STRUCT_SOYUZ_CORE,
             LAUNCH_TABLE,
             COMPACT_LAUNCHER,
@@ -1593,6 +1691,10 @@ public final class ModBlocks {
             MACHINE_POWERRTG,
             FIELD_DISTURBER,
             CAPACITOR_BUS,
+            CAPACITOR_GOLD,
+            CAPACITOR_NIOBIUM,
+            CAPACITOR_TANTALIUM,
+            CAPACITOR_SCHRABIDATE,
             MACHINE_RTG_FURNACE,
             MACHINE_BATTERY,
             MACHINE_BATTERY_POTATO,
@@ -1864,6 +1966,7 @@ public final class ModBlocks {
             "cmb_brick_reinforced:cmb_brick_reinforced",
             "brick_asbestos:brick_asbestos",
             "brick_fire:brick_fire",
+            "glyphid_base:glyphid_base",
             "glyphid_spawner:glyphid_eggs_alt",
             "ducrete_smooth:ducrete",
             "ducrete:ducrete_tile",
@@ -1874,21 +1977,45 @@ public final class ModBlocks {
             "tile_lab_broken:tile_lab_broken",
             "block_meteor:meteor",
             "block_meteor_cobble:meteor_cobble",
+            "block_meteor_broken:meteor_crushed",
             "__end__:__end__"
     );
 
+    static {
+        LegacyMetaItemMappings.registerSparse(LegacyMetaItemMappings.PLANT_FLOWER, Map.of(
+                0, requireRegisteredBlockItem("plant_flower_foxglove"),
+                1, requireRegisteredBlockItem("plant_flower_tobacco"),
+                2, requireRegisteredBlockItem("plant_flower_nightshade"),
+                3, requireRegisteredBlockItem("plant_flower_weed"),
+                4, requireRegisteredBlockItem("plant_flower_cd0"),
+                5, requireRegisteredBlockItem("plant_flower_cd1")));
+        LegacyMetaItemMappings.registerSparse(LegacyMetaItemMappings.FUSION_COMPONENT, Map.of(
+                0, requireRegisteredBlockItem("fusion_component_bscco"),
+                1, requireRegisteredBlockItem("fusion_component_bscco_welded"),
+                2, requireRegisteredBlockItem("fusion_component_blanket"),
+                3, requireRegisteredBlockItem("fusion_component_motor")));
+        LegacyMetaItemMappings.registerSparse(LegacyMetaItemMappings.TILE_SAND_MIX, Map.of(
+                4, requireRegisteredBlockItem("sand_quartz")));
+        LegacyMetaItemMappings.registerSparse(LegacyMetaItemMappings.TILE_GLASS_QUARTZ, Map.of(
+                0, requireRegisteredBlockItem("glass_quartz")));
+        LegacyMetaItemMappings.registerSparse(LegacyMetaItemMappings.TILE_STONE_RESOURCE, Map.of(
+                4, requireRegisteredBlockItem("stone_resource_limestone")));
+    }
+
     public static final List<RegistryObject<Block>> BLOCK_TAB_BLOCKS = Stream.concat(
-            Stream.of(WASTE_EARTH, WASTE_MYCELIUM, WASTE_LEAVES, WASTE_LOG, WASTE_PLANKS, FROZEN_GRASS, FROZEN_DIRT,
+            Stream.of(WASTE_EARTH, WASTE_MYCELIUM, BURNING_EARTH, IMPACT_DIRT, WASTE_LEAVES, WASTE_LOG, WASTE_PLANKS,
+                    FROZEN_GRASS, FROZEN_DIRT,
                     FROZEN_LOG, FROZEN_PLANKS, LEAVES_LAYER, OIL_SPILL, SELLAFIELD, SELLAFIELD_SLAKED,
             SELLAFIELD_BEDROCK, ORE_SELLAFIELD_DIAMOND, ORE_SELLAFIELD_EMERALD, ORE_SELLAFIELD_URANIUM_SCORCHED,
             ORE_SELLAFIELD_SCHRABIDIUM, ORE_SELLAFIELD_RADGEM, WASTE_TRINITITE, WASTE_TRINITITE_RED, GLASS_TRINITITE,
-            MOON_TURF, REINFORCED_LAMINATE, REINFORCED_LAMINATE_PANE, MUSH,
+            MOON_TURF, REINFORCED_GLASS, REINFORCED_GLASS_PANE, REINFORCED_LAMINATE,
+            REINFORCED_LAMINATE_PANE, MUSH,
             PLANT_FLOWER_FOXGLOVE, PLANT_FLOWER_TOBACCO, PLANT_FLOWER_NIGHTSHADE, PLANT_FLOWER_WEED,
             PLANT_FLOWER_CD0, PLANT_FLOWER_CD1,
             BLOCK_CAP_NUKA, BLOCK_CAP_QUANTUM, BLOCK_CAP_SPARKLE, BLOCK_CAP_RAD, BLOCK_CAP_KORL, BLOCK_CAP_FRITZ,
             ASH_DIGAMMA, BALEFIRE, PRIBRIS, PRIBRIS_BURNING, PRIBRIS_RADIATING, PRIBRIS_DIGAMMA,
             ORE_BASALT, VOLCANIC_LAVA_BLOCK, RAD_LAVA_BLOCK, BLOCK_FOAM, MUD_BLOCK,
-                    STEEL_SCAFFOLD, STEEL_BEAM, STEEL_GRATE, STEEL_GRATE_WIDE, CHAIN,
+                    STEEL_SCAFFOLD, STEEL_BEAM, STEEL_GRATE, STEEL_GRATE_WIDE, CHAIN, BARBED_WIRE,
                     POLE_TOP, POLE_SATELLITE_RECEIVER, DECO_TOASTER, TEKTITE,
                     ORE_TEKTITE_OSMIRIDIUM, BLOCK_GRAPHITE, BLOCK_SEMTEX, BLOCK_C4,
                     STALACTITE_SULFUR, STALACTITE_ASBESTOS, STALAGMITE_SULFUR, STALAGMITE_ASBESTOS),
@@ -1907,6 +2034,11 @@ public final class ModBlocks {
             NUKE_CUSTOM,
             NUKE_FSTBMB,
             BOMB_MULTI,
+            EMP_BOMB,
+            FLOAT_BOMB,
+            THERM_ENDO,
+            THERM_EXO,
+            MINE_NAVAL,
             DYNAMITE,
             TNT_NTM,
             SEMTEX,
@@ -1988,6 +2120,14 @@ public final class ModBlocks {
                 .requiresCorrectToolForDrops()));
     }
 
+    private static RegistryObject<Block> decorativeDoorCarrier(String name, float hardness, float resistance) {
+        return registerBlockWithItem(name, () -> new Block(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(hardness, resistance)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
     private static RegistryObject<Block> siren(String name) {
         return registerBlockWithItem(name, () -> new SirenBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
@@ -2048,7 +2188,8 @@ public final class ModBlocks {
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops()
-                .noOcclusion()));
+                .noOcclusion()),
+                block -> new ObjMachineBlockItem(block.get(), new Item.Properties()));
     }
 
     private static RegistryObject<Block> refuelerMachine(String name) {
@@ -2273,6 +2414,39 @@ public final class ModBlocks {
                 block -> new BombMultiBlockItem(block.get(), new Item.Properties()));
     }
 
+    private static RegistryObject<Block> empBomb(String name) {
+        return registerBlockWithItem(name, () -> new EmpBombBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 200.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
+    private static RegistryObject<Block> floatBomb(String name) {
+        return registerBlockWithItem(name, () -> new FloatBombBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 200.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()));
+    }
+
+    private static RegistryObject<Block> thermoBomb(String name, ThermoBombBlock.Kind kind) {
+        return registerBlockWithItem(name, () -> new ThermoBombBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 200.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops(), kind));
+    }
+
+    private static RegistryObject<Block> navalMine(String name) {
+        return registerBlockWithItem(name, () -> new NavalMineBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(1.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion(), 2.5D, 1.0D));
+    }
+
     private static RegistryObject<Block> basicMachine(String name) {
         return registerBlockWithItem(name, () -> new MachineBlockEntityBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
@@ -2298,6 +2472,18 @@ public final class ModBlocks {
         return registerBlockWithItem(
                 name,
                 () -> new ElectricPressBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 10.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion()),
+                block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static RegistryObject<Block> conveyorPressMachine(String name) {
+        return registerBlockWithItem(
+                name,
+                () -> new ConveyorPressBlock(BlockBehaviour.Properties.of()
                         .mapColor(MapColor.METAL)
                         .strength(5.0F, 10.0F)
                         .sound(SoundType.METAL)
@@ -2721,7 +2907,7 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> gasMeltdown(String name) {
-        return registerBlockWithItem(name, () -> new LegacyGasMeltdownBlock(BlockBehaviour.Properties.of()
+        return registerBlockWithItem(name, () -> new BlockGasMeltdown(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.NONE)
                 .strength(0.0F, 0.0F)
                 .noCollission()
@@ -2731,23 +2917,38 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> gasRadon(String name, LegacyGasRadonBlock.Kind kind) {
-        return registerBlockWithItem(name, () -> new LegacyGasRadonBlock(BlockBehaviour.Properties.of()
-                .mapColor(MapColor.NONE)
-                .strength(0.0F, 0.0F)
-                .noCollission()
-                .noOcclusion()
-                .isSuffocating((state, level, pos) -> false)
-                .isViewBlocking((state, level, pos) -> false), kind));
+        return registerBlockWithItem(name, () -> {
+            BlockBehaviour.Properties properties = BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.NONE)
+                    .strength(0.0F, 0.0F)
+                    .noCollission()
+                    .noOcclusion()
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false);
+            return switch (kind) {
+                case NORMAL -> new BlockGasRadon(properties);
+                case DENSE -> new BlockGasRadonDense(properties);
+                case TOMB -> new BlockGasRadonTomb(properties);
+            };
+        });
     }
 
     private static RegistryObject<Block> toxicGas(String name, LegacyToxicGasBlock.Kind kind) {
-        return registerBlockWithItem(name, () -> new LegacyToxicGasBlock(BlockBehaviour.Properties.of()
-                .mapColor(MapColor.NONE)
-                .strength(0.0F, 0.0F)
-                .noCollission()
-                .noOcclusion()
-                .isSuffocating((state, level, pos) -> false)
-                .isViewBlocking((state, level, pos) -> false), kind));
+        return registerBlockWithItem(name, () -> {
+            BlockBehaviour.Properties properties = BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.NONE)
+                    .strength(0.0F, 0.0F)
+                    .noCollission()
+                    .noOcclusion()
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false);
+            return switch (kind) {
+                case ASBESTOS -> new BlockGasAsbestos(properties);
+                case COAL -> new BlockGasCoal(properties);
+                case MONOXIDE -> new BlockGasMonoxide(properties);
+                case CHLORINE -> new BlockGasClorine(properties);
+            };
+        });
     }
 
     private static RegistryObject<Block> acidLiquidBlock(String name) {
@@ -2802,7 +3003,7 @@ public final class ModBlocks {
     private static RegistryObject<Block> radAbsorber(String name) {
         return registerBlockWithItem(
                 name,
-                () -> new LegacyRadAbsorberBlock(BlockBehaviour.Properties.of()
+                () -> new BlockAbsorber(BlockBehaviour.Properties.of()
                         .mapColor(MapColor.METAL)
                         .strength(5.0F, 10.0F)
                         .sound(SoundType.METAL)
@@ -6481,10 +6682,10 @@ public final class ModBlocks {
 
     private static Vec3 orbusModelTranslation(Direction facing) {
         return switch (facing) {
-            case NORTH -> new Vec3(0.5D, 0.0D, 0.5D);
-            case WEST -> new Vec3(0.5D, 0.0D, -0.5D);
-            case EAST -> new Vec3(-0.5D, 0.0D, 0.5D);
-            default -> new Vec3(-0.5D, 0.0D, -0.5D);
+            case NORTH -> ORBUS_TRANSLATION_NORTH;
+            case WEST -> ORBUS_TRANSLATION_WEST;
+            case EAST -> ORBUS_TRANSLATION_EAST;
+            default -> ORBUS_TRANSLATION_SOUTH;
         };
     }
 
@@ -6569,6 +6770,17 @@ public final class ModBlocks {
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops(), maxPower));
+    }
+
+    private static RegistryObject<Block> legacyCapacitor(String blockName, String itemName, long maxPower,
+            String textureName) {
+        return registerBlockWithItemName(blockName, itemName,
+                () -> new CapacitorBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 10.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()
+                        .noOcclusion(), maxPower, textureName));
     }
 
     private static RegistryObject<Block> miniRtgMachine(String name, MiniRtgBlock.Kind kind) {
@@ -6837,6 +7049,15 @@ public final class ModBlocks {
                 .requiresCorrectToolForDrops()));
     }
 
+    private static RegistryObject<Block> launcherStructCoreBlock(String name, LauncherStructCoreBlock.Kind kind) {
+        return registerBlockWithItem(name, () -> new LauncherStructCoreBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion(), kind));
+    }
+
     private static RegistryObject<Block> soyuzStructCoreBlock(String name) {
         return registerBlockWithItem(name, () -> new SoyuzStructBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
@@ -6848,6 +7069,7 @@ public final class ModBlocks {
 
     private static LegacyMachineDefinition satDockDefinition() {
         return LegacyMachineDefinition.builder(utilityModel("sat_dock"), utilityTexture("sat_dock"))
+                .yRotation(facing -> 0.0F)
                 .layout(facing -> LegacyMultiblockLayout.ofOffsets(satDockOffsets()))
                 .renderBoundingBox(pos -> new AABB(
                         pos.getX() - 1.0D,
@@ -6968,10 +7190,24 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> wasteEarth(String name, boolean mycelium) {
-        return registerBlockWithItem(name, () -> new RadioactiveWasteEarthBlock(BlockBehaviour.Properties.of()
+        return registerBlockWithItem(name, () -> new WasteEarth(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.GRASS)
                 .strength(0.6F)
                 .sound(SoundType.GRASS), mycelium));
+    }
+
+    private static RegistryObject<Block> burningEarth(String name) {
+        return registerBlockWithItem(name, () -> new LegacyBurningEarthBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.GRASS)
+                .strength(0.6F)
+                .sound(SoundType.GRASS)));
+    }
+
+    private static RegistryObject<Block> impactDirt(String name) {
+        return registerBlockWithItem(name, () -> new LegacyImpactDirtBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.DIRT)
+                .strength(0.5F)
+                .sound(SoundType.GRAVEL)));
     }
 
     private static RegistryObject<Block> glowingMush(String name) {
@@ -7056,7 +7292,7 @@ public final class ModBlocks {
     private static RegistryObject<Block> sellafield(String name) {
         return registerBlockWithItem(
                 name,
-                () -> new LegacySellafieldBlock(BlockBehaviour.Properties.of()
+                () -> new BlockSellafield(BlockBehaviour.Properties.of()
                         .mapColor(MapColor.STONE)
                         .strength(5.0F, 10.0F)
                         .sound(SoundType.STONE)
@@ -7068,11 +7304,11 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> sellafieldSlaked(String name) {
-        return registerSlakedStateBlock(name, () -> new LegacySellafieldSlakedBlock(sellafieldSlakedProperties()));
+        return registerSlakedStateBlock(name, () -> new BlockSellafieldSlaked(sellafieldSlakedProperties()));
     }
 
     private static RegistryObject<Block> sellafieldBedrock(String name) {
-        return registerSlakedStateBlock(name, () -> new LegacySellafieldSlakedBlock(BlockBehaviour.Properties.of()
+        return registerSlakedStateBlock(name, () -> new BlockSellafieldSlaked(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.STONE)
                 .strength(-1.0F, 3_600_000.0F)
                 .sound(SoundType.STONE)
@@ -7080,7 +7316,7 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> sellafieldOre(String name, LegacySellafieldOreBlock.Kind kind) {
-        return registerSlakedStateBlock(name, () -> new LegacySellafieldOreBlock(sellafieldSlakedProperties(), kind));
+        return registerSlakedStateBlock(name, () -> new BlockSellafieldOre(sellafieldSlakedProperties(), kind));
     }
 
     private static RegistryObject<Block> registerSlakedStateBlock(String name, Supplier<Block> blockFactory) {
@@ -7114,7 +7350,7 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> frozenLog(String name) {
-        return registerBlockWithItem(name, () -> new LegacyWasteLogBlock(BlockBehaviour.Properties.of()
+        return registerBlockWithItem(name, () -> new WasteLog(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.SNOW)
                 .strength(0.5F, 2.5F)
                 .sound(SoundType.GLASS)));
@@ -7312,7 +7548,7 @@ public final class ModBlocks {
     }
 
     private static RegistryObject<Block> radiationBarrel(String name, float chunkRadiationPerTick) {
-        return registerBlockWithItem(name, () -> new LegacyRadiationBarrelBlock(BlockBehaviour.Properties.of()
+        return registerBlockWithItem(name, () -> new YellowBarrel(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
                 .strength(0.5F, 2.5F)
                 .sound(SoundType.METAL)
@@ -7437,6 +7673,17 @@ public final class ModBlocks {
                 .isViewBlocking((state, level, pos) -> false)));
     }
 
+    private static RegistryObject<Block> ashGlass(String name) {
+        return registerBlockWithItem(name, () -> new LegacyNtmGlassBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_CYAN)
+                .strength(3.0F)
+                .sound(SoundType.GLASS)
+                .noOcclusion()
+                .isValidSpawn((state, level, pos, type) -> false)
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false)));
+    }
+
     private static RegistryObject<Block> moonTurf(String name) {
         return registerBlockWithItem(name, () -> new FallingBlock(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.SAND)
@@ -7453,6 +7700,15 @@ public final class ModBlocks {
                 .forceSolidOff()));
     }
 
+    private static RegistryObject<Block> reinforcedGlass(String name) {
+        return registerBlockWithItem(name, () -> new LegacyNtmGlassBlock(reinforcedGlassProperties()));
+    }
+
+    private static RegistryObject<Block> reinforcedGlassPane(String name) {
+        return registerBlockWithItem(name, () -> new LegacyNtmGlassPaneBlock(reinforcedGlassProperties()
+                .forceSolidOff()));
+    }
+
     private static RegistryObject<Block> capBlock(String name) {
         return registerBlockWithItem(name, () -> new Block(BlockBehaviour.Properties.of()
                 .mapColor(MapColor.METAL)
@@ -7465,6 +7721,18 @@ public final class ModBlocks {
         return BlockBehaviour.Properties.of()
                 .mapColor(MapColor.COLOR_CYAN)
                 .strength(15.0F, 300.0F)
+                .sound(SoundType.GLASS)
+                .noOcclusion()
+                .requiresCorrectToolForDrops()
+                .isValidSpawn((state, level, pos, type) -> false)
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false);
+    }
+
+    private static BlockBehaviour.Properties reinforcedGlassProperties() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_CYAN)
+                .strength(2.0F, 25.0F)
                 .sound(SoundType.GLASS)
                 .noOcclusion()
                 .requiresCorrectToolForDrops()
@@ -7510,11 +7778,11 @@ public final class ModBlocks {
             case "rebar" -> LegacyComplexShapeBlock.rebar(simpleResourceProperties(name, textureName).noOcclusion());
             case "wood_barrier" -> LegacyComplexShapeBlock.woodBarrier(simpleResourceProperties(name, textureName).noOcclusion());
             case "sandbags" -> LegacyComplexShapeBlock.sandbags(simpleResourceProperties(name, textureName).noOcclusion());
-            case "block_yellowcake" -> new RadiatingFallingBlock(simpleResourceProperties(name, textureName),
+            case "block_yellowcake" -> new BlockHazardFalling(simpleResourceProperties(name, textureName),
+                    RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER * 0.1F).makeBeaconable();
+            case "block_fallout" -> new BlockHazardFalling(simpleResourceProperties(name, textureName),
                     RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER * 0.1F);
-            case "block_fallout" -> new RadiatingFallingBlock(simpleResourceProperties(name, textureName),
-                    RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER * 0.1F);
-            case "block_red_phosphorus" -> new FallingBlock(simpleResourceProperties(name, textureName));
+            case "block_red_phosphorus" -> new BlockHazardFalling(simpleResourceProperties(name, textureName), 0.0F).makeBeaconable();
             case "block_scrap", "block_electrical_scrap", "gravel_obsidian" ->
                     new FallingBlock(simpleResourceProperties(name, textureName));
             case "dirt_dead", "dirt_oily", "sand_dirty", "sand_dirty_red", "stone_cracked" ->
@@ -7524,48 +7792,75 @@ public final class ModBlocks {
                     "depth_brick", "depth_tiles", "depth_nether_brick", "depth_nether_tiles", "depth_dnt",
                     "stone_depth_nether", "ore_depth_nether_neodymium" ->
                     new LegacyDepthBlock(name, simpleResourceProperties(name, textureName));
-            case "block_waste", "block_waste_painted", "block_waste_vitrified" -> new LegacyNuclearWasteBlock(name, simpleResourceProperties(name, textureName));
+            case "block_waste", "block_waste_painted", "block_waste_vitrified" -> new BlockNuclearWaste(name, simpleResourceProperties(name, textureName));
             case "ore_fluorite", "deepslate_ore_fluorite", "ore_niter", "deepslate_ore_niter",
                     "ore_sulfur", "deepslate_ore_sulfur", "ore_nether_sulfur", "ore_lignite",
                     "deepslate_ore_lignite", "ore_nether_fire", "ore_cobalt", "deepslate_ore_cobalt",
                     "ore_nether_cobalt", "ore_cinnebar", "deepslate_ore_cinnebar", "ore_coltan",
                     "deepslate_ore_coltan",
-                    "ore_oil", "ore_oil_empty", "ore_oil_sand", "block_trinitite", "block_meteor",
-                    "block_meteor_cobble" ->
+                    "ore_oil", "ore_oil_empty", "ore_oil_sand", "block_meteor",
+                    "block_meteor_cobble", "block_meteor_broken" ->
                     new LegacyOreBlock(name, simpleResourceProperties(name, textureName));
-            case "block_u233", "block_u235", "block_neptunium", "block_polonium", "block_mox_fuel",
-                    "block_plutonium", "block_pu238", "block_pu239", "block_pu240", "block_pu_mix",
+            case "block_polonium", "block_pu238" ->
+                    new BlockHotHazard(name, simpleResourceProperties(name, textureName), BlockHazard.ExtDisplayEffect.RADFOG)
+                            .makeBeaconable();
+            case "block_uranium", "block_u238", "block_uranium_fuel", "block_thorium",
+                    "block_thorium_fuel", "block_trinitite", "block_white_phosphorus",
+                    "block_ra226", "block_actinium" ->
+                    new BlockHazard(name, simpleResourceProperties(name, textureName))
+                            .makeBeaconable();
+            case "block_corium" -> new BlockHazard(name, simpleResourceProperties(name, textureName));
+            case "block_u233", "block_u235", "block_neptunium", "block_mox_fuel",
+                    "block_plutonium", "block_pu239", "block_pu240", "block_pu_mix",
                     "block_plutonium_fuel" ->
-                    new LegacyHazardSourceBlock(name, simpleResourceProperties(name, textureName), LegacyHazardSourceBlock.Effect.RADFOG);
+                    new BlockHazard(name, simpleResourceProperties(name, textureName))
+                            .makeBeaconable()
+                            .setDisplayEffect(BlockHazard.ExtDisplayEffect.RADFOG);
             case "block_schraranium", "block_schrabidium", "block_schrabidate", "block_solinium", "block_schrabidium_fuel" ->
-                    new LegacyHazardSourceBlock(name, simpleResourceProperties(name, textureName), LegacyHazardSourceBlock.Effect.SCHRAB);
+                    new BlockHazard(name, simpleResourceProperties(name, textureName))
+                            .makeBeaconable()
+                            .setDisplayEffect(BlockHazard.ExtDisplayEffect.SCHRAB);
             case "crystal_virus" ->
                     new LegacyCrystalVirusBlock(crystalVirusProperties());
             case "crystal_hardened" ->
                     new RadiatingHazardBlock(name, crystalVirusProperties());
+            case "glyphid_base" ->
+                    new LegacyGlyphidBlock(glyphidProperties());
             case "glyphid_spawner" ->
-                    new LegacyGlyphidSpawnerBlock(simpleResourceProperties(name, textureName));
+                    new LegacyGlyphidSpawnerBlock(glyphidProperties());
             case "ore_uranium", "deepslate_ore_uranium", "ore_uranium_scorched", "ore_gneiss_uranium", "ore_gneiss_uranium_scorched",
                     "ore_nether_uranium", "ore_nether_uranium_scorched" ->
-                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON::get, true, false);
+                    new BlockOutgas(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON::get, true, 5, true);
             case "ancient_scrap" ->
-                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON_TOMB::get, true, true, false, true);
+                    new BlockOutgas(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON_TOMB::get, true, 1, true, true, false, true);
             case "block_corium_cobble" ->
-                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON::get, true, true);
+                    new BlockOutgas(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_RADON::get, true, 1, true, true);
             case "ore_nether_coal" ->
-                    new LegacyNetherCoalOreBlock(name, simpleResourceProperties(name, textureName), GAS_MONOXIDE::get, true, false);
+                    new BlockNetherCoal(name, simpleResourceProperties(name, textureName), GAS_MONOXIDE::get, false, 5, true);
             case "ore_asbestos", "deepslate_ore_asbestos", "ore_gneiss_asbestos", "stone_resource_asbestos",
                     "block_asbestos", "deco_asbestos", "brick_asbestos", "tile_lab_broken" ->
-                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_ASBESTOS::get, true, false, true);
+                    new BlockOutgas(name, simpleResourceProperties(name, textureName).randomTicks(), GAS_ASBESTOS::get, true, 5, true, false, true);
             case "tile_lab", "tile_lab_cracked" ->
-                    new LegacyOutgasBlock(name, simpleResourceProperties(name, textureName), GAS_ASBESTOS::get, true, false);
+                    new BlockOutgas(name, simpleResourceProperties(name, textureName), GAS_ASBESTOS::get, false, 5, true);
             default -> new RadiatingHazardBlock(name, simpleResourceProperties(name, textureName));
         }, block -> switch (name) {
             case "floodlight" -> new LegacyFloodlightBlockItem(block.get(), new Item.Properties());
             case "lamp_demon" -> new LegacyDemonLampBlockItem(block.get(), new Item.Properties());
             case "lantern" -> new LegacyLanternBlockItem(block.get(), new Item.Properties());
+            case "glyphid_base", "glyphid_spawner" ->
+                    new LegacyStateBlockItem(block.get(), new Item.Properties(), LegacyGlyphidSpawnerBlock.VARIANT, 3,
+                            variant -> Component.translatable("block.hbm_ntm_rebirth." + name));
+            case "block_schraranium", "block_schrabidate", "block_solinium", "block_schrabidium_fuel" ->
+                    new BlockItem(block.get(), new Item.Properties().rarity(Rarity.RARE));
             default -> new BlockItem(block.get(), new Item.Properties());
         });
+    }
+
+    private static BlockBehaviour.Properties glyphidProperties() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_ORANGE)
+                .strength(0.5F)
+                .sound(SoundType.WOOL);
     }
 
     private static BlockBehaviour.Properties crystalVirusProperties() {
@@ -7662,6 +7957,7 @@ public final class ModBlocks {
                     .strength(5.0F, 240.0F)
                     .sound(SoundType.GRAVEL)
                     .requiresCorrectToolForDrops();
+            case "block_meteor", "block_meteor_cobble", "block_meteor_broken" -> stoneBlast(15.0F, 360.0F);
             case "reinforced_brick" -> stoneBlast(15.0F, 300.0F);
             case "reinforced_light" -> stoneBlast(15.0F, 80.0F).lightLevel(state -> 15);
             case "reinforced_sand" -> stoneBlast(15.0F, 40.0F);
@@ -7696,6 +7992,31 @@ public final class ModBlocks {
                 .requiresCorrectToolForDrops();
     }
 
+    private static RegistryObject<Block> pedestal(String name) {
+        return registerBlockWithItem(name, () -> new LegacyPedestalBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.STONE)
+                .strength(2.0F, 10.0F)
+                .sound(SoundType.STONE)
+                .requiresCorrectToolForDrops()
+                .noOcclusion()
+                .isRedstoneConductor((state, getter, pos) -> false)
+                .isSuffocating((state, getter, pos) -> false)
+                .isViewBlocking((state, getter, pos) -> false)));
+    }
+
+    private static RegistryObject<Block> barbedWire(String name) {
+        return registerBlockWithItem(name, () -> new LegacyBarbedWireBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(5.0F, 10.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noCollission()
+                .noOcclusion()
+                .isValidSpawn((state, getter, pos, type) -> false)
+                .isSuffocating((state, getter, pos) -> false)
+                .isViewBlocking((state, getter, pos) -> false)));
+    }
+
     private static <T extends Block> RegistryObject<T> registerBlockWithItem(String name, Supplier<T> blockSupplier) {
         return registerBlockWithItem(name, blockSupplier, block -> new BlockItem(block.get(), new Item.Properties()));
     }
@@ -7719,6 +8040,14 @@ public final class ModBlocks {
         RegistryObject<T> block = BLOCKS.register(name, blockSupplier);
         BLOCKS_BY_LEGACY_NAME.put(name, block);
         return block;
+    }
+
+    private static RegistryObject<Item> requireRegisteredBlockItem(String name) {
+        RegistryObject<Item> item = ModItems.legacyItem(name);
+        if (item == null) {
+            throw new IllegalStateException("Missing modern block item for legacy block meta mapping: " + name);
+        }
+        return item;
     }
 
     private ModBlocks() {

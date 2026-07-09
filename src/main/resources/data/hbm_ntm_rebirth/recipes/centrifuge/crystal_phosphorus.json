@@ -1,10 +1,30 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/phosphorus" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_phosphorus"
+    },
+    "legacy_id": "hbm:crystal_phosphorus",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_fire", "count": 3 },
-    { "item": "hbm_ntm_rebirth:powder_fire", "count": 3 },
-    { "item": "hbm_ntm_rebirth:ingot_phosphorus", "count": 2 },
-    { "item": "minecraft:blaze_powder", "count": 2 }
-  ]
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:powder_fire"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:powder_fire"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:ingot_phosphorus"
+    },
+    {
+      "count": 2,
+      "item": "minecraft:blaze_powder"
+    }
+  ],
+  "source_order": 51
 }

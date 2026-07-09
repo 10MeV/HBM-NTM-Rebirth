@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DepletedFuelItem extends Item {
+public class DepletedFuelItem extends LegacyNuclearWasteItem {
     public static final int COLD_DAMAGE = 0;
     public static final int HOT_DAMAGE = 1;
     public static final int HOT_TINT = 0xFFBFA5;

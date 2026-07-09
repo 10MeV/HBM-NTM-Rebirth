@@ -44,9 +44,7 @@ public class PollutionSavedData extends SavedData {
             CompoundTag entry = entries.getCompound(i);
             PollutionGridPos pos = new PollutionGridPos(entry.getInt(TAG_CHUNK_X), entry.getInt(TAG_CHUNK_Z));
             PollutionSample sample = PollutionSample.fromTag(entry);
-            if (sample.hasAnyStoredValue()) {
-                data.pollution.put(pos.toLong(), sample);
-            }
+            data.pollution.put(pos.toLong(), sample);
         }
         data.loadDiagnostics = LoadDiagnostics.inspect(tag);
         return data;
@@ -93,9 +91,6 @@ public class PollutionSavedData extends SavedData {
         ListTag entries = new ListTag();
         for (Map.Entry<Long, PollutionSample> entry : pollution.entrySet()) {
             PollutionSample sample = entry.getValue().copy();
-            if (!sample.hasAnyStoredValue()) {
-                continue;
-            }
             PollutionGridPos pos = PollutionGridPos.of(entry.getKey());
             CompoundTag entryTag = new CompoundTag();
             entryTag.putInt(TAG_CHUNK_X, pos.x());
@@ -138,9 +133,6 @@ public class PollutionSavedData extends SavedData {
         }
         PollutionSample sample = pollution.computeIfAbsent(pos.toLong(), key -> new PollutionSample());
         sample.set(type, value);
-        if (!sample.hasAnyStoredValue()) {
-            pollution.remove(pos.toLong());
-        }
         setDirty();
     }
 
@@ -148,37 +140,30 @@ public class PollutionSavedData extends SavedData {
         if (pos == null) {
             return;
         }
-        PollutionSample sample = value == null ? new PollutionSample() : value.copy();
-        if (sample.hasAnyStoredValue()) {
-            pollution.put(pos.toLong(), sample);
-        } else {
-            pollution.remove(pos.toLong());
+        if (value == null) {
+            remove(pos);
+            return;
         }
+        pollution.put(pos.toLong(), value.copy());
         setDirty();
     }
 
     public void add(PollutionGridPos pos, PollutionType type, float amount) {
-        if (pos == null || type == null || amount == 0.0F) {
+        if (pos == null || type == null) {
             return;
         }
         PollutionSample sample = pollution.computeIfAbsent(pos.toLong(), key -> new PollutionSample());
         sample.addClamped(type, amount);
-        if (!sample.hasAnyPollution()) {
-            pollution.remove(pos.toLong());
-        }
         setDirty();
     }
 
     public void addClamped(PollutionGridPos pos, PollutionSample amounts) {
-        if (pos == null || amounts == null || !amounts.hasAnyStoredValue()) {
+        if (pos == null || amounts == null) {
             return;
         }
         PollutionSample sample = pollution.computeIfAbsent(pos.toLong(), key -> new PollutionSample());
         for (PollutionType type : PollutionType.orderedValues()) {
             sample.addClamped(type, amounts.get(type));
-        }
-        if (!sample.hasAnyPollution()) {
-            pollution.remove(pos.toLong());
         }
         setDirty();
     }
@@ -196,9 +181,9 @@ public class PollutionSavedData extends SavedData {
         if (values != null) {
             for (Map.Entry<PollutionGridPos, PollutionSample> entry : values.entrySet()) {
                 PollutionGridPos pos = entry.getKey();
-                PollutionSample sample = entry.getValue() == null ? new PollutionSample() : entry.getValue().copy();
-                if (pos != null && sample.hasAnyStoredValue()) {
-                    pollution.put(pos.toLong(), sample);
+                PollutionSample sample = entry.getValue();
+                if (pos != null && sample != null) {
+                    pollution.put(pos.toLong(), sample.copy());
                 }
             }
         }
@@ -217,6 +202,12 @@ public class PollutionSavedData extends SavedData {
     public void clear() {
         if (!pollution.isEmpty()) {
             pollution.clear();
+            setDirty();
+        }
+    }
+
+    public void remove(PollutionGridPos pos) {
+        if (pos != null && pollution.remove(pos.toLong()) != null) {
             setDirty();
         }
     }

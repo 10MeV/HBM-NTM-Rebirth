@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
@@ -23,11 +24,18 @@ import org.jetbrains.annotations.Nullable;
 public class AssemblyFactoryBlock extends LegacyVisibleMultiblockMachineBlock {
     public AssemblyFactoryBlock(Properties properties, LegacyMachineDefinition definition) {
         super(properties, definition);
+        registerDefaultState(defaultBlockState().setValue(LegacyFrameRenderState.FRAME, false));
     }
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(LegacyFrameRenderState.FRAME);
     }
 
     @Nullable

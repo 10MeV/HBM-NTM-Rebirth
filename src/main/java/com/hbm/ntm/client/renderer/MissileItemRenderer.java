@@ -14,11 +14,66 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 public class MissileItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final float GUI_TARGET_SIZE = 0.86F;
     private static final float WORLD_TARGET_SIZE = 0.72F;
+    private static final RenderSpec MISSILE_TEST_SPEC = spec(ObjMissilePartModels.MISSILE_MICRO,
+            ObjMissilePartModels.MISSILE_MICRO_TEST_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_TAINT_SPEC = spec(ObjMissilePartModels.MISSILE_MICRO,
+            ObjMissilePartModels.MISSILE_MICRO_TAINT_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_MICRO_SPEC = spec(ObjMissilePartModels.MISSILE_MICRO,
+            ObjMissilePartModels.MISSILE_MICRO_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_BHOLE_SPEC = spec(ObjMissilePartModels.MISSILE_MICRO,
+            ObjMissilePartModels.MISSILE_MICRO_BHOLE_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_SCHRABIDIUM_SPEC = spec(ObjMissilePartModels.MISSILE_MICRO,
+            ObjMissilePartModels.MISSILE_MICRO_SCHRAB_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_EMP_SPEC = spec(ObjMissilePartModels.MISSILE_MICRO,
+            ObjMissilePartModels.MISSILE_MICRO_EMP_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_STEALTH_SPEC = spec(ObjMissilePartModels.MISSILE_STEALTH,
+            ObjMissilePartModels.MISSILE_STEALTH_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_GENERIC_SPEC = spec(ObjMissilePartModels.MISSILE_V2,
+            ObjMissilePartModels.MISSILE_V2_HE_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_INCENDIARY_SPEC = spec(ObjMissilePartModels.MISSILE_V2,
+            ObjMissilePartModels.MISSILE_V2_IN_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_CLUSTER_SPEC = spec(ObjMissilePartModels.MISSILE_V2,
+            ObjMissilePartModels.MISSILE_V2_CL_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_BUSTER_SPEC = spec(ObjMissilePartModels.MISSILE_V2,
+            ObjMissilePartModels.MISSILE_V2_BU_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_DECOY_SPEC = spec(ObjMissilePartModels.MISSILE_V2,
+            ObjMissilePartModels.MISSILE_V2_DECOY_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_ANTI_BALLISTIC_SPEC = spec(ObjMissilePartModels.MISSILE_ABM,
+            ObjMissilePartModels.MISSILE_ABM_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_STRONG_SPEC = spec(ObjMissilePartModels.MISSILE_STRONG,
+            ObjMissilePartModels.MISSILE_STRONG_HE_TEXTURE, 1.5F);
+    private static final RenderSpec MISSILE_INCENDIARY_STRONG_SPEC = spec(ObjMissilePartModels.MISSILE_STRONG,
+            ObjMissilePartModels.MISSILE_STRONG_IN_TEXTURE, 1.5F);
+    private static final RenderSpec MISSILE_CLUSTER_STRONG_SPEC = spec(ObjMissilePartModels.MISSILE_STRONG,
+            ObjMissilePartModels.MISSILE_STRONG_CL_TEXTURE, 1.5F);
+    private static final RenderSpec MISSILE_BUSTER_STRONG_SPEC = spec(ObjMissilePartModels.MISSILE_STRONG,
+            ObjMissilePartModels.MISSILE_STRONG_BU_TEXTURE, 1.5F);
+    private static final RenderSpec MISSILE_EMP_STRONG_SPEC = spec(ObjMissilePartModels.MISSILE_STRONG,
+            ObjMissilePartModels.MISSILE_STRONG_EMP_TEXTURE, 1.5F);
+    private static final RenderSpec MISSILE_BURST_SPEC = spec(ObjMissilePartModels.MISSILE_HUGE,
+            ObjMissilePartModels.MISSILE_HUGE_HE_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_INFERNO_SPEC = spec(ObjMissilePartModels.MISSILE_HUGE,
+            ObjMissilePartModels.MISSILE_HUGE_IN_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_RAIN_SPEC = spec(ObjMissilePartModels.MISSILE_HUGE,
+            ObjMissilePartModels.MISSILE_HUGE_CL_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_DRILL_SPEC = spec(ObjMissilePartModels.MISSILE_HUGE,
+            ObjMissilePartModels.MISSILE_HUGE_BU_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_NUCLEAR_SPEC = spec(ObjMissilePartModels.MISSILE_ATLAS,
+            ObjMissilePartModels.MISSILE_ATLAS_NUCLEAR_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_NUCLEAR_CLUSTER_SPEC = spec(ObjMissilePartModels.MISSILE_ATLAS,
+            ObjMissilePartModels.MISSILE_ATLAS_THERMO_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_VOLCANO_SPEC = spec(ObjMissilePartModels.MISSILE_ATLAS,
+            ObjMissilePartModels.MISSILE_ATLAS_VOLCANO_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_DOOMSDAY_SPEC = spec(ObjMissilePartModels.MISSILE_ATLAS,
+            ObjMissilePartModels.MISSILE_ATLAS_DOOMSDAY_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_DOOMSDAY_RUSTED_SPEC = spec(ObjMissilePartModels.MISSILE_ATLAS,
+            ObjMissilePartModels.MISSILE_ATLAS_DOOMSDAY_RUSTED_TEXTURE, 1.0F);
+    private static final RenderSpec MISSILE_SHUTTLE_SPEC = spec(ObjMissilePartModels.MISSILE_SHUTTLE,
+            ObjMissilePartModels.MISSILE_SHUTTLE_TEXTURE, 1.0F);
 
     public static final MissileItemRenderer INSTANCE = new MissileItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -56,126 +111,94 @@ public class MissileItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static RenderSpec specFor(ItemStack stack) {
         if (stack.is(ModItems.MISSILE_TEST.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_MICRO,
-                    ObjMissilePartModels.MISSILE_MICRO_TEST_TEXTURE, 1.0F);
+            return MISSILE_TEST_SPEC;
         }
         if (stack.is(ModItems.MISSILE_TAINT.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_MICRO,
-                    ObjMissilePartModels.MISSILE_MICRO_TAINT_TEXTURE, 1.0F);
+            return MISSILE_TAINT_SPEC;
         }
         if (stack.is(ModItems.MISSILE_MICRO.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_MICRO,
-                    ObjMissilePartModels.MISSILE_MICRO_TEXTURE, 1.0F);
+            return MISSILE_MICRO_SPEC;
         }
         if (stack.is(ModItems.MISSILE_BHOLE.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_MICRO,
-                    ObjMissilePartModels.MISSILE_MICRO_BHOLE_TEXTURE, 1.0F);
+            return MISSILE_BHOLE_SPEC;
         }
         if (stack.is(ModItems.MISSILE_SCHRABIDIUM.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_MICRO,
-                    ObjMissilePartModels.MISSILE_MICRO_SCHRAB_TEXTURE, 1.0F);
+            return MISSILE_SCHRABIDIUM_SPEC;
         }
         if (stack.is(ModItems.MISSILE_EMP.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_MICRO,
-                    ObjMissilePartModels.MISSILE_MICRO_EMP_TEXTURE, 1.0F);
+            return MISSILE_EMP_SPEC;
         }
         if (stack.is(ModItems.MISSILE_STEALTH.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_STEALTH,
-                    ObjMissilePartModels.MISSILE_STEALTH_TEXTURE, 1.0F);
+            return MISSILE_STEALTH_SPEC;
         }
         if (stack.is(ModItems.MISSILE_GENERIC.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_V2,
-                    ObjMissilePartModels.MISSILE_V2_HE_TEXTURE, 1.0F);
+            return MISSILE_GENERIC_SPEC;
         }
         if (stack.is(ModItems.MISSILE_INCENDIARY.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_V2,
-                    ObjMissilePartModels.MISSILE_V2_IN_TEXTURE, 1.0F);
+            return MISSILE_INCENDIARY_SPEC;
         }
         if (stack.is(ModItems.MISSILE_CLUSTER.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_V2,
-                    ObjMissilePartModels.MISSILE_V2_CL_TEXTURE, 1.0F);
+            return MISSILE_CLUSTER_SPEC;
         }
         if (stack.is(ModItems.MISSILE_BUSTER.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_V2,
-                    ObjMissilePartModels.MISSILE_V2_BU_TEXTURE, 1.0F);
+            return MISSILE_BUSTER_SPEC;
         }
         if (stack.is(ModItems.MISSILE_DECOY.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_V2,
-                    ObjMissilePartModels.MISSILE_V2_DECOY_TEXTURE, 1.0F);
+            return MISSILE_DECOY_SPEC;
         }
         if (stack.is(ModItems.MISSILE_ANTI_BALLISTIC.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_ABM,
-                    ObjMissilePartModels.MISSILE_ABM_TEXTURE, 1.0F);
+            return MISSILE_ANTI_BALLISTIC_SPEC;
         }
         if (stack.is(ModItems.MISSILE_STRONG.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_STRONG,
-                    ObjMissilePartModels.MISSILE_STRONG_HE_TEXTURE, 1.5F);
+            return MISSILE_STRONG_SPEC;
         }
         if (stack.is(ModItems.MISSILE_INCENDIARY_STRONG.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_STRONG,
-                    ObjMissilePartModels.MISSILE_STRONG_IN_TEXTURE, 1.5F);
+            return MISSILE_INCENDIARY_STRONG_SPEC;
         }
         if (stack.is(ModItems.MISSILE_CLUSTER_STRONG.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_STRONG,
-                    ObjMissilePartModels.MISSILE_STRONG_CL_TEXTURE, 1.5F);
+            return MISSILE_CLUSTER_STRONG_SPEC;
         }
         if (stack.is(ModItems.MISSILE_BUSTER_STRONG.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_STRONG,
-                    ObjMissilePartModels.MISSILE_STRONG_BU_TEXTURE, 1.5F);
+            return MISSILE_BUSTER_STRONG_SPEC;
         }
         if (stack.is(ModItems.MISSILE_EMP_STRONG.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_STRONG,
-                    ObjMissilePartModels.MISSILE_STRONG_EMP_TEXTURE, 1.5F);
+            return MISSILE_EMP_STRONG_SPEC;
         }
         if (stack.is(ModItems.MISSILE_BURST.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_HUGE,
-                    ObjMissilePartModels.MISSILE_HUGE_HE_TEXTURE, 1.0F);
+            return MISSILE_BURST_SPEC;
         }
         if (stack.is(ModItems.MISSILE_INFERNO.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_HUGE,
-                    ObjMissilePartModels.MISSILE_HUGE_IN_TEXTURE, 1.0F);
+            return MISSILE_INFERNO_SPEC;
         }
         if (stack.is(ModItems.MISSILE_RAIN.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_HUGE,
-                    ObjMissilePartModels.MISSILE_HUGE_CL_TEXTURE, 1.0F);
+            return MISSILE_RAIN_SPEC;
         }
         if (stack.is(ModItems.MISSILE_DRILL.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_HUGE,
-                    ObjMissilePartModels.MISSILE_HUGE_BU_TEXTURE, 1.0F);
+            return MISSILE_DRILL_SPEC;
         }
         if (stack.is(ModItems.MISSILE_NUCLEAR.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_ATLAS,
-                    ObjMissilePartModels.MISSILE_ATLAS_NUCLEAR_TEXTURE, 1.0F);
+            return MISSILE_NUCLEAR_SPEC;
         }
         if (stack.is(ModItems.MISSILE_NUCLEAR_CLUSTER.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_ATLAS,
-                    ObjMissilePartModels.MISSILE_ATLAS_THERMO_TEXTURE, 1.0F);
+            return MISSILE_NUCLEAR_CLUSTER_SPEC;
         }
         if (stack.is(ModItems.MISSILE_VOLCANO.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_ATLAS,
-                    ObjMissilePartModels.MISSILE_ATLAS_VOLCANO_TEXTURE, 1.0F);
+            return MISSILE_VOLCANO_SPEC;
         }
         if (stack.is(ModItems.MISSILE_DOOMSDAY.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_ATLAS,
-                    ObjMissilePartModels.MISSILE_ATLAS_DOOMSDAY_TEXTURE, 1.0F);
+            return MISSILE_DOOMSDAY_SPEC;
         }
         if (stack.is(ModItems.MISSILE_DOOMSDAY_RUSTED.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_ATLAS,
-                    ObjMissilePartModels.MISSILE_ATLAS_DOOMSDAY_RUSTED_TEXTURE, 1.0F);
+            return MISSILE_DOOMSDAY_RUSTED_SPEC;
         }
         if (stack.is(ModItems.MISSILE_SHUTTLE.get())) {
-            return new RenderSpec(ObjMissilePartModels.MISSILE_SHUTTLE,
-                    ObjMissilePartModels.MISSILE_SHUTTLE_TEXTURE, 1.0F);
+            return MISSILE_SHUTTLE_SPEC;
         }
         return null;
     }
 
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack, RenderSpec spec) {
-        AABB bounds = scaledBounds(spec.model().boundsAll(), spec.modelScale());
-        Vec3 center = bounds.getCenter();
-        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
-        float targetSize = displayContext == ItemDisplayContext.GUI ? GUI_TARGET_SIZE : WORLD_TARGET_SIZE;
-        float fitScale = (float) Math.max(0.025D, Math.min(0.45D, targetSize / Math.max(1.0D, maxSize)));
+        float fitScale = displayContext == ItemDisplayContext.GUI ? spec.guiFitScale() : spec.worldFitScale();
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
@@ -191,19 +214,33 @@ public class MissileItemRenderer extends BlockEntityWithoutLevelRenderer {
             }
         }
         poseStack.scale(fitScale, fitScale, fitScale);
-        poseStack.translate(-center.x / spec.modelScale(), -center.y / spec.modelScale(), -center.z / spec.modelScale());
+        poseStack.translate(-spec.centerX(), -spec.centerY(), -spec.centerZ());
     }
 
-    private static AABB scaledBounds(AABB bounds, float scale) {
-        return new AABB(
-                bounds.minX * scale,
-                bounds.minY * scale,
-                bounds.minZ * scale,
-                bounds.maxX * scale,
-                bounds.maxY * scale,
-                bounds.maxZ * scale);
+    private static RenderSpec spec(LegacyWavefrontModel model, ResourceLocation texture, float modelScale) {
+        AABB bounds = model.boundsAll();
+        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize())) * modelScale;
+        RenderSpec spec = new RenderSpec(model, texture, modelScale,
+                (bounds.minX + bounds.maxX) * 0.5D,
+                (bounds.minY + bounds.maxY) * 0.5D,
+                (bounds.minZ + bounds.maxZ) * 0.5D,
+                fitScale(GUI_TARGET_SIZE, maxSize),
+                fitScale(WORLD_TARGET_SIZE, maxSize));
+        return spec;
     }
 
-    private record RenderSpec(LegacyWavefrontModel model, ResourceLocation texture, float modelScale) {
+    private static float fitScale(float targetSize, double maxSize) {
+        return (float) Math.max(0.025D, Math.min(0.45D, targetSize / Math.max(1.0D, maxSize)));
+    }
+
+    private record RenderSpec(
+            LegacyWavefrontModel model,
+            ResourceLocation texture,
+            float modelScale,
+            double centerX,
+            double centerY,
+            double centerZ,
+            float guiFitScale,
+            float worldFitScale) {
     }
 }

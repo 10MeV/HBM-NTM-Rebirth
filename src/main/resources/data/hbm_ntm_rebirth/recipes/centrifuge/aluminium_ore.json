@@ -1,10 +1,26 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/aluminium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/aluminium"
+    },
+    "legacy_ore": "oreAluminum"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:chunk_ore_cryolite", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_titanium" },
-    { "item": "hbm_ntm_rebirth:powder_iron" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:chunk_ore_cryolite"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_titanium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_iron"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 11
 }

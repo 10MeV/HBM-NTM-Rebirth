@@ -58,6 +58,10 @@ public final class ObjParticleAcceleratorModels {
         BEAMLINE.renderOnlyUntextured(poseStack, buffer, red, green, blue, alpha, renderMode, partName);
     }
 
+    public static LegacyWavefrontModel.SelectionHandle beamlineGlassHandle() {
+        return BEAMLINE_GLASS;
+    }
+
     private static LegacyWavefrontModel.SelectionHandle beamlineHandle(String partName) {
         return switch (partName) {
             case "Beamline" -> BEAMLINE_BODY;

@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.ntmpipeBeryllium",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:pipes/beryllium" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:pipes/beryllium" }, "count": 1, "legacy_ore": "ntmpipeBeryllium" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Beryllium", "amount": 216 }
+  ],
+  "pools": [],
+  "source_order": 1382
+}

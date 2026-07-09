@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.lde.titanium",
+  "duration": 200,
+  "power": 10000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/titanium" }, "count": 2, "legacy_ore": "plateTitanium" },
+    { "ingredient": { "tag": "forge:ingots/fiberglass" }, "count": 4, "legacy_ore": "ingotFiberglass" },
+    { "ingredient": { "tag": "forge:ingots/any_hardplastic" }, "count": 1, "legacy_ore": "ingotAnyHardplastic" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:part_generic_lde" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 2
+}

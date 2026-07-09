@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.receiverLightGold",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:light_receivers/gold" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:light_receivers/gold" }, "count": 1, "legacy_ore": "receiverLightGold" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Gold", "amount": 288 }
+  ],
+  "pools": [],
+  "source_order": 1064
+}

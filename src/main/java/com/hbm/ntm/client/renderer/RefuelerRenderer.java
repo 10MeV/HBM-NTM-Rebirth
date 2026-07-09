@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.RefuelerBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.RefuelerBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -15,6 +16,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjMachineModels.REFUELER;
@@ -22,6 +24,7 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
             MODEL.prepareRenderOnlyInCallOrder("Fueler");
     private static final LegacyWavefrontModel.SelectionHandle FLUID =
             MODEL.prepareRenderOnlyInCallOrder("Fluid");
+    private static final int FLUID_ALPHA = 191;
 
     public RefuelerRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -32,18 +35,37 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
     }
 
     @Override
+    public boolean shouldRender(RefuelerBlockEntity refueler, Vec3 cameraPos) {
+        return (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer() || hasVisibleFluid(refueler))
+                && BlockEntityRenderer.super.shouldRender(refueler, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(refueler, getViewDistance());
+    }
+
+    @Override
     public void render(RefuelerBlockEntity refueler, float partialTick, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        boolean renderStaticBody = LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
+        boolean visibleFluid = hasVisibleFluid(refueler);
+        if (!renderStaticBody && !visibleFluid) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(refueler, getViewDistance())) {
             return;
         }
         BlockState state = refueler.getBlockState();
+        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(refueler, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         orient(poseStack, state.hasProperty(RefuelerBlock.FACING) ? state.getValue(RefuelerBlock.FACING) : Direction.NORTH);
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(refueler)) {
-            enqueueFluid(refueler, partialTick, poseStack, buffer);
+            if (renderStaticBody) {
+                MODEL.renderOnlyInCallOrder(ObjMachineModels.REFUELER_TEXTURE, poseStack, buffer, modelLight,
+                        packedOverlay, FUELER);
+            }
+            if (visibleFluid) {
+                enqueueFluid(refueler, partialTick, poseStack, buffer);
+            }
         }
         poseStack.popPose();
     }
@@ -76,17 +98,22 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
             return;
         }
         int color = refueler.getTank().getTankType().getColor();
-        LegacyTileRenderPlans.RefuelerFluidPlan plan = LegacyTileRenderPlans.refuelerFluidPlan(fillLevel, color);
+        double translateY = (1.0D - fillLevel) * LegacyTileRenderPlans.REFUELER_FLUID_TRAVEL;
+        double clipD = LegacyTileRenderPlans.REFUELER_FLUID_CLIP_D + translateY;
         poseStack.pushPose();
-        poseStack.translate(0.0D, plan.translateY(), 0.0D);
-        LegacyTileRenderPlans.ClipPlanePlan clip = plan.clipPlane();
-        double clipD = clip.d() + clip.y() * plan.translateY();
-        LegacyTileRenderPlans.RgbaPlan tint = plan.color();
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose ->
-                MODEL.renderOnlyUntexturedClipped(queuedPose, buffer, tint.redByte(), tint.greenByte(), tint.blueByte(),
-                        tint.alphaByte(), LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
-                        FLUID, clip.x(), clip.y(), clip.z(), clipD));
+        poseStack.translate(0.0D, translateY, 0.0D);
+        LegacyMachineEffectPresenter.enqueueUntexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                poseStack, buffer, parts -> parts.addClipped(MODEL, FLUID,
+                        red(color), green(color), blue(color), FLUID_ALPHA,
+                        LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                        0.0D, 1.0D, 0.0D, clipD));
         poseStack.popPose();
+    }
+
+    private static boolean hasVisibleFluid(RefuelerBlockEntity refueler) {
+        return refueler.getTank().getFill() > 0
+                || refueler.getInterpolatedFillLevel(0.0F) > 1.0E-5D
+                || refueler.getInterpolatedFillLevel(1.0F) > 1.0E-5D;
     }
 
     private static void orient(PoseStack poseStack, Direction facing) {
@@ -97,5 +124,17 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
             case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             default -> poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         }
+    }
+
+    private static int red(int color) {
+        return color >> 16 & 255;
+    }
+
+    private static int green(int color) {
+        return color >> 8 & 255;
+    }
+
+    private static int blue(int color) {
+        return color & 255;
     }
 }

@@ -2,7 +2,8 @@
   "type": "hbm_ntm_rebirth:crystallizer",
   "duration": 100,
   "fluid": { "fluid": "PEROXIDE", "amount": 500 },
-  "input": { "ingredient": { "tag": "forge:sand" } },
+  "input": { "ingredient": { "tag": "forge:sand" }, "legacy_ore": "sand" },
   "output": { "item": "hbm_ntm_rebirth:ingot_fiberglass" },
-  "productivity": 0.15
+  "productivity": 0.15,
+  "source_order": 29
 }

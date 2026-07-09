@@ -11,5 +11,6 @@
     "output2":  {
                     "fluid":  "hbm_ntm_rebirth:diesel_reform",
                     "amount":  40
-                }
+                },
+    "source_order":  4
 }

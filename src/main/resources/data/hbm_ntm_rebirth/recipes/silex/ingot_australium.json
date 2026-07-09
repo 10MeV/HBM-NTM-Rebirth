@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": { "ingredient": { "item": "hbm_ntm_rebirth:ingot_australium" }, "count": 1 }
+  },
+  "fluid_produced": 900,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:nugget_australium_lesser", "weight": 5 },
+    { "item": "hbm_ntm_rebirth:nugget_australium_greater", "weight": 1 }
+  ],
+  "source_order": 9
+}

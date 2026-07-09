@@ -6,5 +6,6 @@
     "ingredient": { "item": "hbm_ntm_rebirth:moon_turf" },
     "count": 16
   },
-  "output": { "item": "hbm_ntm_rebirth:chunk_ore_moonstone" }
+  "output": { "item": "hbm_ntm_rebirth:chunk_ore_moonstone" },
+  "source_order": 407
 }

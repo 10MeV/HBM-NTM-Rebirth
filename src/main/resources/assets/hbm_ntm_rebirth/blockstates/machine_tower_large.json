@@ -1,19 +1,16 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_tower_large",
-      "y": 90
+      "model": "hbm_ntm_rebirth:block/machine_tower_large"
     },
     "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_tower_large"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machine_tower_large",
-      "y": 180
+      "model": "hbm_ntm_rebirth:block/machine_tower_large"
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machine_tower_large",
-      "y": 270
+      "model": "hbm_ntm_rebirth:block/machine_tower_large"
     }
   }
 }

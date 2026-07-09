@@ -1,0 +1,37 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.custom.detector_rail",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "count":  1,
+                            "ingredient":  {
+                                               "item":  "minecraft:detector_rail"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "arc_material_outputs":  [
+                                 {
+                                     "amount":  72,
+                                     "material":  "Iron"
+                                 },
+                                 {
+                                     "amount":  12,
+                                     "material":  "Redstone"
+                                 }
+                             ],
+    "pools":  [
+
+              ],
+    "source_order":  2267
+}

@@ -1,0 +1,44 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:nuclear_waste_short_tiny"
+      },
+      "count": 1,
+      "legacy_id": "hbm:nuclear_waste_short_tiny",
+      "legacy_meta": 5,
+      "partial_nbt": "{Damage:5}"
+    }
+  },
+  "fluid_produced": 100,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_am241",
+      "weight": 25
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_am242",
+      "weight": 35
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_technetium",
+      "weight": 5
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_i131_tiny",
+      "weight": 3
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_cs137_tiny",
+      "weight": 7
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_tiny",
+      "weight": 25
+    }
+  ],
+  "source_order": 301
+}

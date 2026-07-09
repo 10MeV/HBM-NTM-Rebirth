@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "P P",
+    "GPG"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:goggles"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:plates/copper"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:ingot_desh"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:gas_mask_filter"
+    },
+    "X": {
+      "item": "hbm_ntm_rebirth:steel_helmet"
+    }
+  },
+  "pattern": [
+    "DCD",
+    "CXC",
+    " F "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:steamsuit_helmet"
+  },
+  "show_notification": true
+}

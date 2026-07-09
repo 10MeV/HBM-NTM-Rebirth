@@ -1,22 +1,31 @@
 {
-  "variants": {
-    "facing=down": {
-      "model": "hbm_ntm_rebirth:block/cable_diode"
+  "multipart": [
+    {
+      "apply": { "model": "hbm_ntm_rebirth:block/cable_diode" }
     },
-    "facing=east": {
-      "model": "hbm_ntm_rebirth:block/cable_diode"
+    {
+      "when": { "north": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/red_cable_arm_north" }
     },
-    "facing=north": {
-      "model": "hbm_ntm_rebirth:block/cable_diode"
+    {
+      "when": { "east": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/red_cable_arm_east" }
     },
-    "facing=south": {
-      "model": "hbm_ntm_rebirth:block/cable_diode"
+    {
+      "when": { "south": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/red_cable_arm_south" }
     },
-    "facing=up": {
-      "model": "hbm_ntm_rebirth:block/cable_diode"
+    {
+      "when": { "west": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/red_cable_arm_west" }
     },
-    "facing=west": {
-      "model": "hbm_ntm_rebirth:block/cable_diode"
+    {
+      "when": { "up": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/red_cable_arm_up" }
+    },
+    {
+      "when": { "down": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/red_cable_arm_down" }
     }
-  }
+  ]
 }

@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 100,
+  "fluid": { "fluid": "RADIOSOLVENT", "amount": 250 },
+  "input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:plant_item_mustardwillow" },
+    "count": 10
+  },
+  "output": { "item": "hbm_ntm_rebirth:powder_cadmium" },
+  "source_order": 42
+}

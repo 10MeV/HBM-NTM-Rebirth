@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:cyclotron",
+  "particle": { "ingredient": { "item": "hbm_ntm_rebirth:part_plutonium" }, "count": 1 },
+  "input": { "ingredient": { "tag": "forge:dusts/plutonium" }, "count": 1, "legacy_ore": "dustPlutonium" },
+  "output": { "item": "hbm_ntm_rebirth:powder_tennessine" },
+  "antimatter": 100,
+  "source_order": 39
+}

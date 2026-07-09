@@ -1,6 +1,6 @@
 package com.hbm.ntm.neutron;
 
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 
 public record RBMKDialSettings(
         double passiveCooling,
@@ -77,7 +77,7 @@ public record RBMKDialSettings(
     }
 
     public RBMKNeutronSettings toNeutronSettings() {
-        return toNeutronSettings(ChunkRadiationManager::incrementRadiation);
+        return toNeutronSettings(ChunkRadiationManager::incrementRad);
     }
 
     public RBMKNeutronSettings toNeutronSettings(RBMKNeutronLeakHandler leakHandler) {

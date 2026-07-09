@@ -60,6 +60,7 @@ public final class LegacyReactorIrradiationImportProvider implements DataProvide
 
         saves.addAll(importOutgasser(output, handlers));
         saves.addAll(importExposureChamber(output, handlers));
+        LegacyRecipeReportUtil.addImportSummary(report, handlers);
         saves.add(DataProvider.saveStable(output, report, reportPath));
         return CompletableFuture.allOf(saves.toArray(CompletableFuture[]::new));
     }
@@ -92,6 +93,7 @@ public final class LegacyReactorIrradiationImportProvider implements DataProvide
             if (object.has("fusionOnly") && object.get("fusionOnly").getAsBoolean()) {
                 json.addProperty("fusion_only", true);
             }
+            json.addProperty("source_order", sourceIndex);
 
             return new ImportedRecipe(new ResourceLocation(HbmNtm.MOD_ID,
                     "outgasser/legacy_import_" + sourceIndex), json);

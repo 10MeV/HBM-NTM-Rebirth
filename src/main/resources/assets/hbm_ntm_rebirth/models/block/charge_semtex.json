@@ -1,6 +1,17 @@
 {
-  "parent": "minecraft:block/block",
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/blocks/charge_c4.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.5, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/legacy_blocks/charge_semtex"
+    "particle": "hbm_ntm_rebirth:block/legacy_blocks/charge_semtex",
+    "default": "hbm_ntm_rebirth:block/legacy_blocks/charge_semtex",
+    "texture0": "hbm_ntm_rebirth:block/legacy_blocks/charge_semtex"
   }
 }

@@ -1,5 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.blockentity.TeslaBlockEntity;
+import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
@@ -10,7 +12,6 @@ import com.hbm.ntm.util.HbmMathUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import net.minecraft.world.phys.Vec3;
 
 /**
  * Data plans for repeated legacy TESR render states and animated quads.
@@ -20,6 +21,8 @@ public final class LegacyTileRenderPlans {
     public static final int GL_ONE_MINUS_SRC_ALPHA = 771;
     public static final int GL_ONE = 1;
     public static final int GL_ZERO = 0;
+    public static final double DEG_TO_RAD = Math.PI / 180.0D;
+    public static final double RAD_TO_DEG = 180.0D / Math.PI;
     public static final float LEGACY_FULLBRIGHT_LIGHTMAP_X = 240.0F;
     public static final float LEGACY_FULLBRIGHT_LIGHTMAP_Y = 240.0F;
     public static final double ASSEMBLY_SPARK_WIDE = 0.1875D;
@@ -191,6 +194,36 @@ public final class LegacyTileRenderPlans {
     public static final int RBMK_NUMITRON_COUNT = 2;
     public static final int RBMK_NUMITRON_DIGITS = 7;
     public static final long RBMK_NUMITRON_LEFT_DIGIT_MASK = 0x40L;
+    private static final NumitronDigitUvPlan RBMK_NUMITRON_BLANK_UV =
+            new NumitronDigitUvPlan(0.0D, 0.0D, true);
+    private static final NumitronDigitUvPlan RBMK_NUMITRON_DOT_UV =
+            new NumitronDigitUvPlan(0.9D, 0.5D, false);
+    private static final NumitronDigitUvPlan RBMK_NUMITRON_MINUS_UV =
+            new NumitronDigitUvPlan(0.8D, 0.5D, false);
+    private static final NumitronDigitUvPlan RBMK_NUMITRON_KILO_UV =
+            new NumitronDigitUvPlan(0.0D, 0.5D, false);
+    private static final NumitronDigitUvPlan RBMK_NUMITRON_MEGA_UV =
+            new NumitronDigitUvPlan(0.1D, 0.5D, false);
+    private static final NumitronDigitUvPlan RBMK_NUMITRON_GIGA_UV =
+            new NumitronDigitUvPlan(0.2D, 0.5D, false);
+    private static final NumitronDigitUvPlan RBMK_NUMITRON_TERA_UV =
+            new NumitronDigitUvPlan(0.3D, 0.5D, false);
+    private static final NumitronDigitUvPlan RBMK_NUMITRON_PETA_UV =
+            new NumitronDigitUvPlan(0.4D, 0.5D, false);
+    private static final NumitronDigitUvPlan RBMK_NUMITRON_EXA_UV =
+            new NumitronDigitUvPlan(0.5D, 0.5D, false);
+    private static final NumitronDigitUvPlan[] RBMK_NUMITRON_NUMBER_UVS = new NumitronDigitUvPlan[] {
+            new NumitronDigitUvPlan(0.0D, 0.0D, false),
+            new NumitronDigitUvPlan(0.1D, 0.0D, false),
+            new NumitronDigitUvPlan(0.2D, 0.0D, false),
+            new NumitronDigitUvPlan(0.3D, 0.0D, false),
+            new NumitronDigitUvPlan(0.4D, 0.0D, false),
+            new NumitronDigitUvPlan(0.5D, 0.0D, false),
+            new NumitronDigitUvPlan(0.6D, 0.0D, false),
+            new NumitronDigitUvPlan(0.7D, 0.0D, false),
+            new NumitronDigitUvPlan(0.8D, 0.0D, false),
+            new NumitronDigitUvPlan(0.9D, 0.0D, false)
+    };
     public static final double RBMK_NUMITRON_TRANSLATE_X = 0.25D;
     public static final double RBMK_NUMITRON_ROW_STEP = -0.5D;
     public static final double RBMK_NUMITRON_Y_START = 0.25D;
@@ -844,10 +877,10 @@ public final class LegacyTileRenderPlans {
     }
 
     public static PumpPlan pumpPlan(double rotorDegrees) {
-        double radians = Math.toRadians(rotorDegrees);
+        double radians = rotorDegrees * DEG_TO_RAD;
         double sin = Math.sin(radians) * PUMP_CRANK_RADIUS + PUMP_CRANK_SIN_OFFSET;
         double cos = Math.cos(radians) * PUMP_CRANK_RADIUS;
-        double armAngle = Math.toDegrees(Math.acos(cos / PUMP_ARM_ROD_LENGTH)) - 90.0D;
+        double armAngle = Math.acos(cos / PUMP_ARM_ROD_LENGTH) * RAD_TO_DEG - 90.0D;
         double cath = Math.sqrt(1.0D + (cos * cos) / 2.0D);
         double vertical = 1.0D - cath + sin;
         return new PumpPlan("Base",
@@ -925,53 +958,69 @@ public final class LegacyTileRenderPlans {
     }
 
     public static PumpjackPlan pumpjackPlan(double rotationDegrees) {
-        double radians = Math.toRadians(rotationDegrees);
+        double radians = rotationDegrees * DEG_TO_RAD;
         double sin = Math.sin(radians);
         double pRot = -sin * PUMPJACK_HEAD_ROTATION_SCALE;
-        Vec3 backPos = rotateX(new Vec3(0.0D, 0.0D, -2.0D), pRot);
-        Vec3 rot = rotateX(new Vec3(0.0D, 0.5D, 0.0D), -Math.toRadians(rotationDegrees - 90.0D));
+        double headSin = Math.sin(pRot);
+        double headCos = Math.cos(pRot);
+        double backY = -2.0D * headSin;
+        double backZ = -2.0D * headCos;
+        double rotorRadians = -(rotationDegrees - 90.0D) * DEG_TO_RAD;
+        double rotorY = 0.5D * Math.cos(rotorRadians);
+        double rotorZ = -0.5D * Math.sin(rotorRadians);
         List<UntexturedQuadPlan> rods = new ArrayList<>();
 
         for (int i = -1; i <= 1; i += 2) {
             rods.add(new UntexturedQuadPlan("pumpjack_back_rod_" + i, List.of(
                     vertex(PUMPJACK_BACK_ROD_X * i,
-                            PUMPJACK_ROTOR_PIVOT_Y + rot.y,
-                            PUMPJACK_ROTOR_PIVOT_Z + rot.z - PUMPJACK_BACK_ROD_Z_WIDTH,
+                            PUMPJACK_ROTOR_PIVOT_Y + rotorY,
+                            PUMPJACK_ROTOR_PIVOT_Z + rotorZ - PUMPJACK_BACK_ROD_Z_WIDTH,
                             rgba(PUMPJACK_BACK_ROD_COLOR, 1.0F)),
                     vertex(PUMPJACK_BACK_ROD_X * i,
-                            PUMPJACK_ROTOR_PIVOT_Y + rot.y,
-                            PUMPJACK_ROTOR_PIVOT_Z + rot.z + PUMPJACK_BACK_ROD_Z_WIDTH,
+                            PUMPJACK_ROTOR_PIVOT_Y + rotorY,
+                            PUMPJACK_ROTOR_PIVOT_Z + rotorZ + PUMPJACK_BACK_ROD_Z_WIDTH,
                             rgba(PUMPJACK_BACK_ROD_COLOR, 1.0F)),
                     vertex(PUMPJACK_BACK_ROD_X * i,
-                            PUMPJACK_HEAD_PIVOT_Y + backPos.y,
-                            PUMPJACK_HEAD_PIVOT_Z + backPos.z + PUMPJACK_BACK_ROD_Z_WIDTH,
+                            PUMPJACK_HEAD_PIVOT_Y + backY,
+                            PUMPJACK_HEAD_PIVOT_Z + backZ + PUMPJACK_BACK_ROD_Z_WIDTH,
                             rgba(PUMPJACK_BACK_ROD_COLOR, 1.0F)),
                     vertex(PUMPJACK_BACK_ROD_X * i,
-                            PUMPJACK_HEAD_PIVOT_Y + backPos.y,
-                            PUMPJACK_HEAD_PIVOT_Z + backPos.z - PUMPJACK_BACK_ROD_Z_WIDTH,
+                            PUMPJACK_HEAD_PIVOT_Y + backY,
+                            PUMPJACK_HEAD_PIVOT_Z + backZ - PUMPJACK_BACK_ROD_Z_WIDTH,
                             rgba(PUMPJACK_BACK_ROD_COLOR, 1.0F)))));
         }
 
         double height = -sin;
+        double frontPosY = headSin;
+        double frontPosZ = headCos;
+        double frontRadius = PUMPJACK_FRONT_ROD_RADIUS + PUMPJACK_FRONT_ROD_DIST;
+        double frontCutletRadians = PUMPJACK_FRONT_ROD_CUTLET * DEG_TO_RAD;
+        double initialFrontRadiusAngle = pRot + frontCutletRadians * 3.0D;
         for (int i = -1; i <= 1; i += 2) {
-            Vec3 frontPos = rotateX(new Vec3(0.0D, 0.0D, 1.0D), pRot);
-            Vec3 frontRad = rotateX(new Vec3(0.0D, 0.0D,
-                    PUMPJACK_FRONT_ROD_RADIUS + PUMPJACK_FRONT_ROD_DIST), pRot);
-            frontRad = rotateX(frontRad, -Math.toRadians(PUMPJACK_FRONT_ROD_CUTLET * -3.0D));
+            double frontRadiusAngle = initialFrontRadiusAngle;
             for (int j = 0; j < PUMPJACK_FRONT_ROD_SEGMENTS; j++) {
-                Vec3 start = fixedPumpjackFrontRodPoint(frontPos, frontRad, PUMPJACK_FRONT_ROD_DIST);
-                Vec3 nextRad = rotateX(frontRad, -Math.toRadians(PUMPJACK_FRONT_ROD_CUTLET));
-                Vec3 end = fixedPumpjackFrontRodPoint(frontPos, nextRad, PUMPJACK_FRONT_ROD_DIST);
-                rods.add(pumpjackFrontRodQuad("pumpjack_front_rod_" + i + "_" + j, i, start, end));
-                frontRad = nextRad;
+                double startRadY = frontRadius * Math.sin(frontRadiusAngle);
+                double startRadZ = frontRadius * Math.cos(frontRadiusAngle);
+                double startY = fixedPumpjackFrontRodY(frontPosY, startRadY);
+                double startZ = fixedPumpjackFrontRodZ(frontPosZ, startRadY, startRadZ);
+                frontRadiusAngle -= frontCutletRadians;
+                double endRadY = frontRadius * Math.sin(frontRadiusAngle);
+                double endRadZ = frontRadius * Math.cos(frontRadiusAngle);
+                double endY = fixedPumpjackFrontRodY(frontPosY, endRadY);
+                double endZ = fixedPumpjackFrontRodZ(frontPosZ, endRadY, endRadZ);
+                rods.add(pumpjackFrontRodQuad("pumpjack_front_rod_" + i + "_" + j, i,
+                        startY, startZ, endY, endZ));
             }
-            Vec3 tail = fixedPumpjackFrontRodPoint(frontPos, frontRad, PUMPJACK_FRONT_ROD_DIST);
+            double tailRadY = frontRadius * Math.sin(frontRadiusAngle);
+            double tailRadZ = frontRadius * Math.cos(frontRadiusAngle);
+            double tailY = fixedPumpjackFrontRodY(frontPosY, tailRadY);
+            double tailZ = fixedPumpjackFrontRodZ(frontPosZ, tailRadY, tailRadZ);
             rods.add(new UntexturedQuadPlan("pumpjack_front_tail_" + i, List.of(
                     vertex((PUMPJACK_FRONT_ROD_WIDTH + PUMPJACK_FRONT_ROD_HALF_THICKNESS) * i,
-                            PUMPJACK_HEAD_PIVOT_Y + tail.y, PUMPJACK_HEAD_PIVOT_Z + tail.z,
+                            PUMPJACK_HEAD_PIVOT_Y + tailY, PUMPJACK_HEAD_PIVOT_Z + tailZ,
                             rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
                     vertex((PUMPJACK_FRONT_ROD_WIDTH - PUMPJACK_FRONT_ROD_HALF_THICKNESS) * i,
-                            PUMPJACK_HEAD_PIVOT_Y + tail.y, PUMPJACK_HEAD_PIVOT_Z + tail.z,
+                            PUMPJACK_HEAD_PIVOT_Y + tailY, PUMPJACK_HEAD_PIVOT_Z + tailZ,
                             rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F)),
                     vertex((PUMPJACK_FRONT_ROD_WIDTH - PUMPJACK_FRONT_ROD_HALF_THICKNESS) * i,
                             2.0D + height, 0.0D,
@@ -1000,7 +1049,7 @@ public final class LegacyTileRenderPlans {
                 new RotatingModelPartPlan("pumpjack_head", "Head",
                         0.0D, PUMPJACK_HEAD_PIVOT_Y, PUMPJACK_HEAD_PIVOT_Z,
                         1.0F, 0.0F, 0.0F,
-                        Math.toDegrees(sin) * PUMPJACK_HEAD_ROTATION_SCALE),
+                        sin * RAD_TO_DEG * PUMPJACK_HEAD_ROTATION_SCALE),
                 new TranslatedModelPartPlan("pumpjack_carriage", "Carriage", true,
                         0.0D, -sin, 0.0D),
                 List.copyOf(rods));
@@ -1194,7 +1243,7 @@ public final class LegacyTileRenderPlans {
         if (!active) {
             return new BatteryReddZapPlan(false, List.of());
         }
-        Random random = new Random(worldTime / 5L);
+        Random random = LegacyRenderRandom.seeded(worldTime / 5L);
         random.nextBoolean();
         int start = (int) (currentMillis % BATTERY_REDD_ZAP_PERIOD_MILLIS) / BATTERY_REDD_ZAP_START_DIVISOR;
         List<TranslatedBeamPlan> beams = new ArrayList<>();
@@ -1248,7 +1297,7 @@ public final class LegacyTileRenderPlans {
         double pulse = corePulse(worldTime * 0.2D);
         double scale = 0.875D + pulse * 0.125D;
         double spin = worldTime / 200.0D * 90.0D;
-        Random random = new Random(CORE_FLARE_RANDOM_SEED);
+        Random random = LegacyRenderRandom.seeded(CORE_FLARE_RANDOM_SEED);
         List<CoreFlareRayPlan> rays = new ArrayList<>();
         RgbaPlan center = rgba(color, 1.0F);
         RgbaPlan edge = rgba(color, 0.0F);
@@ -1269,7 +1318,7 @@ public final class LegacyTileRenderPlans {
     }
 
     public static CoreVoidPlan coreVoidPlan(int fill, int totalFill, long worldTime) {
-        Random random = new Random(CORE_VOID_RANDOM_SEED);
+        Random random = LegacyRenderRandom.seeded(CORE_VOID_RANDOM_SEED);
         float textureTranslateY = worldTime % 500L / 500.0F;
         TextureGenOffsetPlan initialTextureOffset = new TextureGenOffsetPlan(
                 random.nextFloat(), textureTranslateY, random.nextFloat());
@@ -1465,7 +1514,7 @@ public final class LegacyTileRenderPlans {
     public static CreativeBatterySocketPlan creativeBatterySocketPlan(long worldTime, long currentMillis,
             float partialTicks) {
         double horseYaw = ((worldTime % 360L) + partialTicks) * 25.0D;
-        Random random = new Random(worldTime / 5L);
+        Random random = LegacyRenderRandom.seeded(worldTime / 5L);
         random.nextBoolean();
         int start = (int) (currentMillis % CREATIVE_BATTERY_BEAM_PERIOD_MILLIS)
                 / CREATIVE_BATTERY_BEAM_START_DIVISOR;
@@ -1531,11 +1580,11 @@ public final class LegacyTileRenderPlans {
     }
 
     public static TeslaBeamPlan teslaBeamPlan(double sourceX, double sourceY, double sourceZ,
-            List<TeslaTargetPlan> targets, long worldTime) {
+            List<TeslaBlockEntity.TeslaTarget> targets, long worldTime) {
         List<TeslaTargetBeamPlan> beams = new ArrayList<>();
         if (targets != null) {
             for (int i = 0; i < targets.size(); i++) {
-                TeslaTargetPlan target = targets.get(i);
+                TeslaBlockEntity.TeslaTarget target = targets.get(i);
                 double dx = target.x() - sourceX;
                 double dy = target.y() - sourceY;
                 double dz = target.z() - sourceZ;
@@ -1563,7 +1612,7 @@ public final class LegacyTileRenderPlans {
         if (on) {
             int randomColor = worldTime % EXPOSURE_RANDOM_DURATION >= EXPOSURE_RANDOM_DURATION / 2
                     ? EXPOSURE_RANDOM_BLUE_COLOR : EXPOSURE_RANDOM_WHITE_COLOR;
-            Random random = new Random(worldTime / EXPOSURE_RANDOM_DURATION);
+            Random random = LegacyRenderRandom.seeded(worldTime / EXPOSURE_RANDOM_DURATION);
             random.nextInt(EXPOSURE_RANDOM_CHANCE);
             addExposureRandomBeam(beams, random, randomColor, 0.0D, 3.675D, -7.5D, currentMillis, "random_top");
             addExposureRandomBeam(beams, random, randomColor, 1.1875D, 2.5D, -7.5D, currentMillis, "random_right");
@@ -1731,10 +1780,10 @@ public final class LegacyTileRenderPlans {
     }
 
     public static SteamEnginePlan steamEnginePlan(double rotorDegrees) {
-        double radians = Math.toRadians(rotorDegrees);
+        double radians = rotorDegrees * DEG_TO_RAD;
         double sin = Math.sin(radians) * STEAM_ENGINE_CRANK_RADIUS + STEAM_ENGINE_CRANK_SIN_OFFSET;
         double cos = Math.cos(radians) * STEAM_ENGINE_CRANK_RADIUS;
-        double transmissionAngle = Math.toDegrees(Math.acos(cos / STEAM_ENGINE_ROD_LENGTH)) - 90.0D;
+        double transmissionAngle = Math.acos(cos / STEAM_ENGINE_ROD_LENGTH) * RAD_TO_DEG - 90.0D;
         double cath = Math.sqrt(STEAM_ENGINE_PISTON_CATH_SQUARED - (cos * cos) / 2.0D);
         return new SteamEnginePlan(rotorDegrees, STEAM_ENGINE_MODEL_TRANSLATE_X,
                 new RotatingModelPartPlan("steam_engine_flywheel", "Flywheel",
@@ -1915,18 +1964,36 @@ public final class LegacyTileRenderPlans {
         String textureRole = color == 0 ? "wire" : "wire_greyscale";
         LegacyTexturedLineRenderer.WireOffsets offsets = LegacyTexturedLineRenderer.pylonWireOffsets(
                 x0, y0, z0, x1, y1, z1, LegacyTexturedLineRenderer.PYLON_WIRE_GIRTH);
-        List<LegacyTexturedLineRenderer.WireSubSegment> sourceSegments = hang
-                ? LegacyTexturedLineRenderer.saggedPylonSegments(x0, y0, z0, x1, y1, z1,
-                        LegacyTexturedLineRenderer.PYLON_HANG_SEGMENTS)
-                : List.of(new LegacyTexturedLineRenderer.WireSubSegment(
-                        x0, y0, z0, x1, y1, z1,
-                        (x0 + x1) * 0.5D, (y0 + y1) * 0.5D, (z0 + z1) * 0.5D));
-        List<PylonWireSegmentPlan> segments = new ArrayList<>();
-        for (LegacyTexturedLineRenderer.WireSubSegment segment : sourceSegments) {
-            LegacyTexturedLineRenderer.WireWrap wrap = LegacyTexturedLineRenderer.wireWrap(
-                    segment.x0(), segment.y0(), segment.z0(), segment.x1(), segment.y1(), segment.z1(),
-                    LegacyTexturedLineRenderer.PYLON_WIRE_U_WRAP_PER_BLOCK);
-            segments.add(new PylonWireSegmentPlan(segment, wrap));
+        int segmentCount = hang ? Math.max(1, LegacyTexturedLineRenderer.PYLON_HANG_SEGMENTS) : 1;
+        List<PylonWireSegmentPlan> segments = new ArrayList<>(segmentCount);
+        if (!hang) {
+            addPylonWireSegmentPlan(segments, x0, y0, z0, x1, y1, z1,
+                    (x0 + x1) * 0.5D, (y0 + y1) * 0.5D, (z0 + z1) * 0.5D);
+        } else {
+            double deltaX = x1 - x0;
+            double deltaY = y1 - y0;
+            double deltaZ = z1 - z0;
+            double length = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+            double hangAmount = Math.min(length / LegacyTexturedLineRenderer.PYLON_HANG_DIVISOR,
+                    LegacyTexturedLineRenderer.PYLON_MAX_HANG);
+            for (int i = 0; i < segmentCount; i++) {
+                double j = i;
+                double k = i + 1.0D;
+                double sagJ = LegacyTexturedLineRenderer.pylonSag(j, segmentCount, hangAmount);
+                double sagK = LegacyTexturedLineRenderer.pylonSag(k, segmentCount, hangAmount);
+                double sagMean = (sagJ + sagK) * 0.5D;
+                double sampleT = (j + 0.5D) / segmentCount;
+                addPylonWireSegmentPlan(segments,
+                        x0 + deltaX * j / segmentCount,
+                        y0 + deltaY * j / segmentCount - sagJ,
+                        z0 + deltaZ * j / segmentCount,
+                        x0 + deltaX * k / segmentCount,
+                        y0 + deltaY * k / segmentCount - sagK,
+                        z0 + deltaZ * k / segmentCount,
+                        x0 + deltaX * sampleT,
+                        y0 + deltaY * sampleT - sagMean,
+                        z0 + deltaZ * sampleT);
+            }
         }
         return new PylonWireLinePlan(textureRole, wireColor, hang, false, false,
                 LegacyTexturedLineRenderer.PYLON_WIRE_GIRTH,
@@ -1935,6 +2002,16 @@ public final class LegacyTileRenderPlans {
                 LegacyTexturedLineRenderer.PYLON_MAX_HANG,
                 LegacyTexturedLineRenderer.PYLON_HANG_DIVISOR,
                 offsets, List.copyOf(segments));
+    }
+
+    private static void addPylonWireSegmentPlan(List<PylonWireSegmentPlan> segments,
+            double x0, double y0, double z0, double x1, double y1, double z1,
+            double sampleX, double sampleY, double sampleZ) {
+        LegacyTexturedLineRenderer.WireSubSegment segment = new LegacyTexturedLineRenderer.WireSubSegment(
+                x0, y0, z0, x1, y1, z1, sampleX, sampleY, sampleZ);
+        LegacyTexturedLineRenderer.WireWrap wrap = LegacyTexturedLineRenderer.wireWrap(
+                x0, y0, z0, x1, y1, z1, LegacyTexturedLineRenderer.PYLON_WIRE_U_WRAP_PER_BLOCK);
+        segments.add(new PylonWireSegmentPlan(segment, wrap));
     }
 
     public static RbmkColumnGridPlan rbmkDisplayColumnGridPlan(List<RbmkColumnInputPlan> columns) {
@@ -1957,7 +2034,7 @@ public final class LegacyTileRenderPlans {
         List<DiamondTransformPlan> transforms = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             transforms.add(new DiamondTransformPlan("radial_" + i, translateX, translateY, translateZ,
-                    initialYaw + yawStep * i, scaleX, scaleY, scaleZ));
+                    initialYaw + yawStep * i, scaleX, scaleY, scaleZ, true));
         }
         return new TankDangerDiamondPlan(hasFluid, List.copyOf(transforms));
     }
@@ -1991,32 +2068,29 @@ public final class LegacyTileRenderPlans {
                 axisX, axisY, axisZ, angleDegrees, translateX, translateY, translateZ);
     }
 
-    private static UntexturedQuadPlan pumpjackFrontRodQuad(String role, int side, Vec3 start, Vec3 end) {
+    private static UntexturedQuadPlan pumpjackFrontRodQuad(String role, int side,
+            double startY, double startZ, double endY, double endZ) {
         RgbaPlan color = rgba(PUMPJACK_FRONT_ROD_COLOR, 1.0F);
         return new UntexturedQuadPlan(role, List.of(
                 vertex((PUMPJACK_FRONT_ROD_WIDTH - PUMPJACK_FRONT_ROD_HALF_THICKNESS) * side,
-                        PUMPJACK_HEAD_PIVOT_Y + start.y, PUMPJACK_HEAD_PIVOT_Z + start.z, color),
+                        PUMPJACK_HEAD_PIVOT_Y + startY, PUMPJACK_HEAD_PIVOT_Z + startZ, color),
                 vertex((PUMPJACK_FRONT_ROD_WIDTH + PUMPJACK_FRONT_ROD_HALF_THICKNESS) * side,
-                        PUMPJACK_HEAD_PIVOT_Y + start.y, PUMPJACK_HEAD_PIVOT_Z + start.z, color),
+                        PUMPJACK_HEAD_PIVOT_Y + startY, PUMPJACK_HEAD_PIVOT_Z + startZ, color),
                 vertex((PUMPJACK_FRONT_ROD_WIDTH + PUMPJACK_FRONT_ROD_HALF_THICKNESS) * side,
-                        PUMPJACK_HEAD_PIVOT_Y + end.y, PUMPJACK_HEAD_PIVOT_Z + end.z, color),
+                        PUMPJACK_HEAD_PIVOT_Y + endY, PUMPJACK_HEAD_PIVOT_Z + endZ, color),
                 vertex((PUMPJACK_FRONT_ROD_WIDTH - PUMPJACK_FRONT_ROD_HALF_THICKNESS) * side,
-                        PUMPJACK_HEAD_PIVOT_Y + end.y, PUMPJACK_HEAD_PIVOT_Z + end.z, color)));
+                        PUMPJACK_HEAD_PIVOT_Y + endY, PUMPJACK_HEAD_PIVOT_Z + endZ, color)));
     }
 
-    private static Vec3 fixedPumpjackFrontRodPoint(Vec3 frontPos, Vec3 frontRad, double dist) {
-        double y = frontPos.y + frontRad.y;
-        double z = frontPos.z + frontRad.z;
-        if (frontRad.y < 0.0D) {
-            z = -PUMPJACK_HEAD_PIVOT_Z + dist * 0.5D;
+    private static double fixedPumpjackFrontRodY(double frontPosY, double frontRadY) {
+        return frontPosY + frontRadY;
+    }
+
+    private static double fixedPumpjackFrontRodZ(double frontPosZ, double frontRadY, double frontRadZ) {
+        if (frontRadY < 0.0D) {
+            return -PUMPJACK_HEAD_PIVOT_Z + PUMPJACK_FRONT_ROD_DIST * 0.5D;
         }
-        return new Vec3(0.0D, y, z);
-    }
-
-    private static Vec3 rotateX(Vec3 vec, double radians) {
-        double cos = Math.cos(radians);
-        double sin = Math.sin(radians);
-        return new Vec3(vec.x, vec.y * cos + vec.z * sin, vec.z * cos - vec.y * sin);
+        return frontPosZ + frontRadZ;
     }
 
     private static CraneRigPlan craneRigPlan(CraneSetupInputPlan input, float partialTicks) {
@@ -2171,7 +2245,7 @@ public final class LegacyTileRenderPlans {
     }
 
     private static TrailPoint trailPoint(double degrees) {
-        double radians = Math.toRadians(degrees);
+        double radians = degrees * DEG_TO_RAD;
         double y = Math.cos(radians);
         double z = Math.sin(radians);
         return new TrailPoint(
@@ -2352,35 +2426,43 @@ public final class LegacyTileRenderPlans {
         }
         if (formatted.length() < RBMK_NUMITRON_DIGITS && formatted.charAt(0) == '-' && leadingZeroes) {
             formatted = formatted.substring(1);
-            while (formatted.length() < RBMK_NUMITRON_DIGITS - 1) {
-                formatted = "0" + formatted;
+            StringBuilder builder = new StringBuilder(RBMK_NUMITRON_DIGITS);
+            builder.append('-');
+            for (int i = formatted.length(); i < RBMK_NUMITRON_DIGITS - 1; i++) {
+                builder.append('0');
             }
-            return "-" + formatted;
+            builder.append(formatted);
+            return builder.toString();
         }
-        String fill = leadingZeroes ? "0" : " ";
-        while (formatted.length() < RBMK_NUMITRON_DIGITS) {
-            formatted = fill + formatted;
+        char fill = leadingZeroes ? '0' : ' ';
+        if (formatted.length() < RBMK_NUMITRON_DIGITS) {
+            StringBuilder builder = new StringBuilder(RBMK_NUMITRON_DIGITS);
+            for (int i = formatted.length(); i < RBMK_NUMITRON_DIGITS; i++) {
+                builder.append(fill);
+            }
+            builder.append(formatted);
+            return builder.toString();
         }
         return formatted;
     }
 
     public static NumitronDigitUvPlan rbmkNumitronDigitUv(char character) {
         return switch (character) {
-            case ' ' -> new NumitronDigitUvPlan(0.0D, 0.0D, true);
-            case '.' -> new NumitronDigitUvPlan(0.9D, 0.5D, false);
-            case '-' -> new NumitronDigitUvPlan(0.8D, 0.5D, false);
-            case 'k' -> new NumitronDigitUvPlan(0.0D, 0.5D, false);
-            case 'M' -> new NumitronDigitUvPlan(0.1D, 0.5D, false);
-            case 'G' -> new NumitronDigitUvPlan(0.2D, 0.5D, false);
-            case 'T' -> new NumitronDigitUvPlan(0.3D, 0.5D, false);
-            case 'P' -> new NumitronDigitUvPlan(0.4D, 0.5D, false);
-            case 'E' -> new NumitronDigitUvPlan(0.5D, 0.5D, false);
+            case ' ' -> RBMK_NUMITRON_BLANK_UV;
+            case '.' -> RBMK_NUMITRON_DOT_UV;
+            case '-' -> RBMK_NUMITRON_MINUS_UV;
+            case 'k' -> RBMK_NUMITRON_KILO_UV;
+            case 'M' -> RBMK_NUMITRON_MEGA_UV;
+            case 'G' -> RBMK_NUMITRON_GIGA_UV;
+            case 'T' -> RBMK_NUMITRON_TERA_UV;
+            case 'P' -> RBMK_NUMITRON_PETA_UV;
+            case 'E' -> RBMK_NUMITRON_EXA_UV;
             default -> {
                 int digit = character - '0';
                 if (digit >= 0 && digit <= 9) {
-                    yield new NumitronDigitUvPlan(0.1D * digit, 0.0D, false);
+                    yield RBMK_NUMITRON_NUMBER_UVS[digit];
                 }
-                yield new NumitronDigitUvPlan(0.8D, 0.5D, false);
+                yield RBMK_NUMITRON_MINUS_UV;
             }
         };
     }
@@ -2956,15 +3038,12 @@ public final class LegacyTileRenderPlans {
                                    LegacyBeamRenderer.BeamPlan beam) {
     }
 
-    public record TeslaTargetPlan(double x, double y, double z) {
-    }
-
     public record TeslaBeamPlan(boolean active, double sourceX, double sourceY,
                                 double sourceZ, boolean cullEnabled,
                                 List<TeslaTargetBeamPlan> targetBeams) {
     }
 
-    public record TeslaTargetBeamPlan(TeslaTargetPlan target, double length,
+    public record TeslaTargetBeamPlan(TeslaBlockEntity.TeslaTarget target, double length,
                                       LegacyBeamRenderer.BeamPlan beam) {
     }
 
@@ -3155,7 +3234,13 @@ public final class LegacyTileRenderPlans {
 
     public record DiamondTransformPlan(String role, double translateX, double translateY,
                                        double translateZ, float yawDegrees,
-                                       float scaleX, float scaleY, float scaleZ) {
+                                       float scaleX, float scaleY, float scaleZ,
+                                       boolean rotateBeforeTranslate) {
+        public DiamondTransformPlan(String role, double translateX, double translateY,
+                                    double translateZ, float yawDegrees,
+                                    float scaleX, float scaleY, float scaleZ) {
+            this(role, translateX, translateY, translateZ, yawDegrees, scaleX, scaleY, scaleZ, false);
+        }
     }
 
     public record TexturedQuadPlan(String role, List<QuadVertexPlan> vertices) {

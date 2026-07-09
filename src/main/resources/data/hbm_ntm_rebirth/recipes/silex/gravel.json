@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": { "ingredient": { "item": "minecraft:gravel" }, "count": 1 }
+  },
+  "fluid_produced": 1000,
+  "fluid_consumed": 250,
+  "laser_strength": "visible",
+  "outputs": [
+    { "item": "minecraft:flint", "weight": 80 },
+    { "item": "hbm_ntm_rebirth:powder_boron", "weight": 5 },
+    { "item": "hbm_ntm_rebirth:powder_lithium", "weight": 10 },
+    { "item": "hbm_ntm_rebirth:fluorite", "weight": 5 }
+  ],
+  "source_order": 19
+}

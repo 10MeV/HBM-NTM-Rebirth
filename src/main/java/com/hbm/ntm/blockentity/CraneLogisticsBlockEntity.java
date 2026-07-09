@@ -8,7 +8,8 @@ import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.network.HbmLegacyBufPacketReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
-import com.hbm.ntm.recipe.ModRecipes;
+import com.hbm.ntm.recipe.ItemProcessingRecipe;
+import com.hbm.ntm.recipe.ItemProcessingRecipeRuntime;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
@@ -596,11 +597,7 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         if (level == null || stack.isEmpty()) {
             return 0;
         }
-        return level.getRecipeManager().getAllRecipesFor(ModRecipes.CRYSTALLIZER.type().get()).stream()
-                .filter(recipe -> recipe.matches(stack))
-                .mapToInt(recipe -> Math.max(1, recipe.input().count()))
-                .findFirst()
-                .orElse(0);
+        return ItemProcessingRecipeRuntime.inputAmount(level, ItemProcessingRecipe.Machine.CRYSTALLIZER, stack);
     }
 
     private ItemStack addToHandlerRange(ItemStack stack, int start, int end) {

@@ -6,6 +6,7 @@ import com.hbm.ntm.explosion.ExplosionNT;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
@@ -13,7 +14,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.List;
 
@@ -115,7 +115,7 @@ public class LegacyVolcanoCoreBlockEntity extends BlockEntity {
         for (int i = 0; i < count; i++) {
             int x = (int) Math.floor(pos.getX() + level.random.nextGaussian() * radius);
             int z = (int) Math.floor(pos.getZ() + level.random.nextGaussian() * radius);
-            int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) + 1;
+            int surfaceY = WorldUtil.legacyGetHeightValue(level, x, z) + 1;
             int y = surfaceY - (int) Math.floor(Math.abs(level.random.nextGaussian() * depth));
             BlockPos target = new BlockPos(x, y, z);
             BlockState targetState = level.getBlockState(target);

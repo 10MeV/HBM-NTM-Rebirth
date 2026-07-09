@@ -20,26 +20,42 @@ import org.jetbrains.annotations.Nullable;
 
 public class PressRecipe implements Recipe<Container> {
     private final ResourceLocation id;
-    private final Ingredient input;
+    private final HbmIngredient input;
     private final ItemPressStamp.StampType stampType;
     private final ItemStack result;
+    private final int sourceOrder;
 
-    public PressRecipe(ResourceLocation id, Ingredient input, ItemPressStamp.StampType stampType, ItemStack result) {
+    public PressRecipe(ResourceLocation id, Ingredient input, ItemPressStamp.StampType stampType, ItemStack result,
+            int sourceOrder) {
+        this(id, HbmIngredient.of(input, 1), stampType, result, sourceOrder);
+    }
+
+    public PressRecipe(ResourceLocation id, HbmIngredient input, ItemPressStamp.StampType stampType, ItemStack result,
+            int sourceOrder) {
         this.id = id;
         this.input = input;
         this.stampType = stampType;
         this.result = result;
+        this.sourceOrder = sourceOrder;
     }
 
     public ItemPressStamp.StampType getStampType() {
         return stampType;
     }
 
+    public HbmIngredient input() {
+        return input;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
+    }
+
     @Override
     public boolean matches(Container container, Level level) {
         ItemStack inputStack = container.getItem(0);
         ItemStack stampStack = container.getItem(1);
-        return input.test(inputStack)
+        return input.test(inputStack, true)
                 && stampStack.getItem() instanceof ItemPressStamp stamp
                 && stamp.getStampType() == stampType;
     }
@@ -62,7 +78,7 @@ public class PressRecipe implements Recipe<Container> {
     @Override
     public NonNullList<Ingredient> getIngredients() {
         NonNullList<Ingredient> ingredients = NonNullList.create();
-        ingredients.add(input);
+        ingredients.add(input.ingredient());
         return ingredients;
     }
 
@@ -94,19 +110,23 @@ public class PressRecipe implements Recipe<Container> {
     public static class Serializer implements RecipeSerializer<PressRecipe> {
         @Override
         public PressRecipe fromJson(ResourceLocation id, JsonObject json) {
-            Ingredient input = Ingredient.fromJson(GsonHelper.getAsJsonObject(json, "ingredient"));
+            HbmIngredient input = json.has("input")
+                    ? HbmIngredient.fromJson(GsonHelper.getAsJsonObject(json, "input"))
+                    : HbmIngredient.of(Ingredient.fromJson(GsonHelper.getAsJsonObject(json, "ingredient")), 1);
             ItemPressStamp.StampType stampType = ItemPressStamp.StampType.byName(GsonHelper.getAsString(json, "stamp"));
             ItemStack result = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "result"));
-            return new PressRecipe(id, input, stampType, result);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
+            return new PressRecipe(id, input, stampType, result, sourceOrder);
         }
 
         @Nullable
         @Override
         public PressRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buffer) {
-            Ingredient input = Ingredient.fromNetwork(buffer);
+            HbmIngredient input = HbmIngredient.fromNetwork(buffer);
             ItemPressStamp.StampType stampType = buffer.readEnum(ItemPressStamp.StampType.class);
             ItemStack result = buffer.readItem();
-            return new PressRecipe(id, input, stampType, result);
+            int sourceOrder = buffer.readVarInt();
+            return new PressRecipe(id, input, stampType, result, sourceOrder);
         }
 
         @Override
@@ -114,6 +134,7 @@ public class PressRecipe implements Recipe<Container> {
             recipe.input.toNetwork(buffer);
             buffer.writeEnum(recipe.stampType);
             buffer.writeItem(recipe.result);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
     }
 }

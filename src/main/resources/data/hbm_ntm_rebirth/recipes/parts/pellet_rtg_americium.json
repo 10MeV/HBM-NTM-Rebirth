@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:billet_am241"
+    },
+    {
+      "item": "hbm_ntm_rebirth:billet_am241"
+    },
+    {
+      "item": "hbm_ntm_rebirth:billet_am241"
+    },
+    {
+      "tag": "forge:plates/iron"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:pellet_rtg_americium"
+  }
+}

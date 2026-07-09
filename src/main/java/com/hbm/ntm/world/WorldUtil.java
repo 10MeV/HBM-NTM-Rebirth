@@ -2,30 +2,45 @@ package com.hbm.ntm.world;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public final class WorldUtil {
     private static final int ENTITY_SPAWN_LOAD_RADIUS = 2;
+    private static final int LEGACY_WORLD_XZ_LIMIT = 30_000_000;
+    private static final int LEGACY_OUT_OF_BOUNDS_HEIGHT = 64;
 
     public static Optional<LevelChunk> provideChunk(ServerLevel level, int chunkX, int chunkZ) {
         try {
             ChunkAccess chunk = level.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, false);
+            if (chunk instanceof LevelChunk levelChunk) {
+                return Optional.of(levelChunk);
+            }
+            ChunkPos pos = new ChunkPos(chunkX, chunkZ);
+            if (diskChunkStatus(level, pos) != DiskChunkStatus.FULL) {
+                return Optional.empty();
+            }
+            chunk = level.getChunkSource().getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
             return chunk instanceof LevelChunk levelChunk ? Optional.of(levelChunk) : Optional.empty();
-        } catch (RuntimeException ex) {
+        } catch (Throwable ex) {
             return Optional.empty();
         }
     }
@@ -40,7 +55,12 @@ public final class WorldUtil {
             if (chunk instanceof LevelChunk) {
                 return new ChunkAccessReport(chunkX, chunkZ, loaded, true, false, "full");
             }
-            return new ChunkAccessReport(chunkX, chunkZ, loaded, false, false, loaded ? "loaded_not_full" : "absent");
+            if (loaded) {
+                return new ChunkAccessReport(chunkX, chunkZ, true, false, false, "loaded_not_full");
+            }
+            DiskChunkStatus disk = diskChunkStatus(serverLevel, new ChunkPos(chunkX, chunkZ));
+            return new ChunkAccessReport(chunkX, chunkZ, false, disk == DiskChunkStatus.FULL, disk.failed(),
+                    disk.detail());
         } catch (RuntimeException ex) {
             return new ChunkAccessReport(chunkX, chunkZ, loaded, false, true, ex.getClass().getSimpleName());
         }
@@ -80,6 +100,50 @@ public final class WorldUtil {
 
     public static boolean isBlockLoaded(Level level, BlockPos pos) {
         return isChunkLoaded(level, blockToChunkCoord(pos.getX()), blockToChunkCoord(pos.getZ()));
+    }
+
+    public static int legacyGetHeightValue(Level level, int x, int z) {
+        Objects.requireNonNull(level, "level");
+        if (x < -LEGACY_WORLD_XZ_LIMIT || z < -LEGACY_WORLD_XZ_LIMIT
+                || x >= LEGACY_WORLD_XZ_LIMIT || z >= LEGACY_WORLD_XZ_LIMIT) {
+            return LEGACY_OUT_OF_BOUNDS_HEIGHT;
+        }
+        if (!isChunkLoaded(level, blockToChunkCoord(x), blockToChunkCoord(z))) {
+            return 0;
+        }
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, topBlockY(level), z);
+        for (int y = topBlockY(level); y >= bottomBlockY(level); y--) {
+            cursor.setY(y);
+            if (legacyHeightMapBlocksLight(level, cursor, level.getBlockState(cursor))) {
+                return y + 1;
+            }
+        }
+        return bottomBlockY(level);
+    }
+
+    public static boolean legacyHeightMapBlocksLight(Level level, BlockPos pos, BlockState state) {
+        return state.getLightBlock(level, pos) != 0;
+    }
+
+    public static int legacyGetTopSolidOrLiquidBlock(Level level, int x, int z) {
+        Objects.requireNonNull(level, "level");
+        LevelChunk chunk = level.getChunk(blockToChunkCoord(x), blockToChunkCoord(z));
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, topBlockY(level), z);
+        for (int y = topBlockY(level); y > bottomBlockY(level); y--) {
+            cursor.setY(y);
+            BlockState state = chunk.getBlockState(cursor);
+            if (legacyTopSolidOrLiquidBlocksMovement(level, cursor, state)) {
+                return y + 1;
+            }
+        }
+        return -1;
+    }
+
+    public static boolean legacyTopSolidOrLiquidBlocksMovement(Level level, BlockPos pos, BlockState state) {
+        return state.blocksMotion()
+                && !(state.getBlock() instanceof LeavesBlock)
+                && !state.is(BlockTags.LEAVES);
     }
 
     public static Optional<BlockState> getLoadedBlockState(Level level, BlockPos pos) {
@@ -208,12 +272,9 @@ public final class WorldUtil {
 
     public static boolean loadAndSpawnEntityInWorld(Entity entity) {
         Level level = entity.level();
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return level.addFreshEntity(entity);
-        }
-
-        loadChunksInSquare(serverLevel, chunkPosAt(entity), ENTITY_SPAWN_LOAD_RADIUS);
-        return serverLevel.addFreshEntity(entity);
+        ChunkPos center = chunkPosAt(entity);
+        loadChunksInSquareStrict(level, center.x, center.z, ENTITY_SPAWN_LOAD_RADIUS);
+        return level.addFreshEntity(entity);
     }
 
     public static int minBuildHeight(Level level) {
@@ -278,6 +339,53 @@ public final class WorldUtil {
     }
 
     private WorldUtil() {
+    }
+
+    private static void loadChunksInSquareStrict(Level level, int centerChunkX, int centerChunkZ, int radius) {
+        for (ChunkPos chunk : chunksInSquare(centerChunkX, centerChunkZ, radius)) {
+            level.getChunk(chunk.x, chunk.z);
+        }
+    }
+
+    private static DiskChunkStatus diskChunkStatus(ServerLevel level, ChunkPos pos) {
+        try {
+            Optional<CompoundTag> diskTag = level.getChunkSource().chunkMap.read(pos).join();
+            if (diskTag.isEmpty()) {
+                return DiskChunkStatus.ABSENT;
+            }
+            CompoundTag tag = diskTag.get();
+            if (!tag.contains("Status", 8)) {
+                return DiskChunkStatus.INVALID;
+            }
+            ChunkStatus.ChunkType type = ChunkSerializer.getChunkTypeFromTag(tag);
+            return type == ChunkStatus.ChunkType.LEVELCHUNK ? DiskChunkStatus.FULL : DiskChunkStatus.PROTOCHUNK;
+        } catch (Throwable ex) {
+            return DiskChunkStatus.FAILED;
+        }
+    }
+
+    private enum DiskChunkStatus {
+        ABSENT("disk_absent", false),
+        FULL("disk_full", false),
+        PROTOCHUNK("disk_proto", false),
+        INVALID("disk_invalid", true),
+        FAILED("disk_read_failed", true);
+
+        private final String detail;
+        private final boolean failed;
+
+        DiskChunkStatus(String detail, boolean failed) {
+            this.detail = detail;
+            this.failed = failed;
+        }
+
+        private String detail() {
+            return detail;
+        }
+
+        private boolean failed() {
+            return failed;
+        }
     }
 
     public record ChunkLoadReport(int centerChunkX, int centerChunkZ, int radius, int requestedChunks,

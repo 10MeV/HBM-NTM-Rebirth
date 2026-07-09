@@ -1,0 +1,33 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 50,
+  "input_fluids": [
+    {
+      "amount": 200,
+      "fluid": "hbm_ntm_rebirth:sourgas",
+      "pressure": 1
+    },
+    {
+      "amount": 10,
+      "fluid": "hbm_ntm_rebirth:nitric_acid"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ball_tnt"
+      }
+    }
+  ],
+  "internal_name": "chem.tatb",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:ball_tatb"
+    }
+  ],
+  "pools": [],
+  "power": 5000,
+  "source_order": 62
+}

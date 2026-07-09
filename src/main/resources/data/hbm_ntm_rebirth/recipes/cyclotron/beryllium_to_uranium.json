@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:cyclotron",
+  "particle": { "ingredient": { "item": "hbm_ntm_rebirth:part_beryllium" }, "count": 1 },
+  "input": { "ingredient": { "tag": "forge:dusts/thorium" }, "count": 1, "legacy_ore": "dustThorium" },
+  "output": { "item": "hbm_ntm_rebirth:powder_uranium" },
+  "antimatter": 25,
+  "source_order": 19
+}

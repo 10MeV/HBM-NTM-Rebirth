@@ -4,7 +4,7 @@ import com.hbm.ntm.api.block.ChainExplodable;
 import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
 import com.hbm.ntm.particle.ParticleUtil;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -51,7 +51,7 @@ public class LegacyRadiationBarrelBlock extends Block implements ChainExplodable
     @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.tick(state, level, pos, random);
-        ChunkRadiationManager.incrementRadiation(level, pos, chunkRadiationPerTick);
+        ChunkRadiationManager.proxy.incrementRad(level, pos, chunkRadiationPerTick);
         level.scheduleTick(pos, this, 20);
     }
 
@@ -78,7 +78,7 @@ public class LegacyRadiationBarrelBlock extends Block implements ChainExplodable
         }
         ExplosionNukeGeneric.waste(level, pos.getX(), pos.getY(), pos.getZ(), 35);
         spawnDenseRadon(level, pos);
-        ChunkRadiationManager.incrementRadiation(level, pos, 35.0F);
+        ChunkRadiationManager.proxy.incrementRad(level, pos, 35.0F);
     }
 
     private void spawnDenseRadon(Level level, BlockPos pos) {

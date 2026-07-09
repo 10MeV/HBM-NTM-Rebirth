@@ -142,11 +142,20 @@ public class IntakeBlockEntity extends HbmEnergyAndFluidBlockEntity implements H
 
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
+        Direction facing = facing();
+        Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);
         return List.of(
-                EnergyPort.of(2, 0, 0, Direction.EAST),
-                EnergyPort.of(-2, 0, 0, Direction.WEST),
-                EnergyPort.of(0, 0, 2, Direction.SOUTH),
-                EnergyPort.of(0, 0, -2, Direction.NORTH));
+                EnergyPort.of(facing.getStepX(), 0, facing.getStepZ(), facing),
+                EnergyPort.of(facing.getStepX() + rot.getStepX(), 0, facing.getStepZ() + rot.getStepZ(), facing),
+                EnergyPort.of(-facing.getStepX() * 2, 0, -facing.getStepZ() * 2, facing.getOpposite()),
+                EnergyPort.of(-facing.getStepX() * 2 + rot.getStepX(), 0,
+                        -facing.getStepZ() * 2 + rot.getStepZ(), facing.getOpposite()),
+                EnergyPort.of(rot.getStepX() * 2, 0, rot.getStepZ() * 2, rot),
+                EnergyPort.of(rot.getStepX() * 2 - facing.getStepX(), 0,
+                        rot.getStepZ() * 2 - facing.getStepZ(), rot),
+                EnergyPort.of(-rot.getStepX(), 0, -rot.getStepZ(), rot.getOpposite()),
+                EnergyPort.of(-rot.getStepX() - facing.getStepX(), 0,
+                        -rot.getStepZ() - facing.getStepZ(), rot.getOpposite()));
     }
 
     @Override

@@ -193,10 +193,13 @@ public final class ExplosionChaos {
             return;
         }
         double range = radius;
+        double outerRange = radius * 2.0D;
+        double outerRangeSqr = outerRange * outerRange;
+        double rangeSqr = range * range;
         AABB bounds = new AABB(x - range - 1.0D, y - range - 1.0D, z - range - 1.0D,
                 x + range + 1.0D, y + range + 1.0D, z + range + 1.0D);
         for (Entity entity : level.getEntities(null, bounds)) {
-            if (Math.sqrt(entity.distanceToSqr(x, y, z)) / (radius * 2.0D) > 1.0D) {
+            if (entity.distanceToSqr(x, y, z) > outerRangeSqr) {
                 continue;
             }
             if (entity instanceof Sheep sheep) {
@@ -207,7 +210,7 @@ public final class ExplosionChaos {
             double dx = entity.getX() - x;
             double dy = entity.getY() + entity.getEyeHeight() - y;
             double dz = entity.getZ() - z;
-            if (Math.sqrt(dx * dx + dy * dy + dz * dz) < range) {
+            if (dx * dx + dy * dy + dz * dz < rangeSqr) {
                 entity.teleportTo(entity.getX() + offsetX, entity.getY() + offsetY, entity.getZ() + offsetZ);
             }
         }

@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:cyclotron",
+  "particle": { "ingredient": { "item": "hbm_ntm_rebirth:part_beryllium" }, "count": 1 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_cerium" }, "count": 1 },
+  "output": { "item": "hbm_ntm_rebirth:powder_neodymium" },
+  "antimatter": 25,
+  "source_order": 18
+}

@@ -319,24 +319,24 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
         Direction facing = facing();
         Direction side = facing.getClockWise();
         return List.of(
-                FluidPort.of(facing.getStepX(), 0, facing.getStepZ(), facing),
-                FluidPort.of(facing.getStepX() - side.getStepX(), 0,
-                        facing.getStepZ() - side.getStepZ(), facing),
-                FluidPort.of(-facing.getStepX(), 0, -facing.getStepZ(), facing.getOpposite()),
-                FluidPort.of(-facing.getStepX() - side.getStepX(), 0,
-                        -facing.getStepZ() - side.getStepZ(), facing.getOpposite()));
+                FluidPort.of(facing.getStepX() * 2, 0, facing.getStepZ() * 2, facing),
+                FluidPort.of(facing.getStepX() * 2 - side.getStepX(), 0,
+                        facing.getStepZ() * 2 - side.getStepZ(), facing),
+                FluidPort.of(-facing.getStepX() * 2, 0, -facing.getStepZ() * 2, facing.getOpposite()),
+                FluidPort.of(-facing.getStepX() * 2 - side.getStepX(), 0,
+                        -facing.getStepZ() * 2 - side.getStepZ(), facing.getOpposite()));
     }
 
     private List<EnergyPort> turbofanEnergyPorts() {
         Direction facing = facing();
         Direction side = facing.getClockWise();
         return List.of(
-                EnergyPort.of(facing.getStepX(), 0, facing.getStepZ(), facing),
-                EnergyPort.of(facing.getStepX() - side.getStepX(), 0,
-                        facing.getStepZ() - side.getStepZ(), facing),
-                EnergyPort.of(-facing.getStepX(), 0, -facing.getStepZ(), facing.getOpposite()),
-                EnergyPort.of(-facing.getStepX() - side.getStepX(), 0,
-                        -facing.getStepZ() - side.getStepZ(), facing.getOpposite()));
+                EnergyPort.of(facing.getStepX() * 2, 0, facing.getStepZ() * 2, facing),
+                EnergyPort.of(facing.getStepX() * 2 - side.getStepX(), 0,
+                        facing.getStepZ() * 2 - side.getStepZ(), facing),
+                EnergyPort.of(-facing.getStepX() * 2, 0, -facing.getStepZ() * 2, facing.getOpposite()),
+                EnergyPort.of(-facing.getStepX() * 2 - side.getStepX(), 0,
+                        -facing.getStepZ() * 2 - side.getStepZ(), facing.getOpposite()));
     }
 
     public ItemStackHandler getItems() {

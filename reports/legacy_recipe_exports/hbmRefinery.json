@@ -1,0 +1,98 @@
+{
+  "recipes": [
+    {
+      "input": "HOTOIL",
+      "output0": [
+        "HEAVYOIL",
+        50
+      ],
+      "output1": [
+        "NAPHTHA",
+        25
+      ],
+      "output2": [
+        "LIGHTOIL",
+        15
+      ],
+      "output3": [
+        "PETROLEUM",
+        10
+      ],
+      "solid": [
+        "hbm:sulfur"
+      ]
+    },
+    {
+      "input": "HOTCRACKOIL",
+      "output0": [
+        "NAPHTHA_CRACK",
+        40
+      ],
+      "output1": [
+        "LIGHTOIL_CRACK",
+        30
+      ],
+      "output2": [
+        "AROMATICS",
+        15
+      ],
+      "output3": [
+        "UNSATURATEDS",
+        15
+      ],
+      "solid": [
+        "hbm:oil_tar",
+        1,
+        1
+      ]
+    },
+    {
+      "input": "HOTOIL_DS",
+      "output0": [
+        "HEAVYOIL",
+        30
+      ],
+      "output1": [
+        "NAPHTHA_DS",
+        35
+      ],
+      "output2": [
+        "LIGHTOIL_DS",
+        20
+      ],
+      "output3": [
+        "UNSATURATEDS",
+        15
+      ],
+      "solid": [
+        "hbm:oil_tar",
+        1,
+        5
+      ]
+    },
+    {
+      "input": "HOTCRACKOIL_DS",
+      "output0": [
+        "NAPHTHA_DS",
+        35
+      ],
+      "output1": [
+        "LIGHTOIL_DS",
+        35
+      ],
+      "output2": [
+        "AROMATICS",
+        15
+      ],
+      "output3": [
+        "UNSATURATEDS",
+        15
+      ],
+      "solid": [
+        "hbm:oil_tar",
+        1,
+        5
+      ]
+    }
+  ]
+}

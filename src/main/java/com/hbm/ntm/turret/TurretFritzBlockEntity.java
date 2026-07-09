@@ -139,10 +139,10 @@ public class TurretFritzBlockEntity extends TurretBlockEntityBase
     }
 
     @Override
-    protected void updateServerTickAfterTargeting() {
+    protected void updateServerTickAfterLegacyNetworkPack() {
         boolean changed = updateTankFromInventory();
         if (changed) {
-            onFluidContentsChanged();
+            setChanged();
         }
     }
 
@@ -164,7 +164,7 @@ public class TurretFritzBlockEntity extends TurretBlockEntityBase
         spawnBullet(config, legacyFlameDamage(flammable), LEGACY_FLAME_SPREAD, null);
 
         playTurretSound("hbm:weapon.flamethrowerShoot", 2.0F, 1.0F + level.random.nextFloat() * 0.5F);
-        onFluidContentsChanged();
+        setChanged();
     }
 
     private static float legacyFlameDamage(FlammableFluidTrait flammable) {

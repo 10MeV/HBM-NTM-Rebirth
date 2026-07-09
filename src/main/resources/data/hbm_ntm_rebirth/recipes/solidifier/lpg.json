@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:lpg",
                   "amount":  2900
-              }
+              },
+    "source_order":  41
 }

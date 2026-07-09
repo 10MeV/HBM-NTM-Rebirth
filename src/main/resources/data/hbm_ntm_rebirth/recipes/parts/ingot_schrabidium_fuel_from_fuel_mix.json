@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "tag": "forge:nuggets/schrabidium" },
+    { "tag": "forge:nuggets/schrabidium" },
+    { "tag": "forge:nuggets/schrabidium" },
+    { "tag": "forge:nuggets/neptunium237" },
+    { "tag": "forge:nuggets/neptunium237" },
+    { "tag": "forge:nuggets/neptunium237" },
+    { "item": "hbm_ntm_rebirth:nugget_beryllium" },
+    { "item": "hbm_ntm_rebirth:nugget_beryllium" },
+    { "item": "hbm_ntm_rebirth:nugget_beryllium" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:ingot_schrabidium_fuel" }
+}

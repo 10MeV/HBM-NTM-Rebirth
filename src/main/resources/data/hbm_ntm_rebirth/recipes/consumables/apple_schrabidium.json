@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "food",
+  "pattern": [
+    "SSS",
+    "SAS",
+    "SSS"
+  ],
+  "key": {
+    "S": { "tag": "forge:nuggets/schrabidium" },
+    "A": { "item": "minecraft:apple" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:apple_schrabidium"
+  }
+}

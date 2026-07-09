@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:dusts/lapis"
+    },
+    "legacy_ore": "dustLapis"
+  },
+  "result": {
+    "item": "minecraft:lapis_lazuli"
+  },
+  "source_order": 1,
+  "stamp": "flat"
+}

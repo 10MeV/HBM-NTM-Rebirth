@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:cobblestone"
+    },
+    "legacy_ore": "cobblestone"
+  },
+  "output": [
+    {
+      "amount": 648,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 1
+}

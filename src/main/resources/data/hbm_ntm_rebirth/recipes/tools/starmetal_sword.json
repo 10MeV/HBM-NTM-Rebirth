@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:cobalt_decorated_sword"
+    },
+    "I": {
+      "tag": "forge:ingots/starmetal"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:ring_starmetal"
+    }
+  },
+  "pattern": [
+    " I ",
+    " B ",
+    "ISI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:starmetal_sword"
+  },
+  "show_notification": true
+}

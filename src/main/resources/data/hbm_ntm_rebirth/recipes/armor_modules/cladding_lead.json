@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "P": {
+      "tag": "forge:plates/lead"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:cladding_rubber"
+    }
+  },
+  "pattern": [
+    "DPD",
+    "PRP",
+    "DPD"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cladding_lead"
+  },
+  "show_notification": true
+}

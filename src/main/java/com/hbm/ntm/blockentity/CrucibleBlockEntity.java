@@ -11,6 +11,7 @@ import com.hbm.ntm.item.FoundryScrapsItem;
 import com.hbm.ntm.menu.CrucibleMenu;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.recipe.CrucibleRecipeRuntime;
+import com.hbm.ntm.recipe.CrucibleSmeltingRecipeRuntime;
 import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -153,11 +154,11 @@ public class CrucibleBlockEntity extends BlockEntity
 
     @Nullable
     public CrucibleRecipeRuntime.Recipe getSelectedRecipeDefinition() {
-        return CrucibleRecipeRuntime.find(recipe);
+        return CrucibleRecipeRuntime.find(level, recipe);
     }
 
     public boolean selectRecipe(String selectedRecipe) {
-        if (!CrucibleRecipeRuntime.canSelect(selectedRecipe)) {
+        if (!CrucibleRecipeRuntime.canSelect(level, selectedRecipe)) {
             return false;
         }
         recipe = CrucibleRecipeRuntime.normalize(selectedRecipe);
@@ -294,7 +295,7 @@ public class CrucibleBlockEntity extends BlockEntity
         loadInventory(tag);
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         recipe = CrucibleRecipeRuntime.normalize(tag.contains(TAG_RECIPE) ? tag.getString(TAG_RECIPE) : "null");
-        if (!CrucibleRecipeRuntime.canSelect(recipe)) {
+        if (level != null && !CrucibleRecipeRuntime.canSelect(level, recipe)) {
             recipe = CrucibleRecipeRuntime.NULL_RECIPE;
         }
         recipeStack.clear();
@@ -427,7 +428,8 @@ public class CrucibleBlockEntity extends BlockEntity
         heat -= delta;
         if (progress >= PROCESS_TIME) {
             progress = 0;
-            for (MaterialStack material : Mats.getSmeltingMaterialsFromItem(items.getStackInSlot(slot))) {
+            for (MaterialStack material : CrucibleSmeltingRecipeRuntime.getSmeltingMaterialsFromItem(level,
+                    items.getStackInSlot(slot))) {
                 addMaterial(material);
             }
             items.extractItem(slot, 1, false);
@@ -471,13 +473,20 @@ public class CrucibleBlockEntity extends BlockEntity
                 pos.getZ() + 0.5D + direction.getStepZ() * 1.875D,
                 6.0D, true, stacks, MaterialShapes.NUGGET.q(3), impact);
         if (result.moved() != null && result.impact() != null) {
+            double sourceX = pos.getX() + 0.5D + direction.getStepX() * 1.875D;
+            double sourceY = pos.getY() + 0.25D;
+            double sourceZ = pos.getZ() + 0.5D + direction.getStepZ() * 1.875D;
             com.hbm.ntm.particle.ParticleUtil.spawnFoundryPour(level, result.impact(),
                     result.moved().material.moltenColor, direction,
-                    (float) result.impact().distanceTo(new Vec3(
-                            pos.getX() + 0.5D + direction.getStepX() * 1.875D,
-                            pos.getY() + 0.25D,
-                            pos.getZ() + 0.5D + direction.getStepZ() * 1.875D)));
+                    (float) distance(result.impact(), sourceX, sourceY, sourceZ));
         }
+    }
+
+    private static double distance(Vec3 point, double x, double y, double z) {
+        double dx = point.x - x;
+        double dy = point.y - y;
+        double dz = point.z - z;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     private int firstSmeltableSlot() {
@@ -493,7 +502,7 @@ public class CrucibleBlockEntity extends BlockEntity
         if (stack.isEmpty()) {
             return false;
         }
-        List<MaterialStack> materials = Mats.getSmeltingMaterialsFromItem(stack);
+        List<MaterialStack> materials = CrucibleSmeltingRecipeRuntime.getSmeltingMaterialsFromItem(level, stack);
         if (materials.isEmpty()) {
             return false;
         }
@@ -641,7 +650,7 @@ public class CrucibleBlockEntity extends BlockEntity
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
         return HbmInventoryMenuHelper.stillValidBlockEntity(player, this, 128.0D)
                 && GenericMachineRecipeSelector.isSelectionTag(tag)
-                && CrucibleRecipeRuntime.canSelect(GenericMachineRecipeSelector.readSelection(tag));
+                && CrucibleRecipeRuntime.canSelect(level, GenericMachineRecipeSelector.readSelection(tag));
     }
 
     @Override

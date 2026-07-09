@@ -1,7 +1,20 @@
 ﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/electrolyser"
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/electrolyser.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+    "Cube_Cube.001": true
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/electrolyser",
+    "default": "hbm_ntm_rebirth:models/machines/electrolyser",
+    "texture0": "hbm_ntm_rebirth:models/machines/electrolyser"
+  }
 }

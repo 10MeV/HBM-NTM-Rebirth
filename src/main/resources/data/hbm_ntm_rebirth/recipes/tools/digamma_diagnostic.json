@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "tools",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:geiger_counter"
+    },
+    {
+      "item": "hbm_ntm_rebirth:billet_polonium"
+    },
+    {
+      "tag": "forge:ingots/asbestos"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:digamma_diagnostic"
+  }
+}

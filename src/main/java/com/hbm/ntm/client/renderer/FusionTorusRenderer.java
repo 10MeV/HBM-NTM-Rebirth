@@ -6,6 +6,7 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.TexturedObjPartGroup;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.Util;
@@ -14,6 +15,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlockEntity> {
     private static final double EXTRA_PLASMA_LAYER_DISTANCE = 100.0D;
@@ -29,6 +31,12 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+    }
+
+    @Override
+    public boolean shouldRender(FusionTorusBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -83,14 +91,15 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
                 float green = blockEntity.getPlasmaG();
                 float blue = blockEntity.getPlasmaB();
                 boolean renderExtraLayers = shouldRenderExtraPlasmaLayers(blockEntity);
-                LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
-                    renderPlasmaLayer(ObjFusionModels.PLASMA_TEXTURE, queuedPose, buffer, packedOverlay,
+                LegacyMachineEffectPresenter.enqueueTexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                        poseStack, buffer, group -> {
+                    renderPlasmaLayer(group, ObjFusionModels.PLASMA_TEXTURE, packedOverlay,
                             red, green, blue, alpha, 0.0F, mainOsc);
                     if (renderExtraLayers) {
-                        renderPlasmaLayer(ObjFusionModels.PLASMA_GLOW_TEXTURE, queuedPose, buffer, packedOverlay,
+                        renderPlasmaLayer(group, ObjFusionModels.PLASMA_GLOW_TEXTURE, packedOverlay,
                                 red * 2.0F, green * 2.0F, blue * 2.0F, alpha * 2.0F,
                                 0.0F, positiveUnit(glowOsc + glowExtra));
-                        renderPlasmaLayer(ObjFusionModels.PLASMA_SPARKLE_TEXTURE, queuedPose, buffer, packedOverlay,
+                        renderPlasmaLayer(group, ObjFusionModels.PLASMA_SPARKLE_TEXTURE, packedOverlay,
                                 red * 2.0F, green * 2.0F, blue * 2.0F, 0.75F, sparkleSpin, sparkleOsc);
                     }
                 });
@@ -105,11 +114,12 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
                 poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, partName);
     }
 
-    private static void renderPlasmaLayer(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderPlasmaLayer(TexturedObjPartGroup group, ResourceLocation texture,
             int packedOverlay, float red, float green, float blue, float alpha, float uOffset, float vOffset) {
-        ObjFusionModels.renderTorusPart(texture, poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay,
-                colorByte(red), colorByte(green), colorByte(blue), colorByte(alpha), false,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, uvScroll(uOffset, vOffset), "Plasma");
+        group.add(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.torusPlasmaHandle(), texture,
+                LightTexture.FULL_BRIGHT, packedOverlay, colorByte(red), colorByte(green), colorByte(blue),
+                colorByte(alpha), false, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                uvScroll(uOffset, vOffset));
     }
 
     private static LegacyWavefrontModel.UvTransform uvScroll(float uOffset, float vOffset) {

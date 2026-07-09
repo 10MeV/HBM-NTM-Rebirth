@@ -98,8 +98,8 @@ public final class LegacyGenericRecipeImportProvider implements DataProvider {
                 throw new IllegalStateException("Failed to import legacy recipe file " + source, exception);
             }
         }
-        root.addProperty("found_template_count", foundTemplateCount);
         root.addProperty("supported_generic_handler_count", LegacySerializableRecipeHandlers.supportedGeneric().size());
+        LegacyRecipeReportUtil.addImportSummary(root, handlers);
         saves.add(DataProvider.saveStable(output, root, reportPath));
         if (foundTemplateCount == 0) {
             HbmNtm.LOGGER.info("No legacy generic recipe templates found in {}; skipping generic machine recipe import.", legacyRecipeDir);

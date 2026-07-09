@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "LUL",
+    "UCU",
+    "LUL"
+  ],
+  "key": {
+    "L": {
+      "tag": "forge:plates/lead"
+    },
+    "U": {
+      "tag": "forge:ingots/ferrouranium"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:crate_steel"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:containment_box"
+  },
+  "show_notification": true
+}

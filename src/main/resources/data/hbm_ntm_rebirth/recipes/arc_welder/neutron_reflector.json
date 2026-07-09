@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.neutronreflector",
+  "duration": 400,
+  "power": 50000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:ingots/tungsten_carbide" }, "count": 2, "legacy_ore": "ingotTungstenCarbide" },
+    { "ingredient": { "tag": "forge:plates/dura_steel" }, "count": 1, "legacy_ore": "plateDuraSteel" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:neutron_reflector", "count": 2 }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 3
+}

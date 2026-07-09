@@ -8,9 +8,11 @@
     "input":  {
                   "ingredient":  {
                                      "tag":  "forge:dusts/lapis"
-                                 }
+                                 },
+                  "legacy_ore":  "dustLapis"
               },
     "output":  {
                    "item":  "minecraft:lapis_lazuli"
-               }
+               },
+    "source_order":  47
 }

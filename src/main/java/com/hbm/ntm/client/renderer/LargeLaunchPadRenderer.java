@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LargeLaunchPadBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.LargeLaunchPadBlockEntity;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
@@ -16,14 +17,25 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPadBlockEntity> {
+    private static final ErectorParts[] PARTS_BY_FORM_FACTOR = buildPartsByFormFactor();
+
     public LargeLaunchPadRenderer(BlockEntityRendererProvider.Context context) {
     }
 
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(LargeLaunchPadBlockEntity launchPad, Vec3 cameraPos) {
+        return (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                || hasFormFactorParts(launchPad.getFormFactor()))
+                && BlockEntityRenderer.super.shouldRender(launchPad, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(launchPad, getViewDistance());
     }
 
     @Override
@@ -44,6 +56,10 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(launchPad)) {
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                ObjLaunchModels.renderMissileErectorPart("Pad", ObjLaunchModels.MISSILE_ERECTOR_TEXTURE,
+                        poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+            }
             renderFormFactorParts(launchPad, missile, partialTick, poseStack, buffer, modelLight, packedOverlay);
         }
         poseStack.popPose();
@@ -81,12 +97,25 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         poseStack.popPose();
     }
 
-    private static ErectorParts partsFor(int formFactorOrdinal) {
+    private static ErectorParts[] buildPartsByFormFactor() {
         MissileItem.FormFactor[] values = MissileItem.FormFactor.values();
-        if (formFactorOrdinal < 0 || formFactorOrdinal >= values.length) {
-            return null;
+        ErectorParts[] parts = new ErectorParts[values.length];
+        for (int i = 0; i < values.length; i++) {
+            parts[i] = partsFor(values[i]);
         }
-        MissileItem.FormFactor formFactor = values[formFactorOrdinal];
+        return parts;
+    }
+
+    private static boolean hasFormFactorParts(int formFactorOrdinal) {
+        return formFactorOrdinal >= 0 && formFactorOrdinal < PARTS_BY_FORM_FACTOR.length
+                && PARTS_BY_FORM_FACTOR[formFactorOrdinal] != null;
+    }
+
+    private static ErectorParts partsFor(int formFactorOrdinal) {
+        return hasFormFactorParts(formFactorOrdinal) ? PARTS_BY_FORM_FACTOR[formFactorOrdinal] : null;
+    }
+
+    private static ErectorParts partsFor(MissileItem.FormFactor formFactor) {
         return switch (formFactor) {
             case ABM, OTHER -> new ErectorParts("ABM_Pad", "ABM_Erector", "ABM_Pivot", "ABM_Rope",
                     1.5D, 1.25D, ObjLaunchModels.MISSILE_ERECTOR_ABM_TEXTURE);

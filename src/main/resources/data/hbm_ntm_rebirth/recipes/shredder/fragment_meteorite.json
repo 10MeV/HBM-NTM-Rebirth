@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "item": "hbm_ntm_rebirth:fragment_meteorite" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_meteorite_tiny" }
+  "output": { "item": "hbm_ntm_rebirth:powder_meteorite_tiny" },
+  "source_order": 46
 }

@@ -88,55 +88,22 @@ public class BalefireBombItemRenderer extends BlockEntityWithoutLevelRenderer {
     }
 
     private static AABB transformedInventoryBounds(AABB bounds) {
-        return transformBounds(bounds, point -> {
-            Vec3 transformed = applyLegacyCommonTransform(point);
-            return new Vec3(transformed.x * LEGACY_INVENTORY_SCALE,
-                    transformed.y * LEGACY_INVENTORY_SCALE,
-                    transformed.z * LEGACY_INVENTORY_SCALE);
+        double sin = LegacyTransformedBounds.sinDeg(90.0F);
+        double cos = LegacyTransformedBounds.cosDeg(90.0F);
+        return LegacyTransformedBounds.transform(bounds, (x, y, z, accumulator) -> {
+            double rotatedX = LegacyTransformedBounds.rotateYX(x + 1.0D, z, sin, cos);
+            double rotatedZ = LegacyTransformedBounds.rotateYZ(x + 1.0D, z, sin, cos);
+            accumulator.include(rotatedX * LEGACY_INVENTORY_SCALE,
+                    y * LEGACY_INVENTORY_SCALE,
+                    rotatedZ * LEGACY_INVENTORY_SCALE);
         });
     }
 
     private static AABB transformedCommonBounds(AABB bounds) {
-        return transformBounds(bounds, BalefireBombItemRenderer::applyLegacyCommonTransform);
-    }
-
-    private static Vec3 applyLegacyCommonTransform(Vec3 point) {
-        return rotateY(point.add(1.0D, 0.0D, 0.0D), 90.0F);
-    }
-
-    private static AABB transformBounds(AABB bounds, PointTransform transform) {
-        double minX = Double.POSITIVE_INFINITY;
-        double minY = Double.POSITIVE_INFINITY;
-        double minZ = Double.POSITIVE_INFINITY;
-        double maxX = Double.NEGATIVE_INFINITY;
-        double maxY = Double.NEGATIVE_INFINITY;
-        double maxZ = Double.NEGATIVE_INFINITY;
-
-        for (double x : new double[] { bounds.minX, bounds.maxX }) {
-            for (double y : new double[] { bounds.minY, bounds.maxY }) {
-                for (double z : new double[] { bounds.minZ, bounds.maxZ }) {
-                    Vec3 point = transform.apply(new Vec3(x, y, z));
-                    minX = Math.min(minX, point.x);
-                    minY = Math.min(minY, point.y);
-                    minZ = Math.min(minZ, point.z);
-                    maxX = Math.max(maxX, point.x);
-                    maxY = Math.max(maxY, point.y);
-                    maxZ = Math.max(maxZ, point.z);
-                }
-            }
-        }
-
-        return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private static Vec3 rotateY(Vec3 point, float degrees) {
-        double radians = Math.toRadians(degrees);
-        double sin = Math.sin(radians);
-        double cos = Math.cos(radians);
-        return new Vec3(point.x * cos + point.z * sin, point.y, point.z * cos - point.x * sin);
-    }
-
-    private interface PointTransform {
-        Vec3 apply(Vec3 point);
+        double sin = LegacyTransformedBounds.sinDeg(90.0F);
+        double cos = LegacyTransformedBounds.cosDeg(90.0F);
+        return LegacyTransformedBounds.transform(bounds,
+                (x, y, z, accumulator) -> LegacyTransformedBounds.includeRotatedY(accumulator,
+                        x + 1.0D, y, z, sin, cos));
     }
 }

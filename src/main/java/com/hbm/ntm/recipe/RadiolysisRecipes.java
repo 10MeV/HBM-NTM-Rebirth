@@ -6,6 +6,7 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,23 +14,23 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import org.jetbrains.annotations.Nullable;
 
 public final class RadiolysisRecipes {
-    private static final Map<FluidType, Result> RECIPES = new LinkedHashMap<>();
+    private static final Map<FluidType, Result> FALLBACK_RECIPES = new LinkedHashMap<>();
 
     static {
-        register(HbmFluids.WATER,
+        registerFallback(HbmFluids.WATER,
                 new HbmFluidStack(HbmFluids.PEROXIDE, 80, 0),
                 new HbmFluidStack(HbmFluids.HYDROGEN, 20, 0));
         for (Map.Entry<FluidType, LegacyOilFluidRecipes.PairRecipe> entry : LegacyOilFluidRecipes.crackingRecipes()) {
-            register(entry.getKey(), entry.getValue().left(), entry.getValue().right());
+            registerFallback(entry.getKey(), entry.getValue().left(), entry.getValue().right());
         }
     }
 
     private RadiolysisRecipes() {
     }
 
-    public static void register(FluidType input, HbmFluidStack left, HbmFluidStack right) {
+    private static void registerFallback(FluidType input, HbmFluidStack left, HbmFluidStack right) {
         if (input != null && input != HbmFluids.NONE && left != null && right != null) {
-            RECIPES.put(input, new Result(left, right));
+            FALLBACK_RECIPES.put(input, new Result(left, right));
         }
     }
 
@@ -58,22 +59,20 @@ public final class RadiolysisRecipes {
 
     private static Map<FluidType, Result> recipes(@Nullable RecipeManager recipeManager) {
         if (recipeManager == null) {
-            return RECIPES;
-        }
-        List<Map.Entry<FluidType, LegacyOilFluidRecipes.PairRecipe>> cracking =
-                LegacyOilFluidRecipes.crackingRecipes(recipeManager);
-        if (cracking.isEmpty()) {
-            return RECIPES;
+            return FALLBACK_RECIPES;
         }
         Map<FluidType, Result> recipes = new LinkedHashMap<>();
-        Result water = RECIPES.get(HbmFluids.WATER);
-        if (water != null) {
-            recipes.put(HbmFluids.WATER, water);
-        }
+        recipeManager.getAllRecipesFor(ModRecipes.RADIOLYSIS.type().get()).stream()
+                .sorted(Comparator.comparingInt(RadiolysisRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
+                .forEach(recipe -> recipes.put(recipe.input().type(),
+                        new Result(recipe.output1(), recipe.output2())));
+        List<Map.Entry<FluidType, LegacyOilFluidRecipes.PairRecipe>> cracking =
+                LegacyOilFluidRecipes.crackingRecipes(recipeManager);
         for (Map.Entry<FluidType, LegacyOilFluidRecipes.PairRecipe> entry : cracking) {
             LegacyOilFluidRecipes.PairRecipe pair = entry.getValue();
             if (entry.getKey() != null && pair != null) {
-                recipes.put(entry.getKey(), new Result(pair.left(), pair.right()));
+                recipes.putIfAbsent(entry.getKey(), new Result(pair.left(), pair.right()));
             }
         }
         return Collections.unmodifiableMap(recipes);

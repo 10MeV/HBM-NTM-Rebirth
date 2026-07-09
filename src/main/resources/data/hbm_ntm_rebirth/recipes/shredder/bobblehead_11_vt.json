@@ -7,5 +7,6 @@
   "output": {
     "item": "hbm_ntm_rebirth:scrap_plastic",
     "nbt": "{ScrapType:14}"
-  }
+  },
+  "source_order": 158
 }

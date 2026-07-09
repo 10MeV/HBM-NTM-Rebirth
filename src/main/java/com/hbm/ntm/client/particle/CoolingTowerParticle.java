@@ -22,6 +22,10 @@ public class CoolingTowerParticle extends TextureSheetParticle implements HbmDef
     private final float strafe;
     private final boolean windDir;
     private final float alphaMod;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private CoolingTowerParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites, float lift, float baseScale,
             float maxScale, int lifetime, boolean windDir, float strafe, float alphaMod, int color) {
@@ -45,6 +49,7 @@ public class CoolingTowerParticle extends TextureSheetParticle implements HbmDef
         this.quadSize = baseScale;
         this.hasPhysics = false;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     public static CoolingTowerParticle create(ClientLevel level, double x, double y, double z, float lift, float baseScale,
@@ -82,6 +87,7 @@ public class CoolingTowerParticle extends TextureSheetParticle implements HbmDef
         this.yd *= 0.925D;
         this.zd *= 0.925D;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -92,11 +98,18 @@ public class CoolingTowerParticle extends TextureSheetParticle implements HbmDef
     @Override
     public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(
-                buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite()), camera, partialTick,
+                HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer), camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     @Override

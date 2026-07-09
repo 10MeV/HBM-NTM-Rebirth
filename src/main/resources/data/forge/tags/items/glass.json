@@ -5,7 +5,9 @@
     "hbm_ntm_rebirth:glass_lead",
     "hbm_ntm_rebirth:glass_uranium",
     "hbm_ntm_rebirth:glass_polonium",
+    "hbm_ntm_rebirth:glass_polarized",
     "hbm_ntm_rebirth:glass_quartz",
-    "hbm_ntm_rebirth:glass_trinitite"
+    "hbm_ntm_rebirth:glass_trinitite",
+    "hbm_ntm_rebirth:glass_ash"
   ]
 }

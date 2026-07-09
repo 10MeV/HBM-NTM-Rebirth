@@ -1,0 +1,42 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.custom.ore_gold",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "count":  1,
+                            "ingredient":  {
+                                               "tag":  "forge:ores/gold"
+                                           },
+                            "legacy_ore":  "oreGold"
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "arc_material_outputs":  [
+                                 {
+                                     "amount":  144,
+                                     "material":  "Gold"
+                                 },
+                                 {
+                                     "amount":  24,
+                                     "material":  "Lead"
+                                 },
+                                 {
+                                     "amount":  162,
+                                     "material":  "Stone"
+                                 }
+                             ],
+    "pools":  [
+
+              ],
+    "source_order":  2289
+}

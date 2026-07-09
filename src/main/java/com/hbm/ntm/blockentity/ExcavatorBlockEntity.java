@@ -789,10 +789,10 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
         Direction dir = facing();
         Direction rot = dir.getCounterClockWise();
         return List.of(
-                new FluidPort(offset(dir, 4).offset(offset(rot, 1)), dir),
-                new FluidPort(offset(dir, 4).offset(offset(rot.getOpposite(), 1)), dir),
-                new FluidPort(offset(rot, 4), rot),
-                new FluidPort(offset(rot.getOpposite(), 4), rot.getOpposite()));
+                new FluidPort(offset(dir, 4).offset(offset(rot, 1)).above(), dir),
+                new FluidPort(offset(dir, 4).offset(offset(rot.getOpposite(), 1)).above(), dir),
+                new FluidPort(offset(rot, 4).above(), rot),
+                new FluidPort(offset(rot.getOpposite(), 4).above(), rot.getOpposite()));
     }
 
     @Override
@@ -800,10 +800,10 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
         Direction dir = facing();
         Direction rot = dir.getCounterClockWise();
         return List.of(
-                new EnergyPort(offset(dir, 4).offset(offset(rot, 1)), dir),
-                new EnergyPort(offset(dir, 4).offset(offset(rot.getOpposite(), 1)), dir),
-                new EnergyPort(offset(rot, 4), rot),
-                new EnergyPort(offset(rot.getOpposite(), 4), rot.getOpposite()));
+                new EnergyPort(offset(dir, 4).offset(offset(rot, 1)).above(), dir),
+                new EnergyPort(offset(dir, 4).offset(offset(rot.getOpposite(), 1)).above(), dir),
+                new EnergyPort(offset(rot, 4).above(), rot),
+                new EnergyPort(offset(rot.getOpposite(), 4).above(), rot.getOpposite()));
     }
 
     @Override

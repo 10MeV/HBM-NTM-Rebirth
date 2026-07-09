@@ -21,6 +21,7 @@ import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmWorldUtil;
+import com.hbm.ntm.world.WorldUtil;
 import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import net.minecraft.core.BlockPos;
@@ -48,7 +49,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
@@ -99,6 +99,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     public static final int SLOT_AMMO_END = 9;
     public static final int SLOT_BATTERY = 10;
     public static final int SLOT_COUNT = 11;
+    public static final double LEGACY_USE_DISTANCE_SQR = 128.0D;
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -579,7 +580,11 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     }
 
     protected Vec3 getEntityPos(Entity entity) {
-        return new Vec3(entity.getX(), entity.getY() + entity.getBbHeight() * 0.5D, entity.getZ());
+        AABB bounds = entity.getBoundingBox();
+        return new Vec3(
+                (bounds.minX + bounds.maxX) * 0.5D,
+                (bounds.minY + bounds.maxY) * 0.5D,
+                (bounds.minZ + bounds.maxZ) * 0.5D);
     }
 
     protected void seekNewTarget() {
@@ -618,8 +623,8 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     }
 
     protected void turnTowardsAngle(double targetPitch, double targetYaw) {
-        double turnYaw = Math.toRadians(getTurretYawSpeed());
-        double turnPitch = Math.toRadians(getTurretPitchSpeed());
+        double turnYaw = getTurretYawSpeed() * Mth.DEG_TO_RAD;
+        double turnPitch = getTurretPitchSpeed() * Mth.DEG_TO_RAD;
         double pi2 = Math.PI * 2.0D;
 
         if (Math.abs(rotationPitch - targetPitch) < turnPitch || Math.abs(rotationPitch - targetPitch) > pi2 - turnPitch) {
@@ -653,7 +658,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         double deltaAngle = Math.sqrt(deltaYaw * deltaYaw + deltaPitch * deltaPitch);
         rotationYaw = rotationYaw % pi2;
         rotationPitch = rotationPitch % pi2;
-        aligned = deltaAngle <= Math.toRadians(getAcceptableInaccuracy());
+        aligned = deltaAngle <= getAcceptableInaccuracy() * Mth.DEG_TO_RAD;
     }
 
     protected boolean entityInLineOfSight(Entity entity) {
@@ -688,8 +693,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         if (length < getDetectorGrace() || length > getDetectorRange() * 1.1D) {
             return false;
         }
-        int height = level.getHeight(Heightmap.Types.MOTION_BLOCKING,
-                Mth.floor(entity.getX()), Mth.floor(entity.getZ()));
+        int height = WorldUtil.legacyGetHeightValue(level, Mth.floor(entity.getX()), Mth.floor(entity.getZ()));
         return height < entity.getY() + entity.getBbHeight();
     }
 
@@ -729,6 +733,10 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
 
     protected void clearTarget() {
         target = null;
+        targetPos = null;
+    }
+
+    protected void clearTargetPosition() {
         targetPos = null;
     }
 
@@ -973,6 +981,18 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         }
     }
 
+    public void openInventory() {
+        if (level != null) {
+            LegacySoundPlayer.playSoundEffect(level, worldPosition, "hbm:block.openC", 1.0F, 1.0F);
+        }
+    }
+
+    public void closeInventory() {
+        if (level != null) {
+            LegacySoundPlayer.playSoundEffect(level, worldPosition, "hbm:block.closeC", 1.0F, 1.0F);
+        }
+    }
+
     protected void triggerBarrelSpin(float degrees) {
         spin = normalizeAnimationAngle(spin + degrees);
     }
@@ -1095,7 +1115,7 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
         return player.containerMenu instanceof TurretMenu menu && menu.getBlockEntity() == this
-                && HbmInventoryMenuHelper.stillValidBlockEntity(player, this, 64.0D);
+                && HbmInventoryMenuHelper.stillValidBlockEntity(player, this, LEGACY_USE_DISTANCE_SQR);
     }
 
     @Override

@@ -23,17 +23,18 @@ public final class SolderingStationRecipeRuntime {
 
     public static boolean matchesGroup(ItemStack[] stacks, List<HbmIngredient> ingredients) {
         List<HbmIngredient> safeIngredients = ingredients == null ? List.of() : ingredients;
-        if (safeIngredients.isEmpty()) {
-            return true;
-        }
         ItemStack[] safeStacks = stacks == null ? new ItemStack[0] : stacks;
-        Set<Integer> matchedSlots = new HashSet<>();
-        for (HbmIngredient ingredient : safeIngredients) {
+        Set<Integer> matchedIngredients = new HashSet<>();
+        for (ItemStack rawStack : safeStacks) {
+            ItemStack stack = rawStack == null ? ItemStack.EMPTY : rawStack;
+            if (stack.isEmpty()) {
+                continue;
+            }
             boolean matched = false;
-            for (int i = 0; i < safeStacks.length; i++) {
-                ItemStack stack = safeStacks[i] == null ? ItemStack.EMPTY : safeStacks[i];
-                if (!matchedSlots.contains(i) && ingredient.test(stack)) {
-                    matchedSlots.add(i);
+            for (int i = 0; i < safeIngredients.size(); i++) {
+                HbmIngredient ingredient = safeIngredients.get(i);
+                if (!matchedIngredients.contains(i) && ingredient.test(stack)) {
+                    matchedIngredients.add(i);
                     matched = true;
                     break;
                 }
@@ -42,7 +43,7 @@ public final class SolderingStationRecipeRuntime {
                 return false;
             }
         }
-        return true;
+        return matchedIngredients.size() == safeIngredients.size();
     }
 
     public static boolean isTopping(Level level, ItemStack stack) {

@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/schrabidium"
+    },
+    "legacy_ore": "ingotSchrabidium"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:plate_schrabidium"
+  },
+  "source_order": 18,
+  "stamp": "plate"
+}

@@ -8,7 +8,6 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluids;
-import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -17,6 +16,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlockEntity> {
     private static final ResourceLocation BARREL_PLASTIC = ObjBlockModels.texture("barrel_plastic");
@@ -34,10 +34,17 @@ public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlock
     }
 
     @Override
+    public boolean shouldRender(FluidBarrelBlockEntity barrel, Vec3 cameraPos) {
+        return hasRenderableFluid(barrel)
+                && BlockEntityRenderer.super.shouldRender(barrel, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(barrel, getViewDistance());
+    }
+
+    @Override
     public void render(FluidBarrelBlockEntity barrel, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         FluidType type = barrel.getTank().getTankType();
-        if (type == null || type == HbmFluids.NONE || barrel.getTank().getFill() <= 0) {
+        if (!hasRenderableFluid(barrel)) {
             return;
         }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(barrel, getViewDistance())) {
@@ -57,12 +64,15 @@ public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlock
                     packedOverlay);
             renderConnectorIfConnected(barrel, Direction.SOUTH, -90.0F, barrelTexture, poseStack, buffer, modelLight,
                     packedOverlay);
-            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                    queuedPose -> LegacyFluidTankRenderHelper.renderDangerDiamonds(
-                            LegacyTileRenderPlans.fluidBarrelDangerDiamondPlan(true), type,
-                            queuedPose, buffer, modelLight, packedOverlay));
+            LegacyFluidTankRenderHelper.enqueueFluidBarrelDiamonds(PresentStage.AFTER_BLOCK_ENTITIES,
+                    type, poseStack, buffer, modelLight, packedOverlay);
         }
         poseStack.popPose();
+    }
+
+    private static boolean hasRenderableFluid(FluidBarrelBlockEntity barrel) {
+        FluidType type = barrel.getTank().getTankType();
+        return type != null && type != HbmFluids.NONE && barrel.getTank().getFill() > 0;
     }
 
     private static void renderConnectorIfConnected(FluidBarrelBlockEntity barrel, Direction direction, float yawDegrees,

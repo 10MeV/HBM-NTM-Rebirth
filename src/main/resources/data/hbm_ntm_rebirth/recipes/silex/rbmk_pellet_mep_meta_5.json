@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_mep"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_mep",
+      "legacy_meta": 5
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "ir",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:powder_xe135_tiny",
+      "weight": 1
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_pu_mix",
+      "weight": 84
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_short_tiny",
+      "nbt": "{Damage:3}",
+      "weight": 10
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_short_tiny",
+      "nbt": "{Damage:4}",
+      "weight": 5
+    }
+  ],
+  "source_order": 36
+}

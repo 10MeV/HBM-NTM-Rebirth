@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 50,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "minecraft:sugar"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/saltpeter"
+      },
+      "legacy_ore": "dustSaltpeter"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:sand"
+      },
+      "legacy_ore": "sand"
+    }
+  ],
+  "internal_name": "chem.dynamite",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:ball_dynamite"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 60
+}

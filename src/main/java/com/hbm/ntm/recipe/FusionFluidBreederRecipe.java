@@ -25,14 +25,20 @@ public class FusionFluidBreederRecipe implements Recipe<Container> {
     private final ResourceLocation id;
     private final HbmFluidStack input;
     private final HbmFluidStack output;
+    private final int sourceOrder;
 
     public FusionFluidBreederRecipe(ResourceLocation id, HbmFluidStack input, HbmFluidStack output) {
+        this(id, input, output, Integer.MAX_VALUE);
+    }
+
+    public FusionFluidBreederRecipe(ResourceLocation id, HbmFluidStack input, HbmFluidStack output, int sourceOrder) {
         if (input.isEmpty() || output.isEmpty()) {
             throw new IllegalArgumentException("Fusion fluid breeder recipe requires non-empty input and output");
         }
         this.id = id;
         this.input = input;
         this.output = output;
+        this.sourceOrder = sourceOrder;
     }
 
     public HbmFluidStack input() {
@@ -41,6 +47,10 @@ public class FusionFluidBreederRecipe implements Recipe<Container> {
 
     public HbmFluidStack output() {
         return output;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
     }
 
     public boolean matches(FluidType type, int fill) {
@@ -105,19 +115,24 @@ public class FusionFluidBreederRecipe implements Recipe<Container> {
             if (input.isEmpty() || output.isEmpty()) {
                 throw new JsonSyntaxException("Invalid fusion fluid breeder recipe " + id);
             }
-            return new FusionFluidBreederRecipe(id, input, output);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
+            return new FusionFluidBreederRecipe(id, input, output, sourceOrder);
         }
 
         @Nullable
         @Override
         public FusionFluidBreederRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buffer) {
-            return new FusionFluidBreederRecipe(id, readFluidStack(buffer), readFluidStack(buffer));
+            HbmFluidStack input = readFluidStack(buffer);
+            HbmFluidStack output = readFluidStack(buffer);
+            int sourceOrder = buffer.readVarInt();
+            return new FusionFluidBreederRecipe(id, input, output, sourceOrder);
         }
 
         @Override
         public void toNetwork(FriendlyByteBuf buffer, FusionFluidBreederRecipe recipe) {
             writeFluidStack(buffer, recipe.input);
             writeFluidStack(buffer, recipe.output);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
 
         private static HbmFluidStack readFluidStack(JsonObject object) {

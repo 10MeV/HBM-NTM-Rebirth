@@ -1,10 +1,25 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/rare_earth" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/rare_earth"
+    },
+    "legacy_ore": "oreRareEarth"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_desh_mix" },
-    { "item": "hbm_ntm_rebirth:nugget_zirconium" },
-    { "item": "hbm_ntm_rebirth:nugget_zirconium" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_desh_mix"
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_zirconium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_zirconium"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 14
 }

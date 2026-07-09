@@ -52,7 +52,7 @@ public class BlockPos extends com.hbm.ntm.util.fauxpointtwelve.BlockPos {
     }
 
     public BlockPos rotate(Rotation rotation) {
-        return switch (rotation == null ? Rotation.NONE : rotation) {
+        return switch (rotation) {
             case NONE -> this;
             case CLOCKWISE_90 -> new BlockPos(-getZ(), getY(), getX());
             case CLOCKWISE_180 -> new BlockPos(-getX(), getY(), -getZ());
@@ -75,6 +75,27 @@ public class BlockPos extends com.hbm.ntm.util.fauxpointtwelve.BlockPos {
         return new BlockPos(getX() + direction.getStepX() * distance,
                 getY() + direction.getStepY() * distance,
                 getZ() + direction.getStepZ() * distance);
+    }
+
+    public BlockPos offset(ForgeDirection direction) {
+        return offset(direction, 1);
+    }
+
+    public BlockPos offset(ForgeDirection direction, int distance) {
+        return new BlockPos(getX() + direction.offsetX * distance,
+                getY() + direction.offsetY * distance,
+                getZ() + direction.offsetZ * distance);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof BlockPos pos)) {
+            return false;
+        }
+        return getX() == pos.getX() && getY() == pos.getY() && getZ() == pos.getZ();
     }
 
     @Override

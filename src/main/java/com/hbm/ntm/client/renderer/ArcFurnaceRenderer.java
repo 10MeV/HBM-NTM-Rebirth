@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ArcFurnaceBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
@@ -9,7 +10,6 @@ import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import java.util.List;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -30,6 +30,12 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(ArcFurnaceBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -55,38 +61,26 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
             poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
             LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
-            LegacyTileRenderPlans.ArcFurnacePlan plan = LegacyTileRenderPlans.arcFurnacePlan(
-                    blockEntity.getPreviousLid(),
-                    blockEntity.getLid(),
-                    blockEntity.isProgressing(),
-                    blockEntity.getLevel() == null ? 0L : blockEntity.getLevel().getGameTime(),
-                    partialTick,
-                    blockEntity.getLiquidAmount(),
-                    blockEntity.getMaxLiquid(),
-                    blockEntity.hasMaterial(),
-                    electrodeStates(blockEntity));
-            LegacyArcFurnaceRenderHelper.renderStaticShell(MODEL, poseStack, buffer, modelLight, packedOverlay,
-                    renderMode);
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                LegacyArcFurnaceRenderHelper.renderStaticShell(MODEL, poseStack, buffer, modelLight, packedOverlay,
+                        renderMode);
+            }
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
-                LegacyArcFurnaceRenderHelper.renderAnimatedPlan(MODEL, plan, poseStack, buffer, modelLight,
-                        packedOverlay, renderMode);
+                LegacyArcFurnaceRenderHelper.renderAnimatedDirect(MODEL,
+                        blockEntity.getPreviousLid(),
+                        blockEntity.getLid(),
+                        blockEntity.isProgressing(),
+                        blockEntity.getLevel() == null ? 0L : blockEntity.getLevel().getGameTime(),
+                        partialTick,
+                        blockEntity.getLiquidAmount(),
+                        blockEntity.getMaxLiquid(),
+                        blockEntity.hasMaterial(),
+                        blockEntity.electrodeStateInSlot(ArcFurnaceBlockEntity.SLOT_ELECTRODE_0),
+                        blockEntity.electrodeStateInSlot(ArcFurnaceBlockEntity.SLOT_ELECTRODE_1),
+                        blockEntity.electrodeStateInSlot(ArcFurnaceBlockEntity.SLOT_ELECTRODE_2),
+                        poseStack, buffer, modelLight, packedOverlay, renderMode);
             }
             poseStack.popPose();
         }
-    }
-
-    private static List<LegacyTileRenderPlans.ArcElectrodeState> electrodeStates(ArcFurnaceBlockEntity blockEntity) {
-        return blockEntity.electrodeStates().stream()
-                .map(ArcFurnaceRenderer::electrodeState)
-                .toList();
-    }
-
-    private static LegacyTileRenderPlans.ArcElectrodeState electrodeState(byte state) {
-        return switch (state) {
-            case 1 -> LegacyTileRenderPlans.ArcElectrodeState.FRESH;
-            case 2 -> LegacyTileRenderPlans.ArcElectrodeState.USED;
-            case 3 -> LegacyTileRenderPlans.ArcElectrodeState.DEPLETED;
-            default -> LegacyTileRenderPlans.ArcElectrodeState.NONE;
-        };
     }
 }

@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/copper"
+    },
+    "legacy_ore": "oreCopper"
+  },
+  "output": [
+    {
+      "amount": 144,
+      "material": "Copper"
+    },
+    {
+      "amount": 162,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 33
+}

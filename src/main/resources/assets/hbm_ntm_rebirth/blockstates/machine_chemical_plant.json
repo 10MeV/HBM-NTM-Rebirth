@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=east": {
+    "facing=east,frame=false": {
       "model": "hbm_ntm_rebirth:block/machine_chemical_plant"
     },
-    "facing=north": {
+    "facing=east,frame=true": {
+      "model": "hbm_ntm_rebirth:block/machine_chemical_plant_frame"
+    },
+    "facing=north,frame=false": {
       "model": "hbm_ntm_rebirth:block/machine_chemical_plant",
       "y": 90
     },
-    "facing=south": {
+    "facing=north,frame=true": {
+      "model": "hbm_ntm_rebirth:block/machine_chemical_plant_frame",
+      "y": 90
+    },
+    "facing=south,frame=false": {
       "model": "hbm_ntm_rebirth:block/machine_chemical_plant",
       "y": 270
     },
-    "facing=west": {
+    "facing=south,frame=true": {
+      "model": "hbm_ntm_rebirth:block/machine_chemical_plant_frame",
+      "y": 270
+    },
+    "facing=west,frame=false": {
       "model": "hbm_ntm_rebirth:block/machine_chemical_plant",
+      "y": 180
+    },
+    "facing=west,frame=true": {
+      "model": "hbm_ntm_rebirth:block/machine_chemical_plant_frame",
       "y": 180
     }
   }

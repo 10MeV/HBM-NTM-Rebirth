@@ -1,4 +1,6 @@
 {
+  "loader": "hbm_ntm_rebirth:small_pylon_loader",
+  "texture": "hbm_ntm_rebirth:block/network/model_pylon",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/network/model_pylon"
   }

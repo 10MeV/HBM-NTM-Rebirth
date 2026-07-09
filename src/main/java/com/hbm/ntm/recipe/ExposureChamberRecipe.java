@@ -96,7 +96,7 @@ public class ExposureChamberRecipe implements Recipe<Container> {
             if (output.isEmpty()) {
                 throw new JsonSyntaxException("Exposure chamber output cannot be empty");
             }
-            int sourceOrder = GsonHelper.getAsInt(json, "source_order", 0);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
             return new ExposureChamberRecipe(id, particle, ingredient, output, sourceOrder);
         }
 

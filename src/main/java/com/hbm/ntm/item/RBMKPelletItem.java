@@ -8,7 +8,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class RBMKPelletItem extends Item {
+public class RBMKPelletItem extends LegacyNuclearWasteItem {
     public static final ResourceLocation META_PROPERTY = new ResourceLocation(HbmNtm.MOD_ID, "rbmk_pellet_meta");
 
     private final RBMKFuelRodRegistry.Entry entry;

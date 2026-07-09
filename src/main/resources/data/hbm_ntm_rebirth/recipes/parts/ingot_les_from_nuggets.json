@@ -1,0 +1,17 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "misc",
+    "pattern":  [
+                    "###",
+                    "###",
+                    "###"
+                ],
+    "key":  {
+                "#":  {
+                          "item":  "hbm_ntm_rebirth:nugget_les"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:ingot_les"
+               }
+}

@@ -3,13 +3,27 @@
   "duration": 100,
   "input_fluids": [],
   "input_items": [
-    { "count": 8, "ingredient": { "item": "hbm_ntm_rebirth:plate_steel" } },
-    { "count": 16, "ingredient": { "tag": "forge:dense_wires/gold" } }
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:dense_wires/gold"
+      },
+      "legacy_ore": "wireDenseGold"
+    }
   ],
   "internal_name": "ass.capacitorgold",
   "output_fluids": [],
   "output_items": [
-    { "item": "hbm_ntm_rebirth:capacitor_gold" }
+    {
+      "item": "hbm_ntm_rebirth:capacitor_gold"
+    }
   ],
   "pools": [],
   "power": 100,

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "variant=0": [
+      { "model": "hbm_ntm_rebirth:block/glyphid_base" },
+      { "model": "hbm_ntm_rebirth:block/glyphid_base_alt" }
+    ],
+    "variant=1": [
+      { "model": "hbm_ntm_rebirth:block/glyphid_base_infested" },
+      { "model": "hbm_ntm_rebirth:block/glyphid_base_infested_alt" }
+    ],
+    "variant=2": [
+      { "model": "hbm_ntm_rebirth:block/glyphid_base_rad" },
+      { "model": "hbm_ntm_rebirth:block/glyphid_base_rad_alt" }
+    ]
+  }
+}

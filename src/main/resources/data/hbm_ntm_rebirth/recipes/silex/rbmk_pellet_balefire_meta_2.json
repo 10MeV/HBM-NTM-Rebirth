@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_balefire"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_balefire",
+      "legacy_meta": 2
+    }
+  },
+  "fluid_produced": 400,
+  "fluid_consumed": 100,
+  "laser_strength": "uv",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:powder_balefire",
+      "weight": 50
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_tiny",
+      "weight": 50
+    }
+  ],
+  "source_order": 159
+}

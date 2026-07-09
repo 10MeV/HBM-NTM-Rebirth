@@ -7,5 +7,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:biogas",
                   "amount":  250
-              }
+              },
+    "source_order":  3
 }

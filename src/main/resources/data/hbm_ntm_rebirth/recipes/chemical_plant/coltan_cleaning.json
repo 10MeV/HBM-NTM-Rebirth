@@ -1,0 +1,51 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 60,
+  "input_fluids": [
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:peroxide"
+    },
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:hydrogen"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:dusts/coltan"
+      },
+      "legacy_ore": "dustColtan"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/coal"
+      },
+      "legacy_ore": "dustCoal"
+    }
+  ],
+  "internal_name": "chem.coltancleaning",
+  "output_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:powder_coltan"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_niobium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:dust"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 55
+}

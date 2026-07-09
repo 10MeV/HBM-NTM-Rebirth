@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "auto_switch_group": "autoswitch.weldPlates",
+  "duration": 600,
+  "ignitionTemp": 500000,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:oxygen"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:cast_plates/tungsten"
+      },
+      "legacy_ore": "plateCastTungsten"
+    }
+  ],
+  "internal_name": "plsm.weldtungsten",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:plate_welded_tungsten"
+    }
+  ],
+  "pools": [],
+  "power": 250000,
+  "source_order": 115
+}

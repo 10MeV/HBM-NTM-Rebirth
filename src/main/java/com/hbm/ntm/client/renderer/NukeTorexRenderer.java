@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyBillboardRenderer;
 import com.hbm.ntm.client.obj.LegacyBillboardRenderer.CameraBasis;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.effect.NukeTorexEntity.Cloudlet;
 import com.hbm.ntm.entity.effect.NukeTorexEntity.TorexType;
@@ -37,8 +38,9 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE.renderType(CLOUDLET_TEXTURE);
     private static final RenderType FLARE_RENDER_TYPE =
             LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE.renderType(FLARE_TEXTURE);
-    private static final Comparator<RenderCloudlet> GLOBAL_FAR_TO_NEAR =
-            Comparator.comparingDouble((RenderCloudlet entry) -> entry.distanceToCameraSqr).reversed();
+    private static final List<Cloudlet> CLOUDLET_SCRATCH = new ArrayList<>();
+    private static final Comparator<Cloudlet> GLOBAL_FAR_TO_NEAR =
+            Comparator.comparingDouble((Cloudlet cloudlet) -> cloudlet.renderSortDistanceSq).reversed();
 
     public NukeTorexRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -48,7 +50,7 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
     public void render(NukeTorexEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        CameraBasis cameraBasis = LegacyBillboardRenderer.cameraBasis(camera);
+        CameraBasis cameraBasis = LegacyBillboardRenderer.cameraBasisScratch(camera);
 
         poseStack.pushPose();
         int visualAge = Math.max(entity.tickCount, entity.getSyncedAge());
@@ -63,36 +65,49 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
 
     public static void renderCloudletsAfterLevel(ClientLevel level, Camera camera, float partialTick,
             PoseStack poseStack, MultiBufferSource.BufferSource buffer) {
-        List<RenderCloudlet> cloudlets = collectCloudlets(level, camera.getPosition());
-        if (cloudlets.isEmpty()) {
+        Vec3 cameraPos = camera.getPosition();
+        collectCloudlets(level, cameraPos);
+        if (CLOUDLET_SCRATCH.isEmpty()) {
             return;
         }
 
-        cloudlets.sort(GLOBAL_FAR_TO_NEAR);
-        PoseStack.Pose pose = poseStack.last();
-        Vec3 cameraPos = camera.getPosition();
-        CameraBasis cameraBasis = LegacyBillboardRenderer.cameraBasis(camera);
+        try {
+            if (CLOUDLET_SCRATCH.size() > 1) {
+                CLOUDLET_SCRATCH.sort(GLOBAL_FAR_TO_NEAR);
+            }
+            PoseStack.Pose pose = poseStack.last();
+            CameraBasis cameraBasis = LegacyBillboardRenderer.cameraBasisScratch(camera);
 
-        VertexConsumer consumer = buffer.getBuffer(CLOUDLET_RENDER_TYPE);
-        for (RenderCloudlet entry : cloudlets) {
-            renderBillboard(consumer, pose, cameraBasis, entry.cloudlet(), partialTick,
-                    cameraPos.x, cameraPos.y, cameraPos.z);
+            VertexConsumer consumer = buffer.getBuffer(CLOUDLET_RENDER_TYPE);
+            for (int i = 0; i < CLOUDLET_SCRATCH.size(); i++) {
+                Cloudlet cloudlet = CLOUDLET_SCRATCH.get(i);
+                renderBillboard(consumer, pose, cameraBasis, cloudlet, partialTick,
+                        cameraPos.x, cameraPos.y, cameraPos.z);
+            }
+            buffer.endBatch(CLOUDLET_RENDER_TYPE);
+        } finally {
+            CLOUDLET_SCRATCH.clear();
         }
-        buffer.endBatch(CLOUDLET_RENDER_TYPE);
     }
 
-    private static List<RenderCloudlet> collectCloudlets(ClientLevel level, Vec3 cameraPos) {
-        List<RenderCloudlet> entries = new ArrayList<>();
+    private static void collectCloudlets(ClientLevel level, Vec3 cameraPos) {
+        CLOUDLET_SCRATCH.clear();
+        double cameraX = cameraPos.x;
+        double cameraY = cameraPos.y;
+        double cameraZ = cameraPos.z;
         for (Entity entity : level.entitiesForRendering()) {
             if (!(entity instanceof NukeTorexEntity torex) || torex.cloudlets.isEmpty()) {
                 continue;
             }
-            for (Cloudlet cloudlet : torex.cloudlets) {
-                entries.add(new RenderCloudlet(cloudlet,
-                        cameraPos.distanceToSqr(cloudlet.posX, cloudlet.posY, cloudlet.posZ)));
+            for (int i = 0; i < torex.cloudlets.size(); i++) {
+                Cloudlet cloudlet = torex.cloudlets.get(i);
+                double dx = cameraX - cloudlet.posX;
+                double dy = cameraY - cloudlet.posY;
+                double dz = cameraZ - cloudlet.posZ;
+                cloudlet.renderSortDistanceSq = dx * dx + dy * dy + dz * dz;
+                CLOUDLET_SCRATCH.add(cloudlet);
             }
         }
-        return entries;
     }
 
     private static void renderBillboard(VertexConsumer consumer, PoseStack.Pose pose, CameraBasis cameraBasis, Cloudlet cloudlet,
@@ -102,17 +117,15 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             return;
         }
 
-        Vec3 pos = cloudlet.getInterpPos(partialTick);
-        float x = (float) (pos.x - originX);
-        float y = (float) (pos.y - originY);
-        float z = (float) (pos.z - originZ);
+        float x = (float) (cloudlet.getInterpRenderX(partialTick) - originX);
+        float y = (float) (cloudlet.getInterpRenderY(partialTick) - originY);
+        float z = (float) (cloudlet.getInterpRenderZ(partialTick) - originZ);
         float scale = cloudlet.getScale();
 
         float brightness = cloudlet.type == TorexType.CONDENSATION ? 0.9F : 0.75F * cloudlet.colorMod;
-        Vec3 color = cloudlet.getInterpColor(partialTick);
-        float red = Mth.clamp((float) color.x * brightness, 0.0F, 1.0F);
-        float green = Mth.clamp((float) color.y * brightness, 0.0F, 1.0F);
-        float blue = Mth.clamp((float) color.z * brightness, 0.0F, 1.0F);
+        float red = Mth.clamp((float) cloudlet.getInterpRenderRed(partialTick) * brightness, 0.0F, 1.0F);
+        float green = Mth.clamp((float) cloudlet.getInterpRenderGreen(partialTick) * brightness, 0.0F, 1.0F);
+        float blue = Mth.clamp((float) cloudlet.getInterpRenderBlue(partialTick) * brightness, 0.0F, 1.0F);
         int light = LightTexture.FULL_BRIGHT;
 
         LegacyBillboardRenderer.billboardRgbaF(consumer, pose, cameraBasis,
@@ -123,7 +136,7 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
             CameraBasis cameraBasis) {
         double age = Math.min(entity.tickCount + partialTick, 100.0D);
         float alpha = (float) ((100.0D - age) / 100.0D);
-        Random random = new Random(entity.getId());
+        Random random = LegacyRenderRandom.seeded(entity.getId());
         VertexConsumer consumer = buffer.getBuffer(FLARE_RENDER_TYPE);
         PoseStack.Pose pose = poseStack.last();
 
@@ -149,9 +162,6 @@ public class NukeTorexRenderer extends EntityRenderer<NukeTorexEntity> {
         }
 
         entity.applyClientShockwaveShake(player);
-    }
-
-    private record RenderCloudlet(Cloudlet cloudlet, double distanceToCameraSqr) {
     }
 
     @Override

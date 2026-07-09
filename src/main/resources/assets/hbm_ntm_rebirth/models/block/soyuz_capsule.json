@@ -1,7 +1,20 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/soyuz_lander.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, -0.25, 0.5],
+    "rotation": [0, -25, 15],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Capsule": true,
+    "Chute": false
+  },
   "textures": {
-    "all": "hbm_ntm_rebirth:block/soyuz/capsule/soyuz_lander",
-    "particle": "hbm_ntm_rebirth:block/soyuz/capsule/soyuz_lander"
+    "particle": "hbm_ntm_rebirth:block/soyuz/capsule/soyuz_lander",
+    "default": "hbm_ntm_rebirth:models/soyuz_capsule/soyuz_lander"
   }
 }

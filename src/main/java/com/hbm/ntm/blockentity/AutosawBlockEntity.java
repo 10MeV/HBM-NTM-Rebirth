@@ -52,7 +52,7 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
     private static final int FELL_VERTICAL_RANGE = 32;
     private static final int FELL_MAX_BASE_DEPTH = FELL_VERTICAL_RANGE / 2;
     private static final int TANK_CAPACITY = 100;
-    private static final double CUT_ANGLE = Math.toRadians(5.0D);
+    private static final double CUT_ANGLE = 5.0D * Mth.DEG_TO_RAD;
     private static final int[][] EIGHTEEN_DIRS = {
             {1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1},
             {1, 1, 0}, {1, -1, 0}, {-1, 1, 0}, {-1, -1, 0},
@@ -139,7 +139,7 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
                 autosaw.lastSpin -= 360.0F;
             }
             if (level.getGameTime() % 4L == 0L) {
-                Vec3 exhaust = new Vec3(0.625D, 0.0D, 1.625D).yRot((float) -Math.toRadians(autosaw.yaw));
+                Vec3 exhaust = new Vec3(0.625D, 0.0D, 1.625D).yRot(-autosaw.yaw * Mth.DEG_TO_RAD);
                 level.addParticle(ParticleTypes.SMOKE,
                         pos.getX() + 0.5D + exhaust.x,
                         pos.getY() + 2.0625D,
@@ -319,8 +319,8 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
 
     private Vec3 bladeTip(BlockPos pos) {
         Vec3 pivot = new Vec3(pos.getX() + 0.5D, pos.getY() + 1.75D, pos.getZ() + 0.5D);
-        float armAngle = (float) Math.toRadians(80.0F - pitch);
-        float turn = (float) -Math.toRadians(yaw);
+        float armAngle = (80.0F - pitch) * Mth.DEG_TO_RAD;
+        float turn = -yaw * Mth.DEG_TO_RAD;
         Vec3 upperArm = new Vec3(0.0D, 0.0D, -4.0D).xRot(armAngle).yRot(turn);
         Vec3 lowerArm = new Vec3(0.0D, 0.0D, -4.0D).xRot(-armAngle).yRot(turn);
         Vec3 armTip = new Vec3(0.0D, 0.0D, -2.0D).yRot(turn);
@@ -328,7 +328,7 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private boolean findTargetInSweep(Level level, BlockPos pos) {
-        double rotationYawRads = Math.toRadians((yaw + 270.0F) % 360.0F);
+        double rotationYawRads = ((yaw + 270.0F) % 360.0F) * Mth.DEG_TO_RAD;
         for (int dx = -MAX_DIST; dx <= MAX_DIST; dx++) {
             for (int dz = -MAX_DIST; dz <= MAX_DIST; dz++) {
                 int sqrDst = dx * dx + dz * dz;

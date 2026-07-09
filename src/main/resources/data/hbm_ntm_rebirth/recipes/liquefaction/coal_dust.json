@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:dusts/coal"
+  "source_order": 1,
+  "input": {
+    "ingredient": {
+      "tag": "forge:dusts/coal"
+    },
+    "count": 1,
+    "legacy_ore": "dustCoal"
   },
   "output": {
     "amount": 100,

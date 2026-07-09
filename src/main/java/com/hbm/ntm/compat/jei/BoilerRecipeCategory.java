@@ -1,31 +1,35 @@
 package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.recipe.BoilerRecipeRuntime;
+import com.hbm.ntm.registry.ModBlocks;
+import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
-import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
-import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class BoilerRecipeCategory implements IRecipeCategory<BoilerRecipeRuntime.DisplayRecipe> {
-    private static final int WIDTH = 132;
-    private static final int HEIGHT = 58;
-
     private final RecipeType<BoilerRecipeRuntime.DisplayRecipe> type;
     private final IDrawable icon;
-    private final IDrawableStatic arrow;
+    private final IDrawableStatic background;
+    private final IDrawableStatic slotBackground;
+    private final IDrawableStatic machineBackground;
+    private final List<ItemStack> catalysts;
 
     BoilerRecipeCategory(RecipeType<BoilerRecipeRuntime.DisplayRecipe> type, ItemLike catalyst,
             IGuiHelper guiHelper) {
         this.type = type;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
-        this.arrow = guiHelper.getRecipeArrow();
+        this.background = LegacyNeiUniversalLayout.background(guiHelper);
+        this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
+        this.machineBackground = LegacyNeiUniversalLayout.machineBackground(guiHelper);
+        this.catalysts = List.of(new ItemStack(catalyst), new ItemStack(ModBlocks.MACHINE_INDUSTRIAL_BOILER.get()));
     }
 
     @Override
@@ -40,12 +44,12 @@ public final class BoilerRecipeCategory implements IRecipeCategory<BoilerRecipeR
 
     @Override
     public int getWidth() {
-        return WIDTH;
+        return LegacyNeiUniversalLayout.WIDTH;
     }
 
     @Override
     public int getHeight() {
-        return HEIGHT;
+        return LegacyNeiUniversalLayout.HEIGHT;
     }
 
     @Override
@@ -54,22 +58,17 @@ public final class BoilerRecipeCategory implements IRecipeCategory<BoilerRecipeR
     }
 
     @Override
+    public IDrawable getBackground() {
+        return background;
+    }
+
+    @Override
     public void setRecipe(IRecipeLayoutBuilder builder, BoilerRecipeRuntime.DisplayRecipe recipe,
             IFocusGroup focuses) {
-        JeiFluidSlots.addFluidSlot(builder, recipe.input(), true, 12, 21);
-        JeiFluidSlots.addFluidSlot(builder, recipe.output(), false, 96, 21);
-    }
-
-    @Override
-    public void draw(BoilerRecipeRuntime.DisplayRecipe recipe, IRecipeSlotsView recipeSlotsView,
-            net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        arrow.draw(guiGraphics, 54, 21);
-    }
-
-    @Override
-    public void getTooltip(ITooltipBuilder tooltip, BoilerRecipeRuntime.DisplayRecipe recipe,
-            IRecipeSlotsView recipeSlotsView, double mouseX, double mouseY) {
-        tooltip.add(Component.literal("Heat: " + recipe.heatRequired() + " TU"));
-        tooltip.add(Component.literal("Boiler efficiency: " + recipe.efficiency()));
+        LegacyNeiUniversalLayout.addInputSlots(builder, slotBackground,
+                List.of(List.of(LegacyNeiUniversalLayout.fluidIcon(recipe.input()))));
+        LegacyNeiUniversalLayout.addOutputSlots(builder, slotBackground,
+                List.of(List.of(LegacyNeiUniversalLayout.fluidIcon(recipe.output()))));
+        LegacyNeiUniversalLayout.addMachineCatalyst(builder, machineBackground, catalysts);
     }
 }

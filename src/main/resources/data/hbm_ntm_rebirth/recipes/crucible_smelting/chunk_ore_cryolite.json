@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:chunk_ore_cryolite"
+    }
+  },
+  "output": [
+    {
+      "amount": 72,
+      "material": "Aluminium"
+    },
+    {
+      "amount": 72,
+      "material": "Sodium"
+    }
+  ],
+  "source_order": 22
+}

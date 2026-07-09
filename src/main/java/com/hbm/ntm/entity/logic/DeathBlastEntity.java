@@ -19,6 +19,7 @@ import java.util.List;
 public class DeathBlastEntity extends Entity {
     public static final int MAX_AGE = 60;
     private static final double DAMAGE_RADIUS = 40.0D;
+    private static final double DAMAGE_RADIUS_SQ = DAMAGE_RADIUS * DAMAGE_RADIUS;
     private static final float MAX_DAMAGE = 250.0F;
 
     public DeathBlastEntity(EntityType<? extends DeathBlastEntity> type, Level level) {
@@ -51,10 +52,11 @@ public class DeathBlastEntity extends Entity {
         List<Entity> targets = level().getEntities(this, bounds,
                 entity -> entity.isAlive() && !entity.isSpectator());
         for (Entity target : targets) {
-            double distance = target.distanceTo(this);
-            if (distance > DAMAGE_RADIUS) {
+            double distanceSq = target.distanceToSqr(this);
+            if (distanceSq > DAMAGE_RADIUS_SQ) {
                 continue;
             }
+            double distance = Math.sqrt(distanceSq);
             float damage = (float) ((1.0D - distance / DAMAGE_RADIUS) * MAX_DAMAGE);
             if (damage > 0.0F) {
                 EntityDamageUtil.attackEntityFromNt(target,

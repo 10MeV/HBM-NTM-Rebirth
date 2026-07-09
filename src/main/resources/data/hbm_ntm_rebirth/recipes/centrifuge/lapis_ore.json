@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/lapis"
+    },
+    "legacy_ore": "oreLapis"
+  },
+  "outputs": [
+    {
+      "count": 6,
+      "item": "hbm_ntm_rebirth:powder_lapis"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_cobalt_tiny"
+    },
+    {
+      "item": "hbm_ntm_rebirth:gem_sodalite"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 22
+}

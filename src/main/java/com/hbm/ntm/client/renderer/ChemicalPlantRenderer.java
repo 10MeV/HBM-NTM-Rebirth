@@ -1,9 +1,12 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
+import com.hbm.ntm.client.obj.LegacyObjTransforms;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -19,7 +22,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantBlockEntity> {
@@ -28,6 +30,8 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
             ObjMachineModels.CHEMICAL_PLANT.prepareRenderOnlyInCallOrder("Base");
     private static final LegacyWavefrontModel.SelectionHandle FRAME =
             ObjMachineModels.CHEMICAL_PLANT.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle BASE_FRAME =
+            ObjMachineModels.CHEMICAL_PLANT.prepareRenderOnlyInCallOrder("Base", "Frame");
     private static final LegacyWavefrontModel.SelectionHandle SLIDER =
             ObjMachineModels.CHEMICAL_PLANT.prepareRenderOnlyInCallOrder("Slider");
     private static final LegacyWavefrontModel.SelectionHandle SPINNER =
@@ -46,6 +50,12 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(ChemicalPlantBlockEntity chemicalPlant, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(chemicalPlant, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(chemicalPlant, getViewDistance());
     }
 
     @Override
@@ -76,16 +86,20 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
             poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
             ResourceLocation texture = definition.textureLocation();
 
-            renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
-            if (chemicalPlant.shouldRenderFrame()) {
-                renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
-            }
+            renderStaticBaseFrame(model, chemicalPlant.shouldRenderFrame(), texture, poseStack, buffer,
+                    modelLight, packedOverlay);
 
-            LegacyTileRenderPlans.ChemicalPlantMachinePlan machinePlan =
-                    LegacyTileRenderPlans.chemicalPlantMachinePlan(anim);
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(chemicalPlant)) {
-                renderTranslatedPart(model, machinePlan.slider(), texture, poseStack, buffer, modelLight, packedOverlay);
-                renderRotatingPart(model, machinePlan.spinner(), texture, poseStack, buffer, modelLight, packedOverlay);
+                double sliderX = LegacyObjTransforms.softPeakSine(
+                        anim * LegacyTileRenderPlans.CHEMICAL_PLANT_SLIDER_ANIM_SCALE)
+                        * LegacyTileRenderPlans.CHEMICAL_PLANT_SLIDER_TRAVEL_SCALE;
+                renderTranslatedPart(model, "Slider", sliderX, 0.0D, 0.0D, texture,
+                        poseStack, buffer, modelLight, packedOverlay);
+                double spinnerAngle = anim * LegacyTileRenderPlans.CHEMICAL_PLANT_SPINNER_ROTATION_SCALE % 360.0D;
+                renderRotatingYPart(model, "Spinner",
+                        LegacyTileRenderPlans.CHEMICAL_PLANT_SPINNER_PIVOT_X, 0.0D,
+                        LegacyTileRenderPlans.CHEMICAL_PLANT_SPINNER_PIVOT_Z, spinnerAngle,
+                        texture, poseStack, buffer, modelLight, packedOverlay);
             }
 
             renderProcessingFluid(chemicalPlant, model, poseStack, buffer, modelLight, packedOverlay, anim);
@@ -94,34 +108,23 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         }
     }
 
-    private static void renderTranslatedPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture, PoseStack poseStack,
+    private static void renderTranslatedPart(LegacyWavefrontModel model, String partName,
+            double translateX, double translateY, double translateZ, ResourceLocation texture, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!part.active()) {
-            return;
-        }
         poseStack.pushPose();
-        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        renderModelPart(model, part.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(translateX, translateY, translateZ);
+        renderModelPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderRotatingPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    private static void renderRotatingYPart(LegacyWavefrontModel model, String partName,
+            double pivotX, double pivotY, double pivotZ, double angleDegrees, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
-        if (part.axisX() != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (part.angleDegrees() * part.axisX())));
-        }
-        if (part.axisY() != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (part.angleDegrees() * part.axisY())));
-        }
-        if (part.axisZ() != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (part.angleDegrees() * part.axisZ())));
-        }
-        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        renderModelPart(model, part.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(pivotX, pivotY, pivotZ);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) angleDegrees));
+        poseStack.translate(-pivotX, -pivotY, -pivotZ);
+        renderModelPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
@@ -134,23 +137,37 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         if (recipe == null) {
             return;
         }
-        LegacyTileRenderPlans.ChemicalPlantFluidPlan plan = LegacyTileRenderPlans.chemicalPlantFluidPlan(anim,
-                fluidColors(recipe.getFluidOutputs()), fluidColors(recipe.getFluidInputs()));
-        if (!plan.active()) {
+        int color = averageFluidColor(recipe.getFluidOutputs());
+        if (color < 0) {
+            color = averageFluidColor(recipe.getFluidInputs());
+        }
+        if (color < 0) {
             return;
         }
         renderModelPart(model, "Fluid", ObjMachineModels.CHEMICAL_PLANT_FLUID_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay,
-                plan.color().red(), plan.color().green(), plan.color().blue(),
-                Math.round((float) plan.alpha() * 255.0F), plan.blend().modernRenderMode(),
+                color >> 16 & 255, color >> 8 & 255, color & 255,
+                Math.round((float) LegacyTileRenderPlans.CHEMICAL_PLANT_FLUID_ALPHA * 255.0F),
+                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
                 LegacyWavefrontModel.legacyTextureMatrixDynamic(1.0F, 1.0F,
-                        (float) plan.textureTranslateU(), (float) plan.textureTranslateV()));
+                        (float) LegacyUvAnimation.chemicalPlantFluidU(anim),
+                        (float) LegacyUvAnimation.chemicalPlantFluidV(anim)));
     }
 
     private static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         renderModelPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay,
                 255, 255, 255, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL, LegacyWavefrontModel.UvTransform.DEFAULT);
+    }
+
+    private static void renderStaticBaseFrame(LegacyWavefrontModel model, boolean frameVisible,
+            ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay) {
+        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return;
+        }
+        model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                frameVisible ? BASE_FRAME : BASE);
     }
 
     private static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
@@ -180,11 +197,21 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
         };
     }
 
-    private static List<Integer> fluidColors(List<HbmFluidStack> stacks) {
-        java.util.ArrayList<Integer> colors = new java.util.ArrayList<>();
+    private static int averageFluidColor(Iterable<HbmFluidStack> stacks) {
+        int count = 0;
+        int red = 0;
+        int green = 0;
+        int blue = 0;
         for (HbmFluidStack stack : stacks) {
-            colors.add(stack.type().getColor());
+            int color = stack.type().getColor();
+            red += color >> 16 & 255;
+            green += color >> 8 & 255;
+            blue += color & 255;
+            count++;
         }
-        return colors;
+        if (count <= 0) {
+            return -1;
+        }
+        return (red / count) << 16 | (green / count) << 8 | blue / count;
     }
 }

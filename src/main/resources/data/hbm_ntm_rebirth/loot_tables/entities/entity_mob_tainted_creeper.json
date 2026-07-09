@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:tnt"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "hbm_ntm_rebirth:entities/entity_mob_tainted_creeper"
+}

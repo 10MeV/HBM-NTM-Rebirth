@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": { "fluid": "hbm_ntm_rebirth:puf6" },
+  "fluid_produced": 900,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:nugget_pu238", "weight": 3 },
+    { "item": "hbm_ntm_rebirth:nugget_pu239", "weight": 4 },
+    { "item": "hbm_ntm_rebirth:nugget_pu240", "weight": 2 }
+  ],
+  "source_order": 7
+}

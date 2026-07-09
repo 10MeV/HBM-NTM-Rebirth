@@ -15,7 +15,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
 public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
@@ -26,6 +25,10 @@ public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDef
     private final SpriteSet sprites;
     private final Mode mode;
     private final float baseScale;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private RbmkAnimatedParticle(ClientLevel level, double x, double y, double z, Mode mode, float scale, int lifetime, SpriteSet sprites) {
         super(level, x, y, z);
@@ -37,6 +40,7 @@ public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDef
         this.hasPhysics = false;
         this.alpha = mode == Mode.STEAM ? 0.25F : 1.0F;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     public static RbmkAnimatedParticle flame(ClientLevel level, double x, double y, double z, int lifetime) {
@@ -70,6 +74,7 @@ public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDef
             return;
         }
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -88,7 +93,7 @@ public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDef
         if (alpha <= 0.0F) {
             return;
         }
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetAdditiveNoDepthWrite());
+        VertexConsumer consumer = HbmDeferredParticleRenderer.particleSheetAdditiveNoDepthWriteConsumer(buffer);
         Vec3 cameraPos = camera.getPosition();
         float x = (float) (Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x());
         float y = (float) (Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y());
@@ -97,43 +102,40 @@ public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDef
         float height = mode == Mode.FLAME ? this.baseScale * 2.0F : mode == Mode.STEAM ? this.baseScale : this.baseScale;
         float offsetX = mode == Mode.STEAM ? -0.9375F : mode == Mode.FLAME ? -1.0F : 0.0F;
         float offsetY = mode == Mode.STEAM ? -0.25F : mode == Mode.MUSH ? this.baseScale : 0.0F;
-        Quaternionf rotation = new Quaternionf().rotateY((float) Math.toRadians(-camera.getYRot()));
-        Vector3f[] corners = new Vector3f[] {
-                new Vector3f(-width + offsetX, -height + offsetY, 0.0F),
-                new Vector3f(-width + offsetX, height + offsetY, 0.0F),
-                new Vector3f(width + offsetX, height + offsetY, 0.0F),
-                new Vector3f(width + offsetX, -height + offsetY, 0.0F)
-        };
-        for (Vector3f corner : corners) {
-            corner.rotate(rotation).add(x, y, z);
+        Quaternionf rotation = HbmDeferredParticleRenderer.scratchRotation().rotateY(-camera.getYRot() * Mth.DEG_TO_RAD);
+        float u0 = this.cachedU0;
+        float u1 = this.cachedU1;
+        float v0 = this.cachedV0;
+        float v1 = this.cachedV1;
+        if (mode == Mode.FLAME) {
+            int frame = (((int) renderAge * 5) % 14) % 5;
+            float widthStep = (u1 - u0) / 14.0F;
+            u1 = u0 + widthStep * (frame + 1);
+            u0 += widthStep * frame;
+        } else if (mode == Mode.STEAM) {
+            int frame = ((int) (renderAge / (float) this.lifetime * 20.0F) % 20 + 19) % 20;
+            float widthStep = (u1 - u0) / 20.0F;
+            u1 = u0 + widthStep * (frame + 1);
+            u0 += widthStep * frame;
+        } else {
+            int frame = Mth.clamp((int) (renderAge / (float) this.lifetime * 30.0F), 0, 29);
+            float heightStep = (v1 - v0) / 30.0F;
+            v1 = v0 + heightStep * (frame + 1);
+            v0 += heightStep * frame;
         }
-        Uv uv = frameUv(renderAge);
-        HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT,
-                corners[0], uv.u1, uv.v1,
-                corners[1], uv.u1, uv.v0,
-                corners[2], uv.u0, uv.v0,
-                corners[3], uv.u0, uv.v1,
+        HbmDeferredParticleRenderer.emitLocalParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT, rotation, x, y, z,
+                -width + offsetX, -height + offsetY, 0.0F, u1, v1,
+                -width + offsetX, height + offsetY, 0.0F, u1, v0,
+                width + offsetX, height + offsetY, 0.0F, u0, v0,
+                width + offsetX, -height + offsetY, 0.0F, u0, v1,
                 1.0F, 1.0F, 1.0F, alpha);
     }
 
-    private Uv frameUv(float renderAge) {
-        float u0 = getU0();
-        float u1 = getU1();
-        float v0 = getV0();
-        float v1 = getV1();
-        if (mode == Mode.FLAME) {
-            int frame = (((int) renderAge * 5) % 14) % 5;
-            float width = (u1 - u0) / 14.0F;
-            return new Uv(u0 + width * frame, u0 + width * (frame + 1), v0, v1);
-        }
-        if (mode == Mode.STEAM) {
-            int frame = ((int) (renderAge / (float) this.lifetime * 20.0F) % 20 + 19) % 20;
-            float width = (u1 - u0) / 20.0F;
-            return new Uv(u0 + width * frame, u0 + width * (frame + 1), v0, v1);
-        }
-        int frame = Mth.clamp((int) (renderAge / (float) this.lifetime * 30.0F), 0, 29);
-        float height = (v1 - v0) / 30.0F;
-        return new Uv(u0, u1, v0 + height * frame, v0 + height * (frame + 1));
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     private float flameAlpha(float renderAge) {
@@ -156,20 +158,6 @@ public class RbmkAnimatedParticle extends TextureSheetParticle implements HbmDef
         FLAME,
         STEAM,
         MUSH
-    }
-
-    private static final class Uv {
-        private final float u0;
-        private final float u1;
-        private final float v0;
-        private final float v1;
-
-        private Uv(float u0, float u1, float v0, float v1) {
-            this.u0 = u0;
-            this.u1 = u1;
-            this.v0 = v0;
-            this.v1 = v1;
-        }
     }
 
     public static final class FlameProvider implements ParticleProvider<SimpleParticleType> {

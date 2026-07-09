@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:petroleum",
                   "amount":  3200
-              }
+              },
+    "source_order":  40
 }

@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/malachite"
+    },
+    "legacy_ore": "oreMalachite"
+  },
+  "output": [
+    {
+      "amount": 432,
+      "material": "Malachite"
+    }
+  ],
+  "source_order": 39
+}

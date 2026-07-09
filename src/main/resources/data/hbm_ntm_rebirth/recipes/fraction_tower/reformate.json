@@ -11,5 +11,6 @@
     "output2":  {
                     "fluid":  "hbm_ntm_rebirth:xylene",
                     "amount":  60
-                }
+                },
+    "source_order":  11
 }

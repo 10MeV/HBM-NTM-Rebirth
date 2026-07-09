@@ -1,6 +1,6 @@
 package com.hbm.ntm.neutron;
 
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 
 public record RBMKNeutronSettings(
         double moderatorEfficiency,
@@ -30,7 +30,7 @@ public record RBMKNeutronSettings(
                 DEFAULT_COLUMN_HEIGHT_ABOVE + 1,
                 DEFAULT_FLUX_RANGE,
                 DEFAULT_REASIM_RANGE,
-                ChunkRadiationManager::incrementRadiation);
+                ChunkRadiationManager::incrementRad);
     }
 
     public RBMKNeutronSettings {

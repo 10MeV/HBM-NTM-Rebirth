@@ -149,8 +149,8 @@ public class StingerGunItem extends SednaGunItem {
         Vec3 origin = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         Vec3 end = origin.add(look.scale(distance));
-        AABB search = new AABB(origin, end).inflate(distance * Math.sin(Math.toRadians(angleThresholdDegrees)) + 1.0D,
-                10.0D, distance * Math.sin(Math.toRadians(angleThresholdDegrees)) + 1.0D);
+        double searchInflate = distance * Math.sin(angleThresholdDegrees * Mth.DEG_TO_RAD) + 1.0D;
+        AABB search = new AABB(origin, end).inflate(searchInflate, 10.0D, searchInflate);
         LivingEntity closest = null;
         double closestAngle = 360.0D;
         for (Entity entity : player.level().getEntities(player, search,

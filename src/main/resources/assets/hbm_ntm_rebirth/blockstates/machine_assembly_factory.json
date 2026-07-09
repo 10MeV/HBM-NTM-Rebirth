@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=east": {
+    "facing=east,frame=false": {
       "model": "hbm_ntm_rebirth:block/machine_assembly_factory"
     },
-    "facing=north": {
+    "facing=east,frame=true": {
+      "model": "hbm_ntm_rebirth:block/machine_assembly_factory_frame"
+    },
+    "facing=north,frame=false": {
       "model": "hbm_ntm_rebirth:block/machine_assembly_factory",
       "y": 90
     },
-    "facing=south": {
+    "facing=north,frame=true": {
+      "model": "hbm_ntm_rebirth:block/machine_assembly_factory_frame",
+      "y": 90
+    },
+    "facing=south,frame=false": {
       "model": "hbm_ntm_rebirth:block/machine_assembly_factory",
       "y": 270
     },
-    "facing=west": {
+    "facing=south,frame=true": {
+      "model": "hbm_ntm_rebirth:block/machine_assembly_factory_frame",
+      "y": 270
+    },
+    "facing=west,frame=false": {
       "model": "hbm_ntm_rebirth:block/machine_assembly_factory",
+      "y": 180
+    },
+    "facing=west,frame=true": {
+      "model": "hbm_ntm_rebirth:block/machine_assembly_factory_frame",
       "y": 180
     }
   }

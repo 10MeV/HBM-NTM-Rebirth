@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:tar/oil"
+  "source_order": 4,
+  "input": {
+    "ingredient": {
+      "tag": "forge:tar/oil"
+    },
+    "count": 1,
+    "legacy_ore": "oiltar"
   },
   "output": {
     "amount": 75,

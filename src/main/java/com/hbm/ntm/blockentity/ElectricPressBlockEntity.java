@@ -15,6 +15,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmInventoryUtil;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
@@ -313,6 +314,8 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
         SimpleContainer container = new SimpleContainer(items.getStackInSlot(SLOT_INPUT),
                 items.getStackInSlot(SLOT_STAMP));
         return level.getRecipeManager().getAllRecipesFor(ModRecipes.PRESS.type().get()).stream()
+                .sorted(Comparator.comparingInt(PressRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
                 .filter(recipe -> recipe.matches(container, level))
                 .filter(this::canFitOutput)
                 .findFirst()

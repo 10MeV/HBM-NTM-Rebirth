@@ -139,7 +139,7 @@ public final class LegacyGenericRecipeFormat {
 
         if (ingredient.legacyId() != null) {
             array.add(ingredient.hasPartialNbt() ? "nbt" : "item");
-            array.add(ingredient.legacyId().toString());
+            array.add(legacyItemId(ingredient.legacyId()).toString());
             if (ingredient.count() != 1 || ingredient.legacyMeta() > 0 || ingredient.hasPartialNbt() || ingredient.legacyWildcard()) {
                 array.add(ingredient.count());
             }
@@ -152,15 +152,25 @@ public final class LegacyGenericRecipeFormat {
             return array;
         }
 
+        if (ingredient.isTagIngredient()) {
+            throw new JsonSyntaxException("Cannot write tag ingredient as legacy AStack without legacy_ore provenance: "
+                    + ingredient.diagnosticName());
+        }
+        if (ingredient.fluidContainerType() != null) {
+            throw new JsonSyntaxException("Cannot write fluid-container ingredient as legacy AStack without legacy ore provenance: "
+                    + ingredient.diagnosticName());
+        }
+
         Optional<ItemStack> stack = representativeInputStack(ingredient);
         if (stack.isPresent()) {
             array.add(ingredient.hasPartialNbt() ? "nbt" : "item");
             writeLegacyItemStackBody(array, stack.get(), ingredient.count(),
-                    ingredient.hasPartialNbt() ? ingredient.partialNbt() : null, true);
+                    ingredient.hasPartialNbt() ? ingredient.partialNbt() : null);
             return array;
         }
 
-        throw new JsonSyntaxException("Cannot write HBM ingredient as legacy AStack without concrete item or legacy id");
+        throw new JsonSyntaxException("Cannot write HBM ingredient as legacy AStack without concrete item, legacy id, or legacy ore provenance: "
+                + ingredient.diagnosticName());
     }
 
     public static JsonArray writeLegacyItemOutput(HbmItemOutput output) {
@@ -224,12 +234,8 @@ public final class LegacyGenericRecipeFormat {
             recipe.getFluidOutputs().forEach(fluid -> outputFluids.add(writeLegacyFluidStack(fluid)));
             object.add("outputFluid", outputFluids);
         }
-        if (recipe.getDuration() > 0) {
-            object.addProperty("duration", recipe.getDuration());
-        }
-        if (recipe.getPower() > 0) {
-            object.addProperty("power", recipe.getPower());
-        }
+        object.addProperty("duration", recipe.getDuration());
+        object.addProperty("power", recipe.getPower());
         if (recipe.hasCustomLocalization()) {
             object.addProperty("named", true);
         }
@@ -268,6 +274,14 @@ public final class LegacyGenericRecipeFormat {
     private static HbmIngredient readLegacyItemInput(JsonArray array, int count, boolean nbt) {
         ResourceLocation legacyId = normalizeLegacyId(array.get(1).getAsString());
         int legacyMeta = array.size() > 3 ? array.get(3).getAsInt() : 0;
+        if (nbt) {
+            ItemStack stack = readLegacyItemStack(legacyId, count, 0);
+            if (array.size() > 4) {
+                stack.setTag(parseNbt(array.get(4).getAsString(), "legacy NBTStack"));
+                return HbmIngredient.partialNbt(stack);
+            }
+            return HbmIngredient.exact(stack);
+        }
         if (!nbt) {
             if (legacyMeta == HbmIngredient.WILDCARD_META) {
                 return HbmIngredient.legacyWildcard(legacyId, count);
@@ -278,11 +292,7 @@ public final class LegacyGenericRecipeFormat {
         }
 
         ItemStack stack = readLegacyItemStack(legacyId, count, legacyMeta);
-        if (nbt && array.size() > 4) {
-            stack.setTag(parseNbt(array.get(4).getAsString(), "legacy NBTStack"));
-            return HbmIngredient.partialNbt(stack);
-        }
-        return HbmIngredient.exact(stack);
+        return HbmIngredient.legacyItem(legacyId, legacyMeta, stack);
     }
 
     private static List<HbmItemOutput> readLegacyOutputArray(JsonArray array) {
@@ -347,24 +357,24 @@ public final class LegacyGenericRecipeFormat {
     }
 
     private static ItemStack readLegacyItemStack(ResourceLocation legacyId, int count, int legacyMeta) {
-        if (LegacyMetaItemMappings.item(legacyId, legacyMeta).isPresent()) {
-            return LegacyMetaItemMappings.stack(legacyId, legacyMeta, count)
-                    .orElseThrow();
+        Optional<ItemStack> mappedStack = LegacyMetaItemMappings.stackPreservingCount(legacyId, legacyMeta, count);
+        if (mappedStack.isPresent()) {
+            return mappedStack.get();
         }
         if (legacyMeta != 0) {
             throw new JsonSyntaxException("Missing legacy item meta mapping: " + legacyId + " meta " + legacyMeta);
         }
 
-        Item item = HbmRegistryUtil.item(legacyId)
+        Item item = HbmRegistryUtil.item(modernIdForRegistryLookup(legacyId))
                 .or(() -> {
-                    if (!HbmNtm.MOD_ID.equals(legacyId.getNamespace())) {
+                    if (!isHbmLegacyNamespace(legacyId)) {
                         return java.util.Optional.empty();
                     }
                     RegistryObject<Item> legacyItem = ModItems.legacyItem(legacyId.getPath());
                     return legacyItem == null ? java.util.Optional.empty() : java.util.Optional.of(legacyItem.get());
                 })
                 .orElseThrow(() -> new JsonSyntaxException("Unknown legacy item: " + legacyId));
-        return new ItemStack(item, Math.max(1, count));
+        return new ItemStack(item, count);
     }
 
     private static List<HbmFluidStack> readModernFluidStacks(JsonArray array) {
@@ -393,6 +403,9 @@ public final class LegacyGenericRecipeFormat {
         if (ingredient.hasExactStack()) {
             return Optional.of(ingredient.exactStack());
         }
+        if (!ingredient.isSingleItemIngredient()) {
+            return Optional.empty();
+        }
         List<ItemStack> displayStacks = ingredient.displayStacks();
         if (displayStacks.size() == 1) {
             return Optional.of(displayStacks.get(0));
@@ -400,28 +413,62 @@ public final class LegacyGenericRecipeFormat {
         return Optional.empty();
     }
 
-    private static JsonArray writeLegacyItemStack(ItemStack stack) {
+    public static JsonArray writeLegacyItemStack(ItemStack stack) {
         JsonArray array = new JsonArray();
-        writeLegacyItemStackBody(array, stack, stack.getCount(), stack.getTag(), false);
+        writeLegacyItemStackBody(array, stack, stack.getCount(), stack.getTag());
         return array;
     }
 
-    private static void writeLegacyItemStackBody(JsonArray array, ItemStack stack, int count, CompoundTag tag, boolean hasTypePrefix) {
-        ResourceLocation itemId = HbmRegistryUtil.itemKey(stack.getItem());
+    private static void writeLegacyItemStackBody(JsonArray array, ItemStack stack, int count, CompoundTag tag) {
+        Optional<LegacyMetaItemMappings.LegacyStackIdentity> legacyIdentity =
+                LegacyMetaItemMappings.legacyIdentity(stack);
+        ResourceLocation itemId = legacyIdentity
+                .map(LegacyMetaItemMappings.LegacyStackIdentity::legacyId)
+                .orElseGet(() -> legacyItemId(HbmRegistryUtil.itemKey(stack.getItem())));
+        int meta = legacyIdentity
+                .map(LegacyMetaItemMappings.LegacyStackIdentity::legacyMeta)
+                .orElseGet(stack::getDamageValue);
+        CompoundTag legacyTag = stripSyntheticDamageTag(tag, meta);
+        boolean hasTag = legacyTag != null && !legacyTag.isEmpty();
         array.add(itemId.toString());
-        if (count != 1 || tag != null && !tag.isEmpty()) {
+        if (count != 1 || meta != 0 || hasTag) {
             array.add(count);
         }
-        if (tag != null && !tag.isEmpty()) {
-            if (hasTypePrefix) {
-                array.add(0);
-            }
-            array.add(tag.toString());
+        if (meta != 0 || hasTag) {
+            array.add(meta);
+        }
+        if (hasTag) {
+            array.add(legacyTag.toString());
         }
     }
 
+    private static CompoundTag stripSyntheticDamageTag(CompoundTag tag, int meta) {
+        if (tag == null || tag.isEmpty() || !tag.contains("Damage")) {
+            return tag;
+        }
+        if (tag.getInt("Damage") != meta) {
+            return tag;
+        }
+        CompoundTag copy = tag.copy();
+        copy.remove("Damage");
+        return copy;
+    }
+
     private static ResourceLocation normalizeLegacyId(String id) {
-        return id.contains(":") ? new ResourceLocation(id) : new ResourceLocation(HbmNtm.MOD_ID, id);
+        ResourceLocation parsed = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("hbm", id);
+        return isHbmLegacyNamespace(parsed) ? new ResourceLocation("hbm", parsed.getPath()) : parsed;
+    }
+
+    private static ResourceLocation modernIdForRegistryLookup(ResourceLocation legacyId) {
+        return isHbmLegacyNamespace(legacyId) ? new ResourceLocation(HbmNtm.MOD_ID, legacyId.getPath()) : legacyId;
+    }
+
+    private static ResourceLocation legacyItemId(ResourceLocation itemId) {
+        return HbmNtm.MOD_ID.equals(itemId.getNamespace()) ? new ResourceLocation("hbm", itemId.getPath()) : itemId;
+    }
+
+    private static boolean isHbmLegacyNamespace(ResourceLocation id) {
+        return "hbm".equals(id.getNamespace()) || HbmNtm.MOD_ID.equals(id.getNamespace());
     }
 
     private static CompoundTag parseNbt(String nbt, String name) {

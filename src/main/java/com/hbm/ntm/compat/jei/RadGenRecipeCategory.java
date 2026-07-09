@@ -1,6 +1,6 @@
 package com.hbm.ntm.compat.jei;
 
-import com.hbm.ntm.recipe.RadGenRecipeRuntime;
+import com.hbm.ntm.recipe.RadGenRecipe;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -14,22 +14,22 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class RadGenRecipeCategory implements IRecipeCategory<RadGenRecipeRuntime.FuelSpec> {
+public final class RadGenRecipeCategory implements IRecipeCategory<RadGenRecipe> {
     private static final int WIDTH = 132;
     private static final int HEIGHT = 58;
 
-    private final RecipeType<RadGenRecipeRuntime.FuelSpec> type;
+    private final RecipeType<RadGenRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic arrow;
 
-    RadGenRecipeCategory(RecipeType<RadGenRecipeRuntime.FuelSpec> type, ItemLike catalyst, IGuiHelper guiHelper) {
+    RadGenRecipeCategory(RecipeType<RadGenRecipe> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
         this.arrow = guiHelper.getRecipeArrow();
     }
 
     @Override
-    public RecipeType<RadGenRecipeRuntime.FuelSpec> getRecipeType() {
+    public RecipeType<RadGenRecipe> getRecipeType() {
         return type;
     }
 
@@ -55,9 +55,9 @@ public final class RadGenRecipeCategory implements IRecipeCategory<RadGenRecipeR
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, RadGenRecipeRuntime.FuelSpec recipe, IFocusGroup focuses) {
+    public void setRecipe(IRecipeLayoutBuilder builder, RadGenRecipe recipe, IFocusGroup focuses) {
         builder.addInputSlot(12, 20)
-                .addItemStack(recipe.input())
+                .addItemStacks(recipe.input().displayStacks())
                 .setStandardSlotBackground();
         ItemStack output = recipe.output();
         if (!output.isEmpty()) {
@@ -68,13 +68,13 @@ public final class RadGenRecipeCategory implements IRecipeCategory<RadGenRecipeR
     }
 
     @Override
-    public void draw(RadGenRecipeRuntime.FuelSpec recipe, IRecipeSlotsView recipeSlotsView,
+    public void draw(RadGenRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
         arrow.draw(guiGraphics, 58, 20);
     }
 
     @Override
-    public void getTooltip(ITooltipBuilder tooltip, RadGenRecipeRuntime.FuelSpec recipe,
+    public void getTooltip(ITooltipBuilder tooltip, RadGenRecipe recipe,
             IRecipeSlotsView recipeSlotsView, double mouseX, double mouseY) {
         tooltip.add(Component.literal("Power: " + recipe.powerPerTick() + " HE/t"));
         tooltip.add(Component.literal("Duration: " + recipe.duration() + " ticks"));

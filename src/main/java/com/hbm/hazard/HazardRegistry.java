@@ -125,7 +125,7 @@ public final class HazardRegistry {
     }
 
     public static void registerTrafos() {
-        // Modern default registration already installs the source-backed NBT -> container -> ME chain.
+        com.hbm.ntm.radiation.HazardRegistry.registerDefaultTransformers();
     }
 
     public static HazardData makeData() {

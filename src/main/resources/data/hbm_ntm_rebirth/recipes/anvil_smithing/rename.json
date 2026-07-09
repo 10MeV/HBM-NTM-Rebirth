@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "kind": "rename",
+  "left": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:stone"
+    }
+  },
+  "output": {
+    "item": "minecraft:stone"
+  },
+  "right": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:name_tag"
+    }
+  },
+  "source_order": 57,
+  "tier": 1
+}

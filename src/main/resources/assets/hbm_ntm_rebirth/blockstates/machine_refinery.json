@@ -1,19 +1,68 @@
 {
   "variants": {
-    "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_refinery",
-      "y": 90
+    "exploded=false,facing=east,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/refinery",
+      "y": 180
     },
-    "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machine_refinery"
-    },
-    "facing=south": {
+    "exploded=false,facing=east,tilted=true": {
       "model": "hbm_ntm_rebirth:block/machine_refinery",
       "y": 180
     },
-    "facing=west": {
+    "exploded=false,facing=north,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/refinery",
+      "y": 180
+    },
+    "exploded=false,facing=north,tilted=true": {
       "model": "hbm_ntm_rebirth:block/machine_refinery",
-      "y": 270
+      "y": 180
+    },
+    "exploded=false,facing=south,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/refinery",
+      "y": 180
+    },
+    "exploded=false,facing=south,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
+    },
+    "exploded=false,facing=west,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/refinery",
+      "y": 180
+    },
+    "exploded=false,facing=west,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
+    },
+    "exploded=true,facing=east,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
+    },
+    "exploded=true,facing=east,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
+    },
+    "exploded=true,facing=north,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
+    },
+    "exploded=true,facing=north,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
+    },
+    "exploded=true,facing=south,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
+    },
+    "exploded=true,facing=south,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
+    },
+    "exploded=true,facing=west,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
+    },
+    "exploded=true,facing=west,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_refinery",
+      "y": 180
     }
   }
 }

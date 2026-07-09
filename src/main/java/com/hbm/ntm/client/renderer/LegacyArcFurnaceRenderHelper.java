@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
@@ -61,6 +62,53 @@ public final class LegacyArcFurnaceRenderHelper {
         renderPart(model, "Furnace", poseStack, buffer, packedLight, packedOverlay, renderMode);
     }
 
+    public static void renderStaticPreview(LegacyWavefrontModel model, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
+        renderStaticShell(model, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        poseStack.pushPose();
+        renderPart(model, "Lid", poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderElectrodeDirect(model, 0, (byte) 1, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderElectrodeDirect(model, 1, (byte) 1, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderElectrodeDirect(model, 2, (byte) 1, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderCableDirect(model, 0, (byte) 1, 0.0D, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderCableDirect(model, 1, (byte) 1, 0.0D, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderCableDirect(model, 2, (byte) 1, 0.0D, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        poseStack.popPose();
+    }
+
+    public static void renderAnimatedDirect(LegacyWavefrontModel model, double prevLid, double lid,
+            boolean progressing, long worldTime, float partialTicks, int liquidAmount, int maxLiquid,
+            boolean hasMaterial, byte electrode0, byte electrode1, byte electrode2,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
+        double time = LegacyUvAnimation.tickTime(worldTime, partialTicks);
+        double lift = prevLid + (lid - prevLid) * partialTicks;
+        if (liquidAmount > 0 && maxLiquid > 0) {
+            poseStack.pushPose();
+            poseStack.translate(0.0D, LegacyTileRenderPlans.ARC_FURNACE_CONTENT_BASE_Y
+                    + liquidAmount * LegacyTileRenderPlans.ARC_FURNACE_CONTENT_TRAVEL / (double) maxLiquid, 0.0D);
+            renderPart(model, "ContentsHot", poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay, renderMode);
+            poseStack.popPose();
+        } else if (hasMaterial) {
+            renderPart(model, "ContentsCold", poseStack, buffer, packedLight, packedOverlay, renderMode);
+        }
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, LegacyTileRenderPlans.ARC_FURNACE_LID_TRAVEL * lift,
+                progressing ? Math.sin(time) * LegacyTileRenderPlans.ARC_FURNACE_LID_WOBBLE : 0.0D);
+        renderPart(model, "Lid", poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderElectrodeDirect(model, 0, electrode0, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderElectrodeDirect(model, 1, electrode1, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderElectrodeDirect(model, 2, electrode2, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        double cableAngle = progressing
+                ? Math.sin(time / 2.0D) * LegacyTileRenderPlans.ARC_FURNACE_CABLE_WOBBLE_DEGREES
+                : 0.0D;
+        renderCableDirect(model, 0, electrode0, cableAngle, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderCableDirect(model, 1, electrode1, cableAngle, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        renderCableDirect(model, 2, electrode2, cableAngle, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        poseStack.popPose();
+    }
+
     public static void renderAnimatedPlan(LegacyWavefrontModel model, LegacyTileRenderPlans.ArcFurnacePlan plan,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode) {
@@ -99,6 +147,45 @@ public final class LegacyArcFurnaceRenderHelper {
         if (partName != null) {
             renderPart(model, partName, poseStack, buffer, packedLight, packedOverlay, renderMode);
         }
+    }
+
+    private static void renderElectrodeDirect(LegacyWavefrontModel model, int index, byte state,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
+        if (state == 0) {
+            return;
+        }
+        int number = index + 1;
+        renderPart(model, "Ring" + number, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        switch (state) {
+            case 1 -> renderPart(model, "Electrode" + number, poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+            case 2 -> renderPart(model, "Electrode" + number + "Hot", poseStack, buffer,
+                    LightTexture.FULL_BRIGHT, packedOverlay, renderMode);
+            case 3 -> renderPart(model, "Electrode" + number + "Short", poseStack, buffer,
+                    LightTexture.FULL_BRIGHT, packedOverlay, renderMode);
+            default -> {
+            }
+        }
+    }
+
+    private static void renderCableDirect(LegacyWavefrontModel model, int index, byte state, double angleDegrees,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
+        if (state == 0) {
+            return;
+        }
+        double pivotZ = switch (index) {
+            case 0 -> 0.5D;
+            case 2 -> -0.5D;
+            default -> 0.0D;
+        };
+        poseStack.pushPose();
+        poseStack.translate(0.0D, LegacyTileRenderPlans.ARC_FURNACE_CABLE_PIVOT_Y, pivotZ);
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        poseStack.translate(0.0D, -LegacyTileRenderPlans.ARC_FURNACE_CABLE_PIVOT_Y, -pivotZ);
+        renderPart(model, "Cable" + (index + 1), poseStack, buffer, packedLight, packedOverlay, renderMode);
+        poseStack.popPose();
     }
 
     private static void renderTranslatedPart(LegacyWavefrontModel model,

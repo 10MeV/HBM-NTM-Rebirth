@@ -24,8 +24,13 @@ public record HbmOilRecipe(
         List<HbmFluidStack> fluidOutputs) {
 
     public static HbmOilRecipe cracking(FluidType input, PairRecipe recipe) {
-        return fluid(List.of(stack(input, 100), stack(com.hbm.ntm.fluid.HbmFluids.STEAM, 200)),
-                List.of(recipe.left(), recipe.right(), stack(com.hbm.ntm.fluid.HbmFluids.SPENTSTEAM, 2)));
+        List<HbmFluidStack> outputs = new ArrayList<>();
+        outputs.add(recipe.left());
+        if (!recipe.right().isEmpty()) {
+            outputs.add(recipe.right());
+        }
+        outputs.add(stack(com.hbm.ntm.fluid.HbmFluids.SPENTSTEAM, 2));
+        return fluid(List.of(stack(input, 100), stack(com.hbm.ntm.fluid.HbmFluids.STEAM, 200)), outputs);
     }
 
     public static HbmOilRecipe fractioning(FluidType input, PairRecipe recipe) {
@@ -33,15 +38,21 @@ public record HbmOilRecipe(
     }
 
     public static HbmOilRecipe hydrotreating(FluidType input, TripleRecipe recipe) {
-        return fluid(List.of(stack(input, 100), recipe.first()), List.of(recipe.second(), recipe.third()));
+        return fluid(List.of(stack(input, 1000), scaled(recipe.first(), 10)),
+                List.of(scaled(recipe.second(), 10), scaled(recipe.third(), 10)));
     }
 
     public static HbmOilRecipe reforming(FluidType input, TripleRecipe recipe) {
-        return fluid(List.of(stack(input, 100)), List.of(recipe.first(), recipe.second(), recipe.third()));
+        return fluid(List.of(stack(input, 1000)),
+                List.of(scaled(recipe.first(), 10), scaled(recipe.second(), 10), scaled(recipe.third(), 10)));
     }
 
     public static HbmOilRecipe vacuum(FluidType input, VacuumRecipe recipe) {
-        return fluid(List.of(stack(input, 100)), List.of(recipe.outputs()));
+        List<HbmFluidStack> outputs = new ArrayList<>();
+        for (HbmFluidStack output : recipe.outputs()) {
+            outputs.add(scaled(output, 10));
+        }
+        return fluid(List.of(new HbmFluidStack(input, 1000, 2)), outputs);
     }
 
     public static HbmOilRecipe refinery(FluidType input, RefineryRecipe recipe) {
@@ -50,7 +61,11 @@ public record HbmOilRecipe(
         if (!solid.isEmpty()) {
             itemOutputs.add(solid);
         }
-        return new HbmOilRecipe(List.of(), List.of(stack(input, 100)), itemOutputs, List.of(recipe.outputs()));
+        List<HbmFluidStack> outputs = new ArrayList<>();
+        for (HbmFluidStack output : recipe.outputs()) {
+            outputs.add(scaled(output, 10));
+        }
+        return new HbmOilRecipe(List.of(), List.of(stack(input, 1000)), itemOutputs, outputs);
     }
 
     public static HbmOilRecipe solidification(FluidType input, SolidificationRecipe recipe) {
@@ -155,5 +170,9 @@ public record HbmOilRecipe(
 
     private static HbmFluidStack stack(FluidType type, int amount) {
         return new HbmFluidStack(type, amount);
+    }
+
+    private static HbmFluidStack scaled(HbmFluidStack stack, int multiplier) {
+        return new HbmFluidStack(stack.type(), stack.amount() * multiplier, stack.pressure());
     }
 }

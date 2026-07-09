@@ -1,1 +1,8 @@
-{"parent":"minecraft:block/block","textures":{"particle":"hbm_ntm_rebirth:block/slag"},"elements":[]}
+{
+  "loader": "hbm_ntm_rebirth:foundry_slag_loader",
+  "texture": "hbm_ntm_rebirth:block/slag",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/slag"
+  }
+}

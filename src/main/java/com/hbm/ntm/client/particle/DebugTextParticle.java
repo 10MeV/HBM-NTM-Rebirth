@@ -13,13 +13,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.Quaternionf;
 
 @OnlyIn(Dist.CLIENT)
 public class DebugTextParticle extends Particle {
     private final int color;
     private final String text;
     private final float textScale;
+    private final PoseStack renderPose = new PoseStack();
 
     public DebugTextParticle(ClientLevel level, double x, double y, double z, int color, String text, float scale) {
         super(level, x, y, z);
@@ -39,9 +39,10 @@ public class DebugTextParticle extends Particle {
         float x = (float) (Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x());
         float y = (float) (Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y());
         float z = (float) (Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z());
-        PoseStack poseStack = new PoseStack();
+        PoseStack poseStack = this.renderPose;
+        poseStack.setIdentity();
         poseStack.translate(x, y, z);
-        poseStack.mulPose(new Quaternionf(camera.rotation()));
+        poseStack.mulPose(camera.rotation());
         float scale = -0.01F * this.textScale;
         poseStack.scale(scale, scale, 0.01F * this.textScale);
         MultiBufferSource.BufferSource buffer = minecraft.renderBuffers().bufferSource();

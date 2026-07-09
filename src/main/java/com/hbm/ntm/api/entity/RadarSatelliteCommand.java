@@ -1,9 +1,9 @@
 package com.hbm.ntm.api.entity;
 
 import com.hbm.ntm.satellite.Satellite;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class RadarSatelliteCommand {
     public static final int LEGACY_DEFAULT_COORD_Y = 60;
@@ -27,7 +27,7 @@ public final class RadarSatelliteCommand {
         }
         if (satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_COORD) {
             int y = satellite.coordActions().contains(Satellite.CoordAction.HAS_Y)
-                    ? level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z)
+                    ? WorldUtil.legacyGetTopSolidOrLiquidBlock(level, x, z)
                     : LEGACY_DEFAULT_COORD_Y;
             return satellite.tryCoordAction(level, player, x, y, z)
                     ? RadarCommandResult.TRIGGERED

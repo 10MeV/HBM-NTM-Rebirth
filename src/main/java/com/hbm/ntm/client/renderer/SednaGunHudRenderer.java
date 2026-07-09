@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.bullet.LegacySednaGunConfigs;
+import com.hbm.ntm.bullet.SednaGunConfig;
 import com.hbm.ntm.item.SednaGunItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -10,9 +11,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.List;
+
 public final class SednaGunHudRenderer {
     private static final ResourceLocation OVERLAY_MISC_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/overlay_misc.png");
+    private static final SednaGunItem.LegacyHudAmmoScratch AMMO_SCRATCH =
+            new SednaGunItem.LegacyHudAmmoScratch();
 
     public static void render(GuiGraphics graphics, int screenWidth, int screenHeight, Player player) {
         if (player == null) {
@@ -22,20 +27,42 @@ public final class SednaGunHudRenderer {
         if (!(stack.getItem() instanceof SednaGunItem gun)) {
             return;
         }
-        for (SednaGunItem.LegacyHudComponent component : gun.legacyHudComponents(stack, player)) {
-            if (isDurability(component.componentName())) {
-                renderDurability(graphics, screenWidth, screenHeight, component);
-            } else if (isAmmo(component.componentName())) {
-                renderAmmo(graphics, screenWidth, screenHeight, component);
+        try {
+            List<SednaGunConfig.GunModeConfig> modes = gun.gunConfig().configs();
+            for (int modeIndex = 0; modeIndex < modes.size(); modeIndex++) {
+                SednaGunConfig.GunModeConfig mode = modes.get(modeIndex);
+                List<String> componentNames = mode.hudComponentNames();
+                if (componentNames.isEmpty()) {
+                    continue;
+                }
+                int bottomOffset = 0;
+                for (int componentIndex = 0; componentIndex < componentNames.size(); componentIndex++) {
+                    String componentName = componentNames.get(componentIndex);
+                    if (isDurability(componentName)) {
+                        renderDurability(graphics, screenWidth, screenHeight, componentName,
+                                gun.legacyHudDurabilityLoss(stack, mode));
+                    } else if (isAmmo(componentName)) {
+                        int receiverIndex = LegacySednaGunConfigs.HUD_COMPONENT_AMMO_SECOND.equals(componentName)
+                                ? 1
+                                : 0;
+                        if (gun.fillLegacyHudAmmo(stack, player, mode, receiverIndex, AMMO_SCRATCH)) {
+                            renderAmmo(graphics, screenWidth, screenHeight, componentName, bottomOffset,
+                                    AMMO_SCRATCH.ammoIcon(), AMMO_SCRATCH.ammoText());
+                        }
+                    }
+                    bottomOffset += componentHeight(componentName);
+                }
             }
+        } finally {
+            AMMO_SCRATCH.clear();
         }
     }
 
     private static void renderDurability(GuiGraphics graphics, int screenWidth, int screenHeight,
-            SednaGunItem.LegacyHudComponent component) {
-        int x = screenWidth / 2 + (isMirror(component.componentName()) ? -(62 + 36 + 52) : (62 + 36));
+            String componentName, int durabilityLoss) {
+        int x = screenWidth / 2 + (isMirror(componentName) ? -(62 + 36 + 52) : (62 + 36));
         int y = screenHeight - 21;
-        int progress = Mth.clamp(50 - component.durabilityLoss(), 0, 50);
+        int progress = Mth.clamp(50 - durabilityLoss, 0, 50);
         LegacyScreenQuadRenderer.blit(OVERLAY_MISC_TEXTURE, graphics, x, y + 16, 94, 0, 52, 3);
         if (progress > 0) {
             LegacyScreenQuadRenderer.blit(OVERLAY_MISC_TEXTURE, graphics, x + 1, y + 16, 95, 3, progress, 3);
@@ -43,16 +70,16 @@ public final class SednaGunHudRenderer {
     }
 
     private static void renderAmmo(GuiGraphics graphics, int screenWidth, int screenHeight,
-            SednaGunItem.LegacyHudComponent component) {
-        boolean noCounter = LegacySednaGunConfigs.HUD_COMPONENT_AMMO_NOCOUNTER.equals(component.componentName());
-        int x = screenWidth / 2 + (isMirror(component.componentName()) ? -(62 + 36 + 52) : (62 + 36))
+            String componentName, int bottomOffset, ItemStack ammoIcon, String ammoText) {
+        boolean noCounter = LegacySednaGunConfigs.HUD_COMPONENT_AMMO_NOCOUNTER.equals(componentName);
+        int x = screenWidth / 2 + (isMirror(componentName) ? -(62 + 36 + 52) : (62 + 36))
                 + (noCounter ? 14 : 0);
-        int y = screenHeight - component.bottomOffset() - 18;
+        int y = screenHeight - bottomOffset - 18;
         if (!noCounter) {
-            graphics.drawString(Minecraft.getInstance().font, component.ammoText(), x + 16, y + 6, 0xFFFFFF, false);
+            graphics.drawString(Minecraft.getInstance().font, ammoText, x + 16, y + 6, 0xFFFFFF, false);
         }
-        if (!component.ammoIcon().isEmpty()) {
-            graphics.renderItem(component.ammoIcon(), x, y);
+        if (!ammoIcon.isEmpty()) {
+            graphics.renderItem(ammoIcon, x, y);
         }
     }
 
@@ -66,6 +93,16 @@ public final class SednaGunHudRenderer {
                 || LegacySednaGunConfigs.HUD_COMPONENT_AMMO_MIRROR.equals(componentName)
                 || LegacySednaGunConfigs.HUD_COMPONENT_AMMO_NOCOUNTER.equals(componentName)
                 || LegacySednaGunConfigs.HUD_COMPONENT_AMMO_SECOND.equals(componentName);
+    }
+
+    private static int componentHeight(String componentName) {
+        if (isAmmo(componentName)) {
+            return 17;
+        }
+        if (isDurability(componentName)) {
+            return 5;
+        }
+        return 0;
     }
 
     private static boolean isMirror(String componentName) {

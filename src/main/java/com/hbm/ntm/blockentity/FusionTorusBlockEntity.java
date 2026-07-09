@@ -339,7 +339,33 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
-        return List.of(EnergyPort.of(0, -1, 0, Direction.DOWN), EnergyPort.of(0, 5, 0, Direction.UP));
+        return List.of(
+                EnergyPort.of(0, -1, 0, Direction.DOWN),
+                EnergyPort.of(0, 5, 0, Direction.UP),
+                EnergyPort.of(6, -1, 0, Direction.DOWN),
+                EnergyPort.of(6, 5, 0, Direction.UP),
+                EnergyPort.of(6, -1, 2, Direction.DOWN),
+                EnergyPort.of(6, 5, 2, Direction.UP),
+                EnergyPort.of(6, -1, -2, Direction.DOWN),
+                EnergyPort.of(6, 5, -2, Direction.UP),
+                EnergyPort.of(-6, -1, 0, Direction.DOWN),
+                EnergyPort.of(-6, 5, 0, Direction.UP),
+                EnergyPort.of(-6, -1, 2, Direction.DOWN),
+                EnergyPort.of(-6, 5, 2, Direction.UP),
+                EnergyPort.of(-6, -1, -2, Direction.DOWN),
+                EnergyPort.of(-6, 5, -2, Direction.UP),
+                EnergyPort.of(0, -1, 6, Direction.DOWN),
+                EnergyPort.of(0, 5, 6, Direction.UP),
+                EnergyPort.of(2, -1, 6, Direction.DOWN),
+                EnergyPort.of(2, 5, 6, Direction.UP),
+                EnergyPort.of(-2, -1, 6, Direction.DOWN),
+                EnergyPort.of(-2, 5, 6, Direction.UP),
+                EnergyPort.of(0, -1, -6, Direction.DOWN),
+                EnergyPort.of(0, 5, -6, Direction.UP),
+                EnergyPort.of(2, -1, -6, Direction.DOWN),
+                EnergyPort.of(2, 5, -6, Direction.UP),
+                EnergyPort.of(-2, -1, -6, Direction.DOWN),
+                EnergyPort.of(-2, 5, -6, Direction.UP));
     }
 
     @Override

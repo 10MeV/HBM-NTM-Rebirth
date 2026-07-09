@@ -3,8 +3,11 @@ package com.hbm.ntm.client.obj;
 import com.hbm.ntm.HbmNtm;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
 public final class ObjWeaponModels {
     public static final LegacyWavefrontModel SHIMMER_SLEDGE = model("shimmer_sledge");
@@ -450,6 +453,7 @@ public final class ObjWeaponModels {
             MINIGUN.prepareRenderOnly("Gun", "Barrels");
     private static final LegacyWavefrontModel.SelectionHandle MINIGUN_DUAL_BARRELS =
             MINIGUN.prepareRenderOnly("GunDual", "Barrels");
+    private static final Map<ResourceLocation, Map<String, PreparedPart>> PREPARED_PARTS = preparedPartMap();
 
     public static final ResourceLocation SHIMMER_SLEDGE_TEXTURE = texture("shimmer_sledge");
     public static final ResourceLocation SHIMMER_AXE_TEXTURE = texture("shimmer_axe");
@@ -677,7 +681,7 @@ public final class ObjWeaponModels {
 
     private static LegacyWavefrontModel.UvTransform legacyTextureMatrix(float uScale, float vScale,
             float rotationDegrees, float uTranslate, float vTranslate) {
-        float radians = (float) Math.toRadians(rotationDegrees);
+        float radians = rotationDegrees * Mth.DEG_TO_RAD;
         float cos = (float) Math.cos(radians);
         float sin = (float) Math.sin(radians);
         return LegacyWavefrontModel.UvTransform.dynamic(
@@ -693,6 +697,13 @@ public final class ObjWeaponModels {
     private static PreparedPart preparedPart(LegacyWavefrontModel model, String partName) {
         if (model == null || partName == null) {
             return null;
+        }
+        Map<String, PreparedPart> parts = PREPARED_PARTS.get(model.modelLocation());
+        if (parts != null) {
+            PreparedPart prepared = parts.get(partName);
+            if (prepared != null) {
+                return prepared;
+            }
         }
         if (sameModel(model, SPAS_12)) {
             return prepared(SPAS_12, switch (partName) {
@@ -1078,6 +1089,244 @@ public final class ObjWeaponModels {
 
     private static boolean sameParts(String[] actual, String... expected) {
         return Arrays.equals(actual, expected);
+    }
+
+    private static Map<ResourceLocation, Map<String, PreparedPart>> preparedPartMap() {
+        Map<ResourceLocation, Map<String, PreparedPart>> map = new HashMap<>();
+        register(map, SPAS_12,
+                entry("MainBody", SPAS_12_MAIN_BODY),
+                entry("PumpGrip", SPAS_12_PUMP_GRIP));
+        register(map, TAU,
+                entry("Body", TAU_BODY),
+                entry("Rotor", TAU_ROTOR));
+        register(map, MARESLEG,
+                entry("Gun", MARESLEG_GUN),
+                entry("Lever", MARESLEG_LEVER),
+                entry("Stock", MARESLEG_STOCK),
+                entry("Barrel", MARESLEG_BARREL),
+                entry("Shell", MARESLEG_SHELL));
+        register(map, CARBINE,
+                entry("Gun", CARBINE_GUN),
+                entry("Slide", CARBINE_SLIDE),
+                entry("Magazine", CARBINE_MAGAZINE),
+                entry("Bullet", CARBINE_BULLET),
+                entry("IronSight", CARBINE_IRON_SIGHT),
+                entry("Scope", CARBINE_SCOPE),
+                entry("Bayonet", CARBINE_BAYONET));
+        register(map, UZI,
+                entry("Gun", UZI_GUN),
+                entry("GunMirror", UZI_GUN_MIRROR),
+                entry("Slide", UZI_SLIDE),
+                entry("Bullet", UZI_BULLET),
+                entry("Magazine", UZI_MAGAZINE),
+                entry("StockFront", UZI_STOCK_FRONT),
+                entry("StockBack", UZI_STOCK_BACK),
+                entry("Silencer", UZI_SILENCER));
+        register(map, STAR_F,
+                entry("Gun", STAR_F_GUN),
+                entry("Slide", STAR_F_SLIDE),
+                entry("Mag", STAR_F_MAG),
+                entry("Hammer", STAR_F_HAMMER),
+                entry("Bullet", STAR_F_BULLET));
+        register(map, G3,
+                entry("Rifle", G3_RIFLE),
+                entry("Bullet", G3_BULLET),
+                entry("Guide_And_Bolt", G3_GUIDE_AND_BOLT),
+                entry("Handle", G3_HANDLE),
+                entry("Plug", G3_PLUG),
+                entry("Mag_Paddle", G3_MAG_PADDLE),
+                entry("Magazine", G3_MAGAZINE),
+                entry("Stock", G3_STOCK),
+                entry("Flash_Hider", G3_FLASH_HIDER),
+                entry("Scope", G3_SCOPE),
+                entry("Silencer", G3_SILENCER),
+                entry("Selector", G3_SELECTOR),
+                entry("Trigger", G3_TRIGGER));
+        register(map, AMAT,
+                entry("Bolt", AMAT_BOLT),
+                entry("Gun", AMAT_GUN),
+                entry("Scope", AMAT_SCOPE),
+                entry("Magazine", AMAT_MAGAZINE),
+                entry("Bullet", AMAT_BULLET),
+                entry("BipodRight", AMAT_BIPOD_RIGHT),
+                entry("BipodHingeRight", AMAT_BIPOD_HINGE_RIGHT),
+                entry("MuzzleBrake", AMAT_MUZZLE_BRAKE),
+                entry("BipodHingeLeft", AMAT_BIPOD_HINGE_LEFT),
+                entry("BipodLeft", AMAT_BIPOD_LEFT));
+        register(map, MK108,
+                entry("Barrel", MK108_BARREL),
+                entry("Lid", MK108_LID),
+                entry("Belt", MK108_BELT),
+                entry("Grenade", MK108_GRENADE),
+                entry("Drum", MK108_DRUM),
+                entry("Gun", MK108_GUN));
+        register(map, MAS36,
+                entry("Gun", MAS36_GUN),
+                entry("Bolt", MAS36_BOLT),
+                entry("Stock", MAS36_STOCK),
+                entry("Bayonet", MAS36_BAYONET),
+                entry("Scope", MAS36_SCOPE),
+                entry("Clip", MAS36_CLIP),
+                entry("Bullet", MAS36_BULLET),
+                entry("Bullets", MAS36_BULLETS));
+        register(map, AM180,
+                entry("Mag", AM180_MAG),
+                entry("MagPlate", AM180_MAG_PLATE),
+                entry("Silencer", AM180_SILENCER),
+                entry("Bolt", AM180_BOLT),
+                entry("Trigger", AM180_TRIGGER),
+                entry("Gun", AM180_GUN));
+        register(map, SEXY,
+                entry("Barrel", SEXY_BARREL),
+                entry("Shell", SEXY_SHELL),
+                entry("Belt", SEXY_BELT),
+                entry("Magazine", SEXY_MAGAZINE),
+                entry("Hood", SEXY_HOOD),
+                entry("RecoilSpring", SEXY_RECOIL_SPRING),
+                entry("Lever", SEXY_LEVER),
+                entry("LockSpring", SEXY_LOCK_SPRING),
+                entry("Gun", SEXY_GUN));
+        register(map, BOLTER,
+                entry("Mag", BOLTER_MAG),
+                entry("Bullet", BOLTER_BULLET),
+                entry("Casing", BOLTER_CASING),
+                entry("Body", BOLTER_BODY));
+        register(map, STG77,
+                entry("Breech", STG77_BREECH),
+                entry("Barrel", STG77_BARREL),
+                entry("Lever", STG77_LEVER),
+                entry("Safety", STG77_SAFETY),
+                entry("Handle", STG77_HANDLE),
+                entry("Bullets", STG77_BULLETS),
+                entry("Magazine", STG77_MAGAZINE),
+                entry("Gun", STG77_GUN));
+        register(map, LASER_PISTOL,
+                entry("Tape", LASER_PISTOL_TAPE),
+                entry("Capacitors", LASER_PISTOL_CAPACITORS),
+                entry("Battery", LASER_PISTOL_BATTERY),
+                entry("Latch", LASER_PISTOL_LATCH),
+                entry("Gun", LASER_PISTOL_GUN));
+        register(map, QUADRO,
+                entry("Rockets", QUADRO_ROCKETS),
+                entry("Launcher", QUADRO_LAUNCHER));
+        register(map, MISSILE_LAUNCHER,
+                entry("Front", MISSILE_LAUNCHER_FRONT),
+                entry("Barrel", MISSILE_LAUNCHER_BARREL),
+                entry("Missile", MISSILE_LAUNCHER_MISSILE),
+                entry("Launcher", MISSILE_LAUNCHER_LAUNCHER));
+        register(map, LASRIFLE,
+                entry("Scope", LASRIFLE_SCOPE),
+                entry("Stock", LASRIFLE_STOCK),
+                entry("Barrel", LASRIFLE_BARREL),
+                entry("Battery", LASRIFLE_BATTERY),
+                entry("Lever", LASRIFLE_LEVER),
+                entry("Gun", LASRIFLE_GUN));
+        register(map, LASRIFLE_MODS,
+                entry("UnderBarrel", LASRIFLE_MODS_UNDER_BARREL),
+                entry("BarrelShotgun", LASRIFLE_MODS_BARREL_SHOTGUN));
+        register(map, PANZERSCHRECK,
+                entry("Shield", PANZERSCHRECK_SHIELD),
+                entry("Rocket", PANZERSCHRECK_ROCKET),
+                entry("Tube", PANZERSCHRECK_TUBE));
+        register(map, FATMAN,
+                entry("Piston", FATMAN_PISTON),
+                entry("Handle", FATMAN_HANDLE),
+                entry("Gauge", FATMAN_GAUGE),
+                entry("Lid", FATMAN_LID),
+                entry("MiniNuke", FATMAN_MININUKE),
+                entry("Launcher", FATMAN_LAUNCHER));
+        register(map, CHARGE_THROWER,
+                entry("Oomph", CHARGE_THROWER_OOMPH),
+                entry("Mortar", CHARGE_THROWER_MORTAR),
+                entry("Gun", CHARGE_THROWER_GUN),
+                entry("Scope", CHARGE_THROWER_SCOPE),
+                entry("Hook", CHARGE_THROWER_HOOK),
+                entry("Rocket", CHARGE_THROWER_ROCKET));
+        register(map, ABERRATOR,
+                entry("Gun", ABERRATOR_GUN),
+                entry("Hammer", ABERRATOR_HAMMER),
+                entry("Magazine", ABERRATOR_MAGAZINE),
+                entry("Bullet", ABERRATOR_BULLET),
+                entry("Slide", ABERRATOR_SLIDE),
+                entry("Sight", ABERRATOR_SIGHT));
+        register(map, MIKE_HAWK,
+                entry("Grip", MIKE_HAWK_GRIP),
+                entry("Slide", MIKE_HAWK_SLIDE),
+                entry("Hammer", MIKE_HAWK_HAMMER),
+                entry("Bullet", MIKE_HAWK_BULLET),
+                entry("Magazine", MIKE_HAWK_MAGAZINE));
+        register(map, DOUBLE_BARREL,
+                entry("Stock", DOUBLE_BARREL_STOCK),
+                entry("BarrelShort", DOUBLE_BARREL_BARREL_SHORT),
+                entry("Barrel", DOUBLE_BARREL_BARREL),
+                entry("Buckle", DOUBLE_BARREL_BUCKLE),
+                entry("Lever", DOUBLE_BARREL_LEVER),
+                entry("Shells", DOUBLE_BARREL_SHELLS));
+        register(map, LILMAC,
+                entry("Gun", LILMAC_GUN),
+                entry("Cylinder", LILMAC_CYLINDER),
+                entry("Bullets", LILMAC_BULLETS),
+                entry("Casings", LILMAC_CASINGS),
+                entry("Pivot", LILMAC_PIVOT),
+                entry("Hammer", LILMAC_HAMMER),
+                entry("Scope", LILMAC_SCOPE));
+        register(map, FLAMETHROWER,
+                entry("Gun", FLAMETHROWER_GUN),
+                entry("Tank", FLAMETHROWER_TANK),
+                entry("Gauge", FLAMETHROWER_GAUGE),
+                entry("HeatShield", FLAMETHROWER_HEAT_SHIELD));
+        register(map, CHEMTHROWER,
+                entry("Gun", CHEMTHROWER_GUN),
+                entry("Hose", CHEMTHROWER_HOSE),
+                entry("Nozzle", CHEMTHROWER_NOZZLE),
+                entry("Gauge", CHEMTHROWER_GAUGE));
+        register(map, DRILL,
+                entry("Base", DRILL_BASE),
+                entry("Gauge", DRILL_GAUGE),
+                entry("Piston1", DRILL_PISTON_1),
+                entry("Piston2", DRILL_PISTON_2),
+                entry("Piston3", DRILL_PISTON_3),
+                entry("DrillBack", DRILL_BACK),
+                entry("DrillFront", DRILL_FRONT));
+        register(map, TESLA_CANNON,
+                entry("Gun", TESLA_CANNON_GUN),
+                entry("Extension", TESLA_CANNON_EXTENSION),
+                entry("Cog", TESLA_CANNON_COG),
+                entry("Capacitor", TESLA_CANNON_CAPACITOR));
+        register(map, FOLLY,
+                entry("Cannon", FOLLY_CANNON),
+                entry("Barrel", FOLLY_BARREL),
+                entry("Shell", FOLLY_SHELL),
+                entry("Breech", FOLLY_BREECH),
+                entry("Cog", FOLLY_COG));
+        register(map, N_I_4_N_I,
+                entry("Barrel", N_I_4_N_I_BARREL),
+                entry("Coin4", N_I_4_N_I_COIN_4),
+                entry("Coin3", N_I_4_N_I_COIN_3),
+                entry("Coin2", N_I_4_N_I_COIN_2),
+                entry("Coin1", N_I_4_N_I_COIN_1),
+                entry("Grip", N_I_4_N_I_GRIP),
+                entry("FrameLight", N_I_4_N_I_FRAME_LIGHT),
+                entry("Cylinder", N_I_4_N_I_CYLINDER),
+                entry("CylinderHighlights", N_I_4_N_I_CYLINDER_HIGHLIGHTS),
+                entry("FrameDark", N_I_4_N_I_FRAME_DARK));
+        return Map.copyOf(map);
+    }
+
+    private static void register(Map<ResourceLocation, Map<String, PreparedPart>> map, LegacyWavefrontModel model,
+            PartEntry... entries) {
+        Map<String, PreparedPart> parts = new HashMap<>();
+        for (PartEntry entry : entries) {
+            parts.put(entry.partName(), new PreparedPart(model, entry.selection()));
+        }
+        map.put(model.modelLocation(), Map.copyOf(parts));
+    }
+
+    private static PartEntry entry(String partName, LegacyWavefrontModel.SelectionHandle selection) {
+        return new PartEntry(partName, selection);
+    }
+
+    private record PartEntry(String partName, LegacyWavefrontModel.SelectionHandle selection) {
     }
 
     private record PreparedPart(LegacyWavefrontModel model, LegacyWavefrontModel.SelectionHandle selection) {

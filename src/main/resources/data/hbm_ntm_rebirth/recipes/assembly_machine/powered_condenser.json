@@ -47,7 +47,8 @@
         "type": "hbm_ntm_rebirth:fluid_container",
         "amount": 1000,
         "fluid": "hbm_ntm_rebirth:lubricant"
-      }
+      },
+      "legacy_ore": "container1000lubricant"
     }
   ],
   "internal_name": "ass.hpcondenser",

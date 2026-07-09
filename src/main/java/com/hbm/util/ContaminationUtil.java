@@ -15,7 +15,7 @@ import java.util.HashSet;
 @Deprecated(forRemoval = false)
 public final class ContaminationUtil {
     @SuppressWarnings("rawtypes")
-    public static final HashSet<Class> immuneEntities = RadiationUtil.legacyImmuneEntitiesView();
+    public static HashSet<Class> immuneEntities = RadiationUtil.legacyImmuneEntitiesView();
 
     private ContaminationUtil() {
     }
@@ -29,10 +29,7 @@ public final class ContaminationUtil {
     }
 
     public static boolean isRadImmune(Entity entity) {
-        if (!(entity instanceof LivingEntity living)) {
-            return false;
-        }
-        return RadiationUtil.isRadImmune(living);
+        return RadiationUtil.isRadImmune(entity, immuneEntities);
     }
 
     @SuppressWarnings("rawtypes")

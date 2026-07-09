@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:powered_rail"
+    }
+  },
+  "output": [
+    {
+      "amount": 72,
+      "material": "Gold"
+    },
+    {
+      "amount": 12,
+      "material": "Redstone"
+    }
+  ],
+  "source_order": 4
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "S": {
+      "tag": "forge:ingots/steel"
+    },
+    "W": {
+      "item": "minecraft:red_wool"
+    }
+  },
+  "pattern": [
+    "W W",
+    "S S"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:dieselsuit_boots"
+  },
+  "show_notification": true
+}

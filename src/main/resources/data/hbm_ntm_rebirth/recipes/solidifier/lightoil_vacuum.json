@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:lightoil_vacuum",
                   "amount":  1200
-              }
+              },
+    "source_order":  34
 }

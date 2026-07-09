@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 50,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.peroxide",
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:peroxide"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 100,
+  "source_order": 49
+}

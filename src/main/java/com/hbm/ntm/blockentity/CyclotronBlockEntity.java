@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -15,9 +16,9 @@ import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.CyclotronMenu;
+import com.hbm.ntm.recipe.CyclotronRecipe;
 import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import com.hbm.ntm.recipe.CyclotronRecipeRuntime;
-import com.hbm.ntm.recipe.CyclotronRecipeRuntime.CyclotronRecipe;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
@@ -54,7 +55,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements MenuProvider, HbmEnergyReceiver,
-        HbmStandardFluidTransceiver, LegacyUpgradeInfoProvider, LegacyProxyDelegateProvider {
+        HbmStandardFluidTransceiver, LegacyUpgradeInfoProvider, LegacyProxyDelegateProvider,
+        HbmEnergyPortInspectable {
     public static final int SLOT_PARTICLE_START = 0;
     public static final int SLOT_TARGET_START = 3;
     public static final int SLOT_OUTPUT_START = 6;
@@ -85,10 +87,10 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             if (slot >= SLOT_PARTICLE_START && slot < SLOT_PARTICLE_START + 3) {
-                return CyclotronRecipeRuntime.isValidParticle(stack);
+                return CyclotronRecipeRuntime.isValidParticle(CyclotronBlockEntity.this.level, stack);
             }
             if (slot >= SLOT_TARGET_START && slot < SLOT_TARGET_START + 3) {
-                return CyclotronRecipeRuntime.isValidInput(stack);
+                return CyclotronRecipeRuntime.isValidInput(CyclotronBlockEntity.this.level, stack);
             }
             if (slot == SLOT_BATTERY) {
                 return HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
@@ -225,7 +227,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
     }
 
     private Optional<CyclotronRecipe> recipe(int lane) {
-        return CyclotronRecipeRuntime.find(items.getStackInSlot(SLOT_PARTICLE_START + lane),
+        return CyclotronRecipeRuntime.find(level, items.getStackInSlot(SLOT_PARTICLE_START + lane),
                 items.getStackInSlot(SLOT_TARGET_START + lane));
     }
 
@@ -364,6 +366,12 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
                 HbmEnergyUtil.EnergyPort.of(-1, 0, 3, Direction.SOUTH),
                 HbmEnergyUtil.EnergyPort.of(1, 0, -3, Direction.NORTH),
                 HbmEnergyUtil.EnergyPort.of(-1, 0, -3, Direction.NORTH));
+    }
+
+    @Override
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        return level == null ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
+                : HbmEnergyUtil.inspectPorts(level, worldPosition, energyPorts());
     }
 
     @Override

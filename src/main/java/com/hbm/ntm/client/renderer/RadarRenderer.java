@@ -32,6 +32,12 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
     }
 
     @Override
+    public boolean shouldRender(T blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }

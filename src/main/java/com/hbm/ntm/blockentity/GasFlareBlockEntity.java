@@ -6,6 +6,7 @@ import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
+import com.hbm.ntm.block.GasFlareBlock;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
@@ -154,12 +155,14 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
                 || oldPower != blockEntity.energy.getPower()
                 || oldOn != blockEntity.on
                 || oldBurn != blockEntity.burn;
+        changed = blockEntity.syncTiltedBlockState(level, blockEntity.isTilted()) || changed;
         if (changed) {
             blockEntity.setChanged();
         }
         blockEntity.networkPackNT(50);
         if (changed) {
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            BlockState currentState = blockEntity.getBlockState();
+            level.sendBlockUpdated(pos, currentState, currentState, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -417,6 +420,15 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY() + 11.0D, pos.getZ(),
                     "hbm:weapon.flamethrowerShoot", SoundSource.BLOCKS, getVolume(1.5F), 0.75F);
         }
+        return true;
+    }
+
+    private boolean syncTiltedBlockState(Level level, boolean tilted) {
+        BlockState state = getBlockState();
+        if (!state.hasProperty(GasFlareBlock.TILTED) || state.getValue(GasFlareBlock.TILTED) == tilted) {
+            return false;
+        }
+        level.setBlock(worldPosition, state.setValue(GasFlareBlock.TILTED, tilted), Block.UPDATE_CLIENTS);
         return true;
     }
 

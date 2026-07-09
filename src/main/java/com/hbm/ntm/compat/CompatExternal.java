@@ -3,6 +3,8 @@ package com.hbm.ntm.compat;
 import com.hbm.ntm.blockentity.HbmFluidBlockEntity;
 import com.hbm.ntm.api.fluid.HbmFluidContainerRegisterListener;
 import com.hbm.ntm.api.fluid.HbmFluidRegisterListener;
+import com.hbm.inventory.recipes.loader.SerializableRecipe;
+import com.hbm.ntm.api.recipe.IRecipeRegisterListener;
 import com.hbm.ntm.api.recipe.RecipeRegisterListener;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
@@ -169,6 +171,16 @@ public final class CompatExternal {
 
     public static boolean unregisterRecipeRegisterListener(RecipeRegisterListener listener) {
         return CompatRecipeRegistry.unregisterRecipeRegisterListener(listener);
+    }
+
+    public static void registerLegacyRecipeRegisterListener(IRecipeRegisterListener listener) {
+        if (listener != null) {
+            SerializableRecipe.additionalListeners.add(listener);
+        }
+    }
+
+    public static boolean unregisterLegacyRecipeRegisterListener(IRecipeRegisterListener listener) {
+        return listener != null && SerializableRecipe.additionalListeners.remove(listener);
     }
 
     public static CompatRecipeRegistry.Diagnostics recipeDiagnostics() {

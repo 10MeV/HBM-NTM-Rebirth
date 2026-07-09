@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "forge:bolts/steel"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor"
+    },
+    "P": {
+      "tag": "forge:plates/iron"
+    }
+  },
+  "pattern": [
+    "MBM",
+    "PBP",
+    "MBM"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:servo_set"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:particle_accelerator",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:item_expensive_gold_dust"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/schrabidium"
+      },
+      "count": 1,
+      "legacy_ore": "ingotSchrabidium"
+    }
+  ],
+  "momentum": 10000,
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:item_expensive_degenerate_matter"
+    }
+  ],
+  "source_order": 9
+}

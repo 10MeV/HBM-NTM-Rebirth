@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.bbronze",
+  "fallback_name": "Bismuth Bronze Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_bismuth_bronze" },
+  "frequency": 9,
+  "input": [
+    { "material": "Copper", "amount": 64 },
+    { "material": "Bismuth", "amount": 8 },
+    { "material": "Flux", "amount": 24 }
+  ],
+  "output": [
+    { "material": "BismuthBronze", "amount": 72 },
+    { "material": "Slag", "amount": 24 }
+  ],
+  "source_order": 8
+}

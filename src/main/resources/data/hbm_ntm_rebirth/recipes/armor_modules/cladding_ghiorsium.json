@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:ingot_gh336"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:cladding_desh"
+    }
+  },
+  "pattern": [
+    "DPD",
+    "PRP",
+    "DPD"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cladding_ghiorsium"
+  },
+  "show_notification": true
+}

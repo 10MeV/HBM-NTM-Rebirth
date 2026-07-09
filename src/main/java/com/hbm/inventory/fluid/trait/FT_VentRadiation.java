@@ -2,8 +2,8 @@ package com.hbm.inventory.fluid.trait;
 
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import java.io.IOException;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -49,7 +49,7 @@ public class FT_VentRadiation extends VentRadiationFluidTrait {
     public void onFluidRelease(Level level, int x, int y, int z, com.hbm.inventory.fluid.tank.FluidTank tank,
             int overflowAmount, FluidTrait.FluidReleaseType release) {
         if (level != null && overflowAmount > 0 && radPerMB > 0.0F) {
-            ChunkRadiationManager.incrementRadiation(level, new BlockPos(x, y, z), overflowAmount * radPerMB);
+            ChunkRadiationManager.proxy.incrementRad(level, new BlockPos(x, y, z), overflowAmount * radPerMB);
         }
     }
 

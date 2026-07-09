@@ -5,6 +5,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -16,6 +17,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.block.LegacyFrameRenderState;
 import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
@@ -64,6 +66,7 @@ import java.util.Map;
 import java.util.List;
 
 public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
+        HbmEnergyPortInspectable,
         HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_DID_PROCESS = "DidProcess";
@@ -158,6 +161,9 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, AssemblyMachineBlockEntity blockEntity) {
+        if (level.getGameTime() % 20L == 0L) {
+            state = LegacyFrameRenderState.syncFrameBlockState(level, pos, state, 3);
+        }
         long oldPower = blockEntity.energy.getPower();
         HbmEnergyUtil.chargeStorageFromItem(blockEntity.items.getStackInSlot(SLOT_BATTERY), blockEntity, blockEntity.getReceiverSpeed());
         blockEntity.subscribeEnergyReceiverToPorts();
@@ -205,6 +211,13 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     public HbmEnergyStorage getEnergyStorage() {
         return energy;
+    }
+
+    @Override
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        return level == null
+                ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
+                : HbmEnergyUtil.inspectPorts(level, worldPosition, ENERGY_PORTS);
     }
 
     public HbmFluidTank getInputTank() {
@@ -321,7 +334,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public boolean shouldRenderFrame() {
-        return level != null && !level.getBlockState(worldPosition.above(3)).isAir();
+        return LegacyFrameRenderState.isFrameVisible(getBlockState(), level, worldPosition, 3);
     }
 
     private void updateAudioLoop() {

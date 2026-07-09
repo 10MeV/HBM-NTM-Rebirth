@@ -1,5 +1,8 @@
 package com.hbm.ntm.datagen;
 
+import net.minecraft.advancements.critereon.EnchantmentPredicate;
+import net.minecraft.advancements.critereon.ItemPredicate;
+import net.minecraft.advancements.critereon.MinMaxBounds;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.DecoToasterBlock;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
@@ -29,8 +32,11 @@ import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.functions.SetNbtFunction;
 import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
+import net.minecraft.world.level.storage.loot.predicates.InvertedLootItemCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
+import net.minecraft.world.level.storage.loot.predicates.MatchTool;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -91,6 +97,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.FAN.get());
         add(ModBlocks.FILING_CABINET.get(),
                 legacyStateVariantDrop(ModBlocks.FILING_CABINET.get(), LegacyFileCabinetBlock.VARIANT, 2));
+        dropSelf(ModBlocks.PEDESTAL.get());
         add(ModBlocks.RED_CABLE_BOX.get(),
                 legacyStateVariantDrop(ModBlocks.RED_CABLE_BOX.get(), RedCableBoxBlock.SIZE, 5));
         add(ModBlocks.FLUID_DUCT_NEO.get(),
@@ -119,6 +126,11 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.MACHINE_LITHIUM_BATTERY.get());
         dropSelf(ModBlocks.MACHINE_SCHRABIDIUM_BATTERY.get());
         dropSelf(ModBlocks.MACHINE_DINEUTRONIUM_BATTERY.get());
+        dropSelf(ModBlocks.CAPACITOR_COPPER.get());
+        dropSelf(ModBlocks.CAPACITOR_GOLD.get());
+        dropSelf(ModBlocks.CAPACITOR_NIOBIUM.get());
+        dropSelf(ModBlocks.CAPACITOR_TANTALIUM.get());
+        dropSelf(ModBlocks.CAPACITOR_SCHRABIDATE.get());
         addNoDrop(ModBlocks.MACHINE_WELL.get());
         addNoDrop(ModBlocks.MACHINE_PUMPJACK.get());
         addNoDrop(ModBlocks.MACHINE_FRACKING_TOWER.get());
@@ -141,12 +153,14 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addNoDrop(ModBlocks.SOYUZ_LAUNCHER.get());
         dropSelf(ModBlocks.STRUCT_LAUNCHER.get());
         dropSelf(ModBlocks.STRUCT_SCAFFOLD.get());
+        dropSelf(ModBlocks.STRUCT_LAUNCHER_CORE.get());
+        dropSelf(ModBlocks.STRUCT_LAUNCHER_CORE_LARGE.get());
         dropSelf(ModBlocks.STRUCT_SOYUZ_CORE.get());
         dropSelf(ModBlocks.LAUNCH_PAD.get());
         dropSelf(ModBlocks.LAUNCH_PAD_LARGE.get());
         dropSelf(ModBlocks.LAUNCH_PAD_RUSTED.get());
-        dropSelf(ModBlocks.LAUNCH_TABLE.get());
-        dropSelf(ModBlocks.COMPACT_LAUNCHER.get());
+        add(ModBlocks.LAUNCH_TABLE.get(), block -> createSingleItemTable(ModBlocks.STRUCT_LAUNCHER_CORE_LARGE.get()));
+        add(ModBlocks.COMPACT_LAUNCHER.get(), block -> createSingleItemTable(ModBlocks.STRUCT_LAUNCHER_CORE.get()));
         dropSelf(ModBlocks.MACHINE_MISSILE_ASSEMBLY.get());
         addNoDrop(ModBlocks.OIL_PIPE.get());
         add(ModBlocks.CONVEYOR.get(), conveyorWandDrop("REGULAR"));
@@ -173,7 +187,12 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         ModBlocks.PYLON_BLOCKS.forEach(block -> dropSelf(block.get()));
         ModBlocks.BLOCK_TAB_BLOCKS.stream()
                 .filter(block -> !ModBlocks.CAP_BLOCKS.contains(block))
+                .filter(block -> block != ModBlocks.BURNING_EARTH && block != ModBlocks.IMPACT_DIRT)
+                .filter(block -> !"glyphid_base".equals(block.getId().getPath()))
+                .filter(block -> !"glyphid_spawner".equals(block.getId().getPath()))
                 .forEach(block -> dropSelf(block.get()));
+        addNoDrop(ModBlocks.legacyBlock("glyphid_base").get());
+        add(ModBlocks.legacyBlock("glyphid_spawner").get(), this::glyphidSpawnerDrop);
         addLegacyOreDrops();
         addCapBlockDrops();
         addPileGraphiteDrops();
@@ -190,6 +209,8 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.MUSH_BLOCK_STEM.get(), hugeMushDrop());
         add(ModBlocks.FROZEN_GRASS.get(), block -> singleItemDrop(Items.SNOWBALL));
         add(ModBlocks.FROZEN_DIRT.get(), block -> singleItemDrop(Items.SNOWBALL));
+        add(ModBlocks.BURNING_EARTH.get(), block -> singleItemDrop(Items.DIRT));
+        add(ModBlocks.IMPACT_DIRT.get(), block -> singleItemDrop(Items.DIRT));
         add(ModBlocks.FROZEN_LOG.get(), block -> snowballStackDrop(2.0F, 4.0F));
         add(ModBlocks.FROZEN_PLANKS.get(), block -> singleItemDrop(Items.SNOWBALL));
         addNoDrop(ModBlocks.FIRE_DIGAMMA.get());
@@ -203,8 +224,10 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         && block != ModBlocks.CHARGE_C4
                         && block != ModBlocks.CHARGE_SEMTEX
                         && block != ModBlocks.VOLCANO_CORE
-                        && block != ModBlocks.VOLCANO_RAD_CORE)
+                        && block != ModBlocks.VOLCANO_RAD_CORE
+                        && block != ModBlocks.MINE_NAVAL)
                 .forEach(block -> dropSelf(block.get()));
+        addNoDrop(ModBlocks.MINE_NAVAL.get());
         addNoDrop(ModBlocks.VOLCANO_CORE.get());
         addNoDrop(ModBlocks.VOLCANO_RAD_CORE.get());
         addNoDrop(ModBlocks.CHARGE_DYNAMITE.get());
@@ -236,13 +259,16 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.GLASS_LEAD.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_LEAD.get()));
         add(ModBlocks.GLASS_URANIUM.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_URANIUM.get()));
         add(ModBlocks.GLASS_POLONIUM.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_POLONIUM.get()));
+        add(ModBlocks.GLASS_POLARIZED.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_POLARIZED.get()));
         add(ModBlocks.GLASS_QUARTZ.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_QUARTZ.get()));
+        add(ModBlocks.REINFORCED_GLASS.get(), createSilkTouchOnlyTable(ModBlocks.REINFORCED_GLASS.get()));
         dropSelf(ModBlocks.SAND_BORON.get());
         dropSelf(ModBlocks.SAND_LEAD.get());
         dropSelf(ModBlocks.SAND_URANIUM.get());
         dropSelf(ModBlocks.SAND_POLONIUM.get());
         dropSelf(ModBlocks.SAND_QUARTZ.get());
         add(ModBlocks.GLASS_TRINITITE.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_TRINITITE.get()));
+        add(ModBlocks.GLASS_ASH.get(), createSilkTouchOnlyTable(ModBlocks.GLASS_ASH.get()));
         add(ModBlocks.FALLOUT.get(), block -> createSingleItemTable(ModItems.legacyItem("fallout").get()));
         add(ModBlocks.WASTE_TRINITITE.get(), block -> singleItemDrop(ModItems.legacyItem("trinitite").get()));
         add(ModBlocks.WASTE_TRINITITE_RED.get(), block -> singleItemDrop(ModItems.legacyItem("trinitite").get()));
@@ -293,7 +319,9 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.STALAGMITE_ASBESTOS.get(), block -> singleItemDrop(ModItems.legacyItem("powder_asbestos").get()));
         addLegacyNetherFireOreDrop();
         addLegacyNoSilkFortuneDrop("ore_oil", "oil_tar_crude");
-        addLegacySingleOreDrop("block_meteor_cobble", "fragment_meteorite");
+        addLegacyNoFortuneOreDrop("block_meteor_cobble", "fragment_meteorite");
+        addLegacyNoFortuneOreDrop("block_meteor_broken", "fragment_meteorite", 1.0F, 3.0F);
+        addNoDrop(ModBlocks.ORE_BEDROCK_COLTAN.get());
     }
 
     private void addLegacySingleOreDrop(String blockName, String itemName) {
@@ -305,6 +333,17 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 LootItem.lootTableItem(ModItems.legacyItem(itemName).get())
                         .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max)))
                         .apply(ApplyBonusCount.addOreBonusCount(Enchantments.BLOCK_FORTUNE))));
+    }
+
+    private void addLegacyNoFortuneOreDrop(String blockName, String itemName) {
+        add(ModBlocks.legacyBlock(blockName).get(), block -> createSilkTouchDispatchTable(block,
+                LootItem.lootTableItem(ModItems.legacyItem(itemName).get())));
+    }
+
+    private void addLegacyNoFortuneOreDrop(String blockName, String itemName, float min, float max) {
+        add(ModBlocks.legacyBlock(blockName).get(), block -> createSilkTouchDispatchTable(block,
+                LootItem.lootTableItem(ModItems.legacyItem(itemName).get())
+                        .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max)))));
     }
 
     private void addLegacyNoSilkFortuneDrop(String blockName, String itemName) {
@@ -400,6 +439,40 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                                 .apply(SetNbtFunction.setTag(tag))
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 6.0F))))
                         .when(ExplosionCondition.survivesExplosion()));
+    }
+
+    private LootTable.Builder glyphidSpawnerDrop(Block block) {
+        return LootTable.lootTable()
+                .withPool(glyphidEggPool(4.0F, 6.0F, fortuneAtLeast(3)))
+                .withPool(glyphidEggPool(3.0F, 5.0F, fortuneExactly(2)))
+                .withPool(glyphidEggPool(2.0F, 4.0F, fortuneExactly(1)))
+                .withPool(glyphidEggPool(1.0F, 3.0F, noFortune()));
+    }
+
+    private LootPool.Builder glyphidEggPool(float min, float max, LootItemCondition.Builder condition) {
+        return LootPool.lootPool()
+                .setRolls(ConstantValue.exactly(1.0F))
+                .add(LootItem.lootTableItem(ModItems.EGG_GLYPHID.get())
+                        .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max))))
+                .when(ExplosionCondition.survivesExplosion())
+                .when(condition);
+    }
+
+    private LootItemCondition.Builder fortuneExactly(int level) {
+        return fortune(MinMaxBounds.Ints.exactly(level));
+    }
+
+    private LootItemCondition.Builder fortuneAtLeast(int level) {
+        return fortune(MinMaxBounds.Ints.atLeast(level));
+    }
+
+    private LootItemCondition.Builder noFortune() {
+        return InvertedLootItemCondition.invert(fortuneAtLeast(1));
+    }
+
+    private LootItemCondition.Builder fortune(MinMaxBounds.Ints levels) {
+        return MatchTool.toolMatches(ItemPredicate.Builder.item()
+                .hasEnchantment(new EnchantmentPredicate(Enchantments.BLOCK_FORTUNE, levels)));
     }
 
     private LootTable.Builder zirnoxDestroyedDrop() {

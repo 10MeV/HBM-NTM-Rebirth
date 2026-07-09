@@ -1,25 +1,27 @@
 {
   "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:battery_lead"
+    },
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "W": {
+      "tag": "forge:wires/mingrade"
+    }
+  },
   "pattern": [
     "WRW",
     " I ",
     " B "
   ],
-  "key": {
-    "W": {
-      "tag": "forge:wires/mingrade"
-    },
-    "R": {
-      "item": "minecraft:redstone"
-    },
-    "I": {
-      "tag": "forge:ingots/iron"
-    },
-    "B": {
-      "item": "hbm_ntm_rebirth:battery_lead"
-    }
-  },
   "result": {
     "item": "hbm_ntm_rebirth:power_net_tool"
-  }
+  },
+  "show_notification": true
 }

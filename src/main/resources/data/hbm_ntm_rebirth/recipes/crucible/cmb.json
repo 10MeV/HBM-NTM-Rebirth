@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.cmb",
+  "fallback_name": "CMB Steel Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_combine_steel" },
+  "frequency": 3,
+  "input": [
+    { "material": "MagnetizedTungsten", "amount": 48 },
+    { "material": "Mud", "amount": 24 }
+  ],
+  "output": [
+    { "material": "CMBSteel", "amount": 72 }
+  ],
+  "source_order": 10
+}

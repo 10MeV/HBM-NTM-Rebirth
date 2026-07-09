@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.block.RefineryBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -151,9 +152,11 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (changed) {
             refinery.setChanged();
         }
+        changed = refinery.syncRenderBlockState(level) || changed;
         refinery.networkPackNT(150);
         if (changed) {
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            BlockState currentState = refinery.getBlockState();
+            level.sendBlockUpdated(pos, currentState, currentState, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -358,6 +361,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         invalidateFluidHandlers();
         setChanged();
         if (level != null) {
+            syncRenderBlockState(level);
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
@@ -422,6 +426,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         invalidateFluidHandlers();
         setChanged();
         if (level != null) {
+            syncRenderBlockState(level);
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -442,6 +447,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
             onFire = false;
             setChanged();
             if (level != null) {
+                syncRenderBlockState(level);
                 level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
             }
             return;
@@ -457,6 +463,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         invalidateFluidHandlers();
         setChanged();
         if (level != null) {
+            syncRenderBlockState(level);
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
@@ -491,6 +498,21 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void explodeFromFluidOverpressure(Level level, BlockPos pos) {
         explode();
+    }
+
+    private boolean syncRenderBlockState(Level level) {
+        BlockState state = getBlockState();
+        if (!state.hasProperty(RefineryBlock.EXPLODED) || !state.hasProperty(RefineryBlock.TILTED)) {
+            return false;
+        }
+        BlockState updated = state
+                .setValue(RefineryBlock.EXPLODED, exploded)
+                .setValue(RefineryBlock.TILTED, isTilted());
+        if (updated == state) {
+            return false;
+        }
+        level.setBlock(worldPosition, updated, Block.UPDATE_CLIENTS);
+        return true;
     }
 
     private boolean burnResidualFluid() {

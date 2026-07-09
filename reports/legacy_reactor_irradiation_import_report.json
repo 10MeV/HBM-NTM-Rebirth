@@ -1,4 +1,5 @@
 {
+  "found_template_count": 0,
   "handlers": [
     {
       "external_template_status": "missing",
@@ -17,5 +18,9 @@
       "status": "main_resources_only"
     }
   ],
-  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes"
+  "imported_recipe_count": 0,
+  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes",
+  "main_resource_recipe_count": 23,
+  "skipped_recipe_count": 0,
+  "status": "main_resources_only"
 }

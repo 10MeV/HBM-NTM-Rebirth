@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "item": "hbm_ntm_rebirth:fragment_lanthanium" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_lanthanium_tiny" }
+  "output": { "item": "hbm_ntm_rebirth:powder_lanthanium_tiny" },
+  "source_order": 43
 }

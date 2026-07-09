@@ -48,15 +48,91 @@ public final class RtgPelletRuntime {
         return spec(stack) != null;
     }
 
+    public static boolean isPellet(Item item) {
+        return spec(item) != null;
+    }
+
     public static int heat(ItemStack stack) {
         PelletSpec spec = spec(stack);
         if (spec == null) {
             return 0;
         }
-        if (!RtgConfig.scaleRtgPower() || !RtgConfig.doRtgsDecay()) {
+        if (!RtgConfig.scaleRtgPower()) {
             return spec.baseHeat();
         }
-        return (int) Math.ceil(spec.baseHeat() * ((double) lifespan(stack, spec) / (double) spec.lifespan()));
+        return scaledHeat(stack, spec);
+    }
+
+    public static int baseHeat(ItemStack stack) {
+        PelletSpec spec = spec(stack);
+        return spec == null ? 0 : spec.baseHeat();
+    }
+
+    public static int baseHeat(Item item) {
+        PelletSpec spec = spec(item);
+        return spec == null ? 0 : spec.baseHeat();
+    }
+
+    public static int scaledHeat(ItemStack stack) {
+        PelletSpec spec = spec(stack);
+        return spec == null ? 0 : scaledHeat(stack, spec);
+    }
+
+    public static long lifespan(ItemStack stack) {
+        PelletSpec spec = spec(stack);
+        return spec == null ? 0L : lifespan(stack, spec);
+    }
+
+    public static long maxLifespan(ItemStack stack) {
+        PelletSpec spec = spec(stack);
+        return spec == null ? 0L : spec.lifespan();
+    }
+
+    public static long maxLifespan(Item item) {
+        PelletSpec spec = spec(item);
+        return spec == null ? 0L : spec.lifespan();
+    }
+
+    public static boolean doesDecay(ItemStack stack) {
+        return spec(stack) != null;
+    }
+
+    public static boolean doesDecay(Item item) {
+        return spec(item) != null;
+    }
+
+    public static ItemStack decayItem(ItemStack stack) {
+        PelletSpec spec = spec(stack);
+        return spec == null ? ItemStack.EMPTY : itemStack(spec.decayItem(), 1);
+    }
+
+    public static ItemStack decayItem(Item item) {
+        PelletSpec spec = spec(item);
+        return spec == null ? ItemStack.EMPTY : itemStack(spec.decayItem(), 1);
+    }
+
+    public static double durabilityForDisplay(ItemStack stack) {
+        PelletSpec spec = spec(stack);
+        if (spec == null || spec.lifespan() <= 0L) {
+            return 0.0D;
+        }
+        return 1.0D - (double) lifespan(stack, spec) / (double) spec.lifespan();
+    }
+
+    public static ItemStack handleDecay(ItemStack stack) {
+        PelletSpec spec = spec(stack);
+        return spec == null ? stack : handleDecay(stack, spec);
+    }
+
+    public static void decay(ItemStack stack) {
+        PelletSpec spec = spec(stack);
+        if (spec != null) {
+            decay(stack, spec);
+        }
+    }
+
+    public static boolean isRegularPellet(ItemStack stack) {
+        return isNamed(stack, "pellet_rtg");
     }
 
     public static int updateHeat(ItemStackHandler items, int firstSlot, int lastSlotInclusive) {
@@ -68,7 +144,7 @@ public final class RtgPelletRuntime {
                 continue;
             }
             total += heat(stack);
-            ItemStack decayed = handleDecay(stack, spec);
+            ItemStack decayed = handleDecay(stack);
             if (decayed != stack || RtgConfig.doRtgsDecay()) {
                 items.setStackInSlot(slot, decayed);
             }
@@ -106,27 +182,54 @@ public final class RtgPelletRuntime {
         }
         long lifespan = lifespan(stack, spec);
         if (lifespan <= 0L) {
-            return itemStack(spec.decayItem(), stack.getCount());
+            return itemStack(spec.decayItem(), 1);
         }
-        stack.getOrCreateTag().putLong(TAG_PELLET_DEPLETION, lifespan - 1L);
+        decay(stack, spec);
         return stack;
     }
 
+    private static void decay(ItemStack stack, PelletSpec spec) {
+        if (stack.hasTag()) {
+            stack.getOrCreateTag().putLong(TAG_PELLET_DEPLETION, lifespan(stack, spec) - 1L);
+        } else {
+            stack.getOrCreateTag().putLong(TAG_PELLET_DEPLETION, spec.lifespan());
+        }
+    }
+
     private static long lifespan(ItemStack stack, PelletSpec spec) {
-        CompoundTag tag = stack.getOrCreateTag();
-        if (!tag.contains(TAG_PELLET_DEPLETION)) {
+        if (!stack.hasTag()) {
+            CompoundTag tag = stack.getOrCreateTag();
             tag.putLong(TAG_PELLET_DEPLETION, spec.lifespan());
             return spec.lifespan();
         }
-        return tag.getLong(TAG_PELLET_DEPLETION);
+        return stack.getOrCreateTag().getLong(TAG_PELLET_DEPLETION);
+    }
+
+    private static int scaledHeat(ItemStack stack, PelletSpec spec) {
+        if (spec.lifespan() <= 0L) {
+            return spec.baseHeat();
+        }
+        return (int) Math.ceil(spec.baseHeat() * ((double) lifespan(stack, spec) / (double) spec.lifespan()));
     }
 
     private static PelletSpec spec(ItemStack stack) {
         if (stack.isEmpty()) {
             return null;
         }
-        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        return spec(stack.getItem());
+    }
+
+    private static PelletSpec spec(Item item) {
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
         return id == null ? null : SPECS.get(id.getPath());
+    }
+
+    private static boolean isNamed(ItemStack stack, String name) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        return id != null && name.equals(id.getPath());
     }
 
     private static void register(String name, int heat, String decayItem, long lifespan) {

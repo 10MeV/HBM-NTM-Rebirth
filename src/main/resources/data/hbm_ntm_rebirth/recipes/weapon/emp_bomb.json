@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    "LML",
+    "LCL",
+    "LML"
+  ],
+  "key": {
+    "L": {
+      "tag": "forge:plates/lead"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:magnetron"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:emp_bomb"
+  }
+}

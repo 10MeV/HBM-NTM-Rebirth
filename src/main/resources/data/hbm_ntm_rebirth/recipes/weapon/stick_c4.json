@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ingot_c4"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:det_cord"
+    }
+  },
+  "pattern": [
+    " S ",
+    "PDP",
+    "PDP"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:stick_c4"
+  },
+  "show_notification": true
+}

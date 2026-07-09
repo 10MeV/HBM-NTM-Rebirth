@@ -5,6 +5,7 @@
                },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:reclaimed",
-                  "amount":  31000
-              }
+                  "amount":  63000
+              },
+    "source_order":  24
 }

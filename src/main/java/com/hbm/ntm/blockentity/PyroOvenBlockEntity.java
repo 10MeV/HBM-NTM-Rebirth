@@ -29,6 +29,7 @@ import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.LegacyUpgradeSlotSound;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
@@ -542,7 +543,11 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
             }
         }
         SimpleContainer container = new SimpleContainer(items.getStackInSlot(SLOT_INPUT));
-        for (PyroOvenRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.PYRO_OVEN.type().get())) {
+        for (PyroOvenRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.PYRO_OVEN.type().get())
+                .stream()
+                .sorted(Comparator.comparingInt(PyroOvenRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
+                .toList()) {
             if (recipe.matches(container, level) && doesRecipeMatch(recipe)) {
                 lastRecipeId = recipe.getId();
                 return recipe;

@@ -1,5 +1,7 @@
 # Blender v2.79 (sub 0) OBJ File: 'rbmk_console.blend'
 # www.blender.org
+mtllib rbmk_console.mtl
+usemtl Texture
 o Cube
 v 0.000000 0.000000 -2.500000
 v 0.000000 0.000000 2.500000

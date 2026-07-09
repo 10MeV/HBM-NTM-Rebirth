@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.CableDiodeBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.CableDiodeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
@@ -17,6 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEntity> {
     private static final TextureAtlasSprite PLATE_SPRITE = sprite("cable_diode");
@@ -28,13 +30,33 @@ public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEn
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+    }
+
+    @Override
+    public boolean shouldRender(CableDiodeBlockEntity diode, Vec3 cameraPos) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                && BlockEntityRenderer.super.shouldRender(diode, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(diode, getViewDistance());
+    }
+
+    @Override
     public void render(CableDiodeBlockEntity diode, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        BlockState state = diode.getBlockState();
-        int light = LegacyRenderLighting.resolveMultiblockLight(diode, packedLight);
+        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return;
+        }
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(diode, getViewDistance())) {
+            return;
+        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(diode)) {
+            BlockState state = diode.getBlockState();
+            int light = LegacyRenderLighting.resolveMultiblockLight(diode, packedLight);
 
-        renderBody(poseStack, buffer, light, packedOverlay, outputDirection(state));
-        renderWorldCableArms(diode.getLevel(), diode.getBlockPos(), state, poseStack, buffer, light, packedOverlay);
+            renderBody(poseStack, buffer, light, packedOverlay, outputDirection(state));
+            renderWorldCableArms(diode.getLevel(), diode.getBlockPos(), state, poseStack, buffer, light, packedOverlay);
+        }
     }
 
     public static void renderItem(BlockState state, PoseStack poseStack, MultiBufferSource buffer,
@@ -81,6 +103,6 @@ public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEn
     }
 
     private static TextureAtlasSprite sprite(String texture) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + texture);
     }
 }

@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:particle_accelerator",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:particle_hydrogen"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:particle_amat"
+      },
+      "count": 1
+    }
+  ],
+  "momentum": 2500,
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:particle_muon"
+    }
+  ],
+  "source_order": 3
+}

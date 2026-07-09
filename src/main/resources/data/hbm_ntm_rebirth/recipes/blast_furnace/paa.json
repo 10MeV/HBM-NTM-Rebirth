@@ -3,23 +3,25 @@
   "duration": 600,
   "inputs": [
     {
+      "count": 1,
       "ingredient": {
         "tag": "forge:ingots/gold"
       },
-      "count": 1,
       "legacy_ore": "ingotGold"
     },
     {
+      "count": 1,
       "ingredient": {
         "item": "hbm_ntm_rebirth:plate_mixed"
       },
-      "count": 1,
       "legacy_item": "plate_mixed"
     }
   ],
+  "name": "blast.paa",
   "outputs": [
     {
       "item": "hbm_ntm_rebirth:plate_paa"
     }
-  ]
+  ],
+  "source_order": 11
 }

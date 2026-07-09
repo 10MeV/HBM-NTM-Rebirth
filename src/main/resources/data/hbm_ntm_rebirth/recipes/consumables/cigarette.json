@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "tag": "forge:ingots/asbestos"
+    },
+    {
+      "tag": "forge:any/tar"
+    },
+    {
+      "tag": "forge:nuggets/polonium210"
+    },
+    {
+      "item": "hbm_ntm_rebirth:plant_item_tobacco"
+    }
+  ],
+  "result": {
+    "count": 16,
+    "item": "hbm_ntm_rebirth:cigarette"
+  }
+}

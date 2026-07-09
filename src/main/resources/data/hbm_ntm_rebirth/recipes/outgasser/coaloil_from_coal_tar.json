@@ -1,11 +1,13 @@
 {
   "type": "hbm_ntm_rebirth:outgasser",
+  "source_order": 17,
   "input": {
     "ingredient": {
-      "tag": "forge:tar/coal"
+      "item": "hbm_ntm_rebirth:oil_tar_coal"
     },
     "count": 1,
-    "legacy_ore": "coaltar"
+    "legacy_id": "hbm:oil_tar",
+    "legacy_meta": 2
   },
   "fluid_output": {
     "fluid": "COALOIL",

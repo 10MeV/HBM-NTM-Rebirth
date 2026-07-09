@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEntity> {
     private static final LegacyWavefrontModel.SelectionHandle FRAME =
@@ -25,6 +26,12 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(LegacyFanBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override

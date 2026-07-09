@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": { "fluid": "hbm_ntm_rebirth:death" },
+  "fluid_produced": 1000,
+  "fluid_consumed": 1000,
+  "laser_strength": "gamma",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_impure_osmiridium", "weight": 1 }
+  ],
+  "source_order": 16
+}

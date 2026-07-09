@@ -3,11 +3,11 @@ package com.hbm.ntm.api.recipe;
 /**
  * Legacy-name bridge for addon recipe registration callbacks.
  *
- * <p>The 1.7.10 listener received a SerializableRecipe class name and mutated
- * static recipe maps. The modern bridge emits datapack-compatible JSON through
- * {@link RecipeSink}; it intentionally does not expose runtime map mutation.</p>
+ * <p>The 1.7.10 listener receives a SerializableRecipe class name. Modern
+ * datapack-compatible recipe emission uses {@link RecipeRegisterListener}
+ * instead.</p>
  */
 @Deprecated(forRemoval = false)
 @FunctionalInterface
-public interface IRecipeRegisterListener extends RecipeRegisterListener {
+public interface IRecipeRegisterListener extends api.hbm.recipe.IRecipeRegisterListener {
 }

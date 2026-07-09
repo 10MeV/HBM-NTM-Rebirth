@@ -17,8 +17,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,21 +45,14 @@ public class CustomMissileItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.pushPose();
         applyDisplay(displayContext, poseStack, parts);
-        ObjMissilePartModels.renderMissile(parts.thruster(), parts.fins(), parts.fuselage(), parts.warhead(),
-                poseStack, buffer, packedLight, packedOverlay);
+        ObjMissilePartModels.renderMissile(parts.thrusterPart(), parts.finsPart(), parts.fuselagePart(),
+                parts.warheadPart(), poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack, CustomMissileParts parts) {
-        double height = parts.height();
-        if (height <= 0.0D) {
-            height = 4.0D;
-        }
-        AABB bounds = parts.bounds();
-        Vec3 center = bounds.getCenter();
-        double maxSize = Math.max(height, Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize())));
-        float targetSize = displayContext == ItemDisplayContext.GUI ? GUI_TARGET_SIZE : WORLD_TARGET_SIZE;
-        float fitScale = (float) Math.max(0.03D, Math.min(0.42D, targetSize / Math.max(1.0D, maxSize)));
+        MissilePartRenderCache.CustomMissileFit fit = parts.fit();
+        float fitScale = displayContext == ItemDisplayContext.GUI ? fit.guiFitScale() : fit.worldFitScale();
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
@@ -82,7 +73,7 @@ public class CustomMissileItemRenderer extends BlockEntityWithoutLevelRenderer {
         } else {
             poseStack.scale(fitScale, fitScale, fitScale);
         }
-        poseStack.translate(-center.x, -center.y, -center.z);
+        poseStack.translate(-fit.centerX(), -fit.centerY(), -fit.centerZ());
     }
 
     private static void renderFallbackIcon(ItemDisplayContext displayContext, PoseStack poseStack,
@@ -97,25 +88,18 @@ public class CustomMissileItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(-0.5D, -0.5D, 0.0D);
         }
 
-        LegacyTexturedQuadRenderer.quad(FALLBACK_ICON, poseStack, buffer, packedLight, packedOverlay,
+        LegacyTexturedQuadRenderer.quadDirect(FALLBACK_ICON, poseStack, buffer, packedLight, packedOverlay,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 0.0F, 1.0F,
-                LegacyTexturedQuadRenderer.vertex(0.0F, 1.0F, 0.0F, 0.0F, 1.0F),
-                LegacyTexturedQuadRenderer.vertex(1.0F, 1.0F, 0.0F, 1.0F, 1.0F),
-                LegacyTexturedQuadRenderer.vertex(1.0F, 0.0F, 0.0F, 1.0F, 0.0F),
-                LegacyTexturedQuadRenderer.vertex(0.0F, 0.0F, 0.0F, 0.0F, 0.0F));
+                0.0F, 1.0F, 0.0F, 0.0F, 1.0F,
+                1.0F, 1.0F, 0.0F, 1.0F, 1.0F,
+                1.0F, 0.0F, 0.0F, 1.0F, 0.0F,
+                0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
+                0xFFFFFF, 255);
         poseStack.popPose();
     }
 
-    private static AABB include(AABB bounds, ObjMissilePartModels.LegacyMissilePart part, double yOffset) {
-        if (part == null) {
-            return bounds;
-        }
-        AABB partBounds = part.model().boundsAll().move(0.0D, yOffset, 0.0D);
-        return bounds == null ? partBounds : bounds.minmax(partBounds);
-    }
-
     @Nullable
-    private static ObjMissilePartModels.LegacyMissilePart part(ItemStack stack, String tagKey,
+    private static MissilePartRenderCache.PartRenderSpec part(ItemStack stack, String tagKey,
             ObjMissilePartModels.PartKind expectedKind) {
         ResourceLocation id = CustomMissileItem.getPartId(stack, tagKey);
         if (id == null) {
@@ -125,53 +109,71 @@ public class CustomMissileItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (!(item instanceof MissilePartItem missilePart)) {
             return null;
         }
-        ObjMissilePartModels.LegacyMissilePart part = ObjMissilePartModels.part(missilePart.legacyModelKey());
-        return part != null && part.kind() == expectedKind ? part : null;
+        MissilePartRenderCache.PartRenderSpec spec = MissilePartRenderCache.spec(missilePart.legacyModelKey());
+        return spec != null && spec.part().kind() == expectedKind ? spec : null;
     }
 
-    private record CustomMissileParts(
-            ObjMissilePartModels.LegacyMissilePart warhead,
-            ObjMissilePartModels.LegacyMissilePart fuselage,
-            ObjMissilePartModels.LegacyMissilePart fins,
-            ObjMissilePartModels.LegacyMissilePart thruster) {
+    private static final class CustomMissileParts {
+        private final MissilePartRenderCache.PartRenderSpec warhead;
+        private final MissilePartRenderCache.PartRenderSpec fuselage;
+        private final MissilePartRenderCache.PartRenderSpec fins;
+        private final MissilePartRenderCache.PartRenderSpec thruster;
+        private final MissilePartRenderCache.CustomMissileFit fit;
+
+        private CustomMissileParts(MissilePartRenderCache.PartRenderSpec warhead,
+                MissilePartRenderCache.PartRenderSpec fuselage,
+                MissilePartRenderCache.PartRenderSpec fins,
+                MissilePartRenderCache.PartRenderSpec thruster) {
+            this.warhead = warhead;
+            this.fuselage = fuselage;
+            this.fins = fins;
+            this.thruster = thruster;
+            this.fit = MissilePartRenderCache.customMissileFit(thruster, fins, fuselage, warhead,
+                    GUI_TARGET_SIZE, WORLD_TARGET_SIZE);
+        }
+
         @Nullable
         static CustomMissileParts fromStack(ItemStack stack) {
             if (!(stack.getItem() instanceof CustomMissileItem)) {
                 return null;
             }
             return new CustomMissileParts(
-                    part(stack, CustomMissileItem.TAG_WARHEAD, ObjMissilePartModels.PartKind.WARHEAD),
-                    part(stack, CustomMissileItem.TAG_FUSELAGE, ObjMissilePartModels.PartKind.FUSELAGE),
-                    part(stack, CustomMissileItem.TAG_STABILITY, ObjMissilePartModels.PartKind.FINS),
-                    part(stack, CustomMissileItem.TAG_THRUSTER, ObjMissilePartModels.PartKind.THRUSTER));
+                    CustomMissileItemRenderer.part(stack, CustomMissileItem.TAG_WARHEAD,
+                            ObjMissilePartModels.PartKind.WARHEAD),
+                    CustomMissileItemRenderer.part(stack, CustomMissileItem.TAG_FUSELAGE,
+                            ObjMissilePartModels.PartKind.FUSELAGE),
+                    CustomMissileItemRenderer.part(stack, CustomMissileItem.TAG_STABILITY,
+                            ObjMissilePartModels.PartKind.FINS),
+                    CustomMissileItemRenderer.part(stack, CustomMissileItem.TAG_THRUSTER,
+                            ObjMissilePartModels.PartKind.THRUSTER));
         }
 
         boolean hasRenderablePart() {
             return warhead != null || fuselage != null || fins != null || thruster != null;
         }
 
-        double height() {
-            return ObjMissilePartModels.missileHeight(thruster, fuselage, warhead);
+        MissilePartRenderCache.CustomMissileFit fit() {
+            return fit;
         }
 
-        AABB bounds() {
-            AABB bounds = null;
-            double y = 0.0D;
-            if (thruster != null) {
-                bounds = include(bounds, thruster, y);
-                y += thruster.height();
-            }
-            if (fuselage != null) {
-                if (fins != null) {
-                    bounds = include(bounds, fins, y);
-                }
-                bounds = include(bounds, fuselage, y);
-                y += fuselage.height();
-            }
-            if (warhead != null) {
-                bounds = include(bounds, warhead, y);
-            }
-            return bounds == null ? new AABB(0.0D, 0.0D, 0.0D, 1.0D, 4.0D, 1.0D) : bounds;
+        ObjMissilePartModels.LegacyMissilePart warheadPart() {
+            return part(warhead);
+        }
+
+        ObjMissilePartModels.LegacyMissilePart fuselagePart() {
+            return part(fuselage);
+        }
+
+        ObjMissilePartModels.LegacyMissilePart finsPart() {
+            return part(fins);
+        }
+
+        ObjMissilePartModels.LegacyMissilePart thrusterPart() {
+            return part(thruster);
+        }
+
+        private static ObjMissilePartModels.LegacyMissilePart part(MissilePartRenderCache.PartRenderSpec spec) {
+            return spec == null ? null : spec.part();
         }
     }
 }

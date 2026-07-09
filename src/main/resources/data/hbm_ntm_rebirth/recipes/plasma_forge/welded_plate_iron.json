@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "auto_switch_group": "autoswitch.weldPlates",
+  "duration": 50,
+  "ignitionTemp": 500000,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:cast_plates/iron"
+      },
+      "legacy_ore": "plateCastIron"
+    }
+  ],
+  "internal_name": "plsm.weldiron",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:plate_welded_iron"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 107
+}

@@ -37,7 +37,7 @@ public class CrucibleRecipeSelectorScreen extends Screen {
         super(Component.translatableWithFallback("container.machineCrucible", "Crucible"));
         this.previousScreen = previousScreen;
         this.selection = previousScreen.getMenu().getBlockEntity().getSelectedRecipeName();
-        this.allRecipes = CrucibleRecipeRuntime.recipes();
+        this.allRecipes = CrucibleRecipeRuntime.recipes(previousScreen.getMenu().getBlockEntity().getLevel());
         regenerateRecipes("");
     }
 
@@ -237,7 +237,7 @@ public class CrucibleRecipeSelectorScreen extends Screen {
     }
 
     private CrucibleRecipeRuntime.Recipe selectedRecipe() {
-        return CrucibleRecipeRuntime.find(selection);
+        return CrucibleRecipeRuntime.find(previousScreen.getMenu().getBlockEntity().getLevel(), selection);
     }
 
     private void sendSelection() {

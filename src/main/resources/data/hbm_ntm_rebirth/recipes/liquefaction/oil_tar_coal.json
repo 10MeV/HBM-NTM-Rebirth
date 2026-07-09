@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:tar/coal"
+  "source_order": 6,
+  "input": {
+    "ingredient": {
+      "tag": "forge:tar/coal"
+    },
+    "count": 1,
+    "legacy_ore": "coaltar"
   },
   "output": {
     "amount": 50,

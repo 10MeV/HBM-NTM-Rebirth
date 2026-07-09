@@ -1,0 +1,57 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/tungsten"
+      },
+      "legacy_ore": "ingotTungsten"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:reinforced_glass"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/any_rubber"
+      },
+      "legacy_ore": "ingotAnyRubber"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:bolts/dura_steel"
+      },
+      "legacy_ore": "boltDuraSteel"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    }
+  ],
+  "internal_name": "ass.slidingdoor",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:sliding_blast_door"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 60
+}

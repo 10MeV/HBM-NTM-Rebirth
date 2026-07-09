@@ -1,8 +1,12 @@
 {
   "variants": {
-    "facing=north": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/empty" },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/empty" }
+    "facing=east,window=false": { "model": "hbm_ntm_rebirth:block/particleaccelerator/detector" },
+    "facing=north,window=false": { "model": "hbm_ntm_rebirth:block/particleaccelerator/detector", "y": 90 },
+    "facing=west,window=false": { "model": "hbm_ntm_rebirth:block/particleaccelerator/detector", "y": 180 },
+    "facing=south,window=false": { "model": "hbm_ntm_rebirth:block/particleaccelerator/detector", "y": 270 },
+    "facing=east,window=true": { "model": "hbm_ntm_rebirth:block/particleaccelerator/detector" },
+    "facing=north,window=true": { "model": "hbm_ntm_rebirth:block/particleaccelerator/detector", "y": 90 },
+    "facing=west,window=true": { "model": "hbm_ntm_rebirth:block/particleaccelerator/detector", "y": 180 },
+    "facing=south,window=true": { "model": "hbm_ntm_rebirth:block/particleaccelerator/detector", "y": 270 }
   }
 }

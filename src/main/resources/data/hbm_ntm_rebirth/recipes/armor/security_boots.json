@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "P P",
+    "I I"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:security_boots"
+  },
+  "show_notification": true
+}

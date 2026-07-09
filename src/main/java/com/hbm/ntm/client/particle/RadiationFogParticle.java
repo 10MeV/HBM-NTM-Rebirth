@@ -9,8 +9,6 @@ import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -19,12 +17,28 @@ import java.util.Random;
 @OnlyIn(Dist.CLIENT)
 public class RadiationFogParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static final int LEGACY_QUAD_COUNT = 25;
-    private static final int LEGACY_RANDOM_SEED = 50;
+    private static final long LEGACY_RANDOM_SEED = 50L;
     private static final float LEGACY_SCALE = 7.5F;
     private static final float LEGACY_ALPHA = 0.125F;
     private static final float LEGACY_RED = 0.85F;
     private static final float LEGACY_GREEN = 0.9F;
     private static final float LEGACY_BLUE = 0.5F;
+    private static final float[] LAYER_OFFSET_X = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_OFFSET_Y = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_OFFSET_Z = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_JITTER_X = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_JITTER_Y = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_JITTER_Z = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_SIZE_FACTOR = new float[LEGACY_QUAD_COUNT];
+
+    static {
+        precomputeStaticRenderLayers();
+    }
+
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private RadiationFogParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
         super(level, x, y, z);
@@ -36,6 +50,33 @@ public class RadiationFogParticle extends TextureSheetParticle implements HbmDef
         this.alpha = 0.0F;
         this.hasPhysics = false;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
+    }
+
+    private static void precomputeStaticRenderLayers() {
+        Random legacyRandom = new Random(LEGACY_RANDOM_SEED);
+        float cumulativeX = 0.0F;
+        float cumulativeY = 0.0F;
+        float cumulativeZ = 0.0F;
+        for (int i = 0; i < LEGACY_QUAD_COUNT; i++) {
+            cumulativeX += (float) ((legacyRandom.nextGaussian() - 1.0D) * 2.5D);
+            cumulativeY += (float) ((legacyRandom.nextGaussian() - 1.0D) * 0.15D);
+            cumulativeZ += (float) ((legacyRandom.nextGaussian() - 1.0D) * 2.5D);
+            LAYER_OFFSET_X[i] = cumulativeX;
+            LAYER_OFFSET_Y[i] = cumulativeY;
+            LAYER_OFFSET_Z[i] = cumulativeZ;
+            LAYER_SIZE_FACTOR[i] = (float) legacyRandom.nextDouble();
+            LAYER_JITTER_X[i] = (float) (legacyRandom.nextGaussian() * 0.5D);
+            LAYER_JITTER_Y[i] = (float) (legacyRandom.nextGaussian() * 0.5D);
+            LAYER_JITTER_Z[i] = (float) (legacyRandom.nextGaussian() * 0.5D);
+        }
     }
 
     @Override
@@ -63,55 +104,24 @@ public class RadiationFogParticle extends TextureSheetParticle implements HbmDef
         if (this.alpha <= 0.0F) {
             return;
         }
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
+        VertexConsumer consumer = HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer);
 
-        Quaternionf rotation = camera.rotation();
-        Vector3f[] corners = new Vector3f[]{
-                new Vector3f(-1.0F, -1.0F, 0.0F),
-                new Vector3f(-1.0F, 1.0F, 0.0F),
-                new Vector3f(1.0F, 1.0F, 0.0F),
-                new Vector3f(1.0F, -1.0F, 0.0F)
-        };
-        float u0 = getU0();
-        float u1 = getU1();
-        float v0 = getV0();
-        float v1 = getV1();
         int light = getLightColor(partialTick);
-        double baseX = Mth.lerp(partialTick, this.xo, this.x) - camera.getPosition().x();
-        double baseY = Mth.lerp(partialTick, this.yo, this.y) - camera.getPosition().y();
-        double baseZ = Mth.lerp(partialTick, this.zo, this.z) - camera.getPosition().z();
-        Random legacyRandom = new Random(LEGACY_RANDOM_SEED);
-        float cumulativeX = 0.0F;
-        float cumulativeY = 0.0F;
-        float cumulativeZ = 0.0F;
+        var cameraPos = camera.getPosition();
+        double baseX = Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x();
+        double baseY = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y();
+        double baseZ = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
+        var basis = HbmDeferredParticleRenderer.cameraBillboardBasis(camera, 1.0F);
 
         for (int i = 0; i < LEGACY_QUAD_COUNT; i++) {
-            cumulativeX += (float) ((legacyRandom.nextGaussian() - 1.0D) * 2.5D);
-            cumulativeY += (float) ((legacyRandom.nextGaussian() - 1.0D) * 0.15D);
-            cumulativeZ += (float) ((legacyRandom.nextGaussian() - 1.0D) * 2.5D);
-            float size = (float) (legacyRandom.nextDouble() * this.quadSize);
-            float jitterX = (float) (legacyRandom.nextGaussian() * 0.5D);
-            float jitterY = (float) (legacyRandom.nextGaussian() * 0.5D);
-            float jitterZ = (float) (legacyRandom.nextGaussian() * 0.5D);
-            float x = (float) baseX + cumulativeX + jitterX;
-            float y = (float) baseY + cumulativeY + jitterY;
-            float z = (float) baseZ + cumulativeZ + jitterZ;
-            renderQuad(consumer, rotation, corners, x, y, z, size, u0, u1, v0, v1, light);
+            float size = LAYER_SIZE_FACTOR[i] * this.quadSize;
+            float x = (float) baseX + LAYER_OFFSET_X[i] + LAYER_JITTER_X[i];
+            float y = (float) baseY + LAYER_OFFSET_Y[i] + LAYER_JITTER_Y[i];
+            float z = (float) baseZ + LAYER_OFFSET_Z[i] + LAYER_JITTER_Z[i];
+            HbmDeferredParticleRenderer.emitCameraUnitParticleSheetQuad(consumer, light, basis[0], basis[1],
+                    x, y, z, size, this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
+                    rCol, gCol, bCol, alpha);
         }
-    }
-
-    private void renderQuad(VertexConsumer consumer, Quaternionf rotation, Vector3f[] corners,
-            float x, float y, float z, float size, float u0, float u1, float v0, float v1, int light) {
-        Vector3f corner0 = new Vector3f(corners[0]).rotate(rotation).mul(size).add(x, y, z);
-        Vector3f corner1 = new Vector3f(corners[1]).rotate(rotation).mul(size).add(x, y, z);
-        Vector3f corner2 = new Vector3f(corners[2]).rotate(rotation).mul(size).add(x, y, z);
-        Vector3f corner3 = new Vector3f(corners[3]).rotate(rotation).mul(size).add(x, y, z);
-        HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, light,
-                corner0, u1, v1,
-                corner1, u1, v0,
-                corner2, u0, v0,
-                corner3, u0, v1,
-                rCol, gCol, bCol, alpha);
     }
 
     @Override

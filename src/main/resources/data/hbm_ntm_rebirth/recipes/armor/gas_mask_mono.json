@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "F": {
+      "tag": "forge:plates/iron"
+    },
+    "P": {
+      "tag": "forge:ingots/any_rubber"
+    }
+  },
+  "pattern": [
+    " P ",
+    "PPP",
+    " F "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:gas_mask_mono"
+  },
+  "show_notification": true
+}

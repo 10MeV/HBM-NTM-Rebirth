@@ -121,7 +121,7 @@ public abstract class HbmLegacyWireNodeBlockEntity extends HbmEnergyNodeBlockEnt
         }
         Level level = getLevel();
         if (level != null && !selfMounts.isEmpty()) {
-            for (BlockPos remotePos : wireConnections.connected()) {
+            for (BlockPos remotePos : wireConnections.connectedView()) {
                 BlockEntity remote = level.getBlockEntity(remotePos);
                 if (!(remote instanceof HbmLegacyWireNode remoteWire)) {
                     continue;

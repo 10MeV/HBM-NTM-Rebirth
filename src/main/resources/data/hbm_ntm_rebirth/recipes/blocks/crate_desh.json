@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:container_upgrade_crafting",
+  "category": "building",
+  "key": {
+    "D": {
+      "tag": "forge:plates/desh"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:crate_steel"
+    }
+  },
+  "pattern": [
+    " D ",
+    "DSD",
+    " D "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:crate_desh"
+  },
+  "show_notification": true
+}

@@ -1,19 +1,16 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_vacuum_distill",
-      "y": 90
+      "model": "hbm_ntm_rebirth:block/machine_vacuum_distill"
     },
     "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_vacuum_distill"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machine_vacuum_distill",
-      "y": 180
+      "model": "hbm_ntm_rebirth:block/machine_vacuum_distill"
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machine_vacuum_distill",
-      "y": 270
+      "model": "hbm_ntm_rebirth:block/machine_vacuum_distill"
     }
   }
 }

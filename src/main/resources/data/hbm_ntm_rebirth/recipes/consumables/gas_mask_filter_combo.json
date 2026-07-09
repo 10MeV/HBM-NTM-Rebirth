@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:catalyst_clay"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:gas_mask_filter"
+    },
+    "Z": {
+      "tag": "forge:ingots/zirconium"
+    }
+  },
+  "pattern": [
+    "ZCZ",
+    "CFC",
+    "ZCZ"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:gas_mask_filter_combo"
+  },
+  "show_notification": true
+}

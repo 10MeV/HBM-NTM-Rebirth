@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.plateTripleZirconium",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:cast_plates/zirconium" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:cast_plates/zirconium" }, "count": 1, "legacy_ore": "plateTripleZirconium" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Zirconium", "amount": 216 }
+  ],
+  "pools": [],
+  "source_order": 1448
+}

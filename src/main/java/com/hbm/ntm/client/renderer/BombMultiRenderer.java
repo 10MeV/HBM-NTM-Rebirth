@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.BombMultiBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.BombMultiBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjNukeModels;
@@ -13,6 +14,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEntity> {
     private static final ResourceLocation BOMB_MULTI_TEXTURE = ObjNukeModels.texture("bomb_multi_legacy");
@@ -21,8 +23,18 @@ public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEnti
     }
 
     @Override
+    public boolean shouldRender(BombMultiBlockEntity blockEntity, Vec3 cameraPos) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(BombMultiBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }

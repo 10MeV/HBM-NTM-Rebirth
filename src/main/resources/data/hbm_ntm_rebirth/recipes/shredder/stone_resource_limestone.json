@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:stone_resource_limestone" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_limestone", "count": 4 },
+  "source_order": 36
+}

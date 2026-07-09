@@ -5,6 +5,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -39,23 +40,27 @@ public class MovingPackageRenderer extends EntityRenderer<MovingPackageEntity> {
     }
 
     private static void renderCrateCube(PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        face(poseStack, buffer, -0.5F, -0.5F, 0.5F, 0.5F, -0.5F, 0.5F, 0.5F, 0.5F, 0.5F, -0.5F, 0.5F, 0.5F, 0.0F, 0.0F, 1.0F, packedLight);
-        face(poseStack, buffer, 0.5F, -0.5F, -0.5F, -0.5F, -0.5F, -0.5F, -0.5F, 0.5F, -0.5F, 0.5F, 0.5F, -0.5F, 0.0F, 0.0F, -1.0F, packedLight);
-        face(poseStack, buffer, -0.5F, -0.5F, -0.5F, -0.5F, -0.5F, 0.5F, -0.5F, 0.5F, 0.5F, -0.5F, 0.5F, -0.5F, -1.0F, 0.0F, 0.0F, packedLight);
-        face(poseStack, buffer, 0.5F, -0.5F, 0.5F, 0.5F, -0.5F, -0.5F, 0.5F, 0.5F, -0.5F, 0.5F, 0.5F, 0.5F, 1.0F, 0.0F, 0.0F, packedLight);
-        face(poseStack, buffer, -0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, -0.5F, -0.5F, 0.5F, -0.5F, 0.0F, 1.0F, 0.0F, packedLight);
-        face(poseStack, buffer, -0.5F, -0.5F, -0.5F, 0.5F, -0.5F, -0.5F, 0.5F, -0.5F, 0.5F, -0.5F, -0.5F, 0.5F, 0.0F, -1.0F, 0.0F, packedLight);
+        VertexConsumer consumer = LegacyTexturedQuadRenderer.vertexAlphaConsumer(TEXTURE, buffer,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
+        PoseStack.Pose pose = poseStack.last();
+        face(consumer, pose, -0.5F, -0.5F, 0.5F, 0.5F, -0.5F, 0.5F, 0.5F, 0.5F, 0.5F, -0.5F, 0.5F, 0.5F, 0.0F, 0.0F, 1.0F, packedLight);
+        face(consumer, pose, 0.5F, -0.5F, -0.5F, -0.5F, -0.5F, -0.5F, -0.5F, 0.5F, -0.5F, 0.5F, 0.5F, -0.5F, 0.0F, 0.0F, -1.0F, packedLight);
+        face(consumer, pose, -0.5F, -0.5F, -0.5F, -0.5F, -0.5F, 0.5F, -0.5F, 0.5F, 0.5F, -0.5F, 0.5F, -0.5F, -1.0F, 0.0F, 0.0F, packedLight);
+        face(consumer, pose, 0.5F, -0.5F, 0.5F, 0.5F, -0.5F, -0.5F, 0.5F, 0.5F, -0.5F, 0.5F, 0.5F, 0.5F, 1.0F, 0.0F, 0.0F, packedLight);
+        face(consumer, pose, -0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, -0.5F, -0.5F, 0.5F, -0.5F, 0.0F, 1.0F, 0.0F, packedLight);
+        face(consumer, pose, -0.5F, -0.5F, -0.5F, 0.5F, -0.5F, -0.5F, 0.5F, -0.5F, 0.5F, -0.5F, -0.5F, 0.5F, 0.0F, -1.0F, 0.0F, packedLight);
     }
 
-    private static void face(PoseStack poseStack, MultiBufferSource buffer,
+    private static void face(VertexConsumer consumer, PoseStack.Pose pose,
             float x1, float y1, float z1, float x2, float y2, float z2,
             float x3, float y3, float z3, float x4, float y4, float z4,
             float nx, float ny, float nz, int packedLight) {
-        LegacyTexturedQuadRenderer.quad(TEXTURE, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
-                LegacyTexturedRenderMode.CUTOUT_CULL, nx, ny, nz,
-                LegacyTexturedQuadRenderer.vertex(x1, y1, z1, 0.0F, 1.0F),
-                LegacyTexturedQuadRenderer.vertex(x2, y2, z2, 1.0F, 1.0F),
-                LegacyTexturedQuadRenderer.vertex(x3, y3, z3, 1.0F, 0.0F),
-                LegacyTexturedQuadRenderer.vertex(x4, y4, z4, 0.0F, 0.0F));
+        LegacyTexturedQuadRenderer.quadWithVertexAlpha(consumer, pose, packedLight, OverlayTexture.NO_OVERLAY,
+                nx, ny, nz,
+                x1, y1, z1, 0.0F, 1.0F, 255,
+                x2, y2, z2, 1.0F, 1.0F, 255,
+                x3, y3, z3, 1.0F, 0.0F, 255,
+                x4, y4, z4, 0.0F, 0.0F, 255,
+                0xFFFFFF);
     }
 }

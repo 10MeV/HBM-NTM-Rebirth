@@ -3,20 +3,23 @@ package com.hbm.ntm.item;
 import net.minecraft.ChatFormatting;
 
 public enum LaserWavelength {
-    NULL("laser_crystal_none", 0x010101, 0x010101, ChatFormatting.WHITE),
-    IR("laser_crystal_co2", 0xBB1010, 0xCC4040, ChatFormatting.RED),
-    VISIBLE("laser_crystal_bismuth", 0, 0, ChatFormatting.GREEN),
-    UV("laser_crystal_cmb", 0x0A1FC4, 0x00EFFF, ChatFormatting.AQUA),
-    GAMMA("laser_crystal_dnt", 0x150560, 0xEF00FF, ChatFormatting.LIGHT_PURPLE),
-    DRX("laser_crystal_digamma", 0xFF0000, 0xFF0000, ChatFormatting.DARK_RED);
+    NULL("laser_crystal_none", "", 0x010101, 0x010101, ChatFormatting.WHITE),
+    IR("laser_crystal_co2", "wavelengths.name.ir", 0xBB1010, 0xCC4040, ChatFormatting.RED),
+    VISIBLE("laser_crystal_bismuth", "wavelengths.name.visible", 0, 0, ChatFormatting.GREEN),
+    UV("laser_crystal_cmb", "wavelengths.name.uv", 0x0A1FC4, 0x00EFFF, ChatFormatting.AQUA),
+    GAMMA("laser_crystal_dnt", "wavelengths.name.gamma", 0x150560, 0xEF00FF, ChatFormatting.LIGHT_PURPLE),
+    DRX("laser_crystal_digamma", "wavelengths.name.drx", 0xFF0000, 0xFF0000, ChatFormatting.DARK_RED);
 
     private final String legacyItemName;
+    private final String displayNameKey;
     private final int renderedBeamColor;
     private final int guiColor;
     private final ChatFormatting textColor;
 
-    LaserWavelength(String legacyItemName, int renderedBeamColor, int guiColor, ChatFormatting textColor) {
+    LaserWavelength(String legacyItemName, String displayNameKey, int renderedBeamColor, int guiColor,
+            ChatFormatting textColor) {
         this.legacyItemName = legacyItemName;
+        this.displayNameKey = displayNameKey;
         this.renderedBeamColor = renderedBeamColor;
         this.guiColor = guiColor;
         this.textColor = textColor;
@@ -24,6 +27,10 @@ public enum LaserWavelength {
 
     public String legacyItemName() {
         return legacyItemName;
+    }
+
+    public String displayNameKey() {
+        return displayNameKey;
     }
 
     public int renderedBeamColor() {

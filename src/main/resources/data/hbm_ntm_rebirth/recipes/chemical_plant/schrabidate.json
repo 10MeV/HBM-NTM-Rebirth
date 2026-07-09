@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 150,
+  "input_fluids": [
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:schrabidic"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:dusts/iron"
+      },
+      "legacy_ore": "dustIron"
+    }
+  ],
+  "internal_name": "chem.schrabidate",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:powder_schrabidate"
+    }
+  ],
+  "pools": [],
+  "power": 5000,
+  "source_order": 54
+}

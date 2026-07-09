@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:bottle_nuka"
+    },
+    {
+      "item": "minecraft:carrot"
+    },
+    {
+      "tag": "forge:nuggets/gold"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bottle_sparkle"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/polonium210"
+    },
+    "count": 1,
+    "legacy_ore": "ingotPolonium210"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_technetium"
+  },
+  "source_order": 24
+}

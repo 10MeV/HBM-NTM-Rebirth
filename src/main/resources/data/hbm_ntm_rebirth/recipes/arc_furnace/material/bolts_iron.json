@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.boltIron",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:bolts/iron" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:bolts/iron" }, "count": 1, "legacy_ore": "boltIron" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Iron", "amount": 9 }
+  ],
+  "pools": [],
+  "source_order": 1026
+}

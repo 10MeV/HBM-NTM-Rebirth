@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ingots/bakelite" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_bakelite" }
+  "output": { "item": "hbm_ntm_rebirth:powder_bakelite" },
+  "source_order": 1000
 }

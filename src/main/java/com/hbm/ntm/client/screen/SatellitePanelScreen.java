@@ -9,6 +9,7 @@ import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SatelliteInterfaceItem;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -23,7 +24,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.lwjgl.glfw.GLFW;
@@ -146,7 +146,7 @@ public class SatellitePanelScreen extends Screen {
         for (int i = -100; i < 100; i++) {
             int x = centerX + i;
             int z = centerZ + scanPos - 100;
-            int y = minecraft.level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+            int y = WorldUtil.legacyGetHeightValue(minecraft.level, x, z) - 1;
             BlockPos pos = new BlockPos(x, y, z);
             if (HbmRegistryUtil.hasChunkAt(minecraft.level, pos)) {
                 BlockState state = minecraft.level.getBlockState(pos);

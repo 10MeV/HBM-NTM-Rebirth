@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:bathwater"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:bottle_mercury"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:nuclear_waste"
+    }
+  },
+  "pattern": [
+    "MWM",
+    "WBW",
+    "MWM"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bathwater_mk2"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_osmiridium"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:nugget_osmiridium",
+    "count": 9
+  }
+}

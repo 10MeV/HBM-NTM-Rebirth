@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "ingredients": [
+    { "item": "minecraft:potion" },
+    { "item": "minecraft:sugar" },
+    { "item": "minecraft:sugar" },
+    { "tag": "forge:dyes/orange" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:mucho_mango"
+  }
+}

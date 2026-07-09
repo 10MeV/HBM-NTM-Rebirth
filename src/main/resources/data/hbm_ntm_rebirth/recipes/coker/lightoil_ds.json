@@ -10,5 +10,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:lightoil_ds",
                   "amount":  370
-              }
+              },
+    "source_order":  15
 }

@@ -1,5 +1,7 @@
+mtllib bomb_generic.mtl
 # Blender v2.76 (sub 0) OBJ File: 'BombGeneric.blend'
 # www.blender.org
+usemtl default
 o Cylinder
 v 0.176777 0.426777 -0.375000
 v 0.176777 0.426776 0.375000

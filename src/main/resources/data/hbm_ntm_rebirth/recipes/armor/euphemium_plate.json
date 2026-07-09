@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:plate_euphemium"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:watch"
+    }
+  },
+  "pattern": [
+    "EWE",
+    "EEE",
+    "EEE"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:euphemium_plate"
+  },
+  "show_notification": true
+}

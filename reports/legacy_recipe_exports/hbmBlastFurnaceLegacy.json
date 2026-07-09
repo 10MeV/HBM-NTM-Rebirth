@@ -1,0 +1,182 @@
+{
+  "recipes": [
+    {
+      "input1": [
+        "dictframe",
+        "Iron"
+      ],
+      "input2": [
+        "dictframe",
+        "Coal"
+      ],
+      "output": [
+        "hbm:ingot_steel"
+      ]
+    },
+    {
+      "input1": [
+        "dictframe",
+        "Iron"
+      ],
+      "input2": [
+        "dictframe",
+        "AnyCoke"
+      ],
+      "output": [
+        "hbm:ingot_steel"
+      ]
+    },
+    {
+      "input1": [
+        "dict",
+        "oreIron"
+      ],
+      "input2": [
+        "dictframe",
+        "Coal"
+      ],
+      "output": [
+        "hbm:ingot_steel",
+        2
+      ]
+    },
+    {
+      "input1": [
+        "dict",
+        "oreIron"
+      ],
+      "input2": [
+        "dictframe",
+        "AnyCoke"
+      ],
+      "output": [
+        "hbm:ingot_steel",
+        3
+      ]
+    },
+    {
+      "input1": [
+        "dict",
+        "oreIron"
+      ],
+      "input2": [
+        "item",
+        "hbm:powder_flux"
+      ],
+      "output": [
+        "hbm:ingot_steel",
+        3
+      ]
+    },
+    {
+      "input1": [
+        "dictframe",
+        "Copper"
+      ],
+      "input2": [
+        "dictframe",
+        "Redstone"
+      ],
+      "output": [
+        "hbm:ingot_red_copper",
+        2
+      ]
+    },
+    {
+      "input1": [
+        "item",
+        "hbm:canister_full",
+        1,
+        86
+      ],
+      "input2": [
+        "dict",
+        "slimeball"
+      ],
+      "output": [
+        "hbm:canister_napalm"
+      ]
+    },
+    {
+      "input1": [
+        "dictframe",
+        "Tungsten"
+      ],
+      "input2": [
+        "dict",
+        "nuggetSchrabidium"
+      ],
+      "output": [
+        "hbm:ingot_magnetized_tungsten"
+      ]
+    },
+    {
+      "input1": [
+        "dictframe",
+        "Steel"
+      ],
+      "input2": [
+        "dict",
+        "nuggetTechnetium99"
+      ],
+      "output": [
+        "hbm:ingot_tcalloy"
+      ]
+    },
+    {
+      "input1": [
+        "dict",
+        "plateGold"
+      ],
+      "input2": [
+        "item",
+        "hbm:plate_mixed"
+      ],
+      "output": [
+        "hbm:plate_paa",
+        2
+      ]
+    },
+    {
+      "input1": [
+        "dictframe",
+        "Saturnite"
+      ],
+      "input2": [
+        "item",
+        "hbm:ingot_meteorite"
+      ],
+      "output": [
+        "hbm:ingot_starmetal",
+        2
+      ]
+    },
+    {
+      "input1": [
+        "dictframe",
+        "Cobalt"
+      ],
+      "input2": [
+        "item",
+        "hbm:powder_meteorite"
+      ],
+      "output": [
+        "hbm:ingot_meteorite"
+      ]
+    },
+    {
+      "hidden": true,
+      "input1": [
+        "item",
+        "hbm:meteorite_sword_hardened"
+      ],
+      "input2": [
+        "dictframe",
+        "Cobalt"
+      ],
+      "output": [
+        "hbm:meteorite_sword_alloyed"
+      ]
+    }
+  ]
+}

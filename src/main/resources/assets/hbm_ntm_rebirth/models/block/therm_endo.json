@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/therm_top",
+    "up": "hbm_ntm_rebirth:block/therm_top",
+    "north": "hbm_ntm_rebirth:block/therm_endo",
+    "south": "hbm_ntm_rebirth:block/therm_endo",
+    "west": "hbm_ntm_rebirth:block/therm_endo",
+    "east": "hbm_ntm_rebirth:block/therm_endo",
+    "particle": "hbm_ntm_rebirth:block/therm_endo"
+  }
+}

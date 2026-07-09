@@ -1,0 +1,13 @@
+{
+  "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmBlastFurnaceLegacy.json",
+  "exported_recipe_count": 13,
+  "failures": [],
+  "legacy_class": "BlastFurnaceRecipes",
+  "legacy_file": "hbmBlastFurnaceLegacy.json",
+  "modern_recipe_type": "difurnace",
+  "note": "Exports hbm_ntm_rebirth:difurnace datapack recipes to the deprecated BlastFurnaceRecipes JSON shape for tooling/debug parity only.",
+  "skipped_recipe_count": 0,
+  "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/difurnace",
+  "status": "exported",
+  "written_file_count": 1
+}

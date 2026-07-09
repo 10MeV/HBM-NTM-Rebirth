@@ -1,19 +1,16 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_hydrotreater",
-      "y": 90
+      "model": "hbm_ntm_rebirth:block/machine_hydrotreater"
     },
     "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_hydrotreater"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machine_hydrotreater",
-      "y": 180
+      "model": "hbm_ntm_rebirth:block/machine_hydrotreater"
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machine_hydrotreater",
-      "y": 270
+      "model": "hbm_ntm_rebirth:block/machine_hydrotreater"
     }
   }
 }

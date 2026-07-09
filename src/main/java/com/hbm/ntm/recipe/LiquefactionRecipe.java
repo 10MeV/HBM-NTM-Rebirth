@@ -24,15 +24,46 @@ public class LiquefactionRecipe implements Recipe<Container> {
     private final ResourceLocation id;
     private final HbmIngredient input;
     private final HbmFluidStack output;
+    private final int sourceOrder;
 
     public LiquefactionRecipe(ResourceLocation id, HbmIngredient input, HbmFluidStack output) {
+        this(id, input, output, Integer.MAX_VALUE);
+    }
+
+    public LiquefactionRecipe(ResourceLocation id, HbmIngredient input, HbmFluidStack output, int sourceOrder) {
         this.id = id;
         this.input = input;
         this.output = output;
+        this.sourceOrder = sourceOrder;
+    }
+
+    public HbmIngredient input() {
+        return input;
     }
 
     public HbmFluidStack getOutputFluid() {
         return output;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
+    }
+
+    public int matchPriority(ItemStack stack) {
+        if (!input.test(stack)) {
+            return Integer.MAX_VALUE;
+        }
+        if (input.hasExactStack() || input.isSingleItemIngredient()
+                || input.legacyId() != null && !input.legacyWildcard()) {
+            return 0;
+        }
+        if (input.legacyWildcard()) {
+            return 1;
+        }
+        if (input.legacyOreName() != null || input.isTagIngredient()) {
+            return 2;
+        }
+        return 3;
     }
 
     @Override
@@ -95,8 +126,9 @@ public class LiquefactionRecipe implements Recipe<Container> {
                     : new HbmIngredient(Ingredient.fromJson(GsonHelper.getAsJsonObject(json, "ingredient")),
                             1, ItemStack.EMPTY, new CompoundTag(), null, -1, false, null, null, 0);
             JsonObject output = GsonHelper.getAsJsonObject(json, "output");
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
             return new LiquefactionRecipe(id, input,
-                    HbmFluidJsonUtil.readFluidStack(output, "liquefaction output"));
+                    HbmFluidJsonUtil.readFluidStack(output, "liquefaction output"), sourceOrder);
         }
 
         @Nullable
@@ -104,7 +136,8 @@ public class LiquefactionRecipe implements Recipe<Container> {
         public LiquefactionRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buffer) {
             HbmIngredient input = HbmIngredient.fromNetwork(buffer);
             HbmFluidStack output = new HbmFluidStack(HbmFluids.fromName(buffer.readUtf()), buffer.readVarInt(), buffer.readVarInt());
-            return new LiquefactionRecipe(id, input, output);
+            int sourceOrder = buffer.readVarInt();
+            return new LiquefactionRecipe(id, input, output, sourceOrder);
         }
 
         @Override
@@ -113,6 +146,7 @@ public class LiquefactionRecipe implements Recipe<Container> {
             buffer.writeUtf(recipe.output.type().getName());
             buffer.writeVarInt(recipe.output.amount());
             buffer.writeVarInt(recipe.output.pressure());
+            buffer.writeVarInt(recipe.sourceOrder);
         }
     }
 }

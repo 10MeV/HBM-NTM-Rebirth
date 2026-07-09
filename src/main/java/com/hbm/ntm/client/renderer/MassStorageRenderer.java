@@ -17,8 +17,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.Locale;
+import net.minecraft.world.phys.Vec3;
 
 public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlockEntity> {
     private static final int INFO_VIEW_DISTANCE = 32;
@@ -35,18 +34,25 @@ public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlock
             return;
         }
 
-        ItemStack type = storage.type();
+        ItemStack type = storage.renderType();
         if (type.isEmpty()) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(storage);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(storage)) {
+            poseStack.pushPose();
+            applyFrontPanelTransform(storage.getBlockState(), poseStack);
+            renderItem(type, storage, poseStack, buffer);
+            renderCount(storage, poseStack, buffer);
+            renderFillBar(storage, poseStack, buffer);
+            poseStack.popPose();
+        }
+    }
 
-        poseStack.pushPose();
-        applyFrontPanelTransform(storage.getBlockState(), poseStack);
-        renderItem(type, storage, poseStack, buffer);
-        renderCount(storage, poseStack, buffer);
-        renderFillBar(storage, poseStack, buffer);
-        poseStack.popPose();
+    @Override
+    public boolean shouldRender(MassStorageBlockEntity storage, Vec3 cameraPos) {
+        return storage.hasType()
+                && BlockEntityRenderer.super.shouldRender(storage, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(storage, getViewDistance());
     }
 
     @Override
@@ -85,7 +91,7 @@ public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlock
         poseStack.pushPose();
         poseStack.translate(8.0D, 6.5D, -0.002D);
         poseStack.scale(8.0F, -8.0F, 8.0F);
-        minecraft.getItemRenderer().renderStatic(type.copyWithCount(1), ItemDisplayContext.GUI,
+        minecraft.getItemRenderer().renderStatic(type, ItemDisplayContext.GUI,
                 LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, poseStack, buffer, storage.getLevel(), 0);
         poseStack.popPose();
     }
@@ -93,7 +99,7 @@ public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlock
     private static void renderCount(MassStorageBlockEntity storage, PoseStack poseStack, MultiBufferSource buffer) {
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;
-        String text = getTextForCount(storage.stockpile(), minecraft.options.forceUnicodeFont().get());
+        String text = storage.renderCountText(minecraft.options.forceUnicodeFont().get());
         int textX = 32 - font.width(text) / 2;
         int textY = 44;
 
@@ -119,7 +125,9 @@ public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlock
         double maxY = 14.0D;
         double z = -0.006D;
         int color = red << 16 | green << 8;
-        LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+        LegacyUntexturedQuadRenderer.QuadBatch batch = LegacyUntexturedQuadRenderer.quadBatch(poseStack, buffer,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        LegacyUntexturedQuadRenderer.quad(batch,
                 minX, maxY, z,
                 maxX, maxY, z,
                 maxX, minY, z,
@@ -127,19 +135,4 @@ public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlock
                 color, 255, 255, 255, 255);
     }
 
-    private static String getTextForCount(int stackSize, boolean isUnicode) {
-        if (stackSize >= 100_000_000 || stackSize >= 1_000_000 && isUnicode) {
-            return String.format(Locale.ROOT, "%.0fM", stackSize / 1_000_000.0F);
-        }
-        if (stackSize >= 1_000_000) {
-            return String.format(Locale.ROOT, "%.1fM", stackSize / 1_000_000.0F);
-        }
-        if (stackSize >= 100_000 || stackSize >= 10_000 && isUnicode) {
-            return String.format(Locale.ROOT, "%.0fK", stackSize / 1_000.0F);
-        }
-        if (stackSize >= 10_000) {
-            return String.format(Locale.ROOT, "%.1fK", stackSize / 1_000.0F);
-        }
-        return String.valueOf(stackSize);
-    }
 }

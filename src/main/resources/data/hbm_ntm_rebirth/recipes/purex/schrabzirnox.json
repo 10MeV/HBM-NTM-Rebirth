@@ -1,4 +1,4 @@
-﻿{
+{
     "type":  "hbm_ntm_rebirth:purex",
     "internal_name":  "purex.schrabzirnox",
     "duration":  200,
@@ -41,6 +41,6 @@
               ],
     "auto_switch_group":  "autoswitch.schrab",
     "name_wrapper":  "purex.schrab",
-    "source_order":  512
+    "source_order": 52
 }
 

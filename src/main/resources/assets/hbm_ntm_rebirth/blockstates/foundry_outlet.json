@@ -1,1 +1,19 @@
-{"variants":{"facing=east":{"model":"hbm_ntm_rebirth:block/foundry_outlet"},"facing=north":{"model":"hbm_ntm_rebirth:block/foundry_outlet"},"facing=south":{"model":"hbm_ntm_rebirth:block/foundry_outlet"},"facing=west":{"model":"hbm_ntm_rebirth:block/foundry_outlet"}}}
+{
+  "variants": {
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/foundry_outlet"
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/foundry_outlet",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/foundry_outlet",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/foundry_outlet",
+      "y": 270
+    }
+  }
+}

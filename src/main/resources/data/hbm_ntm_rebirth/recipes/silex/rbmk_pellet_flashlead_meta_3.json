@@ -1,0 +1,39 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_flashlead"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_flashlead",
+      "legacy_meta": 3
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_au198",
+      "weight": 14
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_pb209",
+      "weight": 14
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_bismuth",
+      "weight": 19
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_mercury",
+      "weight": 19
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_gh336",
+      "weight": 34
+    }
+  ],
+  "source_order": 212
+}

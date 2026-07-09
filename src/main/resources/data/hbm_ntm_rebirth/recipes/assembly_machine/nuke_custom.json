@@ -1,19 +1,45 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.customnuke",
   "duration": 300,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:shells/steel" }, "count": 2, "legacy_ore": "shellSteel" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:fins_small_steel" }, "count": 1 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller_advanced" }, "count": 8, "legacy_id": "hbm:circuit", "legacy_meta": 14 },
-    { "ingredient": { "tag": "forge:dyes/gray" }, "count": 4, "legacy_ore": "dyeGray" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:nuke_custom" }
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:shells/steel"
+      },
+      "legacy_ore": "shellSteel"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fins_small_steel"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_controller_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 14
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:dyes/gray"
+      },
+      "legacy_ore": "dyeGray"
+    }
   ],
+  "internal_name": "ass.customnuke",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:nuke_custom"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 207
 }

@@ -32,6 +32,15 @@ public final class WorldSavedDataDiagnostics {
                 new KnownDataDefinition(CraterRadiationData.DATA_NAME, "crater_radiation", List.of(), true, false));
     }
 
+    private static <T> List<T> diagnosticList(List<? extends T> source) {
+        return source == null ? List.of() : java.util.Collections.unmodifiableList(new ArrayList<>(source));
+    }
+
+    private static <K, V> Map<K, V> diagnosticMap(Map<? extends K, ? extends V> source) {
+        return source == null ? Map.of()
+                : java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(source));
+    }
+
     public static LevelStatus inspect(ServerLevel level) {
         Optional<TomImpactSavedData> tom = TomImpactSavedData.getExisting(level);
         Optional<AnnihilatorSavedData> annihilator = AnnihilatorSavedData.getExisting(level);
@@ -157,7 +166,9 @@ public final class WorldSavedDataDiagnostics {
     private static LevelHealthStatus health(LevelStatus status, ServerLevel level) {
         int tomProblems = status.hasTomImpact() ? status.tomImpactSummary().loadDiagnostics().problemCount() : 0;
         int annihilatorProblems = status.hasAnnihilator()
-                ? status.annihilatorSummary().loadDiagnostics().problemCount() : 0;
+                ? status.annihilatorSummary().loadDiagnostics().problemCount()
+                        + status.annihilatorSummary().publicMapProblemCount()
+                : 0;
         int annihilatorProblemPools = status.hasAnnihilator()
                 ? status.annihilatorSummary().problemPools() : 0;
         int satelliteProblems = status.hasSatellites()
@@ -180,6 +191,21 @@ public final class WorldSavedDataDiagnostics {
                     .forEach(issue -> issues.add("annihilator:" + issue));
             if (annihilatorProblemPools > 0) {
                 issues.add("annihilator:problem_pools=" + annihilatorProblemPools);
+            }
+            if (status.annihilatorSummary().nullPoolMaps() > 0) {
+                issues.add("annihilator:null_pool_map");
+            }
+            if (status.annihilatorSummary().nullPoolValues() > 0) {
+                issues.add("annihilator:null_pool_values=" + status.annihilatorSummary().nullPoolValues());
+            }
+            if (status.annihilatorSummary().nullItemMaps() > 0) {
+                issues.add("annihilator:null_item_maps=" + status.annihilatorSummary().nullItemMaps());
+            }
+            if (status.annihilatorSummary().unknownKeyEntries() > 0) {
+                issues.add("annihilator:unknown_key_entries=" + status.annihilatorSummary().unknownKeyEntries());
+            }
+            if (status.annihilatorSummary().nullAmountEntries() > 0) {
+                issues.add("annihilator:null_amount_entries=" + status.annihilatorSummary().nullAmountEntries());
             }
         }
         if (status.hasSatellites()) {
@@ -335,29 +361,36 @@ public final class WorldSavedDataDiagnostics {
     }
 
     public record AnnihilatorSummary(boolean present, int pools, int entries, BigInteger totalAmount,
-                                     Map<AnnihilatorSavedData.Kind, Integer> keyKindCounts,
-                                     Map<AnnihilatorSavedData.Kind, BigInteger> keyKindTotals,
-                                     List<AnnihilatorSavedData.PoolSummary> topPools,
-                                     int problemPools,
-                                     AnnihilatorSavedData.LoadDiagnostics loadDiagnostics) {
+                                      Map<AnnihilatorSavedData.Kind, Integer> keyKindCounts,
+                                      Map<AnnihilatorSavedData.Kind, BigInteger> keyKindTotals,
+                                      List<AnnihilatorSavedData.PoolSummary> topPools,
+                                      int problemPools, int nullPoolMaps, int nullPoolValues, int nullItemMaps,
+                                      int unknownKeyEntries, int nullAmountEntries,
+                                      AnnihilatorSavedData.LoadDiagnostics loadDiagnostics) {
         public AnnihilatorSummary {
             totalAmount = totalAmount == null ? BigInteger.ZERO : totalAmount;
-            keyKindCounts = keyKindCounts == null ? Map.of() : Map.copyOf(keyKindCounts);
-            keyKindTotals = keyKindTotals == null ? Map.of() : Map.copyOf(keyKindTotals);
-            topPools = topPools == null ? List.of() : List.copyOf(topPools);
+            keyKindCounts = diagnosticMap(keyKindCounts);
+            keyKindTotals = diagnosticMap(keyKindTotals);
+            topPools = diagnosticList(topPools);
             loadDiagnostics = loadDiagnostics == null ? AnnihilatorSavedData.LoadDiagnostics.empty()
                     : loadDiagnostics;
         }
 
         public static AnnihilatorSummary absent() {
             return new AnnihilatorSummary(false, 0, 0, BigInteger.ZERO, Map.of(), Map.of(), List.of(),
-                    0, AnnihilatorSavedData.LoadDiagnostics.empty());
+                    0, 0, 0, 0, 0, 0, AnnihilatorSavedData.LoadDiagnostics.empty());
         }
 
         public static AnnihilatorSummary of(AnnihilatorSavedData data) {
             return new AnnihilatorSummary(true, data.poolCount(), data.poolEntryCount(), data.totalAmount(),
                     data.keyKindCounts(), data.keyKindTotals(), data.topPoolSummariesSnapshot(8),
-                    data.problemPoolLoadDiagnosticsSnapshot().size(), data.loadDiagnostics());
+                    data.problemPoolLoadDiagnosticsSnapshot().size(), data.nullPoolMapCount(),
+                    data.nullPoolValueCount(), data.nullItemMapCount(),
+                    data.unknownKeyEntryCount(), data.nullAmountEntryCount(), data.loadDiagnostics());
+        }
+
+        public int publicMapProblemCount() {
+            return nullPoolMaps + nullPoolValues + nullItemMaps + unknownKeyEntries + nullAmountEntries;
         }
 
         public String detail() {
@@ -367,6 +400,11 @@ public final class WorldSavedDataDiagnostics {
                     + " keys=" + keyKindCounts
                     + " kindTotals=" + keyKindTotals
                     + " problemPools=" + problemPools
+                    + " nullPoolMaps=" + nullPoolMaps
+                    + " nullPools=" + nullPoolValues
+                    + " nullItemMaps=" + nullItemMaps
+                    + " unknownKeys=" + unknownKeyEntries
+                    + " nullAmounts=" + nullAmountEntries
                     + " load={" + loadDiagnostics.summary() + "}";
         }
     }
@@ -384,12 +422,12 @@ public final class WorldSavedDataDiagnostics {
                                    SatelliteSavedData.LoadDiagnostics loadDiagnostics,
                                    SatelliteSavedData.SatelliteStats stats) {
         public SatelliteSummary {
-            typeCounts = typeCounts == null ? Map.of() : Map.copyOf(typeCounts);
-            cargoTypeCounts = cargoTypeCounts == null ? Map.of() : Map.copyOf(cargoTypeCounts);
-            cargoPoolCounts = cargoPoolCounts == null ? Map.of() : Map.copyOf(cargoPoolCounts);
-            frequencies = frequencies == null ? List.of() : List.copyOf(frequencies);
-            cargoFrequencies = cargoFrequencies == null ? List.of() : List.copyOf(cargoFrequencies);
-            satellites = satellites == null ? List.of() : List.copyOf(satellites);
+            typeCounts = diagnosticMap(typeCounts);
+            cargoTypeCounts = diagnosticMap(cargoTypeCounts);
+            cargoPoolCounts = diagnosticMap(cargoPoolCounts);
+            frequencies = diagnosticList(frequencies);
+            cargoFrequencies = diagnosticList(cargoFrequencies);
+            satellites = diagnosticList(satellites);
             loadDiagnostics = loadDiagnostics == null ? SatelliteSavedData.LoadDiagnostics.empty()
                     : loadDiagnostics;
             stats = stats == null ? SatelliteSavedData.SatelliteStats.empty() : stats;
@@ -554,6 +592,26 @@ public final class WorldSavedDataDiagnostics {
 
         public int totalAnnihilatorProblemPools() {
             return levels.stream().mapToInt(level -> level.annihilatorSummary().problemPools()).sum();
+        }
+
+        public int totalAnnihilatorNullPoolValues() {
+            return levels.stream().mapToInt(level -> level.annihilatorSummary().nullPoolValues()).sum();
+        }
+
+        public int totalAnnihilatorNullPoolMaps() {
+            return levels.stream().mapToInt(level -> level.annihilatorSummary().nullPoolMaps()).sum();
+        }
+
+        public int totalAnnihilatorNullItemMaps() {
+            return levels.stream().mapToInt(level -> level.annihilatorSummary().nullItemMaps()).sum();
+        }
+
+        public int totalAnnihilatorUnknownKeyEntries() {
+            return levels.stream().mapToInt(level -> level.annihilatorSummary().unknownKeyEntries()).sum();
+        }
+
+        public int totalAnnihilatorNullAmountEntries() {
+            return levels.stream().mapToInt(level -> level.annihilatorSummary().nullAmountEntries()).sum();
         }
 
         public BigInteger totalAnnihilatorAmount() {

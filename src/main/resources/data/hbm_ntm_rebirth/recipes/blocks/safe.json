@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:container_upgrade_crafting",
+  "category": "building",
+  "key": {
+    "A": {
+      "tag": "forge:plates/titanium"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:crate_steel"
+    },
+    "L": {
+      "tag": "forge:plates/lead"
+    }
+  },
+  "pattern": [
+    "LAL",
+    "ACA",
+    "LAL"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:safe"
+  },
+  "show_notification": true
+}

@@ -33,10 +33,14 @@ public final class LegacyObjGlintRenderer {
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyWavefrontModel.SelectionHandle selection, float age, float colorMod,
             float red, float green, float blue, float speed, float scale) {
-        for (GlintLayerPlan layer : classicGlintPlan(age, colorMod, red, green, blue, speed, scale).layers()) {
+        int finalRed = color(red);
+        int finalGreen = color(green);
+        int finalBlue = color(blue);
+        for (int layer = 0; layer < LAYERS; layer++) {
             model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
-                    color(red), color(green), color(blue), 255, false,
-                    LegacyTexturedRenderMode.GLINT_EQUAL_DEPTH, textureMatrixUvTransform(layer.textureMatrix()),
+                    finalRed, finalGreen, finalBlue, 255, false,
+                    LegacyTexturedRenderMode.GLINT_EQUAL_DEPTH,
+                    textureMatrixUvTransform(age, layer, speed, scale),
                     selection);
         }
     }
@@ -76,6 +80,13 @@ public final class LegacyObjGlintRenderer {
                     (float) plan.scaleU(), (float) plan.scaleV(),
                     (float) plan.rotationDegrees(), (float) plan.translateU(), (float) plan.translateV());
         };
+    }
+
+    private static LegacyWavefrontModel.UvTransform textureMatrixUvTransform(float age, int layer, float speed,
+            float scale) {
+        return LegacyWavefrontModel.legacyTextureMatrixDynamic(scale, scale,
+                (float) LegacyUvAnimation.classicGlintRotation(layer), 0.0F,
+                (float) LegacyUvAnimation.classicGlintMovement(age, layer, speed));
     }
 
     private static int color(float value) {

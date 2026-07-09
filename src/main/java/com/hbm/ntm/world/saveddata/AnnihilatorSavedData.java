@@ -1,31 +1,40 @@
 package com.hbm.ntm.world.saveddata;
 
+import com.hbm.inventory.RecipesCommon.ComparableStack;
+import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.util.HbmItemStackUtil;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidJsonUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.recipe.AnnihilatorRecipeRuntime;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import com.hbm.util.fauxpointtwelve.NBTTagCompound;
+import com.hbm.util.fauxpointtwelve.NBTTagList;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import com.hbm.util.fauxpointtwelve.WorldSavedData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.saveddata.SavedData;
 
 import java.math.BigInteger;
+import java.util.AbstractCollection;
 import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +43,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class AnnihilatorSavedData extends SavedData {
+public class AnnihilatorSavedData extends WorldSavedData {
     public static final String DATA_NAME = "annihilator";
     public static final String KEY = DATA_NAME;
     public static final String TAG_POOLS = "pools";
@@ -50,24 +59,67 @@ public class AnnihilatorSavedData extends SavedData {
     public static final byte KEY_ITEM_META = 1;
     public static final byte KEY_FLUID = 2;
     public static final byte KEY_ORE_DICT = 3;
+    private static final Comparator<String> NULL_SAFE_STRING_COMPARATOR =
+            Comparator.nullsFirst(String::compareTo);
 
-    public final HashMap<String, AnnihilatorPool> pools = new DirtyTrackingPoolMap();
+    public HashMap<String, AnnihilatorPool> pools = new DirtyTrackingPoolMap();
     private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
     private List<PoolLoadDiagnostics> poolLoadDiagnostics = List.of();
+    private transient ServerLevel recipeLevel;
 
     public AnnihilatorSavedData() {
+        super(DATA_NAME);
         setDirty();
     }
 
     public AnnihilatorSavedData(String name) {
-        this();
+        super(name);
+    }
+
+    private static AnnihilatorSavedData createData() {
+        return new com.hbm.saveddata.AnnihilatorSavedData();
+    }
+
+    private static AnnihilatorSavedData createLoadedData() {
+        return new com.hbm.saveddata.AnnihilatorSavedData(DATA_NAME);
+    }
+
+    private static <K, V> Map<K, V> diagnosticMap(Map<? extends K, ? extends V> source) {
+        return source == null ? Map.of()
+                : java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(source));
+    }
+
+    private static boolean isLegacyOreDictName(String name) {
+        return name != null && !name.isEmpty();
     }
 
     public static AnnihilatorSavedData load(CompoundTag tag) {
-        AnnihilatorSavedData data = new AnnihilatorSavedData();
-        data.pools.clear();
-        boolean hasPoolsTag = tag.contains(TAG_POOLS, Tag.TAG_LIST);
-        ListTag pools = tag.getList(TAG_POOLS, Tag.TAG_COMPOUND);
+        AnnihilatorSavedData data = createLoadedData();
+        NBTTagCompound legacyRoot = NBTTagCompound.copyOf(Objects.requireNonNull(tag, "tag"));
+        try {
+            data.readLegacyRoot(legacyRoot, true);
+        } catch (Exception exception) {
+            HbmNtm.LOGGER.warn(
+                    "Keeping partially loaded Annihilator SavedData after legacy root read failure, matching 1.7.10 MapStorage.",
+                    exception);
+        }
+        data.setDirty(false);
+        return data;
+    }
+
+    private static AnnihilatorSavedData loadStrict(CompoundTag tag) {
+        AnnihilatorSavedData data = createLoadedData();
+        data.readLegacyRoot(NBTTagCompound.copyOf(Objects.requireNonNull(tag, "tag")), true);
+        data.setDirty(false);
+        return data;
+    }
+
+    private void readLegacyRoot(NBTTagCompound legacyRoot, boolean clearExisting) {
+        if (clearExisting) {
+            pools.clear();
+        }
+        boolean hasPoolsTag = legacyRoot.hasKey(TAG_POOLS, Tag.TAG_LIST);
+        NBTTagList pools = legacyRoot.getTagList(TAG_POOLS, Tag.TAG_COMPOUND);
         int poolsLoaded = 0;
         int missingPoolNames = 0;
         int missingPoolTags = 0;
@@ -79,11 +131,10 @@ public class AnnihilatorSavedData extends SavedData {
         int duplicateKeys = 0;
         Set<String> seenPoolNames = new HashSet<>();
         List<PoolLoadDiagnostics> poolDiagnostics = new ArrayList<>();
-        for (int i = 0; i < pools.size(); i++) {
-            CompoundTag poolTag = pools.getCompound(i);
-            boolean hasPoolName = poolTag.contains(TAG_POOL_NAME, Tag.TAG_STRING)
-                    && !poolTag.getString(TAG_POOL_NAME).isBlank();
-            boolean hasPoolList = poolTag.contains(TAG_POOL, Tag.TAG_LIST);
+        for (int i = 0; i < pools.tagCount(); i++) {
+            NBTTagCompound poolTag = pools.getCompoundTagAt(i);
+            boolean hasPoolName = poolTag.hasKey(TAG_POOL_NAME, Tag.TAG_STRING);
+            boolean hasPoolList = poolTag.hasKey(TAG_POOL, Tag.TAG_LIST);
             if (!hasPoolName) {
                 missingPoolNames++;
             }
@@ -95,9 +146,9 @@ public class AnnihilatorSavedData extends SavedData {
             if (duplicatePoolName) {
                 duplicatePoolNames++;
             }
-            AnnihilatorPool pool = data.createPool();
+            AnnihilatorPool pool = createPool();
             PoolEntryLoadDiagnostics entryDiagnostics = pool.deserializeWithDiagnostics(
-                    poolTag.getList(TAG_POOL, Tag.TAG_COMPOUND));
+                    poolTag.getTagList(TAG_POOL, Tag.TAG_COMPOUND));
             entriesRead += entryDiagnostics.entriesRead();
             entriesLoaded += entryDiagnostics.entriesLoaded();
             invalidKeys += entryDiagnostics.invalidKeys();
@@ -107,23 +158,25 @@ public class AnnihilatorSavedData extends SavedData {
                     entryDiagnostics.entriesRead(), entryDiagnostics.entriesLoaded(),
                     entryDiagnostics.invalidKeys(), entryDiagnostics.invalidAmounts(),
                     entryDiagnostics.duplicateKeys()));
-            data.pools.put(poolName, pool);
+            this.pools.put(poolName, pool);
             poolsLoaded++;
         }
-        data.loadDiagnostics = new LoadDiagnostics(hasPoolsTag, pools.size(), poolsLoaded, missingPoolNames,
+        loadDiagnostics = new LoadDiagnostics(hasPoolsTag, pools.tagCount(), poolsLoaded, missingPoolNames,
                 missingPoolTags, duplicatePoolNames, entriesRead, entriesLoaded, invalidKeys, invalidAmounts,
                 duplicateKeys);
-        data.poolLoadDiagnostics = List.copyOf(poolDiagnostics);
-        data.setDirty(false);
-        return data;
+        poolLoadDiagnostics = List.copyOf(poolDiagnostics);
     }
 
     public static AnnihilatorSavedData forLevel(ServerLevel level) {
-        return WorldSavedDataHelper.get(level, DATA_NAME, AnnihilatorSavedData::load, AnnihilatorSavedData::new);
+        return bindRecipeLevel(WorldSavedDataHelper.get(level, DATA_NAME, AnnihilatorSavedData::load,
+                AnnihilatorSavedData::createData), level);
     }
 
     public static Optional<AnnihilatorSavedData> forLevel(Level level) {
-        return WorldSavedDataHelper.get(level, DATA_NAME, AnnihilatorSavedData::load, AnnihilatorSavedData::new);
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return Optional.empty();
+        }
+        return Optional.of(forLevel(serverLevel));
     }
 
     public static AnnihilatorSavedData forWorld(ServerLevel level) {
@@ -143,19 +196,23 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public static Optional<AnnihilatorSavedData> getExisting(ServerLevel level) {
-        return WorldSavedDataHelper.getExisting(level, DATA_NAME, AnnihilatorSavedData::load);
+        return bindRecipeLevel(WorldSavedDataHelper.getExisting(level, DATA_NAME, AnnihilatorSavedData::load), level);
     }
 
     public static Optional<AnnihilatorSavedData> getExisting(MinecraftServer server) {
-        return WorldSavedDataHelper.getExisting(server, DATA_NAME, AnnihilatorSavedData::load);
+        return getExisting(server.overworld());
     }
 
     public static Optional<AnnihilatorSavedData> getExisting(MinecraftServer server, ResourceKey<Level> dimension) {
-        return WorldSavedDataHelper.getExisting(server, dimension, DATA_NAME, AnnihilatorSavedData::load);
+        ServerLevel level = server.getLevel(dimension);
+        return level == null ? Optional.empty() : getExisting(level);
     }
 
     public static Optional<AnnihilatorSavedData> getExisting(Level level) {
-        return WorldSavedDataHelper.getExisting(level, DATA_NAME, AnnihilatorSavedData::load);
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return Optional.empty();
+        }
+        return getExisting(serverLevel);
     }
 
     public static AnnihilatorSavedData getData(ServerLevel level) {
@@ -167,38 +224,30 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public static AnnihilatorSavedData getData(MinecraftServer server) {
-        return WorldSavedDataHelper.get(server, DATA_NAME, AnnihilatorSavedData::load, AnnihilatorSavedData::new);
+        return forLevel(server.overworld());
     }
 
     public static Optional<AnnihilatorSavedData> getData(MinecraftServer server, ResourceKey<Level> dimension) {
-        return WorldSavedDataHelper.get(server, dimension, DATA_NAME, AnnihilatorSavedData::load,
-                AnnihilatorSavedData::new);
+        ServerLevel level = server.getLevel(dimension);
+        return level == null ? Optional.empty() : Optional.of(forLevel(level));
     }
 
     @Override
     public CompoundTag save(CompoundTag tag) {
-        ListTag poolsTag = new ListTag();
-        for (Map.Entry<String, AnnihilatorPool> entry : pools.entrySet()) {
-            CompoundTag poolTag = new CompoundTag();
-            poolTag.putString(TAG_POOL_NAME, entry.getKey());
-            poolTag.put(TAG_POOL, entry.getValue().serialize());
-            poolsTag.add(poolTag);
+        return super.save(tag);
+    }
+
+    public void readFromNBT(NBTTagCompound tag) {
+        boolean wasDirty = isDirty();
+        try {
+            readLegacyRoot(Objects.requireNonNull(tag, "tag"), false);
+        } finally {
+            setDirty(wasDirty);
         }
-        tag.put(TAG_POOLS, poolsTag);
-        return tag;
     }
 
-    public void readFromNBT(CompoundTag tag) {
-        AnnihilatorSavedData loaded = load(tag == null ? new CompoundTag() : tag);
-        pools.clear();
-        loaded.pools.forEach((name, pool) -> pools.put(name, pool.copy(this::setDirty)));
-        loadDiagnostics = loaded.loadDiagnostics;
-        poolLoadDiagnostics = loaded.poolLoadDiagnostics;
-        setDirty(false);
-    }
-
-    public void writeToNBT(CompoundTag tag) {
-        save(tag);
+    public void writeToNBT(NBTTagCompound tag) {
+        Objects.requireNonNull(tag, "tag").setTag(TAG_POOLS, writeLegacyPoolsList());
     }
 
     public int readLegacyPools(CompoundTag tag) {
@@ -206,7 +255,15 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public int readLegacyPools(CompoundTag tag, boolean clearExisting) {
-        AnnihilatorSavedData loaded = load(tag == null ? new CompoundTag() : tag);
+        if (tag == null) {
+            if (clearExisting) {
+                pools.clear();
+            }
+            loadDiagnostics = LoadDiagnostics.empty();
+            poolLoadDiagnostics = List.of();
+            return 0;
+        }
+        AnnihilatorSavedData loaded = loadStrict(tag);
         if (clearExisting) {
             pools.clear();
         }
@@ -254,31 +311,52 @@ public class AnnihilatorSavedData extends SavedData {
 
     public void writeLegacyPools(CompoundTag tag) {
         if (tag != null) {
-            tag.put(TAG_POOLS, writeLegacyPoolsList());
+            if (tag instanceof NBTTagCompound legacyTag) {
+                legacyTag.setTag(TAG_POOLS, writeLegacyPoolsList());
+            } else {
+                tag.put(TAG_POOLS, writeLegacyPoolsList());
+            }
         }
     }
 
     public CompoundTag writeLegacyPoolsTag() {
-        CompoundTag tag = new CompoundTag();
+        NBTTagCompound tag = new NBTTagCompound();
         writeLegacyPools(tag);
         return tag;
     }
 
-    public ListTag writeLegacyPoolsList() {
-        ListTag poolsTag = new ListTag();
+    public NBTTagList writeLegacyPoolsList() {
+        NBTTagList poolsTag = new NBTTagList();
         for (Map.Entry<String, AnnihilatorPool> entry : pools.entrySet()) {
-            poolsTag.add(writeLegacyPoolTag(entry.getKey(), entry.getValue()));
+            NBTTagCompound pool = new NBTTagCompound();
+            NBTTagList poolList = new NBTTagList();
+
+            entry.getValue().serialize(poolList);
+            pool.setString(TAG_POOL_NAME, entry.getKey());
+            pool.setTag(TAG_POOL, poolList);
+            poolsTag.appendTag(pool);
         }
         return poolsTag;
     }
 
     public LegacyPools legacyPoolsSnapshot() {
-        return new LegacyPools(pools.entrySet().stream()
-                .map(entry -> new LegacyPool(entry.getKey(), entry.getValue().entriesSnapshot().stream()
-                        .map(poolEntry -> new AnnihilatorPool.PoolEntry(poolEntry.getKey(),
-                                poolEntry.getKey().toLegacyObject(), poolEntry.getValue()))
-                        .toList()))
-                .toList());
+        List<LegacyPool> snapshot = new ArrayList<>();
+        for (Map.Entry<String, AnnihilatorPool> entry : pools.entrySet()) {
+            AnnihilatorPool pool = entry.getValue();
+            if (pool == null) {
+                continue;
+            }
+            List<AnnihilatorPool.PoolEntry> entries = new ArrayList<>();
+            for (Map.Entry<PoolKey, BigInteger> poolEntry : pool.entriesSnapshot()) {
+                PoolKey key = poolEntry.getKey();
+                BigInteger amount = poolEntry.getValue();
+                if (key != null && amount != null) {
+                    entries.add(new AnnihilatorPool.PoolEntry(key, key.toLegacyObject(), amount));
+                }
+            }
+            snapshot.add(new LegacyPool(entry.getKey(), entries));
+        }
+        return new LegacyPools(snapshot);
     }
 
     public boolean readLegacyPool(CompoundTag tag) {
@@ -288,7 +366,7 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public boolean readLegacyPool(String poolName, ListTag entries) {
-        if (poolName == null || poolName.isBlank() || entries == null) {
+        if (poolName == null || entries == null) {
             return false;
         }
         AnnihilatorPool pool = createPool();
@@ -299,7 +377,7 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public boolean readLegacyEntry(String poolName, CompoundTag tag) {
-        if (poolName == null || poolName.isBlank() || tag == null) {
+        if (tag == null) {
             return false;
         }
         boolean loaded = grabPool(poolName).deserializeEntry(tag);
@@ -310,15 +388,20 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public static void writeLegacyPool(CompoundTag tag, String poolName, AnnihilatorPool pool) {
-        if (tag == null || poolName == null || poolName.isBlank() || pool == null) {
+        if (tag == null || poolName == null || pool == null) {
             return;
         }
-        tag.putString(TAG_POOL_NAME, poolName);
-        tag.put(TAG_POOL, pool.serialize());
+        if (tag instanceof NBTTagCompound legacyTag) {
+            legacyTag.setString(TAG_POOL_NAME, poolName);
+            legacyTag.setTag(TAG_POOL, pool.serializeLegacyList());
+        } else {
+            tag.putString(TAG_POOL_NAME, poolName);
+            tag.put(TAG_POOL, pool.serialize());
+        }
     }
 
-    public static CompoundTag writeLegacyPoolTag(String poolName, AnnihilatorPool pool) {
-        CompoundTag tag = new CompoundTag();
+    public static NBTTagCompound writeLegacyPoolTag(String poolName, AnnihilatorPool pool) {
+        NBTTagCompound tag = new NBTTagCompound();
         writeLegacyPool(tag, poolName, pool);
         return tag;
     }
@@ -334,31 +417,36 @@ public class AnnihilatorSavedData extends SavedData {
         if (pools == null) {
             return List.of();
         }
+        NBTTagList legacyPools = NBTTagList.copyOf(pools);
         List<LegacyPool> result = new ArrayList<>();
-        for (int i = 0; i < pools.size(); i++) {
-            readLegacyPoolTag(pools.getCompound(i)).ifPresent(result::add);
+        for (int i = 0; i < legacyPools.tagCount(); i++) {
+            readLegacyPoolTag(legacyPools.getCompoundTagAt(i)).ifPresent(result::add);
         }
         return List.copyOf(result);
     }
 
     public static void writeLegacyPools(CompoundTag tag, Collection<LegacyPool> pools) {
         if (tag != null) {
-            tag.put(TAG_POOLS, writeLegacyPoolsList(pools));
+            if (tag instanceof NBTTagCompound legacyTag) {
+                legacyTag.setTag(TAG_POOLS, writeLegacyPoolsList(pools));
+            } else {
+                tag.put(TAG_POOLS, writeLegacyPoolsList(pools));
+            }
         }
     }
 
     public static CompoundTag writeLegacyPoolsTag(Collection<LegacyPool> pools) {
-        CompoundTag tag = new CompoundTag();
+        NBTTagCompound tag = new NBTTagCompound();
         writeLegacyPools(tag, pools);
         return tag;
     }
 
-    public static ListTag writeLegacyPoolsList(Collection<LegacyPool> pools) {
-        ListTag poolsTag = new ListTag();
+    public static NBTTagList writeLegacyPoolsList(Collection<LegacyPool> pools) {
+        NBTTagList poolsTag = new NBTTagList();
         if (pools != null) {
             for (LegacyPool pool : pools) {
                 if (pool != null) {
-                    poolsTag.add(pool.writeTag());
+                    poolsTag.appendTag(pool.writeTag());
                 }
             }
         }
@@ -366,20 +454,17 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public static Optional<LegacyPool> readLegacyPoolTag(CompoundTag tag) {
-        if (tag == null || !tag.contains(TAG_POOL_NAME, Tag.TAG_STRING)
-                || !tag.contains(TAG_POOL, Tag.TAG_LIST)) {
+        if (tag == null) {
             return Optional.empty();
         }
-        String poolName = tag.getString(TAG_POOL_NAME);
-        if (poolName.isBlank()) {
-            return Optional.empty();
-        }
+        NBTTagCompound legacyTag = NBTTagCompound.copyOf(tag);
+        String poolName = legacyTag.getString(TAG_POOL_NAME);
         return Optional.of(new LegacyPool(poolName,
-                AnnihilatorPool.readLegacyEntries(tag.getList(TAG_POOL, Tag.TAG_COMPOUND))));
+                AnnihilatorPool.readLegacyEntries(legacyTag.getTagList(TAG_POOL, Tag.TAG_COMPOUND))));
     }
 
     public AnnihilatorPool grabPool(String pool) {
-        return pools.computeIfAbsent(Objects.requireNonNull(pool, "pool"), ignored -> createPool());
+        return pools.computeIfAbsent(pool, ignored -> createPool());
     }
 
     public Optional<AnnihilatorPool> getPool(String pool) {
@@ -394,11 +479,9 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public Optional<IncrementResult> incrementLegacy(String pool, Object legacyKey, long amount) {
-        Optional<PoolKey> key = PoolKey.fromLegacyObject(legacyKey);
-        if (key.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(increment(pool, key.get(), amount));
+        IncrementResult result = grabPool(pool).incrementRaw(legacyKey, amount);
+        setDirty();
+        return Optional.of(result);
     }
 
     public IncrementResult incrementLegacyItem(String pool, Item item, int legacyMeta, long amount) {
@@ -410,44 +493,64 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public ItemStack pushToPool(String pool, FluidType type, long amount, boolean alwaysPayOut) {
+        if (recipeLevel != null) {
+            return emptyToNull(pushToPool(recipeLevel, pool, type, amount, alwaysPayOut));
+        }
         pushToPoolResult(pool, type, amount, alwaysPayOut);
         return null;
     }
 
     public ItemStack pushToPool(ServerLevel level, String pool, FluidType type, long amount, boolean alwaysPayOut) {
-        if (type == null || amount <= 0L) {
-            return ItemStack.EMPTY;
-        }
-        PoolKey key = PoolKey.fluid(type);
-        IncrementResult result = increment(pool, key, amount);
-        return AnnihilatorRecipeRuntime.findPayout(level, key, result, alwaysPayOut);
+        IncrementResult result = incrementLegacy(pool, type, amount).orElseThrow();
+        return PoolKey.fromLegacyObject(type)
+                .map(key -> AnnihilatorRecipeRuntime.findPayout(level, key, result, alwaysPayOut))
+                .orElse(ItemStack.EMPTY);
     }
 
     public PoolPushResult pushToPoolResult(String pool, FluidType type, long amount, boolean alwaysPayOut) {
-        if (type == null || amount <= 0L) {
-            return PoolPushResult.empty(alwaysPayOut);
-        }
-        IncrementResult result = increment(pool, PoolKey.fluid(type), amount);
+        IncrementResult result = incrementLegacy(pool, type, amount).orElseThrow();
         return new PoolPushResult(result, false, "payout_deferred", alwaysPayOut);
     }
 
     public ItemStack pushToPool(String pool, ItemStack stack, boolean alwaysPayOut) {
+        Objects.requireNonNull(stack, "stack");
+        if (recipeLevel != null) {
+            return emptyToNull(pushToPool(recipeLevel, pool, stack, alwaysPayOut));
+        }
         pushToPoolResult(pool, stack, alwaysPayOut);
         return null;
     }
 
     public ItemStack pushToPool(ServerLevel level, String pool, ItemStack stack, boolean alwaysPayOut) {
-        if (stack == null || stack.isEmpty()) {
+        Objects.requireNonNull(stack, "stack");
+        if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
         PoolKey itemKey = PoolKey.item(stack.getItem());
         IncrementResult itemResult = increment(pool, itemKey, stack.getCount());
         PoolKey metaKey = PoolKey.itemMeta(stack, stack.getDamageValue());
         IncrementResult metaResult = increment(pool, metaKey, stack.getCount());
+
+        ItemStack dictPayout = ItemStack.EMPTY;
+        for (String name : HbmItemStackUtil.getOreDictNames(stack)) {
+            if (isLegacyOreDictName(name)) {
+                PoolKey dictKey = PoolKey.oreDict(name);
+                IncrementResult dictResult = increment(pool, dictKey, stack.getCount());
+                ItemStack payout = AnnihilatorRecipeRuntime.findPayout(level, dictKey, dictResult, alwaysPayOut);
+                if (!payout.isEmpty()) {
+                    dictPayout = payout;
+                }
+            }
+        }
+        if (!dictPayout.isEmpty()) {
+            return dictPayout;
+        }
+
         ItemStack metaPayout = AnnihilatorRecipeRuntime.findPayout(level, metaKey, metaResult, alwaysPayOut);
         if (!metaPayout.isEmpty()) {
             return metaPayout;
         }
+
         return AnnihilatorRecipeRuntime.findPayout(level, itemKey, itemResult, alwaysPayOut);
     }
 
@@ -455,9 +558,19 @@ public class AnnihilatorSavedData extends SavedData {
         if (stack == null || stack.isEmpty()) {
             return PoolPushResult.empty(alwaysPayOut);
         }
-        IncrementResult result = increment(pool, PoolKey.item(stack.getItem()), stack.getCount());
+        IncrementResult itemResult = increment(pool, PoolKey.item(stack.getItem()), stack.getCount());
         IncrementResult metaResult = increment(pool, PoolKey.itemMeta(stack, stack.getDamageValue()), stack.getCount());
-        return new PoolPushResult(metaResult, false, "payout_deferred_ore_dict_deferred", alwaysPayOut);
+
+        IncrementResult lastOreDictResult = null;
+        for (String name : HbmItemStackUtil.getOreDictNames(stack)) {
+            if (isLegacyOreDictName(name)) {
+                lastOreDictResult = increment(pool, PoolKey.oreDict(name), stack.getCount());
+            }
+        }
+
+        IncrementResult preferred = lastOreDictResult != null ? lastOreDictResult
+                : metaResult != null ? metaResult : itemResult;
+        return new PoolPushResult(preferred, false, "payout_deferred", alwaysPayOut);
     }
 
     public ItemPoolPushResult pushLegacyItemToPool(String pool, ItemStack stack, int legacyMeta,
@@ -474,7 +587,7 @@ public class AnnihilatorSavedData extends SavedData {
         IncrementResult lastOreDictResult = null;
         Collection<String> oreDictNames = legacyOreDictNames == null ? List.of() : legacyOreDictNames;
         for (String name : oreDictNames) {
-            if (name != null && !name.isBlank()) {
+            if (isLegacyOreDictName(name)) {
                 lastOreDictResult = increment(pool, PoolKey.oreDict(name), stack.getCount());
                 oreDictResults.add(lastOreDictResult);
             }
@@ -500,7 +613,7 @@ public class AnnihilatorSavedData extends SavedData {
         ItemStack dictPayout = ItemStack.EMPTY;
         Collection<String> oreDictNames = legacyOreDictNames == null ? List.of() : legacyOreDictNames;
         for (String name : oreDictNames) {
-            if (name != null && !name.isBlank()) {
+            if (isLegacyOreDictName(name)) {
                 PoolKey dictKey = PoolKey.oreDict(name);
                 IncrementResult dictResult = increment(pool, dictKey, stack.getCount());
                 ItemStack payout = AnnihilatorRecipeRuntime.findPayout(level, dictKey, dictResult, alwaysPayOut);
@@ -541,7 +654,7 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public PoolPushResult pushOreDictToPool(String pool, String oreDict, long amount, boolean alwaysPayOut) {
-        if (oreDict == null || oreDict.isBlank() || amount <= 0L) {
+        if (!isLegacyOreDictName(oreDict)) {
             return PoolPushResult.empty(alwaysPayOut);
         }
         IncrementResult result = increment(pool, PoolKey.oreDict(oreDict), amount);
@@ -550,7 +663,7 @@ public class AnnihilatorSavedData extends SavedData {
 
     public ItemStack pushOreDictToPool(ServerLevel level, String pool, String oreDict, long amount,
             boolean alwaysPayOut) {
-        if (oreDict == null || oreDict.isBlank() || amount <= 0L) {
+        if (!isLegacyOreDictName(oreDict)) {
             return ItemStack.EMPTY;
         }
         PoolKey key = PoolKey.oreDict(oreDict);
@@ -594,7 +707,7 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public BigInteger getOreDictAmount(String pool, String oreDict) {
-        return oreDict == null || oreDict.isBlank() ? BigInteger.ZERO : getAmount(pool, PoolKey.oreDict(oreDict));
+        return !isLegacyOreDictName(oreDict) ? BigInteger.ZERO : getAmount(pool, PoolKey.oreDict(oreDict));
     }
 
     public BigInteger setAmount(String pool, PoolKey key, BigInteger amount) {
@@ -635,7 +748,7 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public boolean hasPool(String pool) {
-        return pools.containsKey(pool);
+        return pools != null && pools.containsKey(pool);
     }
 
     public int poolEntryCount(String pool) {
@@ -646,6 +759,16 @@ public class AnnihilatorSavedData extends SavedData {
     public BigInteger totalAmount(String pool) {
         AnnihilatorPool poolInstance = pools.get(pool);
         return poolInstance == null ? BigInteger.ZERO : poolInstance.totalAmount();
+    }
+
+    public int unknownKeyEntryCount(String pool) {
+        AnnihilatorPool poolInstance = pools.get(pool);
+        return poolInstance == null ? 0 : poolInstance.unknownKeyEntryCount();
+    }
+
+    public int nullAmountEntryCount(String pool) {
+        AnnihilatorPool poolInstance = pools.get(pool);
+        return poolInstance == null ? 0 : poolInstance.nullAmountEntryCount();
     }
 
     public Map<Kind, Integer> keyKindCounts(String pool) {
@@ -660,22 +783,34 @@ public class AnnihilatorSavedData extends SavedData {
 
     public Map<Kind, Integer> keyKindCounts() {
         EnumMap<Kind, Integer> counts = new EnumMap<>(Kind.class);
+        if (pools == null) {
+            return diagnosticMap(counts);
+        }
         for (AnnihilatorPool pool : pools.values()) {
+            if (pool == null) {
+                continue;
+            }
             for (Map.Entry<Kind, Integer> entry : pool.keyKindCounts().entrySet()) {
                 counts.merge(entry.getKey(), entry.getValue(), Integer::sum);
             }
         }
-        return Map.copyOf(counts);
+        return diagnosticMap(counts);
     }
 
     public Map<Kind, BigInteger> keyKindTotals() {
         EnumMap<Kind, BigInteger> totals = new EnumMap<>(Kind.class);
+        if (pools == null) {
+            return diagnosticMap(totals);
+        }
         for (AnnihilatorPool pool : pools.values()) {
+            if (pool == null) {
+                continue;
+            }
             for (Map.Entry<Kind, BigInteger> entry : pool.keyKindTotals().entrySet()) {
                 totals.merge(entry.getKey(), entry.getValue(), BigInteger::add);
             }
         }
-        return Map.copyOf(totals);
+        return diagnosticMap(totals);
     }
 
     public List<Map.Entry<PoolKey, BigInteger>> poolEntriesSnapshot(String pool) {
@@ -694,20 +829,30 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     public List<Map.Entry<String, AnnihilatorPool>> poolsSnapshot() {
+        if (pools == null) {
+            return List.of();
+        }
         return pools.entrySet().stream()
                 .<Map.Entry<String, AnnihilatorPool>>map(
-                        entry -> new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue().copy()))
+                        entry -> new AbstractMap.SimpleImmutableEntry<>(entry.getKey(),
+                                entry.getValue() == null ? null : entry.getValue().copy()))
                 .toList();
     }
 
     public List<String> poolNamesSnapshot() {
-        return pools.keySet().stream().sorted().toList();
+        if (pools == null) {
+            return List.of();
+        }
+        return pools.keySet().stream().sorted(NULL_SAFE_STRING_COMPARATOR).toList();
     }
 
     public List<PoolSummary> poolSummariesSnapshot() {
+        if (pools == null) {
+            return List.of();
+        }
         return pools.entrySet().stream()
                 .map(entry -> PoolSummary.of(entry.getKey(), entry.getValue()))
-                .sorted(Comparator.comparing(PoolSummary::name))
+                .sorted(Comparator.comparing(PoolSummary::name, NULL_SAFE_STRING_COMPARATOR))
                 .toList();
     }
 
@@ -717,35 +862,88 @@ public class AnnihilatorSavedData extends SavedData {
         }
         return poolSummariesSnapshot().stream()
                 .sorted(Comparator.comparing(PoolSummary::totalAmount).reversed()
-                        .thenComparing(PoolSummary::name))
+                        .thenComparing(PoolSummary::name, NULL_SAFE_STRING_COMPARATOR))
                 .limit(limit)
                 .toList();
     }
 
     public boolean removePool(String pool) {
-        if (pools.remove(pool) != null) {
-            setDirty();
+        if (pools.containsKey(pool)) {
+            pools.remove(pool);
             return true;
         }
         return false;
     }
 
     public int poolCount() {
-        return pools.size();
+        return pools == null ? 0 : pools.size();
     }
 
     public int poolEntryCount() {
-        return pools.values().stream().mapToInt(AnnihilatorPool::size).sum();
+        if (pools == null) {
+            return 0;
+        }
+        return pools.values().stream()
+                .filter(Objects::nonNull)
+                .mapToInt(AnnihilatorPool::size)
+                .sum();
+    }
+
+    public int nullPoolValueCount() {
+        if (pools == null) {
+            return 0;
+        }
+        return (int) pools.values().stream()
+                .filter(Objects::isNull)
+                .count();
+    }
+
+    public int nullPoolMapCount() {
+        return pools == null ? 1 : 0;
+    }
+
+    public int nullItemMapCount() {
+        if (pools == null) {
+            return 0;
+        }
+        return (int) pools.values().stream()
+                .filter(Objects::nonNull)
+                .filter(AnnihilatorPool::nullItemMap)
+                .count();
+    }
+
+    public int unknownKeyEntryCount() {
+        if (pools == null) {
+            return 0;
+        }
+        return pools.values().stream()
+                .filter(Objects::nonNull)
+                .mapToInt(AnnihilatorPool::unknownKeyEntryCount)
+                .sum();
+    }
+
+    public int nullAmountEntryCount() {
+        if (pools == null) {
+            return 0;
+        }
+        return pools.values().stream()
+                .filter(Objects::nonNull)
+                .mapToInt(AnnihilatorPool::nullAmountEntryCount)
+                .sum();
     }
 
     public BigInteger totalAmount() {
+        if (pools == null) {
+            return BigInteger.ZERO;
+        }
         return pools.values().stream()
+                .filter(Objects::nonNull)
                 .map(AnnihilatorPool::totalAmount)
                 .reduce(BigInteger.ZERO, BigInteger::add);
     }
 
     public boolean isEmpty() {
-        return pools.isEmpty();
+        return pools == null || pools.isEmpty();
     }
 
     public LoadDiagnostics loadDiagnostics() {
@@ -767,21 +965,60 @@ public class AnnihilatorSavedData extends SavedData {
     }
 
     private AnnihilatorPool createPool() {
-        return new AnnihilatorPool(this::setDirty);
+        return new AnnihilatorPool(this::setDirty, recipeLevel);
     }
 
     private AnnihilatorPool bindPool(AnnihilatorPool pool) {
         if (pool != null) {
             pool.bindDirtyCallback(this::setDirty);
+            pool.bindRecipeLevel(recipeLevel);
         }
         return pool;
     }
 
+    private void bindRecipeLevel(ServerLevel level) {
+        recipeLevel = level;
+        if (pools == null) {
+            return;
+        }
+        for (AnnihilatorPool pool : pools.values()) {
+            if (pool != null) {
+                pool.bindRecipeLevel(level);
+            }
+        }
+    }
+
+    private static AnnihilatorSavedData bindRecipeLevel(AnnihilatorSavedData data, ServerLevel level) {
+        if (data != null) {
+            data.bindRecipeLevel(level);
+        }
+        return data;
+    }
+
+    private static Optional<AnnihilatorSavedData> bindRecipeLevel(Optional<AnnihilatorSavedData> data,
+                                                                  ServerLevel level) {
+        data.ifPresent(value -> value.bindRecipeLevel(level));
+        return data;
+    }
+
+    private static ItemStack emptyToNull(ItemStack stack) {
+        return stack == null || stack.isEmpty() ? null : stack;
+    }
+
     private final class DirtyTrackingPoolMap extends HashMap<String, AnnihilatorPool> {
+        private boolean markIfChanged(boolean changed) {
+            if (changed) {
+                setDirty();
+            }
+            return changed;
+        }
+
         @Override
         public AnnihilatorPool put(String key, AnnihilatorPool value) {
-            AnnihilatorPool previous = super.put(key, bindPool(value));
-            if (previous != value) {
+            boolean hadKey = containsKey(key);
+            AnnihilatorPool bound = bindPool(value);
+            AnnihilatorPool previous = super.put(key, bound);
+            if (!hadKey || previous != bound) {
                 setDirty();
             }
             return previous;
@@ -789,8 +1026,10 @@ public class AnnihilatorSavedData extends SavedData {
 
         @Override
         public AnnihilatorPool putIfAbsent(String key, AnnihilatorPool value) {
-            AnnihilatorPool previous = super.putIfAbsent(key, bindPool(value));
-            if (previous == null) {
+            boolean hadKey = containsKey(key);
+            AnnihilatorPool bound = bindPool(value);
+            AnnihilatorPool previous = super.putIfAbsent(key, bound);
+            if (!hadKey || (previous == null && bound != null)) {
                 setDirty();
             }
             return previous;
@@ -798,8 +1037,9 @@ public class AnnihilatorSavedData extends SavedData {
 
         @Override
         public AnnihilatorPool remove(Object key) {
+            boolean hadKey = containsKey(key);
             AnnihilatorPool previous = super.remove(key);
-            if (previous != null) {
+            if (hadKey) {
                 setDirty();
             }
             return previous;
@@ -816,8 +1056,10 @@ public class AnnihilatorSavedData extends SavedData {
 
         @Override
         public AnnihilatorPool replace(String key, AnnihilatorPool value) {
-            AnnihilatorPool previous = super.replace(key, bindPool(value));
-            if (previous != null && previous != value) {
+            boolean hadKey = containsKey(key);
+            AnnihilatorPool bound = bindPool(value);
+            AnnihilatorPool previous = super.replace(key, bound);
+            if (hadKey && previous != bound) {
                 setDirty();
             }
             return previous;
@@ -846,8 +1088,9 @@ public class AnnihilatorSavedData extends SavedData {
         public AnnihilatorPool computeIfAbsent(String key,
                                                Function<? super String, ? extends AnnihilatorPool> mappingFunction) {
             boolean hadKey = containsKey(key);
+            AnnihilatorPool previous = super.get(key);
             AnnihilatorPool result = super.computeIfAbsent(key, poolName -> bindPool(mappingFunction.apply(poolName)));
-            if (!hadKey && result != null) {
+            if (hadKey != containsKey(key) || previous != super.get(key)) {
                 setDirty();
             }
             return result;
@@ -911,17 +1154,209 @@ public class AnnihilatorSavedData extends SavedData {
                 setDirty();
             }
         }
+
+        @Override
+        public Set<String> keySet() {
+            Set<String> delegate = super.keySet();
+            return new AbstractSet<>() {
+                @Override
+                public Iterator<String> iterator() {
+                    Iterator<String> iterator = delegate.iterator();
+                    return new Iterator<>() {
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public String next() {
+                            return iterator.next();
+                        }
+
+                        @Override
+                        public void remove() {
+                            iterator.remove();
+                            setDirty();
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return delegate.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    return delegate.contains(object);
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    return markIfChanged(delegate.remove(object));
+                }
+
+                @Override
+                public boolean removeAll(Collection<?> collection) {
+                    return markIfChanged(delegate.removeAll(collection));
+                }
+
+                @Override
+                public boolean retainAll(Collection<?> collection) {
+                    return markIfChanged(delegate.retainAll(collection));
+                }
+
+                @Override
+                public void clear() {
+                    DirtyTrackingPoolMap.this.clear();
+                }
+            };
+        }
+
+        @Override
+        public Collection<AnnihilatorPool> values() {
+            Collection<AnnihilatorPool> delegate = super.values();
+            return new AbstractCollection<>() {
+                @Override
+                public Iterator<AnnihilatorPool> iterator() {
+                    Iterator<AnnihilatorPool> iterator = delegate.iterator();
+                    return new Iterator<>() {
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public AnnihilatorPool next() {
+                            return iterator.next();
+                        }
+
+                        @Override
+                        public void remove() {
+                            iterator.remove();
+                            setDirty();
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return delegate.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    return delegate.contains(object);
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    return markIfChanged(delegate.remove(object));
+                }
+
+                @Override
+                public boolean removeAll(Collection<?> collection) {
+                    return markIfChanged(delegate.removeAll(collection));
+                }
+
+                @Override
+                public boolean retainAll(Collection<?> collection) {
+                    return markIfChanged(delegate.retainAll(collection));
+                }
+
+                @Override
+                public void clear() {
+                    DirtyTrackingPoolMap.this.clear();
+                }
+            };
+        }
+
+        @Override
+        public Set<Map.Entry<String, AnnihilatorPool>> entrySet() {
+            Set<Map.Entry<String, AnnihilatorPool>> delegate = super.entrySet();
+            return new AbstractSet<>() {
+                @Override
+                public Iterator<Map.Entry<String, AnnihilatorPool>> iterator() {
+                    Iterator<Map.Entry<String, AnnihilatorPool>> iterator = delegate.iterator();
+                    return new Iterator<>() {
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public Map.Entry<String, AnnihilatorPool> next() {
+                            Map.Entry<String, AnnihilatorPool> entry = iterator.next();
+                            return new AbstractMap.SimpleEntry<>(entry) {
+                                @Override
+                                public AnnihilatorPool setValue(AnnihilatorPool value) {
+                                    AnnihilatorPool bound = bindPool(value);
+                                    AnnihilatorPool previous = entry.setValue(bound);
+                                    if (previous != bound) {
+                                        setDirty();
+                                    }
+                                    super.setValue(bound);
+                                    return previous;
+                                }
+                            };
+                        }
+
+                        @Override
+                        public void remove() {
+                            iterator.remove();
+                            setDirty();
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return delegate.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    return delegate.contains(object);
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    return markIfChanged(delegate.remove(object));
+                }
+
+                @Override
+                public boolean removeAll(Collection<?> collection) {
+                    return markIfChanged(delegate.removeAll(collection));
+                }
+
+                @Override
+                public boolean retainAll(Collection<?> collection) {
+                    return markIfChanged(delegate.retainAll(collection));
+                }
+
+                @Override
+                public void clear() {
+                    DirtyTrackingPoolMap.this.clear();
+                }
+            };
+        }
     }
 
     public static class AnnihilatorPool {
-        public final HashMap<Object, BigInteger> items;
+        public HashMap<Object, BigInteger> items;
+        private transient ServerLevel recipeLevel;
 
         public AnnihilatorPool() {
             this(null);
         }
 
         private AnnihilatorPool(Runnable dirtyCallback) {
+            this(dirtyCallback, null);
+        }
+
+        private AnnihilatorPool(Runnable dirtyCallback, ServerLevel recipeLevel) {
             this.items = new LegacyKeyPoolMap(dirtyCallback);
+            this.recipeLevel = recipeLevel;
         }
 
         private void bindDirtyCallback(Runnable dirtyCallback) {
@@ -930,22 +1365,34 @@ public class AnnihilatorSavedData extends SavedData {
             }
         }
 
+        private void bindRecipeLevel(ServerLevel level) {
+            recipeLevel = level;
+        }
+
         public IncrementResult increment(PoolKey key, long amount) {
             Objects.requireNonNull(key, "key");
-            BigInteger previous = items.getOrDefault(key, BigInteger.ZERO);
+            return incrementRaw(key, amount);
+        }
+
+        private IncrementResult incrementRaw(Object key, long amount) {
+            BigInteger previousValue = items.get(key);
+            boolean hadPrevious = previousValue != null;
+            BigInteger previous = hadPrevious ? previousValue : BigInteger.ZERO;
             BigInteger current = previous.add(BigInteger.valueOf(amount));
             items.put(key, current);
-            return new IncrementResult(previous, current);
+            return new IncrementResult(previous, current, hadPrevious);
         }
 
         public Optional<IncrementResult> increment(Object legacyKey, long amount) {
-            return PoolKey.fromLegacyObject(legacyKey)
-                    .map(key -> increment(key, amount));
+            return Optional.of(incrementRaw(legacyKey, amount));
         }
 
         public ItemStack increment(Object legacyKey, long amount, boolean alwaysPayOut) {
-            incrementResult(legacyKey, amount, alwaysPayOut);
-            return null;
+            IncrementResult result = incrementRaw(legacyKey, amount);
+            return PoolKey.fromLegacyObject(legacyKey)
+                    .map(key -> emptyToNull(AnnihilatorRecipeRuntime.findPayout(recipeLevel, key, result,
+                            alwaysPayOut)))
+                    .orElse(null);
         }
 
         public Optional<IncrementResult> incrementResult(Object legacyKey, long amount, boolean alwaysPayOut) {
@@ -957,9 +1404,8 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public BigInteger getLegacyAmount(Object legacyKey) {
-            return PoolKey.fromLegacyObject(legacyKey)
-                    .map(this::getAmount)
-                    .orElse(BigInteger.ZERO);
+            BigInteger amount = items.get(legacyKey);
+            return amount == null ? BigInteger.ZERO : amount;
         }
 
         public BigInteger putAmount(PoolKey key, BigInteger amount) {
@@ -974,8 +1420,8 @@ public class AnnihilatorSavedData extends SavedData {
             if (amount == null) {
                 return Optional.empty();
             }
-            return PoolKey.fromLegacyObject(legacyKey)
-                    .map(key -> putAmount(key, amount));
+            BigInteger previous = items.put(legacyKey, amount);
+            return Optional.of(previous == null ? BigInteger.ZERO : previous);
         }
 
         public BigInteger removeAmount(PoolKey key) {
@@ -987,9 +1433,8 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public BigInteger removeLegacyAmount(Object legacyKey) {
-            return PoolKey.fromLegacyObject(legacyKey)
-                    .map(this::removeAmount)
-                    .orElse(BigInteger.ZERO);
+            BigInteger previous = items.remove(legacyKey);
+            return previous == null ? BigInteger.ZERO : previous;
         }
 
         public boolean containsAmount(PoolKey key) {
@@ -997,27 +1442,67 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public boolean containsLegacyAmount(Object legacyKey) {
-            return PoolKey.fromLegacyObject(legacyKey)
-                    .map(this::containsAmount)
-                    .orElse(false);
+            return items.containsKey(legacyKey);
         }
 
         public int size() {
-            return items.size();
+            return items == null ? 0 : items.size();
         }
 
         public boolean isEmpty() {
-            return items.isEmpty();
+            return items == null || items.isEmpty();
         }
 
         public BigInteger totalAmount() {
-            return items.values().stream().reduce(BigInteger.ZERO, BigInteger::add);
+            if (items == null) {
+                return BigInteger.ZERO;
+            }
+            return items.values().stream()
+                    .filter(Objects::nonNull)
+                    .reduce(BigInteger.ZERO, BigInteger::add);
+        }
+
+        public boolean nullItemMap() {
+            return items == null;
+        }
+
+        public int unknownKeyEntryCount() {
+            if (items == null) {
+                return 0;
+            }
+            int count = 0;
+            for (Object key : items.keySet()) {
+                if (PoolKey.fromLegacyObject(key).isEmpty()) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        public int nullAmountEntryCount() {
+            if (items == null) {
+                return 0;
+            }
+            int count = 0;
+            for (BigInteger amount : items.values()) {
+                if (amount == null) {
+                    count++;
+                }
+            }
+            return count;
         }
 
         public List<Map.Entry<PoolKey, BigInteger>> entriesSnapshot() {
             List<Map.Entry<PoolKey, BigInteger>> entries = new ArrayList<>();
+            if (items == null) {
+                return List.of();
+            }
             for (Map.Entry<Object, BigInteger> entry : items.entrySet()) {
+                if (entry.getValue() == null) {
+                    continue;
+                }
                 PoolKey.fromLegacyObject(entry.getKey())
+                        .filter(key -> key.kind() != Kind.UNKNOWN)
                         .ifPresent(key -> entries.add(new AbstractMap.SimpleImmutableEntry<>(key, entry.getValue())));
             }
             return List.copyOf(entries);
@@ -1025,7 +1510,13 @@ public class AnnihilatorSavedData extends SavedData {
 
         public List<Map.Entry<Object, BigInteger>> legacyEntriesSnapshot() {
             List<Map.Entry<Object, BigInteger>> entries = new ArrayList<>();
+            if (items == null) {
+                return List.of();
+            }
             for (Map.Entry<Object, BigInteger> entry : items.entrySet()) {
+                if (entry.getValue() == null) {
+                    continue;
+                }
                 PoolKey.fromLegacyObject(entry.getKey())
                         .map(PoolKey::toLegacyObject)
                         .ifPresent(key -> entries.add(new AbstractMap.SimpleImmutableEntry<>(key, entry.getValue())));
@@ -1056,19 +1547,33 @@ public class AnnihilatorSavedData extends SavedData {
 
         public Map<Kind, Integer> keyKindCounts() {
             EnumMap<Kind, Integer> counts = new EnumMap<>(Kind.class);
-            for (Object key : items.keySet()) {
-                PoolKey.fromLegacyObject(key).ifPresent(poolKey -> counts.merge(poolKey.kind(), 1, Integer::sum));
+            if (items == null) {
+                return diagnosticMap(counts);
             }
-            return Map.copyOf(counts);
+            for (Object key : items.keySet()) {
+                counts.merge(diagnosticKind(key), 1, Integer::sum);
+            }
+            return diagnosticMap(counts);
         }
 
         public Map<Kind, BigInteger> keyKindTotals() {
             EnumMap<Kind, BigInteger> totals = new EnumMap<>(Kind.class);
-            for (Map.Entry<Object, BigInteger> entry : items.entrySet()) {
-                PoolKey.fromLegacyObject(entry.getKey())
-                        .ifPresent(key -> totals.merge(key.kind(), entry.getValue(), BigInteger::add));
+            if (items == null) {
+                return diagnosticMap(totals);
             }
-            return Map.copyOf(totals);
+            for (Map.Entry<Object, BigInteger> entry : items.entrySet()) {
+                if (entry.getValue() == null) {
+                    continue;
+                }
+                totals.merge(diagnosticKind(entry.getKey()), entry.getValue(), BigInteger::add);
+            }
+            return diagnosticMap(totals);
+        }
+
+        private static Kind diagnosticKind(Object legacyKey) {
+            return PoolKey.fromLegacyObject(legacyKey)
+                    .map(PoolKey::kind)
+                    .orElse(Kind.UNKNOWN);
         }
 
         public ListTag serialize() {
@@ -1077,15 +1582,40 @@ public class AnnihilatorSavedData extends SavedData {
             return list;
         }
 
+        public NBTTagList serializeLegacyList() {
+            NBTTagList list = new NBTTagList();
+            serialize(list);
+            return list;
+        }
+
         public void serialize(ListTag list) {
             Objects.requireNonNull(list, "list");
-            for (Map.Entry<Object, BigInteger> entry : items.entrySet()) {
-                Optional<PoolKey> key = PoolKey.fromLegacyObject(entry.getKey());
-                if (key.isEmpty()) {
-                    continue;
-                }
-                list.add(serializeEntryTag(key.get(), entry.getValue()));
+            if (list instanceof NBTTagList legacyList) {
+                serialize(legacyList);
+                return;
             }
+            for (Map.Entry<Object, BigInteger> entry : items.entrySet()) {
+                CompoundTag tag = new CompoundTag();
+                saveRecognizedLegacyKey(tag, entry.getKey());
+                tag.putByteArray(TAG_AMOUNT, entry.getValue().toByteArray());
+                list.add(tag);
+            }
+        }
+
+        public void serialize(NBTTagList list) {
+            Objects.requireNonNull(list, "list");
+            for (Map.Entry<Object, BigInteger> entry : items.entrySet()) {
+                NBTTagCompound tag = new NBTTagCompound();
+                saveRecognizedLegacyKey(tag, entry.getKey());
+                tag.setByteArray(TAG_AMOUNT, entry.getValue().toByteArray());
+                list.appendTag(tag);
+            }
+        }
+
+        private static void saveRecognizedLegacyKey(CompoundTag tag, Object legacyKey) {
+            PoolKey.fromLegacyObject(legacyKey)
+                    .filter(key -> key.kind() != Kind.UNKNOWN)
+                    .ifPresent(key -> key.save(tag));
         }
 
         public static void serializeEntry(CompoundTag tag, Object legacyKey, BigInteger amount) {
@@ -1096,6 +1626,12 @@ public class AnnihilatorSavedData extends SavedData {
                 key.save(tag);
                 writeLegacyAmount(tag, amount);
             });
+        }
+
+        public static NBTTagCompound serializeLegacyEntryTag(Object legacyKey, BigInteger amount) {
+            NBTTagCompound tag = new NBTTagCompound();
+            serializeEntry(tag, legacyKey, amount);
+            return tag;
         }
 
         public static CompoundTag serializeEntryTag(Object legacyKey, BigInteger amount) {
@@ -1112,19 +1648,27 @@ public class AnnihilatorSavedData extends SavedData {
             if (list == null) {
                 return List.of();
             }
+            NBTTagList legacyList = NBTTagList.copyOf(list);
             List<PoolEntry> entries = new ArrayList<>();
-            for (int i = 0; i < list.size(); i++) {
-                readLegacyEntryTag(list.getCompound(i)).ifPresent(entries::add);
+            try {
+                for (int i = 0; i < legacyList.tagCount(); i++) {
+                    NBTTagCompound tag = (NBTTagCompound) legacyList.tagList.get(i);
+                    Optional<PoolKey> key = readLegacyPoolKey(tag);
+                    if (key.isPresent()) {
+                        entries.add(new PoolEntry(key.get(), key.get().toLegacyObject(), readAmountStrict(tag)));
+                    }
+                }
+            } catch (Throwable ignored) {
             }
             return List.copyOf(entries);
         }
 
-        public static ListTag writeLegacyEntriesList(Iterable<PoolEntry> entries) {
-            ListTag list = new ListTag();
+        public static NBTTagList writeLegacyEntriesList(Iterable<PoolEntry> entries) {
+            NBTTagList list = new NBTTagList();
             if (entries != null) {
                 for (PoolEntry entry : entries) {
                     if (entry != null) {
-                        list.add(entry.writeTag());
+                        list.appendTag(entry.writeTag());
                     }
                 }
             }
@@ -1132,30 +1676,48 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public PoolEntryLoadDiagnostics deserializeWithDiagnostics(ListTag list) {
-            Objects.requireNonNull(list, "list");
+            if (list == null) {
+                return new PoolEntryLoadDiagnostics(0, 0, 0, 0, 0);
+            }
+            NBTTagList legacyList = NBTTagList.copyOf(list);
+            int entriesRead = 0;
             int entriesLoaded = 0;
             int invalidKeys = 0;
             int invalidAmounts = 0;
             int duplicateKeys = 0;
-            for (int i = 0; i < list.size(); i++) {
-                CompoundTag tag = list.getCompound(i);
-                Optional<PoolEntry> entry = readLegacyEntryTag(tag);
-                if (entry.isEmpty()) {
-                    if (deserializePoolKey(tag).isEmpty()) {
-                        invalidKeys++;
-                    } else {
-                        invalidAmounts++;
-                    }
+            for (int i = 0; i < legacyList.tagCount(); i++) {
+                entriesRead++;
+                NBTTagCompound tag;
+                try {
+                    tag = (NBTTagCompound) legacyList.tagList.get(i);
+                } catch (Throwable ignored) {
+                    invalidKeys++;
+                    break;
+                }
+                Optional<PoolKey> key = readLegacyPoolKey(tag);
+                if (key.isEmpty()) {
+                    invalidKeys++;
                     continue;
                 }
-                PoolEntry value = entry.get();
-                if (items.containsKey(value.key())) {
-                    duplicateKeys++;
+                BigInteger amount;
+                try {
+                    amount = readAmountStrict(tag);
+                } catch (Throwable ignored) {
+                    invalidAmounts++;
+                    break;
                 }
-                items.put(value.key(), value.amount());
-                entriesLoaded++;
+                PoolEntry value = new PoolEntry(key.get(), key.get().toLegacyObject(), amount);
+                try {
+                    if (items.containsKey(value.key())) {
+                        duplicateKeys++;
+                    }
+                    items.put(value.key(), value.amount());
+                    entriesLoaded++;
+                } catch (Throwable ignored) {
+                    break;
+                }
             }
-            return new PoolEntryLoadDiagnostics(list.size(), entriesLoaded, invalidKeys, invalidAmounts,
+            return new PoolEntryLoadDiagnostics(entriesRead, entriesLoaded, invalidKeys, invalidAmounts,
                     duplicateKeys);
         }
 
@@ -1174,10 +1736,7 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public static Optional<PoolEntry> readLegacyEntryTag(CompoundTag tag) {
-            if (tag == null) {
-                return Optional.empty();
-            }
-            Optional<PoolKey> key = PoolKey.load(tag);
+            Optional<PoolKey> key = readLegacyPoolKey(tag);
             if (key.isEmpty()) {
                 return Optional.empty();
             }
@@ -1194,7 +1753,17 @@ public class AnnihilatorSavedData extends SavedData {
 
         public static void writeLegacyAmount(CompoundTag tag, BigInteger amount) {
             if (tag != null && amount != null) {
-                tag.putByteArray(TAG_AMOUNT, amount.toByteArray());
+                if (tag instanceof NBTTagCompound legacyTag) {
+                    writeLegacyAmount(legacyTag, amount);
+                } else {
+                    tag.putByteArray(TAG_AMOUNT, amount.toByteArray());
+                }
+            }
+        }
+
+        public static void writeLegacyAmount(NBTTagCompound tag, BigInteger amount) {
+            if (tag != null && amount != null) {
+                tag.setByteArray(TAG_AMOUNT, amount.toByteArray());
             }
         }
 
@@ -1221,8 +1790,8 @@ public class AnnihilatorSavedData extends SavedData {
                 }
             }
 
-            public CompoundTag writeTag() {
-                CompoundTag tag = new CompoundTag();
+            public NBTTagCompound writeTag() {
+                NBTTagCompound tag = new NBTTagCompound();
                 write(tag);
                 return tag;
             }
@@ -1238,7 +1807,7 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public Optional<PoolKey> deserializePoolKey(CompoundTag tag) {
-            return tag == null ? Optional.empty() : PoolKey.load(tag);
+            return readLegacyPoolKey(tag);
         }
 
         public Object deserializeLegacyKey(CompoundTag tag) {
@@ -1253,7 +1822,11 @@ public class AnnihilatorSavedData extends SavedData {
 
         private AnnihilatorPool copy(Runnable dirtyCallback) {
             AnnihilatorPool copy = new AnnihilatorPool(dirtyCallback);
-            copy.items.putAll(items);
+            if (items == null) {
+                copy.items = null;
+            } else {
+                copy.items.putAll(items);
+            }
             return copy;
         }
 
@@ -1266,6 +1839,21 @@ public class AnnihilatorSavedData extends SavedData {
             }
         }
 
+        private static BigInteger readAmountStrict(NBTTagCompound tag) {
+            return new BigInteger(tag.getByteArray(TAG_AMOUNT));
+        }
+
+        private static Optional<PoolKey> readLegacyPoolKey(CompoundTag tag) {
+            if (tag == null) {
+                return Optional.empty();
+            }
+            try {
+                return PoolKey.load(NBTTagCompound.copyOf(tag));
+            } catch (Throwable ignored) {
+                return Optional.empty();
+            }
+        }
+
         private static final class LegacyKeyPoolMap extends HashMap<Object, BigInteger> {
             private Runnable dirtyCallback;
 
@@ -1273,35 +1861,38 @@ public class AnnihilatorSavedData extends SavedData {
                 this.dirtyCallback = dirtyCallback;
             }
 
+            private boolean markIfChanged(boolean changed) {
+                if (changed) {
+                    markDirty();
+                }
+                return changed;
+            }
+
+            private static Object storageKey(Object key) {
+                return PoolKey.fromLegacyObject(key).map(Object.class::cast).orElse(key);
+            }
+
             @Override
             public BigInteger get(Object key) {
-                return PoolKey.fromLegacyObject(key)
-                        .map(poolKey -> super.get(poolKey))
-                        .orElse(null);
+                return super.get(storageKey(key));
             }
 
             @Override
             public boolean containsKey(Object key) {
-                return PoolKey.fromLegacyObject(key)
-                        .map(poolKey -> super.containsKey(poolKey))
-                        .orElse(false);
+                return super.containsKey(storageKey(key));
             }
 
             @Override
             public BigInteger getOrDefault(Object key, BigInteger defaultValue) {
-                return PoolKey.fromLegacyObject(key)
-                        .map(poolKey -> super.getOrDefault(poolKey, defaultValue))
-                        .orElse(defaultValue);
+                return super.getOrDefault(storageKey(key), defaultValue);
             }
 
             @Override
             public BigInteger put(Object key, BigInteger value) {
-                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
-                if (poolKey.isEmpty()) {
-                    return null;
-                }
-                BigInteger previous = super.put(poolKey.get(), value);
-                if (!Objects.equals(previous, value)) {
+                Object normalizedKey = storageKey(key);
+                boolean hadKey = super.containsKey(normalizedKey);
+                BigInteger previous = super.put(normalizedKey, value);
+                if (!hadKey || !Objects.equals(previous, value)) {
                     markDirty();
                 }
                 return previous;
@@ -1309,12 +1900,12 @@ public class AnnihilatorSavedData extends SavedData {
 
             @Override
             public BigInteger putIfAbsent(Object key, BigInteger value) {
-                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
-                if (poolKey.isEmpty()) {
-                    return null;
-                }
-                BigInteger previous = super.putIfAbsent(poolKey.get(), value);
-                if (previous == null) {
+                Object normalizedKey = storageKey(key);
+                boolean hadKey = super.containsKey(normalizedKey);
+                BigInteger previousValue = super.get(normalizedKey);
+                BigInteger previous = super.putIfAbsent(normalizedKey, value);
+                if (hadKey != super.containsKey(normalizedKey)
+                        || !Objects.equals(previousValue, super.get(normalizedKey))) {
                     markDirty();
                 }
                 return previous;
@@ -1322,10 +1913,10 @@ public class AnnihilatorSavedData extends SavedData {
 
             @Override
             public BigInteger remove(Object key) {
-                BigInteger previous = PoolKey.fromLegacyObject(key)
-                        .map(poolKey -> super.remove(poolKey))
-                        .orElse(null);
-                if (previous != null) {
+                Object normalizedKey = storageKey(key);
+                boolean hadKey = super.containsKey(normalizedKey);
+                BigInteger previous = super.remove(normalizedKey);
+                if (hadKey) {
                     markDirty();
                 }
                 return previous;
@@ -1333,9 +1924,7 @@ public class AnnihilatorSavedData extends SavedData {
 
             @Override
             public boolean remove(Object key, Object value) {
-                boolean removed = PoolKey.fromLegacyObject(key)
-                        .map(poolKey -> super.remove(poolKey, value))
-                        .orElse(false);
+                boolean removed = super.remove(storageKey(key), value);
                 if (removed) {
                     markDirty();
                 }
@@ -1344,12 +1933,10 @@ public class AnnihilatorSavedData extends SavedData {
 
             @Override
             public BigInteger replace(Object key, BigInteger value) {
-                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
-                if (poolKey.isEmpty()) {
-                    return null;
-                }
-                BigInteger previous = super.replace(poolKey.get(), value);
-                if (previous != null && !Objects.equals(previous, value)) {
+                Object normalizedKey = storageKey(key);
+                boolean hadKey = super.containsKey(normalizedKey);
+                BigInteger previous = super.replace(normalizedKey, value);
+                if (hadKey && !Objects.equals(previous, value)) {
                     markDirty();
                 }
                 return previous;
@@ -1357,9 +1944,7 @@ public class AnnihilatorSavedData extends SavedData {
 
             @Override
             public boolean replace(Object key, BigInteger oldValue, BigInteger newValue) {
-                boolean replaced = PoolKey.fromLegacyObject(key)
-                        .map(poolKey -> super.replace(poolKey, oldValue, newValue))
-                        .orElse(false);
+                boolean replaced = super.replace(storageKey(key), oldValue, newValue);
                 if (replaced && !Objects.equals(oldValue, newValue)) {
                     markDirty();
                 }
@@ -1378,13 +1963,12 @@ public class AnnihilatorSavedData extends SavedData {
             @Override
             public BigInteger computeIfAbsent(Object key,
                                               Function<? super Object, ? extends BigInteger> mappingFunction) {
-                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
-                if (poolKey.isEmpty()) {
-                    return null;
-                }
-                boolean hadKey = super.containsKey(poolKey.get());
-                BigInteger result = super.computeIfAbsent(poolKey.get(), ignored -> mappingFunction.apply(key));
-                if (!hadKey && result != null) {
+                Object normalizedKey = storageKey(key);
+                boolean hadKey = super.containsKey(normalizedKey);
+                BigInteger previous = super.get(normalizedKey);
+                BigInteger result = super.computeIfAbsent(normalizedKey, ignored -> mappingFunction.apply(key));
+                if (hadKey != super.containsKey(normalizedKey)
+                        || !Objects.equals(previous, super.get(normalizedKey))) {
                     markDirty();
                 }
                 return result;
@@ -1394,14 +1978,12 @@ public class AnnihilatorSavedData extends SavedData {
             public BigInteger compute(Object key,
                                       BiFunction<? super Object, ? super BigInteger,
                                               ? extends BigInteger> remappingFunction) {
-                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
-                if (poolKey.isEmpty()) {
-                    return null;
-                }
-                boolean hadKey = super.containsKey(poolKey.get());
-                BigInteger previous = super.get(poolKey.get());
-                BigInteger result = super.compute(poolKey.get(), (ignored, amount) -> remappingFunction.apply(key, amount));
-                if (hadKey != super.containsKey(poolKey.get()) || !Objects.equals(previous, result)) {
+                Object normalizedKey = storageKey(key);
+                boolean hadKey = super.containsKey(normalizedKey);
+                BigInteger previous = super.get(normalizedKey);
+                BigInteger result = super.compute(normalizedKey,
+                        (ignored, amount) -> remappingFunction.apply(key, amount));
+                if (hadKey != super.containsKey(normalizedKey) || !Objects.equals(previous, result)) {
                     markDirty();
                 }
                 return result;
@@ -1411,12 +1993,9 @@ public class AnnihilatorSavedData extends SavedData {
             public BigInteger computeIfPresent(Object key,
                                                BiFunction<? super Object, ? super BigInteger,
                                                        ? extends BigInteger> remappingFunction) {
-                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
-                if (poolKey.isEmpty()) {
-                    return null;
-                }
-                BigInteger previous = super.get(poolKey.get());
-                BigInteger result = super.computeIfPresent(poolKey.get(),
+                Object normalizedKey = storageKey(key);
+                BigInteger previous = super.get(normalizedKey);
+                BigInteger result = super.computeIfPresent(normalizedKey,
                         (ignored, amount) -> remappingFunction.apply(key, amount));
                 if (!Objects.equals(previous, result)) {
                     markDirty();
@@ -1428,13 +2007,10 @@ public class AnnihilatorSavedData extends SavedData {
             public BigInteger merge(Object key, BigInteger value,
                                     BiFunction<? super BigInteger, ? super BigInteger,
                                             ? extends BigInteger> remappingFunction) {
-                Optional<PoolKey> poolKey = PoolKey.fromLegacyObject(key);
-                if (poolKey.isEmpty()) {
-                    return null;
-                }
-                boolean hadKey = super.containsKey(poolKey.get());
-                BigInteger previous = super.get(poolKey.get());
-                BigInteger result = super.merge(poolKey.get(), value, remappingFunction);
+                Object normalizedKey = storageKey(key);
+                boolean hadKey = super.containsKey(normalizedKey);
+                BigInteger previous = super.get(normalizedKey);
+                BigInteger result = super.merge(normalizedKey, value, remappingFunction);
                 if (!hadKey || !Objects.equals(previous, result)) {
                     markDirty();
                 }
@@ -1456,6 +2032,249 @@ public class AnnihilatorSavedData extends SavedData {
                     super.clear();
                     markDirty();
                 }
+            }
+
+            @Override
+            public Set<Object> keySet() {
+                Set<Object> delegate = super.keySet();
+                return new AbstractSet<>() {
+                    @Override
+                    public Iterator<Object> iterator() {
+                        Iterator<Object> iterator = delegate.iterator();
+                        return new Iterator<>() {
+                            @Override
+                            public boolean hasNext() {
+                                return iterator.hasNext();
+                            }
+
+                            @Override
+                            public Object next() {
+                                return iterator.next();
+                            }
+
+                            @Override
+                            public void remove() {
+                                iterator.remove();
+                                markDirty();
+                            }
+                        };
+                    }
+
+                    @Override
+                    public int size() {
+                        return delegate.size();
+                    }
+
+                    @Override
+                    public boolean contains(Object object) {
+                        return LegacyKeyPoolMap.this.containsKey(object);
+                    }
+
+                    @Override
+                    public boolean remove(Object object) {
+                        return markIfChanged(delegate.remove(storageKey(object)));
+                    }
+
+                    @Override
+                    public boolean removeAll(Collection<?> collection) {
+                        boolean changed = false;
+                        for (Object object : new ArrayList<>(collection)) {
+                            changed |= remove(object);
+                        }
+                        return changed;
+                    }
+
+                    @Override
+                    public boolean retainAll(Collection<?> collection) {
+                        HashSet<Object> keep = new HashSet<>();
+                        for (Object object : collection) {
+                            keep.add(storageKey(object));
+                        }
+                        return markIfChanged(delegate.retainAll(keep));
+                    }
+
+                    @Override
+                    public void clear() {
+                        LegacyKeyPoolMap.this.clear();
+                    }
+                };
+            }
+
+            @Override
+            public Collection<BigInteger> values() {
+                Collection<BigInteger> delegate = super.values();
+                return new AbstractCollection<>() {
+                    @Override
+                    public Iterator<BigInteger> iterator() {
+                        Iterator<BigInteger> iterator = delegate.iterator();
+                        return new Iterator<>() {
+                            @Override
+                            public boolean hasNext() {
+                                return iterator.hasNext();
+                            }
+
+                            @Override
+                            public BigInteger next() {
+                                return iterator.next();
+                            }
+
+                            @Override
+                            public void remove() {
+                                iterator.remove();
+                                markDirty();
+                            }
+                        };
+                    }
+
+                    @Override
+                    public int size() {
+                        return delegate.size();
+                    }
+
+                    @Override
+                    public boolean contains(Object object) {
+                        return delegate.contains(object);
+                    }
+
+                    @Override
+                    public boolean remove(Object object) {
+                        return markIfChanged(delegate.remove(object));
+                    }
+
+                    @Override
+                    public boolean removeAll(Collection<?> collection) {
+                        return markIfChanged(delegate.removeAll(collection));
+                    }
+
+                    @Override
+                    public boolean retainAll(Collection<?> collection) {
+                        return markIfChanged(delegate.retainAll(collection));
+                    }
+
+                    @Override
+                    public void clear() {
+                        LegacyKeyPoolMap.this.clear();
+                    }
+                };
+            }
+
+            @Override
+            public Set<Map.Entry<Object, BigInteger>> entrySet() {
+                Set<Map.Entry<Object, BigInteger>> delegate = super.entrySet();
+                return new AbstractSet<>() {
+                    @Override
+                    public Iterator<Map.Entry<Object, BigInteger>> iterator() {
+                        Iterator<Map.Entry<Object, BigInteger>> iterator = delegate.iterator();
+                        return new Iterator<>() {
+                            @Override
+                            public boolean hasNext() {
+                                return iterator.hasNext();
+                            }
+
+                            @Override
+                            public Map.Entry<Object, BigInteger> next() {
+                                Map.Entry<Object, BigInteger> entry = iterator.next();
+                                return new AbstractMap.SimpleEntry<>(entry) {
+                                    @Override
+                                    public BigInteger setValue(BigInteger value) {
+                                        BigInteger previous = entry.setValue(value);
+                                        if (!Objects.equals(previous, value)) {
+                                            markDirty();
+                                        }
+                                        super.setValue(value);
+                                        return previous;
+                                    }
+                                };
+                            }
+
+                            @Override
+                            public void remove() {
+                                iterator.remove();
+                                markDirty();
+                            }
+                        };
+                    }
+
+                    @Override
+                    public int size() {
+                        return delegate.size();
+                    }
+
+                    @Override
+                    public boolean contains(Object object) {
+                        return containsEntry(object);
+                    }
+
+                    @Override
+                    public boolean remove(Object object) {
+                        return removeEntry(object);
+                    }
+
+                    @Override
+                    public boolean removeAll(Collection<?> collection) {
+                        boolean changed = false;
+                        for (Object object : new ArrayList<>(collection)) {
+                            changed |= removeEntry(object);
+                        }
+                        return changed;
+                    }
+
+                    @Override
+                    public boolean retainAll(Collection<?> collection) {
+                        boolean changed = false;
+                        Iterator<Map.Entry<Object, BigInteger>> iterator = delegate.iterator();
+                        while (iterator.hasNext()) {
+                            Map.Entry<Object, BigInteger> entry = iterator.next();
+                            if (!collectionContainsEntry(collection, entry)) {
+                                iterator.remove();
+                                changed = true;
+                            }
+                        }
+                        return markIfChanged(changed);
+                    }
+
+                    @Override
+                    public void clear() {
+                        LegacyKeyPoolMap.this.clear();
+                    }
+                };
+            }
+
+            private boolean containsEntry(Object object) {
+                if (!(object instanceof Map.Entry<?, ?> entry)) {
+                    return false;
+                }
+                Object storageKey = storageKey(entry.getKey());
+                return super.containsKey(storageKey)
+                        && Objects.equals(super.get(storageKey), entry.getValue());
+            }
+
+            private boolean removeEntry(Object object) {
+                if (!(object instanceof Map.Entry<?, ?> entry)) {
+                    return false;
+                }
+                Object storageKey = storageKey(entry.getKey());
+                if (!super.containsKey(storageKey)
+                        || !Objects.equals(super.get(storageKey), entry.getValue())) {
+                    return false;
+                }
+                super.remove(storageKey);
+                markDirty();
+                return true;
+            }
+
+            private boolean collectionContainsEntry(Collection<?> collection, Map.Entry<Object, BigInteger> target) {
+                for (Object object : collection) {
+                    if (!(object instanceof Map.Entry<?, ?> entry)) {
+                        continue;
+                    }
+                    Object normalizedKey = storageKey(entry.getKey());
+                    if (Objects.equals(normalizedKey, target.getKey())
+                            && Objects.equals(entry.getValue(), target.getValue())) {
+                        return true;
+                    }
+                }
+                return false;
             }
 
             private void markDirty() {
@@ -1486,6 +2305,11 @@ public class AnnihilatorSavedData extends SavedData {
         public static PoolKey itemMeta(ItemStack stack, int meta) {
             Objects.requireNonNull(stack, "stack");
             return itemMeta(HbmRegistryUtil.itemKey(stack.getItem()), meta);
+        }
+
+        public static PoolKey comparableStack(ComparableStack stack) {
+            Objects.requireNonNull(stack, "stack");
+            return itemMeta(HbmRegistryUtil.itemKey(stack.item), stack.meta);
         }
 
         public static PoolKey legacyItem(Item item, int legacyMeta) {
@@ -1519,13 +2343,13 @@ public class AnnihilatorSavedData extends SavedData {
             if (legacyKey instanceof Item item) {
                 return Optional.of(item(item));
             }
-            if (legacyKey instanceof ItemStack stack && !stack.isEmpty()) {
-                return Optional.of(itemMeta(stack, stack.getDamageValue()));
+            if (legacyKey instanceof ComparableStack stack) {
+                return Optional.of(comparableStack(stack));
             }
             if (legacyKey instanceof FluidType fluid) {
                 return Optional.of(fluid(fluid));
             }
-            if (legacyKey instanceof String oreDict && !oreDict.isBlank()) {
+            if (legacyKey instanceof String oreDict) {
                 return Optional.of(oreDict(oreDict));
             }
             if (legacyKey instanceof ResourceLocation item) {
@@ -1550,8 +2374,8 @@ public class AnnihilatorSavedData extends SavedData {
         public static Optional<PoolKey> load(CompoundTag tag) {
             Kind kind = Kind.byLegacyId(tag.getByte(TAG_KEY));
             return switch (kind) {
-                case ITEM -> readItem(tag).map(PoolKey::item);
-                case ITEM_META -> readItem(tag).map(item -> itemMeta(item, tag.getShort(TAG_META)));
+                case ITEM -> readExistingItem(tag).map(PoolKey::item);
+                case ITEM_META -> Optional.of(itemMeta(readComparableStackItem(tag), tag.getShort(TAG_META)));
                 case FLUID -> Optional.of(fluid(tag.getString(TAG_FLUID)));
                 case ORE_DICT -> Optional.of(oreDict(tag.getString(TAG_DICT)));
                 case UNKNOWN -> Optional.empty();
@@ -1559,6 +2383,10 @@ public class AnnihilatorSavedData extends SavedData {
         }
 
         public void save(CompoundTag tag) {
+            if (tag instanceof NBTTagCompound legacyTag) {
+                save(legacyTag);
+                return;
+            }
             tag.putByte(TAG_KEY, kind.legacyId);
             switch (kind) {
                 case ITEM -> tag.putString(TAG_ITEM, item.toString());
@@ -1568,6 +2396,21 @@ public class AnnihilatorSavedData extends SavedData {
                 }
                 case FLUID -> tag.putString(TAG_FLUID, fluid);
                 case ORE_DICT -> tag.putString(TAG_DICT, oreDict);
+                case UNKNOWN -> {
+                }
+            }
+        }
+
+        public void save(NBTTagCompound tag) {
+            tag.setByte(TAG_KEY, kind.legacyId);
+            switch (kind) {
+                case ITEM -> tag.setString(TAG_ITEM, item.toString());
+                case ITEM_META -> {
+                    tag.setString(TAG_ITEM, item.toString());
+                    tag.setShort(TAG_META, (short) meta);
+                }
+                case FLUID -> tag.setString(TAG_FLUID, fluid);
+                case ORE_DICT -> tag.setString(TAG_DICT, oreDict);
                 case UNKNOWN -> {
                 }
             }
@@ -1593,7 +2436,15 @@ public class AnnihilatorSavedData extends SavedData {
             return type == HbmFluids.NONE ? name : type.getName();
         }
 
-        private static Optional<ResourceLocation> readItem(CompoundTag tag) {
+        private static Optional<ResourceLocation> readExistingItem(CompoundTag tag) {
+            return readItemId(tag).filter(id -> HbmRegistryUtil.item(id).isPresent());
+        }
+
+        private static ResourceLocation readComparableStackItem(CompoundTag tag) {
+            return readExistingItem(tag).orElse(ModItems.NOTHING.getId());
+        }
+
+        private static Optional<ResourceLocation> readItemId(CompoundTag tag) {
             return Optional.ofNullable(ResourceLocation.tryParse(tag.getString(TAG_ITEM)));
         }
     }
@@ -1657,7 +2508,7 @@ public class AnnihilatorSavedData extends SavedData {
         }
     }
 
-    public record IncrementResult(BigInteger previous, BigInteger current) {
+    public record IncrementResult(BigInteger previous, BigInteger current, boolean hadPrevious) {
     }
 
     public record LoadDiagnostics(boolean hasPoolsTag, int poolsRead, int poolsLoaded,
@@ -1804,7 +2655,7 @@ public class AnnihilatorSavedData extends SavedData {
     public record PoolPushResult(IncrementResult increment, boolean paidOut, String payoutStatus,
                                  boolean alwaysPayOut) {
         private static PoolPushResult empty(boolean alwaysPayOut) {
-            return new PoolPushResult(new IncrementResult(BigInteger.ZERO, BigInteger.ZERO), false, "empty",
+            return new PoolPushResult(new IncrementResult(BigInteger.ZERO, BigInteger.ZERO, false), false, "empty",
                     alwaysPayOut);
         }
     }
@@ -1814,33 +2665,37 @@ public class AnnihilatorSavedData extends SavedData {
                                      List<IncrementResult> oreDictIncrements, boolean paidOut,
                                      String payoutStatus, boolean alwaysPayOut) {
         private static ItemPoolPushResult empty(boolean alwaysPayOut) {
-            IncrementResult empty = new IncrementResult(BigInteger.ZERO, BigInteger.ZERO);
+            IncrementResult empty = new IncrementResult(BigInteger.ZERO, BigInteger.ZERO, false);
             return new ItemPoolPushResult(empty, empty, Optional.empty(), List.of(), false, "empty", alwaysPayOut);
         }
     }
 
     public record PoolSummary(String name, int entries, BigInteger totalAmount,
                               Map<Kind, Integer> keyKindCounts,
-                              Map<Kind, BigInteger> keyKindTotals) {
+                              Map<Kind, BigInteger> keyKindTotals,
+                              int unknownKeyEntries, int nullAmountEntries,
+                              boolean nullPoolValue, boolean nullItemMap) {
         public PoolSummary {
-            Objects.requireNonNull(name, "name");
-            Objects.requireNonNull(totalAmount, "totalAmount");
-            keyKindCounts = keyKindCounts == null ? Map.of() : Map.copyOf(keyKindCounts);
-            keyKindTotals = keyKindTotals == null ? Map.of() : Map.copyOf(keyKindTotals);
+            totalAmount = totalAmount == null ? BigInteger.ZERO : totalAmount;
+            keyKindCounts = diagnosticMap(keyKindCounts);
+            keyKindTotals = diagnosticMap(keyKindTotals);
         }
 
         private static PoolSummary of(String name, AnnihilatorPool pool) {
+            if (pool == null) {
+                return new PoolSummary(name, 0, BigInteger.ZERO, Map.of(), Map.of(), 0, 0, true, false);
+            }
             return new PoolSummary(name, pool.size(), pool.totalAmount(),
-                    pool.keyKindCounts(), pool.keyKindTotals());
+                    pool.keyKindCounts(), pool.keyKindTotals(), pool.unknownKeyEntryCount(),
+                    pool.nullAmountEntryCount(), false, pool.nullItemMap());
         }
     }
 
     public record LegacyPool(String name, List<AnnihilatorPool.PoolEntry> entries) {
         public LegacyPool {
-            if (name == null || name.isBlank()) {
-                throw new IllegalArgumentException("name");
-            }
-            entries = entries == null ? List.of() : List.copyOf(entries);
+            entries = entries == null ? List.of() : entries.stream()
+                    .filter(Objects::nonNull)
+                    .toList();
         }
 
         public AnnihilatorPool toPool() {
@@ -1857,13 +2712,18 @@ public class AnnihilatorSavedData extends SavedData {
 
         public void write(CompoundTag tag) {
             if (tag != null) {
-                tag.putString(TAG_POOL_NAME, name);
-                tag.put(TAG_POOL, AnnihilatorPool.writeLegacyEntriesList(entries));
+                if (tag instanceof NBTTagCompound legacyTag) {
+                    legacyTag.setString(TAG_POOL_NAME, name);
+                    legacyTag.setTag(TAG_POOL, AnnihilatorPool.writeLegacyEntriesList(entries));
+                } else {
+                    tag.putString(TAG_POOL_NAME, name);
+                    tag.put(TAG_POOL, AnnihilatorPool.writeLegacyEntriesList(entries));
+                }
             }
         }
 
-        public CompoundTag writeTag() {
-            CompoundTag tag = new CompoundTag();
+        public NBTTagCompound writeTag() {
+            NBTTagCompound tag = new NBTTagCompound();
             write(tag);
             return tag;
         }

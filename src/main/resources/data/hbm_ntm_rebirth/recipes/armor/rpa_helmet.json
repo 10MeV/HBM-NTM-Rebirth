@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "F": {
+      "item": "hbm_ntm_rebirth:gas_mask_filter_combo"
+    },
+    "K": {
+      "item": "hbm_ntm_rebirth:plate_kevlar"
+    },
+    "L": {
+      "item": "hbm_ntm_rebirth:parts_legendary_tier2"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_armor_ajr"
+    }
+  },
+  "pattern": [
+    "KPK",
+    "PLP",
+    " F "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:rpa_helmet"
+  },
+  "show_notification": true
+}

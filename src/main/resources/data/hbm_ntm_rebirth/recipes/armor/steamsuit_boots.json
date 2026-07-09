@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:plates/copper"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:ingot_desh"
+    },
+    "X": {
+      "item": "hbm_ntm_rebirth:steel_boots"
+    }
+  },
+  "pattern": [
+    "C C",
+    "DXD"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:steamsuit_boots"
+  },
+  "show_notification": true
+}

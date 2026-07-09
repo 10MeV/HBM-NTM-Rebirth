@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 20,
+  "fluid": { "fluid": "LIGHTOIL", "amount": 100 },
+  "input": {
+    "ingredient": { "tag": "forge:dusts/copper" },
+    "legacy_ore": "dustCopper"
+  },
+  "output": { "item": "hbm_ntm_rebirth:chemical_dye_green", "count": 4 },
+  "productivity": 0.15,
+  "source_order": 394
+}

@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:rotary_furnace",
+  "output": {
+    "material": "WeaponSteel",
+    "amount": 144
+  },
+  "duration": 200,
+  "steam": 400,
+  "fluid": {
+    "fluid": "GAS_COKER",
+    "amount": 100
+  },
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:ingots/steel"
+      },
+      "count": 1,
+      "legacy_ore": "ingotSteel"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_flux"
+      },
+      "count": 2
+    }
+  ],
+  "source_order": 7
+}

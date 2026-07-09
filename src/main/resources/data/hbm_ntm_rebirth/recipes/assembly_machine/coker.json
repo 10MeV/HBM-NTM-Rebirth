@@ -1,0 +1,52 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:welded_plates/steel"
+      },
+      "legacy_ore": "plateSextupleSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:shells/steel"
+      },
+      "legacy_ore": "shellSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/copper"
+      },
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/niobium"
+      },
+      "legacy_ore": "ingotNiobium"
+    }
+  ],
+  "internal_name": "ass.coker",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_coker"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 94
+}

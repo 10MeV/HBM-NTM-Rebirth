@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyChargeBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.LegacyChargeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
@@ -14,6 +15,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<LegacyChargeBlockEntity> {
     private static final ResourceLocation DYNAMITE_TEXTURE = ObjBlockModels.texture("charge_dynamite");
@@ -22,6 +24,12 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
     private static final ResourceLocation SEMTEX_TEXTURE = ObjBlockModels.texture("charge_semtex");
 
     public LegacyChargeBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
+    }
+
+    @Override
+    public boolean shouldRender(LegacyChargeBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -39,8 +47,10 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         applyLegacyRotation(poseStack, state.getValue(LegacyChargeBlock.FACING));
-        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            model(block.kind()).renderAll(texture(block.kind()), poseStack, buffer, modelLight, packedOverlay);
+        if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+                model(block.kind()).renderAll(texture(block.kind()), poseStack, buffer, modelLight, packedOverlay);
+            }
         }
         renderTimer(blockEntity, poseStack, buffer, modelLight);
         poseStack.popPose();

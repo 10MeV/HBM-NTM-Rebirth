@@ -1,4 +1,4 @@
-﻿{
+{
     "type":  "hbm_ntm_rebirth:purex",
     "internal_name":  "purex.thoriumsalt",
     "duration":  20,
@@ -36,6 +36,6 @@
     "pools":  [
 
               ],
-    "source_order":  353
+    "source_order": 34
 }
 

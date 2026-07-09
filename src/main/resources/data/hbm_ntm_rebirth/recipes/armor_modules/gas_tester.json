@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_vacuum_tube"
+    },
+    "G": {
+      "tag": "forge:plates/gold"
+    },
+    "I": {
+      "tag": "forge:plates/iron"
+    }
+  },
+  "pattern": [
+    "G",
+    "C",
+    "I"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:gas_tester"
+  },
+  "show_notification": true
+}

@@ -21,9 +21,9 @@ public final class SubChunkSnapshot {
     }
 
     public static SubChunkSnapshot getSnapshot(Level level, SubChunkKey key, boolean allowGeneration) {
+        level.getChunkSource();
         com.hbm.ntm.world.SubChunkSnapshot snapshot =
-                com.hbm.ntm.world.SubChunkSnapshot.getSnapshot(level, key == null ? null : key.modern(),
-                        allowGeneration);
+                com.hbm.ntm.world.SubChunkSnapshot.getSnapshotLegacy(level, key.modern(), allowGeneration);
         return snapshot == com.hbm.ntm.world.SubChunkSnapshot.EMPTY ? EMPTY : new SubChunkSnapshot(snapshot);
     }
 
@@ -32,11 +32,19 @@ public final class SubChunkSnapshot {
     }
 
     public Block getBlock(int x, int y, int z) {
-        return delegate.getBlock(x, y, z);
+        return delegate.getBlockUnchecked(x, y, z);
     }
 
     public BlockState getBlockState(int x, int y, int z) {
-        return delegate.getBlockState(x, y, z);
+        return delegate.getBlockStateUnchecked(x, y, z);
+    }
+
+    public Block getBlockUnchecked(int x, int y, int z) {
+        return delegate.getBlockUnchecked(x, y, z);
+    }
+
+    public BlockState getBlockStateUnchecked(int x, int y, int z) {
+        return delegate.getBlockStateUnchecked(x, y, z);
     }
 
     public Block getBlock(BlockPos worldPos) {

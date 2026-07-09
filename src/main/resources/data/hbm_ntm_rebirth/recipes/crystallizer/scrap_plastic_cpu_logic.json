@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "PEROXIDE", "amount": 500 },
+  "input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:scrap_plastic" },
+    "partial_nbt": "{ScrapType:12}"
+  },
+  "output": { "item": "hbm_ntm_rebirth:circuit_star_piece_cpu_logic" },
+  "source_order": 69
+}

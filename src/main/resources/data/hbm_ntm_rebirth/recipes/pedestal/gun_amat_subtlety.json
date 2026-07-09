@@ -1,0 +1,73 @@
+{
+  "type": "hbm_ntm_rebirth:pedestal",
+  "input": [
+    {
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "count": 1,
+      "legacy_ore": "ingotStarmetal"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/aluminium"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastAluminum"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "count": 1,
+      "legacy_ore": "ingotStarmetal"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/aluminium"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastAluminum"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:gun_amat"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/aluminium"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastAluminum"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "count": 1,
+      "legacy_ore": "ingotStarmetal"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/aluminium"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastAluminum"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "count": 1,
+      "legacy_ore": "ingotStarmetal"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:gun_amat_subtlety"
+  },
+  "extra": "none",
+  "set": 0,
+  "source_order": 4
+}

@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
+  "source_order": 25,
   "ingredient": {
     "item": "hbm_ntm_rebirth:biomass"
   },

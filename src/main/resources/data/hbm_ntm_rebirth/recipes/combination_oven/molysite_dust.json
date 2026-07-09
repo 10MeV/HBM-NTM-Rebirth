@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": {
+    "ingredient": {
+      "tag": "forge:dusts/molysite"
+    },
+    "legacy_ore": "dustMolysite"
+  },
+  "output_item": {
+    "item": "minecraft:iron_ingot"
+  },
+  "output_fluid": {
+    "fluid": "CHLORINE",
+    "amount": 250
+  }
+}

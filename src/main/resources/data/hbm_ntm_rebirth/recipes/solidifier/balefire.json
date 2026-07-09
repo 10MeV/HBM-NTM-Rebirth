@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:balefire",
                   "amount":  230
-              }
+              },
+    "source_order":  20
 }

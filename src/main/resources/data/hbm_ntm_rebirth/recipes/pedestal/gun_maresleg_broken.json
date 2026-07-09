@@ -1,0 +1,69 @@
+{
+  "type": "hbm_ntm_rebirth:pedestal",
+  "input": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:barbed_wire"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:plates/weapon_steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateWeaponSteel"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:barbed_wire"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:plates/weapon_steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateWeaponSteel"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:gun_maresleg"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:plates/weapon_steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateWeaponSteel"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:barbed_wire"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:plates/weapon_steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateWeaponSteel"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:barbed_wire"
+      },
+      "count": 1
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:gun_maresleg_broken"
+  },
+  "extra": "none",
+  "set": 0,
+  "source_order": 1
+}

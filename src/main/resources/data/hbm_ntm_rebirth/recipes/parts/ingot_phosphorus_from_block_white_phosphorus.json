@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:block_white_phosphorus"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ingot_phosphorus",
+    "count": 9
+  }
+}

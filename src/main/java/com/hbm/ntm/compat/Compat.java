@@ -6,10 +6,14 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.hbm.ntm.radiation.HazmatRegistry;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -53,6 +57,8 @@ public final class Compat {
     public static final String MOD_RC = MOD_RAILCRAFT;
     public static final String MOD_TORCHERINO = "torcherino";
     public static final String MOD_TOR = MOD_TORCHERINO;
+    public static final String MOD_OPENCOMPUTERS = "opencomputers";
+    public static final String MOD_OC = MOD_OPENCOMPUTERS;
 
     private static final HazardClass[] LEGACY_FULL_PACKAGE = new HazardClass[] {
             HazardClass.PARTICLE_COARSE,
@@ -247,6 +253,31 @@ public final class Compat {
     public static ItemStack tryLoadBlockStack(ResourceLocation id, int count) {
         Block block = tryLoadBlock(id);
         return block == null ? ItemStack.EMPTY : new ItemStack(block, Math.max(1, count));
+    }
+
+    public static List<ItemStack> scrapeItemFromME(ItemStack meDrive) {
+        List<ItemStack> stacks = new ArrayList<>();
+        try {
+            CompoundTag nbt = meDrive == null ? null : meDrive.getTag();
+            if (nbt == null) {
+                return stacks;
+            }
+            int types = nbt.getShort("it");
+            for (int i = 0; i < types; i++) {
+                String stackKey = "#" + i;
+                if (!nbt.contains(stackKey, Tag.TAG_COMPOUND)) {
+                    continue;
+                }
+                ItemStack stack = ItemStack.of(nbt.getCompound(stackKey));
+                if (stack.isEmpty()) {
+                    continue;
+                }
+                stack.setCount(nbt.getInt("@" + i));
+                stacks.add(stack);
+            }
+        } catch (Exception ignored) {
+        }
+        return stacks;
     }
 
     public static ItemStack getPreferredItemOutput(List<ItemStack> candidates) {
@@ -456,6 +487,34 @@ public final class Compat {
         protectionEntries += tryRegisterProtection(MOD_GT6, "gt.armor.hazmat.radiation.head", LEGACY_FULL_PACKAGE);
 
         return new CompatHazmatReport(resistanceEntries, protectionEntries);
+    }
+
+    // Old optional-mod hooks stay callable, but their integration behavior is intentionally frozen.
+    public static void registerCompatFluidContainers() {
+    }
+
+    public static void handleRailcraftNonsense() {
+    }
+
+    @Nullable
+    public static Class<?> getChunkBiomeHook() {
+        return null;
+    }
+
+    @Nullable
+    public static Method getBiomeShortArray;
+
+    @Nullable
+    public static Method getBiomeShortArray() {
+        return null;
+    }
+
+    @Nullable
+    public static short[] getBiomeShortArray(Object instance) {
+        return null;
+    }
+
+    public static void blacklistAccelerator(Class<?> clazz) {
     }
 
     private static int tryRegisterHazmatSet(String namespace, String helmet, String chest, String legs, String boots,

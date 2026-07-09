@@ -21,6 +21,8 @@ public final class AchievementHandler {
     public static final ResourceLocation SULFURIC = new ResourceLocation(HbmNtm.MOD_ID, "sulfuric");
     public static final ResourceLocation RAD_POISON = new ResourceLocation(HbmNtm.MOD_ID, "rad_poison");
     public static final ResourceLocation RAD_DEATH = new ResourceLocation(HbmNtm.MOD_ID, "rad_death");
+    public static final ResourceLocation RADIUM = new ResourceLocation(HbmNtm.MOD_ID, "radium");
+    public static final ResourceLocation NO9 = new ResourceLocation(HbmNtm.MOD_ID, "no9");
     public static final ResourceLocation DIGAMMA_SEE =
             new ResourceLocation(HbmNtm.MOD_ID, "digamma_see");
     public static final ResourceLocation DIGAMMA_FEEL =
@@ -29,6 +31,7 @@ public final class AchievementHandler {
             new ResourceLocation(HbmNtm.MOD_ID, "digamma_know");
     public static final ResourceLocation DIGAMMA_KAUAI_MOHO =
             new ResourceLocation(HbmNtm.MOD_ID, "digamma_kauai_moho");
+    public static final ResourceLocation HIDDEN = new ResourceLocation(HbmNtm.MOD_ID, "hidden");
 
     private AchievementHandler() {
     }

@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:enderjuice",
                   "amount":  100
-              }
+              },
+    "source_order":  5
 }

@@ -20,6 +20,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.BooleanOp;
@@ -33,11 +35,13 @@ import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class CargoElevatorBlock extends LegacyXrMultiblockBlock implements EntityBlock {
+    public static final BooleanProperty PLATFORM = BooleanProperty.create("platform");
     private static final int[] LEGACY_DIMENSIONS = { 0, 0, 1, 1, 1, 1 };
     private static final int LEGACY_OFFSET = 1;
 
     public CargoElevatorBlock(Properties properties) {
         super(properties);
+        registerDefaultState(defaultBlockState().setValue(PLATFORM, false));
     }
 
     @Override
@@ -74,7 +78,13 @@ public class CargoElevatorBlock extends LegacyXrMultiblockBlock implements Entit
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(PLATFORM);
     }
 
     @Override

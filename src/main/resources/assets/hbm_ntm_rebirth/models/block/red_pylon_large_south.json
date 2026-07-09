@@ -1,0 +1,20 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/network/pylon_large.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 90, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Cube_Cube.001": true
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/network/pylon_large",
+    "default": "hbm_ntm_rebirth:block/network/pylon_large",
+    "texture0": "hbm_ntm_rebirth:block/network/pylon_large"
+  }
+}

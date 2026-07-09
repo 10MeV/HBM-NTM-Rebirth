@@ -10,6 +10,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
@@ -30,7 +31,7 @@ public final class HazmatRegistry {
     public static double chest = com.hbm.ntm.radiation.HazmatRegistry.chest;
     public static double legs = com.hbm.ntm.radiation.HazmatRegistry.legs;
     public static double boots = com.hbm.ntm.radiation.HazmatRegistry.boots;
-    public static final List<Tuple.Pair<Item, Double>> external = new ExternalHazmatList();
+    public static List<Tuple.Pair<Item, Double>> external = new ExternalHazmatList();
     public static final Gson gson = com.hbm.ntm.radiation.HazmatRegistry.gson;
 
     private HazmatRegistry() {
@@ -49,6 +50,7 @@ public final class HazmatRegistry {
 
     public static void registerDefaults() {
         syncWeightsToModern();
+        syncExternalToModern();
         com.hbm.ntm.radiation.HazmatRegistry.registerDefaults();
         syncWeightsFromModern();
     }
@@ -390,11 +392,26 @@ public final class HazmatRegistry {
         boots = com.hbm.ntm.radiation.HazmatRegistry.boots;
     }
 
+    private static void syncExternalToModern() {
+        if (external instanceof ExternalHazmatList) {
+            return;
+        }
+        List<HbmTuple.Pair<Item, Double>> converted = new ArrayList<>();
+        if (external != null) {
+            for (Tuple.Pair<Item, Double> entry : external) {
+                if (entry != null && entry.getKey() != null && entry.getValue() != null) {
+                    converted.add(entry);
+                }
+            }
+        }
+        com.hbm.ntm.radiation.HazmatRegistry.external = converted;
+    }
+
     private static final class ExternalHazmatList extends AbstractList<Tuple.Pair<Item, Double>> {
         @Override
         public Tuple.Pair<Item, Double> get(int index) {
             HbmTuple.Pair<Item, Double> entry = com.hbm.ntm.radiation.HazmatRegistry.external.get(index);
-            return new Tuple.Pair<>(entry.getKey(), entry.getValue());
+            return legacyPair(entry);
         }
 
         @Override
@@ -418,13 +435,13 @@ public final class HazmatRegistry {
             }
             HbmTuple.Pair<Item, Double> replaced =
                     com.hbm.ntm.radiation.HazmatRegistry.external.set(index, element);
-            return new Tuple.Pair<>(replaced.getKey(), replaced.getValue());
+            return legacyPair(replaced);
         }
 
         @Override
         public Tuple.Pair<Item, Double> remove(int index) {
             HbmTuple.Pair<Item, Double> previous = com.hbm.ntm.radiation.HazmatRegistry.external.remove(index);
-            return new Tuple.Pair<>(previous.getKey(), previous.getValue());
+            return legacyPair(previous);
         }
 
         @Override
@@ -477,6 +494,14 @@ public final class HazmatRegistry {
             return entry.getKey() == candidate.getKey()
                     && candidate.getValue() instanceof Number resistance
                     && Double.compare(entry.getValue(), resistance.doubleValue()) == 0;
+        }
+
+        @SuppressWarnings("unchecked")
+        private Tuple.Pair<Item, Double> legacyPair(HbmTuple.Pair<Item, Double> entry) {
+            if (entry instanceof Tuple.Pair<?, ?> pair) {
+                return (Tuple.Pair<Item, Double>) pair;
+            }
+            return new Tuple.Pair<>(entry.getKey(), entry.getValue());
         }
     }
 }

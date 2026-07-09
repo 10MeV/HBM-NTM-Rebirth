@@ -39,7 +39,7 @@ public class CloudFleijaRenderer extends EntityRenderer<CloudFleijaEntity> {
         double shockwave = 5.0D * baseScale;
         poseStack.scale((float) shockwave, (float) shockwave, (float) shockwave);
         int shockTint = Math.max(0, Math.min(255, (int) ((1.0D - ageScale) * 0.75D * 255.0D)));
-        ObjEffectModels.SPHERE_NEW.renderAllUntextured(poseStack, buffer, shockTint, shockTint, shockTint, 255, true);
+        ObjEffectModels.renderSphereNewDynamicUntextured(poseStack, buffer, shockTint, shockTint, shockTint, 255, true);
         poseStack.popPose();
 
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);

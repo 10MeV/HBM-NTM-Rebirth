@@ -1,0 +1,43 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fallout"
+      },
+      "count": 1,
+      "legacy_id": "hbm:fallout",
+      "legacy_meta": 0
+    }
+  },
+  "fluid_produced": 900,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:dust_tiny",
+      "weight": 90
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_co60",
+      "weight": 2
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_sr90_tiny",
+      "weight": 3
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_i131_tiny",
+      "weight": 1
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_cs137_tiny",
+      "weight": 3
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_au198",
+      "weight": 1
+    }
+  ],
+  "source_order": 324
+}

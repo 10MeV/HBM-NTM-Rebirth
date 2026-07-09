@@ -1,20 +1,52 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.pistonsetstar",
   "duration": 200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:ingots/starmetal" }, "count": 24, "legacy_ore": "ingotStarmetal" },
-    { "ingredient": { "tag": "forge:ingots/rubber" }, "count": 16, "legacy_ore": "ingotRubber" },
-    { "ingredient": { "tag": "forge:plates/saturnite" }, "count": 24, "legacy_ore": "plateSaturnite" },
-    { "ingredient": { "tag": "forge:ingots/niobium" }, "count": 16, "legacy_ore": "ingotNiobium" },
-    { "ingredient": { "tag": "forge:pipes/dura_steel" }, "count": 4, "legacy_ore": "ntmpipeDuraSteel" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:piston_set_starmetal" }
+  "input_items": [
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "legacy_ore": "ingotStarmetal"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:plates/saturnite"
+      },
+      "legacy_ore": "plateSaturnite"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/niobium"
+      },
+      "legacy_ore": "ingotNiobium"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:pipes/dura_steel"
+      },
+      "legacy_ore": "ntmpipeDuraSteel"
+    }
   ],
+  "internal_name": "ass.pistonsetstar",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:piston_set_desh"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 131
 }

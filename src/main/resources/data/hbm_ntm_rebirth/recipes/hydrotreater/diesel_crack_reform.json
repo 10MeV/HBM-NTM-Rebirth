@@ -16,5 +16,6 @@
     "output2":  {
                     "fluid":  "hbm_ntm_rebirth:sourgas",
                     "amount":  30
-                }
+                },
+    "source_order":  4
 }

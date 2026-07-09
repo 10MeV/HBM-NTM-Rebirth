@@ -1,0 +1,37 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/blocks/splitter.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Inner": true,
+    "InnerBottom": true,
+    "InnerLeft": true,
+    "InnerTop": true,
+    "InnerRight": true,
+    "Top": true,
+    "Right": false,
+    "Left": true,
+    "Back": true,
+    "Bottom": true,
+    "Front": true
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/crane_splitter_inner",
+    "top": "hbm_ntm_rebirth:block/crane_splitter_top_left",
+    "bottom": "hbm_ntm_rebirth:block/crane_splitter_top_right",
+    "side_left": "hbm_ntm_rebirth:block/crane_splitter_left",
+    "side_right": "hbm_ntm_rebirth:block/crane_splitter_right",
+    "back": "hbm_ntm_rebirth:block/crane_splitter_back_left",
+    "front": "hbm_ntm_rebirth:block/crane_splitter_front_left",
+    "inner": "hbm_ntm_rebirth:block/crane_splitter_inner",
+    "inner_side": "hbm_ntm_rebirth:block/crane_splitter_inner_side",
+    "belt": "hbm_ntm_rebirth:block/crane_splitter_belt"
+  }
+}

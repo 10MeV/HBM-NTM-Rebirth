@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -23,6 +24,9 @@ public final class LegacyTomRenderer {
     public static final FlameScale LAYER_POST_SCALE = new FlameScale(-1.015F, 0.9F, 1.015F);
     public static final int FLAME_LAYERS = 20;
     public static final int FLAME_RANDOM_BOUND = 90;
+    private static final int[] FLAME_RANDOM_YAWS = createFlameRandomYaws();
+    private static final ThreadLocal<LegacyWavefrontModel.TexturedPreparedSequence> FLAME_SEQUENCE =
+            ThreadLocal.withInitial(LegacyWavefrontModel.TexturedPreparedSequence::new);
 
     public static TomRenderPlan plan(long currentMillis) {
         float baseYaw = flameBaseYaw(currentMillis);
@@ -55,18 +59,25 @@ public final class LegacyTomRenderer {
     public static void renderFlames(PoseStack poseStack, MultiBufferSource buffer, int packedOverlay,
             long currentMillis) {
         LegacyWavefrontModel.UvTransform uvTransform = hmfTransform(currentMillis);
+        LegacyWavefrontModel.TexturedPreparedSequence flameSequence = FLAME_SEQUENCE.get();
+        if (!ObjWeaponModels.TOM_FLAME.prepareTexturedAllSequence(flameSequence, ObjWeaponModels.TOM_FLAME_TEXTURE,
+                buffer, LightTexture.FULL_BRIGHT, packedOverlay, 255, 255, 255, 255, false,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, uvTransform,
+                LegacyWavefrontModel.RenderBackendFallbackReason.GPU_UNSUPPORTED_UV_TRANSFORM)) {
+            return;
+        }
         poseStack.pushPose();
         try {
             applyInitialFlameScale(poseStack);
-            TomRenderPlan plan = plan(currentMillis);
-            for (FlameLayer layer : plan.flameLayers()) {
-                applyBeforeFlameLayer(poseStack, layer);
-                renderAll(ObjWeaponModels.TOM_FLAME, ObjWeaponModels.TOM_FLAME_TEXTURE, poseStack, buffer,
-                        LightTexture.FULL_BRIGHT, packedOverlay, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
-                        uvTransform);
-                applyAfterFlameLayer(poseStack, layer);
+            float baseYaw = flameBaseYaw(currentMillis);
+            for (int i = 0; i < FLAME_LAYERS; i++) {
+                poseStack.mulPose(Axis.YP.rotationDegrees(baseYaw + FLAME_RANDOM_YAWS[i]));
+                flameSequence.render(poseStack);
+                poseStack.mulPose(Axis.YN.rotationDegrees(baseYaw));
+                applyScale(poseStack, LAYER_POST_SCALE);
             }
         } finally {
+            flameSequence.clear();
             poseStack.popPose();
         }
     }
@@ -97,13 +108,21 @@ public final class LegacyTomRenderer {
     }
 
     public static List<FlameLayer> flameLayers(float baseYaw) {
-        Random random = new Random(0L);
         List<FlameLayer> layers = new ArrayList<>(FLAME_LAYERS);
         for (int i = 0; i < FLAME_LAYERS; i++) {
-            int randomYaw = random.nextInt(FLAME_RANDOM_BOUND);
+            int randomYaw = FLAME_RANDOM_YAWS[i];
             layers.add(new FlameLayer(i, randomYaw, baseYaw + randomYaw, baseYaw, LAYER_POST_SCALE));
         }
         return Collections.unmodifiableList(layers);
+    }
+
+    private static int[] createFlameRandomYaws() {
+        Random random = LegacyRenderRandom.seeded(0L);
+        int[] yaws = new int[FLAME_LAYERS];
+        for (int i = 0; i < FLAME_LAYERS; i++) {
+            yaws[i] = random.nextInt(FLAME_RANDOM_BOUND);
+        }
+        return yaws;
     }
 
     private static void applyScale(PoseStack poseStack, FlameScale scale) {

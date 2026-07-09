@@ -1,7 +1,20 @@
 {
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/nuke/bomb_multi"
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/bomb_generic.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.5, 0.5],
+    "rotation": [180, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+    "Cylinder": true
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/nuke/bomb_multi",
+    "default": "hbm_ntm_rebirth:models/bomb_generic",
+    "texture0": "hbm_ntm_rebirth:models/bomb_generic"
+  }
 }

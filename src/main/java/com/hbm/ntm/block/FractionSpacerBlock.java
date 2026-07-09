@@ -2,6 +2,7 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.FractionSpacerBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,11 @@ import org.jetbrains.annotations.Nullable;
 public class FractionSpacerBlock extends LegacyVisibleMultiblockMachineBlock {
     public FractionSpacerBlock(Properties properties, LegacyMachineDefinition definition) {
         super(properties, definition);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable

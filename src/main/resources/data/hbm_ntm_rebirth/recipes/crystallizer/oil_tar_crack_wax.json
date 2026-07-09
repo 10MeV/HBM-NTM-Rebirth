@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 20,
+  "fluid": { "fluid": "CHLORINE", "amount": 100 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:oil_tar_crack" } },
+  "output": { "item": "hbm_ntm_rebirth:oil_tar_wax" },
+  "source_order": 397
+}

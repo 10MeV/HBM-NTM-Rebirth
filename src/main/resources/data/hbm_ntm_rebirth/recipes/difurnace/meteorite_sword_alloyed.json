@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:difurnace",
+  "internal_name": "difurnace.meteoriteSwordAlloyed",
+  "source_order": 12,
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:meteorite_sword_hardened"
+      },
+      "count": 1,
+      "legacy_id": "hbm:meteorite_sword_hardened",
+      "legacy_meta": 0
+    },
+    {
+      "ingredient": [
+        {
+          "tag": "forge:ingots/cobalt"
+        },
+        {
+          "tag": "forge:plates/cobalt"
+        },
+        {
+          "tag": "forge:gems/cobalt"
+        },
+        {
+          "tag": "forge:dusts/cobalt"
+        }
+      ],
+      "count": 1,
+      "legacy_dictframe": "Cobalt"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:meteorite_sword_alloyed"
+  },
+  "legacy_hidden": true
+}

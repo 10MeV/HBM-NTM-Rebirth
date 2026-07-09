@@ -1,0 +1,18 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "misc",
+    "pattern":  [
+                    "###",
+                    "###",
+                    "###"
+                ],
+    "key":  {
+                "#":  {
+                          "item":  "hbm_ntm_rebirth:ore_byproduct_b_silicon"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:nugget_silicon",
+                   "count":  3
+               }
+}

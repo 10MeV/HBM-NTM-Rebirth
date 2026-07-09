@@ -1,19 +1,44 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.rbmkautoloader",
   "duration": 100,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:welded_plates/steel" }, "count": 4 },
-    { "ingredient": { "tag": "forge:cast_plates/lead" }, "count": 4, "legacy_ore": "plateCastLead" },
-    { "ingredient": { "tag": "forge:ingots/boron" }, "count": 4, "legacy_ore": "ingotBoron" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 3 }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:rbmk_autoloader" }
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:welded_plates/steel"
+      },
+      "legacy_ore": "plateWeldedSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:cast_plates/lead"
+      },
+      "legacy_ore": "plateCastLead"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/boron"
+      },
+      "legacy_ore": "ingotBoron"
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    }
   ],
+  "internal_name": "ass.rbmkautoloader",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:rbmk_autoloader"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 163
 }

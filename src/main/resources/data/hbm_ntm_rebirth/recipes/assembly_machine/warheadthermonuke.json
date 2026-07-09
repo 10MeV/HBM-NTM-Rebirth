@@ -1,22 +1,57 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.warheadthermonuke",
   "duration": 600,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:cast_plates/titanium" }, "count": 12, "legacy_ore": "plateCastTitanium" },
-    { "ingredient": { "tag": "forge:cast_plates/lead" }, "count": 6, "legacy_ore": "plateCastLead" },
-    { "ingredient": { "tag": "forge:billets/pu239" }, "count": 8, "legacy_ore": "billetPu239" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:ball_tatb" }, "count": 12 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller_advanced" }, "count": 2, "legacy_id": "hbm:circuit", "legacy_meta": 14 }
-  ],
   "input_fluids": [
-    { "fluid": "hbm_ntm_rebirth:deuterium", "amount": 4000 }
+    {
+      "amount": 4000,
+      "fluid": "hbm_ntm_rebirth:deuterium"
+    }
   ],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:warhead_mirv" }
+  "input_items": [
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:cast_plates/titanium"
+      },
+      "legacy_ore": "plateCastTitanium"
+    },
+    {
+      "count": 6,
+      "ingredient": {
+        "tag": "forge:cast_plates/lead"
+      },
+      "legacy_ore": "plateCastLead"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:billets/pu239"
+      },
+      "legacy_ore": "billetPu239"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ball_tatb"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_controller_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 14
+    }
   ],
+  "internal_name": "ass.warheadthermonuke",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:warhead_mirv"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 263
 }

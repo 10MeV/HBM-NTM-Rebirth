@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:asbestos_cloth"
+    },
+    "I": {
+      "tag": "forge:plates/gold"
+    }
+  },
+  "pattern": [
+    "EEE",
+    "EIE"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:asbestos_helmet"
+  },
+  "show_notification": true
+}

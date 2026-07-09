@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": {
+      "item": "hbm_ntm_rebirth:insert_du"
+    },
+    "Y": {
+      "item": "hbm_ntm_rebirth:billet_yharonite"
+    }
+  },
+  "pattern": [
+    "YIY",
+    "IYI",
+    "YIY"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:insert_yharonite"
+  },
+  "show_notification": true
+}

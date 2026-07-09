@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.particle;
 
+import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -13,8 +14,6 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,6 +29,16 @@ public class LegacyContrailParticle extends TextureSheetParticle implements HbmD
     private final float baseGreen;
     private final float baseBlue;
     private final float baseScale;
+    private final float[] layerRed = new float[LEGACY_QUAD_COUNT];
+    private final float[] layerGreen = new float[LEGACY_QUAD_COUNT];
+    private final float[] layerBlue = new float[LEGACY_QUAD_COUNT];
+    private final float[] layerOffsetX = new float[LEGACY_QUAD_COUNT];
+    private final float[] layerOffsetY = new float[LEGACY_QUAD_COUNT];
+    private final float[] layerOffsetZ = new float[LEGACY_QUAD_COUNT];
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     public LegacyContrailParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed,
             SpriteSet sprites, float red, float green, float blue, float scale) {
@@ -46,6 +55,28 @@ public class LegacyContrailParticle extends TextureSheetParticle implements HbmD
         this.friction = 1.0F;
         this.alpha = 1.0F;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
+        this.precomputeRenderLayers();
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
+    }
+
+    private void precomputeRenderLayers() {
+        Random legacyRandom = LegacyRenderRandom.seeded(seed);
+        for (int i = 0; i < LEGACY_QUAD_COUNT; i++) {
+            float mod = legacyRandom.nextFloat() * 0.2F + 0.2F;
+            this.layerRed[i] = clampColor(this.baseRed + mod);
+            this.layerGreen[i] = clampColor(this.baseGreen + mod);
+            this.layerBlue[i] = clampColor(this.baseBlue + mod);
+            this.layerOffsetX[i] = (float) (legacyRandom.nextGaussian() * 0.5D * this.baseScale);
+            this.layerOffsetY[i] = (float) (legacyRandom.nextGaussian() * 0.5D * this.baseScale);
+            this.layerOffsetZ[i] = (float) (legacyRandom.nextGaussian() * 0.5D * this.baseScale);
+        }
     }
 
     @Override
@@ -59,6 +90,7 @@ public class LegacyContrailParticle extends TextureSheetParticle implements HbmD
         }
         this.alpha = 1.0F - (float) this.age / (float) this.lifetime;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -71,51 +103,30 @@ public class LegacyContrailParticle extends TextureSheetParticle implements HbmD
         if (this.alpha <= 0.0F) {
             return;
         }
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
-        Quaternionf rotation = camera.rotation();
-        Vector3f[] corners = new Vector3f[]{
-                new Vector3f(-1.0F, -1.0F, 0.0F),
-                new Vector3f(-1.0F, 1.0F, 0.0F),
-                new Vector3f(1.0F, 1.0F, 0.0F),
-                new Vector3f(1.0F, -1.0F, 0.0F)
-        };
-        double baseX = Mth.lerp(partialTick, this.xo, this.x) - camera.getPosition().x();
-        double baseY = Mth.lerp(partialTick, this.yo, this.y) - camera.getPosition().y();
-        double baseZ = Mth.lerp(partialTick, this.zo, this.z) - camera.getPosition().z();
-        float u0 = getU0();
-        float u1 = getU1();
-        float v0 = getV0();
-        float v1 = getV1();
-        Random legacyRandom = new Random(seed);
+        VertexConsumer consumer = HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer);
+        var cameraPos = camera.getPosition();
+        double baseX = Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x();
+        double baseY = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y();
+        double baseZ = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
+        float u0 = this.cachedU0;
+        float u1 = this.cachedU1;
+        float v0 = this.cachedV0;
+        float v1 = this.cachedV1;
+        float scale = (this.alpha + 0.5F) * this.baseScale;
+        var basis = HbmDeferredParticleRenderer.cameraBillboardBasis(camera, 1.0F);
 
         for (int i = 0; i < LEGACY_QUAD_COUNT; i++) {
-            float mod = legacyRandom.nextFloat() * 0.2F + 0.2F;
-            float scale = (this.alpha + 0.5F) * this.baseScale;
-            float px = (float) (baseX + legacyRandom.nextGaussian() * 0.5D * this.baseScale);
-            float py = (float) (baseY + legacyRandom.nextGaussian() * 0.5D * this.baseScale);
-            float pz = (float) (baseZ + legacyRandom.nextGaussian() * 0.5D * this.baseScale);
-            renderQuad(consumer, rotation, corners, px, py, pz, scale,
-                    clampColor(this.baseRed + mod), clampColor(this.baseGreen + mod), clampColor(this.baseBlue + mod),
-                    this.alpha, u0, u1, v0, v1);
+            float px = (float) baseX + this.layerOffsetX[i];
+            float py = (float) baseY + this.layerOffsetY[i];
+            float pz = (float) baseZ + this.layerOffsetZ[i];
+            HbmDeferredParticleRenderer.emitCameraUnitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT, basis[0], basis[1],
+                    px, py, pz, scale, u0, u1, v0, v1,
+                    this.layerRed[i], this.layerGreen[i], this.layerBlue[i], this.alpha);
         }
     }
 
     private static float clampColor(float value) {
         return Mth.clamp(value, 0.0F, 1.0F);
-    }
-
-    private void renderQuad(VertexConsumer consumer, Quaternionf rotation, Vector3f[] corners, float x, float y, float z,
-            float size, float red, float green, float blue, float alpha, float u0, float u1, float v0, float v1) {
-        Vector3f corner0 = new Vector3f(corners[0]).rotate(rotation).mul(size).add(x, y, z);
-        Vector3f corner1 = new Vector3f(corners[1]).rotate(rotation).mul(size).add(x, y, z);
-        Vector3f corner2 = new Vector3f(corners[2]).rotate(rotation).mul(size).add(x, y, z);
-        Vector3f corner3 = new Vector3f(corners[3]).rotate(rotation).mul(size).add(x, y, z);
-        HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT,
-                corner0, u1, v1,
-                corner1, u1, v0,
-                corner2, u0, v0,
-                corner3, u0, v1,
-                red, green, blue, alpha);
     }
 
     @Override

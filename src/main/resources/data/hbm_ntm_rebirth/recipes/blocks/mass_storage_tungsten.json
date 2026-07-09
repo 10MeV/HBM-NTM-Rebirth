@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:container_upgrade_crafting",
+  "category": "building",
+  "key": {
+    "C": {
+      "tag": "forge:circuits/advanced"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:mass_storage"
+    },
+    "P": {
+      "tag": "forge:ingots/any_resistant_alloy"
+    }
+  },
+  "pattern": [
+    " C ",
+    "PMP",
+    " P "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:mass_storage",
+    "nbt": "{hbmLegacyVariant:2}"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 24.0,
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:ore_nether_plutonium"
+  },
+  "result": "hbm_ntm_rebirth:ingot_plutonium"
+}

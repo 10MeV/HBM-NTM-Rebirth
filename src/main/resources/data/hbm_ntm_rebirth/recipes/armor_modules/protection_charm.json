@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "tag": "forge:gems/diamond"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:fragment_meteorite"
+    }
+  },
+  "pattern": [
+    " M ",
+    "MDM",
+    " M "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:protection_charm"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [
+    "SS ",
+    " PS",
+    " T "
+  ],
+  "key": {
+    "S": {
+      "tag": "forge:plates/steel"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:tank_steel"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:acetylene_torch"
+  }
+}

@@ -1,0 +1,212 @@
+{
+  "recipes": [
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:particle_hydrogen"
+        ],
+        [
+          "item",
+          "hbm:particle_copper"
+        ]
+      ],
+      "momentum": 300,
+      "outputs": [
+        [
+          "hbm:particle_amat"
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:particle_amat"
+        ],
+        [
+          "item",
+          "hbm:particle_amat"
+        ]
+      ],
+      "momentum": 400,
+      "outputs": [
+        [
+          "hbm:particle_aschrab"
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:particle_aschrab"
+        ],
+        [
+          "item",
+          "hbm:particle_aschrab"
+        ]
+      ],
+      "momentum": 10000,
+      "outputs": [
+        [
+          "hbm:particle_dark"
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:particle_hydrogen"
+        ],
+        [
+          "item",
+          "hbm:particle_amat"
+        ]
+      ],
+      "momentum": 2500,
+      "outputs": [
+        [
+          "hbm:particle_muon"
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:particle_hydrogen"
+        ],
+        [
+          "item",
+          "hbm:particle_lead"
+        ]
+      ],
+      "momentum": 6500,
+      "outputs": [
+        [
+          "hbm:particle_higgs"
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:particle_muon"
+        ],
+        [
+          "item",
+          "hbm:particle_higgs"
+        ]
+      ],
+      "momentum": 5000,
+      "outputs": [
+        [
+          "hbm:particle_tachyon"
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:particle_muon"
+        ],
+        [
+          "item",
+          "hbm:particle_dark"
+        ]
+      ],
+      "momentum": 12500,
+      "outputs": [
+        [
+          "hbm:particle_strange"
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:particle_strange"
+        ],
+        [
+          "item",
+          "hbm:powder_magic"
+        ]
+      ],
+      "momentum": 12500,
+      "outputs": [
+        [
+          "hbm:particle_sparkticle"
+        ],
+        [
+          "hbm:dust"
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:particle_sparkticle"
+        ],
+        [
+          "item",
+          "hbm:particle_higgs"
+        ]
+      ],
+      "momentum": 70000,
+      "outputs": [
+        [
+          "hbm:particle_digamma"
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "hbm:item_expensive",
+          1,
+          8
+        ],
+        [
+          "dict",
+          "ingotSchrabidium"
+        ]
+      ],
+      "momentum": 10000,
+      "outputs": [
+        [
+          "hbm:item_expensive",
+          1,
+          9
+        ]
+      ]
+    },
+    {
+      "inputs": [
+        [
+          "item",
+          "minecraft:chicken"
+        ],
+        [
+          "item",
+          "minecraft:chicken"
+        ]
+      ],
+      "momentum": 100,
+      "outputs": [
+        [
+          "hbm:nugget"
+        ],
+        [
+          "hbm:nugget"
+        ]
+      ]
+    }
+  ]
+}

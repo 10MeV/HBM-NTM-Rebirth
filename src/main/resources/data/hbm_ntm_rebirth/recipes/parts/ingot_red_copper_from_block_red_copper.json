@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:block_red_copper"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "item": "hbm_ntm_rebirth:ingot_red_copper"
+  }
+}

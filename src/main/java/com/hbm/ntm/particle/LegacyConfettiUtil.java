@@ -1,6 +1,7 @@
 package com.hbm.ntm.particle;
 
 import com.hbm.ntm.damage.DamageClass;
+import com.hbm.ntm.entity.mob.EntityRADBeast;
 import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -68,7 +69,8 @@ public final class LegacyConfettiUtil {
         if (entity instanceof Slime || entity instanceof MagmaCube || entity instanceof Creeper) {
             return ParticleUtil.GIBLET_SLIME;
         }
-        if (entity instanceof AbstractGolem || entity instanceof Blaze || entity.getType() == EntityType.IRON_GOLEM) {
+        if (entity instanceof AbstractGolem || entity instanceof Blaze || entity instanceof EntityRADBeast
+                || entity.getType() == EntityType.IRON_GOLEM) {
             return ParticleUtil.GIBLET_METAL;
         }
         return ParticleUtil.GIBLET_MEAT;

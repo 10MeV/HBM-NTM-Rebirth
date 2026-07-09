@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:meteorite_sword_reforged"
+    },
+    "legacy_id": "hbm:meteorite_sword_reforged",
+    "legacy_meta": 0
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:meteorite_sword_hardened"
+  },
+  "source_order": 6,
+  "stamp": "flat"
+}

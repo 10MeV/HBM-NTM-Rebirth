@@ -12,7 +12,6 @@ import com.hbm.ntm.artillery.LegacyArtilleryImpactExecutor;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.sound.LegacySoundPlayer;
-import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -239,8 +238,8 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
                 shell = delegatedShell;
             }
         }
-        if (profile != null && !profile.effects(LegacyArtilleryAmmoCatalog.CargoStickEffect.class).isEmpty()
-                && cargoImpact(hit)) {
+        if (profile != null && !profile.effects(LegacyArtilleryAmmoCatalog.CargoStickEffect.class).isEmpty()) {
+            handleCargoImpact(hit);
             return;
         }
         BlockPos impactBlockPos = hit instanceof BlockHitResult blockHit
@@ -251,11 +250,10 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
         discard();
     }
 
-    private boolean cargoImpact(HitResult hit) {
+    private void handleCargoImpact(HitResult hit) {
         if (hit instanceof BlockHitResult blockHit) {
             stickCargo(blockHit);
         }
-        return true;
     }
 
     @Override
@@ -278,7 +276,10 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
             setPos(getX(), getY(), getZ());
         }
 
-        if (new Vec3(syncPosX - getX(), syncPosY - getY(), syncPosZ - getZ()).length() < 0.2D) {
+        double syncDeltaX = syncPosX - getX();
+        double syncDeltaY = syncPosY - getY();
+        double syncDeltaZ = syncPosZ - getZ();
+        if (syncDeltaX * syncDeltaX + syncDeltaY * syncDeltaY + syncDeltaZ * syncDeltaZ < 0.04D) {
             ParticleUtil.spawnLegacyArtillerySmokeTrail(level(), getX(), getY(), getZ());
         }
     }
@@ -331,7 +332,7 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
     public InteractionResult interact(Player player, InteractionHand hand) {
         if (!level().isClientSide()) {
             if (!cargo.isEmpty()) {
-                HbmItemStackUtil.giveOrDrop(player, cargo, level(), getX(), getY(), getZ());
+                player.addItem(cargo.copy());
             }
             discard();
         }

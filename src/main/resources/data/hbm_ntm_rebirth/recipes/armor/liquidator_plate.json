@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:hazmat_plate_grey"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:cladding_lead"
+    },
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:gas_empty"
+    }
+  },
+  "pattern": [
+    "ICI",
+    "TBT",
+    "ICI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:liquidator_plate"
+  },
+  "show_notification": true
+}

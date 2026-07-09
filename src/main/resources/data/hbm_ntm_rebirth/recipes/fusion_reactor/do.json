@@ -1,20 +1,35 @@
 {
   "type": "hbm_ntm_rebirth:fusion_reactor",
-  "internal_name": "fus.do",
+  "b": 0.6,
   "duration": 100,
-  "power": 25000,
-  "input_items": [],
-  "input_fluids": [
-    { "fluid": "hbm_ntm_rebirth:deuterium", "amount": 10 },
-    { "fluid": "hbm_ntm_rebirth:oxygen", "amount": 10 }
-  ],
-  "output_items": [{ "item": "hbm_ntm_rebirth:pellet_charged" }],
-  "output_fluids": [],
-  "pools": [],
-  "ignitionTemp": 250000,
-  "outputTemp": 1250000,
-  "outputFlux": 50.0,
-  "r": 1.0,
   "g": 0.2,
-  "b": 0.2
+  "icon": {
+    "item": "hbm_ntm_rebirth:gas_full",
+    "nbt": "{hbm_fluid:\"OXYGEN\",hbm_fluid_amount:0,hbm_fluid_pressure:0}"
+  },
+  "ignitionTemp": 250000,
+  "input_fluids": [
+    {
+      "amount": 10,
+      "fluid": "hbm_ntm_rebirth:deuterium"
+    },
+    {
+      "amount": 10,
+      "fluid": "hbm_ntm_rebirth:oxygen"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "fus.do",
+  "outputFlux": 50.0,
+  "outputTemp": 1250000,
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pellet_charged"
+    }
+  ],
+  "pools": [],
+  "power": 25000,
+  "r": 1.0,
+  "source_order": 1
 }

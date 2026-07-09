@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/hematite"
+    },
+    "legacy_ore": "oreHematite"
+  },
+  "output": [
+    {
+      "amount": 72,
+      "material": "Hematite"
+    }
+  ],
+  "source_order": 38
+}

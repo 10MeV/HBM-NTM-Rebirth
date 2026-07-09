@@ -10,5 +10,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:redmud",
                   "amount":  450
-              }
+              },
+    "source_order":  26
 }

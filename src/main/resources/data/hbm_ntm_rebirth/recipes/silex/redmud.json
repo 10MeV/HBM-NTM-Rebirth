@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": { "fluid": "hbm_ntm_rebirth:redmud" },
+  "fluid_produced": 300,
+  "fluid_consumed": 50,
+  "laser_strength": "visible",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_aluminium", "weight": 10 },
+    { "item": "hbm_ntm_rebirth:powder_neodymium_tiny", "count": 3, "weight": 5 },
+    { "item": "hbm_ntm_rebirth:powder_boron_tiny", "count": 3, "weight": 5 },
+    { "item": "hbm_ntm_rebirth:nugget_zirconium", "weight": 5 },
+    { "item": "hbm_ntm_rebirth:powder_iron", "weight": 20 },
+    { "item": "hbm_ntm_rebirth:powder_titanium", "weight": 15 },
+    { "item": "hbm_ntm_rebirth:powder_sodium", "weight": 10 }
+  ],
+  "source_order": 18
+}

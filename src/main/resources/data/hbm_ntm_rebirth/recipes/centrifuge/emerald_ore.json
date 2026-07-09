@@ -1,10 +1,25 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/emerald" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/emerald"
+    },
+    "legacy_ore": "oreEmerald"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_emerald" },
-    { "item": "hbm_ntm_rebirth:powder_emerald" },
-    { "item": "hbm_ntm_rebirth:powder_emerald" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_emerald"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_emerald"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_emerald"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 6
 }

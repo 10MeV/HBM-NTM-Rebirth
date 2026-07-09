@@ -5,6 +5,7 @@
                },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:naphtha",
-                  "amount":  32000
-              }
+                  "amount":  65000
+              },
+    "source_order":  26
 }

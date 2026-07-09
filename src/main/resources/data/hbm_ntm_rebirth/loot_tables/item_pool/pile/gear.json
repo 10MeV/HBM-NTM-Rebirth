@@ -163,6 +163,22 @@
           ],
           "name": "hbm_ntm_rebirth:taurun_boots",
           "weight": 20
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 5.0,
+                "min": 2.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "hbm_ntm_rebirth:canned_beef",
+          "weight": 40
         }
       ],
       "rolls": 1.0

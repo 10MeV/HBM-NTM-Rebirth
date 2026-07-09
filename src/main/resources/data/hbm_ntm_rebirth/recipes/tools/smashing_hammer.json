@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "S": {
+      "tag": "forge:storage_blocks/steel"
+    },
+    "T": {
+      "tag": "forge:storage_blocks/tungsten"
+    }
+  },
+  "pattern": [
+    "STS",
+    "SPS",
+    " P "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:smashing_hammer"
+  },
+  "show_notification": true
+}

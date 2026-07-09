@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:gem_volcanic"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:ingot_meteorite"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:starmetal_axe"
+    },
+    "T": {
+      "tag": "forge:bolts/tungsten"
+    }
+  },
+  "pattern": [
+    " BM",
+    "BPB",
+    "TB "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:volcanic_axe"
+  },
+  "show_notification": true
+}

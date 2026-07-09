@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/beryllium"
+    },
+    "legacy_ore": "oreBeryllium"
+  },
+  "output": [
+    {
+      "amount": 144,
+      "material": "Beryllium"
+    },
+    {
+      "amount": 162,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 35
+}

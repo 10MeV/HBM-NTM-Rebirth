@@ -39,6 +39,12 @@ public class TurbofanRenderer implements BlockEntityRenderer<TurbofanBlockEntity
     }
 
     @Override
+    public boolean shouldRender(TurbofanBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(TurbofanBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {

@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "kind": "mold_exact",
+  "left": {
+    "count": 1,
+    "ingredient": [
+      {
+        "item": "hbm_ntm_rebirth:blade_titanium"
+      },
+      {
+        "item": "hbm_ntm_rebirth:blade_tungsten"
+      }
+    ]
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:mold",
+    "nbt": "{mold:5}"
+  },
+  "right": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:mold_base"
+    }
+  },
+  "source_order": 46,
+  "tier": 1
+}

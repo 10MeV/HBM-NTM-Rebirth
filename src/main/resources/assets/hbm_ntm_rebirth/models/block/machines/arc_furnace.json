@@ -4,6 +4,32 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Cable1": false,
+    "Cable2": false,
+    "Cable3": false,
+    "ContentsCold": false,
+    "ContentsHot": false,
+    "Electrode1": false,
+    "Electrode1Hot": false,
+    "Electrode1Short": false,
+    "Electrode2": false,
+    "Electrode2Hot": false,
+    "Electrode2Short": false,
+    "Electrode3": false,
+    "Electrode3Hot": false,
+    "Electrode3Short": false,
+    "Furnace": true,
+    "Lid": false,
+    "Ring1": false,
+    "Ring2": false,
+    "Ring3": false
+  },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/arc_furnace",
     "default": "hbm_ntm_rebirth:block/machines/arc_furnace",

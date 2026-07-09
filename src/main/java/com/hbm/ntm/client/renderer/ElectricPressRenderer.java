@@ -14,6 +14,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressBlockEntity> {
     public ElectricPressRenderer(BlockEntityRendererProvider.Context context) {
@@ -27,6 +28,12 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(ElectricPressBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -44,11 +51,12 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
-                LegacyTileRenderPlans.ElectricPressPlan plan = LegacyTileRenderPlans.electricPressPlan(
-                        blockEntity.getInterpolatedPress(partialTick), ElectricPressBlockEntity.MAX_PRESS);
+                double progress = normalizedPress(blockEntity.getInterpolatedPress(partialTick),
+                        ElectricPressBlockEntity.MAX_PRESS);
+                double headTranslateY = LegacyTileRenderPlans.ELECTRIC_PRESS_HEAD_BASE_Y
+                        + (1.0D - progress) * LegacyTileRenderPlans.ELECTRIC_PRESS_HEAD_TRAVEL;
                 poseStack.pushPose();
-                LegacyTileRenderPlans.TranslatedModelPartPlan head = plan.head();
-                poseStack.translate(0.5D + head.translateX(), head.translateY(), 0.5D + head.translateZ());
+                poseStack.translate(0.5D, headTranslateY, 0.5D);
                 poseStack.mulPose(Axis.YP.rotationDegrees(yRotation));
                 ObjMachineModels.EPRESS_HEAD.renderAll(ObjMachineModels.EPRESS_HEAD_TEXTURE,
                         poseStack, buffer, modelLight, packedOverlay);
@@ -57,6 +65,13 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
         }
 
         renderInputItem(blockEntity, yRotation, poseStack, buffer, packedLight);
+    }
+
+    private static double normalizedPress(double press, double maxPress) {
+        if (maxPress <= 0.0D) {
+            return 0.0D;
+        }
+        return Math.max(0.0D, Math.min(1.0D, press / maxPress));
     }
 
     private static void renderInputItem(ElectricPressBlockEntity blockEntity, float yRotation, PoseStack poseStack,

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:titanium_helmet"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:gas_mask_filter"
+    },
+    "I": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_armor_hev"
+    }
+  },
+  "pattern": [
+    "PPC",
+    "PBP",
+    "IFI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:hev_helmet"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.thruster.small",
+  "duration": 60,
+  "power": 1000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 4, "legacy_ore": "plateSteel" },
+    { "ingredient": { "tag": "forge:wires/aluminium" }, "count": 4, "legacy_ore": "wireFineAluminum" },
+    { "ingredient": { "tag": "forge:plates/copper" }, "count": 4, "legacy_ore": "plateCopper" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:thruster_small" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 18
+}

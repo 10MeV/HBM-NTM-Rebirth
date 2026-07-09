@@ -1,10 +1,24 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "item": "minecraft:blaze_rod" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:blaze_rod"
+    }
+  },
   "outputs": [
-    { "item": "minecraft:blaze_powder" },
-    { "item": "minecraft:blaze_powder" },
-    { "item": "hbm_ntm_rebirth:powder_fire" },
-    { "item": "hbm_ntm_rebirth:powder_fire" }
-  ]
+    {
+      "item": "minecraft:blaze_powder"
+    },
+    {
+      "item": "minecraft:blaze_powder"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_fire"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_fire"
+    }
+  ],
+  "source_order": 29
 }

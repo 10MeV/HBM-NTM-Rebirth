@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:heatingoil_vacuum",
                   "amount":  5400
-              }
+              },
+    "source_order":  23
 }

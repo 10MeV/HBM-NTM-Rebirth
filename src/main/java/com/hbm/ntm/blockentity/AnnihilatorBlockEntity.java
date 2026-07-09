@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
+import com.hbm.inventory.RecipesCommon.ComparableStack;
 import com.hbm.hazard.HazardRegistry;
 import com.hbm.hazard.HazardSystem;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
@@ -16,7 +18,6 @@ import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.menu.AnnihilatorMenu;
 import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.particle.ParticleUtil;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -113,7 +114,7 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
         boolean changed = annihilator.setFluidTankTypeFromIdentifierSlot(
                 annihilator.items, SLOT_FLUID_IDENTIFIER, annihilator.tank);
 
-        if (!annihilator.pool.isBlank() && level instanceof ServerLevel serverLevel) {
+        if (isLegacyPoolName(annihilator.pool) && level instanceof ServerLevel serverLevel) {
             if (annihilator.tank.getTankType() != HbmFluids.NONE) {
                 annihilator.refreshTrackedReceiverFluidPortsReport(List.of(annihilator.tank), annihilator);
             }
@@ -145,8 +146,6 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
             if (annihilator.processRequest(serverLevel, data)) {
                 changed = true;
             }
-        } else {
-            annihilator.monitorBigInt = BigInteger.ZERO;
         }
 
         changed = changed
@@ -176,15 +175,18 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
     private void updateMonitor(AnnihilatorSavedData data) {
         ItemStack monitor = items.getStackInSlot(SLOT_MONITOR);
         if (monitor.isEmpty()) {
-            monitorBigInt = BigInteger.ZERO;
             return;
         }
         if (monitor.getItem() instanceof IFluidIdentifierItem identifier) {
             FluidType type = identifier.getIdentifiedFluid(level, worldPosition, monitor);
-            monitorBigInt = data.getFluidAmount(pool, type);
+            monitor(data, type);
         } else {
-            monitorBigInt = data.getItemMetaAmount(pool, monitor, monitor.getDamageValue());
+            monitor(data, new ComparableStack(monitor).makeSingular());
         }
+    }
+
+    private void monitor(AnnihilatorSavedData data, Object type) {
+        monitorBigInt = data.getLegacyAmount(pool, type);
     }
 
     private static int safeDoubleMb(int amount) {
@@ -198,7 +200,7 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         Direction facing = facing();
         BlockPos radiationPos = worldPosition.offset(-facing.getStepX() * 3, 9, -facing.getStepZ() * 3);
-        ChunkRadiationManager.incrementRadiation(level, radiationPos, Math.min(radiation * 5.0F, 1_000.0F));
+        ChunkRadiationManager.proxy.incrementRad(level, radiationPos, Math.min(radiation * 5.0F, 1_000.0F));
     }
 
     private void spawnBurnEffects(Level level) {
@@ -378,8 +380,8 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
     public void receiveControl(ServerPlayer player, CompoundTag data) {
         if (data.contains(TAG_POOL)) {
             String requested = data.getString(TAG_POOL);
-            if (!requested.isBlank()) {
-                pool = requested.length() > 20 ? requested.substring(0, 20) : requested;
+            if (isLegacyPoolName(requested)) {
+                pool = requested;
                 setChanged();
                 if (level != null && !level.isClientSide) {
                     level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -393,7 +395,6 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
         tag.putString(TAG_POOL, pool);
-        tag.putString(TAG_MONITOR, monitorBigInt.toString());
         tank.writeToNbt(tag, "t");
     }
 
@@ -401,16 +402,27 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
-        pool = tag.contains(TAG_POOL) && !tag.getString(TAG_POOL).isBlank()
-                ? tag.getString(TAG_POOL)
-                : DEFAULT_POOL;
-        if (pool.length() > 20) {
-            pool = pool.substring(0, 20);
-        }
+        pool = tag.getString(TAG_POOL);
         if (tag.contains("t") || tag.contains("t_type") || tag.contains("t_type_id")) {
             tank.readFromNbt(tag, "t");
         }
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putString(TAG_MONITOR, monitorBigInt.toString());
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
         monitorBigInt = parseBigInteger(tag.getString(TAG_MONITOR));
+    }
+
+    private static boolean isLegacyPoolName(String value) {
+        return value != null && !value.isEmpty();
     }
 
     private static BigInteger parseBigInteger(String value) {

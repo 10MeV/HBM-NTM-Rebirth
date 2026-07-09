@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "EEE",
+    "EEE",
+    "EEE"
+  ],
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:ingot_euphemium"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:block_euphemium"
+  }
+}

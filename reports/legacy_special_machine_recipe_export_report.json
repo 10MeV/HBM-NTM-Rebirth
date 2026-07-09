@@ -1,0 +1,44 @@
+{
+  "export_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports",
+  "exported_recipe_count": 172,
+  "handlers": [
+    {
+      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmCombination.json",
+      "exported_recipe_count": 23,
+      "failures": [],
+      "legacy_class": "CombinationRecipes",
+      "legacy_file": "hbmCombination.json",
+      "modern_recipe_type": "combination_oven",
+      "skipped_recipe_count": 0,
+      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/combination_oven",
+      "status": "exported"
+    },
+    {
+      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmCrystallizer.json",
+      "exported_recipe_count": 107,
+      "failures": [],
+      "legacy_class": "CrystallizerRecipes",
+      "legacy_file": "hbmCrystallizer.json",
+      "modern_recipe_type": "crystallizer",
+      "skipped_recipe_count": 0,
+      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/crystallizer",
+      "status": "exported"
+    },
+    {
+      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmCyclotron.json",
+      "exported_recipe_count": 42,
+      "failures": [],
+      "legacy_class": "CyclotronRecipes",
+      "legacy_file": "hbmCyclotron.json",
+      "modern_recipe_type": "cyclotron",
+      "skipped_recipe_count": 0,
+      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/cyclotron",
+      "status": "exported"
+    }
+  ],
+  "note": "Old special-machine JSON exports are datapack/debug tooling only; main-resource datapack recipes remain the runtime source of truth.",
+  "skipped_recipe_count": 0,
+  "source_root": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes",
+  "status": "exported",
+  "written_file_count": 3
+}

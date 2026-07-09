@@ -1,0 +1,54 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "count": 32
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "count": 32
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor_tantalium"
+      },
+      "count": 16
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_controller_chassis"
+      }
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_speed_1"
+      }
+    }
+  ],
+  "solder": [
+    {
+      "ingredient": {
+        "tag": "forge:wires/lead"
+      },
+      "count": 16,
+      "legacy_ore": "wireFineLead"
+    }
+  ],
+  "fluid": {
+    "fluid": "PERFLUOROMETHYL",
+    "amount": 1000
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:circuit_controller"
+  },
+  "duration": 400,
+  "consumption": 15000,
+  "source_order": 6
+}

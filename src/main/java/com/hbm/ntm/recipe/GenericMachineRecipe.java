@@ -2,6 +2,7 @@ package com.hbm.ntm.recipe;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidContainerRules;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -10,6 +11,7 @@ import com.hbm.ntm.item.FluidIconItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.BobMathUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
@@ -163,7 +165,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
                 return fluidIcon;
             }
         }
-        return getToastSymbol();
+        return new ItemStack(ModItems.NOTHING.get());
     }
 
     private static ItemStack fluidIcon(HbmFluidStack fluid) {
@@ -203,8 +205,7 @@ public class GenericMachineRecipe implements Recipe<Container> {
         List<Component> lines = new ArrayList<>();
         lines.add(getDisplayName().copy().withStyle(ChatFormatting.YELLOW));
         if (autoSwitchGroup != null) {
-            lines.add(Component.translatableWithFallback("autoswitch", "Auto-switch: %s",
-                    Component.translatable(autoSwitchGroup)).withStyle(ChatFormatting.GOLD));
+            addAutoSwitchLines(lines);
         }
         if (duration > 0) {
             lines.add(Component.translatableWithFallback("gui.recipe.duration", "Duration")
@@ -212,7 +213,8 @@ public class GenericMachineRecipe implements Recipe<Container> {
         }
         if (power > 0) {
             lines.add(Component.translatableWithFallback("gui.recipe.consumption", "Consumption")
-                    .append(Component.literal(": " + power + "HE/t")).withStyle(ChatFormatting.RED));
+                    .append(Component.literal(": " + BobMathUtil.getShortNumber(power) + "HE/t"))
+                    .withStyle(ChatFormatting.RED));
         }
         addExtraDisplayLines(lines);
 
@@ -235,45 +237,17 @@ public class GenericMachineRecipe implements Recipe<Container> {
         for (HbmFluidStack fluid : fluidOutputs) {
             lines.add(Component.literal("  ").append(fluidDisplayName(fluid)).withStyle(ChatFormatting.BLUE));
         }
+        for (MaterialStack stack : extraData.arcMaterialOutputs()) {
+            lines.add(Component.literal("  ").append(materialDisplayName(stack)).withStyle(ChatFormatting.GOLD));
+        }
         return List.copyOf(lines);
-    }
-
-    public String getSearchText() {
-        StringBuilder builder = new StringBuilder();
-        appendSearch(builder, internalName);
-        appendSearch(builder, id.toString());
-        appendSearch(builder, getDisplayName().getString());
-        pools.forEach(pool -> appendSearch(builder, pool));
-        if (autoSwitchGroup != null) {
-            appendSearch(builder, autoSwitchGroup);
-        }
-        extraData.plasmaForge().ifPresent(plasma -> appendSearch(builder, Long.toString(plasma.ignitionTemp())));
-        extraData.fusion().ifPresent(fusion -> {
-            appendSearch(builder, Long.toString(fusion.ignitionTemp()));
-            appendSearch(builder, Long.toString(fusion.outputTemp()));
-            appendSearch(builder, Double.toString(fusion.outputFlux()));
-        });
-        extraData.pollution().ifPresent(pollution -> {
-            appendSearch(builder, pollution.type().id());
-            appendSearch(builder, Float.toString(pollution.amount()));
-        });
-        for (HbmIngredient input : itemInputs) {
-            appendSearch(builder, input.legacyOreName());
-            input.displayStacks().forEach(stack -> appendSearch(builder, stack.getHoverName().getString()));
-        }
-        fluidInputs.forEach(fluid -> appendSearch(builder, fluid.type().getDisplayName().getString()));
-        for (HbmItemOutput output : itemOutputs) {
-            output.displayOptions().forEach(option -> appendSearch(builder, option.stack().getHoverName().getString()));
-        }
-        fluidOutputs.forEach(fluid -> appendSearch(builder, fluid.type().getDisplayName().getString()));
-        return builder.toString().toLowerCase(Locale.ROOT);
     }
 
     public boolean matchesSearch(String query) {
         if (query == null || query.isBlank()) {
             return true;
         }
-        return getSearchText().contains(query.toLowerCase(Locale.ROOT));
+        return getDisplayName().getString().toLowerCase(Locale.US).contains(query.toLowerCase(Locale.US));
     }
 
     public boolean hasCustomLocalization() {
@@ -283,23 +257,33 @@ public class GenericMachineRecipe implements Recipe<Container> {
     private void addExtraDisplayLines(List<Component> lines) {
         extraData.plasmaForge().ifPresent(plasma -> lines.add(
                 Component.translatableWithFallback("gui.recipe.plasmaIn", "Plasma input")
-                        .append(Component.literal(": " + plasma.ignitionTemp() + "TU/t"))
+                        .append(Component.literal(": " + BobMathUtil.getShortNumber(plasma.ignitionTemp()) + "TU/t"))
                         .withStyle(ChatFormatting.LIGHT_PURPLE)));
         extraData.fusion().ifPresent(fusion -> {
             lines.add(Component.translatableWithFallback("gui.recipe.fusionIn", "Fusion input")
-                    .append(Component.literal(": " + fusion.ignitionTemp() + "KyU/t"))
+                    .append(Component.literal(": " + BobMathUtil.getShortNumber(fusion.ignitionTemp()) + "KyU/t"))
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
             lines.add(Component.translatableWithFallback("gui.recipe.fusionOut", "Fusion output")
-                    .append(Component.literal(": " + fusion.outputTemp() + "TU/t"))
+                    .append(Component.literal(": " + BobMathUtil.getShortNumber(fusion.outputTemp()) + "TU/t"))
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
             lines.add(Component.translatableWithFallback("gui.recipe.fusionFlux", "Fusion flux")
-                    .append(Component.literal(": " + Math.floor(fusion.outputFlux() * 10.0D) / 10.0D + " flux/t"))
+                    .append(Component.literal(": " + (int) (fusion.outputFlux() * 10.0D) / 10.0D + " flux/t"))
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
         });
         extraData.pollution().ifPresent(pollution -> lines.add(
                 Component.translatableWithFallback("gui.recipe.pollution", "Pollution")
                         .append(Component.literal(": " + pollution.type().id() + " " + pollution.amount()))
                         .withStyle(ChatFormatting.DARK_GRAY)));
+    }
+
+    private void addAutoSwitchLines(List<Component> lines) {
+        Component groupName = Component.translatable(autoSwitchGroup);
+        String text = Component.translatableWithFallback("autoswitch",
+                        "Part of auto switch group \"%s\"$Recipe changes based on first ingredient", groupName)
+                .getString();
+        for (String line : text.split("\\$")) {
+            lines.add(Component.literal(line).withStyle(ChatFormatting.GOLD));
+        }
     }
 
     @Nullable
@@ -314,7 +298,19 @@ public class GenericMachineRecipe implements Recipe<Container> {
 
     @Override
     public boolean matches(Container container, Level level) {
-        return false;
+        return fluidInputs.isEmpty() && matchesItemInputs(container);
+    }
+
+    public boolean matchesItemInputs(Container container) {
+        if (itemInputs.isEmpty() || itemInputs.size() > container.getContainerSize()) {
+            return false;
+        }
+        for (int i = 0; i < itemInputs.size(); i++) {
+            if (!itemInputs.get(i).test(container.getItem(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -467,14 +463,13 @@ public class GenericMachineRecipe implements Recipe<Container> {
 
     private static Component inputDisplayName(HbmIngredient input) {
         List<ItemStack> stacks = input.displayStacks();
-        if (!stacks.isEmpty()) {
-            ItemStack stack = stacks.get(0);
-            return Component.literal(input.count() + "x ").append(stack.getHoverName());
-        }
-        if (input.legacyOreName() != null) {
-            return Component.literal(input.count() + "x " + input.legacyOreName());
-        }
-        return Component.literal(input.count() + "x " + input.ingredient().toJson());
+        ItemStack stack = stacks.isEmpty() ? new ItemStack(ModItems.NOTHING.get()) : cyclingDisplayStack(stacks, 20);
+        return Component.literal(stack.getCount() + "x ").append(stack.getHoverName());
+    }
+
+    private static ItemStack cyclingDisplayStack(List<ItemStack> stacks, int cycle) {
+        cycle *= 50;
+        return stacks.get((int) (System.currentTimeMillis() % (cycle * stacks.size()) / cycle));
     }
 
     private static Component fluidDisplayName(HbmFluidStack fluid) {
@@ -488,18 +483,12 @@ public class GenericMachineRecipe implements Recipe<Container> {
         return base;
     }
 
-    private static String secondsLabel(int ticks) {
-        double seconds = ticks / 20.0D;
-        if (seconds == Math.rint(seconds)) {
-            return (int) seconds + "s";
-        }
-        return String.format(Locale.US, "%.2fs", seconds);
+    private static Component materialDisplayName(MaterialStack stack) {
+        return Component.literal(stack.amount + "q " + stack.material.names[0]);
     }
 
-    private static void appendSearch(StringBuilder builder, @Nullable String value) {
-        if (value != null && !value.isBlank()) {
-            builder.append(' ').append(value);
-        }
+    private static String secondsLabel(int ticks) {
+        return Double.toString(ticks / 20.0D) + "s";
     }
 
     public static class Serializer implements RecipeSerializer<GenericMachineRecipe> {
@@ -525,6 +514,10 @@ public class GenericMachineRecipe implements Recipe<Container> {
             String nameWrapper = LegacyGenericRecipeFormat.readNameWrapper(json);
             int sourceOrder = LegacyGenericRecipeFormat.readSourceOrder(json);
             GenericMachineRecipeExtraData extraData = GenericMachineRecipeExtraData.fromJson(json);
+            if (!extraData.arcMaterialOutputs().isEmpty() && machine != Machine.ARC_FURNACE) {
+                throw new JsonSyntaxException("HBM machine recipe " + id
+                        + " has arc_material_outputs but is not an arc furnace recipe");
+            }
             machine.validateRecipeLimits(id, itemInputs.size(), fluidInputs.size(), itemOutputs.size(), fluidOutputs.size());
             validateItemInputStackLimits(id, itemInputs);
             return new GenericMachineRecipe(id, machine, internalName, duration, power, itemInputs, fluidInputs, itemOutputs, fluidOutputs,

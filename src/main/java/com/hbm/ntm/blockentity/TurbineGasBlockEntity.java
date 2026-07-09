@@ -396,7 +396,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     private List<EnergyPort> energyPorts() {
         Direction facing = facing();
         Direction side = LegacyMultiblockOffsets.legacyUpSide(facing);
-        BlockPos offset = LegacyMultiblockOffsets.relative(facing, side, 0, 4, 1);
+        BlockPos offset = LegacyMultiblockOffsets.relative(facing, side, 0, 5, 1);
         return List.of(EnergyPort.of(offset.getX(), offset.getY(), offset.getZ(), side));
     }
 

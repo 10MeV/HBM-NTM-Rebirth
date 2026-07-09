@@ -66,9 +66,7 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyWavefrontModel model = ObjNukeModels.BOY;
         boolean gui = displayContext == ItemDisplayContext.GUI;
-        AABB bounds = gui
-                ? transformBounds(model.boundsAll(), point -> point.add(-1.0D, 0.0D, 0.0D).scale(5.0D))
-                : transformBounds(model.boundsAll(), point -> point.add(-1.0D, 0.0D, 0.0D));
+        AABB bounds = customNukeBounds(model.boundsAll(), gui);
         Vec3 center = bounds.getCenter();
         double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
 
@@ -143,47 +141,29 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    private static Vec3 applyLegacyCommonTransform(NuclearDeviceBlock.Kind kind, Vec3 point) {
-        return switch (kind) {
-            case GADGET -> rotateY(point, -90.0F);
-            case BOY -> point.add(-1.0D, 0.0D, 0.0D);
-            case MAN -> rotateY(point.add(-0.75D, 0.0D, 0.0D), 180.0F);
-            case TSAR -> point.add(1.5D, 0.0D, 0.0D);
-            case PROTOTYPE -> rotateY(point.add(0.0D, 0.125D, 0.0D), 90.0F);
-            case FLEIJA -> rotateY(point, 90.0F).add(0.125D, 0.0D, 0.0D);
-            case SOLINIUM -> rotateY(point.add(0.0D, -0.125D, 0.0D), 90.0F);
-            case MIKE, N2 -> point;
-        };
-    }
-
     private static void applyLegacyInventory(NuclearDeviceBlock.Kind kind, PoseStack poseStack) {
-        Vec3 translation = legacyInventoryTranslation(kind);
-        poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.translate(0.0D, legacyInventoryTranslationY(kind), 0.0D);
         float scale = legacyInventoryScale(kind);
         poseStack.scale(scale, scale, scale);
     }
 
     private static AABB transformedInventoryBounds(NuclearDeviceBlock.Kind kind, AABB bounds) {
-        return transformBounds(bounds, point -> {
-            Vec3 result = applyLegacyCommonTransform(kind, point);
-            float scale = legacyInventoryScale(kind);
-            result = new Vec3(result.x * scale, result.y * scale, result.z * scale);
-            return result.add(legacyInventoryTranslation(kind));
-        });
+        return transformedLegacyBounds(kind, bounds, legacyInventoryScale(kind), 0.0D,
+                legacyInventoryTranslationY(kind), 0.0D);
     }
 
     private static AABB transformedCommonBounds(NuclearDeviceBlock.Kind kind, AABB bounds) {
-        return transformBounds(bounds, point -> applyLegacyCommonTransform(kind, point));
+        return transformedLegacyBounds(kind, bounds, 1.0D, 0.0D, 0.0D, 0.0D);
     }
 
-    private static Vec3 legacyInventoryTranslation(NuclearDeviceBlock.Kind kind) {
+    private static double legacyInventoryTranslationY(NuclearDeviceBlock.Kind kind) {
         return switch (kind) {
-            case GADGET -> new Vec3(0.0D, -3.0D, 0.0D);
-            case MAN -> new Vec3(0.0D, -2.0D, 0.0D);
-            case MIKE, N2 -> new Vec3(0.0D, -5.0D, 0.0D);
-            case PROTOTYPE -> new Vec3(0.0D, 0.125D, 0.0D);
-            case SOLINIUM -> new Vec3(0.0D, -0.125D, 0.0D);
-            default -> Vec3.ZERO;
+            case GADGET -> -3.0D;
+            case MAN -> -2.0D;
+            case MIKE, N2 -> -5.0D;
+            case PROTOTYPE -> 0.125D;
+            case SOLINIUM -> -0.125D;
+            default -> 0.0D;
         };
     }
 
@@ -197,39 +177,52 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
         };
     }
 
-    private static AABB transformBounds(AABB bounds, PointTransform transform) {
-        double minX = Double.POSITIVE_INFINITY;
-        double minY = Double.POSITIVE_INFINITY;
-        double minZ = Double.POSITIVE_INFINITY;
-        double maxX = Double.NEGATIVE_INFINITY;
-        double maxY = Double.NEGATIVE_INFINITY;
-        double maxZ = Double.NEGATIVE_INFINITY;
-
-        for (double x : new double[] { bounds.minX, bounds.maxX }) {
-            for (double y : new double[] { bounds.minY, bounds.maxY }) {
-                for (double z : new double[] { bounds.minZ, bounds.maxZ }) {
-                    Vec3 point = transform.apply(new Vec3(x, y, z));
-                    minX = Math.min(minX, point.x);
-                    minY = Math.min(minY, point.y);
-                    minZ = Math.min(minZ, point.z);
-                    maxX = Math.max(maxX, point.x);
-                    maxY = Math.max(maxY, point.y);
-                    maxZ = Math.max(maxZ, point.z);
-                }
-            }
-        }
-
-        return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+    private static AABB customNukeBounds(AABB bounds, boolean gui) {
+        double scale = gui ? 5.0D : 1.0D;
+        return LegacyTransformedBounds.transform(bounds, (x, y, z, accumulator) -> accumulator.include(
+                (x - 1.0D) * scale, y * scale, z * scale));
     }
 
-    private static Vec3 rotateY(Vec3 point, float degrees) {
-        double radians = Math.toRadians(degrees);
-        double sin = Math.sin(radians);
-        double cos = Math.cos(radians);
-        return new Vec3(point.x * cos + point.z * sin, point.y, point.z * cos - point.x * sin);
+    private static AABB transformedLegacyBounds(NuclearDeviceBlock.Kind kind, AABB bounds, double scale,
+            double translateX, double translateY, double translateZ) {
+        return switch (kind) {
+            case GADGET -> transformedRotateY(bounds, -90.0F, 0.0D, 0.0D, 0.0D,
+                    0.0D, 0.0D, 0.0D, scale, translateX, translateY, translateZ);
+            case BOY -> transformedTranslate(bounds, -1.0D, 0.0D, 0.0D, scale, translateX, translateY, translateZ);
+            case MAN -> transformedRotateY(bounds, 180.0F, -0.75D, 0.0D, 0.0D,
+                    0.0D, 0.0D, 0.0D, scale, translateX, translateY, translateZ);
+            case TSAR -> transformedTranslate(bounds, 1.5D, 0.0D, 0.0D, scale, translateX, translateY, translateZ);
+            case PROTOTYPE -> transformedRotateY(bounds, 90.0F, 0.0D, 0.125D, 0.0D,
+                    0.0D, 0.0D, 0.0D, scale, translateX, translateY, translateZ);
+            case FLEIJA -> transformedRotateY(bounds, 90.0F, 0.0D, 0.0D, 0.0D,
+                    0.125D, 0.0D, 0.0D, scale, translateX, translateY, translateZ);
+            case SOLINIUM -> transformedRotateY(bounds, 90.0F, 0.0D, -0.125D, 0.0D,
+                    0.0D, 0.0D, 0.0D, scale, translateX, translateY, translateZ);
+            case MIKE, N2 -> transformedTranslate(bounds, 0.0D, 0.0D, 0.0D, scale,
+                    translateX, translateY, translateZ);
+        };
     }
 
-    private interface PointTransform {
-        Vec3 apply(Vec3 point);
+    private static AABB transformedTranslate(AABB bounds, double addX, double addY, double addZ, double scale,
+            double translateX, double translateY, double translateZ) {
+        return LegacyTransformedBounds.transform(bounds, (x, y, z, accumulator) -> accumulator.include(
+                (x + addX) * scale + translateX,
+                (y + addY) * scale + translateY,
+                (z + addZ) * scale + translateZ));
+    }
+
+    private static AABB transformedRotateY(AABB bounds, float degrees, double preX, double preY, double preZ,
+            double postX, double postY, double postZ, double scale, double translateX, double translateY,
+            double translateZ) {
+        double sin = LegacyTransformedBounds.sinDeg(degrees);
+        double cos = LegacyTransformedBounds.cosDeg(degrees);
+        return LegacyTransformedBounds.transform(bounds, (x, y, z, accumulator) -> {
+            double rotatedX = LegacyTransformedBounds.rotateYX(x + preX, z + preZ, sin, cos) + postX;
+            double rotatedY = y + preY + postY;
+            double rotatedZ = LegacyTransformedBounds.rotateYZ(x + preX, z + preZ, sin, cos) + postZ;
+            accumulator.include(rotatedX * scale + translateX,
+                    rotatedY * scale + translateY,
+                    rotatedZ * scale + translateZ);
+        });
     }
 }

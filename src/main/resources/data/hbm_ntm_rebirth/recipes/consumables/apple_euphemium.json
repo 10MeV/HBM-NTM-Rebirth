@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "food",
+  "pattern": [
+    "EEE",
+    "EAE",
+    "EEE"
+  ],
+  "key": {
+    "E": { "tag": "forge:nuggets/euphemium" },
+    "A": { "item": "minecraft:apple" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:apple_euphemium"
+  }
+}

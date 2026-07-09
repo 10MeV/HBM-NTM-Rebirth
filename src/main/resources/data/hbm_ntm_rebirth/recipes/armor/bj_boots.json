@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:block_starmetal"
+    },
+    "N": {
+      "item": "hbm_ntm_rebirth:plate_armor_lunar"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:starmetal_boots"
+    }
+  },
+  "pattern": [
+    "N N",
+    "BSB"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bj_boots"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,51 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:glass_quartz"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:cast_plates/steel"
+      },
+      "legacy_ore": "plateCastSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/workers_alloy"
+      },
+      "legacy_ore": "ingotWorkersAlloy"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:pipes/steel"
+      },
+      "legacy_ore": "ntmpipeSteel"
+    }
+  ],
+  "internal_name": "ass.silex",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_silex"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 105
+}

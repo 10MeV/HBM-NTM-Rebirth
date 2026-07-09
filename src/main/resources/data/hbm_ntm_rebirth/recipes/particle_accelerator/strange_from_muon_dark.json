@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:particle_accelerator",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:particle_muon"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:particle_dark"
+      },
+      "count": 1
+    }
+  ],
+  "momentum": 12500,
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:particle_strange"
+    }
+  ],
+  "source_order": 6
+}

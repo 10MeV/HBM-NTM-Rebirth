@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:particle_accelerator",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "minecraft:chicken"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:chicken"
+      },
+      "count": 1
+    }
+  ],
+  "momentum": 100,
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget"
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget"
+    }
+  ],
+  "source_order": 10
+}

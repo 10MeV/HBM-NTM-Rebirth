@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": { "fluid": "hbm_ntm_rebirth:vitriol" },
+  "fluid_produced": 1000,
+  "fluid_consumed": 300,
+  "laser_strength": "ir",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_bromine", "weight": 5 },
+    { "item": "hbm_ntm_rebirth:powder_iodine", "weight": 5 },
+    { "item": "hbm_ntm_rebirth:powder_iron", "weight": 5 },
+    { "item": "hbm_ntm_rebirth:sulfur", "weight": 15 }
+  ],
+  "source_order": 17
+}

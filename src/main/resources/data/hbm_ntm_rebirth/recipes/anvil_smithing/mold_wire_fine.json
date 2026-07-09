@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "kind": "mold_prefix",
+  "left": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:wire_fine_copper"
+    }
+  },
+  "mold_prefix": "wireFine",
+  "output": {
+    "item": "hbm_ntm_rebirth:mold",
+    "nbt": "{mold:4}"
+  },
+  "right": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:mold_base"
+    }
+  },
+  "source_order": 45,
+  "tier": 1
+}

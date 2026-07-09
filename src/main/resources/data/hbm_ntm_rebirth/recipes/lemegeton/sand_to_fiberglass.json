@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:sand"
+    },
+    "count": 1,
+    "legacy_ore": "sand"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_fiberglass"
+  },
+  "source_order": 35
+}

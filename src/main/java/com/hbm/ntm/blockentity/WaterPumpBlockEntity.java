@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -43,7 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class WaterPumpBlockEntity extends HbmFluidNetworkBlockEntity
-        implements HbmStandardFluidReceiver, HbmStandardFluidSender, HbmEnergyReceiver {
+        implements HbmStandardFluidReceiver, HbmStandardFluidSender, HbmEnergyReceiver, HbmEnergyPortInspectable {
     private static final String TAG_ACTIVE = "isOn";
     private static final String TAG_ON_GROUND = "onGround";
     private static final String TAG_ROTOR = "rotor";
@@ -298,6 +299,12 @@ public class WaterPumpBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public long getReceiverSpeed() {
         return isElectric() ? ELECTRIC_MAX_POWER : 0L;
+    }
+
+    @Override
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        return level == null ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
+                : HbmEnergyUtil.inspectPorts(level, worldPosition, isElectric() ? ENERGY_PORTS : List.of());
     }
 
     public boolean isActive() {

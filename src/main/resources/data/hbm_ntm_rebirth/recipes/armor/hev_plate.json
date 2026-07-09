@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:titanium_plate"
+    },
+    "I": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor_desh"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_armor_hev"
+    }
+  },
+  "pattern": [
+    "MPM",
+    "IBI",
+    "PPP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:hev_plate"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,33 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.custom.casing_small",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "count":  1,
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:casing_small"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "arc_material_outputs":  [
+                                 {
+                                     "amount":  18,
+                                     "material":  "Gunmetal"
+                                 }
+                             ],
+    "pools":  [
+
+              ],
+    "source_order":  2279
+}

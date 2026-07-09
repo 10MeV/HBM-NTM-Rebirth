@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:holotape_image_restored"
+    },
+    {
+      "item": "hbm_ntm_rebirth:upgrade_muffler"
+    },
+    {
+      "item": "hbm_ntm_rebirth:crt_display"
+    },
+    {
+      "item": "hbm_ntm_rebirth:gem_alexandrite"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:holotape_damaged"
+  }
+}

@@ -1,11 +1,11 @@
 package com.hbm.ntm.api.entity;
 
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.Arrays;
 
@@ -71,7 +71,7 @@ public final class RadarMap {
     }
 
     public static byte sampleHeight(ServerLevel level, int x, int z) {
-        int height = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+        int height = WorldUtil.legacyGetHeightValue(level, x, z);
         return (byte) Mth.clamp(height, MIN_DISPLAY_HEIGHT, MAX_DISPLAY_HEIGHT);
     }
 

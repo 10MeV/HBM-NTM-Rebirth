@@ -5,10 +5,11 @@
                },
     "byproduct":  {
                       "fluid":  "hbm_ntm_rebirth:reformate",
-                      "amount":  700
+                      "amount":  1400
                   },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:heavyoil_vacuum",
-                  "amount":  7000
-              }
+                  "amount":  14000
+              },
+    "source_order":  1
 }

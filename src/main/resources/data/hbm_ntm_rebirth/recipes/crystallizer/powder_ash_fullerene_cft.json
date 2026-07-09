@@ -7,5 +7,6 @@
     "count": 4
   },
   "output": { "item": "hbm_ntm_rebirth:ingot_cft" },
-  "productivity": 0.1
+  "productivity": 0.1,
+  "source_order": 44
 }

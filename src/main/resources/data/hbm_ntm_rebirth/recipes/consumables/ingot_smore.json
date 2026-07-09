@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "ingredients": [
+    { "item": "minecraft:wheat" },
+    {
+      "type": "forge:nbt",
+      "item": "hbm_ntm_rebirth:marshmallow",
+      "nbt": "{hbmLegacyDamage:1}"
+    },
+    { "item": "minecraft:cocoa_beans" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ingot_smore"
+  }
+}

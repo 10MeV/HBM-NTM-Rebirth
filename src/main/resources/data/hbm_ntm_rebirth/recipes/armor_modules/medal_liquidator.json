@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "forge:ingots/boron"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:debris_fuel"
+    },
+    "G": {
+      "tag": "forge:nuggets/au198"
+    }
+  },
+  "pattern": [
+    "GBG",
+    "BFB",
+    "GBG"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:medal_liquidator"
+  },
+  "show_notification": true
+}

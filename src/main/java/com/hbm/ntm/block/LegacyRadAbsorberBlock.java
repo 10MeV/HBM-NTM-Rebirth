@@ -1,6 +1,6 @@
 package com.hbm.ntm.block;
 
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -37,7 +37,7 @@ public class LegacyRadAbsorberBlock extends Block {
     @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.tick(state, level, pos, random);
-        ChunkRadiationManager.decrementRadiation(level, pos, ABSORB_AMOUNTS[state.getValue(TIER)]);
+        ChunkRadiationManager.proxy.decrementRad(level, pos, ABSORB_AMOUNTS[state.getValue(TIER)]);
         level.scheduleTick(pos, this, 10);
     }
 

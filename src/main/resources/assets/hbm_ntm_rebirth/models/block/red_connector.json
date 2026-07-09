@@ -1,5 +1,20 @@
 {
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/network/connector.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Cube_Cube.001": true
+  },
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/network/connector"
+    "particle": "hbm_ntm_rebirth:block/network/connector",
+    "default": "hbm_ntm_rebirth:block/network/connector",
+    "texture0": "hbm_ntm_rebirth:block/network/connector"
   }
 }

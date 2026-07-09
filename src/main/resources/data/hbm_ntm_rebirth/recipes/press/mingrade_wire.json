@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/mingrade"
+    },
+    "legacy_ore": "ingotMingrade"
+  },
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:wire_fine_mingrade"
+  },
+  "source_order": 37,
+  "stamp": "wire"
+}

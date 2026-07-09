@@ -1,0 +1,387 @@
+{
+  "recipes": [
+    {
+      "duration": 800,
+      "inputItem": [
+        [
+          "dict",
+          "ingotIron",
+          2
+        ],
+        [
+          "dict",
+          "sand"
+        ]
+      ],
+      "name": "blast.steelFromIngot",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_steel",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:scraps",
+            1,
+            0,
+            "{amount:72,mat:41}"
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 800,
+      "inputItem": [
+        [
+          "dict",
+          "dustIron",
+          2
+        ],
+        [
+          "dict",
+          "sand"
+        ]
+      ],
+      "name": "blast.steelFromDust",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_steel",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:scraps",
+            1,
+            0,
+            "{amount:72,mat:41}"
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 800,
+      "inputItem": [
+        [
+          "dict",
+          "oreIron"
+        ],
+        [
+          "dict",
+          "sand"
+        ]
+      ],
+      "name": "blast.steelFromOre",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_steel",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:scraps",
+            1,
+            0,
+            "{amount:144,mat:41}"
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 1200,
+      "inputItem": [
+        [
+          "dict",
+          "oreIron"
+        ],
+        [
+          "item",
+          "hbm:powder_flux"
+        ]
+      ],
+      "name": "blast.steelWithFlux",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_steel",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:scraps",
+            1,
+            0,
+            "{amount:144,mat:41}"
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 400,
+      "inputItem": [
+        [
+          "dict",
+          "ingotCopper"
+        ],
+        [
+          "dict",
+          "dustRedstone"
+        ]
+      ],
+      "name": "blast.mingrade",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_red_copper",
+            2
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 400,
+      "inputItem": [
+        [
+          "dict",
+          "dustCopper"
+        ],
+        [
+          "dict",
+          "dustRedstone"
+        ]
+      ],
+      "name": "blast.mingradeDust",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_red_copper",
+            2
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 400,
+      "inputItem": [
+        [
+          "dict",
+          "ingotCopper"
+        ],
+        [
+          "dict",
+          "ingotRedstone"
+        ]
+      ],
+      "name": "blast.mingradeIngot",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_red_copper",
+            2
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 400,
+      "inputItem": [
+        [
+          "dict",
+          "dustCopper"
+        ],
+        [
+          "dict",
+          "ingotRedstone"
+        ]
+      ],
+      "name": "blast.mingradeCursed",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_red_copper",
+            2
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 1200,
+      "inputItem": [
+        [
+          "dict",
+          "oreCopper"
+        ],
+        [
+          "dict",
+          "dustRedstone",
+          6
+        ]
+      ],
+      "name": "blast.mingradeOre",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_red_copper",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:scraps",
+            1,
+            0,
+            "{amount:72,mat:41}"
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 1200,
+      "inputItem": [
+        [
+          "dict",
+          "ingotCobalt"
+        ],
+        [
+          "item",
+          "hbm:meteorite_sword_hardened"
+        ]
+      ],
+      "name": "blast.meteorSword",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:meteorite_sword_alloyed"
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 600,
+      "inputItem": [
+        [
+          "dict",
+          "ingotSaturnite"
+        ],
+        [
+          "item",
+          "hbm:powder_meteorite"
+        ]
+      ],
+      "name": "blast.starmetal",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_starmetal"
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 600,
+      "inputItem": [
+        [
+          "dict",
+          "ingotGold"
+        ],
+        [
+          "item",
+          "hbm:plate_mixed"
+        ]
+      ],
+      "name": "blast.paa",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_paa"
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 800,
+      "inputItem": [
+        [
+          "dict",
+          "dustAluminum"
+        ],
+        [
+          "item",
+          "minecraft:clay_ball",
+          7
+        ]
+      ],
+      "name": "blast.firebrick",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_firebrick",
+            8
+          ]
+        ]
+      ],
+      "power": 0
+    },
+    {
+      "duration": 800,
+      "inputItem": [
+        [
+          "dict",
+          "oreLimestone"
+        ],
+        [
+          "item",
+          "minecraft:clay_ball",
+          6
+        ]
+      ],
+      "name": "blast.firebrickLimestone",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:ingot_firebrick",
+            8
+          ]
+        ]
+      ],
+      "power": 0
+    }
+  ]
+}

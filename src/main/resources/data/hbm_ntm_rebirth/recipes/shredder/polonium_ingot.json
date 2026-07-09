@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ingots/polonium" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_polonium" }
+  "output": { "item": "hbm_ntm_rebirth:powder_polonium" },
+  "source_order": 1000
 }

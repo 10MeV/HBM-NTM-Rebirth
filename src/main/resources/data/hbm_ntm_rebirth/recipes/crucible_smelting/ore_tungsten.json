@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/tungsten"
+    },
+    "legacy_ore": "oreTungsten"
+  },
+  "output": [
+    {
+      "amount": 144,
+      "material": "Tungsten"
+    },
+    {
+      "amount": 162,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 25
+}

@@ -1,7 +1,19 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "loader": "hbm_ntm_rebirth:fluid_duct_exhaust_loader",
+  "straight": "hbm_ntm_rebirth:block/boxduct_exhaust_straight",
+  "end": "hbm_ntm_rebirth:block/boxduct_exhaust_end",
+  "curve_tl": "hbm_ntm_rebirth:block/boxduct_exhaust_curve_tl",
+  "curve_tr": "hbm_ntm_rebirth:block/boxduct_exhaust_curve_tr",
+  "curve_bl": "hbm_ntm_rebirth:block/boxduct_exhaust_curve_bl",
+  "curve_br": "hbm_ntm_rebirth:block/boxduct_exhaust_curve_br",
+  "junction_0": "hbm_ntm_rebirth:block/boxduct_exhaust_junction_0",
+  "junction_1": "hbm_ntm_rebirth:block/boxduct_exhaust_junction_1",
+  "junction_2": "hbm_ntm_rebirth:block/boxduct_exhaust_junction_2",
+  "junction_3": "hbm_ntm_rebirth:block/boxduct_exhaust_junction_3",
+  "junction_4": "hbm_ntm_rebirth:block/boxduct_exhaust_junction_4",
+  "particle": "hbm_ntm_rebirth:block/boxduct_exhaust_straight",
+  "render_type": "minecraft:cutout",
   "textures": {
-    "all": "hbm_ntm_rebirth:block/boxduct_exhaust",
-    "particle": "hbm_ntm_rebirth:block/boxduct_exhaust"
+    "particle": "hbm_ntm_rebirth:block/boxduct_exhaust_straight"
   }
 }

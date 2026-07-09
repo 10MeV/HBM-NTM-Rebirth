@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -63,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
+        HbmEnergyPortInspectable,
         HbmStandardFluidReceiver, HbmLegacyLoadedTile, LegacyProxyDelegateProvider {
     private static final String TAG_INVENTORY = "items";
     private static final String TAG_CUSTOM_NAME = "name";
@@ -374,6 +376,13 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
             ports.add(EnergyPort.of(offset.x(), 0, offset.z(), offset.direction()));
         }
         return ports;
+    }
+
+    @Override
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        return level == null
+                ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
+                : HbmEnergyUtil.inspectPorts(level, worldPosition, connectionEnergyPorts(getBlockState()));
     }
 
     private List<FluidPort> connectionFluidPorts(BlockState state) {

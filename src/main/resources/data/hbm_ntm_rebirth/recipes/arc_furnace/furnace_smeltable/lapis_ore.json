@@ -1,0 +1,29 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.furnace.lapis_ore",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "minecraft:lapis_ore"
+                                           },
+                            "count":  1
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "minecraft:lapis_lazuli"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  2304
+}

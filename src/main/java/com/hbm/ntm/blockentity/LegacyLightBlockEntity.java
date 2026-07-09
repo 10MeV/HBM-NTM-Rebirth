@@ -11,6 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -200,7 +201,7 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
         if (meta == 6) {
             adjustedRotation = 180.0F - adjustedRotation;
         }
-        dir = rotateAroundZ(dir, Math.toRadians(adjustedRotation) + angles[0]);
+        dir = rotateAroundZ(dir, adjustedRotation * Mth.DEG_TO_RAD + angles[0]);
 
         if (meta == 6 || meta == 7 || meta == 2) {
             dir = rotateAroundY(dir, Math.PI / 2.0D);
@@ -269,8 +270,8 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
 
     private static double[] variation(int index) {
         return new double[] {
-                Math.toRadians(((index / 3) - 2) * 7.5D),
-                Math.toRadians(((index % 3) - 1) * 15.0D)
+                ((index / 3) - 2) * 7.5D * Mth.DEG_TO_RAD,
+                ((index % 3) - 1) * 15.0D * Mth.DEG_TO_RAD
         };
     }
 

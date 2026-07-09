@@ -172,6 +172,7 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
             type = HbmFluids.fromId(tag.getInt(TAG_TYPE + "_id"));
         }
         if (level != null && level.isClientSide && previous != type) {
+            requestModelDataUpdate();
             ClientGeometryInvalidationBridge.schedule(worldPosition);
         }
     }
@@ -192,6 +193,7 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
         super.onLoad();
         refreshFluidNode();
         if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
             ClientGeometryInvalidationBridge.scheduleWithNeighbors(worldPosition);
         }
     }

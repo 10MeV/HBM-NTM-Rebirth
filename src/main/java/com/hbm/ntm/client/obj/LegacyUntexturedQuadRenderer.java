@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
+import org.joml.Matrix4f;
 
 public final class LegacyUntexturedQuadRenderer {
     private static final int LEGACY_EFFECT_BUFFER_SIZE = 262_144;
@@ -281,12 +282,22 @@ public final class LegacyUntexturedQuadRenderer {
 
     public static void vertex(VertexConsumer consumer, PoseStack.Pose pose, double x, double y, double z,
                               int red, int green, int blue, int alpha) {
-        consumer.vertex(pose.pose(), (float) x, (float) y, (float) z)
+        vertex(consumer, pose.pose(), x, y, z, red, green, blue, alpha);
+    }
+
+    public static void vertex(VertexConsumer consumer, Matrix4f pose, double x, double y, double z,
+                              int red, int green, int blue, int alpha) {
+        consumer.vertex(pose, (float) x, (float) y, (float) z)
                 .color(red, green, blue, alpha)
                 .endVertex();
     }
 
     public static void vertex(VertexConsumer consumer, PoseStack.Pose pose, double x, double y, double z,
+            int color, int alpha) {
+        vertex(consumer, pose, x, y, z, color >> 16 & 255, color >> 8 & 255, color & 255, alpha);
+    }
+
+    public static void vertex(VertexConsumer consumer, Matrix4f pose, double x, double y, double z,
             int color, int alpha) {
         vertex(consumer, pose, x, y, z, color >> 16 & 255, color >> 8 & 255, color & 255, alpha);
     }
@@ -303,6 +314,17 @@ public final class LegacyUntexturedQuadRenderer {
                             double x3, double y3, double z3,
                             int red, int green, int blue,
                             int alpha0, int alpha1, int alpha2, int alpha3) {
+        quad(consumer, pose.pose(), x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
+                red, green, blue, alpha0, alpha1, alpha2, alpha3);
+    }
+
+    public static void quad(VertexConsumer consumer, Matrix4f pose,
+                            double x0, double y0, double z0,
+                            double x1, double y1, double z1,
+                            double x2, double y2, double z2,
+                            double x3, double y3, double z3,
+                            int red, int green, int blue,
+                            int alpha0, int alpha1, int alpha2, int alpha3) {
         vertex(consumer, pose, x0, y0, z0, red, green, blue, alpha0);
         vertex(consumer, pose, x1, y1, z1, red, green, blue, alpha1);
         vertex(consumer, pose, x2, y2, z2, red, green, blue, alpha2);
@@ -310,6 +332,17 @@ public final class LegacyUntexturedQuadRenderer {
     }
 
     public static void quad(VertexConsumer consumer, PoseStack.Pose pose,
+                            double x0, double y0, double z0,
+                            double x1, double y1, double z1,
+                            double x2, double y2, double z2,
+                            double x3, double y3, double z3,
+                            int color,
+                            int alpha0, int alpha1, int alpha2, int alpha3) {
+        quad(consumer, pose.pose(), x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
+                color, alpha0, alpha1, alpha2, alpha3);
+    }
+
+    public static void quad(VertexConsumer consumer, Matrix4f pose,
                             double x0, double y0, double z0,
                             double x1, double y1, double z1,
                             double x2, double y2, double z2,
@@ -355,6 +388,221 @@ public final class LegacyUntexturedQuadRenderer {
                 rgb(red, green, blue), alpha(alpha0), alpha(alpha1), alpha(alpha2), alpha(alpha3));
     }
 
+    public static QuadBatch quadBatch(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode) {
+        return new QuadBatch(poseStack, buffer, renderMode);
+    }
+
+    public static void quad(QuadBatch batch,
+                            double x0, double y0, double z0,
+                            double x1, double y1, double z1,
+                            double x2, double y2, double z2,
+                            double x3, double y3, double z3,
+                            int color,
+                            int alpha0, int alpha1, int alpha2, int alpha3) {
+        int a0 = clampAlpha(alpha0);
+        int a1 = clampAlpha(alpha1);
+        int a2 = clampAlpha(alpha2);
+        int a3 = clampAlpha(alpha3);
+        if (a0 == a1 && a0 == a2 && a0 == a3
+                && LegacyWavefrontModel.renderUntexturedTransientQuad(batch.poseStack, batch.buffer, batch.renderMode,
+                x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3, color, a0)) {
+            return;
+        }
+        if (LegacyWavefrontModel.renderUntexturedVertexColorTransientQuad(batch.poseStack, batch.buffer,
+                batch.renderMode,
+                x0, y0, z0, color, a0,
+                x1, y1, z1, color, a1,
+                x2, y2, z2, color, a2,
+                x3, y3, z3, color, a3)) {
+            return;
+        }
+        int minimumAlpha = minimumAlpha(a0, a1, a2, a3);
+        quad(batch.fallbackConsumer(minimumAlpha), batch.pose(),
+                x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
+                color, a0, a1, a2, a3);
+    }
+
+    public static final class QuadBatch {
+        private final PoseStack poseStack;
+        private final MultiBufferSource buffer;
+        private final LegacyTexturedRenderMode renderMode;
+        private VertexConsumer fallbackConsumer;
+        private PoseStack.Pose fallbackPose;
+        private int fallbackAlpha = -1;
+
+        private QuadBatch(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode) {
+            this.poseStack = poseStack;
+            this.buffer = buffer;
+            this.renderMode = renderMode;
+        }
+
+        private VertexConsumer fallbackConsumer(int alpha) {
+            if (this.fallbackConsumer == null || this.fallbackAlpha != alpha) {
+                this.fallbackConsumer = consumer(this.buffer, this.renderMode, alpha);
+                this.fallbackAlpha = alpha;
+            }
+            return this.fallbackConsumer;
+        }
+
+        private PoseStack.Pose pose() {
+            if (this.fallbackPose == null) {
+                this.fallbackPose = this.poseStack.last();
+            }
+            return this.fallbackPose;
+        }
+    }
+
+    public static DirectQuadBatch directQuadBatch(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode) {
+        return directQuadBatch(poseStack, buffer, renderMode, 255);
+    }
+
+    public static DirectQuadBatch directQuadBatch(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode, int renderAlpha) {
+        return new DirectQuadBatch(poseStack, buffer, renderMode, renderAlpha);
+    }
+
+    public static final class DirectQuadBatch {
+        private final VertexConsumer consumer;
+        private final PoseStack.Pose pose;
+
+        private DirectQuadBatch(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
+                int renderAlpha) {
+            this.consumer = consumer(buffer, renderMode, renderAlpha);
+            this.pose = poseStack.last();
+        }
+    }
+
+    public static DirectTriangleBatch directTriangleBatch(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode) {
+        return directTriangleBatch(poseStack, buffer, renderMode, 255);
+    }
+
+    public static DirectTriangleBatch directTriangleBatch(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode, int renderAlpha) {
+        return new DirectTriangleBatch(poseStack, buffer, renderMode, renderAlpha);
+    }
+
+    public static final class DirectTriangleBatch {
+        private final VertexConsumer consumer;
+        private final PoseStack.Pose pose;
+
+        private DirectTriangleBatch(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
+                int renderAlpha) {
+            this.consumer = buffer.getBuffer(type(renderMode, renderAlpha, VertexFormat.Mode.TRIANGLES));
+            this.pose = poseStack.last();
+        }
+    }
+
+    public static void quadDirect(DirectQuadBatch batch,
+                            double x0, double y0, double z0, int color0, int alpha0,
+                            double x1, double y1, double z1, int color1, int alpha1,
+                            double x2, double y2, double z2, int color2, int alpha2,
+                            double x3, double y3, double z3, int color3, int alpha3) {
+        vertex(batch.consumer, batch.pose, x0, y0, z0, color0, clampAlpha(alpha0));
+        vertex(batch.consumer, batch.pose, x1, y1, z1, color1, clampAlpha(alpha1));
+        vertex(batch.consumer, batch.pose, x2, y2, z2, color2, clampAlpha(alpha2));
+        vertex(batch.consumer, batch.pose, x3, y3, z3, color3, clampAlpha(alpha3));
+    }
+
+    public static void quadDirect(DirectQuadBatch batch,
+                            double x0, double y0, double z0,
+                            double x1, double y1, double z1,
+                            double x2, double y2, double z2,
+                            double x3, double y3, double z3,
+                            int color, int alpha0, int alpha1, int alpha2, int alpha3) {
+        quadDirect(batch,
+                x0, y0, z0, color, alpha0,
+                x1, y1, z1, color, alpha1,
+                x2, y2, z2, color, alpha2,
+                x3, y3, z3, color, alpha3);
+    }
+
+    public static void quadRgbaFDirect(DirectQuadBatch batch,
+                            double x0, double y0, double z0,
+                            double x1, double y1, double z1,
+                            double x2, double y2, double z2,
+                            double x3, double y3, double z3,
+                            float red, float green, float blue,
+                            float alpha0, float alpha1, float alpha2, float alpha3) {
+        int color = rgb(red, green, blue);
+        quadDirect(batch,
+                x0, y0, z0, color, alpha(alpha0),
+                x1, y1, z1, color, alpha(alpha1),
+                x2, y2, z2, color, alpha(alpha2),
+                x3, y3, z3, color, alpha(alpha3));
+    }
+
+    public static void quadDirect(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
+                            double x0, double y0, double z0, int color0, int alpha0,
+                            double x1, double y1, double z1, int color1, int alpha1,
+                            double x2, double y2, double z2, int color2, int alpha2,
+                            double x3, double y3, double z3, int color3, int alpha3) {
+        int a0 = clampAlpha(alpha0);
+        int a1 = clampAlpha(alpha1);
+        int a2 = clampAlpha(alpha2);
+        int a3 = clampAlpha(alpha3);
+        VertexConsumer consumer = consumer(buffer, renderMode, minimumAlpha(a0, a1, a2, a3));
+        PoseStack.Pose pose = poseStack.last();
+        vertex(consumer, pose, x0, y0, z0, color0, a0);
+        vertex(consumer, pose, x1, y1, z1, color1, a1);
+        vertex(consumer, pose, x2, y2, z2, color2, a2);
+        vertex(consumer, pose, x3, y3, z3, color3, a3);
+    }
+
+    public static void quadDirect(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
+                            double x0, double y0, double z0,
+                            double x1, double y1, double z1,
+                            double x2, double y2, double z2,
+                            double x3, double y3, double z3,
+                            int color, int alpha0, int alpha1, int alpha2, int alpha3) {
+        quadDirect(poseStack, buffer, renderMode,
+                x0, y0, z0, color, alpha0,
+                x1, y1, z1, color, alpha1,
+                x2, y2, z2, color, alpha2,
+                x3, y3, z3, color, alpha3);
+    }
+
+    public static void quadRgbaFDirect(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
+                            double x0, double y0, double z0,
+                            double x1, double y1, double z1,
+                            double x2, double y2, double z2,
+                            double x3, double y3, double z3,
+                            float red, float green, float blue,
+                            float alpha0, float alpha1, float alpha2, float alpha3) {
+        int color = rgb(red, green, blue);
+        quadDirect(poseStack, buffer, renderMode,
+                x0, y0, z0, color, alpha(alpha0),
+                x1, y1, z1, color, alpha(alpha1),
+                x2, y2, z2, color, alpha(alpha2),
+                x3, y3, z3, color, alpha(alpha3));
+    }
+
+    public static void triangleDirect(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
+                            double x0, double y0, double z0, int color0, int alpha0,
+                            double x1, double y1, double z1, int color1, int alpha1,
+                            double x2, double y2, double z2, int color2, int alpha2) {
+        int a0 = clampAlpha(alpha0);
+        int a1 = clampAlpha(alpha1);
+        int a2 = clampAlpha(alpha2);
+        VertexConsumer consumer = buffer.getBuffer(type(renderMode, minimumAlpha(a0, a1, a2),
+                VertexFormat.Mode.TRIANGLES));
+        PoseStack.Pose pose = poseStack.last();
+        vertex(consumer, pose, x0, y0, z0, color0, a0);
+        vertex(consumer, pose, x1, y1, z1, color1, a1);
+        vertex(consumer, pose, x2, y2, z2, color2, a2);
+    }
+
+    public static void triangleDirect(DirectTriangleBatch batch,
+                            double x0, double y0, double z0, int color0, int alpha0,
+                            double x1, double y1, double z1, int color1, int alpha1,
+                            double x2, double y2, double z2, int color2, int alpha2) {
+        vertex(batch.consumer, batch.pose, x0, y0, z0, color0, clampAlpha(alpha0));
+        vertex(batch.consumer, batch.pose, x1, y1, z1, color1, clampAlpha(alpha1));
+        vertex(batch.consumer, batch.pose, x2, y2, z2, color2, clampAlpha(alpha2));
+    }
+
     public static void doubleSidedQuad(VertexConsumer consumer, PoseStack.Pose pose,
                                        double x0, double y0, double z0,
                                        double x1, double y1, double z1,
@@ -397,9 +645,36 @@ public final class LegacyUntexturedQuadRenderer {
                 clampAlpha(alpha0), clampAlpha(alpha1), clampAlpha(alpha2), clampAlpha(alpha3));
     }
 
+    public static void doubleSidedQuadDirect(PoseStack poseStack, MultiBufferSource buffer,
+                                       LegacyTexturedRenderMode renderMode,
+                                       double x0, double y0, double z0,
+                                       double x1, double y1, double z1,
+                                       double x2, double y2, double z2,
+                                       double x3, double y3, double z3,
+                                       int color,
+                                       int alpha0, int alpha1, int alpha2, int alpha3) {
+        int a0 = clampAlpha(alpha0);
+        int a1 = clampAlpha(alpha1);
+        int a2 = clampAlpha(alpha2);
+        int a3 = clampAlpha(alpha3);
+        VertexConsumer consumer = consumer(buffer, renderMode, minimumAlpha(a0, a1, a2, a3));
+        doubleSidedQuad(consumer, poseStack.last(), x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
+                color >> 16 & 255, color >> 8 & 255, color & 255, a0, a1, a2, a3);
+    }
+
     public static void horizontalQuad(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
             double y, double minX, double minZ, double maxX, double maxZ, int color, int alpha) {
         quad(poseStack, buffer, renderMode,
+                minX, y, minZ,
+                minX, y, maxZ,
+                maxX, y, maxZ,
+                maxX, y, minZ,
+                color, alpha, alpha, alpha, alpha);
+    }
+
+    public static void horizontalQuad(DirectQuadBatch batch,
+            double y, double minX, double minZ, double maxX, double maxZ, int color, int alpha) {
+        quadDirect(batch,
                 minX, y, minZ,
                 minX, y, maxZ,
                 maxX, y, maxZ,
@@ -418,10 +693,31 @@ public final class LegacyUntexturedQuadRenderer {
         }
     }
 
+    public static void horizontalSlices(DirectQuadBatch batch,
+            double minX, double minZ, double maxX, double maxZ,
+            double minY, double maxY, double step, int color, int alpha) {
+        if (step <= 0.0D || maxY < minY) {
+            return;
+        }
+        for (double y = minY; y <= maxY + 1.0E-6D; y += step) {
+            horizontalQuad(batch, y, minX, minZ, maxX, maxZ, color, alpha);
+        }
+    }
+
     public static void xPlaneCenteredRect(PoseStack poseStack, MultiBufferSource buffer,
             LegacyTexturedRenderMode renderMode, double x, double y, double z, double halfY, double halfZ,
             int color, int alpha) {
         quad(poseStack, buffer, renderMode,
+                x, y + halfY, z - halfZ,
+                x, y + halfY, z + halfZ,
+                x, y - halfY, z + halfZ,
+                x, y - halfY, z - halfZ,
+                color, alpha, alpha, alpha, alpha);
+    }
+
+    public static void xPlaneCenteredRect(DirectQuadBatch batch,
+            double x, double y, double z, double halfY, double halfZ, int color, int alpha) {
+        quadDirect(batch,
                 x, y + halfY, z - halfZ,
                 x, y + halfY, z + halfZ,
                 x, y - halfY, z + halfZ,
@@ -451,12 +747,39 @@ public final class LegacyUntexturedQuadRenderer {
                 color, alpha, alpha, alpha, alpha);
     }
 
+    public static void xPlaneDot(DirectQuadBatch batch,
+            double x, double y, double z, double width, double edge, int color, int alpha) {
+        quadDirect(batch,
+                x, y + width, z,
+                x, y + edge, z + edge,
+                x, y, z + width,
+                x, y - edge, z + edge,
+                color, alpha, alpha, alpha, alpha);
+        quadDirect(batch,
+                x, y + edge, z - edge,
+                x, y + width, z,
+                x, y - edge, z - edge,
+                x, y, z - width,
+                color, alpha, alpha, alpha, alpha);
+        quadDirect(batch,
+                x, y + width, z,
+                x, y - edge, z + edge,
+                x, y - width, z,
+                x, y - edge, z - edge,
+                color, alpha, alpha, alpha, alpha);
+    }
+
     private static int minimumAlpha(int... vertexAlphas) {
         int alpha = 255;
         for (int vertexAlpha : vertexAlphas) {
             alpha = Math.min(alpha, clampAlpha(vertexAlpha));
         }
         return alpha;
+    }
+
+    private static int minimumAlpha(int alpha0, int alpha1, int alpha2, int alpha3) {
+        return Math.min(Math.min(clampAlpha(alpha0), clampAlpha(alpha1)),
+                Math.min(clampAlpha(alpha2), clampAlpha(alpha3)));
     }
 
     private static int clampAlpha(int alpha) {

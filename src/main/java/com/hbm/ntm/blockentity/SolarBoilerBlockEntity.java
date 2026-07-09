@@ -114,6 +114,10 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         return Collections.unmodifiableSet(secondaryBeamTargets);
     }
 
+    public boolean hasSolarMirrorBeamTargets() {
+        return !secondaryBeamTargets.isEmpty();
+    }
+
     @Nullable
     @Override
     public HbmFluidTank getTankToPasteFluidSettings() {

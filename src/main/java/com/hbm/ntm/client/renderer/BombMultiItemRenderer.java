@@ -89,67 +89,37 @@ public class BombMultiItemRenderer extends BlockEntityWithoutLevelRenderer {
     }
 
     private static AABB transformedInventoryBounds(AABB bounds) {
-        return transformBounds(bounds, point -> {
-            Vec3 transformed = applyLegacyCommonTransform(point);
-            transformed = new Vec3(transformed.x * LEGACY_INVENTORY_SCALE,
-                    transformed.y * LEGACY_INVENTORY_SCALE,
-                    transformed.z * LEGACY_INVENTORY_SCALE);
-            return transformed.add(0.0D, -1.0D, 0.0D);
+        double sinY = LegacyTransformedBounds.sinDeg(90.0F);
+        double cosY = LegacyTransformedBounds.cosDeg(90.0F);
+        double sinX = LegacyTransformedBounds.sinDeg(180.0F);
+        double cosX = LegacyTransformedBounds.cosDeg(180.0F);
+        return LegacyTransformedBounds.transform(bounds, (x, y, z, accumulator) -> {
+            double rotatedYx = LegacyTransformedBounds.rotateYX(x, z, sinY, cosY);
+            double rotatedYz = LegacyTransformedBounds.rotateYZ(x, z, sinY, cosY);
+            double rotatedXy = y * cosX - rotatedYz * sinX;
+            double rotatedXz = y * sinX + rotatedYz * cosX;
+            double commonX = rotatedYx * 3.0D + 0.75D;
+            double commonY = (rotatedXy + 0.5D) * 3.0D;
+            double commonZ = rotatedXz * 3.0D;
+            accumulator.include(commonX * LEGACY_INVENTORY_SCALE,
+                    commonY * LEGACY_INVENTORY_SCALE - 1.0D,
+                    commonZ * LEGACY_INVENTORY_SCALE);
         });
     }
 
     private static AABB transformedCommonBounds(AABB bounds) {
-        return transformBounds(bounds, BombMultiItemRenderer::applyLegacyCommonTransform);
-    }
-
-    private static Vec3 applyLegacyCommonTransform(Vec3 point) {
-        Vec3 transformed = rotateY(point, 90.0F);
-        transformed = rotateX(transformed, 180.0F);
-        transformed = transformed.add(0.0D, 0.5D, 0.0D);
-        transformed = new Vec3(transformed.x * 3.0D, transformed.y * 3.0D, transformed.z * 3.0D);
-        return transformed.add(0.75D, 0.0D, 0.0D);
-    }
-
-    private static AABB transformBounds(AABB bounds, PointTransform transform) {
-        double minX = Double.POSITIVE_INFINITY;
-        double minY = Double.POSITIVE_INFINITY;
-        double minZ = Double.POSITIVE_INFINITY;
-        double maxX = Double.NEGATIVE_INFINITY;
-        double maxY = Double.NEGATIVE_INFINITY;
-        double maxZ = Double.NEGATIVE_INFINITY;
-
-        for (double x : new double[] { bounds.minX, bounds.maxX }) {
-            for (double y : new double[] { bounds.minY, bounds.maxY }) {
-                for (double z : new double[] { bounds.minZ, bounds.maxZ }) {
-                    Vec3 point = transform.apply(new Vec3(x, y, z));
-                    minX = Math.min(minX, point.x);
-                    minY = Math.min(minY, point.y);
-                    minZ = Math.min(minZ, point.z);
-                    maxX = Math.max(maxX, point.x);
-                    maxY = Math.max(maxY, point.y);
-                    maxZ = Math.max(maxZ, point.z);
-                }
-            }
-        }
-
-        return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private static Vec3 rotateX(Vec3 point, float degrees) {
-        double radians = Math.toRadians(degrees);
-        double sin = Math.sin(radians);
-        double cos = Math.cos(radians);
-        return new Vec3(point.x, point.y * cos - point.z * sin, point.y * sin + point.z * cos);
-    }
-
-    private static Vec3 rotateY(Vec3 point, float degrees) {
-        double radians = Math.toRadians(degrees);
-        double sin = Math.sin(radians);
-        double cos = Math.cos(radians);
-        return new Vec3(point.x * cos + point.z * sin, point.y, point.z * cos - point.x * sin);
-    }
-
-    private interface PointTransform {
-        Vec3 apply(Vec3 point);
+        double sinY = LegacyTransformedBounds.sinDeg(90.0F);
+        double cosY = LegacyTransformedBounds.cosDeg(90.0F);
+        double sinX = LegacyTransformedBounds.sinDeg(180.0F);
+        double cosX = LegacyTransformedBounds.cosDeg(180.0F);
+        return LegacyTransformedBounds.transform(bounds, (x, y, z, accumulator) -> {
+            double rotatedYx = LegacyTransformedBounds.rotateYX(x, z, sinY, cosY);
+            double rotatedYz = LegacyTransformedBounds.rotateYZ(x, z, sinY, cosY);
+            double rotatedXy = y * cosX - rotatedYz * sinX;
+            double rotatedXz = y * sinX + rotatedYz * cosX;
+            accumulator.include(rotatedYx * 3.0D + 0.75D,
+                    (rotatedXy + 0.5D) * 3.0D,
+                    rotatedXz * 3.0D);
+        });
     }
 }

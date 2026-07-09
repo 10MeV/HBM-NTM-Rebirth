@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.lde.aluminium",
+  "duration": 200,
+  "power": 5000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/aluminium" }, "count": 4, "legacy_ore": "plateAluminum" },
+    { "ingredient": { "tag": "forge:ingots/fiberglass" }, "count": 4, "legacy_ore": "ingotFiberglass" },
+    { "ingredient": { "tag": "forge:ingots/any_hardplastic" }, "count": 1, "legacy_ore": "ingotAnyHardplastic" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:part_generic_lde" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 1
+}

@@ -1,10 +1,27 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/aluminium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_aluminium"
+    },
+    "legacy_id": "hbm:crystal_aluminium",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:chunk_ore_cryolite", "count": 3 },
-    { "item": "hbm_ntm_rebirth:powder_titanium" },
-    { "item": "hbm_ntm_rebirth:powder_iron" },
-    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
-  ]
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:chunk_ore_cryolite"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_titanium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_iron"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_lithium_tiny"
+    }
+  ],
+  "source_order": 44
 }

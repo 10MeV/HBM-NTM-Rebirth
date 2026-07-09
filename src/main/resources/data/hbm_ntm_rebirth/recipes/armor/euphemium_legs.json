@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:plate_euphemium"
+    }
+  },
+  "pattern": [
+    "EEE",
+    "E E",
+    "E E"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:euphemium_legs"
+  },
+  "show_notification": true
+}

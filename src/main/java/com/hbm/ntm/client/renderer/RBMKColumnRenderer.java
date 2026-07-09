@@ -10,6 +10,7 @@ import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.UntexturedQuadGroup;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.neutron.RBMKControlRodPlanner;
 import com.hbm.ntm.neutron.RBMKStructureDimensions;
@@ -23,6 +24,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Arrays;
 
@@ -71,6 +73,9 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
         } else {
             renderStaticSegment(blockRenderer, state, 0, columnHeightAbove(), poseStack, buffer, modelLight);
         }
+        if (!hasDynamicSegments(column.kind())) {
+            return;
+        }
         if (column.getLevel() != null
                 && !MultiblockHelper.isOperationalCoreLayoutComplete(column.getLevel(), column.getBlockPos())) {
             return;
@@ -81,6 +86,12 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
     @Override
     public boolean shouldRenderOffScreen(RBMKColumnBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(RBMKColumnBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -118,7 +129,7 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
     public static void renderDynamicSegment(RBMKColumnBlockEntity column, int segmentIndex, float partialTick,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (segmentIndex < 0 || !column.hasOperationalLayout()) {
+        if (segmentIndex < 0 || !hasDynamicSegments(column.kind()) || !column.hasOperationalLayout()) {
             return;
         }
         BlockState state = column.getBlockState();
@@ -160,8 +171,9 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
         if (plan.cherenkov()) {
             int frozenSegmentIndex = segmentIndex;
             int frozenColumnOffset = plan.columnOffset();
-            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                    queuedPose -> renderCherenkovSegment(queuedPose, buffer, frozenSegmentIndex, frozenColumnOffset));
+            LegacyMachineEffectPresenter.enqueueUntexturedQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                    buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                    group -> renderCherenkovSegment(group, frozenSegmentIndex, frozenColumnOffset));
         }
         poseStack.popPose();
     }
@@ -190,7 +202,7 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
         poseStack.popPose();
     }
 
-    private static void renderCherenkovSegment(PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderCherenkovSegment(UntexturedQuadGroup group,
             int segmentIndex, int columnOffset) {
         double globalMax = columnOffset + ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_START_Y;
         double localMin = Math.max(0.0D, ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_START_Y - segmentIndex);
@@ -198,10 +210,22 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
         if (localMax < localMin) {
             return;
         }
-        LegacyUntexturedQuadRenderer.horizontalSlices(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
-                -0.5D, -0.5D, 0.5D, 0.5D,
-                localMin, localMax, ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_STEP,
-                ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_COLOR, ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_ALPHA);
+        double step = ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_STEP;
+        if (step <= 0.0D) {
+            return;
+        }
+        for (double y = localMin; y <= localMax + 1.0E-6D; y += step) {
+            group.add(
+                    -0.5D, y, -0.5D,
+                    -0.5D, y, 0.5D,
+                    0.5D, y, 0.5D,
+                    0.5D, y, -0.5D,
+                    ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_COLOR,
+                    ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_ALPHA,
+                    ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_ALPHA,
+                    ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_ALPHA,
+                    ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_ALPHA);
+        }
     }
 
     private static void renderFuelChannelStaticSegment(RBMKColumnBlock.Kind kind, BlockState state,
@@ -225,30 +249,40 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
     private static void renderFuelChannelSideShell(TextureAtlasSprite side, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
-        LegacyTexturedQuadRenderer.spriteQuad(side, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 0.0F, 1.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 1.0D, 1.0D, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 1.0D, 1.0D, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 0.0D, 1.0D, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 0.0D, 1.0D, 16.0D, 16.0D));
-        LegacyTexturedQuadRenderer.spriteQuad(side, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 1.0D, 1.0D, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 1.0D, 0.0D, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 0.0D, 0.0D, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 0.0D, 1.0D, 16.0D, 16.0D));
-        LegacyTexturedQuadRenderer.spriteQuad(side, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 0.0F, -1.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 1.0D, 0.0D, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 1.0D, 0.0D, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 0.0D, 0.0D, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(1.0D, 0.0D, 0.0D, 16.0D, 16.0D));
-        LegacyTexturedQuadRenderer.spriteQuad(side, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, -1.0F, 0.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 1.0D, 0.0D, 16.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 1.0D, 1.0D, 0.0D, 0.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 0.0D, 1.0D, 0.0D, 16.0D),
-                LegacyTexturedQuadRenderer.spritePixelVertex(0.0D, 0.0D, 0.0D, 16.0D, 16.0D));
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(poseStack,
+                buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
+        LegacyTexturedQuadRenderer.spritePixelQuadDirect(side, batch, packedLight,
+                OverlayTexture.NO_OVERLAY, 0.0F, 0.0F, 1.0F,
+                1.0D, 1.0D, 1.0D, 16.0D, 0.0D,
+                0.0D, 1.0D, 1.0D, 0.0D, 0.0D,
+                0.0D, 0.0D, 1.0D, 0.0D, 16.0D,
+                1.0D, 0.0D, 1.0D, 16.0D, 16.0D,
+                0xFFFFFF, 255);
+        LegacyTexturedQuadRenderer.spritePixelQuadDirect(side, batch, packedLight,
+                OverlayTexture.NO_OVERLAY, 1.0F, 0.0F, 0.0F,
+                1.0D, 1.0D, 1.0D, 16.0D, 0.0D,
+                1.0D, 1.0D, 0.0D, 0.0D, 0.0D,
+                1.0D, 0.0D, 0.0D, 0.0D, 16.0D,
+                1.0D, 0.0D, 1.0D, 16.0D, 16.0D,
+                0xFFFFFF, 255);
+        LegacyTexturedQuadRenderer.spritePixelQuadDirect(side, batch, packedLight,
+                OverlayTexture.NO_OVERLAY, 0.0F, 0.0F, -1.0F,
+                1.0D, 1.0D, 0.0D, 16.0D, 0.0D,
+                0.0D, 1.0D, 0.0D, 0.0D, 0.0D,
+                0.0D, 0.0D, 0.0D, 0.0D, 16.0D,
+                1.0D, 0.0D, 0.0D, 16.0D, 16.0D,
+                0xFFFFFF, 255);
+        LegacyTexturedQuadRenderer.spritePixelQuadDirect(side, batch, packedLight,
+                OverlayTexture.NO_OVERLAY, -1.0F, 0.0F, 0.0F,
+                0.0D, 1.0D, 0.0D, 16.0D, 0.0D,
+                0.0D, 1.0D, 1.0D, 0.0D, 0.0D,
+                0.0D, 0.0D, 1.0D, 0.0D, 16.0D,
+                0.0D, 0.0D, 0.0D, 16.0D, 16.0D,
+                0xFFFFFF, 255);
+    }
+
+    public static boolean hasDynamicSegments(RBMKColumnBlock.Kind kind) {
+        return kind != null && (kind.rod() || kind.control());
     }
 
     private static void renderFuelChannelLidSlab(FuelChannelSprites sprites, RBMKColumnBlock.LidType lid,
@@ -283,28 +317,28 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
         if (sprites == null) {
             return;
         }
-        renderPipePad(sprites.top(), sprites.side(), poseStack, buffer, packedLight,
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(poseStack,
+                buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
+        renderPipePad(sprites.top(), sprites.side(), batch, packedLight,
                 PIPE_PAD_MIN_LOW, PIPE_PAD_MIN_LOW, PIPE_PAD_MAX_LOW, PIPE_PAD_MAX_LOW);
-        renderPipePad(sprites.top(), sprites.side(), poseStack, buffer, packedLight,
+        renderPipePad(sprites.top(), sprites.side(), batch, packedLight,
                 PIPE_PAD_MIN_LOW, PIPE_PAD_MIN_HIGH, PIPE_PAD_MAX_LOW, PIPE_PAD_MAX_HIGH);
-        renderPipePad(sprites.top(), sprites.side(), poseStack, buffer, packedLight,
+        renderPipePad(sprites.top(), sprites.side(), batch, packedLight,
                 PIPE_PAD_MIN_HIGH, PIPE_PAD_MIN_HIGH, PIPE_PAD_MAX_HIGH, PIPE_PAD_MAX_HIGH);
-        renderPipePad(sprites.top(), sprites.side(), poseStack, buffer, packedLight,
+        renderPipePad(sprites.top(), sprites.side(), batch, packedLight,
                 PIPE_PAD_MIN_HIGH, PIPE_PAD_MIN_LOW, PIPE_PAD_MAX_HIGH, PIPE_PAD_MAX_LOW);
     }
 
     private static void renderPipePad(TextureAtlasSprite top, TextureAtlasSprite side,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            LegacyTexturedQuadRenderer.SpriteQuadBatch batch, int packedLight,
             double minX, double minZ, double maxX, double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side,
-                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, 255,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                batch, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, 255,
                 minX, PIPE_PAD_MIN_Y, minZ, maxX, PIPE_PAD_MAX_Y, maxZ);
     }
 
     private static TextureAtlasSprite blockSprite(String name) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID,
-                "block/rbmk/icons/" + name));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/rbmk/icons/" + name);
     }
 
     private static PipePadSprites pipePadTextures(RBMKColumnBlock.Kind kind) {

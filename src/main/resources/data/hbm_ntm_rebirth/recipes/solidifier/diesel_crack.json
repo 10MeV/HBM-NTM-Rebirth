@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:diesel_crack",
                   "amount":  14000
-              }
+              },
+    "source_order":  30
 }

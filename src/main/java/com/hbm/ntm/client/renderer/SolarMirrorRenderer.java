@@ -5,6 +5,7 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.core.BlockPos;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -24,6 +25,12 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
     }
 
     @Override
+    public boolean shouldRender(SolarMirrorBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }
@@ -40,8 +47,9 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 if (blockEntity.isTargetAbove()) {
-                    Vec3 delta = Vec3.atLowerCornerOf(blockEntity.getTarget().subtract(blockEntity.getBlockPos()));
-                    aimAt(delta, poseStack);
+                    BlockPos target = blockEntity.getTarget();
+                    BlockPos origin = blockEntity.getBlockPos();
+                    aimAt(target.getX() - origin.getX(), target.getY() - origin.getY(), target.getZ() - origin.getZ(), poseStack);
                 }
                 SOLAR_MIRROR.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, MIRROR);
             }
@@ -49,13 +57,13 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
         poseStack.popPose();
     }
 
-    private static void aimAt(Vec3 delta, PoseStack poseStack) {
-        double distance = delta.length();
+    private static void aimAt(double dx, double dy, double dz, PoseStack poseStack) {
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (distance <= 0.0D) {
             return;
         }
-        double pitch = -Math.asin(delta.y / distance) + Math.PI / 2.0D;
-        double yaw = -Math.atan2(delta.z, delta.x) - Math.PI / 2.0D;
+        double pitch = -Math.asin(dy / distance) + Math.PI / 2.0D;
+        double yaw = -Math.atan2(dz, dx) - Math.PI / 2.0D;
         poseStack.translate(0.0D, 1.0D, 0.0D);
         poseStack.mulPose(Axis.YP.rotation((float) yaw));
         poseStack.mulPose(Axis.XP.rotation((float) pitch));

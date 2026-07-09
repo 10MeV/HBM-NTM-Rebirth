@@ -84,7 +84,6 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
@@ -116,6 +115,8 @@ public final class ClientForgeEvents {
     private static boolean hadLevel;
     private static boolean pushedNukeHudShake;
     private static float renderSoot;
+    private static final float DEG_TO_RAD = (float) (Math.PI / 180.0D);
+    private static PoseStack torexCloudletPose = new PoseStack();
     private static final int NOTICE_EMPTY_GAS_MASK_FILTER = 1;
     private static final int NOTICE_EMPTY_GAS_MASK_FILTER_MILLIS = 1_500;
     private static final Map<Integer, Long> VANISHED_ENTITIES = new HashMap<>();
@@ -381,7 +382,7 @@ public final class ClientForgeEvents {
             LegacyMachineEffectPresenter.present(PresentStage.AFTER_LEVEL);
             HbmDeferredParticleRenderer.renderAfterLevel(event.getCamera(), event.getPartialTick(),
                     minecraft.renderBuffers().bufferSource());
-            PoseStack torexPoseStack = new PoseStack();
+            PoseStack torexPoseStack = resetTorexCloudletPose();
             torexPoseStack.mulPose(Axis.XP.rotationDegrees(event.getCamera().getXRot()));
             torexPoseStack.mulPose(Axis.YP.rotationDegrees(event.getCamera().getYRot() + 180.0F));
             NukeTorexRenderer.renderCloudletsAfterLevel(minecraft.level, event.getCamera(), event.getPartialTick(),
@@ -399,6 +400,17 @@ public final class ClientForgeEvents {
             HbmRenderFrameCulling.endFrame();
             HbmRenderFrameFlags.endFrame();
         }
+    }
+
+    private static PoseStack resetTorexCloudletPose() {
+        PoseStack poseStack = torexCloudletPose;
+        if (!poseStack.clear()) {
+            poseStack = new PoseStack();
+            torexCloudletPose = poseStack;
+        } else {
+            poseStack.setIdentity();
+        }
+        return poseStack;
     }
 
     @SubscribeEvent
@@ -578,66 +590,70 @@ public final class ClientForgeEvents {
                 float size = Math.max(0.05F, vortex.getSize());
                 int lifetime = Math.max(1, (int) Math.ceil(size / Math.max(0.0001F, vortex.shrinkRate())) + 2);
                 float intensity = Mth.clamp(size / 1.5F, 0.05F, 1.0F) * 1.35F;
-                Vec3 pos = vortex.getPosition(partialTick);
-                HbmBlackHoleEffects.updateTrackedBlackHole(vortex.getId(), pos.x, pos.y, pos.z,
-                        HbmBlackHoleEffects.BlackHoleSpec.of(size, lifetime)
-                                .withFade(0.0F, Math.max(1, lifetime - 20))
-                                .withAccretionDiskDensity(0.01F)
-                                .withTiltAngle((float) Math.toRadians(vortex.getId() % 90 - 45))
-                                .withIntensity(intensity)
-                                .withRenderQuality(1.6F, 0.45F)
-                                .withLensBoundarySoftness(0.6F)
-                                .withDiskDetail(1.0F, 0.35F)
-                                .withDiskColor(0.45F, 0.85F, 1.0F)
-                                .withDiskRamp(0.85F, 1.35F, 1.6F, 0.05F, 0.45F, 1.0F),
+                HbmBlackHoleEffects.updateTrackedBlackHole(vortex.getId(), renderX(vortex, partialTick),
+                        renderY(vortex, partialTick), renderZ(vortex, partialTick),
+                        HbmBlackHoleEffects.BlackHoleSpec.ofConfigured(size, lifetime,
+                                0.0F, Math.max(1, lifetime - 20),
+                                0.01F, (vortex.getId() % 90 - 45) * DEG_TO_RAD, intensity,
+                                1.6F, 0.45F, 0.6F,
+                                1.0F, 0.35F,
+                                0.45F, 0.85F, 1.0F,
+                                0.85F, 1.35F, 1.6F,
+                                0.05F, 0.45F, 1.0F),
                         0);
             } else if (entity instanceof RagingVortexEntity ragingVortex) {
                 float size = Math.max(0.05F, ragingVortex.getSize());
-                Vec3 pos = ragingVortex.getPosition(partialTick);
-                HbmBlackHoleEffects.updateTrackedBlackHole(ragingVortex.getId(), pos.x, pos.y, pos.z,
-                        HbmBlackHoleEffects.BlackHoleSpec.of(size, 20 * 60)
-                                .withFade(0.0F, 20 * 60 - 20)
-                                .withAccretionDiskDensity(0.01F)
-                                .withTiltAngle((float) Math.toRadians(ragingVortex.getId() % 90 - 45))
-                                .withIntensity(1.45F)
-                                .withRenderQuality(1.45F, 0.55F)
-                                .withLensBoundarySoftness(0.6F)
-                                .withDiskDetail(1.0F, 0.35F)
-                                .withDiskColor(0.82F, 0.68F, 1.0F)
-                                .withDiskRamp(1.55F, 1.25F, 2.0F, 0.45F, 0.18F, 0.95F),
+                HbmBlackHoleEffects.updateTrackedBlackHole(ragingVortex.getId(), renderX(ragingVortex, partialTick),
+                        renderY(ragingVortex, partialTick), renderZ(ragingVortex, partialTick),
+                        HbmBlackHoleEffects.BlackHoleSpec.ofConfigured(size, 20 * 60,
+                                0.0F, 20 * 60 - 20,
+                                0.01F, (ragingVortex.getId() % 90 - 45) * DEG_TO_RAD, 1.45F,
+                                1.45F, 0.55F, 0.6F,
+                                1.0F, 0.35F,
+                                0.82F, 0.68F, 1.0F,
+                                1.55F, 1.25F, 2.0F,
+                                0.45F, 0.18F, 0.95F),
                         0);
             } else if (entity instanceof QuasarEntity quasar) {
                 float size = Math.max(0.05F, quasar.getSize());
-                Vec3 pos = quasar.getPosition(partialTick);
-                HbmBlackHoleEffects.updateTrackedBlackHole(quasar.getId(), pos.x, pos.y, pos.z,
-                        HbmBlackHoleEffects.BlackHoleSpec.of(size, 20 * 60)
-                                .withFade(0.0F, 20 * 60 - 20)
-                                .withAccretionDiskDensity(0.01F)
-                                .withTiltAngle((float) Math.toRadians(quasar.getId() % 90 - 45))
-                                .withIntensity(1.35F)
-                                .withRenderQuality(1.35F, 0.7F)
-                                .withLensBoundarySoftness(0.6F)
-                                .withDiskDetail(1.0F, 0.35F)
-                                .withDiskColor(1.0F, 0.08F, 0.05F)
-                                .withDiskRamp(1.8F, 0.1F, 0.05F, 0.45F, 0.0F, 0.0F),
+                HbmBlackHoleEffects.updateTrackedBlackHole(quasar.getId(), renderX(quasar, partialTick),
+                        renderY(quasar, partialTick), renderZ(quasar, partialTick),
+                        HbmBlackHoleEffects.BlackHoleSpec.ofConfigured(size, 20 * 60,
+                                0.0F, 20 * 60 - 20,
+                                0.01F, (quasar.getId() % 90 - 45) * DEG_TO_RAD, 1.35F,
+                                1.35F, 0.7F, 0.6F,
+                                1.0F, 0.35F,
+                                1.0F, 0.08F, 0.05F,
+                                1.8F, 0.1F, 0.05F,
+                                0.45F, 0.0F, 0.0F),
                         0);
             } else if (entity instanceof BlackHoleEntity blackHole) {
                 float size = Math.max(0.05F, blackHole.getSize());
-                Vec3 pos = blackHole.getPosition(partialTick);
-                HbmBlackHoleEffects.updateTrackedBlackHole(blackHole.getId(), pos.x, pos.y, pos.z,
-                        HbmBlackHoleEffects.BlackHoleSpec.of(size, 20 * 60)
-                                .withFade(0.0F, 20 * 60 - 20)
-                                .withAccretionDiskDensity(0.01F)
-                                .withTiltAngle((float) Math.toRadians(blackHole.getId() % 90 - 45))
-                                .withIntensity(1.2F)
-                                .withRenderQuality(1.35F, 0.7F)
-                                .withLensBoundarySoftness(0.6F)
-                                .withDiskDetail(1.0F, 0.35F)
-                                .withDiskColor(1.0F, 0.99F, 0.9F)
-                                .withDiskRamp(2.0F, 1.95F, 1.68F, 1.0F, 0.88F, 0.46F),
+                HbmBlackHoleEffects.updateTrackedBlackHole(blackHole.getId(), renderX(blackHole, partialTick),
+                        renderY(blackHole, partialTick), renderZ(blackHole, partialTick),
+                        HbmBlackHoleEffects.BlackHoleSpec.ofConfigured(size, 20 * 60,
+                                0.0F, 20 * 60 - 20,
+                                0.01F, (blackHole.getId() % 90 - 45) * DEG_TO_RAD, 1.2F,
+                                1.35F, 0.7F, 0.6F,
+                                1.0F, 0.35F,
+                                1.0F, 0.99F, 0.9F,
+                                2.0F, 1.95F, 1.68F,
+                                1.0F, 0.88F, 0.46F),
                         0);
             }
         }
+    }
+
+    private static double renderX(Entity entity, float partialTick) {
+        return Mth.lerp(partialTick, entity.xOld, entity.getX());
+    }
+
+    private static double renderY(Entity entity, float partialTick) {
+        return Mth.lerp(partialTick, entity.yOld, entity.getY());
+    }
+
+    private static double renderZ(Entity entity, float partialTick) {
+        return Mth.lerp(partialTick, entity.zOld, entity.getZ());
     }
 
     private static void clearNetworkState() {

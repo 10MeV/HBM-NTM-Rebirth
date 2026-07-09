@@ -1,0 +1,34 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "count": 4
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_pcb"
+      },
+      "count": 4
+    }
+  ],
+  "solder": [
+    {
+      "ingredient": {
+        "tag": "forge:wires/lead"
+      },
+      "count": 4,
+      "legacy_ore": "wireFineLead"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:circuit_basic"
+  },
+  "duration": 200,
+  "consumption": 250,
+  "source_order": 1
+}

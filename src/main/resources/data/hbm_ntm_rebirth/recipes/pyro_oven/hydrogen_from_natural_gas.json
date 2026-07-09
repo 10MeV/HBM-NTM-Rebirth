@@ -12,5 +12,6 @@
     "item": "hbm_ntm_rebirth:ingot_graphite",
     "count": 1
   },
-  "duration": 60
+  "duration": 60,
+  "source_order": 39
 }

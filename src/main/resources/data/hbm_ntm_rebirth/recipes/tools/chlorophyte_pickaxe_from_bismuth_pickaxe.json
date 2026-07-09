@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "tag": "forge:ingots/fiberglass"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:powder_chlorophyte"
+    },
+    "F": {
+      "tag": "forge:bolts/dura_steel"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:bismuth_pickaxe"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:blades_steel"
+    }
+  },
+  "pattern": [
+    " SD",
+    "APS",
+    "FA "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:chlorophyte_pickaxe"
+  },
+  "show_notification": true
+}

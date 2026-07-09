@@ -10,7 +10,10 @@ public class NbtRadiationHazardTransformer implements HazardTransformer {
     @Override
     public void transformPost(ItemStack stack, List<HazardEntry> entries) {
         if (stack.hasTag() && stack.getTag().contains(RAD_KEY)) {
-            entries.add(new HazardEntry(HazardType.RADIATION, stack.getTag().getFloat(RAD_KEY)));
+            float radiation = stack.getTag().getFloat(RAD_KEY);
+            if (Float.isFinite(radiation)) {
+                entries.add(new HazardEntry(HazardType.RADIATION, radiation));
+            }
         }
     }
 }

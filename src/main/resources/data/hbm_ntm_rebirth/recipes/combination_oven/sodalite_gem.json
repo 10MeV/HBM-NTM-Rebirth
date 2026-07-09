@@ -1,6 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:combination_oven",
-  "input": { "ingredient": { "item": "hbm_ntm_rebirth:gem_sodalite" } },
+  "input": { "ingredient": { "tag": "forge:gems/sodalite" }, "legacy_ore": "gemSodalite" },
   "output_item": { "item": "hbm_ntm_rebirth:powder_sodium" },
   "output_fluid": { "fluid": "CHLORINE", "amount": 100 }
 }

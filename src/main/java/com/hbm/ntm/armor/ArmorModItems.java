@@ -559,7 +559,9 @@ public final class ArmorModItems {
             Vec3 look = player.getLookAngle();
             double x = movement.x;
             double z = movement.z;
-            if (new Vec3(movement.x, y, movement.z).length() < speedLimit) {
+            double speedLimitSqr = speedLimit * speedLimit;
+            double speedSqr = movement.x * movement.x + y * y + movement.z * movement.z;
+            if (speedSqr < speedLimitSqr) {
                 x += look.x * lookThrust;
                 y += look.y * lookThrust;
                 z += look.z * lookThrust;
@@ -1655,15 +1657,22 @@ public final class ArmorModItems {
     }
 
     public static class Charm extends ArmorModItem {
+        private final boolean negateBroadcastDamage;
 
         public Charm(Item.Properties properties) {
+            this(properties, false);
+        }
+
+        public Charm(Item.Properties properties, boolean negateBroadcastDamage) {
             super(properties, ArmorModHandler.ArmorModSlot.HELMET_ONLY, true, true, false, false);
+            this.negateBroadcastDamage = negateBroadcastDamage;
         }
 
         @Override
         public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
             tooltip.add(Component.literal("You feel blessed.").withStyle(ChatFormatting.AQUA));
-            tooltip.add(Component.literal("Halves broadcaster damage").withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.literal(negateBroadcastDamage ? "Negates broadcaster damage"
+                    : "Halves broadcaster damage").withStyle(ChatFormatting.AQUA));
             tooltip.add(Component.empty());
             super.appendHoverText(stack, level, tooltip, flag);
         }
@@ -1679,7 +1688,7 @@ public final class ArmorModItems {
             if (!event.getSource().is(ModDamageSources.BROADCAST)) {
                 return;
             }
-            event.setAmount(event.getAmount() * 0.5F);
+            event.setAmount(negateBroadcastDamage ? 0.0F : event.getAmount() * 0.5F);
         }
     }
 

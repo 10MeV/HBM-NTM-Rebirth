@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:can_empty" },
+    { "item": "minecraft:potion" },
+    { "item": "minecraft:sugar" },
+    { "item": "hbm_ntm_rebirth:pellet_cluster" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:can_redbomb"
+  }
+}

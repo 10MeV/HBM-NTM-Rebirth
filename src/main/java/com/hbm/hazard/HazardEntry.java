@@ -13,9 +13,9 @@ import java.util.List;
  */
 @Deprecated(forRemoval = false)
 public class HazardEntry {
-    public final HazardTypeBase type;
-    public final float baseLevel;
-    public List<HazardModifier> mods = new ArrayList<>();
+    HazardTypeBase type;
+    float baseLevel;
+    List<HazardModifier> mods = new ArrayList<>();
 
     public HazardEntry(HazardTypeBase type) {
         this(type, 1.0F);

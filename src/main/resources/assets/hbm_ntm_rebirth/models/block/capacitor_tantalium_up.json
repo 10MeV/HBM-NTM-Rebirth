@@ -1,0 +1,27 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/blocks/capacitor.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.5, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Top": true,
+    "Side": true,
+    "Bottom": true,
+    "InnerTop": true,
+    "InnerSide": true
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/legacy_blocks/capacitor_tantalium_top",
+    "top": "hbm_ntm_rebirth:block/legacy_blocks/capacitor_tantalium_top",
+    "side": "hbm_ntm_rebirth:block/legacy_blocks/capacitor_tantalium_side",
+    "bottom": "hbm_ntm_rebirth:block/legacy_blocks/capacitor_tantalium_bottom",
+    "inner_top": "hbm_ntm_rebirth:block/legacy_blocks/capacitor_tantalium_inner_top",
+    "inner_side": "hbm_ntm_rebirth:block/legacy_blocks/capacitor_tantalium_inner_side"
+  }
+}

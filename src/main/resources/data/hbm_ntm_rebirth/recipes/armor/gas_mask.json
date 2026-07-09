@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "F": {
+      "tag": "forge:plates/iron"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "GPG",
+    " F "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:gas_mask"
+  },
+  "show_notification": true
+}

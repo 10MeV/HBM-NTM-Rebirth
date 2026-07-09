@@ -1,10 +1,25 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/beryllium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/beryllium"
+    },
+    "legacy_ore": "oreBeryllium"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_beryllium" },
-    { "item": "hbm_ntm_rebirth:powder_beryllium" },
-    { "item": "hbm_ntm_rebirth:powder_emerald" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_beryllium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_beryllium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_emerald"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 18
 }

@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.IndustrialSteamTurbineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
@@ -34,6 +35,12 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
     }
 
     @Override
+    public boolean shouldRender(IndustrialSteamTurbineBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }
@@ -51,9 +58,9 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
 
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
-        LegacyTileRenderPlans.IndustrialTurbinePlan plan = LegacyTileRenderPlans.industrialTurbinePlan(
-                gaugeDegrees(blockEntity.getInputTank().getTankType()),
-                blockEntity.getLastRotor(), blockEntity.getRotor(), partialTick);
+        double gaugeDegrees = gaugeDegrees(blockEntity.getInputTank().getTankType());
+        double flywheelDegrees = blockEntity.getLastRotor()
+                + (blockEntity.getRotor() - blockEntity.getLastRotor()) * partialTick;
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -64,13 +71,17 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
 
         LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            MODEL.renderOnlyInCallOrder(MODEL.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
-                    TURBINE, renderMode);
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                MODEL.renderOnlyInCallOrder(MODEL.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                        TURBINE, renderMode);
+            }
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
-                renderRotatingPart(MODEL, plan.gauge(), GAUGE, poseStack, buffer, modelLight, packedOverlay,
+                renderRotatingPart(MODEL, GAUGE, LegacyTileRenderPlans.INDUSTRIAL_TURBINE_PIVOT_Y,
+                        0.0F, 0.0F, 1.0F, gaugeDegrees, poseStack, buffer, modelLight, packedOverlay,
                         renderMode);
-                renderRotatingPart(MODEL, plan.flywheel(), FLYWHEEL, poseStack, buffer, modelLight,
-                        packedOverlay, renderMode);
+                renderRotatingPart(MODEL, FLYWHEEL, LegacyTileRenderPlans.INDUSTRIAL_TURBINE_PIVOT_Y,
+                        0.0F, 0.0F, -1.0F, flywheelDegrees, poseStack, buffer, modelLight, packedOverlay,
+                        renderMode);
             }
         }
 
@@ -103,10 +114,17 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
             LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyWavefrontModel.SelectionHandle handle,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode) {
+        renderRotatingPart(model, handle, part.pivotY(), part.axisX(), part.axisY(), part.axisZ(),
+                part.angleDegrees(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+    }
+
+    private static void renderRotatingPart(LegacyWavefrontModel model, LegacyWavefrontModel.SelectionHandle handle,
+            double pivotY, float axisX, float axisY, float axisZ, double angleDegrees, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         poseStack.pushPose();
-        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
-        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
-        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        poseStack.translate(0.0D, pivotY, 0.0D);
+        rotate(poseStack, axisX, axisY, axisZ, angleDegrees);
+        poseStack.translate(0.0D, -pivotY, 0.0D);
         model.renderOnlyInCallOrder(model.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
                 handle, renderMode);
         poseStack.popPose();

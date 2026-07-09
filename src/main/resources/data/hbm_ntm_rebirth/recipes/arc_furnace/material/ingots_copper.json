@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.ingotCopper",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:ingots/copper" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:ingots/copper" }, "count": 1, "legacy_ore": "ingotCopper" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Copper", "amount": 72 }
+  ],
+  "pools": [],
+  "source_order": 1189
+}

@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:charcoal"
+    }
+  },
+  "output": [
+    {
+      "amount": 24,
+      "material": "Carbon"
+    }
+  ],
+  "source_order": 42
+}

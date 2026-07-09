@@ -1,19 +1,45 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.thrusternerva",
   "duration": 600,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:ingots/dura_steel" }, "count": 32, "legacy_ore": "ingotDuraSteel" },
-    { "ingredient": { "tag": "forge:ingots/boron" }, "count": 8, "legacy_ore": "ingotBoron" },
-    { "ingredient": { "tag": "forge:plates/lead" }, "count": 16, "legacy_ore": "plateLead" },
-    { "ingredient": { "tag": "forge:pipes/steel" }, "count": 4, "legacy_ore": "ntmpipeSteel" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:thruster_nuclear" }
+  "input_items": [
+    {
+      "count": 32,
+      "ingredient": {
+        "tag": "forge:ingots/dura_steel"
+      },
+      "legacy_ore": "ingotDuraSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/boron"
+      },
+      "legacy_ore": "ingotBoron"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:plates/lead"
+      },
+      "legacy_ore": "plateLead"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:pipes/steel"
+      },
+      "legacy_ore": "ntmpipeSteel"
+    }
   ],
+  "internal_name": "ass.thrusternerva",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:thruster_nuclear"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 265
 }

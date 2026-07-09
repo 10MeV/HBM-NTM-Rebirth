@@ -1,0 +1,13 @@
+{
+    "type":  "minecraft:crafting_shapeless",
+    "category":  "misc",
+    "ingredients":  [
+                        {
+                            "item":  "hbm_ntm_rebirth:egg_balefire"
+                        }
+                    ],
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:egg_balefire_shard",
+                   "count":  9
+               }
+}

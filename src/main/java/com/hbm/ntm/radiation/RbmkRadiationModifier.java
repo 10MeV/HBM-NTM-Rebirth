@@ -1,5 +1,7 @@
 package com.hbm.ntm.radiation;
 
+import com.hbm.items.machine.ItemRBMKRod;
+import com.hbm.ntm.neutron.RBMKFuelRodState;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -21,12 +23,13 @@ public class RbmkRadiationModifier implements HazardModifier {
 
     @Override
     public float modify(ItemStack stack, LivingEntity holder, float level) {
-        CompoundTag tag = stack.getTag();
-        if (tag == null) {
+        if (!(stack.getItem() instanceof ItemRBMKRod fuelRod)) {
             return level;
         }
+        CompoundTag tag = stack.getTag();
 
-        double enrichment = getEnrichment(tag);
+        double totalYield = fuelRod.getSpec().totalYield() > 0.0D ? fuelRod.getSpec().totalYield() : initialYield;
+        double enrichment = getEnrichment(tag, totalYield);
         double depletion = linear ? 1.0D - enrichment : 1.0D - Math.pow(enrichment, 2.0D);
         double poison = getPoisonLevel(tag);
 
@@ -34,27 +37,12 @@ public class RbmkRadiationModifier implements HazardModifier {
         return modified + (float) (RadiationConstants.XE135 * poison);
     }
 
-    private double getEnrichment(CompoundTag tag) {
-        if (tag.contains("enrichment")) {
-            return clamp01(tag.getDouble("enrichment"));
-        }
-        if (tag.contains("yield")) {
-            return clamp01(tag.getDouble("yield") / initialYield);
-        }
-        return 1.0D;
+    private double getEnrichment(CompoundTag tag, double totalYield) {
+        double yield = tag == null ? totalYield : tag.getDouble(RBMKFuelRodState.TAG_YIELD);
+        return yield / totalYield;
     }
 
     private double getPoisonLevel(CompoundTag tag) {
-        if (tag.contains("poison")) {
-            return clamp01(tag.getDouble("poison"));
-        }
-        if (tag.contains("xenon")) {
-            return clamp01(tag.getDouble("xenon") / 100.0D);
-        }
-        return 0.0D;
-    }
-
-    private static double clamp01(double value) {
-        return Math.max(0.0D, Math.min(1.0D, value));
+        return tag == null ? 0.0D : tag.getDouble(RBMKFuelRodState.TAG_XENON) / 100.0D;
     }
 }

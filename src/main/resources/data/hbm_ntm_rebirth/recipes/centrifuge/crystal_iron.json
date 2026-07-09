@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/iron" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_iron"
+    },
+    "legacy_id": "hbm:crystal_iron",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_iron", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_iron", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_titanium" },
-    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_iron"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_iron"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_titanium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_lithium_tiny"
+    }
+  ],
+  "source_order": 31
 }

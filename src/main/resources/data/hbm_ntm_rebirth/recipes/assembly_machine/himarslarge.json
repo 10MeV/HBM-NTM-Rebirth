@@ -1,19 +1,51 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.himarslarge",
   "duration": 200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:plates/steel" }, "count": 24, "legacy_ore": "plateSteel" },
-    { "ingredient": { "tag": "forge:ingots/any_hardplastic" }, "count": 12, "legacy_ore": "ingotAnyHardPlastic" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:rocket_fuel" }, "count": 36 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:ball_tatb" }, "count": 16 },
-    { "ingredient": { "tag": "forge:circuits/advanced" }, "count": 1, "legacy_ore": "circuitAdvanced" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:ammo_himars_single" }
+  "input_items": [
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
+    },
+    {
+      "count": 36,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rocket_fuel"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ball_tatb"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 9
+    }
   ],
+  "internal_name": "ass.himarslarge",
   "output_fluids": [],
-  "pools": []
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:ammo_himars_single"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 247
 }

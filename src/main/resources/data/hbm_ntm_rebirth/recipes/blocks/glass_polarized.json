@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": {
+      "item": "hbm_ntm_rebirth:part_generic_glass_polarized"
+    }
+  },
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:glass_polarized"
+  },
+  "show_notification": true
+}

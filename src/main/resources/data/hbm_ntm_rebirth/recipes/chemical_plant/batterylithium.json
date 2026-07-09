@@ -2,17 +2,40 @@
   "type": "hbm_ntm_rebirth:chemical_plant",
   "duration": 100,
   "input_fluids": [
-    { "fluid": "hbm_ntm_rebirth:oxygen", "amount": 2000 }
+    {
+      "amount": 2000,
+      "fluid": "hbm_ntm_rebirth:oxygen"
+    }
   ],
   "input_items": [
-    { "count": 12, "ingredient": { "tag": "forge:dusts/lithium" } },
-    { "count": 8, "ingredient": { "tag": "forge:dusts/cobalt" } },
-    { "count": 4, "ingredient": { "tag": "forge:ingots/any_plastic" } }
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:dusts/lithium"
+      },
+      "legacy_ore": "dustLithium"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:dusts/cobalt"
+      },
+      "legacy_ore": "dustCobalt"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    }
   ],
   "internal_name": "chem.batterylithium",
   "output_fluids": [],
   "output_items": [
-    { "item": "hbm_ntm_rebirth:battery_lithium" }
+    {
+      "item": "hbm_ntm_rebirth:battery_lithium"
+    }
   ],
   "pools": [],
   "power": 1000,

@@ -48,6 +48,18 @@
         {
           "item": "hbm_ntm_rebirth:ballistite",
           "weight": 20
+        },
+        {
+          "item": "hbm_ntm_rebirth:grenade_shell_frag",
+          "weight": 5
+        },
+        {
+          "item": "hbm_ntm_rebirth:grenade_shell_stick",
+          "weight": 5
+        },
+        {
+          "item": "hbm_ntm_rebirth:grenade_fuze_s3",
+          "weight": 10
         }
       ]
     }

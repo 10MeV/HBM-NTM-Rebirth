@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SoyuzLauncherBlockEntity;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
@@ -9,6 +10,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.phys.Vec3;
 
 public class SoyuzLauncherRenderer implements BlockEntityRenderer<SoyuzLauncherBlockEntity> {
     public SoyuzLauncherRenderer(BlockEntityRendererProvider.Context context) {
@@ -17,6 +19,12 @@ public class SoyuzLauncherRenderer implements BlockEntityRenderer<SoyuzLauncherB
     @Override
     public boolean shouldRenderOffScreen(SoyuzLauncherBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(SoyuzLauncherBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -37,7 +45,8 @@ public class SoyuzLauncherRenderer implements BlockEntityRenderer<SoyuzLauncherB
         poseStack.pushPose();
         poseStack.translate(0.5D, -4.0D, 0.5D);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            renderLauncher(blockEntity.getTowerRotation(partialTick), poseStack, buffer, modelLight);
+            renderLauncher(blockEntity.getTowerRotation(partialTick), poseStack, buffer, modelLight,
+                    LegacyMachineRenderShapes.renderChunkBakedStaticsInBer());
             if (blockEntity.getRocketType() >= 0) {
                 poseStack.translate(0.0D, 5.0D, 0.0D);
                 ObjSoyuzModels.renderSoyuz(ObjSoyuzModels.textureSetForSkin(blockEntity.getRocketType()), poseStack,
@@ -47,7 +56,13 @@ public class SoyuzLauncherRenderer implements BlockEntityRenderer<SoyuzLauncherB
         poseStack.popPose();
     }
 
-    private static void renderLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        ObjLaunchModels.renderSoyuzLauncher(rotation, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+    private static void renderLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            boolean renderStaticParts) {
+        if (renderStaticParts) {
+            ObjLaunchModels.renderSoyuzLauncher(rotation, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        } else {
+            ObjLaunchModels.renderSoyuzLauncherMovingParts(rotation, poseStack, buffer, packedLight,
+                    OverlayTexture.NO_OVERLAY);
+        }
     }
 }

@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/titanium"
+    },
+    "legacy_ore": "oreTitanium"
+  },
+  "output": [
+    {
+      "amount": 144,
+      "material": "Titanium"
+    },
+    {
+      "amount": 24,
+      "material": "Iron"
+    },
+    {
+      "amount": 162,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 24
+}

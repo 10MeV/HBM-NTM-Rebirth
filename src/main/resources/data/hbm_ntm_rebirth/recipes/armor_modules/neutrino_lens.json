@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_bismoid"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "S": {
+      "tag": "forge:ingots/starmetal"
+    }
+  },
+  "pattern": [
+    "PSP",
+    "SCS",
+    "PSP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:neutrino_lens"
+  },
+  "show_notification": true
+}

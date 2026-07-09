@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "hbm_ntm_rebirth:radaway"
+    },
+    "L": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:syringe_metal_super"
+    }
+  },
+  "pattern": [
+    "LL",
+    "SI",
+    "LL"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:med_bag"
+  },
+  "show_notification": true
+}

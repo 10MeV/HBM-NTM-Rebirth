@@ -14,7 +14,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -34,24 +33,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @SuppressWarnings("deprecation")
-public class CableDiodeBlock extends BaseEntityBlock implements com.hbm.ntm.energy.HbmEnergyConnectorBlock, Toolable {
+public class CableDiodeBlock extends HbmEnergyNodeBlock implements Toolable {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
     public CableDiodeBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
     }
 
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
+        BlockState state = defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
+        return getConnectionState(state, context.getLevel(), context.getClickedPos());
     }
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         Direction facing = Direction.orderedByNearest(placer)[0].getOpposite();
-        level.setBlock(pos, state.setValue(FACING, facing), Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
+        if (state.getValue(FACING) != facing) {
+            BlockState updated = getConnectionState(state.setValue(FACING, facing), level, pos);
+            level.setBlock(pos, updated, Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
+            updateNeighborConnectionStates(level, pos);
+        }
     }
 
     @Nullable
@@ -72,7 +76,7 @@ public class CableDiodeBlock extends BaseEntityBlock implements com.hbm.ntm.ener
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.INVISIBLE;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override
@@ -131,6 +135,7 @@ public class CableDiodeBlock extends BaseEntityBlock implements com.hbm.ntm.ener
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(FACING);
     }
 }

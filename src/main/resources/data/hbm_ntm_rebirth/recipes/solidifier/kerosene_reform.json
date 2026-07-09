@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:kerosene_reform",
                   "amount":  560
-              }
+              },
+    "source_order":  36
 }

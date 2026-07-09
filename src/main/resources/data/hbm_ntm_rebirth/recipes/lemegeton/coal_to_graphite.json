@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:gems/coal"
+    },
+    "count": 1,
+    "legacy_ore": "gemCoal"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_graphite"
+  },
+  "source_order": 28
+}

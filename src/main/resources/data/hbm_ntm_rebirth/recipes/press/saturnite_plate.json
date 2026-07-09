@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/saturnite"
+    },
+    "legacy_ore": "ingotSaturnite"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:plate_saturnite"
+  },
+  "source_order": 22,
+  "stamp": "plate"
+}

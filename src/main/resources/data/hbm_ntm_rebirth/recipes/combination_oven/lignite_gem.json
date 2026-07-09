@@ -1,6 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:combination_oven",
-  "input": { "ingredient": { "tag": "forge:gems/lignite" } },
+  "input": { "ingredient": { "tag": "forge:gems/lignite" }, "legacy_ore": "gemLignite" },
   "output_item": { "item": "hbm_ntm_rebirth:coke_lignite" },
   "output_fluid": { "fluid": "COALCREOSOTE", "amount": 50 }
 }

@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:titanium_helmet"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_armor_titanium"
+    },
+    "X": {
+      "item": "hbm_ntm_rebirth:gas_mask_m65"
+    }
+  },
+  "pattern": [
+    "PPC",
+    "PBP",
+    "IXI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:t51_helmet"
+  },
+  "show_notification": true
+}

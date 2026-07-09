@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "hbm_ntm_rebirth:blowtorch",
+    "hbm_ntm_rebirth:acetylene_torch"
+  ]
+}

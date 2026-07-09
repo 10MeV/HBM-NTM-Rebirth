@@ -6,7 +6,6 @@ import com.hbm.ntm.client.render.HbmRenderFrameLight;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
@@ -32,15 +31,15 @@ import org.lwjgl.opengl.GL30;
  */
 public final class HbmIrisRenderBatch {
     private static ActiveBatch activeBatch;
-    private static final AtomicLong beginCalls = new AtomicLong();
-    private static final AtomicLong reuseHits = new AtomicLong();
-    private static final AtomicLong endCalls = new AtomicLong();
-    private static final AtomicLong drawCalls = new AtomicLong();
-    private static final AtomicLong shadowDrawCalls = new AtomicLong();
-    private static final AtomicLong applyFailures = new AtomicLong();
-    private static final AtomicLong shaderRestoreAttempts = new AtomicLong();
-    private static final AtomicLong shaderRestoreSuccesses = new AtomicLong();
-    private static final AtomicLong shaderRestoreFailures = new AtomicLong();
+    private static long beginCalls;
+    private static long reuseHits;
+    private static long endCalls;
+    private static long drawCalls;
+    private static long shadowDrawCalls;
+    private static long applyFailures;
+    private static long shaderRestoreAttempts;
+    private static long shaderRestoreSuccesses;
+    private static long shaderRestoreFailures;
     private static long currentFrameBeginCalls;
     private static long currentFrameReuseHits;
     private static long currentFrameEndCalls;
@@ -50,15 +49,15 @@ public final class HbmIrisRenderBatch {
     private static long currentFrameShaderRestoreAttempts;
     private static long currentFrameShaderRestoreSuccesses;
     private static long currentFrameShaderRestoreFailures;
-    private static final AtomicLong lastFrameBeginCalls = new AtomicLong();
-    private static final AtomicLong lastFrameReuseHits = new AtomicLong();
-    private static final AtomicLong lastFrameEndCalls = new AtomicLong();
-    private static final AtomicLong lastFrameDrawCalls = new AtomicLong();
-    private static final AtomicLong lastFrameShadowDrawCalls = new AtomicLong();
-    private static final AtomicLong lastFrameApplyFailures = new AtomicLong();
-    private static final AtomicLong lastFrameShaderRestoreAttempts = new AtomicLong();
-    private static final AtomicLong lastFrameShaderRestoreSuccesses = new AtomicLong();
-    private static final AtomicLong lastFrameShaderRestoreFailures = new AtomicLong();
+    private static long lastFrameBeginCalls;
+    private static long lastFrameReuseHits;
+    private static long lastFrameEndCalls;
+    private static long lastFrameDrawCalls;
+    private static long lastFrameShadowDrawCalls;
+    private static long lastFrameApplyFailures;
+    private static long lastFrameShaderRestoreAttempts;
+    private static long lastFrameShaderRestoreSuccesses;
+    private static long lastFrameShaderRestoreFailures;
     private static volatile String currentFrameApplyFailureReason = "none";
     private static volatile String lastFrameApplyFailureReason = "none";
     private static int cachedShaderProgram = -1;
@@ -72,6 +71,20 @@ public final class HbmIrisRenderBatch {
     private static Uniform fogStartUniform;
     private static Uniform fogEndUniform;
     private static Uniform fogColorUniform;
+    private static ShaderInstance cachedCommonUniformValueShader;
+    private static int cachedCommonUniformValueProgram = -1;
+    private static long cachedCommonUniformValuePipelineGeneration = -1L;
+    private static final Matrix4f LAST_PROJECTION_MATRIX = new Matrix4f();
+    private static boolean projectionUniformValid;
+    private static boolean fogStartUniformValid;
+    private static boolean fogEndUniformValid;
+    private static boolean fogColorUniformValid;
+    private static float lastFogStart;
+    private static float lastFogEnd;
+    private static int lastFogColorRed = Integer.MIN_VALUE;
+    private static int lastFogColorGreen = Integer.MIN_VALUE;
+    private static int lastFogColorBlue = Integer.MIN_VALUE;
+    private static int lastFogColorAlpha = Integer.MIN_VALUE;
     private static final Matrix4f MATRIX_INVERSE = new Matrix4f();
     private static final Matrix3f NORMAL_MATRIX = new Matrix3f();
     private static final float[] MODEL_VIEW_FLOATS = new float[16];
@@ -90,6 +103,7 @@ public final class HbmIrisRenderBatch {
     private static int lastConstantLightmapLocation = -1;
     private static int lastConstantLightmapBlock = Integer.MIN_VALUE;
     private static int lastConstantLightmapSky = Integer.MIN_VALUE;
+    private static boolean activeShaderProgramKnownCurrent;
 
     private HbmIrisRenderBatch() {
     }
@@ -120,12 +134,12 @@ public final class HbmIrisRenderBatch {
         if (active != null && active.matches(stateKey, shader, projectionSource, pipelineGeneration, shadowPass,
                 resolvedBaseTexture)) {
             HbmIrisExtendedShaderAccess.setCurrentRenderedBlockEntity(0);
-            reuseHits.incrementAndGet();
+            reuseHits++;
             currentFrameReuseHits++;
             return true;
         }
         endActiveBatch();
-        Matrix4f resolvedProjection = new Matrix4f(projectionSource);
+        Matrix4f resolvedProjection = projectionSource;
         int previousVao = HbmGlVaoSafety.currentBinding();
         int previousArrayBuffer = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
         int previousActiveTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
@@ -149,23 +163,26 @@ public final class HbmIrisRenderBatch {
             RenderSystem.setShader(() -> shader);
             if (!HbmIrisShaderApply.tryApply(shader)) {
                 recordApplyFailure();
+                activeShaderProgramKnownCurrent = false;
                 return false;
             }
             HbmRenderFrameLight.bindBlockLitSamplerTextures(shader, resolvedBaseTexture);
+            activeShaderProgramKnownCurrent = true;
             resolveMatrixLocations(shader);
             resetDrawAttributeCache();
             resetDrawMatrixCache();
-            activeBatch = new ActiveBatch(stateKey, renderType, shader, phaseGuard, previousBlockEntityId,
-                    previousVao, previousArrayBuffer, previousActiveTexture, previousCullEnabled,
-                    previousDepthTestEnabled, previousDepthMask, previousDepthFunc,
+            activeBatch = REUSABLE_ACTIVE_BATCH.activate(stateKey, renderType, shader, phaseGuard,
+                    previousBlockEntityId, previousVao, previousArrayBuffer, previousActiveTexture,
+                    previousCullEnabled, previousDepthTestEnabled, previousDepthMask, previousDepthFunc,
                     previousBlendEnabled, previousBlendSrcRgb, previousBlendDstRgb,
-                    previousBlendSrcAlpha, previousBlendDstAlpha, new Matrix4f(resolvedProjection),
-                    pipelineGeneration, shadowPass, resolvedBaseTexture);
-            beginCalls.incrementAndGet();
+                    previousBlendSrcAlpha, previousBlendDstAlpha, resolvedProjection, pipelineGeneration,
+                    shadowPass, resolvedBaseTexture);
+            beginCalls++;
             currentFrameBeginCalls++;
             return true;
         } finally {
             if (activeBatch == null) {
+                activeShaderProgramKnownCurrent = false;
                 tryRestoreState("begin rollback", renderStateSet ? renderType : null, phaseGuard,
                         previousBlockEntityId, previousVao, previousArrayBuffer, previousActiveTexture,
                         previousCullEnabled, previousDepthTestEnabled, previousDepthMask, previousDepthFunc,
@@ -176,10 +193,10 @@ public final class HbmIrisRenderBatch {
     }
 
     public static void recordDraw(boolean shadowPass) {
-        drawCalls.incrementAndGet();
+        drawCalls++;
         currentFrameDrawCalls++;
         if (shadowPass) {
-            shadowDrawCalls.incrementAndGet();
+            shadowDrawCalls++;
             currentFrameShadowDrawCalls++;
         }
     }
@@ -208,15 +225,18 @@ public final class HbmIrisRenderBatch {
                 if (!HbmIrisShaderApply.tryApply(active.shader())) {
                     recordApplyFailure();
                     recordShaderRestoreFailure();
+                    activeShaderProgramKnownCurrent = false;
                     HbmNtm.LOGGER.warn("HBM Iris/Oculus companion shader restore failed before draw");
                     return false;
                 }
+                activeShaderProgramKnownCurrent = true;
                 resolveMatrixLocations(active.shader());
                 recordShaderRestoreSuccess();
             } catch (Throwable throwable) {
                 HbmIrisShaderApply.rememberFailure(throwable);
                 recordApplyFailure();
                 recordShaderRestoreFailure();
+                activeShaderProgramKnownCurrent = false;
                 HbmNtm.LOGGER.warn("HBM Iris/Oculus companion shader restore threw before draw: {}",
                         throwable.toString());
                 return false;
@@ -232,13 +252,24 @@ public final class HbmIrisRenderBatch {
 
     private static boolean activeShaderBindingDrifted(ActiveBatch active) {
         if (active.pipelineGeneration() != HbmShaderCompatibilityDetector.pipelineGeneration()) {
+            activeShaderProgramKnownCurrent = false;
             return true;
         }
         if (RenderSystem.getShader() != active.shader()) {
+            activeShaderProgramKnownCurrent = false;
             return true;
         }
         int activeProgram = active.shader().getId();
-        return activeProgram <= 0 || GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM) != activeProgram;
+        if (activeProgram <= 0) {
+            activeShaderProgramKnownCurrent = false;
+            return true;
+        }
+        if (activeShaderProgramKnownCurrent) {
+            return false;
+        }
+        boolean current = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM) == activeProgram;
+        activeShaderProgramKnownCurrent = current;
+        return !current;
     }
 
     public static void endActiveBatch() {
@@ -247,6 +278,7 @@ public final class HbmIrisRenderBatch {
             return;
         }
         activeBatch = null;
+        activeShaderProgramKnownCurrent = false;
         try {
             try {
                 active.shader().clear();
@@ -260,7 +292,8 @@ public final class HbmIrisRenderBatch {
                     active.previousBlendEnabled(), active.previousBlendSrcRgb(), active.previousBlendDstRgb(),
                     active.previousBlendSrcAlpha(), active.previousBlendDstAlpha());
         }
-        endCalls.incrementAndGet();
+        active.clearAfterClose();
+        endCalls++;
         currentFrameEndCalls++;
     }
 
@@ -285,6 +318,7 @@ public final class HbmIrisRenderBatch {
             draw.run();
             return;
         }
+        long activeGeneration = active.generation();
         int previousVao = HbmGlVaoSafety.currentBinding();
         int previousArrayBuffer = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
         int previousActiveTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
@@ -299,29 +333,33 @@ public final class HbmIrisRenderBatch {
         int previousBlendDstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
         try {
             HbmGlVaoSafety.bindVertexArray(0);
+            activeShaderProgramKnownCurrent = false;
             RenderSystem.setShader(GameRenderer::getRendertypeSolidShader);
             draw.run();
         } finally {
             Throwable failure = null;
-            if (activeBatch == active && active.shader() != null) {
+            if (activeBatch == active && active.generation() == activeGeneration && active.shader() != null) {
                 recordShaderRestoreAttempt();
                 try {
                     RenderSystem.setShader(active::shader);
                     setupIrisSamplersAndUniforms(active.shader(), active.projectionMatrix(), active.baseTexture());
                     boolean restored = HbmIrisShaderApply.tryApply(active.shader());
-                    if (restored && activeBatch == active) {
+                    if (restored && activeBatch == active && active.generation() == activeGeneration) {
                         HbmRenderFrameLight.bindBlockLitSamplerTextures(active.shader(), active.baseTexture());
+                        activeShaderProgramKnownCurrent = true;
                         resolveMatrixLocations(active.shader());
                         recordShaderRestoreSuccess();
                     } else {
                         recordApplyFailure();
                         recordShaderRestoreFailure();
+                        activeShaderProgramKnownCurrent = false;
                         HbmNtm.LOGGER.warn("HBM Iris/Oculus vanilla overlay shader restore failed");
                     }
                 } catch (Throwable throwable) {
                     HbmIrisShaderApply.rememberFailure(throwable);
                     recordApplyFailure();
                     recordShaderRestoreFailure();
+                    activeShaderProgramKnownCurrent = false;
                     failure = rememberRestoreFailure(failure, throwable);
                 } finally {
                     resetDrawAttributeCache();
@@ -397,8 +435,10 @@ public final class HbmIrisRenderBatch {
         cachedShaderProgram = -1;
         cachedShaderInstance = null;
         cachedPipelineGeneration = -1L;
+        activeShaderProgramKnownCurrent = false;
         matrixLocations = HbmIrisDerivedMatrixUniforms.Locations.NONE;
         clearCommonUniformCache();
+        clearCommonUniformValueCache();
         resetDrawAttributeCache();
         resetDrawMatrixCache();
     }
@@ -424,15 +464,15 @@ public final class HbmIrisRenderBatch {
         currentFrameShaderRestoreAttempts = 0L;
         currentFrameShaderRestoreSuccesses = 0L;
         currentFrameShaderRestoreFailures = 0L;
-        lastFrameBeginCalls.set(frameBeginCalls);
-        lastFrameReuseHits.set(frameReuseHits);
-        lastFrameEndCalls.set(frameEndCalls);
-        lastFrameDrawCalls.set(frameDrawCalls);
-        lastFrameShadowDrawCalls.set(frameShadowDrawCalls);
-        lastFrameApplyFailures.set(frameApplyFailures);
-        lastFrameShaderRestoreAttempts.set(frameShaderRestoreAttempts);
-        lastFrameShaderRestoreSuccesses.set(frameShaderRestoreSuccesses);
-        lastFrameShaderRestoreFailures.set(frameShaderRestoreFailures);
+        lastFrameBeginCalls = frameBeginCalls;
+        lastFrameReuseHits = frameReuseHits;
+        lastFrameEndCalls = frameEndCalls;
+        lastFrameDrawCalls = frameDrawCalls;
+        lastFrameShadowDrawCalls = frameShadowDrawCalls;
+        lastFrameApplyFailures = frameApplyFailures;
+        lastFrameShaderRestoreAttempts = frameShaderRestoreAttempts;
+        lastFrameShaderRestoreSuccesses = frameShaderRestoreSuccesses;
+        lastFrameShaderRestoreFailures = frameShaderRestoreFailures;
         lastFrameApplyFailureReason = frameApplyFailures > 0L ? currentFrameApplyFailureReason : "none";
         currentFrameApplyFailureReason = "none";
     }
@@ -440,15 +480,15 @@ public final class HbmIrisRenderBatch {
     public static Snapshot snapshot() {
         return new Snapshot(
                 activeBatch != null,
-                beginCalls.get(),
-                reuseHits.get(),
-                endCalls.get(),
-                drawCalls.get(),
-                shadowDrawCalls.get(),
-                applyFailures.get(),
-                shaderRestoreAttempts.get(),
-                shaderRestoreSuccesses.get(),
-                shaderRestoreFailures.get(),
+                beginCalls,
+                reuseHits,
+                endCalls,
+                drawCalls,
+                shadowDrawCalls,
+                applyFailures,
+                shaderRestoreAttempts,
+                shaderRestoreSuccesses,
+                shaderRestoreFailures,
                 currentFrameBeginCalls,
                 currentFrameReuseHits,
                 currentFrameEndCalls,
@@ -458,36 +498,36 @@ public final class HbmIrisRenderBatch {
                 currentFrameShaderRestoreAttempts,
                 currentFrameShaderRestoreSuccesses,
                 currentFrameShaderRestoreFailures,
-                lastFrameBeginCalls.get(),
-                lastFrameReuseHits.get(),
-                lastFrameEndCalls.get(),
-                lastFrameDrawCalls.get(),
-                lastFrameShadowDrawCalls.get(),
-                lastFrameApplyFailures.get(),
-                lastFrameShaderRestoreAttempts.get(),
-                lastFrameShaderRestoreSuccesses.get(),
-                lastFrameShaderRestoreFailures.get(),
+                lastFrameBeginCalls,
+                lastFrameReuseHits,
+                lastFrameEndCalls,
+                lastFrameDrawCalls,
+                lastFrameShadowDrawCalls,
+                lastFrameApplyFailures,
+                lastFrameShaderRestoreAttempts,
+                lastFrameShaderRestoreSuccesses,
+                lastFrameShaderRestoreFailures,
                 lastFrameApplyFailureReason);
     }
 
     private static void recordApplyFailure() {
-        applyFailures.incrementAndGet();
+        applyFailures++;
         currentFrameApplyFailures++;
         currentFrameApplyFailureReason = HbmIrisShaderApply.lastFailureReason();
     }
 
     private static void recordShaderRestoreAttempt() {
-        shaderRestoreAttempts.incrementAndGet();
+        shaderRestoreAttempts++;
         currentFrameShaderRestoreAttempts++;
     }
 
     private static void recordShaderRestoreSuccess() {
-        shaderRestoreSuccesses.incrementAndGet();
+        shaderRestoreSuccesses++;
         currentFrameShaderRestoreSuccesses++;
     }
 
     private static void recordShaderRestoreFailure() {
-        shaderRestoreFailures.incrementAndGet();
+        shaderRestoreFailures++;
         currentFrameShaderRestoreFailures++;
     }
 
@@ -747,8 +787,7 @@ public final class HbmIrisRenderBatch {
     }
 
     private static void setupIrisSamplersAndUniforms(ShaderInstance shader) {
-        setupIrisSamplersAndUniforms(shader, new Matrix4f(RenderSystem.getProjectionMatrix()),
-                TextureAtlas.LOCATION_BLOCKS);
+        setupIrisSamplersAndUniforms(shader, RenderSystem.getProjectionMatrix(), TextureAtlas.LOCATION_BLOCKS);
     }
 
     private static void setupIrisSamplersAndUniforms(ShaderInstance shader, Matrix4f projectionMatrix) {
@@ -757,24 +796,86 @@ public final class HbmIrisRenderBatch {
 
     private static void setupIrisSamplersAndUniforms(ShaderInstance shader, Matrix4f projectionMatrix,
             ResourceLocation baseTexture) {
+        Matrix4f resolvedProjection = projectionMatrix != null ? projectionMatrix : RenderSystem.getProjectionMatrix();
+        updateCommonUniformValueOwner(shader);
         if (shader.PROJECTION_MATRIX != null) {
-            shader.PROJECTION_MATRIX.set(projectionMatrix != null ? projectionMatrix : RenderSystem.getProjectionMatrix());
+            setProjectionUniformIfChanged(shader.PROJECTION_MATRIX, resolvedProjection);
         }
         if (shader.MODEL_VIEW_MATRIX != null) {
             shader.MODEL_VIEW_MATRIX.set(IDENTITY);
         }
         updateCommonUniformCache(shader);
         if (fogStartUniform != null) {
-            fogStartUniform.set(RenderSystem.getShaderFogStart());
+            setFogStartUniformIfChanged(RenderSystem.getShaderFogStart());
         }
         if (fogEndUniform != null) {
-            fogEndUniform.set(RenderSystem.getShaderFogEnd());
+            setFogEndUniformIfChanged(RenderSystem.getShaderFogEnd());
         }
         if (fogColorUniform != null) {
             float[] color = RenderSystem.getShaderFogColor();
-            fogColorUniform.set(color[0], color[1], color[2], color[3]);
+            setFogColorUniformIfChanged(color);
         }
         HbmRenderFrameLight.prepareBlockLitSamplers(shader, baseTexture);
+    }
+
+    private static void updateCommonUniformValueOwner(ShaderInstance shader) {
+        int program = shader == null ? -1 : shader.getId();
+        long generation = HbmShaderCompatibilityDetector.pipelineGeneration();
+        if (cachedCommonUniformValueShader == shader
+                && cachedCommonUniformValueProgram == program
+                && cachedCommonUniformValuePipelineGeneration == generation
+                && cachedCommonUniformValueShader != null) {
+            return;
+        }
+        cachedCommonUniformValueShader = shader;
+        cachedCommonUniformValueProgram = program;
+        cachedCommonUniformValuePipelineGeneration = generation;
+        clearCommonUniformValueCache();
+    }
+
+    private static void setProjectionUniformIfChanged(Uniform uniform, Matrix4f projectionMatrix) {
+        if (!projectionUniformValid || !LAST_PROJECTION_MATRIX.equals(projectionMatrix)) {
+            uniform.set(projectionMatrix);
+            LAST_PROJECTION_MATRIX.set(projectionMatrix);
+            projectionUniformValid = true;
+        }
+    }
+
+    private static void setFogStartUniformIfChanged(float fogStart) {
+        if (!fogStartUniformValid
+                || Float.floatToIntBits(lastFogStart) != Float.floatToIntBits(fogStart)) {
+            fogStartUniform.set(fogStart);
+            lastFogStart = fogStart;
+            fogStartUniformValid = true;
+        }
+    }
+
+    private static void setFogEndUniformIfChanged(float fogEnd) {
+        if (!fogEndUniformValid
+                || Float.floatToIntBits(lastFogEnd) != Float.floatToIntBits(fogEnd)) {
+            fogEndUniform.set(fogEnd);
+            lastFogEnd = fogEnd;
+            fogEndUniformValid = true;
+        }
+    }
+
+    private static void setFogColorUniformIfChanged(float[] color) {
+        int red = Float.floatToIntBits(color[0]);
+        int green = Float.floatToIntBits(color[1]);
+        int blue = Float.floatToIntBits(color[2]);
+        int alpha = Float.floatToIntBits(color[3]);
+        if (!fogColorUniformValid
+                || lastFogColorRed != red
+                || lastFogColorGreen != green
+                || lastFogColorBlue != blue
+                || lastFogColorAlpha != alpha) {
+            fogColorUniform.set(color[0], color[1], color[2], color[3]);
+            lastFogColorRed = red;
+            lastFogColorGreen = green;
+            lastFogColorBlue = blue;
+            lastFogColorAlpha = alpha;
+            fogColorUniformValid = true;
+        }
     }
 
     private static void updateCommonUniformCache(ShaderInstance shader) {
@@ -802,30 +903,86 @@ public final class HbmIrisRenderBatch {
         fogColorUniform = null;
     }
 
+    private static void clearCommonUniformValueCache() {
+        projectionUniformValid = false;
+        fogStartUniformValid = false;
+        fogEndUniformValid = false;
+        fogColorUniformValid = false;
+        lastFogStart = 0.0F;
+        lastFogEnd = 0.0F;
+        lastFogColorRed = Integer.MIN_VALUE;
+        lastFogColorGreen = Integer.MIN_VALUE;
+        lastFogColorBlue = Integer.MIN_VALUE;
+        lastFogColorAlpha = Integer.MIN_VALUE;
+    }
+
     private static final Matrix4f IDENTITY = new Matrix4f();
 
-    private record ActiveBatch(
-            Object stateKey,
-            RenderType renderType,
-            ShaderInstance shader,
-            HbmIrisPhaseGuard phaseGuard,
-            int previousBlockEntityId,
-            int previousVao,
-            int previousArrayBuffer,
-            int previousActiveTexture,
-            boolean previousCullEnabled,
-            boolean previousDepthTestEnabled,
-            boolean previousDepthMask,
-            int previousDepthFunc,
-            boolean previousBlendEnabled,
-            int previousBlendSrcRgb,
-            int previousBlendDstRgb,
-            int previousBlendSrcAlpha,
-            int previousBlendDstAlpha,
-            Matrix4f projectionMatrix,
-            long pipelineGeneration,
-            boolean shadowPass,
-            ResourceLocation baseTexture) {
+    private static final ActiveBatch REUSABLE_ACTIVE_BATCH = new ActiveBatch();
+
+    private static final class ActiveBatch {
+        private Object stateKey;
+        private RenderType renderType;
+        private ShaderInstance shader;
+        private HbmIrisPhaseGuard phaseGuard;
+        private int previousBlockEntityId;
+        private int previousVao;
+        private int previousArrayBuffer;
+        private int previousActiveTexture;
+        private boolean previousCullEnabled;
+        private boolean previousDepthTestEnabled;
+        private boolean previousDepthMask;
+        private int previousDepthFunc;
+        private boolean previousBlendEnabled;
+        private int previousBlendSrcRgb;
+        private int previousBlendDstRgb;
+        private int previousBlendSrcAlpha;
+        private int previousBlendDstAlpha;
+        private final Matrix4f projectionMatrix = new Matrix4f();
+        private long pipelineGeneration;
+        private boolean shadowPass;
+        private ResourceLocation baseTexture;
+        private long generation;
+
+        private ActiveBatch activate(Object stateKey, RenderType renderType, ShaderInstance shader,
+                HbmIrisPhaseGuard phaseGuard, int previousBlockEntityId, int previousVao,
+                int previousArrayBuffer, int previousActiveTexture, boolean previousCullEnabled,
+                boolean previousDepthTestEnabled, boolean previousDepthMask, int previousDepthFunc,
+                boolean previousBlendEnabled, int previousBlendSrcRgb, int previousBlendDstRgb,
+                int previousBlendSrcAlpha, int previousBlendDstAlpha, Matrix4f projectionMatrix,
+                long pipelineGeneration, boolean shadowPass, ResourceLocation baseTexture) {
+            this.generation++;
+            this.stateKey = stateKey;
+            this.renderType = renderType;
+            this.shader = shader;
+            this.phaseGuard = phaseGuard;
+            this.previousBlockEntityId = previousBlockEntityId;
+            this.previousVao = previousVao;
+            this.previousArrayBuffer = previousArrayBuffer;
+            this.previousActiveTexture = previousActiveTexture;
+            this.previousCullEnabled = previousCullEnabled;
+            this.previousDepthTestEnabled = previousDepthTestEnabled;
+            this.previousDepthMask = previousDepthMask;
+            this.previousDepthFunc = previousDepthFunc;
+            this.previousBlendEnabled = previousBlendEnabled;
+            this.previousBlendSrcRgb = previousBlendSrcRgb;
+            this.previousBlendDstRgb = previousBlendDstRgb;
+            this.previousBlendSrcAlpha = previousBlendSrcAlpha;
+            this.previousBlendDstAlpha = previousBlendDstAlpha;
+            this.projectionMatrix.set(projectionMatrix);
+            this.pipelineGeneration = pipelineGeneration;
+            this.shadowPass = shadowPass;
+            this.baseTexture = baseTexture;
+            return this;
+        }
+
+        private void clearAfterClose() {
+            this.stateKey = null;
+            this.renderType = null;
+            this.shader = null;
+            this.phaseGuard = null;
+            this.baseTexture = null;
+        }
 
         private boolean matches(Object stateKey, ShaderInstance shader, Matrix4f projectionMatrix,
                 long pipelineGeneration, boolean shadowPass, ResourceLocation baseTexture) {
@@ -835,6 +992,94 @@ public final class HbmIrisRenderBatch {
                     && this.shadowPass == shadowPass
                     && Objects.equals(this.baseTexture, baseTexture)
                     && matrixEquals(this.projectionMatrix, projectionMatrix);
+        }
+
+        private Object stateKey() {
+            return stateKey;
+        }
+
+        private RenderType renderType() {
+            return renderType;
+        }
+
+        private ShaderInstance shader() {
+            return shader;
+        }
+
+        private HbmIrisPhaseGuard phaseGuard() {
+            return phaseGuard;
+        }
+
+        private int previousBlockEntityId() {
+            return previousBlockEntityId;
+        }
+
+        private int previousVao() {
+            return previousVao;
+        }
+
+        private int previousArrayBuffer() {
+            return previousArrayBuffer;
+        }
+
+        private int previousActiveTexture() {
+            return previousActiveTexture;
+        }
+
+        private boolean previousCullEnabled() {
+            return previousCullEnabled;
+        }
+
+        private boolean previousDepthTestEnabled() {
+            return previousDepthTestEnabled;
+        }
+
+        private boolean previousDepthMask() {
+            return previousDepthMask;
+        }
+
+        private int previousDepthFunc() {
+            return previousDepthFunc;
+        }
+
+        private boolean previousBlendEnabled() {
+            return previousBlendEnabled;
+        }
+
+        private int previousBlendSrcRgb() {
+            return previousBlendSrcRgb;
+        }
+
+        private int previousBlendDstRgb() {
+            return previousBlendDstRgb;
+        }
+
+        private int previousBlendSrcAlpha() {
+            return previousBlendSrcAlpha;
+        }
+
+        private int previousBlendDstAlpha() {
+            return previousBlendDstAlpha;
+        }
+
+        private Matrix4f projectionMatrix() {
+            return projectionMatrix;
+        }
+
+        private long pipelineGeneration() {
+            return pipelineGeneration;
+        }
+
+        private boolean shadowPass() {
+            return shadowPass;
+        }
+
+        private ResourceLocation baseTexture() {
+            return baseTexture;
+        }
+
+        private long generation() {
+            return generation;
         }
     }
 

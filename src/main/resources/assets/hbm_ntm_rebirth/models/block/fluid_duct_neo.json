@@ -1,5 +1,20 @@
 {
-  "parent": "minecraft:block/block",
+  "loader": "hbm_ntm_rebirth:fluid_pipe_loader",
+  "model": "hbm_ntm_rebirth:models/blocks/pipe_neo.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.5, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "base_0": "hbm_ntm_rebirth:block/legacy_blocks/pipe_neo",
+  "overlay_0": "hbm_ntm_rebirth:block/legacy_blocks/pipe_neo_overlay",
+  "base_1": "hbm_ntm_rebirth:block/legacy_blocks/pipe_silver",
+  "overlay_1": "hbm_ntm_rebirth:block/legacy_blocks/pipe_silver_overlay",
+  "base_2": "hbm_ntm_rebirth:block/legacy_blocks/pipe_colored",
+  "overlay_2": "hbm_ntm_rebirth:block/legacy_blocks/pipe_colored_overlay",
+  "particle": "hbm_ntm_rebirth:block/legacy_blocks/pipe_neo",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/legacy_blocks/pipe_neo"
   }

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:syringe_empty"
+    },
+    "L": {
+      "item": "hbm_ntm_rebirth:powder_poison"
+    },
+    "S": {
+      "item": "minecraft:spider_eye"
+    }
+  },
+  "pattern": [
+    "SLS",
+    "LCL",
+    "SLS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:syringe_poison"
+  }
+}

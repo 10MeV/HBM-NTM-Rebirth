@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "kind": "cyanide",
+  "left": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:apple"
+    }
+  },
+  "output": {
+    "item": "minecraft:apple"
+  },
+  "right": {
+    "count": 1,
+    "ingredient": [
+      {
+        "item": "hbm_ntm_rebirth:plan_c"
+      },
+      {
+        "item": "hbm_ntm_rebirth:pill_red"
+      }
+    ]
+  },
+  "source_order": 56,
+  "tier": 1
+}

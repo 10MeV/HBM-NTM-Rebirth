@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:crystals/starmetal" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_dura_steel", "count": 6 }
+  "output": { "item": "hbm_ntm_rebirth:powder_dura_steel", "count": 6 },
+  "source_order": 100
 }

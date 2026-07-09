@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.client.ClientGeometryInvalidationBridge;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidConnectionUtil;
 import com.hbm.ntm.fluid.HbmFluidConnector;
@@ -25,7 +26,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -72,9 +75,17 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
         paintedState = state;
         paintedMeta = legacyMeta & 15;
         setChanged();
+        refreshPaintModelData();
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public @NotNull ModelData getModelData() {
+        return paintedState == null
+                ? ModelData.EMPTY
+                : ModelData.builder().with(PaintableDuctBlockEntity.PAINTED_STATE_PROPERTY, paintedState).build();
     }
 
     @Override
@@ -175,6 +186,7 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        BlockState previous = paintedState;
         BlockState state = null;
         if (tag.contains(TAG_PAINT_BLOCK_NAME)) {
             ResourceLocation key = ResourceLocation.tryParse(tag.getString(TAG_PAINT_BLOCK_NAME));
@@ -192,6 +204,9 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
         }
         paintedState = state;
         paintedMeta = tag.getInt(TAG_PAINT_META) & 15;
+        if (previous != paintedState) {
+            refreshPaintModelData();
+        }
     }
 
     @Override
@@ -224,5 +239,12 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
     public void setRemoved() {
         removeFluidNode();
         super.setRemoved();
+    }
+
+    private void refreshPaintModelData() {
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+            ClientGeometryInvalidationBridge.schedule(worldPosition);
+        }
     }
 }

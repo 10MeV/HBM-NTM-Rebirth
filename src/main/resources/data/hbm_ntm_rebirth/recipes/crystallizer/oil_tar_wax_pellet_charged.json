@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 200,
+  "fluid": { "fluid": "IONGEL", "amount": 500 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:oil_tar_wax" } },
+  "output": { "item": "hbm_ntm_rebirth:pellet_charged" },
+  "source_order": 399
+}

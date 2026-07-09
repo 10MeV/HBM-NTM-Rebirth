@@ -21,6 +21,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public class CustomMissileLauncherRenderer implements BlockEntityRenderer<CustomMissileLauncherBlockEntity> {
     public CustomMissileLauncherRenderer(BlockEntityRendererProvider.Context context) {
@@ -29,6 +30,12 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
     @Override
     public boolean shouldRenderOffScreen(CustomMissileLauncherBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(CustomMissileLauncherBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override

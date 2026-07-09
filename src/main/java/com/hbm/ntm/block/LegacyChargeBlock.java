@@ -116,7 +116,7 @@ public class LegacyChargeBlock extends BaseEntityBlock implements ChainExplodabl
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.INVISIBLE;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable

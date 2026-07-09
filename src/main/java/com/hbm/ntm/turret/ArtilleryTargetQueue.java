@@ -41,7 +41,7 @@ final class ArtilleryTargetQueue {
     void applyManualTarget(TurretBlockEntityBase turret, boolean manualMode) {
         if (manualMode) {
             Vec3 target = peek();
-            if (target != null) {
+            if (target != null && turret.getTarget() == null) {
                 turret.setManualTarget(target);
             }
         } else {

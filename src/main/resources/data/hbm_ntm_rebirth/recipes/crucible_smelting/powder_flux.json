@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:powder_flux"
+    }
+  },
+  "output": [
+    {
+      "amount": 72,
+      "material": "Flux"
+    }
+  ],
+  "source_order": 41
+}

@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
+  "source_order": 17,
   "ingredient": {
     "item": "minecraft:snow_block"
   },

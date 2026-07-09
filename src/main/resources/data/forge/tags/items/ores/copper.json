@@ -1,6 +1,7 @@
 {
-  "replace": false,
   "values": [
+    "minecraft:copper_ore",
+    "minecraft:deepslate_copper_ore",
     "hbm_ntm_rebirth:ore_copper",
     "hbm_ntm_rebirth:ore_gneiss_copper"
   ]

@@ -1,9 +1,10 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.Laserable;
-import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.DfcMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -56,7 +57,7 @@ public class DfcReceiverBlockEntity extends HbmEnergyAndFluidBlockEntity
         energy.setMaxPower(Math.max(0L, output));
         energy.setTransferRates(0L, Math.max(0L, output));
         energy.setPower(output);
-        tryProvideEnergyToPorts();
+        HbmEnergyUtil.tryProvideToAllNeighbors(level, pos, energy);
         pushForgeEnergyToPorts(output);
         if (joules > 0L) {
             if (cryogel.getFill() >= 20) {
@@ -85,8 +86,8 @@ public class DfcReceiverBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private Direction facing() {
-        return getBlockState().hasProperty(HorizontalMachineBlock.FACING)
-                ? getBlockState().getValue(HorizontalMachineBlock.FACING)
+        return getBlockState().hasProperty(DfcMachineBlock.FACING)
+                ? getBlockState().getValue(DfcMachineBlock.FACING)
                 : Direction.NORTH;
     }
 

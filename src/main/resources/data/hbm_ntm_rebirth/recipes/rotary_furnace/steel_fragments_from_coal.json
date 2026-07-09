@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:rotary_furnace",
+  "output": {
+    "material": "Steel",
+    "amount": 288
+  },
+  "duration": 200,
+  "steam": 25,
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:bedrock_ore_fragments/iron"
+      },
+      "count": 9,
+      "legacy_ore": "bedrockorefragmentIron"
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:coal"
+      },
+      "count": 1,
+      "legacy_ore": "gemCoal"
+    }
+  ],
+  "source_order": 2
+}

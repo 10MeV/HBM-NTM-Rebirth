@@ -1,0 +1,54 @@
+{
+  "type": "hbm_ntm_rebirth:pedestal",
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:weapon_mod_special_scope"
+      },
+      "count": 1,
+      "legacy_id": "hbm:weapon_mod_special",
+      "legacy_meta": 1
+    },
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_magic"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:gun_heavy_revolver"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:plates/weapon_steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateWeaponSteel"
+    },
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:grips/bone"
+      },
+      "count": 1,
+      "legacy_ore": "gripBone"
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:apple"
+      },
+      "count": 3
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:gun_heavy_revolver_lilmac"
+  },
+  "extra": "none",
+  "set": 0,
+  "source_order": 2
+}

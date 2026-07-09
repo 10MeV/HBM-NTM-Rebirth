@@ -4,7 +4,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -23,17 +22,20 @@ public class RadiationSavedData extends SavedData {
     private static final String TAG_ENTRIES = "entries";
     private static final String TAG_CHUNK = "chunk";
     private static final String TAG_RADIATION = "radiation";
+    private static final String TAG_LEGACY_CHUNK_IMPORTS_SUPPRESSED = "legacyChunkImportsSuppressed";
 
     private final Map<Long, Float> chunkRadiation = new HashMap<>();
     private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
+    private boolean legacyChunkImportsSuppressed;
 
     public static RadiationSavedData load(CompoundTag tag) {
         RadiationSavedData data = new RadiationSavedData();
+        data.legacyChunkImportsSuppressed = tag.getBoolean(TAG_LEGACY_CHUNK_IMPORTS_SUPPRESSED);
         ListTag entries = tag.getList(TAG_ENTRIES, Tag.TAG_COMPOUND);
         for (int i = 0; i < entries.size(); i++) {
             CompoundTag entry = entries.getCompound(i);
             float radiation = clamp(entry.getFloat(TAG_RADIATION));
-            if (radiation > 0.0F) {
+            if (radiation != 0.0F) {
                 data.chunkRadiation.put(entry.getLong(TAG_CHUNK), radiation);
             }
         }
@@ -46,7 +48,7 @@ public class RadiationSavedData extends SavedData {
         ListTag entries = new ListTag();
         for (Map.Entry<Long, Float> entry : chunkRadiation.entrySet()) {
             float radiation = clamp(entry.getValue());
-            if (radiation <= 0.0F) {
+            if (radiation == 0.0F) {
                 continue;
             }
             CompoundTag entryTag = new CompoundTag();
@@ -55,6 +57,7 @@ public class RadiationSavedData extends SavedData {
             entries.add(entryTag);
         }
         tag.put(TAG_ENTRIES, entries);
+        tag.putBoolean(TAG_LEGACY_CHUNK_IMPORTS_SUPPRESSED, legacyChunkImportsSuppressed);
         return tag;
     }
 
@@ -64,16 +67,18 @@ public class RadiationSavedData extends SavedData {
 
     public void set(ChunkPos pos, float radiation) {
         float clamped = clamp(radiation);
-        if (clamped <= 0.0F) {
-            chunkRadiation.remove(pos.toLong());
-        } else {
-            chunkRadiation.put(pos.toLong(), clamped);
-        }
+        chunkRadiation.put(pos.toLong(), clamped);
         setDirty();
     }
 
     public void loadChunk(ChunkPos pos, float radiation) {
-        chunkRadiation.put(pos.toLong(), clamp(radiation));
+        long key = pos.toLong();
+        float clamped = clamp(radiation);
+        Float previous = chunkRadiation.put(key, clamped);
+        float previousValue = previous == null ? 0.0F : clamp(previous);
+        if (Float.compare(previousValue, clamped) != 0 && (previousValue != 0.0F || clamped != 0.0F)) {
+            setDirty();
+        }
     }
 
     public void clear() {
@@ -94,7 +99,7 @@ public class RadiationSavedData extends SavedData {
         for (Map.Entry<Long, Float> entry : chunkRadiation.entrySet()) {
             ChunkPos pos = new ChunkPos(entry.getKey());
             if (level.hasChunk(pos.x, pos.z)) {
-                entries.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue()));
+                entries.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), clamp(entry.getValue())));
             }
         }
         return entries;
@@ -103,9 +108,28 @@ public class RadiationSavedData extends SavedData {
     public List<Map.Entry<Long, Float>> entriesSnapshot() {
         List<Map.Entry<Long, Float>> entries = new ArrayList<>();
         for (Map.Entry<Long, Float> entry : chunkRadiation.entrySet()) {
-            entries.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue()));
+            entries.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), clamp(entry.getValue())));
         }
         return entries;
+    }
+
+    public boolean contains(ChunkPos pos) {
+        return chunkRadiation.containsKey(pos.toLong());
+    }
+
+    public Float raw(ChunkPos pos) {
+        return chunkRadiation.get(pos.toLong());
+    }
+
+    public boolean legacyChunkImportsSuppressed() {
+        return legacyChunkImportsSuppressed;
+    }
+
+    public void suppressLegacyChunkImports() {
+        if (!legacyChunkImportsSuppressed) {
+            legacyChunkImportsSuppressed = true;
+            setDirty();
+        }
     }
 
     public int pruneUnloaded(ServerLevel level) {
@@ -192,7 +216,7 @@ public class RadiationSavedData extends SavedData {
                     float spread = value * percent;
                     if (previous.containsKey(targetKey)) {
                         float current = next.getOrDefault(targetKey, 0.0F);
-                        float nextValue = Math.max((current + spread) * 0.99F - 0.05F, 0.0F);
+                        float nextValue = legacyDiffusionClamp((current + spread) * 0.99F - 0.05F);
                         next.put(targetKey, nextValue);
                         if (nextValue > fogThreshold) {
                             fogCandidates.add(origin);
@@ -209,8 +233,7 @@ public class RadiationSavedData extends SavedData {
 
         chunkRadiation.clear();
         for (Map.Entry<Long, Float> entry : next.entrySet()) {
-            float radiation = clamp(entry.getValue());
-            chunkRadiation.put(entry.getKey(), radiation);
+            chunkRadiation.put(entry.getKey(), entry.getValue());
         }
         setDirty();
         return fogCandidates;
@@ -225,7 +248,13 @@ public class RadiationSavedData extends SavedData {
     }
 
     private static float clamp(float value) {
-        return Mth.clamp(value, 0.0F, RadiationConstants.MAX_CHUNK_RADIATION);
+        return value < 0.0F ? 0.0F : value > RadiationConstants.MAX_CHUNK_RADIATION
+                ? RadiationConstants.MAX_CHUNK_RADIATION
+                : value;
+    }
+
+    private static float legacyDiffusionClamp(float value) {
+        return 0.0F < value ? value : 0.0F;
     }
 
     public record Stats(int totalEntries, int loadedEntries, int positiveEntries, int loadedPositiveEntries,

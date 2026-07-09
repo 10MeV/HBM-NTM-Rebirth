@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "G": {
+      "tag": "forge:wires/gold"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:tesla"
+    }
+  },
+  "pattern": [
+    "DGD",
+    "GTG",
+    "DGD"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:back_tesla"
+  },
+  "show_notification": true
+}

@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ingots/rare_earth" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_desh_mix" }
+  "output": { "item": "hbm_ntm_rebirth:powder_desh_mix" },
+  "source_order": 63
 }

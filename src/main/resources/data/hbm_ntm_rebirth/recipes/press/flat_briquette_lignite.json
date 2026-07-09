@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:dusts/lignite"
+    },
+    "legacy_ore": "dustLignite"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:briquette_lignite"
+  },
+  "source_order": 9,
+  "stamp": "flat"
+}

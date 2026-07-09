@@ -15,6 +15,10 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class SchrabFogParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
     private final SpriteSet sprites;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private SchrabFogParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
         super(level, x, y, z, 0.0D, 0.0D, 0.0D);
@@ -33,6 +37,7 @@ public class SchrabFogParticle extends TextureSheetParticle implements HbmDeferr
         this.bCol = 1.0F;
         this.alpha = 1.0F;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -40,6 +45,7 @@ public class SchrabFogParticle extends TextureSheetParticle implements HbmDeferr
         super.tick();
         if (!this.removed) {
             this.setSpriteFromAge(sprites);
+            this.cacheSpriteUv();
         }
     }
 
@@ -51,11 +57,18 @@ public class SchrabFogParticle extends TextureSheetParticle implements HbmDeferr
     @Override
     public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(
-                buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite()), camera, partialTick,
+                HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer), camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     @Override

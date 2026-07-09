@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:casing_large_steel"
+    }
+  },
+  "output": [
+    {
+      "amount": 36,
+      "material": "WeaponSteel"
+    }
+  ],
+  "source_order": 20
+}

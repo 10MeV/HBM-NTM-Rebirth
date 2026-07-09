@@ -1,0 +1,12 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/bombs/naval_mine.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/bombs/naval_mine",
+    "default": "hbm_ntm_rebirth:block/bombs/naval_mine",
+    "texture0": "hbm_ntm_rebirth:block/bombs/naval_mine"
+  }
+}

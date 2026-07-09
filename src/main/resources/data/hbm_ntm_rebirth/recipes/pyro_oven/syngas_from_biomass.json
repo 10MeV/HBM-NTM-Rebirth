@@ -14,5 +14,6 @@
     "item": "minecraft:charcoal",
     "count": 1
   },
-  "duration": 100
+  "duration": 100,
+  "source_order": 31
 }

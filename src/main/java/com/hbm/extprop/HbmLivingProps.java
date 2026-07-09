@@ -976,44 +976,92 @@ public final class HbmLivingProps {
 
     private static final class ContaminationList extends AbstractList<ContaminationEffect> {
         private final LivingEntity entity;
+        private final List<ContaminationEffect> entries;
 
         private ContaminationList(LivingEntity entity) {
             this.entity = entity;
+            this.entries = snapshot(entity);
         }
 
         @Override
         public ContaminationEffect get(int index) {
-            return ContaminationEffect.fromModern(HbmLivingProperties.getCont(entity).get(index));
+            return entries.get(index);
         }
 
         @Override
         public int size() {
-            return HbmLivingProperties.getContaminationCount(entity);
+            return entries.size();
         }
 
         @Override
         public void add(int index, ContaminationEffect element) {
-            List<HbmLivingProperties.ContaminationEffect> effects = HbmLivingProperties.getCont(entity);
-            effects.add(index, element == null ? new HbmLivingProperties.ContaminationEffect(0.0F, 1, 0, false) : element.toModern());
+            entries.add(index, safeElement(element));
+            modCount++;
+            commit();
         }
 
         @Override
         public ContaminationEffect set(int index, ContaminationEffect element) {
-            List<HbmLivingProperties.ContaminationEffect> effects = HbmLivingProperties.getCont(entity);
-            HbmLivingProperties.ContaminationEffect previous = effects.set(index,
-                    element == null ? new HbmLivingProperties.ContaminationEffect(0.0F, 1, 0, false) : element.toModern());
-            return ContaminationEffect.fromModern(previous);
+            ContaminationEffect previous = entries.set(index, safeElement(element));
+            commit();
+            return previous;
         }
 
         @Override
         public ContaminationEffect remove(int index) {
-            List<HbmLivingProperties.ContaminationEffect> effects = HbmLivingProperties.getCont(entity);
-            return ContaminationEffect.fromModern(effects.remove(index));
+            ContaminationEffect previous = entries.remove(index);
+            modCount++;
+            commit();
+            return previous;
         }
 
         @Override
         public void clear() {
-            HbmLivingProperties.clearCont(entity);
+            if (!entries.isEmpty()) {
+                entries.clear();
+                modCount++;
+            }
+            commit();
+        }
+
+        @Override
+        public boolean removeAll(java.util.Collection<?> collection) {
+            boolean changed = entries.removeAll(collection);
+            if (changed) {
+                modCount++;
+            }
+            commit();
+            return changed;
+        }
+
+        @Override
+        public boolean retainAll(java.util.Collection<?> collection) {
+            boolean changed = entries.retainAll(collection);
+            if (changed) {
+                modCount++;
+            }
+            commit();
+            return changed;
+        }
+
+        private void commit() {
+            List<HbmLivingProperties.ContaminationEffect> effects = HbmLivingProperties.getCont(entity);
+            effects.clear();
+            for (ContaminationEffect effect : entries) {
+                effects.add(safeElement(effect).toModern());
+            }
+        }
+
+        private static ContaminationEffect safeElement(ContaminationEffect element) {
+            return element == null ? new ContaminationEffect(0.0F, 1, 0, false) : element;
+        }
+
+        private static List<ContaminationEffect> snapshot(LivingEntity entity) {
+            List<ContaminationEffect> snapshot = new java.util.ArrayList<>();
+            for (HbmLivingProperties.ContaminationEffect effect : HbmLivingProperties.getCont(entity)) {
+                snapshot.add(ContaminationEffect.fromModern(effect));
+            }
+            return snapshot;
         }
     }
 }

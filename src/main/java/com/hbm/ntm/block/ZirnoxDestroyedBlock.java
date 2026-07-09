@@ -32,7 +32,7 @@ public class ZirnoxDestroyedBlock extends StaticLegacyMultiblockMachineBlock imp
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable

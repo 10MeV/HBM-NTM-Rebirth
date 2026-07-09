@@ -99,9 +99,7 @@ public class TurretRichardBlockEntity extends TurretBlockEntityBase {
             loaded = 0;
             return;
         }
-        if (!spawnBullet(config, 30.0F, getTarget())) {
-            return;
-        }
+        spawnBullet(config, 30.0F, getTarget());
         consumeAmmo(config);
         playTurretSound("hbm:turret.richard_fire", 2.0F, 1.0F);
         loaded--;

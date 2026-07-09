@@ -3,7 +3,9 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.block.LegacyFrameRenderState;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -68,7 +70,8 @@ import java.util.List;
 import java.util.Map;
 
 public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
-        HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider, LegacyProxyDelegateProvider {
+        HbmEnergyPortInspectable, HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider,
+        LegacyProxyDelegateProvider {
     private static final String TAG_INVENTORY = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
     private static final String TAG_MODERN_INVENTORY = "Inventory";
     private static final String TAG_CUSTOM_NAME = "name";
@@ -158,7 +161,6 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     private final boolean[] didProcess = new boolean[MODULES];
     private int prevAnim;
     private int anim;
-    private boolean frame;
     private Object audioLoop;
     @Nullable
     private String customName;
@@ -191,6 +193,9 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ChemicalFactoryBlockEntity blockEntity) {
+        if (level.getGameTime() % 20L == 0L) {
+            state = LegacyFrameRenderState.syncFrameBlockState(level, pos, state, 3);
+        }
         long oldPower = blockEntity.energy.getPower();
         HbmEnergyUtil.chargeStorageFromItem(blockEntity.items.getStackInSlot(SLOT_BATTERY), blockEntity,
                 blockEntity.getReceiverSpeed());
@@ -216,9 +221,6 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         }
         if (active) {
             blockEntity.anim++;
-        }
-        if (level.getGameTime() % 20L == 0L) {
-            blockEntity.frame = !level.getBlockState(pos.above(3)).isAir();
         }
         blockEntity.updateAudioLoop();
     }
@@ -252,7 +254,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public boolean shouldRenderFrame() {
-        return frame || (level != null && !level.getBlockState(worldPosition.above(3)).isAir());
+        return LegacyFrameRenderState.isFrameVisible(getBlockState(), level, worldPosition, 3);
     }
 
     public double getProgress(int module) {
@@ -492,6 +494,13 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
         if (GenericMachineRecipeSelector.hasSelection(tag)) {
             selectRecipe(GenericMachineRecipeSelector.readIndex(tag), GenericMachineRecipeSelector.readSelection(tag));
         }
+    }
+
+    @Override
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        return level == null
+                ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
+                : HbmEnergyUtil.inspectPorts(level, worldPosition, energyPorts());
     }
 
     @Override

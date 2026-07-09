@@ -1,18 +1,35 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.shellmustard",
   "duration": 100,
-  "power": 1000,
-  "input_items": [
-    { "ingredient": { "item": "hbm_ntm_rebirth:ammo_arty" }, "count": 1 },
-    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 1, "legacy_ore": "ingotAnyPlastic" }
-  ],
   "input_fluids": [
-    { "fluid": "hbm_ntm_rebirth:mustardgas", "amount": 4000 }
+    {
+      "amount": 4000,
+      "fluid": "hbm_ntm_rebirth:mustardgas"
+    }
   ],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:ammo_arty_mustard_gas" }
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ammo_arty"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    }
   ],
+  "internal_name": "ass.shellmustard",
   "output_fluids": [],
-  "pools": []
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:ammo_arty_mustard_gas"
+    }
+  ],
+  "pools": [],
+  "power": 1000,
+  "source_order": 319
 }

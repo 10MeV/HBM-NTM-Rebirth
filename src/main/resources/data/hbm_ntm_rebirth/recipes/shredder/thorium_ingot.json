@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ingots/thorium" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_thorium" }
+  "output": { "item": "hbm_ntm_rebirth:powder_thorium" },
+  "source_order": 1000
 }

@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 20,
+  "fluid": { "fluid": "NITROGLYCERIN", "amount": 1000 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:sand_quartz" } },
+  "output": { "item": "hbm_ntm_rebirth:ball_dynamite", "count": 16 },
+  "source_order": 402
+}

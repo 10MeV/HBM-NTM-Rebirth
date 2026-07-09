@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "hbm_ntm_rebirth:block/secure_access_door"
+    }
+  }
+}

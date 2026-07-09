@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "item": "minecraft:enchanted_book" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_magic" }
+  "output": { "item": "hbm_ntm_rebirth:powder_magic" },
+  "source_order": 48
 }

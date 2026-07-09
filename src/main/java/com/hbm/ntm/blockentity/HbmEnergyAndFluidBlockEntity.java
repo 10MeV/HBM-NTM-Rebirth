@@ -9,6 +9,7 @@ import com.hbm.ntm.energy.HbmLoadedEnergy;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import net.minecraft.core.BlockPos;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockEntity
-        implements HbmEnergyConnector, HbmEnergyHandler, HbmLoadedEnergy, InfoProviderEC {
+        implements HbmEnergyConnector, HbmEnergyHandler, HbmLoadedEnergy, HbmEnergyPortInspectable, InfoProviderEC {
     private static final String TAG_ENERGY = "Energy";
 
     protected final HbmEnergyStorage energy;
@@ -89,6 +90,7 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
         return List.of();
     }
 
+    @Override
     public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
         return level == null
                 ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)

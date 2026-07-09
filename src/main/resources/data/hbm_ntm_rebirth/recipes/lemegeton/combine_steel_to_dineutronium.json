@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/combine_steel"
+    },
+    "count": 1,
+    "legacy_ore": "ingotCMBSteel"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_dineutronium"
+  },
+  "source_order": 4
+}

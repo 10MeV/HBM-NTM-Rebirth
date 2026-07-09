@@ -5,6 +5,7 @@ import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.nbt.CompoundTag;
@@ -19,8 +20,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
@@ -36,6 +35,7 @@ import java.util.List;
  */
 public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEntityAdditionalSpawnData {
     private static final int MAX_WARM_START_CLOUDLETS = 60_000;
+    private static final double VEC3_NORMALIZE_EPSILON = 1.0E-4D;
 
     private static final EntityDataAccessor<Float> SCALE =
             SynchedEntityData.defineId(NukeTorexEntity.class, EntityDataSerializers.FLOAT);
@@ -121,9 +121,12 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
                 double radial = upper
                         ? torusWidth + rollerSize * (3.0D + random.nextDouble() * 0.5D)
                         : torusWidth + rollerSize * (5.0D + random.nextDouble());
-                Vec3 vec = rotateY(rotateZ(new Vec3(radial, 0.0D, 0.0D), (float) (Math.PI / 45.0D * j)), angle);
+                float zAngle = (float) (Math.PI / 45.0D * j);
+                double rotatedRadial = radial * Mth.cos(zAngle);
+                double offsetX = rotatedRadial * Mth.cos(angle);
+                double offsetZ = -rotatedRadial * Mth.sin(angle);
                 double y = getY() + coreHeight + (upper ? 25.0D + j * cloudScale : -5.0D + j * simulationScale);
-                Cloudlet cloud = new Cloudlet(getX() + vec.x, y, getZ() + vec.z, angle, 0,
+                Cloudlet cloud = new Cloudlet(getX() + offsetX, y, getZ() + offsetZ, angle, 0,
                         (int) ((20.0D + tickCount / 10.0D) * (1.0D + random.nextDouble() * 0.1D)),
                         TorexType.CONDENSATION);
                 cloud.setScale(0.125F * (float) cloudScale, 3.0F * (float) cloudScale);
@@ -208,7 +211,7 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
         convectionHeight = coreHeight + rollerSize;
         int maxHeat = (int) (50.0D * cloudScale);
         heat = maxHeat - Math.pow((maxHeat * age) / (double) Math.max(1, getMaxAge()), 1.0D);
-        lastSpawnY = Math.max(level().getHeight(Heightmap.Types.WORLD_SURFACE, Mth.floor(getX()), Mth.floor(getZ())) - 3, 1);
+        lastSpawnY = Math.max(WorldUtil.legacyGetHeightValue(level(), Mth.floor(getX()), Mth.floor(getZ())) - 3, 1);
         lastRenderSortTick = Integer.MIN_VALUE;
     }
 
@@ -267,7 +270,7 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
             didSpawnWarpShockwave = true;
         }
 
-        int spawnTarget = Math.max(level().getHeight(Heightmap.Types.WORLD_SURFACE, Mth.floor(x), Mth.floor(z)) - 3, 1);
+        int spawnTarget = Math.max(WorldUtil.legacyGetHeightValue(level(), Mth.floor(x), Mth.floor(z)) - 3, 1);
         double moveSpeed = 0.5D;
         if (Math.abs(spawnTarget - lastSpawnY) < moveSpeed) {
             lastSpawnY = spawnTarget;
@@ -294,10 +297,12 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
             int shockLife = Math.max(300 - tickCount * 20, 50);
             for (int i = 0; i < cloudCount; i++) {
                 float rot = (float) (Math.PI * 2.0D * random.nextDouble());
-                Vec3 vec = rotateY(new Vec3((tickCount * 1.5D + random.nextDouble()) * 1.5D, 0.0D, 0.0D), rot);
-                cloudlets.add(new Cloudlet(vec.x + x,
-                        level().getHeight(Heightmap.Types.WORLD_SURFACE, (int) (vec.x + x) + 1, (int) (vec.z + z)),
-                        vec.z + z, rot, 0, shockLife, TorexType.SHOCK)
+                double radial = (tickCount * 1.5D + random.nextDouble()) * 1.5D;
+                double offsetX = radial * Mth.cos(rot);
+                double offsetZ = -radial * Mth.sin(rot);
+                cloudlets.add(new Cloudlet(offsetX + x,
+                        WorldUtil.legacyGetHeightValue(level(), (int) (offsetX + x) + 1, (int) (offsetZ + z)),
+                        offsetZ + z, rot, 0, shockLife, TorexType.SHOCK)
                         .setScale(7.0F, 2.0F)
                         .setMotion(tickCount > 15 ? 0.75D : 0.0D));
             }
@@ -473,18 +478,6 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
                 ^ (Mth.floor(getZ()) & 0xFFFFFFFFL);
     }
 
-    private static Vec3 rotateY(Vec3 vec, float angle) {
-        double cos = Mth.cos(angle);
-        double sin = Mth.sin(angle);
-        return new Vec3(vec.x * cos + vec.z * sin, vec.y, vec.z * cos - vec.x * sin);
-    }
-
-    private static Vec3 rotateZ(Vec3 vec, float angle) {
-        double cos = Mth.cos(angle);
-        double sin = Mth.sin(angle);
-        return new Vec3(vec.x * cos + vec.y * sin, vec.y * cos - vec.x * sin, vec.z);
-    }
-
     public enum TorexType {
         STANDARD,
         SHOCK,
@@ -508,13 +501,20 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
         public boolean isDead;
         public float rangeMod = 1.0F;
         public float colorMod = 1.0F;
-        public Vec3 color;
-        public Vec3 prevColor;
+        public double colorR;
+        public double colorG;
+        public double colorB;
+        public double prevColorR;
+        public double prevColorG;
+        public double prevColorB;
         public double renderSortDistanceSq;
         public TorexType type;
         private float startingScale = 1.0F;
         private float growingScale = 5.0F;
         private double motionMult = 1.0D;
+        private double computedMotionX;
+        private double computedMotionY;
+        private double computedMotionZ;
 
         public Cloudlet(double x, double y, double z, float angle, int age, int maxAge) {
             this(x, y, z, angle, age, maxAge, TorexType.STANDARD);
@@ -534,7 +534,9 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
             colorMod = 0.8F + random.nextFloat() * 0.2F;
             this.type = type;
             updateColor();
-            prevColor = color;
+            prevColorR = colorR;
+            prevColorG = colorG;
+            prevColorB = colorB;
         }
 
         private void update() {
@@ -553,28 +555,30 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
             double simPosZ = NukeTorexEntity.this.getZ();
 
             if (type == TorexType.STANDARD) {
-                Vec3 convection = getConvectionMotion(simPosX, simPosZ);
-                Vec3 lift = getLiftMotion(simPosX);
+                computeConvectionMotion(simPosX, simPosZ);
+                double convectionX = computedMotionX;
+                double convectionY = computedMotionY;
+                double convectionZ = computedMotionZ;
+                computeLiftMotion(simPosX);
                 double factor = Mth.clamp((posY - NukeTorexEntity.this.getY()) / NukeTorexEntity.this.coreHeight, 0.0D, 1.0D);
-                motionX = convection.x * factor + lift.x * (1.0D - factor);
-                motionY = convection.y * factor + lift.y * (1.0D - factor);
-                motionZ = convection.z * factor + lift.z * (1.0D - factor);
+                motionX = convectionX * factor + computedMotionX * (1.0D - factor);
+                motionY = convectionY * factor + computedMotionY * (1.0D - factor);
+                motionZ = convectionZ * factor + computedMotionZ * (1.0D - factor);
             } else if (type == TorexType.SHOCK) {
                 double factor = Mth.clamp((posY - NukeTorexEntity.this.getY()) / NukeTorexEntity.this.coreHeight, 0.0D, 1.0D);
-                Vec3 motion = rotateY(new Vec3(1.0D, 0.0D, 0.0D), angle);
-                motionX = motion.x * factor;
-                motionY = motion.y * factor;
-                motionZ = motion.z * factor;
+                motionX = Mth.cos(angle) * factor;
+                motionY = 0.0D;
+                motionZ = -Mth.sin(angle) * factor;
             } else if (type == TorexType.RING) {
-                Vec3 motion = getRingMotion(simPosX, simPosZ);
-                motionX = motion.x;
-                motionY = motion.y;
-                motionZ = motion.z;
+                computeRingMotion(simPosX, simPosZ);
+                motionX = computedMotionX;
+                motionY = computedMotionY;
+                motionZ = computedMotionZ;
             } else if (type == TorexType.CONDENSATION) {
-                Vec3 motion = getCondensationMotion();
-                motionX = motion.x;
-                motionY = motion.y;
-                motionZ = motion.z;
+                computeCondensationMotion();
+                motionX = computedMotionX;
+                motionY = computedMotionY;
+                motionZ = computedMotionZ;
             }
 
             double mult = motionMult * getSimulationSpeed();
@@ -585,62 +589,113 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
             updateColor();
         }
 
-        private Vec3 getCondensationMotion() {
+        private void computeCondensationMotion() {
             double speed = 0.00002D * NukeTorexEntity.this.tickCount;
-            return new Vec3((posX - NukeTorexEntity.this.getX()) * speed, 0.0D,
+            setComputedMotion((posX - NukeTorexEntity.this.getX()) * speed, 0.0D,
                     (posZ - NukeTorexEntity.this.getZ()) * speed);
         }
 
-        private Vec3 getRingMotion(double simPosX, double simPosZ) {
+        private void computeRingMotion(double simPosX, double simPosZ) {
             if (simPosX > NukeTorexEntity.this.getX() + torusWidth * 2.0D) {
-                return Vec3.ZERO;
+                setComputedMotion(0.0D, 0.0D, 0.0D);
+                return;
             }
 
-            Vec3 torusPos = new Vec3(NukeTorexEntity.this.getX() + torusWidth,
-                    NukeTorexEntity.this.getY() + coreHeight * 0.5D, NukeTorexEntity.this.getZ());
-            Vec3 delta = new Vec3(torusPos.x - simPosX, torusPos.y - posY, torusPos.z - simPosZ);
+            double torusPosX = NukeTorexEntity.this.getX() + torusWidth;
+            double torusPosY = NukeTorexEntity.this.getY() + coreHeight * 0.5D;
+            double torusPosZ = NukeTorexEntity.this.getZ();
+            double deltaX = torusPosX - simPosX;
+            double deltaY = torusPosY - posY;
+            double deltaZ = torusPosZ - simPosZ;
             double roller = rollerSize * rangeMod * 0.25D;
-            double dist = delta.length() / roller - 1.0D;
+            double dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ) / roller - 1.0D;
             if (Math.abs(dist) < 1.0E-6D) {
-                return Vec3.ZERO;
+                setComputedMotion(0.0D, 0.0D, 0.0D);
+                return;
             }
 
             double func = 1.0D - Math.pow(Math.E, -dist);
             float turn = (float) (func * Math.PI * 0.5D);
-            Vec3 rot = rotateZ(new Vec3(-delta.x / dist, -delta.y / dist, -delta.z / dist), turn);
-            Vec3 motion = new Vec3(torusPos.x + rot.x - simPosX, torusPos.y + rot.y - posY,
-                    torusPos.z + rot.z - simPosZ).scale(0.001D).normalize();
-            return rotateY(motion, angle);
+            double rotX = -deltaX / dist;
+            double rotY = -deltaY / dist;
+            double rotZ = -deltaZ / dist;
+            double cos = Mth.cos(turn);
+            double sin = Mth.sin(turn);
+            double rotatedX = rotX * cos + rotY * sin;
+            double rotatedY = rotY * cos - rotX * sin;
+            setNormalizedMotion((torusPosX + rotatedX - simPosX) * 0.001D,
+                    (torusPosY + rotatedY - posY) * 0.001D,
+                    (torusPosZ + rotZ - simPosZ) * 0.001D);
+            rotateComputedMotionAroundY();
         }
 
-        private Vec3 getConvectionMotion(double simPosX, double simPosZ) {
-            Vec3 torusPos = new Vec3(NukeTorexEntity.this.getX() + torusWidth,
-                    NukeTorexEntity.this.getY() + coreHeight, NukeTorexEntity.this.getZ());
-            Vec3 delta = new Vec3(torusPos.x - simPosX, torusPos.y - posY, torusPos.z - simPosZ);
+        private void computeConvectionMotion(double simPosX, double simPosZ) {
+            double torusPosX = NukeTorexEntity.this.getX() + torusWidth;
+            double torusPosY = NukeTorexEntity.this.getY() + coreHeight;
+            double torusPosZ = NukeTorexEntity.this.getZ();
+            double deltaX = torusPosX - simPosX;
+            double deltaY = torusPosY - posY;
+            double deltaZ = torusPosZ - simPosZ;
             double roller = rollerSize * rangeMod;
-            double dist = delta.length() / roller - 1.0D;
+            double dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ) / roller - 1.0D;
             if (Math.abs(dist) < 1.0E-6D) {
-                return Vec3.ZERO;
+                setComputedMotion(0.0D, 0.0D, 0.0D);
+                return;
             }
 
             double func = 1.0D - Math.pow(Math.E, -dist);
             float turn = (float) (func * Math.PI * 0.5D);
-            Vec3 rot = rotateZ(new Vec3(-delta.x / dist, -delta.y / dist, -delta.z / dist), turn);
-            Vec3 motion = new Vec3(torusPos.x + rot.x - simPosX, torusPos.y + rot.y - posY,
-                    torusPos.z + rot.z - simPosZ).normalize();
-            return rotateY(motion, angle);
+            double rotX = -deltaX / dist;
+            double rotY = -deltaY / dist;
+            double rotZ = -deltaZ / dist;
+            double cos = Mth.cos(turn);
+            double sin = Mth.sin(turn);
+            double rotatedX = rotX * cos + rotY * sin;
+            double rotatedY = rotY * cos - rotX * sin;
+            setNormalizedMotion(torusPosX + rotatedX - simPosX,
+                    torusPosY + rotatedY - posY,
+                    torusPosZ + rotZ - simPosZ);
+            rotateComputedMotionAroundY();
         }
 
-        private Vec3 getLiftMotion(double simPosX) {
+        private void computeLiftMotion(double simPosX) {
             double scale = Mth.clamp(1.0D - (simPosX - (NukeTorexEntity.this.getX() + torusWidth)), 0.0D, 1.0D);
-            Vec3 motion = new Vec3(NukeTorexEntity.this.getX() - posX,
+            setNormalizedMotion(NukeTorexEntity.this.getX() - posX,
                     (NukeTorexEntity.this.getY() + convectionHeight) - posY,
-                    NukeTorexEntity.this.getZ() - posZ).normalize();
-            return motion.scale(scale);
+                    NukeTorexEntity.this.getZ() - posZ);
+            computedMotionX *= scale;
+            computedMotionY *= scale;
+            computedMotionZ *= scale;
+        }
+
+        private void setComputedMotion(double x, double y, double z) {
+            computedMotionX = x;
+            computedMotionY = y;
+            computedMotionZ = z;
+        }
+
+        private void setNormalizedMotion(double x, double y, double z) {
+            double length = Math.sqrt(x * x + y * y + z * z);
+            if (length < VEC3_NORMALIZE_EPSILON) {
+                setComputedMotion(0.0D, 0.0D, 0.0D);
+                return;
+            }
+            setComputedMotion(x / length, y / length, z / length);
+        }
+
+        private void rotateComputedMotionAroundY() {
+            double cos = Mth.cos(angle);
+            double sin = Mth.sin(angle);
+            double x = computedMotionX;
+            double z = computedMotionZ;
+            computedMotionX = x * cos + z * sin;
+            computedMotionZ = z * cos - x * sin;
         }
 
         private void updateColor() {
-            prevColor = color;
+            prevColorR = colorR;
+            prevColorG = colorG;
+            prevColorB = colorB;
 
             double exX = NukeTorexEntity.this.getX();
             double exY = NukeTorexEntity.this.getY() + NukeTorexEntity.this.coreHeight;
@@ -653,44 +708,74 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
 
             int cloudType = NukeTorexEntity.this.getCloudType();
             if (cloudType == 1) {
-                color = new Vec3(Math.max(col, 0.25D), Math.max(col * 2.0D, 0.25D), Math.max(col * 0.5D, 0.25D));
+                colorR = Math.max(col, 0.25D);
+                colorG = Math.max(col * 2.0D, 0.25D);
+                colorB = Math.max(col * 0.5D, 0.25D);
             } else if (cloudType == 2) {
                 Color hsb = Color.getHSBColor(angle / 2.0F / (float) Math.PI, 1.0F, 1.0F);
                 if (type == TorexType.RING) {
-                    color = new Vec3(Math.max(col, 0.25D), Math.max(col, 0.25D), Math.max(col, 0.25D));
+                    colorR = Math.max(col, 0.25D);
+                    colorG = Math.max(col, 0.25D);
+                    colorB = Math.max(col, 0.25D);
                 } else {
-                    color = new Vec3(hsb.getRed() / 255.0D, hsb.getGreen() / 255.0D, hsb.getBlue() / 255.0D);
+                    colorR = hsb.getRed() / 255.0D;
+                    colorG = hsb.getGreen() / 255.0D;
+                    colorB = hsb.getBlue() / 255.0D;
                 }
             } else {
-                color = new Vec3(Math.max(col * 2.0D, 0.25D), Math.max(col * 1.5D, 0.25D), Math.max(col * 0.5D, 0.25D));
+                colorR = Math.max(col * 2.0D, 0.25D);
+                colorG = Math.max(col * 1.5D, 0.25D);
+                colorB = Math.max(col * 0.5D, 0.25D);
             }
         }
 
-        public Vec3 getInterpPos(float partialTick) {
+        public double getInterpRenderX(float partialTick) {
+            return interpRenderCoord(partialTick, prevPosX, posX, NukeTorexEntity.this.getX());
+        }
+
+        public double getInterpRenderY(float partialTick) {
+            return interpRenderCoord(partialTick, prevPosY, posY, NukeTorexEntity.this.getY());
+        }
+
+        public double getInterpRenderZ(float partialTick) {
+            return interpRenderCoord(partialTick, prevPosZ, posZ, NukeTorexEntity.this.getZ());
+        }
+
+        private double interpRenderCoord(float partialTick, double previous, double current, double origin) {
+            double value = Mth.lerp(partialTick, previous, current);
+            if (type == TorexType.SHOCK) {
+                return value;
+            }
             float scale = NukeTorexEntity.this.getCloudScale();
-            Vec3 base = new Vec3(Mth.lerp(partialTick, prevPosX, posX), Mth.lerp(partialTick, prevPosY, posY),
-                    Mth.lerp(partialTick, prevPosZ, posZ));
-            if (type != TorexType.SHOCK) {
-                base = new Vec3((base.x - NukeTorexEntity.this.getX()) * scale + NukeTorexEntity.this.getX(),
-                        (base.y - NukeTorexEntity.this.getY()) * scale + NukeTorexEntity.this.getY(),
-                        (base.z - NukeTorexEntity.this.getZ()) * scale + NukeTorexEntity.this.getZ());
-            }
-            return base;
+            return (value - origin) * scale + origin;
         }
 
-        public Vec3 getInterpColor(float partialTick) {
+        public double getInterpRenderRed(float partialTick) {
+            return interpRenderColor(partialTick, 0);
+        }
+
+        public double getInterpRenderGreen(float partialTick) {
+            return interpRenderColor(partialTick, 1);
+        }
+
+        public double getInterpRenderBlue(float partialTick) {
+            return interpRenderColor(partialTick, 2);
+        }
+
+        private double interpRenderColor(float partialTick, int component) {
             if (type == TorexType.CONDENSATION) {
-                return new Vec3(1.0D, 1.0D, 1.0D);
+                return 1.0D;
             }
 
             double greying = NukeTorexEntity.this.getGreying();
             if (type == TorexType.RING) {
                 greying += 1.0D;
             }
-            Vec3 previous = prevColor == null ? color : prevColor;
-            return new Vec3(Mth.lerp(partialTick, previous.x, color.x) * greying,
-                    Mth.lerp(partialTick, previous.y, color.y) * greying,
-                    Mth.lerp(partialTick, previous.z, color.z) * greying);
+            return switch (component) {
+                case 0 -> Mth.lerp(partialTick, prevColorR, colorR) * greying;
+                case 1 -> Mth.lerp(partialTick, prevColorG, colorG) * greying;
+                default -> Mth.lerp(partialTick, prevColorB, colorB) * greying;
+            };
         }
 
         public float getAlpha() {

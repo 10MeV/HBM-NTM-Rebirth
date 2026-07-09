@@ -1,6 +1,7 @@
 package com.hbm.ntm.world;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.util.fauxpointtwelve.NBTTagCompound;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraftforge.fml.ModList;
@@ -22,6 +23,7 @@ public final class BlockMigrationHelper {
     private static final AtomicLong MIGRATED_ITEM_STACKS = new AtomicLong();
     private static final AtomicLong NUMERIC_ITEM_STACKS_WITHOUT_MAP = new AtomicLong();
     private static final AtomicLong UNKNOWN_NUMERIC_ITEM_STACKS = new AtomicLong();
+    private static final AtomicLong UNKNOWN_LEGACY_BATTERY_METAS = new AtomicLong();
     private static volatile LegacyWorldItemIdMap legacyItemIds = LegacyWorldItemIdMap.empty();
     private static volatile LegacyWorldItemIdMap.LoadResult lastLegacyItemIdMapLoad =
             LegacyWorldItemIdMap.LoadResult.empty(null, "not_loaded");
@@ -57,7 +59,13 @@ public final class BlockMigrationHelper {
     }
 
     public static void save(CompoundTag tag) {
-        tag.putInt(NBT_KEY_BUILD_NUMBER, buildNumber());
+        if (tag instanceof NBTTagCompound legacyTag) {
+            legacyTag.setInteger(NBT_KEY_BUILD_NUMBER, buildNumber());
+        } else {
+            NBTTagCompound legacyTag = NBTTagCompound.copyOf(tag);
+            legacyTag.setInteger(NBT_KEY_BUILD_NUMBER, buildNumber());
+            replaceWithLegacy(tag, legacyTag);
+        }
         SAVED_CHUNKS.incrementAndGet();
     }
 
@@ -71,6 +79,7 @@ public final class BlockMigrationHelper {
             MIGRATED_ITEM_STACKS.addAndGet(result.migrated());
             NUMERIC_ITEM_STACKS_WITHOUT_MAP.addAndGet(result.numericItemStacksWithoutMap());
             UNKNOWN_NUMERIC_ITEM_STACKS.addAndGet(result.unknownNumericItemStacks());
+            UNKNOWN_LEGACY_BATTERY_METAS.addAndGet(result.unknownLegacyBatteryMetas());
         }
     }
 
@@ -91,10 +100,14 @@ public final class BlockMigrationHelper {
     }
 
     public static MigrationMarker inspectTag(CompoundTag tag) {
-        if (tag == null || !tag.contains(NBT_KEY_BUILD_NUMBER)) {
+        if (tag == null) {
             return inspectMarker(null);
         }
-        return inspectMarker(tag.getInt(NBT_KEY_BUILD_NUMBER));
+        NBTTagCompound legacyTag = NBTTagCompound.copyOf(tag);
+        if (!legacyTag.hasKey(NBT_KEY_BUILD_NUMBER)) {
+            return inspectMarker(null);
+        }
+        return inspectMarker(legacyTag.getInteger(NBT_KEY_BUILD_NUMBER));
     }
 
     public static MigrationMarker inspectMarker(Integer previousBuild) {
@@ -129,6 +142,7 @@ public final class BlockMigrationHelper {
                 MIGRATED_ITEM_STACKS.get(),
                 NUMERIC_ITEM_STACKS_WITHOUT_MAP.get(),
                 UNKNOWN_NUMERIC_ITEM_STACKS.get(),
+                UNKNOWN_LEGACY_BATTERY_METAS.get(),
                 lastLegacyItemIdMapLoad,
                 lastLoadResult);
     }
@@ -143,6 +157,7 @@ public final class BlockMigrationHelper {
         MIGRATED_ITEM_STACKS.set(0L);
         NUMERIC_ITEM_STACKS_WITHOUT_MAP.set(0L);
         UNKNOWN_NUMERIC_ITEM_STACKS.set(0L);
+        UNKNOWN_LEGACY_BATTERY_METAS.set(0L);
         lastLoadResult = MigrationResult.unknown();
     }
 
@@ -179,6 +194,13 @@ public final class BlockMigrationHelper {
         } catch (NumberFormatException ex) {
             return Optional.empty();
         }
+    }
+
+    private static void replaceWithLegacy(CompoundTag target, NBTTagCompound source) {
+        for (String key : target.getAllKeys().toArray(new String[0])) {
+            target.remove(key);
+        }
+        target.merge(source);
     }
 
     private BlockMigrationHelper() {
@@ -244,6 +266,7 @@ public final class BlockMigrationHelper {
                                        long migratedItemStacks,
                                        long numericItemStacksWithoutMap,
                                        long unknownNumericItemStacks,
+                                       long unknownLegacyBatteryMetas,
                                        LegacyWorldItemIdMap.LoadResult legacyItemIdMapLoad,
                                        MigrationResult lastLoadResult) {
         public long loadedChunks() {
@@ -267,6 +290,7 @@ public final class BlockMigrationHelper {
                     + " migratedItemStacks=" + migratedItemStacks
                     + " numericItemStacksWithoutMap=" + numericItemStacksWithoutMap
                     + " unknownNumericItemStacks=" + unknownNumericItemStacks
+                    + " unknownLegacyBatteryMetas=" + unknownLegacyBatteryMetas
                     + " legacyItemIdMap=" + legacyItemIdMapLoad.summary();
         }
     }

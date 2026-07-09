@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SSS",
+    "SSS",
+    "SSS"
+  ],
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:ingot_starmetal"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:block_starmetal"
+  }
+}

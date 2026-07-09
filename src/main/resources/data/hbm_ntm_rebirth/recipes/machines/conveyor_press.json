@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "CPC",
+    "CBC",
+    "CCC"
+  ],
+  "key": {
+    "C": {
+      "tag": "forge:plates/copper"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:machine_epress"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:conveyor_wand"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_conveyor_press"
+  },
+  "show_notification": true
+}

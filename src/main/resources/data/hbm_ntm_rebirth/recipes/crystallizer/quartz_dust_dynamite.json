@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 20,
+  "fluid": { "fluid": "NITROGLYCERIN", "amount": 250 },
+  "input": {
+    "ingredient": { "tag": "forge:dusts/quartz" },
+    "legacy_ore": "dustNetherQuartz"
+  },
+  "output": { "item": "hbm_ntm_rebirth:ball_dynamite", "count": 4 },
+  "source_order": 403
+}

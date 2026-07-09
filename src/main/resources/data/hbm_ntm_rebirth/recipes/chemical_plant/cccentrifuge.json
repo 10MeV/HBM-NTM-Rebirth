@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 200,
+  "input_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:chlorocalcite_cleaned"
+    },
+    {
+      "amount": 8000,
+      "fluid": "hbm_ntm_rebirth:sulfuric_acid"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.cccentrifuge",
+  "output_fluids": [
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:potassium_chloride"
+    },
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:calcium_chloride"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 100,
+  "source_order": 8
+}

@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
 public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlockEntity> {
     public BasicMachineRenderer(BlockEntityRendererProvider.Context context) {
@@ -29,6 +30,12 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
     }
 
     @Override
+    public boolean shouldRender(BasicMachineBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(BasicMachineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
@@ -36,30 +43,30 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
         }
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         ItemStack stack = blockEntity.getRenderStack();
-        LegacyTileRenderPlans.BasicPressPlan plan = LegacyTileRenderPlans.basicPressPlan(!stack.isEmpty(),
-                blockEntity.getInterpolatedPress(partialTick), BasicMachineBlockEntity.MAX_PRESS);
+        double progress = normalizedPress(blockEntity.getInterpolatedPress(partialTick),
+                BasicMachineBlockEntity.MAX_PRESS);
+        double headTranslateY = (1.0D - progress) * LegacyTileRenderPlans.BASIC_PRESS_HEAD_TRAVEL;
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity);
                 LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 poseStack.pushPose();
-                LegacyTileRenderPlans.TranslatedModelPartPlan head = plan.head();
                 poseStack.translate(0.5D, 0.0D, 0.5D);
                 poseStack.scale(0.99F, 1.0F, 0.99F);
-                poseStack.translate(head.translateX(), head.translateY(), head.translateZ());
+                poseStack.translate(0.0D, headTranslateY, 0.0D);
                 ObjMachineModels.PRESS_HEAD_LEGACY.renderAll(ObjMachineModels.PRESS_HEAD_TEXTURE, poseStack, buffer,
                         modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
                 poseStack.popPose();
             }
         }
 
-        if (!plan.item().active()) {
+        if (stack.isEmpty()) {
             return;
         }
 
         poseStack.pushPose();
-        applyItemTransform(plan.item(), poseStack);
+        applyBasicPressItemTransform(poseStack);
         Minecraft.getInstance().getItemRenderer().renderStatic(
                 stack,
                 ItemDisplayContext.FIXED,
@@ -73,13 +80,20 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
         poseStack.popPose();
     }
 
-    private static void applyItemTransform(LegacyTileRenderPlans.ItemTransformPlan plan, PoseStack poseStack) {
-        poseStack.translate(plan.translateX(), plan.translateY(), plan.translateZ());
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.rotateYDegrees()));
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.rotateXDegrees()));
-        if (plan.rotateZDegrees() != 0.0D) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) plan.rotateZDegrees()));
+    private static double normalizedPress(double press, double maxPress) {
+        if (maxPress <= 0.0D) {
+            return 0.0D;
         }
-        poseStack.scale((float) plan.scale(), (float) plan.scale(), (float) plan.scale());
+        return Math.max(0.0D, Math.min(1.0D, press / maxPress));
+    }
+
+    private static void applyBasicPressItemTransform(PoseStack poseStack) {
+        poseStack.translate(LegacyTileRenderPlans.BASIC_PRESS_ITEM_TRANSLATE_X,
+                LegacyTileRenderPlans.BASIC_PRESS_ITEM_TRANSLATE_Y,
+                LegacyTileRenderPlans.BASIC_PRESS_ITEM_TRANSLATE_Z);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) LegacyTileRenderPlans.BASIC_PRESS_ITEM_ROTATION_Y));
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) LegacyTileRenderPlans.BASIC_PRESS_ITEM_ROTATION_X));
+        float scale = (float) LegacyTileRenderPlans.BASIC_PRESS_ITEM_SCALE;
+        poseStack.scale(scale, scale, scale);
     }
 }

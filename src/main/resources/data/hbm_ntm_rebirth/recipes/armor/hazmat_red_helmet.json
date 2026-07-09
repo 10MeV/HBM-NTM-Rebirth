@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:hazmat_cloth_red"
+    },
+    "F": {
+      "tag": "forge:plates/iron"
+    },
+    "I": {
+      "tag": "forge:glass_panes"
+    }
+  },
+  "pattern": [
+    "EEE",
+    "EIE",
+    "EFE"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:hazmat_helmet_red"
+  },
+  "show_notification": true
+}

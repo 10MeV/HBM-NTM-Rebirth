@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:lubricant",
                   "amount":  100
-              }
+              },
+    "source_order":  19
 }

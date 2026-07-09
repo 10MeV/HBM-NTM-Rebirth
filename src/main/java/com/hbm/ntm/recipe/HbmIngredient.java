@@ -21,7 +21,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
-import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -54,9 +53,29 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
                 null, 0);
     }
 
+    public static HbmIngredient of(Ingredient ingredient, int count) {
+        return new HbmIngredient(ingredient, count, ItemStack.EMPTY, new CompoundTag(), null, -1, false, null,
+                null, 0);
+    }
+
     public static HbmIngredient legacyOre(String legacyOreName, int count) {
-        return new HbmIngredient(Ingredient.of(LegacyOreDictionaryMappings.itemTag(legacyOreName)), count,
-                ItemStack.EMPTY, new CompoundTag(), null, -1, false, legacyOreName, null, 0);
+        return legacyOre(legacyOreName, Ingredient.of(LegacyOreDictionaryMappings.itemTag(legacyOreName)), count);
+    }
+
+    public static HbmIngredient legacyOre(String legacyOreName, Ingredient ingredient, int count) {
+        return new HbmIngredient(ingredient, count, ItemStack.EMPTY, new CompoundTag(), null, -1, false,
+                legacyOreName, null, 0);
+    }
+
+    public static HbmIngredient legacyItem(ResourceLocation legacyId, int legacyMeta, ItemStack stack) {
+        ItemStack safeStack = stack == null ? ItemStack.EMPTY : stack.copy();
+        if (safeStack.isEmpty()) {
+            throw new IllegalArgumentException("Legacy item provenance needs a non-empty modern stack: "
+                    + legacyId + " meta " + legacyMeta);
+        }
+        ItemStack exactStack = safeStack.hasTag() && !safeStack.getTag().isEmpty() ? safeStack : ItemStack.EMPTY;
+        return new HbmIngredient(Ingredient.of(safeStack), safeStack.getCount(), exactStack, new CompoundTag(),
+                legacyId, legacyMeta, false, null, null, 0);
     }
 
     public static HbmIngredient exact(ItemStack stack) {
@@ -73,30 +92,36 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
     }
 
     public static HbmIngredient legacyMeta(ResourceLocation legacyId, int legacyMeta, int count) {
-        RegistryObject<Item> item = LegacyMetaItemMappings.requireItem(legacyId, legacyMeta);
-        return new HbmIngredient(Ingredient.of(item.get()), count, ItemStack.EMPTY, new CompoundTag(), legacyId,
+        LegacyMetaItemMappings.requireItem(legacyId, legacyMeta);
+        ItemStack stack = LegacyMetaItemMappings.stack(legacyId, legacyMeta, count)
+                .orElseThrow(() -> new IllegalStateException("Missing legacy item mapping: " + legacyId
+                        + " meta " + legacyMeta));
+        ItemStack exactStack = stack.hasTag() && !stack.getTag().isEmpty() ? stack : ItemStack.EMPTY;
+        return new HbmIngredient(Ingredient.of(stack), count, exactStack, new CompoundTag(), legacyId,
                 legacyMeta, false, null, null, 0);
     }
 
     public static HbmIngredient legacyWildcard(ResourceLocation legacyId, int count) {
-        List<RegistryObject<Item>> variants = LegacyMetaItemMappings.variants(legacyId);
-        if (variants.isEmpty()) {
+        List<ItemStack> stacks = LegacyMetaItemMappings.stacks(legacyId, count);
+        if (stacks.isEmpty()) {
             throw new IllegalStateException("Missing legacy wildcard item mapping: " + legacyId);
         }
-        ItemStack[] stacks = variants.stream()
-                .map(item -> new ItemStack(item.get()))
-                .toArray(ItemStack[]::new);
-        return new HbmIngredient(Ingredient.of(stacks), count, ItemStack.EMPTY, new CompoundTag(), legacyId,
+        return new HbmIngredient(Ingredient.of(stacks.toArray(ItemStack[]::new)), count, ItemStack.EMPTY, new CompoundTag(), legacyId,
                 WILDCARD_META, true, null, null, 0);
     }
 
     public static HbmIngredient fluidContainer(FluidType type, int amount, int count) {
+        return fluidContainer(type, amount, count, null);
+    }
+
+    public static HbmIngredient fluidContainer(FluidType type, int amount, int count,
+            @Nullable String legacyOreName) {
         List<ItemStack> stacks = fluidContainerStacks(type, amount, 1);
         if (stacks.isEmpty()) {
             throw new IllegalStateException("Missing fluid container mapping: " + type.getName() + " " + amount + "mB");
         }
         return new HbmIngredient(Ingredient.of(stacks.toArray(ItemStack[]::new)), count, ItemStack.EMPTY,
-                new CompoundTag(), null, -1, false, null, type, amount);
+                new CompoundTag(), null, -1, false, legacyOreName, type, amount);
     }
 
     public boolean test(ItemStack stack) {
@@ -108,6 +133,10 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
             return false;
         }
         if (!ingredient.test(stack)) {
+            return false;
+        }
+        if (legacyId != null && !legacyWildcard && LegacyMetaItemMappings.isDamageValueBacked(legacyId)
+                && stack.getDamageValue() != legacyMeta) {
             return false;
         }
         if (!exactStack.isEmpty() && !ItemStack.isSameItemSameTags(exactStack, stack)) {
@@ -153,7 +182,13 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
             if (legacyWildcard) {
                 return LegacyMetaItemMappings.stacks(legacyId, count);
             }
-            return mappedLegacyStack().map(List::of).orElseGet(List::of);
+            Optional<ItemStack> mapped = mappedLegacyStack();
+            if (mapped.isPresent()) {
+                return List.of(mapped.get());
+            }
+            if (legacyMeta != 0) {
+                return List.of();
+            }
         }
         if (hasExactStack()) {
             return List.of(exactStack());
@@ -234,6 +269,14 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         return "ingredient:" + ingredient.toJson();
     }
 
+    public boolean isSingleItemIngredient() {
+        return ingredientItemId() != null;
+    }
+
+    public boolean isTagIngredient() {
+        return ingredientTagId() != null;
+    }
+
     public boolean exceedsStackLimit() {
         return stackLimit().filter(limit -> count > limit).isPresent();
     }
@@ -301,12 +344,13 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
             throw new JsonSyntaxException("HBM ingredient cannot define both exact_stack and partial_nbt");
         }
         ResourceLocation legacyId = object.has("legacy_id") ? new ResourceLocation(object.get("legacy_id").getAsString()) : null;
-        int legacyMeta = object.has("legacy_meta") ? object.get("legacy_meta").getAsInt() : -1;
+        int legacyMeta = object.has("legacy_meta") ? object.get("legacy_meta").getAsInt() : 0;
         boolean legacyWildcard = object.has("legacy_wildcard") && object.get("legacy_wildcard").getAsBoolean();
-        if (legacyId != null && legacyWildcard && LegacyMetaItemMappings.variants(legacyId).isEmpty()) {
+        if (legacyId != null && legacyWildcard && LegacyMetaItemMappings.stacks(legacyId, count).isEmpty()) {
             throw new JsonSyntaxException("Missing legacy wildcard item mapping: " + legacyId);
         }
-        if (legacyId != null && !legacyWildcard && LegacyMetaItemMappings.item(legacyId, legacyMeta).isEmpty()) {
+        if (legacyId != null && !legacyWildcard && legacyMeta != 0
+                && LegacyMetaItemMappings.stack(legacyId, legacyMeta, count).isEmpty()) {
             throw new JsonSyntaxException("Missing legacy item mapping: " + legacyId + " meta " + legacyMeta);
         }
         String legacyOreName = object.has("legacy_ore") ? object.get("legacy_ore").getAsString() : null;

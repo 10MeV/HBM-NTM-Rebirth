@@ -1,9 +1,10 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.Laserable;
-import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.DfcMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -13,6 +14,7 @@ import com.hbm.ntm.menu.DfcEmitterMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -68,6 +70,9 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void tickServer(Level level, BlockPos pos, BlockState state) {
+        for (Direction direction : Direction.values()) {
+            HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, direction, energy);
+        }
         watts = Mth.clamp(watts, 1, 100);
         long demand = MAX_POWER * watts / 2000L;
         beam = 0;
@@ -106,20 +111,21 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
             BlockPos target = pos.relative(direction, i);
             BlockEntity targetEntity = level.getBlockEntity(target);
             BlockState targetState = level.getBlockState(target);
-            if (targetEntity instanceof DfcCoreBlockEntity core) {
-                out = core.burn(out);
-                continue;
+            if (targetState.getBlock() instanceof Laserable laserable) {
+                laserable.addEnergy(level, target, out, direction);
+                break;
             }
             if (targetEntity instanceof Laserable laserable) {
                 laserable.addEnergy(level, target, out, direction);
                 break;
             }
-            if (targetState.getBlock() instanceof Laserable laserable) {
-                laserable.addEnergy(level, target, out, direction);
-                break;
+            if (targetEntity instanceof DfcCoreBlockEntity core) {
+                out = core.burn(out);
+                continue;
             }
             if (!targetState.isAir()) {
                 if (targetState.getBlock() instanceof LiquidBlock) {
+                    LegacySoundPlayer.playSoundEffect(level, target, "random.fizz", 1.0F, 1.0F);
                     level.setBlock(target, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
                 } else if (targetState.getDestroySpeed(level, target) >= 0.0F
                         && targetState.getExplosionResistance(level, target, null) < 6000.0F
@@ -148,8 +154,8 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private Direction facing() {
-        return getBlockState().hasProperty(HorizontalMachineBlock.FACING)
-                ? getBlockState().getValue(HorizontalMachineBlock.FACING)
+        return getBlockState().hasProperty(DfcMachineBlock.FACING)
+                ? getBlockState().getValue(DfcMachineBlock.FACING)
                 : Direction.NORTH;
     }
 
@@ -222,7 +228,6 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putLong("joules", joules);
         tag.putLong("prev", prev);
         tag.putBoolean("isOn", isOn);
-        tag.putInt("beam", beam);
         cryogel.writeToNbt(tag, "tank");
     }
 
@@ -234,7 +239,19 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
         joules = tag.getLong("joules");
         prev = tag.getLong("prev");
         isOn = tag.getBoolean("isOn");
-        beam = tag.getInt("beam");
         cryogel.readFromNbt(tag, "tank");
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("beam", beam);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        beam = tag.getInt("beam");
     }
 }

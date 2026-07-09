@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 5.0,
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:lodestone"
+  },
+  "result": "hbm_ntm_rebirth:crystal_iron"
+}

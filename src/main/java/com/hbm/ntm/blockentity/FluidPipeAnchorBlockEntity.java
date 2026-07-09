@@ -17,7 +17,9 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -30,6 +32,7 @@ public class FluidPipeAnchorBlockEntity extends FluidPipeBlockEntity {
     private static final double MAX_PIPE_LENGTH_SQ = MAX_PIPE_LENGTH * MAX_PIPE_LENGTH;
 
     private final Set<BlockPos> remoteConnections = new LinkedHashSet<>();
+    private final Set<BlockPos> remoteConnectionsView = Collections.unmodifiableSet(remoteConnections);
 
     public FluidPipeAnchorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.FLUID_PIPE_ANCHOR.get(), pos, state);
@@ -69,6 +72,33 @@ public class FluidPipeAnchorBlockEntity extends FluidPipeBlockEntity {
 
     public Set<BlockPos> getRemoteConnections() {
         return Set.copyOf(remoteConnections);
+    }
+
+    public Set<BlockPos> getRemoteConnectionsView() {
+        return remoteConnectionsView;
+    }
+
+    public boolean hasRemoteConnections() {
+        return !remoteConnections.isEmpty();
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        int minX = worldPosition.getX();
+        int minY = worldPosition.getY();
+        int minZ = worldPosition.getZ();
+        int maxX = worldPosition.getX() + 1;
+        int maxY = worldPosition.getY() + 1;
+        int maxZ = worldPosition.getZ() + 1;
+        for (BlockPos remote : remoteConnections) {
+            minX = Math.min(minX, remote.getX());
+            minY = Math.min(minY, remote.getY());
+            minZ = Math.min(minZ, remote.getZ());
+            maxX = Math.max(maxX, remote.getX() + 1);
+            maxY = Math.max(maxY, remote.getY() + 1);
+            maxZ = Math.max(maxZ, remote.getZ() + 1);
+        }
+        return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     public boolean hasRemoteConnection(BlockPos pos) {

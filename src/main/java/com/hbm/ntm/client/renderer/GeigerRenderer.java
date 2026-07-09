@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.GeigerBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.GeigerBlockEntity;
 import com.hbm.ntm.client.obj.ObjUtilityModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -9,14 +10,25 @@ import net.minecraft.core.Direction;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.world.phys.Vec3;
 
 public class GeigerRenderer implements BlockEntityRenderer<GeigerBlockEntity> {
     public GeigerRenderer(BlockEntityRendererProvider.Context context) {
     }
 
     @Override
+    public boolean shouldRender(GeigerBlockEntity blockEntity, Vec3 cameraPos) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(GeigerBlockEntity geiger, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(geiger, getViewDistance())) {
             return;
         }

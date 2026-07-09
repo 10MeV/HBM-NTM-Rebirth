@@ -17,6 +17,8 @@ public final class AchievementHandler {
     public static final ResourceLocation SULFURIC = com.hbm.ntm.util.AchievementHandler.SULFURIC;
     public static final ResourceLocation RAD_POISON = com.hbm.ntm.util.AchievementHandler.RAD_POISON;
     public static final ResourceLocation RAD_DEATH = com.hbm.ntm.util.AchievementHandler.RAD_DEATH;
+    public static final ResourceLocation RADIUM = com.hbm.ntm.util.AchievementHandler.RADIUM;
+    public static final ResourceLocation NO9 = com.hbm.ntm.util.AchievementHandler.NO9;
     public static final ResourceLocation DIGAMMA_SEE = com.hbm.ntm.util.AchievementHandler.DIGAMMA_SEE;
     public static final ResourceLocation DIGAMMA_FEEL = com.hbm.ntm.util.AchievementHandler.DIGAMMA_FEEL;
     public static final ResourceLocation DIGAMMA_KNOW = com.hbm.ntm.util.AchievementHandler.DIGAMMA_KNOW;

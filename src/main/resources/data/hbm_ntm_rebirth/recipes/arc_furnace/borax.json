@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.borax",
+  "duration": 400,
+  "power": 1000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:dusts/borax" }, "count": 1, "legacy_ore": "dustBorax" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:powder_boron_tiny", "count": 3 }
+  ],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Boron", "amount": 24 }
+  ],
+  "pools": [],
+  "source_order": 11
+}

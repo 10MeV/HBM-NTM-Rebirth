@@ -109,7 +109,7 @@ public final class WorldConfig {
             craterBiomeInnerRad = com.hbm.ntm.config.RadiationConfig.craterBiomeInnerRadiation();
             craterBiomeOuterRad = com.hbm.ntm.config.RadiationConfig.craterBiomeOuterRadiation();
             craterBiomeWaterMult = com.hbm.ntm.config.RadiationConfig.craterBiomeWaterMultiplier();
-        } catch (IllegalStateException ignored) {
+        } catch (IllegalStateException | NullPointerException ignored) {
             // Keep legacy defaults until Forge finishes loading the modern config.
         }
     }

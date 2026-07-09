@@ -15,7 +15,7 @@ import java.util.List;
  * Legacy package facade for 1.7.10 hazard type imports.
  */
 @Deprecated(forRemoval = false)
-public class HazardTypeBase {
+public abstract class HazardTypeBase {
     private final HazardType modernType;
 
     protected HazardTypeBase(HazardType modernType) {

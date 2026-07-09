@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.data.ModelProperty;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ public interface PaintableDuctBlockEntity {
     String TAG_SETTINGS_PAINT_BLOCK = "paintblock";
     String TAG_SETTINGS_PAINT_META = "paintmeta";
     String TAG_SETTINGS_PAINT_BLOCK_NAME = "paint_block";
+    ModelProperty<BlockState> PAINTED_STATE_PROPERTY = new ModelProperty<>();
 
     @Nullable
     BlockState getPaintedState();

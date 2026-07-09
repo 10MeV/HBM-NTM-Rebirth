@@ -1,7 +1,11 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "loader": "hbm_ntm_rebirth:fluid_duct_box_loader",
+  "silver_prefix": "hbm_ntm_rebirth:block/boxduct_silver",
+  "copper_prefix": "hbm_ntm_rebirth:block/boxduct_copper",
+  "white_prefix": "hbm_ntm_rebirth:block/boxduct_white",
+  "particle": "hbm_ntm_rebirth:block/boxduct_silver_junction_0",
+  "render_type": "minecraft:cutout",
   "textures": {
-    "all": "hbm_ntm_rebirth:block/boxduct_silver",
-    "particle": "hbm_ntm_rebirth:block/boxduct_silver"
+    "particle": "hbm_ntm_rebirth:block/boxduct_silver_junction_0"
   }
 }

@@ -11,5 +11,6 @@
     "output2":  {
                     "fluid":  "hbm_ntm_rebirth:sodium_aluminate",
                     "amount":  50
-                }
+                },
+    "source_order":  18
 }

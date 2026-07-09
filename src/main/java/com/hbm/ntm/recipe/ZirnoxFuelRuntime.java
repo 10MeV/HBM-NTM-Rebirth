@@ -1,6 +1,6 @@
 package com.hbm.ntm.recipe;
 
-import com.hbm.ntm.item.ZirnoxRodItem;
+import com.hbm.items.machine.ItemZirnoxRod;
 import com.hbm.ntm.registry.ModItems;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -30,11 +30,11 @@ public final class ZirnoxFuelRuntime {
     }
 
     public static boolean isRod(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() instanceof ZirnoxRodItem;
+        return !stack.isEmpty() && stack.getItem() instanceof ItemZirnoxRod;
     }
 
     public static boolean isFuelRod(ItemStack stack) {
-        return stack.getItem() instanceof ZirnoxRodItem rod && !rod.breeding();
+        return stack.getItem() instanceof ItemZirnoxRod rod && !rod.breeding();
     }
 
     public static List<DisplayRod> displayRods() {
@@ -47,11 +47,11 @@ public final class ZirnoxFuelRuntime {
     }
 
     public static int heat(ItemStack stack) {
-        return stack.getItem() instanceof ZirnoxRodItem rod ? rod.heat() : 0;
+        return stack.getItem() instanceof ItemZirnoxRod rod ? rod.heat() : 0;
     }
 
     public static boolean isBreeding(ItemStack stack) {
-        return stack.getItem() instanceof ZirnoxRodItem rod && rod.breeding();
+        return stack.getItem() instanceof ItemZirnoxRod rod && rod.breeding();
     }
 
     public static ItemStack product(ItemStack stack) {

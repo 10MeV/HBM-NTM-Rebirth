@@ -7,5 +7,6 @@
   "output_item": {
     "item": "hbm_ntm_rebirth:solid_fuel"
   },
-  "duration": 60
+  "duration": 60,
+  "source_order": 9
 }

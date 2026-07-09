@@ -22,5 +22,6 @@
               },
     "solid":  {
                   "item":  "hbm_ntm_rebirth:oil_tar_crack"
-              }
+              },
+    "source_order":  1
 }

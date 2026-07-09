@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/tungsten"
+    },
+    "legacy_ore": "ingotTungsten"
+  },
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:wire_fine_tungsten"
+  },
+  "source_order": 32,
+  "stamp": "wire"
+}

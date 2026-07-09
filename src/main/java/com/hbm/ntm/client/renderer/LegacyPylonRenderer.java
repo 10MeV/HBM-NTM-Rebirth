@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyConnectorBlock;
 import com.hbm.ntm.block.LegacyLargePylonBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyMediumPylonBlock;
 import com.hbm.ntm.block.LegacySmallPylonBlock;
 import com.hbm.ntm.block.LegacySubstationBlock;
@@ -63,14 +64,26 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
     }
 
     @Override
+    public boolean shouldRender(T pylon, Vec3 cameraPos) {
+        return hasBerVisuals(pylon)
+                && BlockEntityRenderer.super.shouldRender(pylon, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(pylon, getViewDistance());
+    }
+
+    @Override
     public void render(T pylon, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(pylon, getViewDistance())) {
             return;
         }
-        int modelLight = LegacyRenderLighting.resolveMultiblockLight(pylon, packedLight);
-        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(pylon)) {
-            renderPylonModel(pylon.getBlockState(), poseStack, buffer, modelLight, packedOverlay);
+        BlockState state = pylon.getBlockState();
+        boolean renderStaticBody = !usesChunkBakedPylonBody(state)
+                || LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
+        if (renderStaticBody) {
+            int modelLight = LegacyRenderLighting.resolveMultiblockLight(pylon, packedLight);
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(pylon)) {
+                renderPylonModel(state, poseStack, buffer, modelLight, packedOverlay);
+            }
         }
         renderWires(pylon, poseStack, buffer, packedLight, packedOverlay);
     }
@@ -171,7 +184,11 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
         int color = pylon.getWireConnections().color();
         ResourceLocation texture = color == 0 ? WIRE_TEXTURE : WIRE_GREYSCALE_TEXTURE;
         int wireColor = color == 0 ? 0xFFFFFF : color;
-        for (BlockPos remotePos : pylon.getWireConnections().connected()) {
+        double selfX = selfPos.getX();
+        double selfY = selfPos.getY();
+        double selfZ = selfPos.getZ();
+        LegacyTexturedLineRenderer.PylonLineBatch wireBatch = null;
+        for (BlockPos remotePos : pylon.getWireConnections().connectedView()) {
             BlockEntity remote = level.getBlockEntity(remotePos);
             if (!(remote instanceof HbmLegacyWireNode remoteWire)) {
                 continue;
@@ -190,12 +207,22 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
                         HbmLegacyWireRenderMath.legacyMetadata(pylon.getBlockState()),
                         HbmLegacyWireRenderMath.legacyMetadata(remote.getBlockState()));
                 Vec3 remoteAbs = remoteMounts.get(remoteIndex);
-                Vec3 start = startAbs.subtract(selfPos.getX(), selfPos.getY(), selfPos.getZ());
-                Vec3 remoteRelative = remoteAbs.subtract(selfPos.getX(), selfPos.getY(), selfPos.getZ());
-                Vec3 end = start.add(remoteRelative.subtract(start).scale(0.5D));
-                LegacyTexturedLineRenderer.pylonLine(texture, poseStack, buffer, packedLight, packedOverlay,
-                        start.x, start.y, start.z,
-                        end.x, end.y, end.z,
+                double startX = startAbs.x - selfX;
+                double startY = startAbs.y - selfY;
+                double startZ = startAbs.z - selfZ;
+                double remoteX = remoteAbs.x - selfX;
+                double remoteY = remoteAbs.y - selfY;
+                double remoteZ = remoteAbs.z - selfZ;
+                double endX = startX + (remoteX - startX) * 0.5D;
+                double endY = startY + (remoteY - startY) * 0.5D;
+                double endZ = startZ + (remoteZ - startZ) * 0.5D;
+                if (wireBatch == null) {
+                    wireBatch = LegacyTexturedLineRenderer.pylonLineBatch(texture, poseStack, buffer, packedLight,
+                            packedOverlay);
+                }
+                LegacyTexturedLineRenderer.pylonLine(wireBatch,
+                        startX, startY, startZ,
+                        endX, endY, endZ,
                         true, wireColor);
             }
         }
@@ -261,6 +288,21 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
             case EAST -> 45.0F;
             default -> 0.0F;
         };
+    }
+
+    private static boolean hasBerVisuals(HbmLegacyWireNodeBlockEntity pylon) {
+        BlockState state = pylon.getBlockState();
+        return !usesChunkBakedPylonBody(state)
+                || LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                || !pylon.getWireConnections().isEmpty();
+    }
+
+    private static boolean usesChunkBakedPylonBody(BlockState state) {
+        return state.getBlock() instanceof LegacyMediumPylonBlock
+                || state.getBlock() instanceof LegacyLargePylonBlock
+                || state.getBlock() instanceof LegacySmallPylonBlock
+                || state.getBlock() instanceof LegacyConnectorBlock
+                || state.getBlock() instanceof LegacySubstationBlock;
     }
 
 }

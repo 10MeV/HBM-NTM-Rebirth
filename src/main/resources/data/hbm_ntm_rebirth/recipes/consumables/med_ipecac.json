@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "ingredients": [
+    { "item": "minecraft:glass_bottle" },
+    { "item": "minecraft:nether_wart" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:med_ipecac"
+  }
+}

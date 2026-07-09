@@ -1,6 +1,6 @@
 package com.hbm.ntm.block;
 
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
@@ -41,7 +41,7 @@ public class LegacySellafieldBlock extends Block {
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.randomTick(state, level, pos, random);
         int meta = state.getValue(LEVEL);
-        ChunkRadiationManager.incrementRadiation(level, pos, 0.5F * (meta + 1));
+        ChunkRadiationManager.proxy.incrementRad(level, pos, 0.5F * (meta + 1));
 
         if (random.nextInt(meta == 0 ? 25 : 15) == 0) {
             if (meta > 0) {

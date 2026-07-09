@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:bottle_empty"
+    },
+    {
+      "item": "minecraft:potion"
+    },
+    {
+      "item": "minecraft:sugar"
+    },
+    {
+      "item": "hbm_ntm_rebirth:trinitite"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bottle_quantum"
+  }
+}

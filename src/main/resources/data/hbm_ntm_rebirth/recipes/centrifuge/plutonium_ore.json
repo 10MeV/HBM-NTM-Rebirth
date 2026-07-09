@@ -1,10 +1,26 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/plutonium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/plutonium"
+    },
+    "legacy_ore": "orePlutonium"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_plutonium" },
-    { "item": "hbm_ntm_rebirth:powder_plutonium" },
-    { "item": "hbm_ntm_rebirth:nugget_polonium", "count": 3 },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_plutonium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_plutonium"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:nugget_polonium"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 15
 }

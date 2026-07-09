@@ -1,0 +1,471 @@
+{
+  "recipes": [
+    {
+      "duration": 60,
+      "inputFluid": [
+        "SMEAR",
+        34000
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "HEATINGOIL",
+        7300
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "HEATINGOIL_VACUUM",
+        2100
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "RECLAIMED",
+        25000
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "PETROIL",
+        22000
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "NAPHTHA",
+        26000
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "NAPHTHA_CRACK",
+        33000
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "DIESEL",
+        5200
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "DIESEL_REFORM",
+        2100
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "DIESEL_CRACK",
+        5600
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "DIESEL_CRACK_REFORM",
+        2200
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "LIGHTOIL",
+        980
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "LIGHTOIL_CRACK",
+        1500
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "LIGHTOIL_VACUUM",
+        480
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "KEROSENE",
+        560
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "KEROSENE_REFORM",
+        220
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "SOURGAS",
+        11000
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "REFORMGAS",
+        270
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "SYNGAS",
+        1700
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "PETROLEUM",
+        1300
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "LPG",
+        1100
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "BIOFUEL",
+        1400
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "AROMATICS",
+        3100
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "UNSATURATEDS",
+        390
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "REFORMATE",
+        600
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "XYLENE",
+        680
+      ],
+      "outputItem": [
+        "hbm:solid_fuel"
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "BALEFIRE",
+        93
+      ],
+      "outputItem": [
+        "hbm:solid_fuel_bf"
+      ]
+    },
+    {
+      "duration": 300,
+      "inputFluid": [
+        "SYNGAS",
+        2000
+      ],
+      "inputItem": [
+        "dict",
+        "dustTungsten"
+      ],
+      "outputFluid": [
+        "SPENTSTEAM",
+        1000
+      ],
+      "outputItem": [
+        "hbm:ingot_tungsten_carbide"
+      ]
+    },
+    {
+      "duration": 100,
+      "inputFluid": [
+        "STEAM",
+        500
+      ],
+      "inputItem": [
+        "dict",
+        "gemCoal"
+      ],
+      "outputFluid": [
+        "SYNGAS",
+        1000
+      ]
+    },
+    {
+      "duration": 100,
+      "inputFluid": [
+        "STEAM",
+        500
+      ],
+      "inputItem": [
+        "dict",
+        "dustCoal"
+      ],
+      "outputFluid": [
+        "SYNGAS",
+        1000
+      ]
+    },
+    {
+      "duration": 100,
+      "inputFluid": [
+        "STEAM",
+        250
+      ],
+      "inputItem": [
+        "dict",
+        "gemAnyCoke"
+      ],
+      "outputFluid": [
+        "SYNGAS",
+        1000
+      ]
+    },
+    {
+      "duration": 100,
+      "inputItem": [
+        "item",
+        "hbm:biomass",
+        4
+      ],
+      "outputFluid": [
+        "SYNGAS",
+        1000
+      ],
+      "outputItem": [
+        "minecraft:coal",
+        1,
+        1
+      ]
+    },
+    {
+      "duration": 40,
+      "inputItem": [
+        "dict",
+        "anyTar",
+        4
+      ],
+      "outputFluid": [
+        "CARBONDIOXIDE",
+        1000
+      ],
+      "outputItem": [
+        "hbm:powder_ash",
+        1,
+        4
+      ]
+    },
+    {
+      "duration": 100,
+      "inputFluid": [
+        "HYDROGEN",
+        500
+      ],
+      "inputItem": [
+        "dict",
+        "gemCoal"
+      ],
+      "outputFluid": [
+        "HEAVYOIL",
+        1000
+      ]
+    },
+    {
+      "duration": 100,
+      "inputFluid": [
+        "HYDROGEN",
+        500
+      ],
+      "inputItem": [
+        "dict",
+        "dustCoal"
+      ],
+      "outputFluid": [
+        "HEAVYOIL",
+        1000
+      ]
+    },
+    {
+      "duration": 50,
+      "inputFluid": [
+        "HEAVYOIL",
+        500
+      ],
+      "inputItem": [
+        "dict",
+        "gemCoal"
+      ],
+      "outputFluid": [
+        "COALGAS",
+        1000
+      ]
+    },
+    {
+      "duration": 50,
+      "inputFluid": [
+        "HEAVYOIL",
+        500
+      ],
+      "inputItem": [
+        "dict",
+        "dustCoal"
+      ],
+      "outputFluid": [
+        "COALGAS",
+        1000
+      ]
+    },
+    {
+      "duration": 50,
+      "inputFluid": [
+        "HEAVYOIL",
+        500
+      ],
+      "inputItem": [
+        "dict",
+        "gemAnyCoke"
+      ],
+      "outputFluid": [
+        "COALGAS",
+        1000
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "GAS_COKER",
+        4000
+      ],
+      "outputFluid": [
+        "REFORMGAS",
+        100
+      ]
+    },
+    {
+      "duration": 60,
+      "inputFluid": [
+        "GAS",
+        12000
+      ],
+      "outputFluid": [
+        "HYDROGEN",
+        8000
+      ],
+      "outputItem": [
+        "hbm:ingot_graphite"
+      ]
+    }
+  ]
+}

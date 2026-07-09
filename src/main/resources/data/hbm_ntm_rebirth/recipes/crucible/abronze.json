@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.abronze",
+  "fallback_name": "Arsenic Bronze Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_arsenic_bronze" },
+  "frequency": 9,
+  "input": [
+    { "material": "Copper", "amount": 64 },
+    { "material": "Arsenic", "amount": 8 },
+    { "material": "Flux", "amount": 24 }
+  ],
+  "output": [
+    { "material": "ArsenicBronze", "amount": 72 },
+    { "material": "Slag", "amount": 24 }
+  ],
+  "source_order": 9
+}

@@ -1,0 +1,415 @@
+{
+  "recipes": [
+    {
+      "byproducts": [
+        [
+          "hbm:chunk_ore",
+          4,
+          2
+        ],
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_aluminium"
+      ],
+      "output1": [
+        "Aluminium",
+        144
+      ],
+      "output2": [
+        "Iron",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ],
+        [
+          "hbm:powder_quartz",
+          2
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_beryllium"
+      ],
+      "output1": [
+        "Beryllium",
+        432
+      ],
+      "output2": [
+        "Lead",
+        32
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_copper",
+          4
+        ],
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_cobalt"
+      ],
+      "output1": [
+        "Cobalt",
+        216
+      ],
+      "output2": [
+        "Iron",
+        288
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ],
+        [
+          "hbm:sulfur",
+          2
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_copper"
+      ],
+      "output1": [
+        "Copper",
+        432
+      ],
+      "output2": [
+        "Lead",
+        32
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ],
+        [
+          "hbm:ingot_mercury",
+          2
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_gold"
+      ],
+      "output1": [
+        "Gold",
+        432
+      ],
+      "output2": [
+        "Lead",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_iron"
+      ],
+      "output1": [
+        "Iron",
+        432
+      ],
+      "output2": [
+        "Titanium",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_lead"
+      ],
+      "output1": [
+        "Lead",
+        432
+      ],
+      "output2": [
+        "Gold",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_quartz",
+          2
+        ],
+        [
+          "hbm:fluorite",
+          2
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_lithium"
+      ],
+      "output1": [
+        "Lithium",
+        432
+      ],
+      "output2": [
+        "Boron",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_plutonium"
+      ],
+      "output1": [
+        "Plutonium",
+        432
+      ],
+      "output2": [
+        "Polonium210",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_desh_mix",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_rare"
+      ],
+      "output1": [
+        "Zirconium",
+        48
+      ],
+      "output2": [
+        "Boron",
+        16
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_schrabidium"
+      ],
+      "output1": [
+        "Schrabidium",
+        432
+      ],
+      "output2": [
+        "Plutonium",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:nugget_neptunium",
+          2
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_schraranium"
+      ],
+      "output1": [
+        "Schrabidium",
+        40
+      ],
+      "output2": [
+        "Uranium",
+        16
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_astatine",
+          3
+        ],
+        [
+          "hbm:ingot_mercury",
+          8
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_starmetal"
+      ],
+      "output1": [
+        "DuraSteel",
+        288
+      ],
+      "output2": [
+        "Cobalt",
+        288
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_thorium"
+      ],
+      "output1": [
+        "Thorium232",
+        432
+      ],
+      "output2": [
+        "Uranium",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_titanium"
+      ],
+      "output1": [
+        "Titanium",
+        432
+      ],
+      "output2": [
+        "Iron",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_niobium",
+          4
+        ],
+        [
+          "hbm:powder_nitan_mix",
+          2
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_trixite"
+      ],
+      "output1": [
+        "Plutonium",
+        216
+      ],
+      "output2": [
+        "Cobalt",
+        288
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_tungsten"
+      ],
+      "output1": [
+        "Tungsten",
+        432
+      ],
+      "output2": [
+        "Iron",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:powder_lithium_tiny",
+          3
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "item",
+        "hbm:crystal_uranium"
+      ],
+      "output1": [
+        "Uranium",
+        432
+      ],
+      "output2": [
+        "Radium226",
+        32
+      ]
+    }
+  ]
+}

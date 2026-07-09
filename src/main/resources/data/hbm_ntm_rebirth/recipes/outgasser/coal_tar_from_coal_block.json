@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:outgasser",
+  "source_order": 15,
   "input": {
     "ingredient": {
       "tag": "forge:storage_blocks/coal"

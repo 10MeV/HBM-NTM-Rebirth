@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 200,
+  "fluid": { "fluid": "ESTRADIOL", "amount": 250 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:oil_tar_paraffin" } },
+  "output": { "item": "hbm_ntm_rebirth:pill_red" },
+  "source_order": 400
+}

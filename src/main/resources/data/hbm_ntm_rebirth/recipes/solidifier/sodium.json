@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:sodium",
                   "amount":  100
-              }
+              },
+    "source_order":  8
 }

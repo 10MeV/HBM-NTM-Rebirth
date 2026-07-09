@@ -4,6 +4,7 @@ import com.hbm.ntm.block.FalloutLayerBlock;
 import com.hbm.ntm.block.LegacyVolcanoCoreBlock;
 import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.entity.item.LegacyFallingBlockEntity;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
 import com.hbm.ntm.multiblock.DummyBlock;
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
@@ -24,7 +25,6 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -251,8 +251,8 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
                 continue;
             }
 
-            FallingBlockEntity falling = FallingBlockEntity.fall(level(), fallingPos, fallingState);
-            falling.dropItem = false;
+            LegacyFallingBlockEntity falling = LegacyFallingBlockEntity.createNoDrop(level(), fallingPos, fallingState);
+            level().addFreshEntity(falling);
         }
     }
 

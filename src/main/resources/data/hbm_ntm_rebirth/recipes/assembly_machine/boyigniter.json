@@ -1,19 +1,46 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.boyigniter",
   "duration": 200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:shells/aluminium" }, "count": 3, "legacy_ore": "shellAluminum" },
-    { "ingredient": { "tag": "forge:cast_plates/dura_steel" }, "count": 1, "legacy_ore": "plateCastDuraSteel" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 1, "legacy_id": "hbm:circuit", "legacy_meta": 9 },
-    { "ingredient": { "tag": "forge:wires/mingrade" }, "count": 16, "legacy_ore": "wireFineMingrade" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:boy_igniter" }
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:shells/aluminium"
+      },
+      "legacy_ore": "shellAluminum"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:cast_plates/dura_steel"
+      },
+      "legacy_ore": "plateCastDuraSteel"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 9
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:wires/mingrade"
+      },
+      "legacy_ore": "wireFineMingrade"
+    }
   ],
+  "internal_name": "ass.boyigniter",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:boy_igniter"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 219
 }

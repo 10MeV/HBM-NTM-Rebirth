@@ -81,10 +81,7 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
         if (satellite == null) {
             return false;
         }
-        if (isLaserAction(action, data)) {
-            return mode == Mode.PANEL && satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_PANEL;
-        }
-        return mode == Mode.COORD && satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_COORD;
+        return true;
     }
 
     @Override

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:cheese" },
+    { "item": "hbm_ntm_rebirth:cheese" },
+    { "item": "minecraft:bread" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:quesadilla",
+    "count": 3
+  }
+}

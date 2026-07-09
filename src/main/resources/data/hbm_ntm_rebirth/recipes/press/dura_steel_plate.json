@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/dura_steel"
+    },
+    "legacy_ore": "ingotDuraSteel"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:plate_dura_steel"
+  },
+  "source_order": 23,
+  "stamp": "plate"
+}

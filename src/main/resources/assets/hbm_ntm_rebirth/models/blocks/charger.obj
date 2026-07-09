@@ -1,5 +1,7 @@
 # Blender v2.79 (sub 0) OBJ File: 'charger.blend'
 # www.blender.org
+mtllib hbm_default.mtl
+usemtl default
 o Light
 v -0.266762 0.501450 -0.023437
 v -0.269068 0.517861 -0.016573

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:black_wool"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    },
+    "I": {
+      "item": "hbm_ntm_rebirth:ingot_starmetal"
+    },
+    "S": {
+      "item": "minecraft:string"
+    }
+  },
+  "pattern": [
+    "SBS",
+    " C ",
+    " I "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bj_helmet"
+  },
+  "show_notification": true
+}

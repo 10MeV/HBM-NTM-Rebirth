@@ -194,7 +194,8 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     protected Iterable<EnergyPort> getEnergyPorts() {
         Direction facing = facing();
         Direction rot = facing.getClockWise();
-        return List.of(EnergyPort.of(rot.getStepX() * 3, 0, rot.getStepZ() * 3, rot),
+        return List.of(EnergyPort.of(facing.getStepX() * 4, 2, facing.getStepZ() * 4, facing),
+                EnergyPort.of(rot.getStepX() * 3, 0, rot.getStepZ() * 3, rot),
                 EnergyPort.of(-rot.getStepX() * 3, 0, -rot.getStepZ() * 3, rot.getOpposite()));
     }
 

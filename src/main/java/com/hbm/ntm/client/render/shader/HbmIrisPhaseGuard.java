@@ -5,7 +5,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.util.concurrent.atomic.AtomicLong;
 import net.minecraftforge.fml.ModList;
 
 /**
@@ -27,21 +26,21 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
     private static Class<?> phaseEnumClass;
     private static volatile Object phaseBlockEntities;
     private static volatile Object phaseNone;
-    private static final AtomicLong pushAttempts = new AtomicLong();
-    private static final AtomicLong activePushes = new AtomicLong();
-    private static final AtomicLong pushFailures = new AtomicLong();
-    private static final AtomicLong restores = new AtomicLong();
-    private static final AtomicLong restoreFailures = new AtomicLong();
+    private static long pushAttempts;
+    private static long activePushes;
+    private static long pushFailures;
+    private static long restores;
+    private static long restoreFailures;
     private static long currentFramePushAttempts;
     private static long currentFrameActivePushes;
     private static long currentFramePushFailures;
     private static long currentFrameRestores;
     private static long currentFrameRestoreFailures;
-    private static final AtomicLong lastFramePushAttempts = new AtomicLong();
-    private static final AtomicLong lastFrameActivePushes = new AtomicLong();
-    private static final AtomicLong lastFramePushFailures = new AtomicLong();
-    private static final AtomicLong lastFrameRestores = new AtomicLong();
-    private static final AtomicLong lastFrameRestoreFailures = new AtomicLong();
+    private static long lastFramePushAttempts;
+    private static long lastFrameActivePushes;
+    private static long lastFramePushFailures;
+    private static long lastFrameRestores;
+    private static long lastFrameRestoreFailures;
 
     private final boolean active;
     private final Object previousPhase;
@@ -52,7 +51,7 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
     }
 
     public static HbmIrisPhaseGuard pushBlockEntities() {
-        pushAttempts.incrementAndGet();
+        pushAttempts++;
         currentFramePushAttempts++;
         initialize();
         if (!available) {
@@ -68,11 +67,11 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
                 return NOOP;
             }
             invokeSetPhase(pipeline, phaseBlockEntities);
-            activePushes.incrementAndGet();
+            activePushes++;
             currentFrameActivePushes++;
             return new HbmIrisPhaseGuard(true, previous);
         } catch (Throwable ignored) {
-            pushFailures.incrementAndGet();
+            pushFailures++;
             currentFramePushFailures++;
             return NOOP;
         }
@@ -83,12 +82,12 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
         if (!active) {
             return;
         }
-        restores.incrementAndGet();
+        restores++;
         currentFrameRestores++;
         try {
             Object pipeline = currentPipeline();
             if (pipeline == null) {
-                restoreFailures.incrementAndGet();
+                restoreFailures++;
                 currentFrameRestoreFailures++;
                 return;
             }
@@ -98,7 +97,7 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
                 invokeSetPhase(pipeline, phaseNone);
             }
         } catch (Throwable ignored) {
-            restoreFailures.incrementAndGet();
+            restoreFailures++;
             currentFrameRestoreFailures++;
         }
     }
@@ -114,11 +113,11 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
         currentFramePushFailures = 0L;
         currentFrameRestores = 0L;
         currentFrameRestoreFailures = 0L;
-        lastFramePushAttempts.set(framePushAttempts);
-        lastFrameActivePushes.set(frameActivePushes);
-        lastFramePushFailures.set(framePushFailures);
-        lastFrameRestores.set(frameRestores);
-        lastFrameRestoreFailures.set(frameRestoreFailures);
+        lastFramePushAttempts = framePushAttempts;
+        lastFrameActivePushes = frameActivePushes;
+        lastFramePushFailures = framePushFailures;
+        lastFrameRestores = frameRestores;
+        lastFrameRestoreFailures = frameRestoreFailures;
     }
 
     public static Snapshot snapshot() {
@@ -126,21 +125,21 @@ public final class HbmIrisPhaseGuard implements AutoCloseable {
                 initialized,
                 available,
                 setPhaseHandle != null && getPipelineManagerHandle != null && getPipelineNullableHandle != null,
-                pushAttempts.get(),
-                activePushes.get(),
-                pushFailures.get(),
-                restores.get(),
-                restoreFailures.get(),
+                pushAttempts,
+                activePushes,
+                pushFailures,
+                restores,
+                restoreFailures,
                 currentFramePushAttempts,
                 currentFrameActivePushes,
                 currentFramePushFailures,
                 currentFrameRestores,
                 currentFrameRestoreFailures,
-                lastFramePushAttempts.get(),
-                lastFrameActivePushes.get(),
-                lastFramePushFailures.get(),
-                lastFrameRestores.get(),
-                lastFrameRestoreFailures.get());
+                lastFramePushAttempts,
+                lastFrameActivePushes,
+                lastFramePushFailures,
+                lastFrameRestores,
+                lastFrameRestoreFailures);
     }
 
     private static Object currentPipeline() throws Throwable {

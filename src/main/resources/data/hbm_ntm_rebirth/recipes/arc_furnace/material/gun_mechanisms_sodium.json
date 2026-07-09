@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.gunMechanismSodium",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:gun_mechanisms/sodium" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:gun_mechanisms/sodium" }, "count": 1, "legacy_ore": "gunMechanismSodium" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Sodium", "amount": 288 }
+  ],
+  "pools": [],
+  "source_order": 1799
+}

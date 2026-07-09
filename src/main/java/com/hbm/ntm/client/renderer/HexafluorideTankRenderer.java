@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 public class HexafluorideTankRenderer implements BlockEntityRenderer<HexafluorideTankBlockEntity> {
     public HexafluorideTankRenderer(BlockEntityRendererProvider.Context context) {
@@ -17,6 +18,11 @@ public class HexafluorideTankRenderer implements BlockEntityRenderer<Hexafluorid
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(HexafluorideTankBlockEntity blockEntity, Vec3 cameraPos) {
+        return false;
     }
 
     @Override

@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.thruster.large",
+  "duration": 200,
+  "power": 5000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:ingots/dura_steel" }, "count": 10, "legacy_ore": "ingotDuraSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 1 },
+    { "ingredient": { "tag": "forge:ingots/tungsten_carbide" }, "count": 12, "legacy_ore": "ingotTungstenCarbide" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:thruster_large" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 20
+}

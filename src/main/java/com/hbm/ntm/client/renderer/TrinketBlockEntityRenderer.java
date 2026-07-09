@@ -14,17 +14,18 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBlockEntity> {
-    private static final ObjModelPart BOBBLEHEAD_SOCKET = trinketPart("bobble_socket", RenderType.cutout());
+    private static final ObjModelPart BOBBLEHEAD_SOCKET = trinketPart("bobble_socket", RenderType.solid());
     private static final ObjModelPart BOBBLEHEAD_PELLET = trinketPart("bobble_pellet", RenderType.cutout());
     private static final ObjModelPart BOBBLEHEAD_FUMO = trinketPart("bobble_fumo", RenderType.cutout());
     private static final ObjModelPart BOBBLEHEAD_DRILLGON = trinketPart("bobble_drillgon", RenderType.cutout());
-    private static final ObjModelPart SNOWGLOBE_SOCKET = trinketPart("snowglobe_socket", RenderType.cutout());
+    private static final ObjModelPart SNOWGLOBE_SOCKET = trinketPart("snowglobe_socket", RenderType.solid());
     private static final ObjModelPart SNOWGLOBE_GLASS = translucentTrinketPart("snowglobe_glass");
     private static final Map<String, ObjModelPart> BOBBLEHEAD_MODELS = new HashMap<>();
     private static final Map<String, ObjModelPart> SNOWGLOBE_FEATURES = new HashMap<>();
@@ -38,7 +39,7 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
             BOBBLEHEAD_MODELS.put(texture, trinketPart("bobble_classic_" + texture, RenderType.cutout()));
         }
         for (String feature : new String[]{"rivetcity", "tenpennytower", "lucky38", "sierramadre", "prydwen"}) {
-            SNOWGLOBE_FEATURES.put(feature, trinketPart("snowglobe_" + feature, RenderType.cutout()));
+            SNOWGLOBE_FEATURES.put(feature, trinketPart("snowglobe_" + feature, RenderType.solid()));
         }
         PLUSHIE_MODELS.put("yomi", trinketPart("plushie_yomi", RenderType.cutout()));
         PLUSHIE_MODELS.put("numbernine", trinketPart("plushie_numbernine", RenderType.cutout()));
@@ -54,6 +55,13 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
     }
 
     @Override
+    public boolean shouldRender(TrinketBlockEntity blockEntity, Vec3 cameraPos) {
+        return blockEntity.variant() > 0
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(TrinketBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         TrinketVariant.Kind kind = blockEntity.kind();
@@ -61,16 +69,21 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
         if (variant <= 0) {
             return;
         }
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.yawDegrees() + 90.0F));
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.yawDegrees() + 90.0F));
 
-        renderTrinket(kind, variant, blockEntity.squishTimer(), partialTick, poseStack, buffer,
-                blockEntity.getBlockState(), modelLight, packedOverlay);
+            renderTrinket(kind, variant, blockEntity.squishTimer(), partialTick, poseStack, buffer,
+                    blockEntity.getBlockState(), modelLight, packedOverlay);
 
-        poseStack.popPose();
+            poseStack.popPose();
+        }
     }
 
     public static void renderTrinket(TrinketVariant.Kind kind, int variant, int squishTimer, float partialTick,

@@ -24,6 +24,15 @@ import java.util.Random;
 @OnlyIn(Dist.CLIENT)
 public class AmatFlashParticle extends Particle {
     private static final int BEAM_COUNT = 100;
+    private static final float[] BEAM_LEFT_X = new float[BEAM_COUNT];
+    private static final float[] BEAM_LEFT_Y = new float[BEAM_COUNT];
+    private static final float[] BEAM_LEFT_Z = new float[BEAM_COUNT];
+    private static final float[] BEAM_RIGHT_X = new float[BEAM_COUNT];
+    private static final float[] BEAM_RIGHT_Y = new float[BEAM_COUNT];
+    private static final float[] BEAM_RIGHT_Z = new float[BEAM_COUNT];
+    private static final float[] BEAM_BACK_X = new float[BEAM_COUNT];
+    private static final float[] BEAM_BACK_Y = new float[BEAM_COUNT];
+    private static final float[] BEAM_BACK_Z = new float[BEAM_COUNT];
     private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
         @Override
         public void begin(BufferBuilder builder, net.minecraft.client.renderer.texture.TextureManager textureManager) {
@@ -49,7 +58,38 @@ public class AmatFlashParticle extends Particle {
         }
     };
 
+    static {
+        precomputeBeamGeometry();
+    }
+
     private final float flashScale;
+
+    private static void precomputeBeamGeometry() {
+        Random random = new Random(432L);
+        Quaternionf rotation = new Quaternionf();
+        Vector3f point = new Vector3f();
+        for (int i = 0; i < BEAM_COUNT; i++) {
+            rotation.rotateX(random.nextFloat() * ((float) Math.PI * 2.0F))
+                    .rotateY(random.nextFloat() * ((float) Math.PI * 2.0F))
+                    .rotateZ(random.nextFloat() * ((float) Math.PI * 2.0F))
+                    .rotateX(random.nextFloat() * ((float) Math.PI * 2.0F))
+                    .rotateY(random.nextFloat() * ((float) Math.PI * 2.0F));
+            float length = random.nextFloat() * 20.0F + 15.0F;
+            float width = random.nextFloat() * 2.0F + 3.0F;
+            storeBeamPoint(i, point.set(-0.866F * width, length, -0.5F * width).rotate(rotation),
+                    BEAM_LEFT_X, BEAM_LEFT_Y, BEAM_LEFT_Z);
+            storeBeamPoint(i, point.set(0.866F * width, length, -0.5F * width).rotate(rotation),
+                    BEAM_RIGHT_X, BEAM_RIGHT_Y, BEAM_RIGHT_Z);
+            storeBeamPoint(i, point.set(0.0F, length, width).rotate(rotation),
+                    BEAM_BACK_X, BEAM_BACK_Y, BEAM_BACK_Z);
+        }
+    }
+
+    private static void storeBeamPoint(int index, Vector3f point, float[] xs, float[] ys, float[] zs) {
+        xs[index] = point.x();
+        ys[index] = point.y();
+        zs[index] = point.z();
+    }
 
     public AmatFlashParticle(ClientLevel level, double x, double y, double z, float scale) {
         super(level, x, y, z);
@@ -80,33 +120,31 @@ public class AmatFlashParticle extends Particle {
         float y = (float) (this.yo + (this.y - this.yo) * partialTick - cameraPos.y());
         float z = (float) (this.zo + (this.z - this.zo) * partialTick - cameraPos.z());
         float globalScale = 0.2F * this.flashScale;
-        Random random = new Random(432L);
-        Quaternionf rotation = new Quaternionf();
+        float beamScale = (float) (intensity * 0.5D) * globalScale;
         int centerAlpha = (int) (alpha * 255.0F);
 
         for (int i = 0; i < BEAM_COUNT; i++) {
-            rotation.rotateX(random.nextFloat() * ((float) Math.PI * 2.0F))
-                    .rotateY(random.nextFloat() * ((float) Math.PI * 2.0F))
-                    .rotateZ(random.nextFloat() * ((float) Math.PI * 2.0F))
-                    .rotateX(random.nextFloat() * ((float) Math.PI * 2.0F))
-                    .rotateY(random.nextFloat() * ((float) Math.PI * 2.0F));
-            float length = (random.nextFloat() * 20.0F + 15.0F) * (float) (intensity * 0.5D) * globalScale;
-            float width = (random.nextFloat() * 2.0F + 3.0F) * (float) (intensity * 0.5D) * globalScale;
-            Vector3f left = new Vector3f(-0.866F * width, length, -0.5F * width).rotate(rotation).add(x, y, z);
-            Vector3f right = new Vector3f(0.866F * width, length, -0.5F * width).rotate(rotation).add(x, y, z);
-            Vector3f back = new Vector3f(0.0F, length, width).rotate(rotation).add(x, y, z);
+            float leftX = x + BEAM_LEFT_X[i] * beamScale;
+            float leftY = y + BEAM_LEFT_Y[i] * beamScale;
+            float leftZ = z + BEAM_LEFT_Z[i] * beamScale;
+            float rightX = x + BEAM_RIGHT_X[i] * beamScale;
+            float rightY = y + BEAM_RIGHT_Y[i] * beamScale;
+            float rightZ = z + BEAM_RIGHT_Z[i] * beamScale;
+            float backX = x + BEAM_BACK_X[i] * beamScale;
+            float backY = y + BEAM_BACK_Y[i] * beamScale;
+            float backZ = z + BEAM_BACK_Z[i] * beamScale;
             LegacyWavefrontModel.emitUntexturedVertexColorTriangleIdentity(consumer,
                     x, y, z, 0xFFFFFF, centerAlpha,
-                    left.x(), left.y(), left.z(), 0xFFFFFF, 0,
-                    right.x(), right.y(), right.z(), 0xFFFFFF, 0);
+                    leftX, leftY, leftZ, 0xFFFFFF, 0,
+                    rightX, rightY, rightZ, 0xFFFFFF, 0);
             LegacyWavefrontModel.emitUntexturedVertexColorTriangleIdentity(consumer,
                     x, y, z, 0xFFFFFF, centerAlpha,
-                    right.x(), right.y(), right.z(), 0xFFFFFF, 0,
-                    back.x(), back.y(), back.z(), 0xFFFFFF, 0);
+                    rightX, rightY, rightZ, 0xFFFFFF, 0,
+                    backX, backY, backZ, 0xFFFFFF, 0);
             LegacyWavefrontModel.emitUntexturedVertexColorTriangleIdentity(consumer,
                     x, y, z, 0xFFFFFF, centerAlpha,
-                    back.x(), back.y(), back.z(), 0xFFFFFF, 0,
-                    left.x(), left.y(), left.z(), 0xFFFFFF, 0);
+                    backX, backY, backZ, 0xFFFFFF, 0,
+                    leftX, leftY, leftZ, 0xFFFFFF, 0);
         }
     }
 

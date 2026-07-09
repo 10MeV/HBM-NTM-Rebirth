@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:catalyst_clay"
+    },
+    "Z": {
+      "tag": "forge:nuggets/zirconium"
+    }
+  },
+  "pattern": [
+    "ZZZ",
+    "ZCZ",
+    "ZZZ"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:gas_mask_filter_mono"
+  },
+  "show_notification": true
+}

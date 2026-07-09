@@ -1,4 +1,4 @@
-﻿{
+{
     "type":  "hbm_ntm_rebirth:purex",
     "internal_name":  "purex.uzh",
     "duration":  600,
@@ -38,6 +38,6 @@
     "pools":  [
 
               ],
-    "source_order":  43
+    "source_order": 0
 }
 

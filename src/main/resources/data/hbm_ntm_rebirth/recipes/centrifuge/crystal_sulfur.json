@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/sulfur" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_sulfur"
+    },
+    "legacy_id": "hbm:crystal_sulfur",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:sulfur", "count": 4 },
-    { "item": "hbm_ntm_rebirth:sulfur", "count": 4 },
-    { "item": "hbm_ntm_rebirth:powder_iron" },
-    { "item": "hbm_ntm_rebirth:nugget_mercury" }
-  ]
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:sulfur"
+    },
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:sulfur"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_iron"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_mercury"
+    }
+  ],
+  "source_order": 40
 }

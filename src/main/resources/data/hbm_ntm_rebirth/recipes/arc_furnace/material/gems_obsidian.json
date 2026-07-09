@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.gemObsidian",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:gems/obsidian" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:gems/obsidian" }, "count": 1, "legacy_ore": "gemObsidian" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Obsidian", "amount": 72 }
+  ],
+  "pools": [],
+  "source_order": 1098
+}

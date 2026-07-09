@@ -291,11 +291,19 @@ public final class ObjMissilePartModels {
     public static void renderMissile(LegacyMissilePart thruster, LegacyMissilePart fins, LegacyMissilePart fuselage,
             LegacyMissilePart warhead, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        for (MissileRenderStep step : missileRenderPlan(thruster, fins, fuselage, warhead).steps()) {
-            step.part().render(poseStack, buffer, packedLight, packedOverlay);
-            if (step.translateAfterY() != 0.0D) {
-                poseStack.translate(0.0D, step.translateAfterY(), 0.0D);
+        if (isKind(thruster, PartKind.THRUSTER)) {
+            thruster.render(poseStack, buffer, packedLight, packedOverlay);
+            poseStack.translate(0.0D, thruster.height(), 0.0D);
+        }
+        if (isKind(fuselage, PartKind.FUSELAGE)) {
+            if (isKind(fins, PartKind.FINS)) {
+                fins.render(poseStack, buffer, packedLight, packedOverlay);
             }
+            fuselage.render(poseStack, buffer, packedLight, packedOverlay);
+            poseStack.translate(0.0D, fuselage.height(), 0.0D);
+        }
+        if (isKind(warhead, PartKind.WARHEAD)) {
+            warhead.render(poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }

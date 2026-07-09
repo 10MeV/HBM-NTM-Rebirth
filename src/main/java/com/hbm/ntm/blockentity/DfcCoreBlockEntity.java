@@ -1,21 +1,28 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
-import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.entity.effect.CloudFleijaRainbowEntity;
+import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.item.AmsCatalystItem;
 import com.hbm.ntm.item.AmsCoreItem;
 import com.hbm.ntm.menu.DfcCoreMenu;
+import com.hbm.ntm.radiation.ArmorUtil;
+import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmWorldUtil;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -24,6 +31,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -32,13 +40,16 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DfcCoreBlockEntity extends HbmFluidNetworkBlockEntity
-        implements MenuProvider, HbmStandardFluidReceiver {
+public class DfcCoreBlockEntity extends HbmFluidNetworkBlockEntity implements MenuProvider {
     public static final int SLOT_CATALYST_LEFT = 0;
     public static final int SLOT_CORE = 1;
     public static final int SLOT_CATALYST_RIGHT = 2;
     public static final int SLOT_COUNT = 3;
     public static final int TANK_CAPACITY = 128_000;
+    private static final float LEGACY_MELTDOWN_CHUNK_RADIATION = 100.0F;
+    private static final float LEGACY_AMS_DAMAGE = 1000.0F;
+    private static final float LEGACY_AMS_CORE_DAMAGE = 10000.0F;
+    private static final int LEGACY_AMS_FIRE_SECONDS = 3;
 
     private static final String TAG_ITEMS = "items";
 
@@ -101,7 +112,10 @@ public class DfcCoreBlockEntity extends HbmFluidNetworkBlockEntity
                 && level.hasChunk(chunkX - 1, chunkZ - 1);
         color = calculateCoreColor();
         if (lastTickValid && heat > 0 && heat >= field) {
-            meltdownTick = true;
+            handleLegacyMeltdown(level, pos);
+        }
+        if (heat > 0) {
+            applyLegacyAmsRadiation(level, pos);
         }
         networkPackNT(250);
         heat = 0;
@@ -110,6 +124,61 @@ public class DfcCoreBlockEntity extends HbmFluidNetworkBlockEntity
         }
         setChanged();
         level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+    }
+
+    private void handleLegacyMeltdown(Level level, BlockPos pos) {
+        int size = calculateLegacyMeltdownSize();
+        double x = pos.getX() + 0.5D;
+        double y = pos.getY() + 0.5D;
+        double z = pos.getZ() + 0.5D;
+        if (!NukeExplosionMk3Entity.hasAntiTeleportOverlap(level, x, y, z)) {
+            level.addFreshEntity(NukeExplosionMk3Entity.createFleija(level, x, y, z, size));
+            LegacySoundPlayer.playSoundEffect(level, pos.getX(), pos.getY(), pos.getZ(), "random.explode",
+                    100000.0F, 1.0F);
+            level.addFreshEntity(CloudFleijaRainbowEntity.create(level, pos.getX(), pos.getY(), pos.getZ(), size));
+            return;
+        }
+        meltdownTick = true;
+        ChunkRadiationManager.proxy.incrementRad(level, pos, LEGACY_MELTDOWN_CHUNK_RADIATION);
+    }
+
+    private int calculateLegacyMeltdownSize() {
+        int fill = fuel1.getFill() + fuel2.getFill();
+        int max = fuel1.getMaxFill() + fuel2.getMaxFill();
+        if (max <= 0) {
+            return 50;
+        }
+        int mod = heat * 10;
+        return Math.max(Math.min(fill * mod / max, 1000), 50);
+    }
+
+    private void applyLegacyAmsRadiation(Level level, BlockPos pos) {
+        double scale = meltdownTick ? 5.0D : 3.0D;
+        double range = meltdownTick ? 50.0D : 10.0D;
+        Vec3 center = Vec3.atCenterOf(pos);
+        Vec3 origin = new Vec3(pos.getX() + 0.5D, pos.getY() + 6.5D, pos.getZ() + 0.5D);
+
+        for (Entity entity : level.getEntities(null, centeredBox(center, range))) {
+            if (entity instanceof Player player && ArmorUtil.checkForHazmat(player)) {
+                continue;
+            }
+            Vec3 target = new Vec3(entity.getX(), entity.getEyeY(), entity.getZ());
+            if (!HbmWorldUtil.isObstructed(level, origin, target)) {
+                entity.hurt(ModDamageSources.source(level, ModDamageSources.AMS), LEGACY_AMS_DAMAGE);
+                entity.setSecondsOnFire(LEGACY_AMS_FIRE_SECONDS);
+            }
+        }
+
+        for (Entity entity : level.getEntities(null, centeredBox(center, scale))) {
+            if (entity instanceof Player player && ArmorUtil.checkForHaz2(player)) {
+                continue;
+            }
+            entity.hurt(ModDamageSources.source(level, ModDamageSources.AMS_CORE), LEGACY_AMS_CORE_DAMAGE);
+        }
+    }
+
+    private static AABB centeredBox(Vec3 center, double radius) {
+        return new AABB(center.x, center.y, center.z, center.x, center.y, center.z).inflate(radius);
     }
 
     public ItemStackHandler getItems() {
@@ -235,27 +304,28 @@ public class DfcCoreBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
-    public List<HbmFluidTank> getReceivingTanks() {
-        return List.of(fuel1, fuel2);
+    protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
+        return false;
     }
 
     @Override
-    protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return type != HbmFluids.NONE;
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
+    public boolean canConnectFluid(FluidType type, Direction side) {
+        return false;
     }
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        return HbmFluidSideMode.INPUT;
+        return HbmFluidSideMode.NONE;
     }
 
     @Override
-    public long transferFluid(FluidType type, int pressure, long amount) {
-        long remainder = HbmStandardFluidReceiver.super.transferFluid(type, pressure, amount);
-        if (remainder != amount) {
-            onFluidContentsChanged();
-        }
-        return remainder;
+    public boolean supportsFluidSettingsCopy() {
+        return false;
     }
 
     @Override
@@ -268,9 +338,6 @@ public class DfcCoreBlockEntity extends HbmFluidNetworkBlockEntity
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
         tag.putInt("field", field);
-        tag.putInt("heat", heat);
-        tag.putInt("color", color);
-        tag.putBoolean("meltdownTick", meltdownTick);
         fuel1.writeToNbt(tag, "fuel1");
         fuel2.writeToNbt(tag, "fuel2");
     }
@@ -280,11 +347,25 @@ public class DfcCoreBlockEntity extends HbmFluidNetworkBlockEntity
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
         field = tag.getInt("field");
+        fuel1.readFromNbt(tag, "fuel1");
+        fuel2.readFromNbt(tag, "fuel2");
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("heat", heat);
+        tag.putInt("color", color);
+        tag.putBoolean("meltdownTick", meltdownTick);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
         heat = tag.getInt("heat");
         color = tag.getInt("color");
         meltdownTick = tag.getBoolean("meltdownTick");
-        fuel1.readFromNbt(tag, "fuel1");
-        fuel2.readFromNbt(tag, "fuel2");
     }
 
     @Override

@@ -1,0 +1,57 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip_quantum"
+      },
+      "count": 4
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip_bismoid"
+      },
+      "count": 16
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_atomic_clock"
+      },
+      "count": 4
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_pcb"
+      },
+      "count": 16
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "count": 4,
+      "legacy_ore": "ingotAnyHardPlastic"
+    }
+  ],
+  "solder": [
+    {
+      "ingredient": {
+        "tag": "forge:wires/lead"
+      },
+      "count": 16,
+      "legacy_ore": "wireFineLead"
+    }
+  ],
+  "fluid": {
+    "fluid": "HELIUM4",
+    "amount": 1000
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:circuit_quantum"
+  },
+  "duration": 400,
+  "consumption": 100000,
+  "source_order": 5
+}

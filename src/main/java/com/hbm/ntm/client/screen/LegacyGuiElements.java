@@ -66,7 +66,7 @@ public final class LegacyGuiElements {
     public static void drawSmoothGauge(GuiGraphics graphics, int x, int y, double progress, double tipLength,
             double backLength, double backSide, int color, int colorOuter) {
         double clamped = Mth.clamp(progress, 0.0D, 1.0D);
-        double angle = Math.toRadians(-clamped * 270.0D - 45.0D);
+        double angle = (-clamped * 270.0D - 45.0D) * Mth.DEG_TO_RAD;
         double sin = Math.sin(angle);
         double cos = Math.cos(angle);
 

@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> {
     private static final LegacyWavefrontModel.SelectionHandle BASE =
@@ -43,6 +44,12 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
     }
 
     @Override
+    public boolean shouldRender(AutosawBlockEntity autosaw, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(autosaw, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(autosaw, getViewDistance());
+    }
+
+    @Override
     public void render(AutosawBlockEntity autosaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(autosaw, getViewDistance())) {
@@ -56,42 +63,55 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
             poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
-            LegacyTileRenderPlans.AutosawPlan plan = LegacyTileRenderPlans.autosawPlan(
-                    autosaw.getLastYaw(), autosaw.getYaw(),
-                    autosaw.getLastPitch(), autosaw.getPitch(),
-                    autosaw.getLastSpin(), autosaw.getSpin(),
-                    autosaw.isOn(), worldTime(autosaw), partialTick);
+            double turn = autosaw.getYaw(partialTick);
+            double angle = LegacyTileRenderPlans.AUTOSAW_DEFAULT_ANGLE - autosaw.getPitch(partialTick);
+            double bladeSpin = autosaw.getSpin(partialTick);
+            double engine = autosaw.isOn()
+                    ? Math.sin((worldTime(autosaw) * 2.0D) % (Math.PI * 2.0D) + partialTick)
+                    : 0.0D;
+            double engineTranslateY = engine * LegacyTileRenderPlans.AUTOSAW_ENGINE_BOB;
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(autosaw)) {
-                poseStack.mulPose(Axis.YN.rotationDegrees((float) plan.turnDegrees()));
+                poseStack.mulPose(Axis.YN.rotationDegrees((float) turn));
                 renderPart(MAIN, poseStack, buffer, modelLight, packedOverlay);
-                poseStack.translate(0.0D, plan.engineTranslateY(), 0.0D);
+                poseStack.translate(0.0D, engineTranslateY, 0.0D);
                 renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
-                poseStack.translate(0.0D, -plan.engineTranslateY(), 0.0D);
-                renderPart(plan.armUpper(), ARM_UPPER, poseStack, buffer, modelLight, packedOverlay);
-                renderPart(plan.armLower(), ARM_LOWER, poseStack, buffer, modelLight, packedOverlay);
-                renderPart(plan.armTip(), ARM_TIP, poseStack, buffer, modelLight, packedOverlay);
-                renderPart(plan.sawBlade(), SAWBLADE, poseStack, buffer, modelLight, packedOverlay);
+                poseStack.translate(0.0D, -engineTranslateY, 0.0D);
+                renderPivotedX(ARM_UPPER, LegacyTileRenderPlans.AUTOSAW_ARM_PIVOT_Y, 0.0D, angle,
+                        0.0D, poseStack, buffer, modelLight, packedOverlay);
+                renderPivotedX(ARM_LOWER, LegacyTileRenderPlans.AUTOSAW_ARM_PIVOT_Y,
+                        LegacyTileRenderPlans.AUTOSAW_ARM_LOWER_Z, angle * -2.0D,
+                        LegacyTileRenderPlans.AUTOSAW_ARM_LOWER_NUDGE_X, poseStack, buffer, modelLight,
+                        packedOverlay);
+                renderPivotedX(ARM_TIP, LegacyTileRenderPlans.AUTOSAW_ARM_PIVOT_Y,
+                        LegacyTileRenderPlans.AUTOSAW_ARM_TIP_Z, angle, 0.0D, poseStack, buffer,
+                        modelLight, packedOverlay);
+                renderPivotedY(SAWBLADE, LegacyTileRenderPlans.AUTOSAW_ARM_PIVOT_Y,
+                        LegacyTileRenderPlans.AUTOSAW_BLADE_Z, -bladeSpin, poseStack, buffer, modelLight,
+                        packedOverlay);
             }
             poseStack.popPose();
         }
     }
 
-    private static void renderPart(LegacyTileRenderPlans.PivotedModelPartPlan part,
-            LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderPivotedX(LegacyWavefrontModel.SelectionHandle handle, double pivotY, double pivotZ,
+            double angleDegrees, double translateX, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
-        if (part.axisX() != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (part.angleDegrees() * part.axisX())));
-        }
-        if (part.axisY() != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (part.angleDegrees() * part.axisY())));
-        }
-        if (part.axisZ() != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (part.angleDegrees() * part.axisZ())));
-        }
-        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        poseStack.translate(translateX, 0.0D, 0.0D);
+        poseStack.translate(0.0D, pivotY, pivotZ);
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        poseStack.translate(0.0D, -pivotY, -pivotZ);
+        renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderPivotedY(LegacyWavefrontModel.SelectionHandle handle, double pivotY, double pivotZ,
+            double angleDegrees, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        poseStack.translate(0.0D, pivotY, pivotZ);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) angleDegrees));
+        poseStack.translate(0.0D, -pivotY, -pivotZ);
         renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }

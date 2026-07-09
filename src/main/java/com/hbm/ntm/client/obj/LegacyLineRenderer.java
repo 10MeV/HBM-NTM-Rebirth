@@ -8,6 +8,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +30,8 @@ public final class LegacyLineRenderer {
             float lineWidth, double x0, double y0, double z0, double x1, double y1, double z1,
             int color, int alpha) {
         int clampedAlpha = clampAlpha(alpha);
-        LegacyWavefrontModel.renderUntexturedLineTransientLines(poseStack, buffer, renderMode, lineWidth,
-                List.of(new LegacyWavefrontModel.UntexturedLineTransient(
-                        x0, y0, z0, x1, y1, z1, color & 0xFFFFFF, clampedAlpha)));
+        line(consumer(buffer, lineWidth, renderMode, clampedAlpha), poseStack.last(),
+                x0, y0, z0, x1, y1, z1, color & 0xFFFFFF, clampedAlpha);
     }
 
     public static void lines(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
@@ -41,8 +42,31 @@ public final class LegacyLineRenderer {
     public static void box(PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
             float lineWidth, double minX, double minY, double minZ, double maxX, double maxY, double maxZ,
             int color, int alpha) {
-        lines(poseStack, buffer, renderMode, lineWidth,
-                boxLines(minX, minY, minZ, maxX, maxY, maxZ, color, alpha));
+        box(poseStack, consumer(buffer, lineWidth, renderMode, alpha), minX, minY, minZ,
+                maxX, maxY, maxZ, color, alpha);
+    }
+
+    public static void box(PoseStack poseStack, VertexConsumer consumer,
+            double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int color, int alpha) {
+        box(consumer, poseStack.last(), minX, minY, minZ, maxX, maxY, maxZ, color, alpha);
+    }
+
+    public static void box(VertexConsumer consumer, PoseStack.Pose pose,
+            double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int color, int alpha) {
+        line(consumer, pose, minX, minY, minZ, maxX, minY, minZ, color, alpha);
+        line(consumer, pose, maxX, minY, minZ, maxX, minY, maxZ, color, alpha);
+        line(consumer, pose, maxX, minY, maxZ, minX, minY, maxZ, color, alpha);
+        line(consumer, pose, minX, minY, maxZ, minX, minY, minZ, color, alpha);
+
+        line(consumer, pose, minX, maxY, minZ, maxX, maxY, minZ, color, alpha);
+        line(consumer, pose, maxX, maxY, minZ, maxX, maxY, maxZ, color, alpha);
+        line(consumer, pose, maxX, maxY, maxZ, minX, maxY, maxZ, color, alpha);
+        line(consumer, pose, minX, maxY, maxZ, minX, maxY, minZ, color, alpha);
+
+        line(consumer, pose, minX, minY, minZ, minX, maxY, minZ, color, alpha);
+        line(consumer, pose, maxX, minY, minZ, maxX, maxY, minZ, color, alpha);
+        line(consumer, pose, maxX, minY, maxZ, maxX, maxY, maxZ, color, alpha);
+        line(consumer, pose, minX, minY, maxZ, minX, maxY, maxZ, color, alpha);
     }
 
     public static List<LegacyWavefrontModel.UntexturedLineTransient> boxLines(double minX, double minY, double minZ,
@@ -67,6 +91,11 @@ public final class LegacyLineRenderer {
 
     public static void line(VertexConsumer consumer, PoseStack.Pose pose,
             double x0, double y0, double z0, double x1, double y1, double z1, int color, int alpha) {
+        line(consumer, pose.pose(), pose.normal(), x0, y0, z0, x1, y1, z1, color, alpha);
+    }
+
+    public static void line(VertexConsumer consumer, Matrix4f pose, Matrix3f normal,
+            double x0, double y0, double z0, double x1, double y1, double z1, int color, int alpha) {
         float normalX = (float) (x1 - x0);
         float normalY = (float) (y1 - y0);
         float normalZ = (float) (z1 - z0);
@@ -78,8 +107,22 @@ public final class LegacyLineRenderer {
             normalY /= length;
             normalZ /= length;
         }
+        vertex(consumer, pose, normal, x0, y0, z0, color, alpha, normalX, normalY, normalZ);
+        vertex(consumer, pose, normal, x1, y1, z1, color, alpha, normalX, normalY, normalZ);
+    }
+
+    static void lineWithNormal(VertexConsumer consumer, PoseStack.Pose pose,
+            double x0, double y0, double z0, double x1, double y1, double z1,
+            int color, int alpha, float normalX, float normalY, float normalZ) {
         vertex(consumer, pose, x0, y0, z0, color, alpha, normalX, normalY, normalZ);
         vertex(consumer, pose, x1, y1, z1, color, alpha, normalX, normalY, normalZ);
+    }
+
+    static void lineWithNormal(VertexConsumer consumer, Matrix4f pose, Matrix3f normal,
+            double x0, double y0, double z0, double x1, double y1, double z1,
+            int color, int alpha, float normalX, float normalY, float normalZ) {
+        vertex(consumer, pose, normal, x0, y0, z0, color, alpha, normalX, normalY, normalZ);
+        vertex(consumer, pose, normal, x1, y1, z1, color, alpha, normalX, normalY, normalZ);
     }
 
     public static void linePositionColor(VertexConsumer consumer, PoseStack.Pose pose,
@@ -169,9 +212,14 @@ public final class LegacyLineRenderer {
 
     private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, double x, double y, double z,
             int color, int alpha, float normalX, float normalY, float normalZ) {
-        consumer.vertex(pose.pose(), (float) x, (float) y, (float) z)
+        vertex(consumer, pose.pose(), pose.normal(), x, y, z, color, alpha, normalX, normalY, normalZ);
+    }
+
+    private static void vertex(VertexConsumer consumer, Matrix4f pose, Matrix3f normal, double x, double y, double z,
+            int color, int alpha, float normalX, float normalY, float normalZ) {
+        consumer.vertex(pose, (float) x, (float) y, (float) z)
                 .color(color >> 16 & 255, color >> 8 & 255, color & 255, clampAlpha(alpha))
-                .normal(pose.normal(), normalX, normalY, normalZ)
+                .normal(normal, normalX, normalY, normalZ)
                 .endVertex();
     }
 

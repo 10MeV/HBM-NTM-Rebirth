@@ -1,5 +1,6 @@
 package com.hbm.ntm.util;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -17,10 +18,18 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.io.IOException;
+import java.util.AbstractCollection;
+import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Legacy-name damage resistance facade.
@@ -35,12 +44,14 @@ public class DamageResistanceHandler {
     public static final String CATEGORY_PHYSICAL = com.hbm.ntm.damage.DamageResistanceHandler.CATEGORY_PHYSICAL;
     public static final String CATEGORY_ENERGY = com.hbm.ntm.damage.DamageResistanceHandler.CATEGORY_ENERGY;
 
+    public static final Gson gson = new Gson();
+
     public static final HashMap<Item, ResistanceStats> itemStats = new ItemStatsMap();
     public static final HashMap<Tuple.Quartet<Item, Item, Item, Item>, ResistanceStats> setStats = new SetStatsMap();
     public static final HashMap<Class<? extends Entity>, ResistanceStats> entityStats = new EntityStatsMap();
     public static final HashMap<Item, List<Tuple.Quartet<Item, Item, Item, Item>>> itemInfoSet = new HashMap<>();
 
-    protected DamageResistanceHandler() {
+    public DamageResistanceHandler() {
     }
 
     public static DamageResistanceConfig.LoadReport init() {
@@ -607,7 +618,6 @@ public class DamageResistanceHandler {
     }
 
     public static void deserialize(JsonObject json) {
-        clearSystem();
         for (JsonElement element : array(json, "itemStats")) {
             JsonArray statArray = element.getAsJsonArray();
             Item item = item(statArray.get(0));
@@ -705,13 +715,197 @@ public class DamageResistanceHandler {
         }
     }
 
-    private static final class ItemStatsMap extends HashMap<Item, ResistanceStats> {
+    private static <K> Set<Map.Entry<K, ResistanceStats>> liveResistanceEntrySet(
+            Set<Map.Entry<K, ResistanceStats>> backingEntries,
+            BiConsumer<K, ResistanceStats> registerRuntime,
+            Consumer<K> removeRuntime) {
+        return new AbstractSet<>() {
+            @Override
+            public Iterator<Map.Entry<K, ResistanceStats>> iterator() {
+                Iterator<Map.Entry<K, ResistanceStats>> iterator = backingEntries.iterator();
+                return new Iterator<>() {
+                    private Map.Entry<K, ResistanceStats> current;
+
+                    @Override
+                    public boolean hasNext() {
+                        return iterator.hasNext();
+                    }
+
+                    @Override
+                    public Map.Entry<K, ResistanceStats> next() {
+                        current = iterator.next();
+                        return new LiveResistanceEntry<>(current, registerRuntime);
+                    }
+
+                    @Override
+                    public void remove() {
+                        K key = current == null ? null : current.getKey();
+                        iterator.remove();
+                        if (current != null) {
+                            removeRuntime.accept(key);
+                            current = null;
+                        }
+                    }
+                };
+            }
+
+            @Override
+            public int size() {
+                return backingEntries.size();
+            }
+        };
+    }
+
+    private static <K> Set<K> liveResistanceKeySet(Map<K, ResistanceStats> map) {
+        return new AbstractSet<>() {
+            @Override
+            public Iterator<K> iterator() {
+                Iterator<Map.Entry<K, ResistanceStats>> iterator = map.entrySet().iterator();
+                return new Iterator<>() {
+                    @Override
+                    public boolean hasNext() {
+                        return iterator.hasNext();
+                    }
+
+                    @Override
+                    public K next() {
+                        return iterator.next().getKey();
+                    }
+
+                    @Override
+                    public void remove() {
+                        iterator.remove();
+                    }
+                };
+            }
+
+            @Override
+            public int size() {
+                return map.size();
+            }
+
+            @Override
+            public boolean contains(Object value) {
+                return map.containsKey(value);
+            }
+
+            @Override
+            public boolean remove(Object value) {
+                boolean hadKey = map.containsKey(value);
+                map.remove(value);
+                return hadKey;
+            }
+
+            @Override
+            public void clear() {
+                map.clear();
+            }
+        };
+    }
+
+    private static <K> Collection<ResistanceStats> liveResistanceValues(Map<K, ResistanceStats> map) {
+        return new AbstractCollection<>() {
+            @Override
+            public Iterator<ResistanceStats> iterator() {
+                Iterator<Map.Entry<K, ResistanceStats>> iterator = map.entrySet().iterator();
+                return new Iterator<>() {
+                    @Override
+                    public boolean hasNext() {
+                        return iterator.hasNext();
+                    }
+
+                    @Override
+                    public ResistanceStats next() {
+                        return iterator.next().getValue();
+                    }
+
+                    @Override
+                    public void remove() {
+                        iterator.remove();
+                    }
+                };
+            }
+
+            @Override
+            public int size() {
+                return map.size();
+            }
+
+            @Override
+            public boolean contains(Object value) {
+                return map.containsValue(value);
+            }
+
+            @Override
+            public void clear() {
+                map.clear();
+            }
+        };
+    }
+
+    private static final class LiveResistanceEntry<K> implements Map.Entry<K, ResistanceStats> {
+        private final Map.Entry<K, ResistanceStats> delegate;
+        private final BiConsumer<K, ResistanceStats> registerRuntime;
+
+        private LiveResistanceEntry(Map.Entry<K, ResistanceStats> delegate,
+                                    BiConsumer<K, ResistanceStats> registerRuntime) {
+            this.delegate = delegate;
+            this.registerRuntime = registerRuntime;
+        }
+
         @Override
-        public ResistanceStats put(Item item, ResistanceStats stats) {
-            ResistanceStats previous = super.put(item, stats);
+        public K getKey() {
+            return delegate.getKey();
+        }
+
+        @Override
+        public ResistanceStats getValue() {
+            return delegate.getValue();
+        }
+
+        @Override
+        public ResistanceStats setValue(ResistanceStats value) {
+            ResistanceStats previous = delegate.setValue(value);
+            registerRuntime.accept(delegate.getKey(), value);
+            return previous;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (!(object instanceof Map.Entry<?, ?> entry)) {
+                return false;
+            }
+            return Objects.equals(getKey(), entry.getKey()) && Objects.equals(getValue(), entry.getValue());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(getKey()) ^ Objects.hashCode(getValue());
+        }
+
+        @Override
+        public String toString() {
+            return getKey() + "=" + getValue();
+        }
+    }
+
+    private static final class ItemStatsMap extends HashMap<Item, ResistanceStats> {
+        private static void registerRuntime(Item item, ResistanceStats stats) {
             if (item != null && stats != null) {
                 com.hbm.ntm.damage.DamageResistanceHandler.registerItem(item, stats.modern());
             }
+        }
+
+        private static void removeRuntime(Item item) {
+            if (item != null) {
+                com.hbm.ntm.damage.DamageResistanceHandler.removeItem(item);
+            }
+        }
+
+        @Override
+        public ResistanceStats put(Item item, ResistanceStats stats) {
+            ResistanceStats previous = super.put(item, stats);
+            registerRuntime(item, stats);
             return previous;
         }
 
@@ -719,7 +913,7 @@ public class DamageResistanceHandler {
         public ResistanceStats remove(Object key) {
             ResistanceStats previous = super.remove(key);
             if (key instanceof Item item) {
-                com.hbm.ntm.damage.DamageResistanceHandler.removeItem(item);
+                removeRuntime(item);
             }
             return previous;
         }
@@ -738,17 +932,50 @@ public class DamageResistanceHandler {
                 put(entry.getKey(), entry.getValue());
             }
         }
+
+        @Override
+        public Set<Map.Entry<Item, ResistanceStats>> entrySet() {
+            return liveResistanceEntrySet(super.entrySet(), ItemStatsMap::registerRuntime,
+                    ItemStatsMap::removeRuntime);
+        }
+
+        @Override
+        public Set<Item> keySet() {
+            return liveResistanceKeySet(this);
+        }
+
+        @Override
+        public Collection<ResistanceStats> values() {
+            return liveResistanceValues(this);
+        }
+
+        @Override
+        public Object clone() {
+            return new HashMap<>(this);
+        }
     }
 
     private static final class SetStatsMap extends HashMap<Tuple.Quartet<Item, Item, Item, Item>, ResistanceStats> {
-        @Override
-        public ResistanceStats put(Tuple.Quartet<Item, Item, Item, Item> set, ResistanceStats stats) {
-            ResistanceStats previous = super.put(set, stats);
+        private static void registerRuntime(Tuple.Quartet<Item, Item, Item, Item> set, ResistanceStats stats) {
             if (set != null && stats != null) {
                 addSetInfo(set);
                 com.hbm.ntm.damage.DamageResistanceHandler.registerSet(set.getW(), set.getX(), set.getY(),
                         set.getZ(), stats.modern());
             }
+        }
+
+        private static void removeRuntime(Tuple.Quartet<Item, Item, Item, Item> set) {
+            if (set != null) {
+                removeSetInfoObject(set);
+                com.hbm.ntm.damage.DamageResistanceHandler.removeSet(set.getW(), set.getX(), set.getY(),
+                        set.getZ());
+            }
+        }
+
+        @Override
+        public ResistanceStats put(Tuple.Quartet<Item, Item, Item, Item> set, ResistanceStats stats) {
+            ResistanceStats previous = super.put(set, stats);
+            registerRuntime(set, stats);
             return previous;
         }
 
@@ -756,12 +983,11 @@ public class DamageResistanceHandler {
         public ResistanceStats remove(Object key) {
             ResistanceStats previous = super.remove(key);
             if (key instanceof Tuple.Quartet<?, ?, ?, ?> set) {
-                removeSetInfoObject(set);
                 Item helmet = set.getW() instanceof Item item ? item : null;
                 Item plate = set.getX() instanceof Item item ? item : null;
                 Item legs = set.getY() instanceof Item item ? item : null;
                 Item boots = set.getZ() instanceof Item item ? item : null;
-                com.hbm.ntm.damage.DamageResistanceHandler.removeSet(helmet, plate, legs, boots);
+                removeRuntime(new Tuple.Quartet<>(helmet, plate, legs, boots));
             }
             return previous;
         }
@@ -781,15 +1007,46 @@ public class DamageResistanceHandler {
                 put(entry.getKey(), entry.getValue());
             }
         }
+
+        @Override
+        public Set<Map.Entry<Tuple.Quartet<Item, Item, Item, Item>, ResistanceStats>> entrySet() {
+            return liveResistanceEntrySet(super.entrySet(), SetStatsMap::registerRuntime,
+                    SetStatsMap::removeRuntime);
+        }
+
+        @Override
+        public Set<Tuple.Quartet<Item, Item, Item, Item>> keySet() {
+            return liveResistanceKeySet(this);
+        }
+
+        @Override
+        public Collection<ResistanceStats> values() {
+            return liveResistanceValues(this);
+        }
+
+        @Override
+        public Object clone() {
+            return new HashMap<>(this);
+        }
     }
 
     private static final class EntityStatsMap extends HashMap<Class<? extends Entity>, ResistanceStats> {
-        @Override
-        public ResistanceStats put(Class<? extends Entity> entityClass, ResistanceStats stats) {
-            ResistanceStats previous = super.put(entityClass, stats);
+        private static void registerRuntime(Class<? extends Entity> entityClass, ResistanceStats stats) {
             if (entityClass != null && stats != null) {
                 com.hbm.ntm.damage.DamageResistanceHandler.registerEntity(entityClass, stats.modern());
             }
+        }
+
+        private static void removeRuntime(Class<? extends Entity> entityClass) {
+            if (entityClass != null) {
+                com.hbm.ntm.damage.DamageResistanceHandler.removeEntity(entityClass);
+            }
+        }
+
+        @Override
+        public ResistanceStats put(Class<? extends Entity> entityClass, ResistanceStats stats) {
+            ResistanceStats previous = super.put(entityClass, stats);
+            registerRuntime(entityClass, stats);
             return previous;
         }
 
@@ -799,7 +1056,7 @@ public class DamageResistanceHandler {
             if (key instanceof Class<?> type && Entity.class.isAssignableFrom(type)) {
                 @SuppressWarnings("unchecked")
                 Class<? extends Entity> entityClass = (Class<? extends Entity>) type;
-                com.hbm.ntm.damage.DamageResistanceHandler.removeEntity(entityClass);
+                removeRuntime(entityClass);
             }
             return previous;
         }
@@ -817,6 +1074,27 @@ public class DamageResistanceHandler {
             for (Map.Entry<? extends Class<? extends Entity>, ? extends ResistanceStats> entry : map.entrySet()) {
                 put(entry.getKey(), entry.getValue());
             }
+        }
+
+        @Override
+        public Set<Map.Entry<Class<? extends Entity>, ResistanceStats>> entrySet() {
+            return liveResistanceEntrySet(super.entrySet(), EntityStatsMap::registerRuntime,
+                    EntityStatsMap::removeRuntime);
+        }
+
+        @Override
+        public Set<Class<? extends Entity>> keySet() {
+            return liveResistanceKeySet(this);
+        }
+
+        @Override
+        public Collection<ResistanceStats> values() {
+            return liveResistanceValues(this);
+        }
+
+        @Override
+        public Object clone() {
+            return new HashMap<>(this);
         }
     }
 

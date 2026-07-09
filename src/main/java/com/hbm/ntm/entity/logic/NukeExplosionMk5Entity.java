@@ -15,11 +15,11 @@ import com.hbm.ntm.util.HbmBlockStateUtil;
 import com.hbm.ntm.util.AchievementHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -124,31 +124,44 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
     }
 
     private void radiate(float rads, double range) {
-        AABB bounds = new AABB(getX(), getY(), getZ(), getX(), getY(), getZ()).inflate(range);
-        List<LivingEntity> entities = level().getEntitiesOfClass(LivingEntity.class, bounds);
-        Vec3 origin = position();
+        Level level = level();
+        double originX = getX();
+        double originY = getY();
+        double originZ = getZ();
+        AABB bounds = new AABB(originX, originY, originZ, originX, originY, originZ).inflate(range);
+        List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, bounds);
+        BlockPos.MutableBlockPos sample = new BlockPos.MutableBlockPos();
 
         for (LivingEntity entity : entities) {
-            Vec3 offset = new Vec3(entity.getX() - getX(), entity.getEyeY() - getY(), entity.getZ() - getZ());
-            double distance = offset.length();
+            double deltaX = entity.getX() - originX;
+            double deltaY = entity.getEyeY() - originY;
+            double deltaZ = entity.getZ() - originZ;
+            double distanceSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+            double distance = Math.sqrt(distanceSqr);
             if (distance <= 0.0D) {
                 continue;
             }
 
-            Vec3 direction = offset.normalize();
+            double invDistance = 1.0D / distance;
+            double normalX = deltaX * invDistance;
+            double normalY = deltaY * invDistance;
+            double normalZ = deltaZ * invDistance;
             float resistance = 0.0F;
             for (int i = 1; i < distance; i++) {
-                BlockPos sample = BlockPos.containing(origin.add(direction.scale(i)));
-                if (level().isOutsideBuildHeight(sample)) {
+                sample.set(
+                        Mth.floor(originX + normalX * i),
+                        Mth.floor(originY + normalY * i),
+                        Mth.floor(originZ + normalZ * i));
+                if (level.isOutsideBuildHeight(sample)) {
                     continue;
                 }
-                resistance += HbmBlockStateUtil.explosionResistance(level().getBlockState(sample));
+                resistance += HbmBlockStateUtil.explosionResistance(level.getBlockState(sample));
             }
             if (resistance < 1.0F) {
                 resistance = 1.0F;
             }
 
-            float entityRads = rads / resistance / (float) (distance * distance);
+            float entityRads = rads / resistance / (float) distanceSqr;
             RadiationUtil.contaminate(entity, HazardType.RADIATION, RadiationUtil.ContaminationType.RAD_BYPASS, entityRads);
         }
     }

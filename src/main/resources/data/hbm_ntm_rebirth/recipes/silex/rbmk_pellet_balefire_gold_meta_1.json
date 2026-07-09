@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_balefire_gold"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_balefire_gold",
+      "legacy_meta": 1
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_au198",
+      "weight": 70
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_balefire",
+      "weight": 30
+    }
+  ],
+  "source_order": 109
+}

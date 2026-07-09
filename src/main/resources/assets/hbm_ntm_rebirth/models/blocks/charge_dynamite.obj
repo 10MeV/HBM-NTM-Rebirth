@@ -1,6 +1,8 @@
 # Blender v2.79 (sub 0) OBJ File: 'charge_dynamite.blend'
 # www.blender.org
+mtllib hbm_default.mtl
 o Plane
+usemtl default
 v -0.125000 -0.500000 0.437500
 v 0.125000 -0.500000 0.437500
 v -0.125000 -0.500000 -0.437500

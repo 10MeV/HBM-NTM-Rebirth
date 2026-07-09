@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/fiberglass"
+    },
+    "count": 1,
+    "legacy_ore": "ingotFiberglass"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_asbestos"
+  },
+  "source_order": 36
+}

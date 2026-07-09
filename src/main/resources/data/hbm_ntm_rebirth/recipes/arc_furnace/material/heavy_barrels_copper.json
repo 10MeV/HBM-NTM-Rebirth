@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.barrelHeavyCopper",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:heavy_barrels/copper" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:heavy_barrels/copper" }, "count": 1, "legacy_ore": "barrelHeavyCopper" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Copper", "amount": 432 }
+  ],
+  "pools": [],
+  "source_order": 1201
+}

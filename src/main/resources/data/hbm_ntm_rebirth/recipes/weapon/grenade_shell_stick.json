@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "forge:bolts/steel"
+    },
+    "S": {
+      "tag": "forge:shells/steel"
+    },
+    "W": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "pattern": [
+    "S",
+    "B",
+    "W"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:grenade_shell_stick"
+  },
+  "show_notification": true
+}

@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:plates/schrabidium" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_schrabidium" }
+  "output": { "item": "hbm_ntm_rebirth:powder_schrabidium" },
+  "source_order": 1001
 }

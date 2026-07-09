@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "R": {
+      "item": "hbm_ntm_rebirth:ring_starmetal"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:wire_fine_copper"
+    }
+  },
+  "pattern": [
+    " WS",
+    "WRS",
+    " RS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ballistic_gauntlet"
+  },
+  "show_notification": true
+}

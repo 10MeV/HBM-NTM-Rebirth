@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:gas_cent",
+  "input": {
+    "fluid": "hbm_ntm_rebirth:uf6",
+    "amount": 1200
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_u238",
+      "count": 6
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_uranium_fuel",
+      "count": 6
+    },
+    {
+      "item": "hbm_ntm_rebirth:fluorite",
+      "count": 4
+    }
+  ],
+  "high_speed": false,
+  "centrifuges": 2,
+  "input_type": "LEUF6",
+  "output_type": "NONE",
+  "source_order": 1
+}

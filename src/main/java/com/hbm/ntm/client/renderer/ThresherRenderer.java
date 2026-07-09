@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity> {
     private static final LegacyWavefrontModel.SelectionHandle BASE =
@@ -41,6 +42,12 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
     }
 
     @Override
+    public boolean shouldRender(ThresherBlockEntity thresher, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(thresher, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(thresher, getViewDistance());
+    }
+
+    @Override
     public void render(ThresherBlockEntity thresher, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(thresher, getViewDistance())) {
@@ -51,40 +58,47 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
-        LegacyTileRenderPlans.ThresherPlan plan = LegacyTileRenderPlans.thresherPlan(
-                thresher.getPreviousAngle(), thresher.getAngle(),
-                thresher.getLastSpin(), thresher.getSpin(),
-                thresher.isOn(), worldTime(thresher), partialTick);
+        double armAngle = LegacyTileRenderPlans.THRESHER_DEFAULT_ANGLE
+                - (thresher.getPreviousAngle()
+                + (thresher.getAngle() - thresher.getPreviousAngle()) * partialTick);
+        double wheelSpin = thresher.getLastSpin()
+                + (thresher.getSpin() - thresher.getLastSpin()) * partialTick;
+        double engine = thresher.isOn()
+                ? Math.sin((worldTime(thresher) * 2.0D) % (Math.PI * 2.0D) + partialTick)
+                : 0.0D;
+        double engineTranslateY = engine * LegacyTileRenderPlans.THRESHER_ENGINE_BOB;
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(thresher)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(thresher)) {
-                poseStack.translate(0.0D, plan.engineTranslateY(), 0.0D);
+                poseStack.translate(0.0D, engineTranslateY, 0.0D);
                 renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
-                poseStack.translate(0.0D, -plan.engineTranslateY(), 0.0D);
-                renderPart(plan.armUpper(), ARM_UPPER, poseStack, buffer, modelLight, packedOverlay);
-                renderPart(plan.armLower(), ARM_LOWER, poseStack, buffer, modelLight, packedOverlay);
-                renderPart(plan.front(), FRONT, poseStack, buffer, modelLight, packedOverlay);
-                renderPart(plan.wheel(), WHEEL, poseStack, buffer, modelLight, packedOverlay);
+                poseStack.translate(0.0D, -engineTranslateY, 0.0D);
+                renderPivotedX(ARM_UPPER, LegacyTileRenderPlans.THRESHER_ARM_PIVOT_Y,
+                        LegacyTileRenderPlans.THRESHER_ARM_UPPER_Z, armAngle, 0.0D, poseStack, buffer,
+                        modelLight, packedOverlay);
+                renderPivotedX(ARM_LOWER, LegacyTileRenderPlans.THRESHER_ARM_PIVOT_Y,
+                        LegacyTileRenderPlans.THRESHER_ARM_LOWER_Z, armAngle * -2.0D,
+                        LegacyTileRenderPlans.THRESHER_ARM_LOWER_NUDGE_X, poseStack, buffer, modelLight,
+                        packedOverlay);
+                renderPivotedX(FRONT, LegacyTileRenderPlans.THRESHER_ARM_PIVOT_Y,
+                        LegacyTileRenderPlans.THRESHER_FRONT_Z, armAngle,
+                        LegacyTileRenderPlans.THRESHER_FRONT_NUDGE_X, poseStack, buffer, modelLight,
+                        packedOverlay);
+                renderPivotedX(WHEEL, LegacyTileRenderPlans.THRESHER_ARM_PIVOT_Y,
+                        LegacyTileRenderPlans.THRESHER_WHEEL_Z, -wheelSpin, 0.0D, poseStack, buffer,
+                        modelLight, packedOverlay);
             }
         }
         poseStack.popPose();
     }
 
-    private static void renderPart(LegacyTileRenderPlans.PivotedModelPartPlan part,
-            LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderPivotedX(LegacyWavefrontModel.SelectionHandle handle, double pivotY, double pivotZ,
+            double angleDegrees, double translateX, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
-        if (part.axisX() != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (part.angleDegrees() * part.axisX())));
-        }
-        if (part.axisY() != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (part.angleDegrees() * part.axisY())));
-        }
-        if (part.axisZ() != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (part.angleDegrees() * part.axisZ())));
-        }
-        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        poseStack.translate(translateX, 0.0D, 0.0D);
+        poseStack.translate(0.0D, pivotY, pivotZ);
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        poseStack.translate(0.0D, -pivotY, -pivotZ);
         renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }

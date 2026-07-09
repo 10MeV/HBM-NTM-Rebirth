@@ -40,6 +40,12 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
     }
 
     @Override
+    public boolean shouldRender(SteamEngineBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(SteamEngineBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
@@ -54,8 +60,7 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
         float rotor = blockEntity.getRotor();
         float previousRotor = blockEntity.getLastRotor();
-        LegacyTileRenderPlans.SteamEnginePlan plan =
-                LegacyTileRenderPlans.steamEnginePlan(previousRotor, rotor, partialTick);
+        double rotorDegrees = previousRotor + (rotor - previousRotor) * partialTick;
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
@@ -66,10 +71,28 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
-                renderRotatingPart(MODEL, plan.flywheel(), FLYWHEEL, poseStack, buffer, modelLight, packedOverlay);
-                renderRotatingPart(MODEL, plan.shaft(), SHAFT, poseStack, buffer, modelLight, packedOverlay);
-                renderTransmission(MODEL, plan.transmission(), poseStack, buffer, modelLight, packedOverlay);
-                renderTranslatedPart(MODEL, plan.piston(), PISTON, poseStack, buffer, modelLight, packedOverlay);
+                renderRotatingPart(MODEL, FLYWHEEL,
+                        LegacyTileRenderPlans.STEAM_ENGINE_FLYWHEEL_PIVOT_X,
+                        LegacyTileRenderPlans.STEAM_ENGINE_FLYWHEEL_PIVOT_Y, 0.0D,
+                        0.0F, 0.0F, -1.0F, rotorDegrees, poseStack, buffer, modelLight, packedOverlay);
+                renderRotatingPart(MODEL, SHAFT,
+                        0.0D, LegacyTileRenderPlans.STEAM_ENGINE_SHAFT_PIVOT_Y,
+                        LegacyTileRenderPlans.STEAM_ENGINE_SHAFT_PIVOT_Z,
+                        1.0F, 0.0F, 0.0F, rotorDegrees * 2.0D, poseStack, buffer, modelLight,
+                        packedOverlay);
+
+                double radians = rotorDegrees * LegacyTileRenderPlans.DEG_TO_RAD;
+                double sin = Math.sin(radians) * LegacyTileRenderPlans.STEAM_ENGINE_CRANK_RADIUS
+                        + LegacyTileRenderPlans.STEAM_ENGINE_CRANK_SIN_OFFSET;
+                double cos = Math.cos(radians) * LegacyTileRenderPlans.STEAM_ENGINE_CRANK_RADIUS;
+                double transmissionAngle = Math.acos(cos / LegacyTileRenderPlans.STEAM_ENGINE_ROD_LENGTH)
+                        * LegacyTileRenderPlans.RAD_TO_DEG - 90.0D;
+                renderTransmission(MODEL, sin, cos, transmissionAngle, poseStack, buffer, modelLight, packedOverlay);
+
+                double cath = Math.sqrt(LegacyTileRenderPlans.STEAM_ENGINE_PISTON_CATH_SQUARED
+                        - (cos * cos) / 2.0D);
+                renderTranslatedPart(MODEL, LegacyTileRenderPlans.STEAM_ENGINE_ROD_LENGTH - cath + sin,
+                        0.0D, 0.0D, PISTON, poseStack, buffer, modelLight, packedOverlay);
             }
         }
 
@@ -88,10 +111,18 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
     private static void renderRotatingPart(LegacyWavefrontModel model,
             LegacyTileRenderPlans.RotatingModelPartPlan part, LegacyWavefrontModel.SelectionHandle handle,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderRotatingPart(model, handle, part.pivotX(), part.pivotY(), part.pivotZ(),
+                part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees(), poseStack, buffer, packedLight,
+                packedOverlay);
+    }
+
+    private static void renderRotatingPart(LegacyWavefrontModel model, LegacyWavefrontModel.SelectionHandle handle,
+            double pivotX, double pivotY, double pivotZ, float axisX, float axisY, float axisZ,
+            double angleDegrees, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
-        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
-        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+        poseStack.translate(pivotX, pivotY, pivotZ);
+        rotate(poseStack, axisX, axisY, axisZ, angleDegrees);
+        poseStack.translate(-pivotX, -pivotY, -pivotZ);
         model.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, handle);
         poseStack.popPose();
     }
@@ -99,11 +130,19 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
     private static void renderTransmission(LegacyWavefrontModel model,
             LegacyTileRenderPlans.SteamEngineTransmissionPlan transmission, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderTransmission(model, transmission.translateX(), transmission.translateY(), transmission.angleDegrees(),
+                poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    private static void renderTransmission(LegacyWavefrontModel model, double translateX, double translateY,
+            double angleDegrees, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        poseStack.translate(transmission.translateX(), transmission.translateY(), 0.0D);
-        poseStack.translate(transmission.pivotX(), transmission.pivotY(), 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) -transmission.angleDegrees()));
-        poseStack.translate(-transmission.pivotX(), -transmission.pivotY(), 0.0D);
+        poseStack.translate(translateX, translateY, 0.0D);
+        poseStack.translate(LegacyTileRenderPlans.STEAM_ENGINE_TRANSMISSION_PIVOT_X,
+                LegacyTileRenderPlans.STEAM_ENGINE_TRANSMISSION_PIVOT_Y, 0.0D);
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) -angleDegrees));
+        poseStack.translate(-LegacyTileRenderPlans.STEAM_ENGINE_TRANSMISSION_PIVOT_X,
+                -LegacyTileRenderPlans.STEAM_ENGINE_TRANSMISSION_PIVOT_Y, 0.0D);
         model.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, TRANSMISSION);
         poseStack.popPose();
     }
@@ -114,8 +153,15 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
         if (!part.active()) {
             return;
         }
+        renderTranslatedPart(model, part.translateX(), part.translateY(), part.translateZ(), handle, poseStack,
+                buffer, packedLight, packedOverlay);
+    }
+
+    private static void renderTranslatedPart(LegacyWavefrontModel model, double translateX, double translateY,
+            double translateZ, LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
+        poseStack.translate(translateX, translateY, translateZ);
         model.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, handle);
         poseStack.popPose();
     }

@@ -1,0 +1,653 @@
+{
+  "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmShredder.json",
+  "exported_recipe_count": 190,
+  "failures": [],
+  "legacy_file": "hbmShredder.json",
+  "modern_recipe_type": "shredder",
+  "note": "1.7.10 hbmShredder.json is written before registerPost(); source_order >= 1000 post-generated tag recipes are intentionally omitted from the old file export.",
+  "omitted_default_collection_recipe_count": 3,
+  "omitted_default_collections": [
+    {
+      "reason": "1.7.10 default uses OreDictionary collection expansion; modern aggregate tag is not a single old ItemStack",
+      "recipe_id": "hbm_ntm_rebirth:shredder/logs",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/logs.json"
+    },
+    {
+      "reason": "1.7.10 default uses OreDictionary collection expansion; modern aggregate tag is not a single old ItemStack",
+      "recipe_id": "hbm_ntm_rebirth:shredder/planks",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/planks.json"
+    },
+    {
+      "reason": "1.7.10 default uses OreDictionary collection expansion; modern aggregate tag is not a single old ItemStack",
+      "recipe_id": "hbm_ntm_rebirth:shredder/saplings",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/saplings.json"
+    }
+  ],
+  "omitted_post_generated": [
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/aluminium_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/aluminium_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/asbestos_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/asbestos_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/asbestos_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/asbestos_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/asbestos_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/asbestos_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/au198_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/au198_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/bakelite_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/bakelite_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/bakelite_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/bakelite_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/beryllium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/beryllium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/beryllium_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/beryllium_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/beryllium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/beryllium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/bismuth_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/bismuth_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/bismuth_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/bismuth_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/boron_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/boron_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/cadmium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/cadmium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/cadmium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/cadmium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/calcium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/calcium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/co60_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/co60_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/coal_gem",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/coal_gem.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/coal_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/coal_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/coal_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/coal_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/cobalt_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/cobalt_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/cobalt_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/cobalt_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/cobalt_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/cobalt_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/coltan_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/coltan_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/coltan_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/coltan_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/coltan_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/coltan_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/combine_steel_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/combine_steel_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/combine_steel_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/combine_steel_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/combine_steel_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/combine_steel_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/copper_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/copper_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/copper_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/copper_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/copper_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/copper_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/copper_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/copper_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/diamond_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/diamond_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dura_steel_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dura_steel_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dura_steel_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dura_steel_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dura_steel_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dura_steel_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_boron",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_boron.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_coal",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_coal.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_diamond",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_diamond.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_emerald",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_emerald.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_gold",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_gold.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_lead",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_lead.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_lithium",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_lithium.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_polonium",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_polonium.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_quartz",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_quartz.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/dust_uranium",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/dust_uranium.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/emerald_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/emerald_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/emerald_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/emerald_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/fluorite_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/fluorite_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/fluorite_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/fluorite_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/gold_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/gold_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/gold_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/gold_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/gold_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/gold_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/gold_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/gold_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/iron_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/iron_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/iron_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/iron_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/iron_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/iron_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lapis_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lapis_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lapis_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lapis_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lead_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lead_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lead_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lead_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lead_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lead_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lead_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lead_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lignite_gem",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lignite_gem.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lignite_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lignite_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lithium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lithium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lithium_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lithium_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/lithium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/lithium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/neptunium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/neptunium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/neptunium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/neptunium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/niobium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/niobium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/niter_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/niter_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/niter_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/niter_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/plutonium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/plutonium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/plutonium_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/plutonium_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/plutonium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/plutonium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/polonium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/polonium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/polonium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/polonium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/polymer_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/polymer_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/polymer_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/polymer_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/quartz_gem",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/quartz_gem.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/redstone_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/redstone_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/redstone_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/redstone_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/schrabidium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/schrabidium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/schrabidium_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/schrabidium_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/schrabidium_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/schrabidium_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/schrabidium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/schrabidium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/sr90_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/sr90_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/steel_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/steel_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/steel_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/steel_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/steel_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/steel_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/sulfur_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/sulfur_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/sulfur_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/sulfur_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tantalium_gem",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tantalium_gem.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tantalium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tantalium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tantalium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tantalium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/thorium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/thorium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/thorium_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/thorium_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/thorium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/thorium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_actinium",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_actinium.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_boron",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_boron.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_cerium",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_cerium.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_coal",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_coal.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_cobalt",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_cobalt.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_cs137",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_cs137.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_i131",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_i131.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_lanthanium",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_lanthanium.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_lithium",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_lithium.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_neodymium",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_neodymium.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_niobium",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_niobium.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_sr90",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_sr90.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_steel",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_steel.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tiny_dust_xe135",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tiny_dust_xe135.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/titanium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/titanium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/titanium_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/titanium_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/titanium_plate",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/titanium_plate.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/titanium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/titanium_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tungsten_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tungsten_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tungsten_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tungsten_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/tungsten_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/tungsten_storage_block.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/uranium_ingot",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/uranium_ingot.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/uranium_ore",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/uranium_ore.json"
+    },
+    {
+      "reason": "1.7.10 writes hbmShredder.json before ShredderRecipes.registerPost()",
+      "recipe_id": "hbm_ntm_rebirth:shredder/uranium_storage_block",
+      "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder/uranium_storage_block.json"
+    }
+  ],
+  "omitted_post_generated_recipe_count": 124,
+  "skipped_recipe_count": 0,
+  "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder",
+  "status": "exported",
+  "written_file_count": 1
+}

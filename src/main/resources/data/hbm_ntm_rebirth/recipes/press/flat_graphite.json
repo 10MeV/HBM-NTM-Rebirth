@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:gems/any_coke"
+    },
+    "legacy_ore": "gemAnyCoke"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:ingot_graphite"
+  },
+  "source_order": 5,
+  "stamp": "flat"
+}

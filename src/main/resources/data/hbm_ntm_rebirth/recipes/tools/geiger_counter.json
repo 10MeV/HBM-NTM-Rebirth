@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [
+    "GPP",
+    "WCS",
+    "WBB"
+  ],
+  "key": {
+    "G": {
+      "tag": "forge:ingots/gold"
+    },
+    "P": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "W": {
+      "tag": "forge:wires/gold"
+    },
+    "C": {
+      "tag": "forge:circuits/basic"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    },
+    "B": {
+      "tag": "forge:ingots/beryllium"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:geiger_counter"
+  },
+  "show_notification": true
+}

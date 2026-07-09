@@ -1,10 +1,27 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/fluorite" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/fluorite"
+    },
+    "legacy_ore": "oreFluorite"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:fluorite", "count": 3 },
-    { "item": "hbm_ntm_rebirth:fluorite", "count": 3 },
-    { "item": "hbm_ntm_rebirth:gem_sodalite" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:fluorite"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:fluorite"
+    },
+    {
+      "item": "hbm_ntm_rebirth:gem_sodalite"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 19
 }

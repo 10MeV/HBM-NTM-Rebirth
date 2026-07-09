@@ -25,6 +25,10 @@ public class ExplosionSmallParticle extends TextureSheetParticle implements HbmD
     private final float baseScale;
     private final float hue;
     private final float rollSpeed;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private ExplosionSmallParticle(ClientLevel level, double x, double y, double z, float scale, float speedMult, SpriteSet sprites) {
         super(level, x, y, z);
@@ -41,6 +45,7 @@ public class ExplosionSmallParticle extends TextureSheetParticle implements HbmD
         this.rollSpeed = (visualId % 2 - 0.5F) * 5.0F * Mth.DEG_TO_RAD;
         this.updateVisuals(0.0F);
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     public static ExplosionSmallParticle create(ClientLevel level, double x, double y, double z, float scale, float speedMult) {
@@ -65,6 +70,7 @@ public class ExplosionSmallParticle extends TextureSheetParticle implements HbmD
         this.move(this.xd, this.yd, this.zd);
         this.updateVisuals(progress);
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -76,11 +82,18 @@ public class ExplosionSmallParticle extends TextureSheetParticle implements HbmD
     public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         this.updateVisuals((this.age + partialTick) / (float) this.lifetime);
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(
-                buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite()), camera, partialTick,
+                HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer), camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     private void updateVisuals(float progress) {

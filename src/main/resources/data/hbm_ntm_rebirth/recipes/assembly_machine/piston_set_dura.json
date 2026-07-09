@@ -1,19 +1,45 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.pistonsetdura",
   "duration": 200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:ingots/dura_steel" }, "count": 24, "legacy_ore": "ingotDuraSteel" },
-    { "ingredient": { "tag": "forge:plates/titanium" }, "count": 8, "legacy_ore": "plateTitanium" },
-    { "ingredient": { "tag": "forge:ingots/tungsten" }, "count": 8, "legacy_ore": "ingotTungsten" },
-    { "ingredient": { "tag": "forge:bolts/dura_steel" }, "count": 16, "legacy_ore": "boltDuraSteel" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:piston_set_dura" }
+  "input_items": [
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:ingots/dura_steel"
+      },
+      "legacy_ore": "ingotDuraSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/titanium"
+      },
+      "legacy_ore": "plateTitanium"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/tungsten"
+      },
+      "legacy_ore": "ingotTungsten"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:bolts/dura_steel"
+      },
+      "legacy_ore": "boltDuraSteel"
+    }
   ],
+  "internal_name": "ass.pistonsetdura",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:piston_set_steel"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 129
 }

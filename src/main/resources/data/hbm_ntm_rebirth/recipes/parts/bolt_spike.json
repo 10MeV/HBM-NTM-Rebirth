@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "tag": "forge:bolts/steel"
+    }
+  },
+  "pattern": [
+    "BB",
+    "B ",
+    "B "
+  ],
+  "result": {
+    "count": 2,
+    "item": "hbm_ntm_rebirth:bolt_spike"
+  },
+  "show_notification": true
+}

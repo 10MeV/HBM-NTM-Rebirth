@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "left": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:anvil_lead"
+    },
+    "count": 1
+  },
+  "right": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:ingot_ferrouranium"
+    },
+    "count": 10
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:anvil_ferrouranium"
+  },
+  "tier": 1,
+  "source_order": 12
+}

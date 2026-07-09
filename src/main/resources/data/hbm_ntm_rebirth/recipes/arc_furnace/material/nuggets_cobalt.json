@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.nuggetCobalt",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:nuggets/cobalt" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:nuggets/cobalt" }, "count": 1, "legacy_ore": "nuggetCobalt" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Cobalt", "amount": 8 }
+  ],
+  "pools": [],
+  "source_order": 1391
+}

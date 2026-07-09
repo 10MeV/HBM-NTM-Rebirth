@@ -127,7 +127,7 @@ public final class LegacyGenericRecipeHandlers {
         public String commandSummary() {
             if (supported()) {
                 return legacyFileName + " -> " + requireMachine().name().toLowerCase(Locale.ROOT)
-                        + " folder=" + outputFolder;
+                        + " folder=" + outputFolder + " import/export";
             }
             return legacyFileName + " unsupported: " + unsupportedReason.orElse("");
         }

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [
+    "WGW",
+    "WCW",
+    "WBW"
+  ],
+  "key": {
+    "W": {
+      "tag": "minecraft:planks"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "C": {
+      "tag": "forge:circuits/vacuum_tube"
+    },
+    "B": {
+      "tag": "forge:ingots/beryllium"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:dosimeter"
+  },
+  "show_notification": true
+}

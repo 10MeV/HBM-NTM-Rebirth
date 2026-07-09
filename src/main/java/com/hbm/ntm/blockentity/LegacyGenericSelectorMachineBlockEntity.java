@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -67,7 +68,7 @@ import java.util.List;
 import java.util.Map;
 
 public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
-        HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider {
+        HbmEnergyPortInspectable, HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider {
     private static final String TAG_KIND = "kind";
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_ENERGY = "Energy";
@@ -461,6 +462,13 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
 
     public HbmEnergyStorage getEnergyStorage() {
         return energy;
+    }
+
+    @Override
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        return level == null
+                ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
+                : HbmEnergyUtil.inspectPorts(level, worldPosition, kind.energyPorts);
     }
 
     public HbmFluidTank getInputTank(int index) {

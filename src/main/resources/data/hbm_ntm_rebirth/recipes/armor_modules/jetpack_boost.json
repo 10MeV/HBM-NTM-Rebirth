@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "tag": "forge:cast_plates/copper"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    },
+    "D": {
+      "tag": "forge:ingots/desh"
+    },
+    "J": {
+      "item": "hbm_ntm_rebirth:jetpack_vector"
+    },
+    "P": {
+      "tag": "forge:plates/saturnite"
+    }
+  },
+  "pattern": [
+    "PCP",
+    "DJD",
+    "PAP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:jetpack_boost"
+  },
+  "show_notification": true
+}

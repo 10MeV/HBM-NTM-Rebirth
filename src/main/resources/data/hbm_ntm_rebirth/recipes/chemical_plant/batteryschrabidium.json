@@ -2,16 +2,33 @@
   "type": "hbm_ntm_rebirth:chemical_plant",
   "duration": 100,
   "input_fluids": [
-    { "fluid": "hbm_ntm_rebirth:helium4", "amount": 8000 }
+    {
+      "amount": 8000,
+      "fluid": "hbm_ntm_rebirth:helium4"
+    }
   ],
   "input_items": [
-    { "count": 24, "ingredient": { "tag": "forge:dusts/schrabidium" } },
-    { "count": 8, "ingredient": { "tag": "forge:cast_plates/any_bismoid_bronze" } }
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:dusts/schrabidium"
+      },
+      "legacy_ore": "dustSchrabidium"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:cast_plates/any_bismoid_bronze"
+      },
+      "legacy_ore": "plateCastAnyBismoidBronze"
+    }
   ],
   "internal_name": "chem.batteryschrabidium",
   "output_fluids": [],
   "output_items": [
-    { "item": "hbm_ntm_rebirth:battery_schrabidium" }
+    {
+      "item": "hbm_ntm_rebirth:battery_schrabidium"
+    }
   ],
   "pools": [],
   "power": 25000,

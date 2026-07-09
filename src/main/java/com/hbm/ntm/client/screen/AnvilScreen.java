@@ -70,6 +70,31 @@ public class AnvilScreen extends AbstractContainerScreen<AnvilMenu> {
         maxPageIndex = Math.max(0, (int) Math.ceil((recipes.size() - VISIBLE_RECIPE_COUNT) / 2.0D));
     }
 
+    public void focusRecipe(AnvilConstructionRecipe target) {
+        if (target == null || minecraft == null || minecraft.level == null || !target.isTierValid(menu.tier())) {
+            return;
+        }
+        if (search != null) {
+            search.setValue("");
+        }
+        regenerateRecipes();
+        int index = recipeIndex(target);
+        if (index < 0) {
+            return;
+        }
+        selection = index;
+        pageIndex = Math.max(0, Math.min(maxPageIndex, index / 2));
+    }
+
+    private int recipeIndex(AnvilConstructionRecipe target) {
+        for (int i = 0; i < recipes.size(); i++) {
+            if (recipes.get(i).getId().equals(target.getId())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);

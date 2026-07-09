@@ -1,6 +1,7 @@
 package com.hbm.ntm.radiation;
 
 import com.google.gson.Gson;
+import com.hbm.items.armor.ItemModCladding;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.api.item.GasMask;
@@ -9,6 +10,7 @@ import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmTuple.Pair;
 import com.hbm.ntm.util.HbmShadyUtil;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -23,6 +25,7 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -38,13 +41,15 @@ public final class HazmatRegistry {
     @Deprecated public static double chest = CHEST;
     @Deprecated public static double legs = LEGS;
     @Deprecated public static double boots = BOOTS;
-    @Deprecated public static final List<Pair<Item, Double>> external = new ExternalResistanceList();
+    @Deprecated public static List<Pair<Item, Double>> external = new ExternalResistanceList();
     @Deprecated public static final Gson gson = new Gson();
 
     private static final Map<Item, Double> RESISTANCE = new IdentityHashMap<>();
     private static final Map<Item, EnumSet<HazardClass>> PROTECTION = new IdentityHashMap<>();
     private static final Map<Item, Double> EXTERNAL_RESISTANCE_DEFAULTS = new IdentityHashMap<>();
     private static final Map<Item, EnumSet<HazardClass>> EXTERNAL_PROTECTION_DEFAULTS = new IdentityHashMap<>();
+    private static final Set<Item> EXTERNAL_RESISTANCE_LIST_ITEMS =
+            Collections.newSetFromMap(new IdentityHashMap<>());
     private static final int MAX_ARMOR_MOD_PROTECTION_DEPTH = 8;
 
     public static void initDefault() {
@@ -203,8 +208,20 @@ public final class HazmatRegistry {
     }
 
     public static Double removeExternalHazmat(Item item) {
+        return removeExternalHazmat(item, true);
+    }
+
+    private static Double removeExternalHazmat(Item item, boolean removeListEntries) {
         if (item == null || item == Items.AIR) {
             return null;
+        }
+        if (removeListEntries && external instanceof ExternalResistanceList list) {
+            list.removeEntriesForItem(item);
+        } else if (removeListEntries) {
+            removeResistanceEntriesForItem(external, item);
+        }
+        if (removeListEntries) {
+            EXTERNAL_RESISTANCE_LIST_ITEMS.remove(item);
         }
         Double previous = EXTERNAL_RESISTANCE_DEFAULTS.remove(item);
         if (previous != null && resistanceMatches(item, previous)) {
@@ -224,9 +241,19 @@ public final class HazmatRegistry {
     }
 
     public static void clearExternalHazmats() {
+        if (external instanceof ExternalResistanceList list) {
+            list.clearEntriesOnly();
+        } else if (external != null) {
+            try {
+                external.clear();
+            } catch (UnsupportedOperationException ignored) {
+                // Source-compatible replacement lists may be immutable; replay will still read their contents.
+            }
+        }
+        EXTERNAL_RESISTANCE_LIST_ITEMS.clear();
         List<Item> items = new ArrayList<>(EXTERNAL_RESISTANCE_DEFAULTS.keySet());
         for (Item item : items) {
-            removeExternalHazmat(item);
+            removeExternalHazmat(item, false);
         }
     }
 
@@ -257,8 +284,15 @@ public final class HazmatRegistry {
     }
 
     public static EnumSet<HazardClass> removeExternalProtection(Item item) {
+        return removeExternalProtection(item, true);
+    }
+
+    static EnumSet<HazardClass> removeExternalProtection(Item item, boolean removeListEntries) {
         if (item == null || item == Items.AIR) {
             return null;
+        }
+        if (removeListEntries) {
+            ArmorUtil.removeExternalProtectionEntries(item);
         }
         EnumSet<HazardClass> previous = EXTERNAL_PROTECTION_DEFAULTS.remove(item);
         if (previous != null && protectionMatches(item, previous)) {
@@ -278,9 +312,10 @@ public final class HazmatRegistry {
     }
 
     public static void clearExternalProtections() {
+        ArmorUtil.clearExternalProtectionEntriesOnly();
         List<Item> items = new ArrayList<>(EXTERNAL_PROTECTION_DEFAULTS.keySet());
         for (Item item : items) {
-            removeExternalProtection(item);
+            removeExternalProtection(item, false);
         }
     }
 
@@ -434,21 +469,31 @@ public final class HazmatRegistry {
         }
         double cladding = 0.0D;
         if (stack.hasTag()) {
-            cladding = stack.getTag().getFloat("hfr_cladding");
+            cladding = getPositiveFiniteFloat(stack, "hfr_cladding");
             if (cladding == 0.0D) {
-                cladding = stack.getTag().getFloat("ntm_cladding");
+                cladding = getPositiveFiniteFloat(stack, "ntm_cladding");
             }
             if (cladding == 0.0D) {
-                cladding = stack.getTag().getFloat("cladding");
+                cladding = getPositiveFiniteFloat(stack, "cladding");
             }
         }
         if (cladding == 0.0D && ArmorModHandler.hasMods(stack)) {
             ItemStack claddingMod = ArmorModHandler.pryMod(stack, ArmorModHandler.cladding);
             if (claddingMod.getItem() instanceof ArmorModItems.Cladding claddingItem) {
                 cladding = claddingItem.radiationResistance();
+            } else if (claddingMod.getItem() instanceof ItemModCladding claddingItem) {
+                cladding = claddingItem.rad;
             }
         }
         return cladding;
+    }
+
+    private static float getPositiveFiniteFloat(ItemStack stack, String key) {
+        if (!stack.getTag().contains(key, Tag.TAG_ANY_NUMERIC)) {
+            return 0.0F;
+        }
+        float value = stack.getTag().getFloat(key);
+        return Float.isFinite(value) && value > 0.0F ? value : 0.0F;
     }
 
     public static float getResistance(LivingEntity entity) {
@@ -762,15 +807,54 @@ public final class HazmatRegistry {
     }
 
     private static void replayExternalResistances() {
+        syncExternalResistanceDefaultsFromList();
         for (Map.Entry<Item, Double> entry : EXTERNAL_RESISTANCE_DEFAULTS.entrySet()) {
             registerHazmat(entry.getKey(), entry.getValue());
         }
     }
 
     private static void replayExternalProtections() {
+        syncExternalProtectionDefaultsFromList();
         for (Map.Entry<Item, EnumSet<HazardClass>> entry : EXTERNAL_PROTECTION_DEFAULTS.entrySet()) {
             registerProtection(entry.getKey(), entry.getValue().toArray(HazardClass[]::new));
         }
+    }
+
+    private static void syncExternalResistanceDefaultsFromList() {
+        syncExternalResistanceEntries(external);
+    }
+
+    private static void syncExternalResistanceEntries(List<? extends Pair<Item, Double>> entries) {
+        List<Item> previousItems = new ArrayList<>(EXTERNAL_RESISTANCE_LIST_ITEMS);
+        EXTERNAL_RESISTANCE_LIST_ITEMS.clear();
+        for (Item item : previousItems) {
+            removeExternalHazmat(item, false);
+        }
+        if (entries == null) {
+            return;
+        }
+        for (Pair<Item, Double> entry : entries) {
+            if (entry != null && entry.getKey() != null && entry.getValue() != null
+                    && entry.getKey() != Items.AIR) {
+                registerExternalHazmat(entry.getKey(), entry.getValue());
+                EXTERNAL_RESISTANCE_LIST_ITEMS.add(entry.getKey());
+            }
+        }
+    }
+
+    private static void removeResistanceEntriesForItem(List<? extends Pair<Item, Double>> entries, Item item) {
+        if (entries == null) {
+            return;
+        }
+        try {
+            entries.removeIf(entry -> entry != null && entry.getKey() == item);
+        } catch (UnsupportedOperationException ignored) {
+            // Source-compatible replacement lists may be immutable; replay will still read their contents.
+        }
+    }
+
+    private static void syncExternalProtectionDefaultsFromList() {
+        ArmorUtil.syncExternalProtectionEntries();
     }
 
     private static final class ExternalResistanceList extends AbstractList<Pair<Item, Double>> {
@@ -778,8 +862,7 @@ public final class HazmatRegistry {
 
         @Override
         public Pair<Item, Double> get(int index) {
-            Pair<Item, Double> entry = entries.get(index);
-            return new Pair<>(entry.getKey(), entry.getValue());
+            return entries.get(index);
         }
 
         @Override
@@ -790,9 +873,8 @@ public final class HazmatRegistry {
         @Override
         public void add(int index, Pair<Item, Double> element) {
             if (element != null && element.getKey() != null && element.getValue() != null) {
-                Pair<Item, Double> copy = new Pair<>(element.getKey(), element.getValue());
-                entries.add(index, copy);
-                syncItem(copy.getKey());
+                entries.add(index, element);
+                syncEntries();
             }
         }
 
@@ -800,32 +882,24 @@ public final class HazmatRegistry {
         public Pair<Item, Double> set(int index, Pair<Item, Double> element) {
             Pair<Item, Double> previous = entries.get(index);
             if (element == null || element.getKey() == null || element.getValue() == null) {
-                return new Pair<>(previous.getKey(), previous.getValue());
+                return previous;
             }
-            Pair<Item, Double> copy = new Pair<>(element.getKey(), element.getValue());
-            entries.set(index, copy);
-            syncItem(previous.getKey());
-            syncItem(copy.getKey());
-            return new Pair<>(previous.getKey(), previous.getValue());
+            entries.set(index, element);
+            syncEntries();
+            return previous;
         }
 
         @Override
         public Pair<Item, Double> remove(int index) {
             Pair<Item, Double> previous = entries.remove(index);
-            syncItem(previous.getKey());
-            return new Pair<>(previous.getKey(), previous.getValue());
+            syncEntries();
+            return previous;
         }
 
         @Override
         public void clear() {
-            List<Item> affected = entries.stream()
-                    .map(Pair::getKey)
-                    .distinct()
-                    .toList();
             entries.clear();
-            for (Item item : affected) {
-                syncItem(item);
-            }
+            syncEntries();
         }
 
         @Override
@@ -869,13 +943,18 @@ public final class HazmatRegistry {
             return true;
         }
 
-        private void syncItem(Item item) {
-            removeExternalHazmat(item);
-            for (Pair<Item, Double> entry : entries) {
-                if (entry.getKey() == item) {
-                    registerExternalHazmat(entry.getKey(), entry.getValue());
-                }
-            }
+        private void syncEntries() {
+            syncExternalResistanceEntries(entries);
+        }
+
+        private void removeEntriesForItem(Item item) {
+            entries.removeIf(entry -> entry != null && entry.getKey() == item);
+            EXTERNAL_RESISTANCE_LIST_ITEMS.remove(item);
+        }
+
+        private void clearEntriesOnly() {
+            entries.clear();
+            EXTERNAL_RESISTANCE_LIST_ITEMS.clear();
         }
 
         private boolean matches(Pair<Item, Double> entry, Pair<?, ?> candidate) {

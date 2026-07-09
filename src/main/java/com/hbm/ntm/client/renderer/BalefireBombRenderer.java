@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.BalefireBombBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.BalefireBombBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjGlintRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
@@ -17,14 +18,27 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlockEntity> {
     public BalefireBombRenderer(BlockEntityRendererProvider.Context context) {
     }
 
     @Override
+    public boolean shouldRender(BalefireBombBlockEntity blockEntity, Vec3 cameraPos) {
+        return (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer() || blockEntity.isLoadedSynced())
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(BalefireBombBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        boolean renderStaticBody = LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
+        boolean renderLoadedEffects = blockEntity.isLoadedSynced();
+        if (!renderStaticBody && !renderLoadedEffects) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
@@ -38,16 +52,18 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(state)));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            renderModel(poseStack, buffer, modelLight, packedOverlay);
+            if (renderStaticBody) {
+                renderModel(poseStack, buffer, modelLight, packedOverlay);
+            }
 
-            if (blockEntity.isLoadedSynced()) {
+            if (renderLoadedEffects) {
                 float age = glintAge(blockEntity.getLevel(), partialTick);
                 LegacyObjGlintRenderer.renderClassicGlint(ObjBombModels.FSTBMB,
                         LegacyObjGlintRenderer.BALEFIRE_GLINT_TEXTURE, poseStack, buffer, modelLight, packedOverlay,
                         ObjBombModels.FSTBMB_BALEFIRE, age, 0.0F, 0.8F, 0.15F, 5.0F, 2.0F);
             }
         }
-        if (blockEntity.isLoadedSynced()) {
+        if (renderLoadedEffects) {
             renderTimer(blockEntity, poseStack, buffer);
         }
 

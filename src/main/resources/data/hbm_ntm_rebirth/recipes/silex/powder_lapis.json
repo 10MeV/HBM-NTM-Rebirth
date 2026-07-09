@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": { "ingredient": { "item": "hbm_ntm_rebirth:powder_lapis" }, "count": 1 }
+  },
+  "fluid_produced": 100,
+  "fluid_consumed": 100,
+  "laser_strength": "ir",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:sulfur", "weight": 4 },
+    { "item": "hbm_ntm_rebirth:powder_aluminium", "weight": 3 },
+    { "item": "hbm_ntm_rebirth:powder_cobalt", "weight": 3 }
+  ],
+  "source_order": 14
+}

@@ -14,6 +14,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -21,7 +22,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 public class ZirnoxDestroyedBlockEntity extends BlockEntity {
     private static final double RADIATION_RANGE = 100.0D;
@@ -121,28 +121,39 @@ public class ZirnoxDestroyedBlockEntity extends BlockEntity {
     }
 
     private void radiate(Level level, BlockPos pos) {
-        Vec3 center = Vec3.atCenterOf(pos);
-        AABB area = new AABB(center, center).inflate(RADIATION_RANGE);
+        double centerX = pos.getX() + 0.5D;
+        double centerY = pos.getY() + 0.5D;
+        double centerZ = pos.getZ() + 0.5D;
+        AABB area = new AABB(centerX, centerY, centerZ, centerX, centerY, centerZ).inflate(RADIATION_RANGE);
         float baseRads = onFire ? BURNING_RADIATION : COOLED_RADIATION;
+        BlockPos.MutableBlockPos sample = new BlockPos.MutableBlockPos();
 
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area)) {
-            Vec3 delta = entity.getEyePosition().subtract(center);
-            double length = delta.length();
+            double deltaX = entity.getX() - centerX;
+            double deltaY = entity.getEyeY() - centerY;
+            double deltaZ = entity.getZ() - centerZ;
+            double lengthSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+            double length = Math.sqrt(lengthSqr);
             if (length <= 0.0D) {
                 continue;
             }
 
-            Vec3 normal = delta.normalize();
+            double normalX = deltaX / length;
+            double normalY = deltaY / length;
+            double normalZ = deltaZ / length;
             float resistance = 0.0F;
             for (int i = 1; i < length; i++) {
-                BlockPos sample = BlockPos.containing(center.add(normal.scale(i)));
+                sample.set(
+                        Mth.floor(centerX + normalX * i),
+                        Mth.floor(centerY + normalY * i),
+                        Mth.floor(centerZ + normalZ * i));
                 resistance += HbmBlockStateUtil.explosionResistance(level.getBlockState(sample), level, sample);
             }
             if (resistance < 1.0F) {
                 resistance = 1.0F;
             }
 
-            float exposure = baseRads / resistance / (float) (length * length);
+            float exposure = baseRads / resistance / (float) lengthSqr;
             RadiationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, exposure);
             if (onFire && length < FIRE_DAMAGE_RANGE) {
                 EntityDamageUtil.attackEntityFromNt(entity, level.damageSources().inFire(), 2.0F);

@@ -1,0 +1,40 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 20,
+  "input_fluids": [
+    {
+      "amount": 50,
+      "fluid": "hbm_ntm_rebirth:xylene"
+    },
+    {
+      "amount": 50,
+      "fluid": "hbm_ntm_rebirth:phosgene"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:glass"
+      },
+      "legacy_ore": "blockGlass"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:bolts/steel"
+      },
+      "legacy_ore": "boltSteel"
+    }
+  ],
+  "internal_name": "chem.laminate",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:reinforced_laminate"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 65
+}

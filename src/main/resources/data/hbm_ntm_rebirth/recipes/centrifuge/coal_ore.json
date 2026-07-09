@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/coal" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/coal"
+    },
+    "legacy_ore": "oreCoal"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_coal", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_coal", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_coal", "count": 2 },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_coal"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_coal"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_coal"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 1
 }

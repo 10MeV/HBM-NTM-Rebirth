@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.ParticleAcceleratorBlock;
 import com.hbm.ntm.blockentity.PABeamlineBlockEntity;
 import com.hbm.ntm.blockentity.PABlockEntity;
@@ -17,6 +18,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockEntity> {
     public ParticleAcceleratorRenderer(BlockEntityRendererProvider.Context context) {
@@ -33,12 +35,22 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
     }
 
     @Override
+    public boolean shouldRender(PABlockEntity blockEntity, Vec3 cameraPos) {
+        return hasBerVisuals(blockEntity)
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(PABlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ParticleAcceleratorBlock.Variant variant = blockEntity.getVariant();
+        if (!hasBerVisuals(blockEntity)) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        ParticleAcceleratorBlock.Variant variant = blockEntity.getVariant();
         BlockState state = blockEntity.getBlockState();
         poseStack.pushPose();
         poseStack.translate(0.5D, yOffset(variant), 0.5D);
@@ -51,7 +63,8 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             if (blockEntity instanceof PABeamlineBlockEntity beamline) {
-                renderBeamline(beamline, partialTick, texture, poseStack, buffer, modelLight, packedOverlay);
+                renderBeamline(beamline, partialTick, texture, poseStack, buffer, modelLight, packedOverlay,
+                        LegacyMachineRenderShapes.renderChunkBakedStaticsInBer());
             } else {
                 model.renderAll(texture, poseStack, buffer, modelLight, packedOverlay,
                         LegacyTexturedRenderMode.CUTOUT_CULL);
@@ -61,20 +74,21 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
     }
 
     private static void renderBeamline(PABeamlineBlockEntity beamline, float partialTick, ResourceLocation texture,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            boolean renderStaticBody) {
+        if (renderStaticBody) {
+            ObjParticleAcceleratorModels.renderBeamlinePart(beamline.hasWindow() ? "BeamlineWindow" : "Beamline",
+                    texture, poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+        }
         if (!beamline.hasWindow()) {
-            ObjParticleAcceleratorModels.renderBeamlinePart("Beamline", texture, poseStack, buffer, packedLight,
-                    packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
             return;
         }
-        ObjParticleAcceleratorModels.renderBeamlinePart("BeamlineWindow", texture, poseStack, buffer, packedLight,
-                packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         float flash = Math.max(0.0F, beamline.getFlash(partialTick));
         if (flash > 0.0F) {
             int color = Math.min(255, (int) (230.0F * flash));
-            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                    queuedPose -> ObjParticleAcceleratorModels.renderBeamlinePartUntextured("BeamlineGlass",
-                            queuedPose, buffer, color, color, 255, 180,
+            LegacyMachineEffectPresenter.enqueueUntexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                    poseStack, buffer, group -> group.add(ObjParticleAcceleratorModels.BEAMLINE,
+                            ObjParticleAcceleratorModels.beamlineGlassHandle(), color, color, 255, 180,
                             LegacyTexturedRenderMode.ADDITIVE_CULL_NO_DEPTH_WRITE));
         }
     }
@@ -120,5 +134,14 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
             case DIPOLE -> ObjParticleAcceleratorModels.DIPOLE_TEXTURE;
             case DETECTOR -> ObjParticleAcceleratorModels.DETECTOR_TEXTURE;
         };
+    }
+
+    private static boolean hasBerVisuals(PABlockEntity blockEntity) {
+        if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return true;
+        }
+        return blockEntity instanceof PABeamlineBlockEntity beamline
+                && beamline.hasWindow()
+                && Math.max(beamline.getFlash(0.0F), beamline.getFlash(1.0F)) > 0.0F;
     }
 }

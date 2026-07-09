@@ -28,15 +28,22 @@ public class PyroOvenRecipe implements Recipe<Container> {
     private final Optional<HbmItemOutput> outputItem;
     private final Optional<HbmFluidStack> outputFluid;
     private final int duration;
+    private final int sourceOrder;
 
     public PyroOvenRecipe(ResourceLocation id, Optional<HbmIngredient> inputItem, Optional<HbmFluidStack> inputFluid,
             Optional<HbmItemOutput> outputItem, Optional<HbmFluidStack> outputFluid, int duration) {
+        this(id, inputItem, inputFluid, outputItem, outputFluid, duration, Integer.MAX_VALUE);
+    }
+
+    public PyroOvenRecipe(ResourceLocation id, Optional<HbmIngredient> inputItem, Optional<HbmFluidStack> inputFluid,
+            Optional<HbmItemOutput> outputItem, Optional<HbmFluidStack> outputFluid, int duration, int sourceOrder) {
         this.id = id;
         this.inputItem = inputItem == null ? Optional.empty() : inputItem;
         this.inputFluid = inputFluid == null ? Optional.empty() : inputFluid;
         this.outputItem = outputItem == null ? Optional.empty() : outputItem;
         this.outputFluid = outputFluid == null ? Optional.empty() : outputFluid;
         this.duration = Math.max(1, duration);
+        this.sourceOrder = sourceOrder;
     }
 
     public Optional<HbmIngredient> inputItem() {
@@ -57,6 +64,10 @@ public class PyroOvenRecipe implements Recipe<Container> {
 
     public int duration() {
         return duration;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
     }
 
     @Override
@@ -139,7 +150,8 @@ public class PyroOvenRecipe implements Recipe<Container> {
                     ? Optional.of(readFluidStack(GsonHelper.getAsJsonObject(json, "output_fluid")))
                     : Optional.empty();
             int duration = GsonHelper.getAsInt(json, "duration");
-            return new PyroOvenRecipe(id, inputItem, inputFluid, outputItem, outputFluid, duration);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
+            return new PyroOvenRecipe(id, inputItem, inputFluid, outputItem, outputFluid, duration, sourceOrder);
         }
 
         @Nullable
@@ -157,7 +169,9 @@ public class PyroOvenRecipe implements Recipe<Container> {
             Optional<HbmFluidStack> outputFluid = buffer.readBoolean()
                     ? Optional.of(readFluidStack(buffer))
                     : Optional.empty();
-            return new PyroOvenRecipe(id, inputItem, inputFluid, outputItem, outputFluid, buffer.readVarInt());
+            int duration = buffer.readVarInt();
+            int sourceOrder = buffer.readVarInt();
+            return new PyroOvenRecipe(id, inputItem, inputFluid, outputItem, outputFluid, duration, sourceOrder);
         }
 
         @Override
@@ -171,6 +185,7 @@ public class PyroOvenRecipe implements Recipe<Container> {
             buffer.writeBoolean(recipe.outputFluid.isPresent());
             recipe.outputFluid.ifPresent(fluid -> writeFluidStack(buffer, fluid));
             buffer.writeVarInt(recipe.duration);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
 
         private static HbmFluidStack readFluidStack(JsonObject object) {

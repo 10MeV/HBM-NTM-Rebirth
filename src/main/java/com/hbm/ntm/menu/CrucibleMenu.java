@@ -1,9 +1,9 @@
 package com.hbm.ntm.menu;
 
-import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.ntm.blockentity.CrucibleBlockEntity;
 import com.hbm.ntm.recipe.CrucibleRecipeRuntime;
+import com.hbm.ntm.recipe.CrucibleSmeltingRecipeRuntime;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -129,7 +129,7 @@ public class CrucibleMenu extends AbstractContainerMenu {
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END);
         }
         ItemStack stack = slots.get(index).getItem();
-        if (!Mats.getSmeltingMaterialsFromItem(stack).isEmpty()) {
+        if (!CrucibleSmeltingRecipeRuntime.getSmeltingMaterialsFromItem(blockEntity.getLevel(), stack).isEmpty()) {
             return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END, 0, MACHINE_SLOT_COUNT);
         }

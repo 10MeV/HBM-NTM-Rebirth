@@ -70,7 +70,7 @@ public class BreedingReactorMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (BreedingReactorRecipeRuntime.isInput(stack)) {
+        } else if (BreedingReactorRecipeRuntime.isInput(blockEntity.getLevel(), stack)) {
             if (!moveItemStackTo(stack, 0, 1, false)) {
                 return ItemStack.EMPTY;
             }

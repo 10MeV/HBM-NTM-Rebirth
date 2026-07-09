@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.missile.incendiarystrong",
+  "duration": 200,
+  "power": 10000,
+  "input_items": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:warhead_incendiary_medium" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:fuel_tank_medium" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:thruster_medium" }, "count": 1 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:missile_incendiary_strong" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 31
+}

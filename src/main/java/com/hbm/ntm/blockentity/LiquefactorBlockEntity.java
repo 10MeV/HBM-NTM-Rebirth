@@ -45,6 +45,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -395,7 +396,12 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
             return null;
         }
         SimpleContainer container = new SimpleContainer(stack);
-        return level.getRecipeManager().getRecipeFor(ModRecipes.LIQUEFACTION.type().get(), container, level).orElse(null);
+        return level.getRecipeManager().getAllRecipesFor(ModRecipes.LIQUEFACTION.type().get()).stream()
+                .filter(recipe -> recipe.matches(container, level))
+                .min(Comparator.comparingInt((LiquefactionRecipe recipe) -> recipe.matchPriority(stack))
+                        .thenComparingInt(LiquefactionRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
+                .orElse(null);
     }
 
     @Nullable

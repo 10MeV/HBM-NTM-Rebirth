@@ -4,13 +4,16 @@
   "duration": 400,
   "power": 1000,
   "input_items": [
-    { "ingredient": { "item": "minecraft:quartz_block" }, "count": 1 }
+    { "ingredient": { "item": "minecraft:quartz_block" }, "count": 1, "legacy_ore": "blockQuartz" }
   ],
   "input_fluids": [],
   "output_items": [
     { "item": "hbm_ntm_rebirth:nugget_silicon", "count": 12 }
   ],
   "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Silicon", "amount": 96 }
+  ],
   "pools": [],
   "source_order": 4
 }

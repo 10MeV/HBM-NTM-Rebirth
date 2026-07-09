@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import api.hbm.block.ICrucibleAcceptor;
 import com.hbm.inventory.material.MaterialShapes;
 import com.hbm.inventory.material.Mats.MaterialStack;
+import com.hbm.ntm.block.FoundryChannelBlock;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.uninos.networkproviders.FoundryNode;
@@ -50,6 +51,9 @@ public class FoundryChannelBlockEntity extends FoundryBaseBlockEntity {
         super.onLoad();
         if (level != null && !level.isClientSide) {
             ensureNode(level);
+            if (getBlockState().getBlock() instanceof FoundryChannelBlock channelBlock) {
+                channelBlock.refreshConnectionState(level, worldPosition, getBlockState());
+            }
         }
     }
 

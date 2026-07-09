@@ -8,9 +8,11 @@
     "input":  {
                   "ingredient":  {
                                      "tag":  "forge:dusts/emerald"
-                                 }
+                                 },
+                  "legacy_ore":  "dustEmerald"
               },
     "output":  {
                    "item":  "minecraft:emerald"
-               }
+               },
+    "source_order":  46
 }

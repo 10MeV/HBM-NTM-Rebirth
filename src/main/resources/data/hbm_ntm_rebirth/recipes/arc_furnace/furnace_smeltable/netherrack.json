@@ -1,0 +1,29 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.furnace.netherrack",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "ingredient":  {
+                                               "item":  "minecraft:netherrack"
+                                           },
+                            "count":  1
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+                         {
+                             "item":  "minecraft:nether_brick"
+                         }
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "pools":  [
+
+              ],
+    "source_order":  2307
+}

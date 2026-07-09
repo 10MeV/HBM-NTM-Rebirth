@@ -17,7 +17,7 @@ public class ItemPressStamp extends Item {
 
     @Override
     public boolean isDamageable(ItemStack stack) {
-        return true;
+        return stack.getMaxDamage() > 0;
     }
 
     public enum StampType {

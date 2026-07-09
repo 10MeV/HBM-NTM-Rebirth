@@ -90,7 +90,7 @@ public final class GeneralConfig {
             enableVirus = com.hbm.ntm.config.HbmCommonConfig.crystalVirusSpreadingEnabled();
             enableCrosshairs = com.hbm.ntm.config.HbmClientConfig.customCrosshairsEnabled();
             enableMOTD = com.hbm.ntm.config.HbmCommonConfig.motdEnabled();
-        } catch (IllegalStateException ignored) {
+        } catch (IllegalStateException | NullPointerException ignored) {
             // Keep legacy defaults until Forge finishes loading the modern config.
         }
     }

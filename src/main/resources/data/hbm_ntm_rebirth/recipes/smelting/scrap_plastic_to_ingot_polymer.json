@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.1,
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:scrap_plastic"
+  },
+  "result": "hbm_ntm_rebirth:ingot_polymer"
+}

@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:reformate",
                   "amount":  1500
-              }
+              },
+    "source_order":  45
 }

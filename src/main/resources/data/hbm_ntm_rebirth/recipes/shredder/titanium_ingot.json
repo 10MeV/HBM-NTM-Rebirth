@@ -1,4 +1,4 @@
-﻿{
+{
     "type":  "hbm_ntm_rebirth:shredder",
     "input":  {
                   "ingredient":  {
@@ -7,5 +7,6 @@
               },
     "output":  {
                    "item":  "hbm_ntm_rebirth:powder_titanium"
-               }
+               },
+  "source_order": 1000
 }

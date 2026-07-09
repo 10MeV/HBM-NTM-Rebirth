@@ -205,6 +205,30 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         return List.copyOf(components);
     }
 
+    public int legacyHudDurabilityLoss(ItemStack stack, SednaGunConfig.GunModeConfig mode) {
+        return mode.durability() <= 0.0F
+                ? 50
+                : (int) (50.0F * wear(stack, mode.configIndex()) / mode.durability());
+    }
+
+    public boolean fillLegacyHudAmmo(ItemStack stack, Player player, SednaGunConfig.GunModeConfig mode,
+            int receiverIndex, LegacyHudAmmoScratch scratch) {
+        if (scratch == null) {
+            return false;
+        }
+        scratch.clear();
+        SednaMagazineConfig magazine = legacyHudMagazine(stack, mode, receiverIndex);
+        if (magazine == null) {
+            return false;
+        }
+        BulletConfig bulletConfig = hudBulletConfigOrNull(stack, player, magazine);
+        int amount = magazine.kind() == SednaMagazineConfig.Kind.BELT
+                ? (bulletConfig == null ? 0 : beltAmmoCount(player, bulletConfig))
+                : magazine.kind() == SednaMagazineConfig.Kind.INFINITE ? 9999 : magazineCount(stack, magazine);
+        scratch.set(hudIconStack(magazine, bulletConfig), hudAmmoText(magazine, amount));
+        return true;
+    }
+
     @Override
     public boolean canHandleKeybind(ServerPlayer player, ItemStack stack, HbmKeybind keybind) {
         return WeaponConfig.gunsEnabled()
@@ -2241,17 +2265,25 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
     }
 
     protected Optional<RuntimeAmmo> findBeltAmmo(Player player, SednaMagazineConfig magazine) {
+        return Optional.ofNullable(findBeltAmmoOrNull(player, magazine));
+    }
+
+    private RuntimeAmmo findBeltAmmoOrNull(Player player, SednaMagazineConfig magazine) {
         List<BulletConfig> accepted = acceptedRuntimeConfigs(magazine);
         if (accepted.isEmpty()) {
-            return Optional.empty();
+            return null;
         }
         if (player.getAbilities().instabuild) {
-            return Optional.of(RuntimeAmmo.creative(accepted.get(0)));
+            return RuntimeAmmo.creative(accepted.get(0));
         }
-        return findAmmoSource(player, accepted, magazine);
+        return findAmmoSourceOrNull(player, accepted, magazine);
     }
 
     private ItemStack hudIconStack(ItemStack stack, Player player, SednaMagazineConfig magazine) {
+        return hudIconStack(magazine, hudBulletConfigOrNull(stack, player, magazine));
+    }
+
+    private ItemStack hudIconStack(SednaMagazineConfig magazine, BulletConfig bulletConfig) {
         if (magazine.kind() == SednaMagazineConfig.Kind.FLUID
                 || magazine.kind() == SednaMagazineConfig.Kind.LIQUID_ENGINE) {
             return new ItemStack(ModItems.FLUID_ICON.get());
@@ -2259,11 +2291,10 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         if (magazine.kind() == SednaMagazineConfig.Kind.ELECTRIC_ENGINE) {
             return new ItemStack(ModItems.BATTERY_CREATIVE.get());
         }
-        Optional<BulletConfig> config = hudBulletConfig(stack, player, magazine);
-        if (config.isEmpty()) {
+        if (bulletConfig == null) {
             return ItemStack.EMPTY;
         }
-        Item item = ForgeRegistries.ITEMS.getValue(config.get().ammo().itemId());
+        Item item = ForgeRegistries.ITEMS.getValue(bulletConfig.ammo().itemId());
         return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
 
@@ -2271,6 +2302,10 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         int amount = magazine.kind() == SednaMagazineConfig.Kind.BELT
                 ? hudBulletConfig(stack, player, magazine).map(config -> beltAmmoCount(player, config)).orElse(0)
                 : magazine.kind() == SednaMagazineConfig.Kind.INFINITE ? 9999 : magazineCount(stack, magazine);
+        return hudAmmoText(magazine, amount);
+    }
+
+    private String hudAmmoText(SednaMagazineConfig magazine, int amount) {
         return switch (magazine.hudStyle()) {
             case ROUNDS_WITH_CAPACITY -> amount + " / " + magazine.capacity();
             case BELT_COUNT -> "x" + amount;
@@ -2281,21 +2316,44 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
         };
     }
 
+    private SednaMagazineConfig legacyHudMagazine(ItemStack stack, SednaGunConfig.GunModeConfig mode,
+            int receiverIndex) {
+        for (SednaReceiverConfig receiver : mode.receivers()) {
+            if (receiver.receiverIndex() != receiverIndex) {
+                continue;
+            }
+            SednaMagazineConfig magazine = receiver.magazineOrNull();
+            if (magazine == null) {
+                return null;
+            }
+            return stack.isEmpty()
+                    ? magazine
+                    : SednaWeaponModEvaluator.effectiveMagazine(stack, gunConfig.legacyName(),
+                            mode.configIndex(), magazine);
+        }
+        return null;
+    }
+
     private Optional<BulletConfig> hudBulletConfig(ItemStack stack, Player player, SednaMagazineConfig magazine) {
+        return Optional.ofNullable(hudBulletConfigOrNull(stack, player, magazine));
+    }
+
+    private BulletConfig hudBulletConfigOrNull(ItemStack stack, Player player, SednaMagazineConfig magazine) {
         if (magazine.kind() == SednaMagazineConfig.Kind.BELT) {
-            return findBeltAmmo(player, magazine).map(RuntimeAmmo::config);
+            RuntimeAmmo ammo = findBeltAmmoOrNull(player, magazine);
+            return ammo == null ? null : ammo.config();
         }
         if (magazine.kind() == SednaMagazineConfig.Kind.INFINITE) {
             List<BulletConfig> accepted = acceptedRuntimeConfigs(magazine);
-            return accepted.isEmpty() ? Optional.empty() : Optional.of(accepted.get(0));
+            return accepted.isEmpty() ? null : accepted.get(0);
         }
         CompoundTag tag = stack.getTag();
         String legacyName = tag == null ? "" : tag.getString(magazine.nbtTypeKey());
         Optional<BulletConfig> stored = LegacySednaRuntimeBulletConfigs.byName(legacyName);
         if (stored.isPresent() && acceptedRuntimeConfigs(magazine).contains(stored.get())) {
-            return stored;
+            return stored.get();
         }
-        return Optional.empty();
+        return null;
     }
 
     private static boolean isDurabilityHudComponent(String componentName) {
@@ -2638,51 +2696,65 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
 
     private Optional<RuntimeAmmo> findAmmoSource(Player player, List<BulletConfig> accepted,
             SednaMagazineConfig magazine) {
+        return Optional.ofNullable(findAmmoSourceOrNull(player, accepted, magazine));
+    }
+
+    private RuntimeAmmo findAmmoSourceOrNull(Player player, List<BulletConfig> accepted,
+            SednaMagazineConfig magazine) {
         Inventory inventory = player.getInventory();
         for (ItemStack stack : inventory.items) {
             if (stack.isEmpty()) {
                 continue;
             }
-            Optional<BulletConfig> direct = firstMatchingAmmo(stack, accepted);
-            if (direct.isPresent()) {
-                return Optional.of(RuntimeAmmo.direct(direct.get(), stack));
+            BulletConfig direct = firstMatchingAmmoOrNull(stack, accepted);
+            if (direct != null) {
+                return RuntimeAmmo.direct(direct, stack);
             }
-            Optional<RuntimeAmmo> bag = findAmmoBagSource(stack, accepted, magazine);
-            if (bag.isPresent()) {
+            RuntimeAmmo bag = findAmmoBagSourceOrNull(stack, accepted, magazine);
+            if (bag != null) {
                 return bag;
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     private Optional<RuntimeAmmo> findAmmoBagSource(ItemStack bagStack, List<BulletConfig> accepted,
             SednaMagazineConfig magazine) {
+        return Optional.ofNullable(findAmmoBagSourceOrNull(bagStack, accepted, magazine));
+    }
+
+    private RuntimeAmmo findAmmoBagSourceOrNull(ItemStack bagStack, List<BulletConfig> accepted,
+            SednaMagazineConfig magazine) {
         boolean infinite = bagStack.is(ModItems.AMMO_BAG_INFINITE.get());
         boolean regular = bagStack.is(ModItems.AMMO_BAG.get());
         if ((!regular || !magazine.acceptsAmmoBag()) && (!infinite || !magazine.acceptsInfiniteAmmoBag())) {
-            return Optional.empty();
+            return null;
         }
         NonNullList<ItemStack> slots = HbmItemStackUtil.readStacksFromNbt(bagStack, AmmoBagItem.SLOT_COUNT);
         for (int slot = 0; slot < slots.size(); slot++) {
             ItemStack ammoStack = slots.get(slot);
-            Optional<BulletConfig> config = firstMatchingAmmo(ammoStack, accepted);
-            if (config.isPresent()) {
-                return Optional.of(RuntimeAmmo.bag(config.get(), ammoStack, bagStack, slots, slot, infinite));
+            BulletConfig config = firstMatchingAmmoOrNull(ammoStack, accepted);
+            if (config != null) {
+                return RuntimeAmmo.bag(config, ammoStack, bagStack, slots, slot, infinite);
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     private Optional<BulletConfig> firstMatchingAmmo(ItemStack stack, List<BulletConfig> accepted) {
+        return Optional.ofNullable(firstMatchingAmmoOrNull(stack, accepted));
+    }
+
+    private BulletConfig firstMatchingAmmoOrNull(ItemStack stack, List<BulletConfig> accepted) {
         if (stack.isEmpty()) {
-            return Optional.empty();
+            return null;
         }
         for (BulletConfig config : accepted) {
             if (matchesAmmo(stack, config)) {
-                return Optional.of(config);
+                return config;
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     private boolean matchesAmmo(ItemStack stack, BulletConfig config) {
@@ -2757,6 +2829,29 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver {
             int durabilityLoss,
             ItemStack ammoIcon,
             String ammoText) {
+    }
+
+    public static final class LegacyHudAmmoScratch {
+        private ItemStack ammoIcon = ItemStack.EMPTY;
+        private String ammoText = "";
+
+        private void set(ItemStack ammoIcon, String ammoText) {
+            this.ammoIcon = ammoIcon == null ? ItemStack.EMPTY : ammoIcon;
+            this.ammoText = ammoText == null ? "" : ammoText;
+        }
+
+        public void clear() {
+            this.ammoIcon = ItemStack.EMPTY;
+            this.ammoText = "";
+        }
+
+        public ItemStack ammoIcon() {
+            return ammoIcon;
+        }
+
+        public String ammoText() {
+            return ammoText;
+        }
     }
 
     protected record RuntimeAmmo(

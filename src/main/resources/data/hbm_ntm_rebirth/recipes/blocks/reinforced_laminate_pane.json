@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "L": {
+      "item": "hbm_ntm_rebirth:reinforced_laminate"
+    }
+  },
+  "pattern": [
+    "LLL",
+    "LLL"
+  ],
+  "result": {
+    "count": 16,
+    "item": "hbm_ntm_rebirth:reinforced_laminate_pane"
+  },
+  "show_notification": true
+}

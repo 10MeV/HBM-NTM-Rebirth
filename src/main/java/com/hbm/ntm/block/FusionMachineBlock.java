@@ -23,6 +23,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -44,6 +45,13 @@ public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
 
     public Kind kind() {
         return kind;
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return kind.hasChunkBakedStaticModel()
+                ? LegacyMachineRenderShapes.chunkBakedStaticOrEntity()
+                : super.getRenderShape(state);
     }
 
     @Override
@@ -187,6 +195,13 @@ public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
 
         private boolean hasLegacyStandardInfo() {
             return this != PLASMA_FORGE;
+        }
+
+        private boolean hasChunkBakedStaticModel() {
+            return switch (this) {
+                case KLYSTRON, KLYSTRON_CREATIVE, BREEDER, COLLECTOR, BOILER, COUPLER, MHDT -> true;
+                case TORUS, PLASMA_FORGE -> false;
+            };
         }
 
         private String tooltipId() {

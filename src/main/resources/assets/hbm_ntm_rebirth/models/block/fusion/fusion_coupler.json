@@ -4,5 +4,5 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/coupler", "default": "hbm_ntm_rebirth:block/fusion/coupler" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/coupler", "default": "hbm_ntm_rebirth:models/fusion/coupler" }
 }

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:nitra_small"
+    },
+    {
+      "item": "hbm_ntm_rebirth:nitra_small"
+    },
+    {
+      "item": "hbm_ntm_rebirth:nitra_small"
+    },
+    {
+      "item": "hbm_ntm_rebirth:syringe_metal_empty"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:syringe_metal_stimpak"
+  }
+}

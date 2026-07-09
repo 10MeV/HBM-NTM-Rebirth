@@ -10,5 +10,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:slop",
                   "amount":  1000
-              }
+              },
+    "source_order":  31
 }

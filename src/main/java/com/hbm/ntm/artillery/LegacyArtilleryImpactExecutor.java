@@ -13,7 +13,7 @@ import com.hbm.ntm.artillery.LegacyArtilleryAmmoCatalog.ShrapnelEffect;
 import com.hbm.ntm.artillery.LegacyArtilleryAmmoCatalog.SoundEffect;
 import com.hbm.ntm.artillery.LegacyArtilleryAmmoCatalog.StandardExplosionEffect;
 import com.hbm.ntm.artillery.LegacyArtilleryAmmoCatalog.VanillaExplosionEffect;
-import com.hbm.ntm.entity.effect.MistEntity;
+import com.hbm.entity.effect.EntityMist;
 import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.ExplosionLarge;
 import com.hbm.ntm.explosion.ExplosionNukeSmall;
@@ -206,7 +206,7 @@ public final class LegacyArtilleryImpactExecutor {
                     x += level.random.nextGaussian() * effect.scatter();
                     z += level.random.nextGaussian() * effect.scatter();
                 }
-                MistEntity mist = MistEntity.create(level, x, center.y + effect.yOffset(), z, fluid,
+                EntityMist mist = EntityMist.create(level, x, center.y + effect.yOffset(), z, fluid,
                         effect.width(), effect.height(), MIST_DURATION);
                 level.addFreshEntity(mist);
             }

@@ -5,26 +5,29 @@ import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
-import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class LiquefactionRecipeCategory implements IRecipeCategory<LiquefactionRecipe> {
-    private static final int WIDTH = 168;
-    private static final int HEIGHT = 54;
-
     private final RecipeType<LiquefactionRecipe> type;
     private final IDrawable icon;
-    private final IDrawableStatic arrow;
+    private final IDrawableStatic background;
+    private final IDrawableStatic slotBackground;
+    private final IDrawableStatic machineBackground;
+    private final ItemStack catalyst;
 
     LiquefactionRecipeCategory(RecipeType<LiquefactionRecipe> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
-        this.arrow = guiHelper.getRecipeArrow();
+        this.background = LegacyNeiUniversalLayout.background(guiHelper);
+        this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
+        this.machineBackground = LegacyNeiUniversalLayout.machineBackground(guiHelper);
+        this.catalyst = new ItemStack(catalyst);
     }
 
     @Override
@@ -34,17 +37,18 @@ public final class LiquefactionRecipeCategory implements IRecipeCategory<Liquefa
 
     @Override
     public Component getTitle() {
-        return Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_liquefactor", "Liquefactor");
+        return Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_liquefactor",
+                "Industrial Liquefaction Machine");
     }
 
     @Override
     public int getWidth() {
-        return WIDTH;
+        return LegacyNeiUniversalLayout.WIDTH;
     }
 
     @Override
     public int getHeight() {
-        return HEIGHT;
+        return LegacyNeiUniversalLayout.HEIGHT;
     }
 
     @Override
@@ -53,18 +57,15 @@ public final class LiquefactionRecipeCategory implements IRecipeCategory<Liquefa
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, LiquefactionRecipe recipe, IFocusGroup focuses) {
-        if (!recipe.getIngredients().isEmpty()) {
-            builder.addInputSlot(4, 18)
-                    .addItemStacks(List.of(recipe.getIngredients().get(0).getItems()))
-                    .setStandardSlotBackground();
-        }
-        JeiFluidSlots.addFluidSlot(builder, recipe.getOutputFluid(), false, 130, 18);
+    public IDrawable getBackground() {
+        return background;
     }
 
     @Override
-    public void draw(LiquefactionRecipe recipe, IRecipeSlotsView recipeSlotsView,
-            net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        arrow.draw(guiGraphics, 82, 18);
+    public void setRecipe(IRecipeLayoutBuilder builder, LiquefactionRecipe recipe, IFocusGroup focuses) {
+        LegacyNeiUniversalLayout.addInputSlots(builder, slotBackground, List.of(recipe.input().displayStacks()));
+        LegacyNeiUniversalLayout.addOutputSlots(builder, slotBackground,
+                List.of(List.of(LegacyNeiUniversalLayout.fluidIcon(recipe.getOutputFluid()))));
+        LegacyNeiUniversalLayout.addMachineCatalyst(builder, machineBackground, catalyst);
     }
 }

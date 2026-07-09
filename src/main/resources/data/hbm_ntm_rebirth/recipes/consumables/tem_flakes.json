@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:shapeless_nbt",
+  "category": "food",
+  "ingredients": [
+    {
+      "tag": "forge:nuggets/gold"
+    },
+    {
+      "tag": "forge:nuggets/gold"
+    },
+    {
+      "tag": "forge:nuggets/gold"
+    },
+    {
+      "item": "minecraft:paper"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:tem_flakes",
+    "nbt": "{hbmLegacyDamage:1}"
+  }
+}

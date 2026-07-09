@@ -1,6 +1,17 @@
 {
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/geiger"
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/blocks/geiger_counter.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/geiger",
+    "default": "hbm_ntm_rebirth:block/utility/geiger",
+    "texture0": "hbm_ntm_rebirth:block/utility/geiger"
+  }
 }

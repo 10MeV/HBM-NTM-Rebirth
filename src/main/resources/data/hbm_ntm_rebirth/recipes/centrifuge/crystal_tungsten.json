@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/tungsten" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_tungsten"
+    },
+    "legacy_id": "hbm:crystal_tungsten",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_tungsten", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_tungsten", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_iron" },
-    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_tungsten"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_tungsten"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_iron"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_lithium_tiny"
+    }
+  ],
+  "source_order": 43
 }

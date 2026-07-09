@@ -106,6 +106,7 @@ public final class LegacyFluidProcessingRecipeImportProvider implements DataProv
         }
         root.addProperty("found_template_count", foundTemplateCount);
         root.addProperty("imported_recipe_count", importedRecipeCount);
+        LegacyRecipeReportUtil.addImportSummary(root, handlers);
         saves.add(DataProvider.saveStable(output, root, reportPath));
         if (foundTemplateCount == 0) {
             HbmNtm.LOGGER.info("No legacy fluid-processing recipe templates found in {}; skipping import.",

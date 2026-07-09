@@ -15,6 +15,10 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class FluidFillParticle extends TextureSheetParticle {
     private static SpriteSet sharedSprites;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private FluidFillParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed,
             SpriteSet sprites, int color) {
@@ -36,6 +40,7 @@ public class FluidFillParticle extends TextureSheetParticle {
         this.hasPhysics = false;
         this.tick();
         this.pickSprite(sprites);
+        this.cacheSpriteUv();
         if (color >= 0) {
             this.rCol = ((color >> 16) & 255) / 255.0F;
             this.gCol = ((color >> 8) & 255) / 255.0F;
@@ -64,8 +69,15 @@ public class FluidFillParticle extends TextureSheetParticle {
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     @Override

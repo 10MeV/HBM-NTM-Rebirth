@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 50,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/asbestos"
+      },
+      "legacy_ore": "ingotAsbestos"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "minecraft:string"
+      }
+    }
+  ],
+  "internal_name": "ass.firecloth",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:asbestos_cloth"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 27
+}

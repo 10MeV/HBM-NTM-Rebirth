@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ingots/coltan" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_coltan_ore" }
+  "output": { "item": "hbm_ntm_rebirth:powder_coltan_ore" },
+  "source_order": 1000
 }

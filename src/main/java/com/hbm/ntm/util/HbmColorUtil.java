@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class HbmColorUtil {
+    private static final ThreadLocal<float[]> HSB_SCRATCH = ThreadLocal.withInitial(() -> new float[3]);
+
     public static final Map<String, Integer> NAME_TO_COLOR = Map.ofEntries(
             Map.entry("black", 1973019),
             Map.entry("red", 11743532),
@@ -56,7 +58,7 @@ public final class HbmColorUtil {
     }
 
     public static boolean isColorColorful(int hex) {
-        float[] hsb = Color.RGBtoHSB(ir(hex), ig(hex), ib(hex), new float[3]);
+        float[] hsb = Color.RGBtoHSB(ir(hex), ig(hex), ib(hex), HSB_SCRATCH.get());
         return hsb[1] > 0.25F && hsb[2] > 0.25F;
     }
 
@@ -80,7 +82,7 @@ public final class HbmColorUtil {
     }
 
     public static double getColorBrightness(int hex) {
-        float[] hsb = Color.RGBtoHSB(ir(hex), ig(hex), ib(hex), new float[3]);
+        float[] hsb = Color.RGBtoHSB(ir(hex), ig(hex), ib(hex), HSB_SCRATCH.get());
         return hsb[2];
     }
 

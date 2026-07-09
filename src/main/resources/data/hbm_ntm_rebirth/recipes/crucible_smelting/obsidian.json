@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:obsidian"
+    }
+  },
+  "output": [
+    {
+      "amount": 648,
+      "material": "Obsidian"
+    }
+  ],
+  "source_order": 2
+}

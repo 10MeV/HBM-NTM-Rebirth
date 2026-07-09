@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:rail"
+    }
+  },
+  "output": [
+    {
+      "amount": 27,
+      "material": "Iron"
+    }
+  ],
+  "source_order": 3
+}

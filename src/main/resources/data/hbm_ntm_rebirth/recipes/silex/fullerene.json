@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": { "fluid": "hbm_ntm_rebirth:fullerene" },
+  "fluid_produced": 1000,
+  "fluid_consumed": 1000,
+  "laser_strength": "visible",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_ash_fullerene", "weight": 1 }
+  ],
+  "source_order": 20
+}

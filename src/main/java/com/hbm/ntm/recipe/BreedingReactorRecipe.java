@@ -22,8 +22,14 @@ public class BreedingReactorRecipe implements Recipe<Container> {
     private final HbmIngredient input;
     private final HbmItemOutput output;
     private final int flux;
+    private final int sourceOrder;
 
     public BreedingReactorRecipe(ResourceLocation id, HbmIngredient input, HbmItemOutput output, int flux) {
+        this(id, input, output, flux, Integer.MAX_VALUE);
+    }
+
+    public BreedingReactorRecipe(ResourceLocation id, HbmIngredient input, HbmItemOutput output, int flux,
+            int sourceOrder) {
         if (input == null || output == null || output.representativeStack().isEmpty()) {
             throw new IllegalArgumentException("Breeding reactor recipe requires non-empty input and output");
         }
@@ -34,6 +40,7 @@ public class BreedingReactorRecipe implements Recipe<Container> {
         this.input = input;
         this.output = output;
         this.flux = flux;
+        this.sourceOrder = sourceOrder;
     }
 
     public HbmIngredient input() {
@@ -46,6 +53,10 @@ public class BreedingReactorRecipe implements Recipe<Container> {
 
     public int flux() {
         return flux;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
     }
 
     public boolean matches(ItemStack stack) {
@@ -117,14 +128,15 @@ public class BreedingReactorRecipe implements Recipe<Container> {
                 throw new JsonSyntaxException("Breeding reactor recipe " + id + " requires a deterministic output");
             }
             int flux = GsonHelper.getAsInt(json, "flux");
-            return new BreedingReactorRecipe(id, input, output, flux);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
+            return new BreedingReactorRecipe(id, input, output, flux, sourceOrder);
         }
 
         @Nullable
         @Override
         public BreedingReactorRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buffer) {
             return new BreedingReactorRecipe(id, HbmIngredient.fromNetwork(buffer),
-                    HbmItemOutput.fromNetwork(buffer), buffer.readVarInt());
+                    HbmItemOutput.fromNetwork(buffer), buffer.readVarInt(), buffer.readVarInt());
         }
 
         @Override
@@ -132,6 +144,7 @@ public class BreedingReactorRecipe implements Recipe<Container> {
             recipe.input.toNetwork(buffer);
             recipe.output.toNetwork(buffer);
             buffer.writeVarInt(recipe.flux);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
     }
 }

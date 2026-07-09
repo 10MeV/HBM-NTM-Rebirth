@@ -4,5 +4,5 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/boiler", "default": "hbm_ntm_rebirth:block/fusion/boiler" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/boiler", "default": "hbm_ntm_rebirth:models/fusion/boiler" }
 }

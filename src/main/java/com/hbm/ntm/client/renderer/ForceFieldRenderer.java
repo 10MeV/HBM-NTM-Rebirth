@@ -1,22 +1,28 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.ForceFieldBlockEntity;
 import com.hbm.ntm.client.obj.LegacyLineRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
-import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjUtilityModels;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEntity> {
+    private static final int MAX_CACHED_SPHERE_LINE_COUNT = 128_000;
+    private static final Map<SphereKey, SphereLines> SPHERE_LINES =
+            new LinkedHashMap<>(16, 0.75F, true);
+    private static int cachedSphereLineCount;
+
     public ForceFieldRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -30,9 +36,11 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(forceField)) {
-            ObjModelLibrary.MACHINE_RADAR_BODY_LEGACY.renderAll(ObjUtilityModels.FORCEFIELD_BASE_TEXTURE,
-                    poseStack, buffer, modelLight, packedOverlay);
+        if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(forceField)) {
+                ObjModelLibrary.MACHINE_RADAR_BODY_LEGACY.renderAll(ObjUtilityModels.FORCEFIELD_BASE_TEXTURE,
+                        poseStack, buffer, modelLight, packedOverlay);
+            }
         }
 
         poseStack.translate(0.0D, 0.5D, 0.0D);
@@ -58,60 +66,130 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
     }
 
     @Override
+    public boolean shouldRender(ForceFieldBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }
 
     private static void renderSphere(PoseStack poseStack, MultiBufferSource buffer, int latitudes, int segments,
             float radius, int color) {
+        SphereLines lines =
+                cachedSphereLines(new SphereKey(latitudes, segments, Float.floatToIntBits(radius)),
+                        latitudes, segments, radius);
+        VertexConsumer consumer = LegacyLineRenderer.consumer(buffer, LegacyLineRenderer.DEFAULT_LINE_WIDTH,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
+        PoseStack.Pose pose = poseStack.last();
+        double[] coordinates = lines.coordinates();
+        for (int offset = 0; offset < coordinates.length; offset += 6) {
+            LegacyLineRenderer.line(consumer, pose,
+                    coordinates[offset], coordinates[offset + 1], coordinates[offset + 2],
+                    coordinates[offset + 3], coordinates[offset + 4], coordinates[offset + 5],
+                    color, 255);
+        }
+    }
+
+    private static SphereLines cachedSphereLines(SphereKey key, int latitudes, int segments, float radius) {
+        synchronized (SPHERE_LINES) {
+            SphereLines cached = SPHERE_LINES.get(key);
+            if (cached != null) {
+                return cached;
+            }
+        }
+        SphereLines built = buildSphereLines(latitudes, segments, radius);
+        if (built.lineCount() > MAX_CACHED_SPHERE_LINE_COUNT) {
+            return built;
+        }
+        synchronized (SPHERE_LINES) {
+            SphereLines cached = SPHERE_LINES.get(key);
+            if (cached != null) {
+                return cached;
+            }
+            SPHERE_LINES.put(key, built);
+            cachedSphereLineCount += built.lineCount();
+            trimSphereCache();
+            return built;
+        }
+    }
+
+    private static void trimSphereCache() {
+        while (cachedSphereLineCount > MAX_CACHED_SPHERE_LINE_COUNT && SPHERE_LINES.size() > 1) {
+            Map.Entry<SphereKey, SphereLines> eldest =
+                    SPHERE_LINES.entrySet().iterator().next();
+            cachedSphereLineCount -= eldest.getValue().lineCount();
+            SPHERE_LINES.remove(eldest.getKey());
+        }
+    }
+
+    private static SphereLines buildSphereLines(int latitudes, int segments, float radius) {
         double segmentRot = Math.PI * 2.0D / segments;
         double latitudeRot = Math.PI / latitudes;
-        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>(segments * latitudes * 2);
+        int lineCount = segments * latitudes * 2;
+        double[] coordinates = new double[lineCount * 6];
+        int offset = 0;
 
         for (int k = 0; k < segments; k++) {
             double yaw = segmentRot * (k + 1);
-            Vec3 prev = rotateY(new Vec3(0.0D, radius, 0.0D), yaw);
+            double yawCos = Math.cos(yaw);
+            double yawSin = Math.sin(yaw);
+            double prevX = 0.0D;
+            double prevY = radius;
+            double prevZ = 0.0D;
             for (int i = 0; i < latitudes; i++) {
-                Vec3 next = rotateY(rotateX(new Vec3(0.0D, radius, 0.0D), latitudeRot * (i + 1)), yaw);
-                lines.add(line(prev, next, color));
-                prev = next;
+                double pitch = latitudeRot * (i + 1);
+                double localY = radius * Math.cos(pitch);
+                double localZ = radius * Math.sin(pitch);
+                double nextX = localZ * yawSin;
+                double nextY = localY;
+                double nextZ = localZ * yawCos;
+                offset = addLine(coordinates, offset, prevX, prevY, prevZ, nextX, nextY, nextZ);
+                prevX = nextX;
+                prevY = nextY;
+                prevZ = nextZ;
             }
         }
 
-        Vec3 ring = new Vec3(0.0D, radius, 0.0D);
         for (int k = 0; k < latitudes; k++) {
-            ring = rotateZ(ring, latitudeRot);
-            Vec3 prev = ring;
+            double ringAngle = latitudeRot * (k + 1);
+            double ringX = -radius * Math.sin(ringAngle);
+            double ringY = radius * Math.cos(ringAngle);
+            double prevX = ringX;
+            double prevY = ringY;
+            double prevZ = 0.0D;
             for (int i = 0; i < segments; i++) {
-                Vec3 next = rotateY(ring, segmentRot * (i + 1));
-                lines.add(line(prev, next, color));
-                prev = next;
+                double yaw = segmentRot * (i + 1);
+                double yawCos = Math.cos(yaw);
+                double yawSin = Math.sin(yaw);
+                double nextX = ringX * yawCos;
+                double nextY = ringY;
+                double nextZ = -ringX * yawSin;
+                offset = addLine(coordinates, offset, prevX, prevY, prevZ, nextX, nextY, nextZ);
+                prevX = nextX;
+                prevY = nextY;
+                prevZ = nextZ;
             }
         }
-        LegacyLineRenderer.lines(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
-                LegacyLineRenderer.DEFAULT_LINE_WIDTH, lines);
+        return new SphereLines(lineCount, coordinates);
     }
 
-    private static LegacyWavefrontModel.UntexturedLineTransient line(Vec3 start, Vec3 end, int color) {
-        return new LegacyWavefrontModel.UntexturedLineTransient(
-                start.x, start.y, start.z, end.x, end.y, end.z, color, 255);
+    private static int addLine(double[] coordinates, int offset, double startX, double startY, double startZ,
+            double endX, double endY, double endZ) {
+        coordinates[offset++] = startX;
+        coordinates[offset++] = startY;
+        coordinates[offset++] = startZ;
+        coordinates[offset++] = endX;
+        coordinates[offset++] = endY;
+        coordinates[offset++] = endZ;
+        return offset;
     }
 
-    private static Vec3 rotateX(Vec3 vec, double angle) {
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
-        return new Vec3(vec.x, vec.y * cos - vec.z * sin, vec.y * sin + vec.z * cos);
+    private record SphereKey(int latitudes, int segments, int radiusBits) {
     }
 
-    private static Vec3 rotateY(Vec3 vec, double angle) {
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
-        return new Vec3(vec.x * cos + vec.z * sin, vec.y, vec.z * cos - vec.x * sin);
-    }
-
-    private static Vec3 rotateZ(Vec3 vec, double angle) {
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
-        return new Vec3(vec.x * cos - vec.y * sin, vec.x * sin + vec.y * cos, vec.z);
+    private record SphereLines(int lineCount, double[] coordinates) {
     }
 }

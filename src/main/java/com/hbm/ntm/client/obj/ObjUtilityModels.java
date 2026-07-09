@@ -6,7 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class ObjUtilityModels {
     public static final LegacyWavefrontModel GEIGER_COUNTER = new LegacyWavefrontModel(
             new ResourceLocation(HbmNtm.MOD_ID, "models/blocks/geiger_counter.obj"),
-            blockTexture("geiger")).asVBO();
+            utilityBlockTexture("geiger")).asVBO();
     public static final LegacyWavefrontModel FORCEFIELD_TOP = model("forcefield_top");
     public static final LegacyWavefrontModel SAT_FOEQ_BURNING = model("sat_foeq_burning");
     public static final LegacyWavefrontModel SAT_FOEQ_FIRE = model("sat_foeq_fire", "sat_foeq_burning");
@@ -14,7 +14,7 @@ public final class ObjUtilityModels {
     public static final LegacyWavefrontModel TESLA = model("tesla");
     public static final LegacyWavefrontModel FILE_CABINET = model("file_cabinet");
 
-    public static final ResourceLocation GEIGER_TEXTURE = blockTexture("geiger");
+    public static final ResourceLocation GEIGER_TEXTURE = utilityBlockTexture("geiger");
     public static final ResourceLocation FORCEFIELD_BASE_TEXTURE = texture("forcefield_base");
     public static final ResourceLocation FORCEFIELD_TOP_TEXTURE = texture("forcefield_top");
     public static final ResourceLocation SAT_FOEQ_BURNING_TEXTURE = texture("sat_foeq_burning");
@@ -40,6 +40,10 @@ public final class ObjUtilityModels {
 
     public static ResourceLocation blockTexture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/" + name + ".png");
+    }
+
+    public static ResourceLocation utilityBlockTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "textures/block/utility/" + name + ".png");
     }
 
     private ObjUtilityModels() {

@@ -1,23 +1,19 @@
 package com.hbm.ntm.radiation;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import com.hbm.ntm.compat.Compat;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
 public class MeRadiationHazardTransformer implements HazardTransformer {
-    private static final String LEGACY_ITEM_TYPES_KEY = "it";
-
     @Override
     public void transformPost(ItemStack stack, List<HazardEntry> entries) {
-        CompoundTag tag = stack.getTag();
-        if (tag == null || !isMeStorageItem(stack.getItem()) || !tag.contains(LEGACY_ITEM_TYPES_KEY, Tag.TAG_ANY_NUMERIC)) {
+        if (!isMeStorageItem(stack.getItem())) {
             return;
         }
 
-        float radiation = readLegacyMeRadiation(tag);
+        float radiation = readLegacyMeRadiation(stack);
         if (radiation > 0.0F) {
             entries.add(new HazardEntry(HazardType.RADIATION, radiation));
         }
@@ -29,19 +25,9 @@ public class MeRadiationHazardTransformer implements HazardTransformer {
                 || name.equals("appeng.items.tools.powered.ToolPortableCell");
     }
 
-    private static float readLegacyMeRadiation(CompoundTag tag) {
+    private static float readLegacyMeRadiation(ItemStack stack) {
         float radiation = 0.0F;
-        int types = tag.getShort(LEGACY_ITEM_TYPES_KEY);
-        for (int i = 0; i < types; i++) {
-            String stackKey = "#" + i;
-            if (!tag.contains(stackKey, Tag.TAG_COMPOUND)) {
-                continue;
-            }
-            ItemStack held = ItemStack.of(tag.getCompound(stackKey));
-            if (held.isEmpty()) {
-                continue;
-            }
-            held.setCount(Math.max(0, tag.getInt("@" + i)));
+        for (ItemStack held : Compat.scrapeItemFromME(stack)) {
             radiation += HazardRegistry.getStackRadiation(held);
         }
         return radiation;

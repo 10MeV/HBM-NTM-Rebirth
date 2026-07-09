@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.malachite",
+  "fallback_name": "Copper Production from Malachite",
+  "icon": { "item": "hbm_ntm_rebirth:stone_resource_malachite" },
+  "frequency": 6,
+  "input": [
+    { "material": "Malachite", "amount": 144 },
+    { "material": "Flux", "amount": 16 }
+  ],
+  "output": [
+    { "material": "Copper", "amount": 72 },
+    { "material": "Slag", "amount": 24 }
+  ],
+  "source_order": 2
+}

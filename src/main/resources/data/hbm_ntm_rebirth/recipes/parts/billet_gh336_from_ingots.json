@@ -1,0 +1,16 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "misc",
+    "pattern":  [
+                    "GG"
+                ],
+    "key":  {
+                "G":  {
+                          "item":  "hbm_ntm_rebirth:ingot_gh336"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:billet_gh336",
+                   "count":  3
+               }
+}

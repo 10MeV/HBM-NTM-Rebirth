@@ -90,7 +90,7 @@ public final class GenericMachineRecipeRuntime {
             List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks) {
         return hasItemInputs(recipe, items, inputSlots)
                 && hasFluidInputs(recipe, inputTanks)
-                && canFitItemOutputs(recipe, items, inputSlots, outputSlots)
+                && canFitItemOutputs(recipe, items, outputSlots)
                 && canFitFluidOutputs(recipe, outputTanks);
     }
 
@@ -146,10 +146,9 @@ public final class GenericMachineRecipeRuntime {
         double nextProgress = progress + Math.min(factors.speedMultiplier() / recipe.getDuration(), 1.0D);
         boolean completed = false;
         if (nextProgress >= 1.0D) {
-            List<ItemStack> inputRemainders = inputRemainders(recipe, items, inputSlots);
             previewRecipeFluidIoOrThrow(recipe, inputTanks, outputTanks);
             consumeItemInputs(recipe, items, inputSlots);
-            produceItemOutputs(recipe, inputRemainders, items, outputSlots);
+            produceItemOutputs(recipe, items, outputSlots);
             processRecipeFluidIoOrThrow(recipe, inputTanks, outputTanks);
             completed = true;
             if (canProcess(recipe, items, inputSlots, outputSlots, inputTanks, outputTanks)
@@ -251,12 +250,7 @@ public final class GenericMachineRecipeRuntime {
 
     public static void produceOutputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] outputSlots,
             List<HbmFluidTank> outputTanks) {
-        produceOutputs(recipe, List.of(), items, outputSlots, outputTanks);
-    }
-
-    private static void produceOutputs(GenericMachineRecipe recipe, List<ItemStack> inputRemainders,
-            ItemStackHandler items, int[] outputSlots, List<HbmFluidTank> outputTanks) {
-        produceItemOutputs(recipe, inputRemainders, items, outputSlots);
+        produceItemOutputs(recipe, items, outputSlots);
 
         List<HbmFluidStack> fluidOutputs = recipe.getFluidOutputs();
         HbmFluidRecipeIO.FluidStackSetTransferReport fluidReport =
@@ -297,14 +291,8 @@ public final class GenericMachineRecipeRuntime {
         }
     }
 
-    private static void produceItemOutputs(GenericMachineRecipe recipe, List<ItemStack> inputRemainders,
-            ItemStackHandler items, int[] outputSlots) {
+    private static void produceItemOutputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] outputSlots) {
         List<ItemStack> itemOutputs = collapseItemOutputs(recipe, RandomSource.create());
-        if (!inputRemainders.isEmpty()) {
-            List<ItemStack> combined = new ArrayList<>(itemOutputs);
-            combined.addAll(inputRemainders);
-            itemOutputs = combined;
-        }
         int itemCount = itemOutputs.size();
         if (itemCount > outputSlots.length) {
             throw new IllegalStateException("Generic machine output no longer fits after canProcess: " + recipe.getId());
@@ -318,7 +306,7 @@ public final class GenericMachineRecipeRuntime {
             ItemStack current = items.getStackInSlot(outputSlot);
             if (current.isEmpty()) {
                 items.setStackInSlot(outputSlot, output.copy());
-            } else if (ItemStack.isSameItem(current, output)
+            } else if (isSameLegacyOutputStack(current, output)
                     && current.getCount() + output.getCount() <= Math.min(current.getMaxStackSize(), items.getSlotLimit(outputSlot))) {
                 ItemStack merged = current.copy();
                 merged.grow(output.getCount());
@@ -333,6 +321,11 @@ public final class GenericMachineRecipeRuntime {
         return recipe.getItemOutputEntries().stream()
                 .map(output -> output.collapse(random))
                 .toList();
+    }
+
+    private static boolean isSameLegacyOutputStack(ItemStack current, ItemStack output) {
+        return current.getItem() == output.getItem()
+                && current.getDamageValue() == output.getDamageValue();
     }
 
     private static boolean hasItemInputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] inputSlots) {
@@ -389,17 +382,13 @@ public final class GenericMachineRecipeRuntime {
         return HbmFluidRecipeIO.inspectInputs(recipe.getFluidInputs(), inputTanks).complete();
     }
 
-    private static boolean canFitItemOutputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] inputSlots,
-            int[] outputSlots) {
+    private static boolean canFitItemOutputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] outputSlots) {
         List<HbmItemOutput> outputs = recipe.getItemOutputEntries();
         List<PendingItemOutput> pending = new ArrayList<>();
         for (HbmItemOutput output : outputs) {
             pending.add(new PendingItemOutput(output.representativeStack(),
                     output.oneOf() && output.entries().size() > 1));
         }
-        inputRemainders(recipe, items, inputSlots).stream()
-                .map(stack -> new PendingItemOutput(stack, false))
-                .forEach(pending::add);
         if (pending.size() > outputSlots.length) {
             return pending.stream().allMatch(output -> output.stack().isEmpty());
         }
@@ -417,27 +406,12 @@ public final class GenericMachineRecipeRuntime {
             if (output.oneOf()) {
                 return false;
             }
-            if (!ItemStack.isSameItem(current, single)
+            if (!isSameLegacyOutputStack(current, single)
                     || current.getCount() + single.getCount() > Math.min(current.getMaxStackSize(), items.getSlotLimit(outputSlot))) {
                 return false;
             }
         }
         return true;
-    }
-
-    private static List<ItemStack> inputRemainders(GenericMachineRecipe recipe, ItemStackHandler items, int[] inputSlots) {
-        ItemInputMatchPlan itemPlan = matchItemInputs(recipe, items, inputSlots);
-        if (itemPlan == null) {
-            return List.of();
-        }
-        List<ItemStack> remainders = new ArrayList<>();
-        List<HbmIngredient> inputs = recipe.getItemInputs();
-        int[] matchedSlots = itemPlan.matchedSlots();
-        int itemCount = Math.min(inputs.size(), matchedSlots.length);
-        for (int i = 0; i < itemCount; i++) {
-            remainders.addAll(inputs.get(i).remainingItems(items.getStackInSlot(matchedSlots[i])));
-        }
-        return remainders;
     }
 
     private static boolean canFitFluidOutputs(GenericMachineRecipe recipe, List<HbmFluidTank> outputTanks) {
@@ -494,7 +468,9 @@ public final class GenericMachineRecipeRuntime {
 
         public Audit audit() {
             List<GenericMachineRecipe> emptyOutputs = recipes.stream()
-                    .filter(recipe -> recipe.getItemOutputs().isEmpty() && recipe.getFluidOutputs().isEmpty())
+                    .filter(recipe -> recipe.getItemOutputs().isEmpty()
+                            && recipe.getFluidOutputs().isEmpty()
+                            && recipe.getExtraData().arcMaterialOutputs().isEmpty())
                     .toList();
             List<GenericMachineRecipe> emptyInputs = recipes.stream()
                     .filter(recipe -> recipe.getItemInputs().isEmpty() && recipe.getFluidInputs().isEmpty())

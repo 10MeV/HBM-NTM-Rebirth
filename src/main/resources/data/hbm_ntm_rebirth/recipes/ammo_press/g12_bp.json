@@ -1,6 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:ammo_press",
-  "source_order": 40,
+  "source_order": 41,
   "output": {
     "item": "hbm_ntm_rebirth:ammo_standard_g12_bp",
     "count": 6

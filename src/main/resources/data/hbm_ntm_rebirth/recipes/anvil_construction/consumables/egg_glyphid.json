@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:egg_glyphid" },
+    "legacy_id": "hbm:egg_glyphid"
+  },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:glyphid_meat", "count": 2 },
+    { "item": "hbm_ntm_rebirth:glyphid_meat", "chance": 0.5 },
+    { "item": "minecraft:bone", "chance": 0.75 },
+    { "item": "minecraft:experience_bottle", "chance": 0.5 }
+  ],
+  "tier_lower": 1,
+  "overlay": "recycling"
+}

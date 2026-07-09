@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:outgasser",
+  "source_order": 10,
   "input": {
     "ingredient": {
       "item": "minecraft:brown_mushroom"

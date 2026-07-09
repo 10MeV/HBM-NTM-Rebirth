@@ -35,17 +35,12 @@
         "amount": 1000,
         "fluid": "hbm_ntm_rebirth:kerosene_reform"
       },
-      "ingredient": [
-        {
-          "item": "hbm_ntm_rebirth:canister_full"
-        },
-        {
-          "item": "hbm_ntm_rebirth:fluid_tank_full"
-        },
-        {
-          "item": "hbm_ntm_rebirth:fluid_tank_lead_full"
-        }
-      ]
+      "ingredient": {
+        "type": "hbm_ntm_rebirth:fluid_container",
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:kerosene_reform"
+      },
+      "legacy_ore": "container1000kerosenereform"
     },
     {
       "count": 12,
@@ -53,20 +48,20 @@
         "amount": 1000,
         "fluid": "hbm_ntm_rebirth:peroxide"
       },
-      "ingredient": [
-        {
-          "item": "hbm_ntm_rebirth:fluid_tank_full"
-        },
-        {
-          "item": "hbm_ntm_rebirth:fluid_tank_lead_full"
-        }
-      ]
+      "ingredient": {
+        "type": "hbm_ntm_rebirth:fluid_container",
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:peroxide"
+      },
+      "legacy_ore": "container1000peroxide"
     },
     {
       "count": 6,
       "ingredient": {
-        "tag": "forge:circuits/basic"
-      }
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
     }
   ],
   "internal_name": "ass.himarssmalltb",
@@ -77,5 +72,6 @@
     }
   ],
   "pools": [],
-  "power": 100
+  "power": 100,
+  "source_order": 244
 }

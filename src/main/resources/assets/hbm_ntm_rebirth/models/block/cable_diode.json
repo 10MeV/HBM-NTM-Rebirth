@@ -1,5 +1,6 @@
 {
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/cable_diode"
-  }
+  "loader": "hbm_ntm_rebirth:cable_diode_body_loader",
+  "plate": "hbm_ntm_rebirth:block/cable_diode",
+  "pad": "hbm_ntm_rebirth:block/hadron_coil_alloy",
+  "particle": "hbm_ntm_rebirth:block/cable_diode"
 }

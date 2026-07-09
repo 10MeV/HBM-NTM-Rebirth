@@ -53,6 +53,9 @@ public final class LegacyFusionFluidBreederImportProvider implements DataProvide
             int count = countJsonFiles(recipeDir);
             report.addProperty("status", count > 0 ? "main_resources_only" : "missing_template");
             report.addProperty("external_template_status", "missing");
+            report.addProperty("found_template_count", 0);
+            report.addProperty("imported_recipe_count", 0);
+            report.addProperty("skipped_recipe_count", 0);
             report.addProperty("main_resource_recipe_dir", reportPath(recipeDir));
             report.addProperty("main_resource_recipe_count", count);
             saves.add(DataProvider.saveStable(output, report, reportPath));
@@ -100,6 +103,7 @@ public final class LegacyFusionFluidBreederImportProvider implements DataProvide
         }
 
         report.addProperty("status", failures.isEmpty() ? "imported" : "imported_with_skips");
+        report.addProperty("found_template_count", 1);
         report.addProperty("source_recipe_count", sourceRecipeCount);
         report.addProperty("imported_recipe_count", imported.size());
         report.addProperty("skipped_recipe_count", failures.size());
@@ -126,6 +130,7 @@ public final class LegacyFusionFluidBreederImportProvider implements DataProvide
         json.addProperty("type", ModRecipes.FUSION_FLUID_BREEDER.serializer().getId().toString());
         json.add("input", writeModernFluidStack(input));
         json.add("output", writeModernFluidStack(output));
+        json.addProperty("source_order", sourceIndex);
         return new ImportedRecipe(new ResourceLocation(HbmNtm.MOD_ID,
                 "fusion_fluid_breeder/" + input.type().toPath() + "_to_" + output.type().toPath()),
                 input, output, json);

@@ -1,0 +1,41 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "custom_localization": true,
+  "duration": 300,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/iron"
+      },
+      "legacy_ore": "plateIron"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:wires/copper"
+      },
+      "legacy_ore": "wireFineCopper"
+    }
+  ],
+  "internal_name": "ass.factorioChip",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    }
+  ],
+  "pools": [
+    "alt..circuit"
+  ],
+  "power": 20000,
+  "source_order": 34
+}

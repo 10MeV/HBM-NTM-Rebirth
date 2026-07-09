@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 public class WatzStructCoreRenderer implements BlockEntityRenderer<WatzStructCoreBlockEntity> {
     private static final TextureAtlasSprite ELEMENT_TOP = sprite("legacy_blocks/watz_element_top");
@@ -44,53 +44,70 @@ public class WatzStructCoreRenderer implements BlockEntityRenderer<WatzStructCor
     }
 
     @Override
-    public void render(WatzStructCoreBlockEntity blockEntity, float partialTick, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                queuedPose -> renderPreview(queuedPose, buffer, light));
+    public boolean shouldRender(WatzStructCoreBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
-    private static void renderPreview(PoseStack poseStack, MultiBufferSource buffer, int light) {
-        renderPillar(poseStack, buffer, light, COOLER_TOP, COOLER_SIDE, 0, 1, 0);
-        renderPillar(poseStack, buffer, light, COOLER_TOP, COOLER_SIDE, 0, 2, 0);
+    @Override
+    public void render(WatzStructCoreBlockEntity blockEntity, float partialTick, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            int alpha = LegacyBlockEntityRenderCulling.fadedStaticAlpha(
+                    LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA);
+            if (alpha <= 0) {
+                return;
+            }
+            int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
 
-        for (int y = 0; y < 3; y++) {
-            for (int[] offset : ELEMENT_OFFSETS) {
-                renderPillar(poseStack, buffer, light, ELEMENT_TOP, ELEMENT_SIDE, offset[0], y, offset[1]);
-            }
-            for (int[] offset : COOLER_OFFSETS) {
-                renderPillar(poseStack, buffer, light, COOLER_TOP, COOLER_SIDE, offset[0], y, offset[1]);
-            }
-            for (int z = -1; z < 2; z++) {
-                renderCube(poseStack, buffer, light, RIVETED_END, 3, y, z);
-                renderCube(poseStack, buffer, light, RIVETED_END, z, y, 3);
-                renderCube(poseStack, buffer, light, RIVETED_END, -3, y, z);
-                renderCube(poseStack, buffer, light, RIVETED_END, z, y, -3);
-            }
-            renderCube(poseStack, buffer, light, RIVETED_END, 2, y, 2);
-            renderCube(poseStack, buffer, light, RIVETED_END, 2, y, -2);
-            renderCube(poseStack, buffer, light, RIVETED_END, -2, y, 2);
-            renderCube(poseStack, buffer, light, RIVETED_END, -2, y, -2);
+            LegacyMachineEffectPresenter.enqueueAtlasSpriteQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                    poseStack, buffer, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                    quads -> renderPreview(quads, light, alpha));
         }
     }
 
-    private static void renderPillar(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            TextureAtlasSprite top, TextureAtlasSprite side, double x, double y, double z) {
-        LegacyAtlasCuboidRenderer.smallBlock(top, top, side, side, side, side, poseStack, buffer, packedLight,
-                OverlayTexture.NO_OVERLAY, 0xFFFFFF, LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA,
-                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, x, y, z);
+    private static void renderPreview(LegacyTexturedQuadRenderer.SpritePixelQuadSink quads, int light, int alpha) {
+        renderPillar(quads, light, alpha, COOLER_TOP, COOLER_SIDE, 0, 1, 0);
+        renderPillar(quads, light, alpha, COOLER_TOP, COOLER_SIDE, 0, 2, 0);
+
+        for (int y = 0; y < 3; y++) {
+            for (int[] offset : ELEMENT_OFFSETS) {
+                renderPillar(quads, light, alpha, ELEMENT_TOP, ELEMENT_SIDE, offset[0], y, offset[1]);
+            }
+            for (int[] offset : COOLER_OFFSETS) {
+                renderPillar(quads, light, alpha, COOLER_TOP, COOLER_SIDE, offset[0], y, offset[1]);
+            }
+            for (int z = -1; z < 2; z++) {
+                renderCube(quads, light, alpha, RIVETED_END, 3, y, z);
+                renderCube(quads, light, alpha, RIVETED_END, z, y, 3);
+                renderCube(quads, light, alpha, RIVETED_END, -3, y, z);
+                renderCube(quads, light, alpha, RIVETED_END, z, y, -3);
+            }
+            renderCube(quads, light, alpha, RIVETED_END, 2, y, 2);
+            renderCube(quads, light, alpha, RIVETED_END, 2, y, -2);
+            renderCube(quads, light, alpha, RIVETED_END, -2, y, 2);
+            renderCube(quads, light, alpha, RIVETED_END, -2, y, -2);
+        }
     }
 
-    private static void renderCube(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+    private static void renderPillar(LegacyTexturedQuadRenderer.SpritePixelQuadSink quads, int packedLight, int alpha,
+            TextureAtlasSprite top, TextureAtlasSprite side, double x, double y, double z) {
+        LegacyAtlasCuboidRenderer.smallBlock(top, top, side, side, side, side, quads, packedLight,
+                OverlayTexture.NO_OVERLAY, 0xFFFFFF, alpha,
+                x, y, z);
+    }
+
+    private static void renderCube(LegacyTexturedQuadRenderer.SpritePixelQuadSink quads, int packedLight, int alpha,
             TextureAtlasSprite texture, double x, double y, double z) {
-        LegacyAtlasCuboidRenderer.smallBlock(texture, texture, texture, texture, texture, texture, poseStack, buffer,
-                packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA,
-                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, x, y, z);
+        LegacyAtlasCuboidRenderer.smallBlock(texture, texture, texture, texture, texture, texture, quads,
+                packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, alpha,
+                x, y, z);
     }
 
     private static TextureAtlasSprite sprite(String name) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + name);
     }
 }

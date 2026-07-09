@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:steel_boots"
+    },
+    "E": {
+      "item": "hbm_ntm_rebirth:billet_cobalt"
+    }
+  },
+  "pattern": [
+    "ECE"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cobalt_boots"
+  },
+  "show_notification": true
+}

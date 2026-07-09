@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "hbm_ntm_rebirth:coffee_radium"
+    },
+    "title": {
+      "translate": "advancements.hbm_ntm_rebirth.radium.title"
+    },
+    "description": {
+      "translate": "advancements.hbm_ntm_rebirth.radium.description"
+    },
+    "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

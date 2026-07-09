@@ -5,6 +5,7 @@
                },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:aromatics",
-                  "amount":  3900
-              }
+                  "amount":  7800
+              },
+    "source_order":  43
 }

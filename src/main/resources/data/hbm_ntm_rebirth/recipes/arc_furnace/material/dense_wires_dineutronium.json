@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.wireDenseDineutronium",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:dense_wires/dineutronium" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:dense_wires/dineutronium" }, "count": 1, "legacy_ore": "wireDenseDineutronium" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Dineutronium", "amount": 72 }
+  ],
+  "pools": [],
+  "source_order": 2110
+}

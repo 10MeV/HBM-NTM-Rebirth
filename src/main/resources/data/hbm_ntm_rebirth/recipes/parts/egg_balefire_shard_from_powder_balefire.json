@@ -1,0 +1,16 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "misc",
+    "pattern":  [
+                    "##",
+                    "##"
+                ],
+    "key":  {
+                "#":  {
+                          "item":  "hbm_ntm_rebirth:powder_balefire"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:egg_balefire_shard"
+               }
+}

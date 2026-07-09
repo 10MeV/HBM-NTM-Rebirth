@@ -68,6 +68,7 @@ public class SkeletonParticle extends Particle {
     private float momentumYaw;
     private int initialDelay;
     private boolean bloodTexture;
+    private final PoseStack renderPose = new PoseStack();
 
     public SkeletonParticle(ClientLevel level, double x, double y, double z, float brightness, BoneType type, float yaw, float pitch) {
         super(level, x, y, z);
@@ -153,7 +154,8 @@ public class SkeletonParticle extends Particle {
         float timeLeft = this.lifetime - (this.age + partialTick);
         this.alpha = timeLeft < 40.0F ? Math.max(timeLeft / 40.0F, 0.0F) : 1.0F;
 
-        PoseStack poseStack = new PoseStack();
+        PoseStack poseStack = this.renderPose;
+        poseStack.setIdentity();
         poseStack.translate(renderX - cameraPos.x(), renderY - cameraPos.y(), renderZ - cameraPos.z());
         poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, this.prevRotationYaw, this.rotationYaw)));
         poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTick, this.prevRotationPitch, this.rotationPitch)));

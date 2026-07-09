@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.blocks.gas.BlockGasBase;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.particle.ParticleUtil;
@@ -18,7 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 @SuppressWarnings("deprecation")
-public class LegacyToxicGasBlock extends LegacyGasBlock {
+public class LegacyToxicGasBlock extends BlockGasBase {
     private final Kind kind;
 
     public LegacyToxicGasBlock(Properties properties, Kind kind) {

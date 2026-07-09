@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": { "ingredient": { "item": "hbm_ntm_rebirth:ore_tikite" }, "count": 1 }
+  },
+  "fluid_produced": 900,
+  "fluid_consumed": 100,
+  "laser_strength": "uv",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:powder_plutonium", "weight": 2 },
+    { "item": "hbm_ntm_rebirth:powder_cobalt", "weight": 3 },
+    { "item": "hbm_ntm_rebirth:powder_niobium", "weight": 3 },
+    { "item": "hbm_ntm_rebirth:powder_nitan_mix", "weight": 2 }
+  ],
+  "source_order": 12
+}

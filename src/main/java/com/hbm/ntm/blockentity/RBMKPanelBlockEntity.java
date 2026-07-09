@@ -94,6 +94,10 @@ public class RBMKPanelBlockEntity extends BlockEntity
         return displayColumns.clone();
     }
 
+    public RBMKConsolePlanner.ColumnSnapshot[] displayColumnsRenderView() {
+        return displayColumns;
+    }
+
     public boolean setDisplayTarget(BlockPos target) {
         if (target == null) {
             return false;

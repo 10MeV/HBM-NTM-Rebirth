@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": {
+      "item": "hbm_ntm_rebirth:fragment_meteorite"
+    }
+  },
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:block_meteor_cobble"
+  },
+  "show_notification": true
+}

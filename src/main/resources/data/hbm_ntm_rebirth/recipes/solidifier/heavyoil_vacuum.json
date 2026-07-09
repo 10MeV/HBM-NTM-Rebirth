@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:heavyoil_vacuum",
                   "amount":  150
-              }
+              },
+    "source_order":  15
 }

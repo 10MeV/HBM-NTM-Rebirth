@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "item": "hbm_ntm_rebirth:coil_copper" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_red_copper" }
+  "output": { "item": "hbm_ntm_rebirth:powder_red_copper" },
+  "source_order": 104
 }

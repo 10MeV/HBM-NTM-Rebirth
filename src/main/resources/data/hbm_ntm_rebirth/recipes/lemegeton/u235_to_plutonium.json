@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/uranium235"
+    },
+    "count": 1,
+    "legacy_ore": "ingotUranium235"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_plutonium"
+  },
+  "source_order": 16
+}

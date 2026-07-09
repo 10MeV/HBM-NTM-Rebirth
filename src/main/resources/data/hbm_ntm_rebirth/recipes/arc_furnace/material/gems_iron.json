@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.gemIron",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:gems/iron" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:gems/iron" }, "count": 1, "legacy_ore": "gemIron" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Iron", "amount": 72 }
+  ],
+  "pools": [],
+  "source_order": 1029
+}

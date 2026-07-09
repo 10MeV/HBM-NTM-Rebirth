@@ -1,1 +1,19 @@
-{"variants":{"facing=east":{"model":"hbm_ntm_rebirth:block/foundry_slagtap"},"facing=north":{"model":"hbm_ntm_rebirth:block/foundry_slagtap"},"facing=south":{"model":"hbm_ntm_rebirth:block/foundry_slagtap"},"facing=west":{"model":"hbm_ntm_rebirth:block/foundry_slagtap"}}}
+{
+  "variants": {
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/foundry_slagtap"
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/foundry_slagtap",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/foundry_slagtap",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/foundry_slagtap",
+      "y": 270
+    }
+  }
+}

@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:xylene",
                   "amount":  1700
-              }
+              },
+    "source_order":  46
 }

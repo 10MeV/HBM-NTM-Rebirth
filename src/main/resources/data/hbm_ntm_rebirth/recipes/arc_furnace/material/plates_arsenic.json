@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.plateArsenic",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:plates/arsenic" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/arsenic" }, "count": 1, "legacy_ore": "plateArsenic" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Arsenic", "amount": 72 }
+  ],
+  "pools": [],
+  "source_order": 1720
+}

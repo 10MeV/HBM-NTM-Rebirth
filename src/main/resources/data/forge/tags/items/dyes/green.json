@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "minecraft:green_dye"
+    "minecraft:green_dye",
+    "hbm_ntm_rebirth:chemical_dye_green"
   ]
 }

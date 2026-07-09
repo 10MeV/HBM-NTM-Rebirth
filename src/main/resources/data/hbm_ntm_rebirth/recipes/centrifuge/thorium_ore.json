@@ -1,10 +1,25 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/thorium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/thorium"
+    },
+    "legacy_ore": "oreThorium"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_thorium" },
-    { "item": "hbm_ntm_rebirth:powder_thorium" },
-    { "item": "hbm_ntm_rebirth:powder_uranium" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_thorium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_thorium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_uranium"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 17
 }

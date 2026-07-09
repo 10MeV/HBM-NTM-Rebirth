@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:cyclotron",
+  "particle": { "ingredient": { "item": "hbm_ntm_rebirth:part_carbon" }, "count": 1 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_caesium" }, "count": 1 },
+  "output": { "item": "hbm_ntm_rebirth:powder_lanthanium" },
+  "antimatter": 10,
+  "source_order": 23
+}

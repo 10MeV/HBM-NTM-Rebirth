@@ -26,20 +26,22 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 public final class ArmorUtil {
-    @Deprecated public static final List<Pair<Item, HazardClass[]>> external = new ExternalProtectionList();
+    @Deprecated public static List<Pair<Item, HazardClass[]>> external = new ExternalProtectionList();
     public static final String FILTER_KEY = "hfrFilter";
     public static final String FILTERK_KEY = FILTER_KEY;
     public static final int ASH_EXPOSURE_LIMIT_ASH_GLASSES = 64;
     public static final int ASH_EXPOSURE_LIMIT_SAND_OR_LIGHT = 192;
     public static final int ASH_EXPOSURE_LIMIT_UNPROTECTED = 243;
-    public static final HazardClass[] FULL_NO_LIGHT = new HazardClass[] {
+    public static HazardClass[] FULL_NO_LIGHT = new HazardClass[] {
             HazardClass.PARTICLE_COARSE,
             HazardClass.PARTICLE_FINE,
             HazardClass.GAS_LUNG,
@@ -48,7 +50,7 @@ public final class ArmorUtil {
             HazardClass.GAS_MONOXIDE,
             HazardClass.SAND
     };
-    public static final HazardClass[] FULL_PACKAGE = new HazardClass[] {
+    public static HazardClass[] FULL_PACKAGE = new HazardClass[] {
             HazardClass.PARTICLE_COARSE,
             HazardClass.PARTICLE_FINE,
             HazardClass.GAS_LUNG,
@@ -90,25 +92,27 @@ public final class ArmorUtil {
 
     private static final Set<String> FARADAY_KEYWORDS = Set.of(
             "netherite", "paa", "security", "cobalt");
+    private static final Set<Item> EXTERNAL_PROTECTION_LIST_ITEMS =
+            Collections.newSetFromMap(new IdentityHashMap<>());
 
     public static void register() {
-        HazmatRegistry.registerDefaultProtections();
+        ArmorRegistry.registerDefaultProtections();
     }
 
     public static void registerDefaultProtections() {
-        HazmatRegistry.registerDefaultProtections();
+        ArmorRegistry.registerDefaultProtections();
     }
 
     public static void registerProtection(Item item, HazardClass... hazardClasses) {
-        HazmatRegistry.registerProtection(item, hazardClasses);
+        ArmorRegistry.registerProtection(item, hazardClasses);
     }
 
     public static boolean registerProtection(ResourceLocation itemId, HazardClass... hazardClasses) {
-        return HazmatRegistry.registerProtection(itemId, hazardClasses);
+        return ArmorRegistry.registerProtection(itemId, hazardClasses);
     }
 
     public static boolean registerProtection(String itemId, HazardClass... hazardClasses) {
-        return HazmatRegistry.registerProtection(itemId, hazardClasses);
+        return ArmorRegistry.registerProtection(itemId, hazardClasses);
     }
 
     public static void registerExternalProtection(Item item, HazardClass... hazardClasses) {
@@ -124,7 +128,7 @@ public final class ArmorUtil {
     }
 
     public static EnumSet<HazardClass> removeProtection(Item item) {
-        return HazmatRegistry.removeProtection(item);
+        return enumSet(ArmorRegistry.removeProtection(item));
     }
 
     public static boolean removeProtection(ResourceLocation itemId) {
@@ -150,7 +154,7 @@ public final class ArmorUtil {
     }
 
     public static void clearProtections() {
-        HazmatRegistry.clearProtections();
+        ArmorRegistry.clearProtections();
     }
 
     public static void clearExternalProtections() {
@@ -158,7 +162,7 @@ public final class ArmorUtil {
     }
 
     public static void replaceProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
-        HazmatRegistry.replaceProtections(protections);
+        ArmorRegistry.replaceProtections(protections);
     }
 
     public static void replaceExternalProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
@@ -166,15 +170,15 @@ public final class ArmorUtil {
     }
 
     public static Set<HazardClass> getProtection(ItemStack stack) {
-        return HazmatRegistry.getProtection(stack);
+        return enumSet(ArmorRegistry.getProtection(stack));
     }
 
     public static Set<HazardClass> getProtectionFromItem(ItemStack stack, LivingEntity entity) {
-        return HazmatRegistry.getProtectionFromItem(stack, entity);
+        return enumSet(ArmorRegistry.getProtectionFromItem(stack, entity));
     }
 
     public static Map<Item, EnumSet<HazardClass>> protectionSnapshot() {
-        return HazmatRegistry.protectionSnapshot();
+        return ArmorRegistry.protectionSnapshot();
     }
 
     public static Map<Item, EnumSet<HazardClass>> externalProtectionDefaultsSnapshot() {
@@ -273,11 +277,11 @@ public final class ArmorUtil {
     }
 
     public static boolean hasProtection(LivingEntity entity, HazardClass hazardClass) {
-        return HazmatRegistry.getProtectionFromItem(getHelmet(entity), entity).contains(hazardClass);
+        return ArmorRegistry.getProtectionFromItem(getHelmet(entity), entity).contains(hazardClass);
     }
 
     public static boolean hasProtection(LivingEntity entity, EquipmentSlot slot, HazardClass hazardClass) {
-        return HazmatRegistry.hasProtection(entity, slot, hazardClass);
+        return ArmorRegistry.hasProtection(entity, slot, hazardClass);
     }
 
     public static boolean hasProtection(LivingEntity entity, int legacyArmorSlot, HazardClass hazardClass) {
@@ -286,7 +290,7 @@ public final class ArmorUtil {
     }
 
     public static boolean hasAllProtection(LivingEntity entity, HazardClass... hazardClasses) {
-        Set<HazardClass> protections = HazmatRegistry.getProtectionFromItem(getHelmet(entity), entity);
+        List<HazardClass> protections = ArmorRegistry.getProtectionFromItem(getHelmet(entity), entity);
         for (HazardClass hazardClass : hazardClasses) {
             if (!protections.contains(hazardClass)) {
                 return false;
@@ -296,7 +300,7 @@ public final class ArmorUtil {
     }
 
     public static boolean hasAllProtection(LivingEntity entity, EquipmentSlot slot, HazardClass... hazardClasses) {
-        return HazmatRegistry.hasAllProtection(entity, slot, hazardClasses);
+        return ArmorRegistry.hasAllProtection(entity, slot, hazardClasses);
     }
 
     public static boolean hasAllProtection(LivingEntity entity, int legacyArmorSlot, HazardClass... hazardClasses) {
@@ -305,7 +309,7 @@ public final class ArmorUtil {
     }
 
     public static boolean hasAnyProtection(LivingEntity entity, HazardClass... hazardClasses) {
-        Set<HazardClass> protections = HazmatRegistry.getProtectionFromItem(getHelmet(entity), entity);
+        List<HazardClass> protections = ArmorRegistry.getProtectionFromItem(getHelmet(entity), entity);
         for (HazardClass hazardClass : hazardClasses) {
             if (protections.contains(hazardClass)) {
                 return true;
@@ -315,7 +319,7 @@ public final class ArmorUtil {
     }
 
     public static boolean hasAnyProtection(LivingEntity entity, EquipmentSlot slot, HazardClass... hazardClasses) {
-        return HazmatRegistry.hasAnyProtection(entity, slot, hazardClasses);
+        return ArmorRegistry.hasAnyProtection(entity, slot, hazardClasses);
     }
 
     public static boolean hasAnyProtection(LivingEntity entity, int legacyArmorSlot, HazardClass... hazardClasses) {
@@ -901,13 +905,78 @@ public final class ArmorUtil {
         return item != null && item.isPresent() ? item.get() : null;
     }
 
+    private static EnumSet<HazardClass> enumSet(Collection<HazardClass> protections) {
+        EnumSet<HazardClass> set = EnumSet.noneOf(HazardClass.class);
+        if (protections != null) {
+            for (HazardClass protection : protections) {
+                if (protection != null) {
+                    set.add(protection);
+                }
+            }
+        }
+        return set;
+    }
+
+    static void syncExternalProtectionEntries() {
+        syncExternalProtectionEntries(external);
+    }
+
+    static void removeExternalProtectionEntries(Item item) {
+        if (external instanceof ExternalProtectionList list) {
+            list.removeEntriesForItem(item);
+        } else {
+            removeEntriesForItem(external, item);
+        }
+        EXTERNAL_PROTECTION_LIST_ITEMS.remove(item);
+    }
+
+    static void clearExternalProtectionEntriesOnly() {
+        if (external instanceof ExternalProtectionList list) {
+            list.clearEntriesOnly();
+        } else if (external != null) {
+            try {
+                external.clear();
+            } catch (UnsupportedOperationException ignored) {
+                // Source-compatible replacement lists may be immutable; replay will still read their contents.
+            }
+        }
+        EXTERNAL_PROTECTION_LIST_ITEMS.clear();
+    }
+
+    private static void syncExternalProtectionEntries(List<? extends Pair<Item, HazardClass[]>> entries) {
+        List<Item> previousItems = new ArrayList<>(EXTERNAL_PROTECTION_LIST_ITEMS);
+        EXTERNAL_PROTECTION_LIST_ITEMS.clear();
+        for (Item item : previousItems) {
+            HazmatRegistry.removeExternalProtection(item, false);
+        }
+        if (entries == null) {
+            return;
+        }
+        for (Pair<Item, HazardClass[]> entry : entries) {
+            if (entry != null && entry.getKey() != null && entry.getValue() != null) {
+                HazmatRegistry.registerExternalProtection(entry.getKey(), entry.getValue());
+                EXTERNAL_PROTECTION_LIST_ITEMS.add(entry.getKey());
+            }
+        }
+    }
+
+    private static void removeEntriesForItem(List<? extends Pair<Item, HazardClass[]>> entries, Item item) {
+        if (entries == null) {
+            return;
+        }
+        try {
+            entries.removeIf(entry -> entry != null && entry.getKey() == item);
+        } catch (UnsupportedOperationException ignored) {
+            // Source-compatible replacement lists may be immutable; replay will still read their contents.
+        }
+    }
+
     private static final class ExternalProtectionList extends AbstractList<Pair<Item, HazardClass[]>> {
         private final List<Pair<Item, HazardClass[]>> entries = new ArrayList<>();
 
         @Override
         public Pair<Item, HazardClass[]> get(int index) {
-            Pair<Item, HazardClass[]> entry = entries.get(index);
-            return new Pair<>(entry.getKey(), entry.getValue().clone());
+            return entries.get(index);
         }
 
         @Override
@@ -920,41 +989,32 @@ public final class ArmorUtil {
             if (element == null || element.getKey() == null || element.getValue() == null) {
                 return;
             }
-            Pair<Item, HazardClass[]> copy = new Pair<>(element.getKey(), element.getValue().clone());
-            entries.add(index, copy);
-            syncItem(copy.getKey());
+            entries.add(index, element);
+            syncEntries();
         }
 
         @Override
         public Pair<Item, HazardClass[]> set(int index, Pair<Item, HazardClass[]> element) {
             Pair<Item, HazardClass[]> previous = entries.get(index);
             if (element == null || element.getKey() == null || element.getValue() == null) {
-                return new Pair<>(previous.getKey(), previous.getValue().clone());
+                return previous;
             }
-            Pair<Item, HazardClass[]> copy = new Pair<>(element.getKey(), element.getValue().clone());
-            entries.set(index, copy);
-            syncItem(previous.getKey());
-            syncItem(copy.getKey());
-            return new Pair<>(previous.getKey(), previous.getValue().clone());
+            entries.set(index, element);
+            syncEntries();
+            return previous;
         }
 
         @Override
         public Pair<Item, HazardClass[]> remove(int index) {
             Pair<Item, HazardClass[]> previous = entries.remove(index);
-            syncItem(previous.getKey());
-            return new Pair<>(previous.getKey(), previous.getValue().clone());
+            syncEntries();
+            return previous;
         }
 
         @Override
         public void clear() {
-            List<Item> affected = entries.stream()
-                    .map(Pair::getKey)
-                    .distinct()
-                    .toList();
             entries.clear();
-            for (Item item : affected) {
-                syncItem(item);
-            }
+            syncEntries();
         }
 
         @Override
@@ -998,13 +1058,18 @@ public final class ArmorUtil {
             return true;
         }
 
-        private void syncItem(Item item) {
-            HazmatRegistry.removeExternalProtection(item);
-            for (Pair<Item, HazardClass[]> entry : entries) {
-                if (entry.getKey() == item) {
-                    HazmatRegistry.registerExternalProtection(entry.getKey(), entry.getValue());
-                }
-            }
+        private void syncEntries() {
+            syncExternalProtectionEntries(entries);
+        }
+
+        private void removeEntriesForItem(Item item) {
+            entries.removeIf(entry -> entry != null && entry.getKey() == item);
+            EXTERNAL_PROTECTION_LIST_ITEMS.remove(item);
+        }
+
+        private void clearEntriesOnly() {
+            entries.clear();
+            EXTERNAL_PROTECTION_LIST_ITEMS.clear();
         }
 
         private boolean matches(Pair<Item, HazardClass[]> entry, Pair<?, ?> candidate) {

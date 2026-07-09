@@ -32,9 +32,16 @@ public class ItemProcessingRecipe implements Recipe<Container> {
     private final Optional<HbmFluidStack> fluidInput;
     private final int duration;
     private final float productivity;
+    private final int sourceOrder;
 
     public ItemProcessingRecipe(ResourceLocation id, Machine machine, HbmIngredient input,
             List<HbmItemOutput> outputs, Optional<HbmFluidStack> fluidInput, int duration, float productivity) {
+        this(id, machine, input, outputs, fluidInput, duration, productivity, Integer.MAX_VALUE);
+    }
+
+    public ItemProcessingRecipe(ResourceLocation id, Machine machine, HbmIngredient input,
+            List<HbmItemOutput> outputs, Optional<HbmFluidStack> fluidInput, int duration, float productivity,
+            int sourceOrder) {
         this.id = id;
         this.machine = machine;
         this.input = input;
@@ -42,6 +49,7 @@ public class ItemProcessingRecipe implements Recipe<Container> {
         this.fluidInput = fluidInput == null ? Optional.empty() : fluidInput;
         this.duration = Math.max(0, duration);
         this.productivity = Math.max(0.0F, productivity);
+        this.sourceOrder = sourceOrder;
     }
 
     public Machine machine() {
@@ -66,6 +74,10 @@ public class ItemProcessingRecipe implements Recipe<Container> {
 
     public float productivity() {
         return productivity;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
     }
 
     public boolean matches(ItemStack stack) {
@@ -197,7 +209,9 @@ public class ItemProcessingRecipe implements Recipe<Container> {
                     : Optional.empty();
             int duration = GsonHelper.getAsInt(json, "duration", 0);
             float productivity = GsonHelper.getAsFloat(json, "productivity", 0.0F);
-            return new ItemProcessingRecipe(id, machine, input, outputs, fluidInput, duration, productivity);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
+            return new ItemProcessingRecipe(id, machine, input, outputs, fluidInput, duration, productivity,
+                    sourceOrder);
         }
 
         @Nullable
@@ -210,7 +224,9 @@ public class ItemProcessingRecipe implements Recipe<Container> {
                     : Optional.empty();
             int duration = buffer.readVarInt();
             float productivity = buffer.readFloat();
-            return new ItemProcessingRecipe(id, machine, input, outputs, fluidInput, duration, productivity);
+            int sourceOrder = buffer.readVarInt();
+            return new ItemProcessingRecipe(id, machine, input, outputs, fluidInput, duration, productivity,
+                    sourceOrder);
         }
 
         @Override
@@ -221,6 +237,7 @@ public class ItemProcessingRecipe implements Recipe<Container> {
             recipe.fluidInput.ifPresent(fluid -> writeFluidStack(buffer, fluid));
             buffer.writeVarInt(recipe.duration);
             buffer.writeFloat(recipe.productivity);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
 
         private static List<HbmItemOutput> readOutputs(JsonObject json) {

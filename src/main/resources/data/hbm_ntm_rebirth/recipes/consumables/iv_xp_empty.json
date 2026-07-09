@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:iv_empty"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_magic"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:iv_xp_empty"
+  }
+}

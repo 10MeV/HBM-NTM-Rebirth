@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "custom_localization": true,
+  "duration": 25,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:moon_turf"
+      }
+    }
+  ],
+  "internal_name": "chem.helium3",
+  "output_fluids": [
+    {
+      "amount": 125,
+      "fluid": "hbm_ntm_rebirth:helium3"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 2000,
+  "source_order": 5
+}

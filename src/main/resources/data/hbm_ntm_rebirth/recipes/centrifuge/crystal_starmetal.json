@@ -1,10 +1,30 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/starmetal" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_starmetal"
+    },
+    "legacy_id": "hbm:crystal_starmetal",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_dura_steel", "count": 3 },
-    { "item": "hbm_ntm_rebirth:powder_cobalt", "count": 3 },
-    { "item": "hbm_ntm_rebirth:powder_astatine", "count": 2 },
-    { "item": "hbm_ntm_rebirth:nugget_mercury", "count": 5 }
-  ]
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:powder_dura_steel"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:powder_cobalt"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_astatine"
+    },
+    {
+      "count": 5,
+      "item": "hbm_ntm_rebirth:ingot_mercury"
+    }
+  ],
+  "source_order": 54
 }

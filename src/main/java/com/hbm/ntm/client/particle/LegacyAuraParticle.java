@@ -14,6 +14,10 @@ public class LegacyAuraParticle extends TextureSheetParticle {
     private static final float LEGACY_QUAD_SIZE = 0.025F;
     private static final double LEGACY_LIFETIME_BASE = 8.0D;
     private final SpriteSet sprites;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private LegacyAuraParticle(ClientLevel level, double x, double y, double z,
             double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites,
@@ -35,6 +39,7 @@ public class LegacyAuraParticle extends TextureSheetParticle {
         this.alpha = 1.0F;
         this.setParticleSpeed(xSpeed, ySpeed, zSpeed);
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -42,6 +47,7 @@ public class LegacyAuraParticle extends TextureSheetParticle {
         super.tick();
         if (!this.removed) {
             this.setSpriteFromAge(sprites);
+            this.cacheSpriteUv();
         }
     }
 
@@ -50,8 +56,15 @@ public class LegacyAuraParticle extends TextureSheetParticle {
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     @Override

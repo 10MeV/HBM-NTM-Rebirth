@@ -1,20 +1,29 @@
 package com.hbm.ntm.satellite;
 
 import net.minecraft.nbt.CompoundTag;
+import com.hbm.util.fauxpointtwelve.NBTTagCompound;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractList;
 import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -28,11 +37,13 @@ public abstract class Satellite {
     public static final List<Class<? extends Satellite>> satellites = new LegacySatelliteClassList();
     public static final Map<Item, Class<? extends Satellite>> itemToClass = new LegacySatelliteItemClassMap();
 
+    private final List<InterfaceActions> legacyInterfaceActions = new ArrayList<>();
+    private final List<CoordActions> legacyCoordActions = new ArrayList<>();
     protected final EnumSet<InterfaceAction> interfaceActions = EnumSet.noneOf(InterfaceAction.class);
     protected final EnumSet<CoordAction> coordActions = EnumSet.noneOf(CoordAction.class);
     protected SatelliteInterface satelliteInterface = SatelliteInterface.NONE;
-    public final List<InterfaceActions> ifaceAcs = new LegacyInterfaceActionList();
-    public final List<CoordActions> coordAcs = new LegacyCoordActionList();
+    public List<InterfaceActions> ifaceAcs = new LegacyInterfaceActionList();
+    public List<CoordActions> coordAcs = new LegacyCoordActionList();
     public Interfaces satIface = Interfaces.NONE;
 
     static {
@@ -51,34 +62,16 @@ public abstract class Satellite {
     }
 
     public static Satellite create(int legacyId) {
-        LegacySatelliteType type = LegacySatelliteType.byLegacyId(legacyId);
-        if (type == null) {
-            return null;
-        }
-        return create(type);
+        return com.hbm.saveddata.satellites.Satellite.create(legacyId);
     }
 
     public static Satellite create(LegacySatelliteType type) {
-        if (type == null) {
-            return null;
-        }
-        return switch (type) {
-            case MAPPER -> new SatelliteMapper();
-            case SCANNER -> new SatelliteScanner();
-            case RADAR -> new SatelliteRadar();
-            case LASER -> new SatelliteLaser();
-            case RESONATOR -> new SatelliteResonator();
-            case RELAY -> new SatelliteRelay();
-            case MINER -> new SatelliteMiner();
-            case LUNAR_MINER -> new SatelliteLunarMiner();
-            case HORIZONS -> new SatelliteHorizons();
-        };
+        return type == null ? null : create(type.legacyId());
     }
 
     public static Satellite create(Class<? extends Satellite> satelliteClass) {
-        return getTypeFromClass(satelliteClass)
-                .map(Satellite::create)
-                .orElse(null);
+        int legacyId = getLegacyIdFromClass(satelliteClass);
+        return legacyId >= 0 ? create(legacyId) : null;
     }
 
     public static Satellite load(int legacyId, CompoundTag data) {
@@ -94,27 +87,50 @@ public abstract class Satellite {
         if (satellite == null) {
             return false;
         }
+        SatelliteSavedData data = SatelliteSavedData.get(level);
+        data.putSatelliteForOrbit(frequency, satellite);
         satellite.onOrbit(level, x, y, z);
-        SatelliteSavedData.get(level).putSatellite(frequency, satellite);
+        data.markDirty();
         return true;
+    }
+
+    public static boolean orbit(Level level, int legacyId, int frequency, double x, double y, double z) {
+        return level instanceof ServerLevel serverLevel && orbit(serverLevel, legacyId, frequency, x, y, z);
     }
 
     public static boolean orbit(ServerLevel level, LegacySatelliteType type, int frequency, double x, double y, double z) {
         return type != null && orbit(level, type.legacyId(), frequency, x, y, z);
     }
 
+    public static boolean orbit(Level level, LegacySatelliteType type, int frequency, double x, double y, double z) {
+        return type != null && orbit(level, type.legacyId(), frequency, x, y, z);
+    }
+
     public static boolean orbit(ServerLevel level, Class<? extends Satellite> satelliteClass, int frequency,
                                 double x, double y, double z) {
-        return getTypeFromClass(satelliteClass)
-                .map(type -> orbit(level, type, frequency, x, y, z))
-                .orElse(false);
+        int legacyId = getLegacyIdFromClass(satelliteClass);
+        return legacyId >= 0 && orbit(level, legacyId, frequency, x, y, z);
+    }
+
+    public static boolean orbit(Level level, Class<? extends Satellite> satelliteClass, int frequency,
+                                double x, double y, double z) {
+        int legacyId = getLegacyIdFromClass(satelliteClass);
+        return legacyId >= 0 && orbit(level, legacyId, frequency, x, y, z);
     }
 
     public static boolean orbit(ServerLevel level, Item item, int frequency, double x, double y, double z) {
         return orbit(level, getLegacyIdFromItem(item), frequency, x, y, z);
     }
 
+    public static boolean orbit(Level level, Item item, int frequency, double x, double y, double z) {
+        return orbit(level, getLegacyIdFromItem(item), frequency, x, y, z);
+    }
+
     public static boolean orbit(ServerLevel level, ItemStack stack, int frequency, double x, double y, double z) {
+        return stack != null && !stack.isEmpty() && orbit(level, stack.getItem(), frequency, x, y, z);
+    }
+
+    public static boolean orbit(Level level, ItemStack stack, int frequency, double x, double y, double z) {
         return stack != null && !stack.isEmpty() && orbit(level, stack.getItem(), frequency, x, y, z);
     }
 
@@ -125,27 +141,36 @@ public abstract class Satellite {
     }
 
     public static void registerSatelliteClass(Class<? extends Satellite> satelliteClass, LegacySatelliteType type) {
-        if (satelliteClass != null && type != null
-                && !CLASS_TYPES.containsKey(satelliteClass)
-                && !TYPE_CLASSES.containsKey(type)) {
+        if (satelliteClass != null && type != null && !CLASS_TYPES.containsKey(satelliteClass)) {
             CLASS_TYPES.put(satelliteClass, type);
-            TYPE_CLASSES.put(type, satelliteClass);
+            TYPE_CLASSES.putIfAbsent(type, satelliteClass);
         }
     }
 
     public static void registerSatellite(LegacySatelliteType type, Item item) {
-        registerSatelliteItem(item, type);
+        com.hbm.saveddata.satellites.Satellite.registerSatellite(type, item);
     }
 
     public static void registerSatellite(int legacyId, Item item) {
-        registerSatelliteItem(item, LegacySatelliteType.byLegacyId(legacyId));
+        registerSatellite(LegacySatelliteType.byLegacyId(legacyId), item);
     }
 
     public static void registerSatellite(Class<? extends Satellite> satelliteClass, Item item) {
-        getTypeFromClass(satelliteClass).ifPresent(type -> registerSatellite(type, item));
+        if (satelliteClass == null || com.hbm.saveddata.satellites.Satellite.class.isAssignableFrom(satelliteClass)) {
+            com.hbm.saveddata.satellites.Satellite.registerSatellite(satelliteClass, item);
+            return;
+        }
+        getTypeFromClass(satelliteClass).ifPresent(type -> registerSatelliteItem(item, type));
     }
 
     public static Optional<LegacySatelliteType> getTypeFromItem(Item item) {
+        int legacyId = getLegacyIdFromLegacyItemMap(item);
+        if (legacyId >= 0) {
+            return Optional.ofNullable(LegacySatelliteType.byLegacyId(legacyId));
+        }
+        if (legacyItemClassMap().containsKey(item)) {
+            return Optional.empty();
+        }
         if (item instanceof SatelliteChipItem chipItem && chipItem.satelliteType() != null) {
             return Optional.of(chipItem.satelliteType());
         }
@@ -157,11 +182,26 @@ public abstract class Satellite {
     }
 
     public static Optional<LegacySatelliteType> getTypeFromClass(Class<? extends Satellite> satelliteClass) {
+        if (isLegacySatelliteClass(satelliteClass)) {
+            int legacyId = getLegacyIdFromLegacyClassList(satelliteClass);
+            return legacyId >= 0 ? Optional.ofNullable(LegacySatelliteType.byLegacyId(legacyId)) : Optional.empty();
+        }
+        int legacyId = getLegacyIdFromLegacyClassList(satelliteClass);
+        if (legacyId >= 0) {
+            return Optional.ofNullable(LegacySatelliteType.byLegacyId(legacyId));
+        }
         return Optional.ofNullable(satelliteClass == null ? null : CLASS_TYPES.get(satelliteClass));
     }
 
     public static Optional<LegacySatelliteType> getTypeFromSatellite(Satellite satellite) {
-        return Optional.ofNullable(satellite == null ? null : satellite.type());
+        if (satellite == null) {
+            return Optional.empty();
+        }
+        Optional<LegacySatelliteType> listType = getTypeFromClass(satellite.getClass());
+        if (listType.isEmpty() && isLegacySatelliteClass(satellite.getClass())) {
+            return Optional.empty();
+        }
+        return listType.isPresent() ? listType : Optional.ofNullable(satellite.type());
     }
 
     public static Optional<Class<? extends Satellite>> getClassFromType(LegacySatelliteType type) {
@@ -169,40 +209,73 @@ public abstract class Satellite {
     }
 
     public static Optional<Class<? extends Satellite>> getClassFromLegacyId(int legacyId) {
-        return getClassFromType(LegacySatelliteType.byLegacyId(legacyId));
+        return getLegacyClassAt(legacyId);
     }
 
     public static Optional<Class<? extends Satellite>> getClassFromItem(Item item) {
+        Optional<Class<? extends Satellite>> legacyClass = getLegacyClassFromItemMap(item);
+        if (legacyClass.isPresent() || legacyItemClassMap().containsKey(item)) {
+            return legacyClass;
+        }
         return getTypeFromItem(item).flatMap(Satellite::getClassFromType);
     }
 
     public static Optional<Class<? extends Satellite>> getClassFromStack(ItemStack stack) {
-        return getTypeFromStack(stack).flatMap(Satellite::getClassFromType);
+        return stack == null || stack.isEmpty() ? Optional.empty() : getClassFromItem(stack.getItem());
     }
 
     public static Optional<Class<? extends Satellite>> getClassFromSatellite(Satellite satellite) {
-        return getTypeFromSatellite(satellite).flatMap(Satellite::getClassFromType);
+        if (satellite == null) {
+            return Optional.empty();
+        }
+        if (isLegacySatelliteClass(satellite.getClass())) {
+            return getLegacyClassAt(getLegacyIdFromSatellite(satellite));
+        }
+        Optional<Class<? extends Satellite>> legacyClass = getLegacyClassAt(getLegacyIdFromSatellite(satellite));
+        return legacyClass.isPresent() ? legacyClass : getTypeFromSatellite(satellite).flatMap(Satellite::getClassFromType);
     }
 
     public static int getLegacyIdFromItem(Item item) {
+        int legacyId = getLegacyIdFromLegacyItemMap(item);
+        if (legacyId >= 0) {
+            return legacyId;
+        }
+        if (legacyItemClassMap().containsKey(item)) {
+            return -1;
+        }
         return getTypeFromItem(item)
                 .map(LegacySatelliteType::legacyId)
                 .orElse(-1);
     }
 
     public static int getLegacyIdFromStack(ItemStack stack) {
-        return getTypeFromStack(stack)
-                .map(LegacySatelliteType::legacyId)
-                .orElse(-1);
+        return stack == null || stack.isEmpty() ? -1 : getLegacyIdFromItem(stack.getItem());
     }
 
     public static int getLegacyIdFromClass(Class<? extends Satellite> satelliteClass) {
+        if (isLegacySatelliteClass(satelliteClass)) {
+            return getLegacyIdFromLegacyClassList(satelliteClass);
+        }
+        int legacyId = getLegacyIdFromLegacyClassList(satelliteClass);
+        if (legacyId >= 0) {
+            return legacyId;
+        }
         return getTypeFromClass(satelliteClass)
                 .map(LegacySatelliteType::legacyId)
                 .orElse(-1);
     }
 
     public static int getLegacyIdFromSatellite(Satellite satellite) {
+        if (satellite == null) {
+            return -1;
+        }
+        if (isLegacySatelliteClass(satellite.getClass())) {
+            return getLegacyIdFromLegacyClassList(satellite.getClass());
+        }
+        int legacyId = getLegacyIdFromLegacyClassList(satellite.getClass());
+        if (legacyId >= 0) {
+            return legacyId;
+        }
         return getTypeFromSatellite(satellite)
                 .map(LegacySatelliteType::legacyId)
                 .orElse(-1);
@@ -220,20 +293,41 @@ public abstract class Satellite {
         return getLegacyIdFromSatellite(satellite);
     }
 
+    public static boolean matchesClass(@Nullable Satellite satellite,
+                                       @Nullable Class<? extends Satellite> satelliteClass) {
+        int legacyId = getLegacyIdFromClass(satelliteClass);
+        return satellite != null && legacyId >= 0 && getLegacyIdFromSatellite(satellite) == legacyId;
+    }
+
     public static Optional<String> getCargoPoolFromItem(Item item) {
+        boolean legacyItemEntry = legacyItemClassMap().containsKey(item);
+        String legacyCargo = com.hbm.saveddata.satellites.SatelliteMiner.getCargoForItem(item);
+        if (legacyCargo != null) {
+            return Optional.of(legacyCargo);
+        }
+        if (legacyItemEntry) {
+            return Optional.empty();
+        }
         return getTypeFromItem(item).flatMap(Satellite::cargoPoolForType);
     }
 
     public static Optional<String> getCargoPoolFromStack(ItemStack stack) {
-        return getTypeFromStack(stack).flatMap(Satellite::cargoPoolForType);
+        return stack == null || stack.isEmpty() ? Optional.empty() : getCargoPoolFromItem(stack.getItem());
     }
 
     public static Optional<String> getCargoPoolFromClass(Class<? extends Satellite> satelliteClass) {
+        String legacyCargo = com.hbm.saveddata.satellites.SatelliteMiner.getCargoForClass(satelliteClass);
+        if (legacyCargo != null) {
+            return Optional.of(legacyCargo);
+        }
+        if (isLegacySatelliteClass(satelliteClass)) {
+            return Optional.empty();
+        }
         return getTypeFromClass(satelliteClass).flatMap(Satellite::cargoPoolForType);
     }
 
     public static Optional<String> getCargoPoolFromSatellite(Satellite satellite) {
-        return getTypeFromSatellite(satellite).flatMap(Satellite::cargoPoolForType);
+        return satellite == null ? Optional.empty() : satellite.cargoPool();
     }
 
     @Nullable
@@ -257,7 +351,7 @@ public abstract class Satellite {
     }
 
     public static void registerCargo(LegacySatelliteType type, String cargoPool) {
-        if (type == null || cargoPool == null || cargoPool.isBlank()) {
+        if (type == null) {
             return;
         }
         CARGO_POOLS.put(type, cargoPool);
@@ -267,7 +361,7 @@ public abstract class Satellite {
         registerCargo(LegacySatelliteType.byLegacyId(legacyId), cargoPool);
     }
 
-    public static void registerCargo(Class<? extends Satellite> satelliteClass, String cargoPool) {
+    public static void registerCargoForClass(Class<? extends Satellite> satelliteClass, String cargoPool) {
         getTypeFromClass(satelliteClass).ifPresent(type -> registerCargo(type, cargoPool));
     }
 
@@ -280,15 +374,11 @@ public abstract class Satellite {
     }
 
     public static boolean hasCargoPool(Class<? extends Satellite> satelliteClass) {
-        return getTypeFromClass(satelliteClass)
-                .filter(Satellite::hasCargoPool)
-                .isPresent();
+        return getCargoPoolFromClass(satelliteClass).isPresent();
     }
 
     public static boolean hasCargoPool(Satellite satellite) {
-        return getTypeFromSatellite(satellite)
-                .filter(Satellite::hasCargoPool)
-                .isPresent();
+        return satellite != null && satellite.cargoPool().isPresent();
     }
 
     @Nullable
@@ -309,83 +399,356 @@ public abstract class Satellite {
     }
 
     public static List<Class<? extends Satellite>> satelliteClassesSnapshot() {
-        return satelliteTypesSnapshot().stream()
-                .map(TYPE_CLASSES::get)
-                .filter(java.util.Objects::nonNull)
-                .toList();
+        return Collections.unmodifiableList(new ArrayList<>(satellites));
     }
 
     public static Map<Item, LegacySatelliteType> itemTypesSnapshot() {
-        return Map.copyOf(ITEM_TYPES);
+        Map<Item, LegacySatelliteType> result = new IdentityHashMap<>(ITEM_TYPES);
+        for (Map.Entry<Item, Class<? extends com.hbm.saveddata.satellites.Satellite>> entry :
+                legacyItemClassMap().entrySet()) {
+            LegacySatelliteType type = LegacySatelliteType.byLegacyId(
+                    getLegacyIdFromLegacyClassList(entry.getValue()));
+            if (type != null) {
+                result.put(entry.getKey(), type);
+            } else {
+                result.remove(entry.getKey());
+            }
+        }
+        return Collections.unmodifiableMap(result);
     }
 
     public static Map<Item, Class<? extends Satellite>> itemClassesSnapshot() {
-        return Map.copyOf(itemToClass);
+        return Collections.unmodifiableMap(new HashMap<>(itemToClass));
     }
 
     public static Map<LegacySatelliteType, String> cargoPoolsSnapshot() {
-        return Map.copyOf(CARGO_POOLS);
+        return Collections.unmodifiableMap(new EnumMap<>(CARGO_POOLS));
     }
 
     private static final class LegacySatelliteClassList extends AbstractList<Class<? extends Satellite>> {
+        private final List<Class<? extends com.hbm.saveddata.satellites.Satellite>> backing;
+
+        private LegacySatelliteClassList() {
+            this(null);
+        }
+
+        private LegacySatelliteClassList(
+                @Nullable List<Class<? extends com.hbm.saveddata.satellites.Satellite>> backing) {
+            this.backing = backing;
+        }
+
+        private List<Class<? extends com.hbm.saveddata.satellites.Satellite>> backing() {
+            return backing == null ? legacySatelliteClasses() : backing;
+        }
+
         @Override
         public Class<? extends Satellite> get(int index) {
-            LegacySatelliteType type = LegacySatelliteType.byLegacyId(index);
-            if (type == null) {
-                throw new IndexOutOfBoundsException(index);
-            }
-            Class<? extends Satellite> satelliteClass = TYPE_CLASSES.get(type);
-            if (satelliteClass == null) {
-                throw new IndexOutOfBoundsException(index);
-            }
-            return satelliteClass;
+            return widenLegacyClassOrNull(backing().get(index));
         }
 
         @Override
         public int size() {
-            return (int) satelliteTypesSnapshot().stream()
-                    .map(TYPE_CLASSES::get)
-                    .filter(java.util.Objects::nonNull)
-                    .count();
+            return backing().size();
+        }
+
+        @Override
+        public void add(int index, Class<? extends Satellite> element) {
+            backing().add(index, narrowLegacyClassOrNull(element));
+        }
+
+        @Override
+        public Class<? extends Satellite> set(int index, Class<? extends Satellite> element) {
+            return widenLegacyClassOrNull(backing().set(index, narrowLegacyClassOrNull(element)));
+        }
+
+        @Override
+        public Class<? extends Satellite> remove(int index) {
+            return widenLegacyClassOrNull(backing().remove(index));
+        }
+
+        @Override
+        public void clear() {
+            backing().clear();
+        }
+
+        @Override
+        public ListIterator<Class<? extends Satellite>> listIterator(int index) {
+            ListIterator<Class<? extends com.hbm.saveddata.satellites.Satellite>> iterator =
+                    backing().listIterator(index);
+            return new ListIterator<>() {
+                @Override
+                public boolean hasNext() {
+                    return iterator.hasNext();
+                }
+
+                @Override
+                public Class<? extends Satellite> next() {
+                    return widenLegacyClassOrNull(iterator.next());
+                }
+
+                @Override
+                public boolean hasPrevious() {
+                    return iterator.hasPrevious();
+                }
+
+                @Override
+                public Class<? extends Satellite> previous() {
+                    return widenLegacyClassOrNull(iterator.previous());
+                }
+
+                @Override
+                public int nextIndex() {
+                    return iterator.nextIndex();
+                }
+
+                @Override
+                public int previousIndex() {
+                    return iterator.previousIndex();
+                }
+
+                @Override
+                public void remove() {
+                    iterator.remove();
+                }
+
+                @Override
+                public void set(Class<? extends Satellite> element) {
+                    iterator.set(narrowLegacyClassOrNull(element));
+                }
+
+                @Override
+                public void add(Class<? extends Satellite> element) {
+                    iterator.add(narrowLegacyClassOrNull(element));
+                }
+            };
+        }
+
+        @Override
+        public List<Class<? extends Satellite>> subList(int fromIndex, int toIndex) {
+            return new LegacySatelliteClassList(backing().subList(fromIndex, toIndex));
         }
     }
 
     private static final class LegacySatelliteItemClassMap extends AbstractMap<Item, Class<? extends Satellite>> {
         @Override
         public Class<? extends Satellite> get(Object key) {
-            if (!(key instanceof Item item)) {
-                return null;
+            Class<? extends com.hbm.saveddata.satellites.Satellite> legacyClass =
+                    legacyItemClassMap().get(key);
+            if (legacyItemClassMap().containsKey(key)) {
+                return widenLegacyClassOrNull(legacyClass);
             }
-            return getClassFromItem(item).orElse(null);
+            return null;
         }
 
         @Override
         public boolean containsKey(Object key) {
-            return get(key) != null;
+            return legacyItemClassMap().containsKey(key);
         }
 
         @Override
         public boolean containsValue(Object value) {
-            return value instanceof Class<?> satelliteClass
-                    && Satellite.class.isAssignableFrom(satelliteClass)
-                    && CLASS_TYPES.containsKey(satelliteClass);
+            if (value == null) {
+                return legacyItemClassMap().containsValue(null);
+            }
+            if (!(value instanceof Class<?> satelliteClass) || !Satellite.class.isAssignableFrom(satelliteClass)) {
+                return false;
+            }
+            if (com.hbm.saveddata.satellites.Satellite.class.isAssignableFrom(satelliteClass)) {
+                return legacyItemClassMap().containsValue(
+                        satelliteClass.asSubclass(com.hbm.saveddata.satellites.Satellite.class));
+            }
+            return false;
+        }
+
+        @Override
+        public Class<? extends Satellite> put(Item key, Class<? extends Satellite> value) {
+            return widenLegacyClassOrNull(legacyItemClassMap().put(key, narrowLegacyClassOrNull(value)));
+        }
+
+        @Override
+        public Class<? extends Satellite> remove(Object key) {
+            return widenLegacyClassOrNull(legacyItemClassMap().remove(key));
+        }
+
+        @Override
+        public void clear() {
+            legacyItemClassMap().clear();
         }
 
         @Override
         public Set<Entry<Item, Class<? extends Satellite>>> entrySet() {
-            return ITEM_TYPES.entrySet().stream()
-                    .map(entry -> getClassFromType(entry.getValue())
-                            .map(satelliteClass -> new AbstractMap.SimpleImmutableEntry<Item,
-                                    Class<? extends Satellite>>(entry.getKey(), satelliteClass)))
-                    .flatMap(Optional::stream)
-                    .collect(java.util.stream.Collectors.toUnmodifiableSet());
+            return new LegacySatelliteItemClassEntrySet();
         }
+    }
+
+    private static final class LegacySatelliteItemClassEntrySet
+            extends AbstractSet<Map.Entry<Item, Class<? extends Satellite>>> {
+        @Override
+        public Iterator<Map.Entry<Item, Class<? extends Satellite>>> iterator() {
+            Iterator<Map.Entry<Item, Class<? extends com.hbm.saveddata.satellites.Satellite>>> iterator =
+                    legacyItemClassMap().entrySet().iterator();
+            return new Iterator<>() {
+                @Override
+                public boolean hasNext() {
+                    return iterator.hasNext();
+                }
+
+                @Override
+                public Map.Entry<Item, Class<? extends Satellite>> next() {
+                    return new LegacySatelliteItemClassEntry(iterator.next());
+                }
+
+                @Override
+                public void remove() {
+                    iterator.remove();
+                }
+            };
+        }
+
+        @Override
+        public int size() {
+            return legacyItemClassMap().size();
+        }
+
+        @Override
+        public void clear() {
+            legacyItemClassMap().clear();
+        }
+
+        @Override
+        public boolean contains(Object object) {
+            if (!(object instanceof Map.Entry<?, ?> entry) || !legacyItemClassMap().containsKey(entry.getKey())) {
+                return false;
+            }
+            Class<? extends com.hbm.saveddata.satellites.Satellite> value =
+                    legacyItemClassMap().get(entry.getKey());
+            return java.util.Objects.equals(widenLegacyClassOrNull(value), entry.getValue());
+        }
+
+        @Override
+        public boolean remove(Object object) {
+            if (!contains(object)) {
+                return false;
+            }
+            legacyItemClassMap().remove(((Map.Entry<?, ?>) object).getKey());
+            return true;
+        }
+    }
+
+    private static final class LegacySatelliteItemClassEntry
+            implements Map.Entry<Item, Class<? extends Satellite>> {
+        private final Map.Entry<Item, Class<? extends com.hbm.saveddata.satellites.Satellite>> backing;
+
+        private LegacySatelliteItemClassEntry(
+                Map.Entry<Item, Class<? extends com.hbm.saveddata.satellites.Satellite>> backing) {
+            this.backing = backing;
+        }
+
+        @Override
+        public Item getKey() {
+            return backing.getKey();
+        }
+
+        @Override
+        public Class<? extends Satellite> getValue() {
+            return widenLegacyClassOrNull(backing.getValue());
+        }
+
+        @Override
+        public Class<? extends Satellite> setValue(Class<? extends Satellite> value) {
+            return widenLegacyClassOrNull(backing.setValue(narrowLegacyClassOrNull(value)));
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (!(object instanceof Map.Entry<?, ?> entry)) {
+                return false;
+            }
+            return java.util.Objects.equals(getKey(), entry.getKey())
+                    && java.util.Objects.equals(getValue(), entry.getValue());
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hashCode(getKey()) ^ java.util.Objects.hashCode(getValue());
+        }
+
+        @Override
+        public String toString() {
+            return getKey() + "=" + getValue();
+        }
+    }
+
+    private static List<Class<? extends com.hbm.saveddata.satellites.Satellite>> legacySatelliteClasses() {
+        return com.hbm.saveddata.satellites.Satellite.satellites;
+    }
+
+    private static Map<Item, Class<? extends com.hbm.saveddata.satellites.Satellite>> legacyItemClassMap() {
+        return com.hbm.saveddata.satellites.Satellite.itemToClass;
+    }
+
+    private static boolean isLegacySatelliteClass(@Nullable Class<?> satelliteClass) {
+        return satelliteClass != null
+                && com.hbm.saveddata.satellites.Satellite.class.isAssignableFrom(satelliteClass);
+    }
+
+    private static Optional<Class<? extends Satellite>> getLegacyClassAt(int legacyId) {
+        if (legacyId < 0 || legacyId >= legacySatelliteClasses().size()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(widenLegacyClassOrNull(legacySatelliteClasses().get(legacyId)));
+    }
+
+    private static Optional<Class<? extends Satellite>> getLegacyClassFromItemMap(Item item) {
+        Class<? extends com.hbm.saveddata.satellites.Satellite> satelliteClass =
+                legacyItemClassMap().get(item);
+        return satelliteClass == null ? Optional.empty() : Optional.of(widenLegacyClass(satelliteClass));
+    }
+
+    private static int getLegacyIdFromLegacyItemMap(Item item) {
+        Class<? extends com.hbm.saveddata.satellites.Satellite> satelliteClass =
+                legacyItemClassMap().get(item);
+        return legacySatelliteClasses().indexOf(satelliteClass);
+    }
+
+    private static int getLegacyIdFromLegacyClassList(Class<? extends Satellite> satelliteClass) {
+        if (satelliteClass == null
+                || !com.hbm.saveddata.satellites.Satellite.class.isAssignableFrom(satelliteClass)) {
+            return -1;
+        }
+        return legacySatelliteClasses().indexOf(
+                satelliteClass.asSubclass(com.hbm.saveddata.satellites.Satellite.class));
+    }
+
+    private static Class<? extends Satellite> widenLegacyClass(
+            Class<? extends com.hbm.saveddata.satellites.Satellite> satelliteClass) {
+        return satelliteClass.asSubclass(Satellite.class);
+    }
+
+    @Nullable
+    private static Class<? extends Satellite> widenLegacyClassOrNull(
+            @Nullable Class<? extends com.hbm.saveddata.satellites.Satellite> satelliteClass) {
+        return satelliteClass == null ? null : widenLegacyClass(satelliteClass);
+    }
+
+    private static Class<? extends com.hbm.saveddata.satellites.Satellite> narrowLegacyClass(
+            Class<? extends Satellite> satelliteClass) {
+        if (satelliteClass == null) {
+            throw new NullPointerException("satelliteClass");
+        }
+        return satelliteClass.asSubclass(com.hbm.saveddata.satellites.Satellite.class);
+    }
+
+    @Nullable
+    private static Class<? extends com.hbm.saveddata.satellites.Satellite> narrowLegacyClassOrNull(
+            @Nullable Class<? extends Satellite> satelliteClass) {
+        return satelliteClass == null ? null : narrowLegacyClass(satelliteClass);
     }
 
     public abstract LegacySatelliteType type();
 
     public int legacyId() {
-        return type().legacyId();
+        return getLegacyIdFromSatellite(this);
     }
 
     public int getID() {
@@ -405,15 +768,15 @@ public abstract class Satellite {
     }
 
     public Set<InterfaceAction> interfaceActions() {
-        return Set.copyOf(interfaceActions);
+        return Set.copyOf(currentInterfaceActionSet());
     }
 
     public Set<CoordAction> coordActions() {
-        return Set.copyOf(coordActions);
+        return Set.copyOf(currentCoordActionSet());
     }
 
     public boolean hasInterfaceAction(InterfaceAction action) {
-        return action != null && interfaceActions.contains(action);
+        return action != null && currentInterfaceActionSet().contains(action);
     }
 
     public boolean hasInterfaceAction(InterfaceActions action) {
@@ -421,7 +784,7 @@ public abstract class Satellite {
     }
 
     public boolean hasCoordAction(CoordAction action) {
-        return action != null && coordActions.contains(action);
+        return action != null && currentCoordActionSet().contains(action);
     }
 
     public boolean hasCoordAction(CoordActions action) {
@@ -439,26 +802,22 @@ public abstract class Satellite {
     }
 
     protected void addInterfaceAction(InterfaceAction action) {
-        if (action != null) {
-            interfaceActions.add(action);
-        }
+        addInterfaceAction(InterfaceActions.fromModern(action));
     }
 
     protected void addInterfaceAction(InterfaceActions action) {
         if (action != null) {
-            addInterfaceAction(action.modern());
+            ifaceAcs.add(action);
         }
     }
 
     protected void addCoordAction(CoordAction action) {
-        if (action != null) {
-            coordActions.add(action);
-        }
+        addCoordAction(CoordActions.fromModern(action));
     }
 
     protected void addCoordAction(CoordActions action) {
         if (action != null) {
-            addCoordAction(action.modern());
+            coordAcs.add(action);
         }
     }
 
@@ -466,53 +825,87 @@ public abstract class Satellite {
         return Interfaces.fromModern(satelliteInterface());
     }
 
+    private void rebuildInterfaceActionSet() {
+        interfaceActions.clear();
+        for (InterfaceActions action : legacyInterfaceActions) {
+            if (action != null) {
+                interfaceActions.add(action.modern());
+            }
+        }
+    }
+
+    private void rebuildCoordActionSet() {
+        coordActions.clear();
+        for (CoordActions action : legacyCoordActions) {
+            if (action != null) {
+                coordActions.add(action.modern());
+            }
+        }
+    }
+
+    private EnumSet<InterfaceAction> currentInterfaceActionSet() {
+        EnumSet<InterfaceAction> actions = EnumSet.noneOf(InterfaceAction.class);
+        for (InterfaceActions action : ifaceAcs) {
+            if (action != null) {
+                actions.add(action.modern());
+            }
+        }
+        return actions;
+    }
+
+    private EnumSet<CoordAction> currentCoordActionSet() {
+        EnumSet<CoordAction> actions = EnumSet.noneOf(CoordAction.class);
+        for (CoordActions action : coordAcs) {
+            if (action != null) {
+                actions.add(action.modern());
+            }
+        }
+        return actions;
+    }
+
     private final class LegacyInterfaceActionList extends AbstractList<InterfaceActions> {
         @Override
         public InterfaceActions get(int index) {
-            int current = 0;
-            for (InterfaceActions action : InterfaceActions.values()) {
-                if (interfaceActions.contains(action.modern())) {
-                    if (current == index) {
-                        return action;
-                    }
-                    current++;
-                }
-            }
-            throw new IndexOutOfBoundsException(index);
+            return legacyInterfaceActions.get(index);
         }
 
         @Override
         public int size() {
-            return interfaceActions.size();
+            return legacyInterfaceActions.size();
         }
 
         @Override
         public void add(int index, InterfaceActions element) {
-            addInterfaceAction(element);
+            legacyInterfaceActions.add(index, element);
+            rebuildInterfaceActionSet();
         }
 
         @Override
         public InterfaceActions set(int index, InterfaceActions element) {
-            InterfaceActions old = get(index);
-            remove(index);
-            addInterfaceAction(element);
+            InterfaceActions old = legacyInterfaceActions.set(index, element);
+            rebuildInterfaceActionSet();
             return old;
         }
 
         @Override
         public InterfaceActions remove(int index) {
-            InterfaceActions old = get(index);
-            interfaceActions.remove(old.modern());
+            InterfaceActions old = legacyInterfaceActions.remove(index);
+            rebuildInterfaceActionSet();
             return old;
         }
 
         @Override
         public boolean remove(Object object) {
-            return object instanceof InterfaceActions action && interfaceActions.remove(action.modern());
+            boolean removed = legacyInterfaceActions.remove(object);
+            if (removed) {
+                rebuildInterfaceActionSet();
+            }
+            return removed;
         }
 
         @Override
         public void clear() {
+            legacyInterfaceActions.clear();
             interfaceActions.clear();
         }
     }
@@ -520,50 +913,46 @@ public abstract class Satellite {
     private final class LegacyCoordActionList extends AbstractList<CoordActions> {
         @Override
         public CoordActions get(int index) {
-            int current = 0;
-            for (CoordActions action : CoordActions.values()) {
-                if (coordActions.contains(action.modern())) {
-                    if (current == index) {
-                        return action;
-                    }
-                    current++;
-                }
-            }
-            throw new IndexOutOfBoundsException(index);
+            return legacyCoordActions.get(index);
         }
 
         @Override
         public int size() {
-            return coordActions.size();
+            return legacyCoordActions.size();
         }
 
         @Override
         public void add(int index, CoordActions element) {
-            addCoordAction(element);
+            legacyCoordActions.add(index, element);
+            rebuildCoordActionSet();
         }
 
         @Override
         public CoordActions set(int index, CoordActions element) {
-            CoordActions old = get(index);
-            remove(index);
-            addCoordAction(element);
+            CoordActions old = legacyCoordActions.set(index, element);
+            rebuildCoordActionSet();
             return old;
         }
 
         @Override
         public CoordActions remove(int index) {
-            CoordActions old = get(index);
-            coordActions.remove(old.modern());
+            CoordActions old = legacyCoordActions.remove(index);
+            rebuildCoordActionSet();
             return old;
         }
 
         @Override
         public boolean remove(Object object) {
-            return object instanceof CoordActions action && coordActions.remove(action.modern());
+            boolean removed = legacyCoordActions.remove(object);
+            if (removed) {
+                rebuildCoordActionSet();
+            }
+            return removed;
         }
 
         @Override
         public void clear() {
+            legacyCoordActions.clear();
             coordActions.clear();
         }
     }
@@ -574,13 +963,31 @@ public abstract class Satellite {
         return tag;
     }
 
+    public NBTTagCompound saveLegacyData() {
+        NBTTagCompound tag = new NBTTagCompound();
+        writeToNBT(tag);
+        return tag;
+    }
+
     public void save(CompoundTag tag) {
+    }
+
+    public void save(NBTTagCompound tag) {
+        save((CompoundTag) tag);
     }
 
     public void load(CompoundTag tag) {
     }
 
+    public void load(NBTTagCompound tag) {
+        load((CompoundTag) tag);
+    }
+
     public void writeToNBT(CompoundTag tag) {
+        save(tag);
+    }
+
+    public void writeToNBT(NBTTagCompound tag) {
         save(tag);
     }
 
@@ -588,22 +995,52 @@ public abstract class Satellite {
         load(tag);
     }
 
+    public void readFromNBT(NBTTagCompound tag) {
+        load(tag);
+    }
+
     public void onOrbit(ServerLevel level, double x, double y, double z) {
+        onOrbit((Level) level, x, y, z);
+    }
+
+    public void onOrbit(Level level, double x, double y, double z) {
         // Achievements and gameplay side effects are restored with the concrete satellite systems.
     }
 
     public void onClick(ServerLevel level, int x, int z) {
     }
 
+    public void onClick(Level level, int x, int z) {
+        if (level instanceof ServerLevel serverLevel) {
+            onClick(serverLevel, x, z);
+        }
+    }
+
     public boolean tryClick(ServerLevel level, int x, int z) {
         return false;
+    }
+
+    public boolean tryClick(Level level, int x, int z) {
+        return level instanceof ServerLevel serverLevel && tryClick(serverLevel, x, z);
     }
 
     public void onCoordAction(ServerLevel level, ServerPlayer player, int x, int y, int z) {
     }
 
+    public void onCoordAction(Level level, Player player, int x, int y, int z) {
+        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
+            onCoordAction(serverLevel, serverPlayer, x, y, z);
+        }
+    }
+
     public boolean tryCoordAction(ServerLevel level, ServerPlayer player, int x, int y, int z) {
         return false;
+    }
+
+    public boolean tryCoordAction(Level level, Player player, int x, int y, int z) {
+        return level instanceof ServerLevel serverLevel
+                && player instanceof ServerPlayer serverPlayer
+                && tryCoordAction(serverLevel, serverPlayer, x, y, z);
     }
 
     public Optional<String> cargoPool() {
@@ -650,6 +1087,10 @@ public abstract class Satellite {
         private InterfaceAction modern() {
             return InterfaceAction.valueOf(name());
         }
+
+        private static InterfaceActions fromModern(InterfaceAction action) {
+            return action == null ? null : InterfaceActions.valueOf(action.name());
+        }
     }
 
     public enum CoordActions {
@@ -657,6 +1098,10 @@ public abstract class Satellite {
 
         private CoordAction modern() {
             return CoordAction.valueOf(name());
+        }
+
+        private static CoordActions fromModern(CoordAction action) {
+            return action == null ? null : CoordActions.valueOf(action.name());
         }
     }
 

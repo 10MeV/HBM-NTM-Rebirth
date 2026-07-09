@@ -77,7 +77,7 @@ public class PADetectorBlockEntity extends PABlockEntity implements PAParticleUs
         setPower(getPower() - USAGE);
 
         ParticleAcceleratorRecipeRegistry.Recipe recipe =
-                ParticleAcceleratorRecipeRegistry.getOutput(particle.input1(), particle.input2());
+                ParticleAcceleratorRecipeRegistry.getOutput(level, particle.input1(), particle.input2());
         if (recipe == null) {
             particle.crash(PASourceBlockEntity.PAState.CRASH_NORECIPE);
             return;

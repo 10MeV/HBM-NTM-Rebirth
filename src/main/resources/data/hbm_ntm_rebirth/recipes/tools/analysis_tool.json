@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "S": {
+      "tag": "forge:ingots/steel"
+    }
+  },
+  "pattern": [
+    "  G",
+    " S ",
+    "S  "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:analysis_tool"
+  },
+  "show_notification": true
+}

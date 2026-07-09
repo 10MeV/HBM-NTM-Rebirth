@@ -1,5 +1,6 @@
 package com.hbm.ntm.radiation;
 
+import com.hbm.entity.mob.EntityCreeperNuclear;
 import com.hbm.ntm.api.RadiationImmune;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.config.RadiationConfig;
@@ -47,6 +48,9 @@ public final class RadiationUtil {
     }
 
     public static boolean contaminate(LivingEntity entity, HazardType hazard, ContaminationType contamination, float amount) {
+        if (!Float.isFinite(amount)) {
+            return false;
+        }
         if (hazard == HazardType.RADIATION) {
             RadiationData.setRadEnv(entity, RadiationData.getRadEnv(entity) + amount);
         }
@@ -104,6 +108,9 @@ public final class RadiationUtil {
     }
 
     public static void applyDigammaData(LivingEntity entity, float amount) {
+        if (!Float.isFinite(amount)) {
+            return;
+        }
         if (isDigammaDataImmune(entity)) {
             return;
         }
@@ -123,6 +130,9 @@ public final class RadiationUtil {
     }
 
     public static void applyDigammaDirect(LivingEntity entity, float amount) {
+        if (!Float.isFinite(amount)) {
+            return;
+        }
         if (isRadiationImmuneMarker(entity)) {
             return;
         }
@@ -162,10 +172,47 @@ public final class RadiationUtil {
         return false;
     }
 
-    public static boolean isRadImmune(LivingEntity entity) {
+    public static boolean isRadImmune(Entity entity) {
+        if (entity instanceof LivingEntity living) {
+            return isRadImmune(living);
+        }
         return isRegisteredRadImmune(entity)
                 || isRadiationImmuneMarker(entity)
-                || entity.hasEffect(ModEffects.MUTATION.get())
+                || isLegacyImmuneEntityName(entity);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static boolean isRadImmune(Entity entity, HashSet<Class> immuneEntities) {
+        if (immuneEntities == LEGACY_IMMUNE_ENTITIES) {
+            return isRadImmune(entity);
+        }
+        if (entity instanceof LivingEntity living && living.hasEffect(ModEffects.MUTATION.get())) {
+            return true;
+        }
+        if (entity == null) {
+            return false;
+        }
+        if (immuneEntities == null) {
+            return isRadiationImmuneMarker(entity) || isLegacyImmuneEntityName(entity);
+        }
+        if (immuneEntities.isEmpty()) {
+            addLegacyDefaultImmuneEntities(immuneEntities);
+        }
+        Class<?> entityType = entity.getClass();
+        for (Class immuneType : immuneEntities) {
+            if (immuneType != null && immuneType.isAssignableFrom(entityType)) {
+                return true;
+            }
+        }
+        return isRadiationImmuneMarker(entity) || isLegacyImmuneEntityName(entity);
+    }
+
+    public static boolean isRadImmune(LivingEntity entity) {
+        if (entity.hasEffect(ModEffects.MUTATION.get())) {
+            return true;
+        }
+        return isRegisteredRadImmune(entity)
+                || isRadiationImmuneMarker(entity)
                 || isLegacyImmuneEntityName(entity);
     }
 
@@ -175,7 +222,7 @@ public final class RadiationUtil {
                 || hasLegacyClassName(entity, "EntityDuck");
     }
 
-    private static boolean isLegacyImmuneEntityName(LivingEntity entity) {
+    private static boolean isLegacyImmuneEntityName(Entity entity) {
         return hasLegacyClassName(entity, "CreeperNuclear")
                 || hasLegacyClassName(entity, "EntityCreeperNuclear")
                 || hasLegacyClassName(entity, "EntityCreeperTainted")
@@ -204,11 +251,18 @@ public final class RadiationUtil {
         if (!REGISTERED_IMMUNE_ENTITIES.isEmpty()) {
             return;
         }
-        REGISTERED_IMMUNE_ENTITIES.add(MushroomCow.class);
-        REGISTERED_IMMUNE_ENTITIES.add(Zombie.class);
-        REGISTERED_IMMUNE_ENTITIES.add(Skeleton.class);
-        REGISTERED_IMMUNE_ENTITIES.add(Ocelot.class);
-        REGISTERED_IMMUNE_ENTITIES.add(RadiationImmune.class);
+        addLegacyDefaultImmuneEntities(REGISTERED_IMMUNE_ENTITIES);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void addLegacyDefaultImmuneEntities(Set immuneEntities) {
+        immuneEntities.add(EntityCreeperNuclear.class);
+        immuneEntities.add(MushroomCow.class);
+        immuneEntities.add(Zombie.class);
+        immuneEntities.add(Skeleton.class);
+        immuneEntities.add(Ocelot.class);
+        immuneEntities.add(api.hbm.entity.IRadiationImmune.class);
+        immuneEntities.add(RadiationImmune.class);
     }
 
     public static void applyRadiationEffect(LivingEntity entity, int amplifier) {
@@ -294,7 +348,8 @@ public final class RadiationUtil {
     public static void printGeigerData(Player player) {
         float playerRad = truncate1(RadiationData.getRadiation(player));
         float envRad = truncate1(RadiationData.getRadBuf(player));
-        float chunkRad = truncate1(ChunkRadiationManager.getRadiation(player.level(), player.blockPosition()));
+        float chunkRad = truncate1(com.hbm.handler.radiation.ChunkRadiationManager.proxy.getRadiation(
+                player.level(), player.blockPosition()));
         float resistanceCoefficient = truncate2(HazmatRegistry.getResistance(player));
         float resistance = truncate2(100.0F - RadiationResistance.calculateRadiationModifier(player) * 100.0F);
         ChatFormatting resistancePrefix = resistanceCoefficient > 0.0F ? ChatFormatting.GREEN : ChatFormatting.WHITE;
@@ -434,12 +489,54 @@ public final class RadiationUtil {
 
         @Override
         public Iterator<Class> iterator() {
-            return (Iterator) Set.copyOf(REGISTERED_IMMUNE_ENTITIES).iterator();
+            Iterator<Class> snapshot = (Iterator) Set.copyOf(REGISTERED_IMMUNE_ENTITIES).iterator();
+            return new Iterator<>() {
+                private Class last;
+                private boolean canRemove;
+
+                @Override
+                public boolean hasNext() {
+                    return snapshot.hasNext();
+                }
+
+                @Override
+                public Class next() {
+                    last = snapshot.next();
+                    canRemove = true;
+                    return last;
+                }
+
+                @Override
+                public void remove() {
+                    if (!canRemove) {
+                        throw new IllegalStateException();
+                    }
+                    REGISTERED_IMMUNE_ENTITIES.remove(last);
+                    canRemove = false;
+                }
+            };
         }
 
         @Override
         public Spliterator<Class> spliterator() {
             return (Spliterator) Set.copyOf(REGISTERED_IMMUNE_ENTITIES).spliterator();
+        }
+
+        @Override
+        public boolean removeIf(java.util.function.Predicate<? super Class> filter) {
+            java.util.Objects.requireNonNull(filter);
+            boolean changed = false;
+            for (Class type : Set.copyOf(REGISTERED_IMMUNE_ENTITIES)) {
+                if (filter.test(type)) {
+                    changed |= REGISTERED_IMMUNE_ENTITIES.remove(type);
+                }
+            }
+            return changed;
+        }
+
+        @Override
+        public Object clone() {
+            return new HashSet<Class>(REGISTERED_IMMUNE_ENTITIES);
         }
 
         @Override

@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.ntmpipeTungsten",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:pipes/tungsten" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:pipes/tungsten" }, "count": 1, "legacy_ore": "ntmpipeTungsten" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Tungsten", "amount": 216 }
+  ],
+  "pools": [],
+  "source_order": 1221
+}

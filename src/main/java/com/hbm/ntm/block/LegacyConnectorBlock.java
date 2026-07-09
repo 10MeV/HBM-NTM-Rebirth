@@ -53,7 +53,7 @@ public class LegacyConnectorBlock extends HbmLegacyWireNodeBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:hazmat_cloth_red"
+    },
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "L": {
+      "tag": "forge:plates/lead"
+    },
+    "P": {
+      "tag": "forge:plates/iron"
+    }
+  },
+  "pattern": [
+    " P ",
+    "ICI",
+    " L "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:hazmat_cloth_grey"
+  },
+  "show_notification": true
+}

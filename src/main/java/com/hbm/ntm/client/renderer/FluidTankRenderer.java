@@ -1,7 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.BigAssTankBlock;
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.Bat9000BlockEntity;
 import com.hbm.ntm.blockentity.BigAssTankBlockEntity;
@@ -9,9 +11,11 @@ import com.hbm.ntm.blockentity.FluidTankBlockEntity;
 import com.hbm.ntm.blockentity.OrbusBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -27,6 +31,13 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
     @Override
     public boolean shouldRenderOffScreen(T blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(T blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && needsBlockEntityRenderer(blockEntity)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -55,7 +66,8 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        if (blockEntity instanceof BigAssTankBlockEntity bigAssTank && bigAssTank.isTilted()) {
+        boolean bigAssTankTilted = isBigAssTankTilted(blockEntity, state);
+        if (bigAssTankTilted) {
             poseStack.translate(0.0D, -1.0D, 0.0D);
             poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
@@ -74,50 +86,82 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
                 return;
             }
 
-            LegacyTileRenderPlans.FluidTankModelPlan plan = LegacyTileRenderPlans.fluidTankModelPlan(
-                    blockEntity instanceof Bat9000BlockEntity,
-                    blockEntity instanceof BigAssTankBlockEntity,
-                    blockEntity.isExploded());
-            switch (plan.kind()) {
-                case BAT9000 -> {
+            if (blockEntity instanceof Bat9000BlockEntity) {
+                if (!usesBakedBat9000Body(blockEntity)) {
                     ObjModelLibrary.MACHINE_BAT9000.renderAll(poseStack, buffer, modelLight, packedOverlay);
-                    if (plan.renderFluidBody()) {
-                        LegacyFluidTankRenderHelper.renderBat9000Fluid(blockEntity.getTank(), state, poseStack, buffer,
-                                modelLight, packedOverlay);
-                    }
-                    if (plan.renderDangerDiamonds()) {
-                        var tankType = blockEntity.getTank().getTankType();
-                        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                                queuedPose -> LegacyFluidTankRenderHelper.renderBat9000Diamonds(tankType,
-                                        queuedPose, buffer, modelLight, packedOverlay));
-                    }
                 }
-                case BIG_ASS_TANK -> {
-                    ObjModelLibrary.MACHINE_BIGASSTANK.renderAll(poseStack, buffer, modelLight, packedOverlay);
-                    if (plan.renderFluidBody()) {
-                        LegacyFluidTankRenderHelper.renderBigAssTankFluid(blockEntity.getTank(), state, poseStack,
-                                buffer, modelLight, packedOverlay, blockEntity.getLevel() == null ? partialTick
-                                        : blockEntity.getLevel().getGameTime() + partialTick);
-                    }
-                    if (plan.renderDangerDiamonds()) {
-                        var tankType = blockEntity.getTank().getTankType();
-                        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                                queuedPose -> LegacyFluidTankRenderHelper.renderBigAssTankDiamonds(tankType,
-                                        queuedPose, buffer, modelLight, packedOverlay));
-                    }
-                }
-                case SMALL_TANK -> {
-                    LegacyFluidTankRenderHelper.renderSmallTankBody(ObjModelLibrary.MACHINE_FLUIDTANK,
-                            ObjModelLibrary.MACHINE_FLUIDTANK_EXPLODED, blockEntity.getTank(), plan.exploded(),
-                            poseStack, buffer, modelLight, packedOverlay);
+                LegacyFluidTankRenderHelper.renderBat9000Fluid(blockEntity.getTank(), state, poseStack, buffer,
+                        modelLight, packedOverlay);
+                if (hasRenderableTankType(blockEntity)) {
                     var tankType = blockEntity.getTank().getTankType();
-                    LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                            queuedPose -> LegacyFluidTankRenderHelper.renderSmallTankDiamonds(tankType,
-                                    queuedPose, buffer, modelLight, packedOverlay));
+                    LegacyFluidTankRenderHelper.enqueueBat9000Diamonds(PresentStage.AFTER_BLOCK_ENTITIES,
+                            tankType, poseStack, buffer, modelLight, packedOverlay);
+                }
+            } else if (blockEntity instanceof BigAssTankBlockEntity) {
+                if (!usesBakedBigAssTankBody(blockEntity, state)) {
+                    ObjModelLibrary.MACHINE_BIGASSTANK.renderAll(poseStack, buffer, modelLight, packedOverlay);
+                }
+                LegacyFluidTankRenderHelper.renderBigAssTankFluid(blockEntity.getTank(), state, poseStack,
+                        buffer, modelLight, packedOverlay, blockEntity.getLevel() == null ? partialTick
+                                : blockEntity.getLevel().getGameTime() + partialTick);
+                if (hasRenderableTankType(blockEntity)) {
+                    var tankType = blockEntity.getTank().getTankType();
+                    LegacyFluidTankRenderHelper.enqueueBigAssTankDiamonds(PresentStage.AFTER_BLOCK_ENTITIES,
+                            tankType, poseStack, buffer, modelLight, packedOverlay);
+                }
+            } else {
+                if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                        || !blockEntity.usesSmallTankBakedModel()) {
+                    LegacyFluidTankRenderHelper.renderSmallTankBody(ObjModelLibrary.MACHINE_FLUIDTANK,
+                            ObjModelLibrary.MACHINE_FLUIDTANK_EXPLODED, blockEntity.getTank(),
+                            blockEntity.isExploded(), poseStack, buffer, modelLight, packedOverlay);
+                }
+                if (hasRenderableTankType(blockEntity)) {
+                    var tankType = blockEntity.getTank().getTankType();
+                    LegacyFluidTankRenderHelper.enqueueSmallTankDiamonds(PresentStage.AFTER_BLOCK_ENTITIES,
+                            tankType, poseStack, buffer, modelLight, packedOverlay);
                 }
             }
         }
         poseStack.popPose();
+    }
+
+    private static boolean needsBlockEntityRenderer(FluidTankBlockEntity blockEntity) {
+        BlockState state = blockEntity.getBlockState();
+        if (usesBakedBigAssTankBody(blockEntity, state)) {
+            return hasRenderableTankType(blockEntity);
+        }
+        if (usesBakedBat9000Body(blockEntity)) {
+            return hasRenderableTankType(blockEntity);
+        }
+        if (blockEntity.usesSmallTankBakedModel()
+                && !LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return hasRenderableTankType(blockEntity);
+        }
+        return true;
+    }
+
+    private static boolean usesBakedBat9000Body(FluidTankBlockEntity blockEntity) {
+        return blockEntity instanceof Bat9000BlockEntity
+                && !LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
+    }
+
+    private static boolean usesBakedBigAssTankBody(FluidTankBlockEntity blockEntity, BlockState state) {
+        return blockEntity instanceof BigAssTankBlockEntity
+                && !LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                && !isBigAssTankTilted(blockEntity, state);
+    }
+
+    private static boolean isBigAssTankTilted(FluidTankBlockEntity blockEntity, BlockState state) {
+        if (!(blockEntity instanceof BigAssTankBlockEntity bigAssTank)) {
+            return false;
+        }
+        return state.hasProperty(BigAssTankBlock.TILTED) ? state.getValue(BigAssTankBlock.TILTED) : bigAssTank.isTilted();
+    }
+
+    private static boolean hasRenderableTankType(FluidTankBlockEntity blockEntity) {
+        var tankType = blockEntity.getTank().getTankType();
+        return tankType != null && tankType != HbmFluids.NONE;
     }
 
     private static void renderOrbus(OrbusBlockEntity blockEntity, float partialTick, PoseStack poseStack,
@@ -133,8 +177,8 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
                     : blockEntity.getLevel().getGameTime() + partialTick;
             poseStack.translate(0.0D, 2.5D + Math.sin(worldTime * 0.1D) * 0.125D * scale, 0.0D);
             poseStack.scale((float) scale, (float) scale, (float) scale);
-            ObjModelLibrary.EFFECT_SPHERE_UV.renderAllUntextured(poseStack, buffer,
-                    color >> 16 & 255, color >> 8 & 255, color & 255, 255);
+            ObjEffectModels.renderSphereUvDynamicUntextured(poseStack, buffer,
+                    color >> 16 & 255, color >> 8 & 255, color & 255, 255, false);
             poseStack.popPose();
         }
 
@@ -145,23 +189,22 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
             return;
         }
         long gameTime = blockEntity.getLevel() == null ? 0L : blockEntity.getLevel().getGameTime();
-        LegacyBeamRenderer.BeamPlan spiralBeam = LegacyBeamRenderer.beamPlan(
-                0.0D, 3.0D, 0.0D, LegacyBeamRenderer.WaveType.SPIRAL, LegacyBeamRenderer.BeamType.SOLID,
-                0x101020, 0x101020, 0, 1, 0.0F, 6, (float) scale * 0.5F);
-        LegacyBeamRenderer.BeamPlan randomBeamA = LegacyBeamRenderer.beamPlan(
-                0.0D, 3.0D, 0.0D, LegacyBeamRenderer.WaveType.RANDOM, LegacyBeamRenderer.BeamType.SOLID,
-                0x202060, 0x202060, (int) (gameTime / 2L % 1000L), 6, (float) scale, 2,
-                0.0625F * (float) scale);
-        LegacyBeamRenderer.BeamPlan randomBeamB = LegacyBeamRenderer.beamPlan(
-                0.0D, 3.0D, 0.0D, LegacyBeamRenderer.WaveType.RANDOM, LegacyBeamRenderer.BeamType.SOLID,
-                0x202060, 0x202060, (int) (gameTime / 4L % 1000L), 6, (float) scale, 2,
-                0.0625F * (float) scale);
+        float beamScale = (float) scale;
+        int randomStartA = (int) (gameTime / 2L % 1000L);
+        int randomStartB = (int) (gameTime / 4L % 1000L);
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.0D, 0.0D);
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
-            LegacyBeamRenderer.beam(queuedPose, buffer, spiralBeam);
-            LegacyBeamRenderer.beam(queuedPose, buffer, randomBeamA);
-            LegacyBeamRenderer.beam(queuedPose, buffer, randomBeamB);
+        LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                false, beams -> {
+            beams.add(0.0D, 3.0D, 0.0D,
+                    LegacyBeamRenderer.WaveType.SPIRAL, 0x101020, 0x101020, 0, 1, 0.0F, 6,
+                    beamScale * 0.5F);
+            beams.add(0.0D, 3.0D, 0.0D,
+                    LegacyBeamRenderer.WaveType.RANDOM, 0x202060, 0x202060, randomStartA, 6, beamScale, 2,
+                    0.0625F * beamScale);
+            beams.add(0.0D, 3.0D, 0.0D,
+                    LegacyBeamRenderer.WaveType.RANDOM, 0x202060, 0x202060, randomStartB, 6, beamScale, 2,
+                    0.0625F * beamScale);
         });
         poseStack.popPose();
     }

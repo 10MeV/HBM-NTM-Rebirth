@@ -24,10 +24,26 @@ public final class ModRecipes {
             SERIALIZERS.register("rbmk_fuel_disassembly",
                     () -> new net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer<>(
                             RBMKFuelDisassemblyRecipe::new));
+    public static final RegistryObject<RecipeSerializer<GrenadeCraftingRecipe>> GRENADE_CRAFTING =
+            SERIALIZERS.register("grenade_crafting",
+                    () -> new net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer<>(
+                            GrenadeCraftingRecipe::new));
+    public static final RegistryObject<RecipeSerializer<CargoShellCraftingRecipe>> CARGO_SHELL_CRAFTING =
+            SERIALIZERS.register("cargo_shell_crafting",
+                    () -> new net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer<>(
+                            CargoShellCraftingRecipe::new));
+    public static final RegistryObject<RecipeSerializer<ScrapsSplitRecipe>> SCRAPS_SPLIT =
+            SERIALIZERS.register("scraps_split",
+                    () -> new net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer<>(
+                            ScrapsSplitRecipe::new));
+    public static final RegistryObject<RecipeSerializer<ContainerUpgradeCraftingRecipe>> CONTAINER_UPGRADE_CRAFTING =
+            SERIALIZERS.register("container_upgrade_crafting", ContainerUpgradeCraftingRecipe.Serializer::new);
     public static final RegistryObject<RecipeSerializer<LegacyNbtShapedRecipe>> LEGACY_NBT_SHAPED =
             SERIALIZERS.register("shaped_nbt", LegacyNbtShapedRecipe.Serializer::new);
     public static final RegistryObject<RecipeSerializer<LegacyNbtShapelessRecipe>> LEGACY_NBT_SHAPELESS =
             SERIALIZERS.register("shapeless_nbt", LegacyNbtShapelessRecipe.Serializer::new);
+    public static final RegistryObject<RecipeSerializer<HotSmeltingRecipe>> HOT_SMELTING =
+            SERIALIZERS.register("hot_smelting", HotSmeltingRecipe.Serializer::new);
     public static final RecipeHolder<PressRecipe> PRESS = register("press", PressRecipe.Serializer::new);
     public static final RecipeHolder<GenericMachineRecipe> CHEMICAL_PLANT =
             register("chemical_plant", () -> new GenericMachineRecipe.Serializer(GenericMachineRecipe.Machine.CHEMICAL_PLANT));
@@ -52,6 +68,12 @@ public final class ModRecipes {
             register("electrolyzer_fluid", ElectrolyserFluidRecipe.Serializer::new);
     public static final RecipeHolder<ElectrolyserMetalRecipe> ELECTROLYZER_METAL =
             register("electrolyzer_metal", ElectrolyserMetalRecipe.Serializer::new);
+    public static final RecipeHolder<CrucibleRecipe> CRUCIBLE =
+            register("crucible", CrucibleRecipe.Serializer::new);
+    public static final RecipeHolder<CrucibleSmeltingRecipe> CRUCIBLE_SMELTING =
+            register("crucible_smelting", CrucibleSmeltingRecipe.Serializer::new);
+    public static final RecipeHolder<RotaryFurnaceRecipe> ROTARY_FURNACE =
+            register("rotary_furnace", RotaryFurnaceRecipe.Serializer::new);
     public static final RecipeHolder<PyroOvenRecipe> PYRO_OVEN = register("pyro_oven", PyroOvenRecipe.Serializer::new);
     public static final RecipeHolder<OilProcessingRecipe> REFINERY =
             register("refinery", () -> new OilProcessingRecipe.Serializer(OilProcessingRecipe.Machine.REFINERY));
@@ -77,6 +99,8 @@ public final class ModRecipes {
             register("combination_oven", CombinationOvenRecipe.Serializer::new);
     public static final RecipeHolder<BlastFurnaceRecipe> BLAST_FURNACE =
             register("blast_furnace", BlastFurnaceRecipe.Serializer::new);
+    public static final RecipeHolder<DiFurnaceRecipe> DIFURNACE =
+            register("difurnace", DiFurnaceRecipe.Serializer::new);
     public static final RecipeHolder<MixerRecipe> MIXER =
             register("mixer", MixerRecipe.Serializer::new);
     public static final RecipeHolder<ItemProcessingRecipe> SHREDDER =
@@ -85,6 +109,8 @@ public final class ModRecipes {
             register("centrifuge", () -> new ItemProcessingRecipe.Serializer(ItemProcessingRecipe.Machine.CENTRIFUGE));
     public static final RecipeHolder<ItemProcessingRecipe> CRYSTALLIZER =
             register("crystallizer", () -> new ItemProcessingRecipe.Serializer(ItemProcessingRecipe.Machine.CRYSTALLIZER));
+    public static final RecipeHolder<GasCentRecipe> GAS_CENT =
+            register("gas_cent", GasCentRecipe.Serializer::new);
     public static final RecipeHolder<AmmoPressRecipe> AMMO_PRESS =
             register("ammo_press", AmmoPressRecipe.Serializer::new);
     public static final RecipeHolder<OutgasserRecipe> OUTGASSER =
@@ -97,12 +123,28 @@ public final class ModRecipes {
             register("fuel_pool", FuelPoolRecipe.Serializer::new);
     public static final RecipeHolder<ExposureChamberRecipe> EXPOSURE_CHAMBER =
             register("exposure_chamber", ExposureChamberRecipe.Serializer::new);
+    public static final RecipeHolder<RadGenRecipe> RADGEN =
+            register("radgen", RadGenRecipe.Serializer::new);
+    public static final RecipeHolder<RadiolysisRecipe> RADIOLYSIS =
+            register("radiolysis", RadiolysisRecipe.Serializer::new);
+    public static final RecipeHolder<CyclotronRecipe> CYCLOTRON =
+            register("cyclotron", CyclotronRecipe.Serializer::new);
+    public static final RecipeHolder<ParticleAcceleratorRecipe> PARTICLE_ACCELERATOR =
+            register("particle_accelerator", ParticleAcceleratorRecipe.Serializer::new);
+    public static final RecipeHolder<SilexRecipe> SILEX =
+            register("silex", SilexRecipe.Serializer::new);
     public static final RecipeHolder<SolderingStationRecipe> SOLDERING_STATION =
             register("soldering_station", SolderingStationRecipe.Serializer::new);
     public static final RecipeHolder<AnnihilatorRecipe> ANNIHILATOR =
             register("annihilator", AnnihilatorRecipe.Serializer::new);
     public static final RecipeHolder<AnvilConstructionRecipe> ANVIL_CONSTRUCTION =
             register("anvil_construction", AnvilConstructionRecipe.Serializer::new);
+    public static final RecipeHolder<AnvilSmithingRecipe> ANVIL_SMITHING =
+            register("anvil_smithing", AnvilSmithingRecipe.Serializer::new);
+    public static final RecipeHolder<LemegetonRecipe> LEMEGETON =
+            register("lemegeton", LemegetonRecipe.Serializer::new);
+    public static final RecipeHolder<PedestalRecipe> PEDESTAL =
+            register("pedestal", PedestalRecipe.Serializer::new);
 
     public static void register(IEventBus modBus) {
         RECIPE_TYPES.register(modBus);

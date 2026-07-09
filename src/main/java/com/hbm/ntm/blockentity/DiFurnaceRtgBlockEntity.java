@@ -2,8 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.DiFurnaceRtgBlock;
 import com.hbm.ntm.menu.DiFurnaceRtgMenu;
-import com.hbm.ntm.recipe.BlastFurnaceRecipe;
-import com.hbm.ntm.recipe.HbmItemOutput;
+import com.hbm.ntm.recipe.DiFurnaceRecipe;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -96,23 +95,23 @@ public class DiFurnaceRtgBlockEntity extends BlockEntity implements MenuProvider
     }
 
     private boolean canProcess(Level level) {
-        BlastFurnaceRecipe recipe = findRecipe(level);
+        DiFurnaceRecipe recipe = findRecipe(level);
         if (recipe == null) {
             return false;
         }
         return HbmInventoryUtil.doesHandlerHaveSpaceUnchecked(items, 2, 2,
-                recipe.outputs().get(0).representativeStack());
+                recipe.output().representativeStack());
     }
 
     @Nullable
-    private BlastFurnaceRecipe findRecipe(Level level) {
+    private DiFurnaceRecipe findRecipe(Level level) {
         ItemStack upper = items.getStackInSlot(0);
         ItemStack lower = items.getStackInSlot(1);
         if (upper.isEmpty() || lower.isEmpty()) {
             return null;
         }
-        for (BlastFurnaceRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.BLAST_FURNACE.type().get())) {
-            if (recipe.inputs().size() == 2 && recipe.outputs().size() == 1 && recipe.matches(upper, lower)) {
+        for (DiFurnaceRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.DIFURNACE.type().get())) {
+            if (recipe.matches(upper, lower)) {
                 return recipe;
             }
         }
@@ -120,14 +119,13 @@ public class DiFurnaceRtgBlockEntity extends BlockEntity implements MenuProvider
     }
 
     private void process(Level level) {
-        BlastFurnaceRecipe recipe = findRecipe(level);
+        DiFurnaceRecipe recipe = findRecipe(level);
         if (recipe == null) {
             return;
         }
-        HbmItemOutput output = recipe.outputs().get(0);
         int upperConsumed = recipe.consumedCountForSlot(0, items.getStackInSlot(0), items.getStackInSlot(1));
         int lowerConsumed = recipe.consumedCountForSlot(1, items.getStackInSlot(0), items.getStackInSlot(1));
-        HbmInventoryUtil.tryAddItemToHandlerUnchecked(items, 2, 2, output.representativeStack());
+        HbmInventoryUtil.tryAddItemToHandlerUnchecked(items, 2, 2, recipe.output().representativeStack());
         items.extractItem(0, upperConsumed, false);
         items.extractItem(1, lowerConsumed, false);
     }

@@ -1,10 +1,29 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/uranium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_uranium"
+    },
+    "legacy_id": "hbm:crystal_uranium",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_uranium", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_uranium", "count": 2 },
-    { "item": "hbm_ntm_rebirth:nugget_ra226", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_uranium"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_uranium"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:nugget_ra226"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_lithium_tiny"
+    }
+  ],
+  "source_order": 36
 }

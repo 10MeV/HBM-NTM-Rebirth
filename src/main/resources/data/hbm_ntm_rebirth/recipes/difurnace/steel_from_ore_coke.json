@@ -1,0 +1,36 @@
+{
+  "type": "hbm_ntm_rebirth:difurnace",
+  "internal_name": "difurnace.steelFromOreCoke",
+  "source_order": 3,
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:ores/iron"
+      },
+      "count": 1,
+      "legacy_ore": "oreIron"
+    },
+    {
+      "ingredient": [
+        {
+          "tag": "forge:ingots/any_coke"
+        },
+        {
+          "tag": "forge:plates/any_coke"
+        },
+        {
+          "tag": "forge:gems/any_coke"
+        },
+        {
+          "tag": "forge:dusts/any_coke"
+        }
+      ],
+      "count": 1,
+      "legacy_dictframe": "AnyCoke"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_steel",
+    "count": 3
+  }
+}

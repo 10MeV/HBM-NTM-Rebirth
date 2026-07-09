@@ -874,50 +874,83 @@ public final class HbmLivingProperties {
 
     private static final class ContaminationList extends AbstractList<ContaminationEffect> {
         private final LivingEntity entity;
+        private final List<ContaminationEffect> entries;
 
         private ContaminationList(LivingEntity entity) {
             this.entity = entity;
+            this.entries = snapshot(entity);
         }
 
         @Override
         public ContaminationEffect get(int index) {
-            return fromData(RadiationData.getContaminationEffects(entity).get(index));
+            return entries.get(index);
         }
 
         @Override
         public int size() {
-            return RadiationData.getContaminationCount(entity);
+            return entries.size();
         }
 
         @Override
         public void add(int index, ContaminationEffect element) {
-            List<ContaminationEffect> effects = snapshot();
-            effects.add(index, element);
-            RadiationData.setContamination(entity, toListTag(effects));
+            entries.add(index, safeElement(element));
+            modCount++;
+            commit();
         }
 
         @Override
         public ContaminationEffect set(int index, ContaminationEffect element) {
-            List<ContaminationEffect> effects = snapshot();
-            ContaminationEffect previous = effects.set(index, element);
-            RadiationData.setContamination(entity, toListTag(effects));
+            ContaminationEffect previous = entries.set(index, safeElement(element));
+            commit();
             return previous;
         }
 
         @Override
         public ContaminationEffect remove(int index) {
-            List<ContaminationEffect> effects = snapshot();
-            ContaminationEffect previous = effects.remove(index);
-            RadiationData.setContamination(entity, toListTag(effects));
+            ContaminationEffect previous = entries.remove(index);
+            modCount++;
+            commit();
             return previous;
         }
 
         @Override
         public void clear() {
-            RadiationData.clearContamination(entity);
+            if (!entries.isEmpty()) {
+                entries.clear();
+                modCount++;
+            }
+            commit();
         }
 
-        private List<ContaminationEffect> snapshot() {
+        @Override
+        public boolean removeAll(java.util.Collection<?> collection) {
+            boolean changed = entries.removeAll(collection);
+            if (changed) {
+                modCount++;
+            }
+            commit();
+            return changed;
+        }
+
+        @Override
+        public boolean retainAll(java.util.Collection<?> collection) {
+            boolean changed = entries.retainAll(collection);
+            if (changed) {
+                modCount++;
+            }
+            commit();
+            return changed;
+        }
+
+        private void commit() {
+            RadiationData.setContamination(entity, toListTag(entries));
+        }
+
+        private static ContaminationEffect safeElement(ContaminationEffect element) {
+            return element == null ? new ContaminationEffect(0.0F, 1, 0, false) : element;
+        }
+
+        private static List<ContaminationEffect> snapshot(LivingEntity entity) {
             return RadiationData.getContaminationEffects(entity).stream()
                     .map(HbmLivingProperties::fromData)
                     .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));

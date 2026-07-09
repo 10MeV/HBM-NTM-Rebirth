@@ -1,17 +1,32 @@
 {
   "type": "hbm_ntm_rebirth:fusion_reactor",
-  "internal_name": "fus.h3",
+  "b": 1.0,
   "duration": 100,
-  "power": 25000,
-  "input_items": [],
-  "input_fluids": [{ "fluid": "hbm_ntm_rebirth:helium3", "amount": 20 }],
-  "output_items": [],
-  "output_fluids": [{ "fluid": "hbm_ntm_rebirth:helium4", "amount": 1000 }],
-  "pools": [],
-  "ignitionTemp": 500000,
-  "outputTemp": 3750000,
-  "outputFlux": 0.0,
-  "r": 0.2,
   "g": 0.2,
-  "b": 1.0
+  "icon": {
+    "item": "hbm_ntm_rebirth:gas_full",
+    "nbt": "{hbm_fluid:\"HELIUM3\",hbm_fluid_amount:0,hbm_fluid_pressure:0}"
+  },
+  "ignitionTemp": 500000,
+  "input_fluids": [
+    {
+      "amount": 20,
+      "fluid": "hbm_ntm_rebirth:helium3"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "fus.h3",
+  "outputFlux": 0.0,
+  "outputTemp": 3750000,
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:helium4"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 25000,
+  "r": 0.2,
+  "source_order": 4
 }

@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.stockTitanium",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:stocks/titanium" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:stocks/titanium" }, "count": 1, "legacy_ore": "stockTitanium" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Titanium", "amount": 288 }
+  ],
+  "pools": [],
+  "source_order": 1182
+}

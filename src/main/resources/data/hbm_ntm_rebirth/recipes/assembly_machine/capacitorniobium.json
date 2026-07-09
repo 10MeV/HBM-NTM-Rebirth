@@ -3,13 +3,27 @@
   "duration": 100,
   "input_fluids": [],
   "input_items": [
-    { "count": 12, "ingredient": { "tag": "forge:ingots/any_plastic" } },
-    { "count": 24, "ingredient": { "tag": "forge:dense_wires/niobium" } }
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:dense_wires/niobium"
+      },
+      "legacy_ore": "wireDenseNiobium"
+    }
   ],
   "internal_name": "ass.capacitorniobium",
   "output_fluids": [],
   "output_items": [
-    { "item": "hbm_ntm_rebirth:capacitor_niobium" }
+    {
+      "item": "hbm_ntm_rebirth:capacitor_niobium"
+    }
   ],
   "pools": [],
   "power": 1000,

@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/saturnite"
+    },
+    "count": 1,
+    "legacy_ore": "ingotSaturnite"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_starmetal"
+  },
+  "source_order": 6
+}

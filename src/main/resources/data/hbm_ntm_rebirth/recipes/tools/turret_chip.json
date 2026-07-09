@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:circuits/advanced"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "W": {
+      "tag": "forge:wires/gold"
+    }
+  },
+  "pattern": [
+    "WWW",
+    "CPC",
+    "WWW"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:turret_chip"
+  },
+  "show_notification": true
+}

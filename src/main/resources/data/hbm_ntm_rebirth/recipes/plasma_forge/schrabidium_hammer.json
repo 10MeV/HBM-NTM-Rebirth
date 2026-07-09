@@ -1,0 +1,86 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 6000,
+  "ignitionTemp": 25000000,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 35,
+      "ingredient": {
+        "tag": "forge:storage_blocks/schrabidium"
+      },
+      "legacy_ore": "blockSchrabidium"
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:billet_yharonite"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:billet_yharonite"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fragment_meteorite"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fragment_meteorite"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fragment_meteorite"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fragment_meteorite"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fragment_meteorite"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fragment_meteorite"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fragment_meteorite"
+      }
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:fragment_meteorite"
+      }
+    }
+  ],
+  "internal_name": "plsm.schrabhammer",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:schrabidium_hammer",
+      "nbt": "{Damage:0}"
+    }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 135
+}

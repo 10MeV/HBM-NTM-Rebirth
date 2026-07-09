@@ -19,12 +19,15 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
@@ -34,11 +37,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParticleAcceleratorBlock extends LegacyXrMultiblockBlock implements EntityBlock, Toolable {
+    public static final BooleanProperty WINDOW = BooleanProperty.create("window");
+
     private final Variant variant;
 
     public ParticleAcceleratorBlock(Properties properties, Variant variant) {
         super(properties);
         this.variant = variant;
+        registerDefaultState(defaultBlockState().setValue(WINDOW, false));
     }
 
     public Variant variant() {
@@ -99,7 +105,13 @@ public class ParticleAcceleratorBlock extends LegacyXrMultiblockBlock implements
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(WINDOW);
     }
 
     @Override

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:billet_au198"
+    },
+    {
+      "item": "hbm_ntm_rebirth:cell_antimatter"
+    },
+    {
+      "item": "hbm_ntm_rebirth:pellet_charged"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:billet_balefire_gold"
+  }
+}

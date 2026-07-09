@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "hbm_ntm_rebirth:plate_paa"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:powder_dineutronium"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:shimmer_handle"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:chlorophyte_pickaxe"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:blades_desh"
+    }
+  },
+  "pattern": [
+    " SD",
+    "APS",
+    "FA "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:mese_pickaxe"
+  },
+  "show_notification": true
+}

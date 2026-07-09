@@ -11,5 +11,6 @@
     "output2":  {
                     "fluid":  "hbm_ntm_rebirth:heatingoil",
                     "amount":  70
-                }
+                },
+    "source_order":  14
 }

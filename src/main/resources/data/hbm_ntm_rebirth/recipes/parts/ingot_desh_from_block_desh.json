@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:block_desh"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ingot_desh",
+    "count": 9
+  }
+}

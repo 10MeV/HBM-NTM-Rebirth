@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssemblyBlockEntity> {
     public MissileAssemblyRenderer(BlockEntityRendererProvider.Context context) {
@@ -22,6 +23,13 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
     @Override
     public boolean shouldRenderOffScreen(MissileAssemblyBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(MissileAssemblyBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && blockEntity.hasPreviewParts()
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override

@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/gold"
+    },
+    "legacy_ore": "oreGold"
+  },
+  "output": [
+    {
+      "amount": 144,
+      "material": "Gold"
+    },
+    {
+      "amount": 24,
+      "material": "Lead"
+    },
+    {
+      "amount": 162,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 28
+}

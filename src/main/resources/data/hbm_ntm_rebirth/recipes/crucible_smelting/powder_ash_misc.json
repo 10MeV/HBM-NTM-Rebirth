@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:powder_ash_misc"
+    }
+  },
+  "output": [
+    {
+      "amount": 8,
+      "material": "Carbon"
+    }
+  ],
+  "source_order": 45
+}

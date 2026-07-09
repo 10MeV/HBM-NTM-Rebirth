@@ -45,6 +45,21 @@ import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
 public final class HbmParticleEffects {
+    private static final Direction[] DIRECTIONS = Direction.values();
+    private static final DustParticleOptions BJ_JETPACK_DUST = new DustParticleOptions(new Vector3f(0.8F, 0.5F, 1.0F), 1.0F);
+    private static final DustParticleOptions DNS_JETPACK_DUST = new DustParticleOptions(new Vector3f(0.01F, 1.0F, 1.0F), 1.0F);
+    private static final DustParticleOptions BLUE_DUST = new DustParticleOptions(new Vector3f(0.01F, 0.01F, 1.0F), 1.0F);
+    private static final DustParticleOptions GREEN_DUST = new DustParticleOptions(new Vector3f(0.01F, 0.5F, 0.1F), 1.0F);
+    private static final BlockParticleOption STONE_BLOCK_DUST =
+            new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
+    private static final double FAR_PARTICLE_DISTANCE_SQ = 350.0D * 350.0D;
+    private static final ThreadLocal<BlockPos.MutableBlockPos> NEARBY_BLOCK_POS =
+            ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
+    private static final ThreadLocal<BlockPos.MutableBlockPos> NEARBY_BLOCK_NEIGHBOR =
+            ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
+    private static final ThreadLocal<BlockPos.MutableBlockPos> DEBRIS_BLOCK_POS =
+            ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
+
     public static void handleAux(CompoundTag data) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || data == null) {
@@ -299,20 +314,40 @@ public final class HbmParticleEffects {
         if (entity == null) {
             return;
         }
-        JetpackPose pose = jetpackPose(entity, 0.25D, 0.125D, entity.getEyeHeight() - 1.0D);
+        double yaw = entity.getYRot() * Mth.DEG_TO_RAD;
+        double sinYaw = Math.sin(yaw);
+        double cosYaw = Math.cos(yaw);
+        double centerX = entity.getX() + sinYaw * 0.25D;
+        double centerY = entity.getY() + entity.getEyeHeight() - 1.0D;
+        double centerZ = entity.getZ() - cosYaw * 0.25D;
+        double sideX = cosYaw * 0.125D;
+        double sideZ = sinYaw * 0.125D;
         int mode = data.getInt("mode");
-        Vec3 thrust = Vec3.ZERO;
+        double thrustX = 0.0D;
+        double thrustY = 0.0D;
+        double thrustZ = 0.0D;
         if (mode == 0) {
-            thrust = new Vec3(0.0D, -0.2D, 0.0D);
+            thrustY = -0.2D;
         } else if (mode == 1) {
-            thrust = entity.getLookAngle().scale(-0.1D);
+            float pitchRad = entity.getXRot() * Mth.DEG_TO_RAD;
+            float yawRad = -entity.getYRot() * Mth.DEG_TO_RAD;
+            float lookX = Mth.sin(yawRad) * Mth.cos(pitchRad);
+            float lookY = -Mth.sin(pitchRad);
+            float lookZ = Mth.cos(yawRad) * Mth.cos(pitchRad);
+            thrustX = -lookX * 0.1D;
+            thrustY = -lookY * 0.1D;
+            thrustZ = -lookZ * 0.1D;
         }
-        Vec3 motion2 = clamp(entity.getDeltaMovement().add(thrust.scale(2.0D)), 5.0D);
-        Vec3 motion3 = clamp(entity.getDeltaMovement().add(thrust.scale(2.0D)), 10.0D);
-        spawnDual(level, ParticleTypes.FLAME, pose, motion2);
+        Vec3 delta = entity.getDeltaMovement();
+        double motionX = delta.x + thrustX * 2.0D;
+        double motionY = delta.y + thrustY * 2.0D;
+        double motionZ = delta.z + thrustZ * 2.0D;
+        spawnDual(level, ParticleTypes.FLAME, centerX, centerY, centerZ, sideX, sideZ,
+                clamp(motionX, 5.0D), clamp(motionY, 5.0D), clamp(motionZ, 5.0D));
         if (allParticleSetting()) {
-            spawnGroundKick(level, pose.center(), thrust.normalize());
-            spawnDual(level, ParticleTypes.SMOKE, pose, motion3);
+            spawnGroundKick(level, centerX, centerY, centerZ, thrustX, thrustY, thrustZ);
+            spawnDual(level, ParticleTypes.SMOKE, centerX, centerY, centerZ, sideX, sideZ,
+                    clamp(motionX, 10.0D), clamp(motionY, 10.0D), clamp(motionZ, 10.0D));
         }
     }
 
@@ -324,9 +359,19 @@ public final class HbmParticleEffects {
         if (entity == null) {
             return;
         }
-        JetpackPose pose = jetpackPose(entity, 0.6D, 0.275D, entity.getEyeHeight() - 0.6D);
-        Vec3 backward = pose.backward().normalize().scale(0.025D);
-        spawnDualScaled(level, ParticleTypes.SMOKE, pose, new Vec3(backward.x(), 0.0D, backward.z()), 0.5F);
+        double yaw = entity.getYRot() * Mth.DEG_TO_RAD;
+        double sinYaw = Math.sin(yaw);
+        double cosYaw = Math.cos(yaw);
+        spawnDualScaled(level, ParticleTypes.SMOKE,
+                entity.getX() + sinYaw * 0.6D,
+                entity.getY() + entity.getEyeHeight() - 0.6D,
+                entity.getZ() - cosYaw * 0.6D,
+                cosYaw * 0.275D,
+                sinYaw * 0.275D,
+                sinYaw * 0.025D,
+                0.0D,
+                -cosYaw * 0.025D,
+                0.5F);
     }
 
     private static void spawnColoredJetpack(ClientLevel level, CompoundTag data, boolean dns) {
@@ -337,17 +382,21 @@ public final class HbmParticleEffects {
         if (entity == null) {
             return;
         }
-        JetpackPose pose = dns
-                ? jetpackPose(entity, 0.0D, 0.125D, -0.5D)
-                : jetpackPose(entity, 0.3125D, 0.125D, entity.getEyeHeight() - 0.9375D);
+        double yaw = entity.getYRot() * Mth.DEG_TO_RAD;
+        double sinYaw = Math.sin(yaw);
+        double cosYaw = Math.cos(yaw);
+        double backwardOffset = dns ? 0.0D : 0.3125D;
+        double centerX = entity.getX() + sinYaw * backwardOffset;
+        double centerY = entity.getY() + (dns ? -0.5D : entity.getEyeHeight() - 0.9375D);
+        double centerZ = entity.getZ() - cosYaw * backwardOffset;
+        double sideX = cosYaw * 0.125D;
+        double sideZ = sinYaw * 0.125D;
         if (allParticleSetting()) {
-            spawnGroundKick(level, pose.center(), new Vec3(0.0D, -1.0D, 0.0D));
+            spawnGroundKick(level, centerX, centerY, centerZ, 0.0D, -1.0D, 0.0D);
         }
         Vec3 motion = entity.getDeltaMovement();
-        ParticleOptions dust = dns
-                ? new DustParticleOptions(new Vector3f(0.01F, 1.0F, 1.0F), 1.0F)
-                : new DustParticleOptions(new Vector3f(0.8F, 0.5F, 1.0F), 1.0F);
-        spawnDual(level, dust, pose, motion);
+        ParticleOptions dust = dns ? DNS_JETPACK_DUST : BJ_JETPACK_DUST;
+        spawnDual(level, dust, centerX, centerY, centerZ, sideX, sideZ, motion.x, motion.y, motion.z);
     }
 
     private static void spawnRadiationAura(ClientLevel level, CompoundTag data) {
@@ -383,63 +432,59 @@ public final class HbmParticleEffects {
         }
     }
 
-    private static JetpackPose jetpackPose(Entity entity, double backwardOffset, double sideOffset, double yOffset) {
-        double yaw = Math.toRadians(entity.getYRot());
-        Vec3 backward = new Vec3(Math.sin(yaw) * backwardOffset, 0.0D, -Math.cos(yaw) * backwardOffset);
-        Vec3 side = new Vec3(Math.cos(yaw) * sideOffset, 0.0D, Math.sin(yaw) * sideOffset);
-        Vec3 center = new Vec3(entity.getX(), entity.getY() + yOffset, entity.getZ()).add(backward);
-        return new JetpackPose(center, side, backward);
+    private static void spawnDual(ClientLevel level, ParticleOptions particle, double centerX, double centerY,
+            double centerZ, double sideX, double sideZ, double motionX, double motionY, double motionZ) {
+        level.addParticle(particle, centerX + sideX, centerY, centerZ + sideZ, motionX, motionY, motionZ);
+        level.addParticle(particle, centerX - sideX, centerY, centerZ - sideZ, motionX, motionY, motionZ);
     }
 
-    private static void spawnDual(ClientLevel level, ParticleOptions particle, JetpackPose pose, Vec3 motion) {
-        Vec3 left = pose.center().add(pose.side());
-        Vec3 right = pose.center().subtract(pose.side());
-        level.addParticle(particle, left.x(), left.y(), left.z(), motion.x(), motion.y(), motion.z());
-        level.addParticle(particle, right.x(), right.y(), right.z(), motion.x(), motion.y(), motion.z());
+    private static void spawnDualScaled(ClientLevel level, ParticleOptions particle, double centerX, double centerY,
+            double centerZ, double sideX, double sideZ, double motionX, double motionY, double motionZ, float scale) {
+        spawnScaled(level, particle, centerX + sideX, centerY, centerZ + sideZ, motionX, motionY, motionZ, scale);
+        spawnScaled(level, particle, centerX - sideX, centerY, centerZ - sideZ, motionX, motionY, motionZ, scale);
     }
 
-    private static void spawnDualScaled(ClientLevel level, ParticleOptions particle, JetpackPose pose, Vec3 motion, float scale) {
-        Vec3 left = pose.center().add(pose.side());
-        Vec3 right = pose.center().subtract(pose.side());
-        spawnScaled(level, particle, left, motion, scale);
-        spawnScaled(level, particle, right, motion, scale);
-    }
-
-    private static void spawnScaled(ClientLevel level, ParticleOptions particle, Vec3 position, Vec3 motion, float scale) {
+    private static void spawnScaled(ClientLevel level, ParticleOptions particle, double x, double y, double z,
+            double motionX, double motionY, double motionZ, float scale) {
         Particle created = Minecraft.getInstance().particleEngine.createParticle(particle,
-                position.x(), position.y(), position.z(),
-                motion.x(), motion.y(), motion.z());
+                x, y, z, motionX, motionY, motionZ);
         if (created != null && scale != 1.0F) {
             created.scale(scale);
         }
     }
 
-    private static void spawnGroundKick(ClientLevel level, Vec3 origin, Vec3 thrust) {
-        if (thrust.lengthSqr() < 1.0E-6D) {
+    private static void spawnGroundKick(ClientLevel level, double originX, double originY, double originZ,
+            double thrustX, double thrustY, double thrustZ) {
+        double thrustLengthSqr = thrustX * thrustX + thrustY * thrustY + thrustZ * thrustZ;
+        if (thrustLengthSqr < 1.0E-6D) {
             return;
         }
-        Vec3 target = origin.add(thrust.normalize().scale(10.0D));
+        double thrustScale = 10.0D / Math.sqrt(thrustLengthSqr);
+        Vec3 origin = new Vec3(originX, originY, originZ);
+        Vec3 target = new Vec3(originX + thrustX * thrustScale, originY + thrustY * thrustScale, originZ + thrustZ * thrustScale);
         BlockHitResult hit = level.clip(new ClipContext(origin, target, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, Minecraft.getInstance().player));
         if (hit.getType() != HitResult.Type.BLOCK || hit.getDirection() != Direction.UP) {
             return;
         }
         BlockState state = level.getBlockState(hit.getBlockPos());
-        Vec3 delta = origin.subtract(hit.getLocation());
-        int count = Math.max(0, (int) (10.0D - delta.length()));
+        Vec3 hitLocation = hit.getLocation();
+        double deltaX = originX - hitLocation.x;
+        double deltaY = originY - hitLocation.y;
+        double deltaZ = originZ - hitLocation.z;
+        double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        int count = Math.max(0, (int) (10.0D - distance));
+        double speed = 0.75D - distance * 0.075D;
+        BlockParticleOption dust = new BlockParticleOption(ParticleTypes.BLOCK, state);
         for (int i = 0; i < count; i++) {
             double theta = level.random.nextDouble() * Math.PI * 2.0D;
-            double speed = 0.75D - delta.length() * 0.075D;
-            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, state),
-                    hit.getLocation().x(), hit.getLocation().y() + 0.1D, hit.getLocation().z(),
+            level.addParticle(dust,
+                    hitLocation.x, hitLocation.y + 0.1D, hitLocation.z,
                     Math.cos(theta) * speed, 0.1D, Math.sin(theta) * speed);
         }
     }
 
-    private static Vec3 clamp(Vec3 vec, double max) {
-        return new Vec3(Mth.clamp(vec.x(), -max, max), Mth.clamp(vec.y(), -max, max), Mth.clamp(vec.z(), -max, max));
-    }
-
-    private record JetpackPose(Vec3 center, Vec3 side, Vec3 backward) {
+    private static double clamp(double value, double max) {
+        return Mth.clamp(value, -max, max);
     }
 
     private static void spawnVanillaBurst(ClientLevel level, CompoundTag data, double x, double y, double z) {
@@ -552,7 +597,7 @@ public final class HbmParticleEffects {
     private static void spawnMissileContrail(ClientLevel level, CompoundTag data, double x, double y, double z,
             double motionX, double motionY, double motionZ) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && player.position().distanceTo(new Vec3(x, y, z)) > 350.0D) {
+        if (player != null && player.distanceToSqr(x, y, z) > FAR_PARTICLE_DISTANCE_SQ) {
             return;
         }
         float scale = data.contains("scale") ? data.getFloat("scale") : 1.0F;
@@ -602,7 +647,7 @@ public final class HbmParticleEffects {
     private static void spawnExhaust(ClientLevel level, CompoundTag data, double x, double y, double z) {
         String mode = data.getString("mode");
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && player.position().distanceTo(new Vec3(x, y, z)) > 350.0D) {
+        if (player != null && player.distanceToSqr(x, y, z) > FAR_PARTICLE_DISTANCE_SQ) {
             return;
         }
         int count = Math.max(1, data.getInt("count"));
@@ -955,8 +1000,14 @@ public final class HbmParticleEffects {
             BlockState[] debrisStates = sampleLegacyDebrisStates(level,
                     x + offsetX, y + debrisVerticalOffset, z + offsetZ,
                     debrisSize, debrisRetry, random);
-            Vec3 motion = legacyDebrisMotion(random, debrisVelocity);
-            Particle particle = LegacyDebrisParticle.create(level, x, y, z, motion.x(), motion.y(), motion.z(), debrisStates, debrisSize);
+            double angleZ = -(45.0D + random.nextFloat() * 25.0D) * Mth.DEG_TO_RAD;
+            double angleY = random.nextDouble() * Math.PI * 2.0D;
+            double baseX = debrisVelocity * Math.cos(angleZ);
+            double motionY = debrisVelocity * Math.sin(angleZ);
+            double cosY = Math.cos(angleY);
+            double sinY = Math.sin(angleY);
+            Particle particle = LegacyDebrisParticle.create(level, x, y, z,
+                    baseX * cosY, motionY, -baseX * sinY, debrisStates, debrisSize);
             if (particle != null) {
                 Minecraft.getInstance().particleEngine.add(particle);
             }
@@ -1132,12 +1183,16 @@ public final class HbmParticleEffects {
         float yaw = getFloat(data, "yaw", 0.0F);
         boolean crouched = data.getBoolean("crouched");
         int amount = Math.max(1, ejector.amount());
+        double[] motionAndOffset = LegacyCasingEjectors.scratchMotionAndOffset();
         for (int i = 0; i < amount; i++) {
-            Vec3 motion = ejector.motion(pitch, yaw, level.random);
-            Vec3 offset = ejector.positionOffset(pitch, yaw, crouched);
+            ejector.writeMotionAndOffset(pitch, yaw, crouched, level.random, motionAndOffset);
             Particle particle = new SpentCasingParticle(level,
-                    x + offset.x(), y + offset.y(), z + offset.z(),
-                    motion.x(), motion.y(), motion.z(),
+                    x + motionAndOffset[LegacyCasingEjectors.OFFSET_X],
+                    y + motionAndOffset[LegacyCasingEjectors.OFFSET_Y],
+                    z + motionAndOffset[LegacyCasingEjectors.OFFSET_Z],
+                    motionAndOffset[LegacyCasingEjectors.MOTION_X],
+                    motionAndOffset[LegacyCasingEjectors.MOTION_Y],
+                    motionAndOffset[LegacyCasingEjectors.MOTION_Z],
                     (float) Math.toDegrees(yaw),
                     (float) Math.toDegrees(pitch),
                     (float) (level.random.nextGaussian() * 5.0D),
@@ -1158,17 +1213,12 @@ public final class HbmParticleEffects {
         float force = Math.max(0.0F, getFloat(data, "force", 0.15F));
         float brightness = Mth.clamp(getFloat(data, "brightness", 1.0F), 0.0F, 1.0F);
         RandomSource random = level.random;
-        for (BoneDefinition bone : boneDefinitions(living)) {
-            if (gib && random.nextBoolean() && !skeletonEntity) {
-                continue;
-            }
-            SkeletonParticle particle = new SkeletonParticle(level, bone.x(), bone.y(), bone.z(), brightness,
-                    bone.type(), bone.yaw(), bone.pitch());
-            if (gib) {
-                particle.makeGib(skeletonEntity);
-                particle.setParticleSpeed(random.nextGaussian() * force, (random.nextGaussian() + 1.0D) * force, random.nextGaussian() * force);
-            }
-            Minecraft.getInstance().particleEngine.add(particle);
+        if (usesVillagerSkeleton(living)) {
+            spawnVillagerSkeletonBones(level, living, gib, skeletonEntity, force, brightness, random);
+        } else if (usesZombieSkeleton(living)) {
+            spawnZombieSkeletonBones(level, living, gib, skeletonEntity, force, brightness, random);
+        } else {
+            spawnBipedSkeletonBones(level, living, gib, skeletonEntity, force, brightness, random);
         }
     }
 
@@ -1205,67 +1255,102 @@ public final class HbmParticleEffects {
         }
     }
 
-    private static BoneDefinition[] boneDefinitions(LivingEntity entity) {
-        if (usesVillagerSkeleton(entity)) {
-            return villagerBones(entity);
+    private static void spawnBipedSkeletonBones(ClientLevel level, LivingEntity entity, boolean gib, boolean skeletonEntity,
+            float force, float brightness, RandomSource random) {
+        float bodyYaw = entity.yBodyRot;
+        double radians = -bodyYaw / 180.0D * Math.PI;
+        double cos = Math.cos(radians);
+        double sin = Math.sin(radians);
+        double leftArmX = 0.375D * cos;
+        double leftArmZ = -0.375D * sin;
+        double leftLegX = 0.125D * cos;
+        double leftLegZ = -0.125D * sin;
+        double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.SKULL, -entity.yHeadRot, entity.getXRot(), x, y + 1.75D, z);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.TORSO, -bodyYaw, 0.0F, x, y + 1.125D, z);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftArmX, y + 1.125D, z + leftArmZ);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftArmX, y + 1.125D, z - leftArmZ);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftLegX, y + 0.375D, z + leftLegZ);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftLegX, y + 0.375D, z - leftLegZ);
+    }
+
+    private static void spawnZombieSkeletonBones(ClientLevel level, LivingEntity entity, boolean gib, boolean skeletonEntity,
+            float force, float brightness, RandomSource random) {
+        float bodyYaw = entity.yBodyRot;
+        double radians = -bodyYaw / 180.0D * Math.PI;
+        double cos = Math.cos(radians);
+        double sin = Math.sin(radians);
+        double leftArmX = 0.375D * cos;
+        double leftArmZ = -0.375D * sin;
+        double forwardX = 0.25D * sin;
+        double forwardZ = 0.25D * cos;
+        double leftLegX = 0.125D * cos;
+        double leftLegZ = -0.125D * sin;
+        double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.SKULL, -entity.yHeadRot, entity.getXRot(), x, y + 1.75D, z);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.TORSO, -bodyYaw, 0.0F, x, y + 1.125D, z);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, -90.0F, x + leftArmX + forwardX, y + 1.375D, z + leftArmZ + forwardZ);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, -90.0F, x - leftArmX + forwardX, y + 1.375D, z - leftArmZ + forwardZ);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftLegX, y + 0.375D, z + leftLegZ);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftLegX, y + 0.375D, z - leftLegZ);
+    }
+
+    private static void spawnVillagerSkeletonBones(ClientLevel level, LivingEntity entity, boolean gib, boolean skeletonEntity,
+            float force, float brightness, RandomSource random) {
+        float bodyYaw = entity.yBodyRot;
+        double radians = -bodyYaw / 180.0D * Math.PI;
+        double cos = Math.cos(radians);
+        double sin = Math.sin(radians);
+        double leftArmX = 0.375D * cos;
+        double leftArmZ = -0.375D * sin;
+        double forwardX = 0.25D * sin;
+        double forwardZ = 0.25D * cos;
+        double leftLegX = 0.125D * cos;
+        double leftLegZ = -0.125D * sin;
+        double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.SKULL_VILLAGER, -entity.yHeadRot, entity.getXRot(), x, y + 1.6875D, z);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.TORSO, -bodyYaw, 0.0F, x, y + 1.0D, z);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, -45.0F, x + leftArmX + forwardX, y + 1.125D, z + leftArmZ + forwardZ);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, -45.0F, x - leftArmX + forwardX, y + 1.125D, z - leftArmZ + forwardZ);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftLegX, y + 0.375D, z + leftLegZ);
+        spawnSkeletonBone(level, random, gib, skeletonEntity, force, brightness,
+                SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftLegX, y + 0.375D, z - leftLegZ);
+    }
+
+    private static void spawnSkeletonBone(ClientLevel level, RandomSource random, boolean gib, boolean skeletonEntity,
+            float force, float brightness, SkeletonParticle.BoneType type, float yaw, float pitch, double x, double y, double z) {
+        if (gib && random.nextBoolean() && !skeletonEntity) {
+            return;
         }
-        if (usesZombieSkeleton(entity)) {
-            return zombieBones(entity);
+        SkeletonParticle particle = new SkeletonParticle(level, x, y, z, brightness, type, yaw, pitch);
+        if (gib) {
+            particle.makeGib(skeletonEntity);
+            particle.setParticleSpeed(random.nextGaussian() * force, (random.nextGaussian() + 1.0D) * force, random.nextGaussian() * force);
         }
-        return bipedBones(entity);
-    }
-
-    private static BoneDefinition[] bipedBones(LivingEntity entity) {
-        float bodyYaw = entity.yBodyRot;
-        Vec3 leftArm = rotateLegacyY(0.375D, 0.0D, -bodyYaw);
-        Vec3 leftLeg = rotateLegacyY(0.125D, 0.0D, -bodyYaw);
-        double x = entity.getX();
-        double y = entity.getY();
-        double z = entity.getZ();
-        return new BoneDefinition[] {
-                new BoneDefinition(SkeletonParticle.BoneType.SKULL, -entity.yHeadRot, entity.getXRot(), x, y + 1.75D, z),
-                new BoneDefinition(SkeletonParticle.BoneType.TORSO, -bodyYaw, 0.0F, x, y + 1.125D, z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftArm.x, y + 1.125D, z + leftArm.z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftArm.x, y + 1.125D, z - leftArm.z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftLeg.x, y + 0.375D, z + leftLeg.z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftLeg.x, y + 0.375D, z - leftLeg.z)
-        };
-    }
-
-    private static BoneDefinition[] zombieBones(LivingEntity entity) {
-        float bodyYaw = entity.yBodyRot;
-        Vec3 leftArm = rotateLegacyY(0.375D, 0.0D, -bodyYaw);
-        Vec3 forward = rotateLegacyY(0.0D, 0.25D, -bodyYaw);
-        Vec3 leftLeg = rotateLegacyY(0.125D, 0.0D, -bodyYaw);
-        double x = entity.getX();
-        double y = entity.getY();
-        double z = entity.getZ();
-        return new BoneDefinition[] {
-                new BoneDefinition(SkeletonParticle.BoneType.SKULL, -entity.yHeadRot, entity.getXRot(), x, y + 1.75D, z),
-                new BoneDefinition(SkeletonParticle.BoneType.TORSO, -bodyYaw, 0.0F, x, y + 1.125D, z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, -90.0F, x + leftArm.x + forward.x, y + 1.375D, z + leftArm.z + forward.z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, -90.0F, x - leftArm.x + forward.x, y + 1.375D, z - leftArm.z + forward.z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftLeg.x, y + 0.375D, z + leftLeg.z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftLeg.x, y + 0.375D, z - leftLeg.z)
-        };
-    }
-
-    private static BoneDefinition[] villagerBones(LivingEntity entity) {
-        float bodyYaw = entity.yBodyRot;
-        Vec3 leftArm = rotateLegacyY(0.375D, 0.0D, -bodyYaw);
-        Vec3 forward = rotateLegacyY(0.0D, 0.25D, -bodyYaw);
-        Vec3 leftLeg = rotateLegacyY(0.125D, 0.0D, -bodyYaw);
-        double x = entity.getX();
-        double y = entity.getY();
-        double z = entity.getZ();
-        return new BoneDefinition[] {
-                new BoneDefinition(SkeletonParticle.BoneType.SKULL_VILLAGER, -entity.yHeadRot, entity.getXRot(), x, y + 1.6875D, z),
-                new BoneDefinition(SkeletonParticle.BoneType.TORSO, -bodyYaw, 0.0F, x, y + 1.0D, z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, -45.0F, x + leftArm.x + forward.x, y + 1.125D, z + leftArm.z + forward.z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, -45.0F, x - leftArm.x + forward.x, y + 1.125D, z - leftArm.z + forward.z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x + leftLeg.x, y + 0.375D, z + leftLeg.z),
-                new BoneDefinition(SkeletonParticle.BoneType.LIMB, -bodyYaw, 0.0F, x - leftLeg.x, y + 0.375D, z - leftLeg.z)
-        };
+        Minecraft.getInstance().particleEngine.add(particle);
     }
 
     private static boolean usesZombieSkeleton(LivingEntity entity) {
@@ -1283,13 +1368,6 @@ public final class HbmParticleEffects {
 
     private static boolean usesVillagerSkeleton(LivingEntity entity) {
         return entity instanceof Villager || entity instanceof Witch;
-    }
-
-    private static Vec3 rotateLegacyY(double x, double z, double degrees) {
-        double radians = degrees / 180.0D * Math.PI;
-        double cos = Math.cos(radians);
-        double sin = Math.sin(radians);
-        return new Vec3(x * cos + z * sin, 0.0D, z * cos - x * sin);
     }
 
     private static Particle spawnNamedVanilla(ClientLevel level, String mode, double x, double y, double z, double motionX, double motionY, double motionZ) {
@@ -1326,10 +1404,10 @@ public final class HbmParticleEffects {
             case ParticleUtil.VANILLA_CLOUD -> ParticleTypes.CLOUD;
             case ParticleUtil.VANILLA_TOWN_AURA -> ModParticleTypes.TOWN_AURA.get();
             case ParticleUtil.VANILLA_RED_DUST -> DustParticleOptions.REDSTONE;
-            case ParticleUtil.VANILLA_BLUE_DUST -> new DustParticleOptions(new Vector3f(0.01F, 0.01F, 1.0F), 1.0F);
-            case ParticleUtil.VANILLA_GREEN_DUST -> new DustParticleOptions(new Vector3f(0.01F, 0.5F, 0.1F), 1.0F);
+            case ParticleUtil.VANILLA_BLUE_DUST -> BLUE_DUST;
+            case ParticleUtil.VANILLA_GREEN_DUST -> GREEN_DUST;
             case ParticleUtil.VANILLA_FIREWORKS -> ParticleTypes.FIREWORK;
-            case ParticleUtil.VANILLA_BLOCK_DUST -> new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
+            case ParticleUtil.VANILLA_BLOCK_DUST -> STONE_BLOCK_DUST;
             case ParticleUtil.VANILLA_COLOR_DUST -> DustParticleOptions.REDSTONE;
             default -> null;
         };
@@ -1452,16 +1530,6 @@ public final class HbmParticleEffects {
         }
     }
 
-    private static Vec3 legacyDebrisMotion(RandomSource random, float velocity) {
-        double angleZ = -Math.toRadians(45.0D + random.nextFloat() * 25.0D);
-        double angleY = random.nextDouble() * Math.PI * 2.0D;
-        double x = velocity * Math.cos(angleZ);
-        double y = velocity * Math.sin(angleZ);
-        double cosY = Math.cos(angleY);
-        double sinY = Math.sin(angleY);
-        return new Vec3(x * cosY, y, -x * sinY);
-    }
-
     private static void spawnRadialDigamma(ClientLevel level, double x, double y, double z, int count) {
         double angle = level.random.nextDouble() * Math.PI * 2.0D;
         for (int i = 0; i < count; i++) {
@@ -1488,13 +1556,14 @@ public final class HbmParticleEffects {
     }
 
     private static BlockState nearbyBlockState(ClientLevel level, double x, double y, double z) {
-        BlockPos pos = BlockPos.containing(x, y, z);
+        BlockPos.MutableBlockPos pos = NEARBY_BLOCK_POS.get().set(Mth.floor(x), Mth.floor(y), Mth.floor(z));
         BlockState state = level.getBlockState(pos);
         if (!state.isAir()) {
             return state;
         }
-        for (Direction direction : Direction.values()) {
-            state = level.getBlockState(pos.relative(direction));
+        BlockPos.MutableBlockPos neighbor = NEARBY_BLOCK_NEIGHBOR.get();
+        for (Direction direction : DIRECTIONS) {
+            state = level.getBlockState(neighbor.setWithOffset(pos, direction));
             if (!state.isAir()) {
                 return state;
             }
@@ -1512,7 +1581,7 @@ public final class HbmParticleEffects {
         int centerZ = Mth.floor(z + 0.5D);
         int middle = size / 2 - 1;
         boolean[] occupied = new boolean[size * size * size];
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos pos = DEBRIS_BLOCK_POS.get();
 
         for (int ix = 0; ix < 2; ix++) {
             for (int iy = 0; iy < 2; iy++) {
@@ -1580,9 +1649,6 @@ public final class HbmParticleEffects {
 
     private static float getFloat(CompoundTag data, String key, float fallback) {
         return data.contains(key) ? data.getFloat(key) : fallback;
-    }
-
-    private record BoneDefinition(SkeletonParticle.BoneType type, float yaw, float pitch, double x, double y, double z) {
     }
 
     private HbmParticleEffects() {

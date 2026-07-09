@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "O": {
+      "tag": "forge:plates/iron"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    }
+  },
+  "pattern": [
+    "OOO",
+    "PDP",
+    "OOO"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cladding_iron"
+  },
+  "show_notification": true
+}

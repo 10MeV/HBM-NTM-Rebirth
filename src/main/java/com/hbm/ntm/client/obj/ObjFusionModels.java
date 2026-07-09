@@ -349,6 +349,14 @@ public final class ObjFusionModels {
         PLASMA_FORGE_LEGACY.renderPartUntextured(partName, poseStack, buffer, red, green, blue, alpha, renderMode);
     }
 
+    public static LegacyWavefrontModel.SelectionHandle torusPlasmaHandle() {
+        return TORUS_PLASMA_HANDLE;
+    }
+
+    public static LegacyWavefrontModel.SelectionHandle plasmaForgePlasmaHandle() {
+        return PLASMA_FORGE_PLASMA_HANDLE;
+    }
+
     private static LegacyWavefrontModel.SelectionHandle torusHandle(String partName) {
         if (partName == null) {
             return null;

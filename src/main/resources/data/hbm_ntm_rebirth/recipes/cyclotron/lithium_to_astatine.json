@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:cyclotron",
+  "particle": { "ingredient": { "item": "hbm_ntm_rebirth:part_lithium" }, "count": 1 },
+  "input": { "ingredient": { "tag": "forge:dusts/polonium" }, "count": 1, "legacy_ore": "dustPolonium" },
+  "output": { "item": "hbm_ntm_rebirth:powder_astatine" },
+  "antimatter": 50,
+  "source_order": 8
+}

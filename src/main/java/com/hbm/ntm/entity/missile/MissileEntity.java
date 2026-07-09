@@ -254,7 +254,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
                 level().addFreshEntity(emp);
             }
             case NUKE_MICRO -> NuclearExplosionUtil.explodeFatman(level(), getX(), getY() + 0.5D, getZ());
-            case SCHRABIDIUM -> NuclearExplosionUtil.spawnAntiSchrabidium(level(), getX(), getY(), getZ());
+            case SCHRABIDIUM -> NuclearExplosionUtil.spawnMissileAntiSchrabidium(level(), getX(), getY(), getZ());
             case BLACK_HOLE -> {
                 level().explode(this, getX(), getY(), getZ(), 1.5F, false, Level.ExplosionInteraction.BLOCK);
                 BlackHoleEntity blackHole = new BlackHoleEntity(level(), 1.5F);
@@ -276,6 +276,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
                 placeVolcanoCore();
             }
             case DOOMSDAY -> NuclearExplosionUtil.spawnMissileDoomsday(level(), getX(), getY(), getZ());
+            case DOOMSDAY_RUSTED -> NuclearExplosionUtil.spawnMissileDoomsdayRusted(level(), getX(), getY(), getZ());
         }
     }
 
@@ -401,8 +402,8 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
     }
 
     private Vec3 legacyThrustVector() {
-        double pitch = Math.toRadians(getXRot());
-        double yaw = Math.toRadians(getYRot() + 90.0F);
+        double pitch = getXRot() * Mth.DEG_TO_RAD;
+        double yaw = (getYRot() + 90.0F) * Mth.DEG_TO_RAD;
         double sinPitch = Math.sin(pitch);
         double cosPitch = Math.cos(pitch);
         double x = -sinPitch * Math.sin(yaw);
@@ -670,7 +671,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         DOOMSDAY(MissileItem.FormFactor.ATLAS, LegacyMissileRadarProfile.TIER4, 40.0F,
                 Impact.DOOMSDAY, 0.0F, 0, 0, 0, 0, 0, 0),
         DOOMSDAY_RUSTED(MissileItem.FormFactor.ATLAS, LegacyMissileRadarProfile.TIER4, 40.0F,
-                Impact.DOOMSDAY, 0.0F, 0, 0, 0, 0, 0, 0);
+                Impact.DOOMSDAY_RUSTED, 0.0F, 0, 0, 0, 0, 0, 0);
 
         private final MissileItem.FormFactor formFactor;
         private final LegacyMissileRadarProfile radarProfile;
@@ -815,6 +816,7 @@ public class MissileEntity extends Entity implements LegacyMissileRadarDetectabl
         NUCLEAR,
         MIRV,
         VOLCANO,
-        DOOMSDAY
+        DOOMSDAY,
+        DOOMSDAY_RUSTED
     }
 }

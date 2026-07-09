@@ -3,24 +3,26 @@
   "duration": 800,
   "inputs": [
     {
+      "count": 1,
       "ingredient": {
         "tag": "forge:dusts/aluminium"
       },
-      "count": 1,
       "legacy_ore": "dustAluminum"
     },
     {
+      "count": 7,
       "ingredient": {
         "item": "minecraft:clay_ball"
       },
-      "count": 7,
       "legacy_item": "minecraft:clay_ball"
     }
   ],
+  "name": "blast.firebrick",
   "outputs": [
     {
-      "item": "hbm_ntm_rebirth:ingot_firebrick",
-      "count": 8
+      "count": 8,
+      "item": "hbm_ntm_rebirth:ingot_firebrick"
     }
-  ]
+  ],
+  "source_order": 12
 }

@@ -5,10 +5,11 @@
                },
     "byproduct":  {
                       "fluid":  "hbm_ntm_rebirth:gas_coker",
-                      "amount":  170
+                      "amount":  350
                   },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:aromatics",
-                  "amount":  1700
-              }
+                  "amount":  3500
+              },
+    "source_order":  19
 }

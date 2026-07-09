@@ -22,6 +22,7 @@ import com.hbm.ntm.uninos.networkproviders.PlasmaNetwork;
 import com.hbm.ntm.uninos.networkproviders.PlasmaNode;
 import com.hbm.ntm.uninos.networkproviders.PlasmaNodespace;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -398,7 +399,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         if (input.isEmpty() || level == null) {
             return null;
         }
-        for (OutgasserRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.OUTGASSER.type().get())) {
+        for (OutgasserRecipe recipe : sortedOutgasserRecipes()) {
             if (!recipe.matchesFusionBreeder(input)) {
                 continue;
             }
@@ -417,12 +418,21 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         if (input.isEmpty() || level == null) {
             return false;
         }
-        for (OutgasserRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.OUTGASSER.type().get())) {
+        for (OutgasserRecipe recipe : sortedOutgasserRecipes()) {
             if (recipe.matchesFusionBreeder(input)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private List<OutgasserRecipe> sortedOutgasserRecipes() {
+        return level.getRecipeManager()
+                .getAllRecipesFor(ModRecipes.OUTGASSER.type().get())
+                .stream()
+                .sorted(Comparator.comparingInt(OutgasserRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
+                .toList();
     }
 
     private boolean canProcessSpecialMeteoriteSword() {
@@ -466,13 +476,13 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         if (level == null || inputTank.isEmpty()) {
             return null;
         }
-        for (FusionFluidBreederRecipe recipe : level.getRecipeManager().getAllRecipesFor(
-                ModRecipes.FUSION_FLUID_BREEDER.type().get())) {
-            if (recipe.matches(inputTank.getTankType(), inputTank.getFill()) && canFitOutputFluid(recipe.output())) {
-                return recipe;
-            }
-        }
-        return null;
+        return level.getRecipeManager().getAllRecipesFor(ModRecipes.FUSION_FLUID_BREEDER.type().get()).stream()
+                .sorted(Comparator.comparingInt(FusionFluidBreederRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
+                .filter(recipe -> recipe.matches(inputTank.getTankType(), inputTank.getFill())
+                        && canFitOutputFluid(recipe.output()))
+                .findFirst()
+                .orElse(null);
     }
 
     private boolean canFitOutputFluid(HbmFluidStack output) {

@@ -1,0 +1,28 @@
+{
+  "type": "hbm_ntm_rebirth:blast_furnace",
+  "duration": 400,
+  "inputs": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/copper"
+      },
+      "legacy_ore": "ingotCopper"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/redstone"
+      },
+      "legacy_ore": "ingotRedstone"
+    }
+  ],
+  "name": "blast.mingradeIngot",
+  "outputs": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:ingot_red_copper"
+    }
+  ],
+  "source_order": 6
+}

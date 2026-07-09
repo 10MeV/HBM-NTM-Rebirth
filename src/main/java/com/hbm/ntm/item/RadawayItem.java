@@ -1,8 +1,9 @@
 package com.hbm.ntm.item;
 
-import com.hbm.ntm.config.PotionConfig;
 import com.hbm.ntm.registry.ModEffects;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.InventoryUtil;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -25,19 +26,14 @@ public class RadawayItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (PotionConfig.hasPotionSickness(player)) {
-            return InteractionResultHolder.fail(stack);
-        }
         if (!level.isClientSide) {
-            PotionConfig.applyPotionSickness(player, 5);
             MobEffect effect = ModEffects.RADAWAY.get();
             MobEffectInstance active = player.getEffect(effect);
             int appliedDuration = active == null ? duration : active.getDuration() + duration;
             player.addEffect(new MobEffectInstance(effect, appliedDuration, amplifier));
             LegacySoundPlayer.playLegacyRadaway(player);
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
-            }
+            stack.shrink(1);
+            InventoryUtil.giveOrDrop(player, new ItemStack(ModItems.IV_EMPTY.get()));
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }

@@ -1,10 +1,26 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/diamond" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_diamond"
+    },
+    "legacy_id": "hbm:crystal_diamond",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_diamond" },
-    { "item": "hbm_ntm_rebirth:powder_diamond" },
-    { "item": "hbm_ntm_rebirth:powder_diamond" },
-    { "item": "hbm_ntm_rebirth:powder_diamond" }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_diamond"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_diamond"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_diamond"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_diamond"
+    }
+  ],
+  "source_order": 35
 }

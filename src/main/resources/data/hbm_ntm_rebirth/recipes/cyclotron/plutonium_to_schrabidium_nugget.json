@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:cyclotron",
+  "particle": { "ingredient": { "item": "hbm_ntm_rebirth:part_plutonium" }, "count": 1 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:pellet_charged" }, "count": 1 },
+  "output": { "item": "hbm_ntm_rebirth:nugget_schrabidium" },
+  "antimatter": 1000,
+  "source_order": 41
+}

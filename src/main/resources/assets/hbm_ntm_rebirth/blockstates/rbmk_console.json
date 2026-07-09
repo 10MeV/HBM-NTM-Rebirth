@@ -1,8 +1,8 @@
 {
   "variants": {
-    "facing=north": { "model": "hbm_ntm_rebirth:block/rbmk_console" },
     "facing=east": { "model": "hbm_ntm_rebirth:block/rbmk_console" },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/rbmk_console" },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/rbmk_console" }
+    "facing=north": { "model": "hbm_ntm_rebirth:block/rbmk_console_north" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/rbmk_console_south" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/rbmk_console_west" }
   }
 }

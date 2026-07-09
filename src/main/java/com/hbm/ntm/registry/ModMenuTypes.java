@@ -26,6 +26,7 @@ import com.hbm.ntm.menu.CompactLauncherMenu;
 import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.menu.CombustionEngineMenu;
 import com.hbm.ntm.menu.CombinationOvenMenu;
+import com.hbm.ntm.menu.ContainmentBoxMenu;
 import com.hbm.ntm.menu.CraneLogisticsMenu;
 import com.hbm.ntm.menu.CrucibleMenu;
 import com.hbm.ntm.menu.CrateMenu;
@@ -79,6 +80,7 @@ import com.hbm.ntm.menu.OilburnerMenu;
 import com.hbm.ntm.menu.OreSlopperMenu;
 import com.hbm.ntm.menu.ParticleAcceleratorMenu;
 import com.hbm.ntm.menu.PneumaticTubeMenu;
+import com.hbm.ntm.menu.PlasticBagMenu;
 import com.hbm.ntm.menu.PWRMenu;
 import com.hbm.ntm.menu.PyroOvenMenu;
 import com.hbm.ntm.menu.PrecassMenu;
@@ -122,6 +124,7 @@ import com.hbm.ntm.menu.StrandCasterMenu;
 import com.hbm.ntm.menu.SteamTurbineMenu;
 import com.hbm.ntm.menu.StorageDrumMenu;
 import com.hbm.ntm.menu.ToolAbilityMenu;
+import com.hbm.ntm.menu.ToolboxMenu;
 import com.hbm.ntm.menu.TurbofanMenu;
 import com.hbm.ntm.menu.TurbineGasMenu;
 import com.hbm.ntm.menu.TurretMenu;
@@ -155,6 +158,15 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<CasingBagMenu>> CASING_BAG =
             MENUS.register("casing_bag", () -> IForgeMenuType.create(CasingBagMenu::new));
+
+    public static final RegistryObject<MenuType<ContainmentBoxMenu>> CONTAINMENT_BOX =
+            MENUS.register("containment_box", () -> IForgeMenuType.create(ContainmentBoxMenu::new));
+
+    public static final RegistryObject<MenuType<PlasticBagMenu>> PLASTIC_BAG =
+            MENUS.register("plastic_bag", () -> IForgeMenuType.create(PlasticBagMenu::new));
+
+    public static final RegistryObject<MenuType<ToolboxMenu>> TOOLBOX =
+            MENUS.register("toolbox", () -> IForgeMenuType.create(ToolboxMenu::new));
 
     public static final RegistryObject<MenuType<ArmorTableMenu>> ARMOR_TABLE =
             MENUS.register("armor_table", () -> IForgeMenuType.create(ArmorTableMenu::new));

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:coffee" },
+    { "tag": "forge:nuggets/radium226" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:coffee_radium"
+  }
+}

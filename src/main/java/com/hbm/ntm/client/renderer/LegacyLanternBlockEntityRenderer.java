@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.world.phys.Vec3;
 
 public class LegacyLanternBlockEntityRenderer implements BlockEntityRenderer<LegacyLanternBlockEntity> {
     private static final float[][] LIGHT_VERTICES = {
@@ -30,25 +31,43 @@ public class LegacyLanternBlockEntityRenderer implements BlockEntityRenderer<Leg
     }
 
     @Override
+    public boolean shouldRender(LegacyLanternBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(LegacyLanternBlockEntity blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        LegacyTileRenderPlans.LanternLightPlan plan =
-                LegacyTileRenderPlans.lanternLightPlan(System.currentTimeMillis());
-        int color = plan.red() << 16 | plan.green() << 8 | plan.blue();
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            float multiplier = ((float) (Math.sin(System.currentTimeMillis()
+                    / LegacyTileRenderPlans.LANTERN_LIGHT_PERIOD_DIVISOR) / 2.0D + 0.5D))
+                    * LegacyTileRenderPlans.LANTERN_LIGHT_RANGE + LegacyTileRenderPlans.LANTERN_LIGHT_BASE;
+            int red = Math.round(LegacyTileRenderPlans.LANTERN_LIGHT_RED * multiplier);
+            int green = Math.round(LegacyTileRenderPlans.LANTERN_LIGHT_GREEN * multiplier);
+            int blue = Math.round(LegacyTileRenderPlans.LANTERN_LIGHT_BLUE * multiplier);
+            int color = red << 16 | green << 8 | blue;
+            LegacyUntexturedQuadRenderer.DirectQuadBatch batch =
+                    LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                            LegacyTexturedRenderMode.CUTOUT_NO_CULL);
 
-        for (int[] face : LIGHT_FACES) {
-            renderFace(poseStack, buffer, face[0], face[1], face[2], face[3], color, plan.alpha());
-            renderFace(poseStack, buffer, face[3], face[2], face[1], face[0], color, plan.alpha());
+            for (int[] face : LIGHT_FACES) {
+                renderFace(batch, face[0], face[1], face[2], face[3], color, 255);
+                renderFace(batch, face[3], face[2], face[1], face[0], color, 255);
+            }
         }
     }
 
-    private static void renderFace(PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderFace(LegacyUntexturedQuadRenderer.DirectQuadBatch batch,
             int i0, int i1, int i2, int i3, int color, int alpha) {
         float[] v0 = LIGHT_VERTICES[i0 - 1];
         float[] v1 = LIGHT_VERTICES[i1 - 1];
         float[] v2 = LIGHT_VERTICES[i2 - 1];
         float[] v3 = LIGHT_VERTICES[i3 - 1];
-        LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+        LegacyUntexturedQuadRenderer.quadDirect(batch,
                 v0[0], v0[1], v0[2],
                 v1[0], v1[1], v1[2],
                 v2[0], v2[1], v2[2],

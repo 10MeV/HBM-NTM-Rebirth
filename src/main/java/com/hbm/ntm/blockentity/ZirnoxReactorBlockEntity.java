@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.ZirnoxReactorBlock;
 import com.hbm.ntm.api.tile.IInfoProviderEC;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
@@ -17,7 +18,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
-import com.hbm.ntm.item.ZirnoxRodItem;
+import com.hbm.items.machine.ItemZirnoxRod;
 import com.hbm.ntm.menu.ZirnoxReactorMenu;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmLegacyControlReceiver;
@@ -548,6 +549,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
             tiltBlocksChecked = 0;
             tiltBlocksValid = 0;
         }
+        changed = syncTiltedBlockState(level, isTilted()) || changed;
 
         BlockPos floor = standardFloor5x5(tiltBlocksChecked);
         tiltBlocksChecked++;
@@ -559,13 +561,27 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     private boolean setTiltedState(Level level, boolean tilted) {
         if (isTilted() == tilted) {
-            return false;
+            return syncTiltedBlockState(level, tilted);
         }
         if (tilted) {
             level.playSound(null, worldPosition, ModSounds.BLOCK_METAL_IMPACT.get(), SoundSource.BLOCKS, 3.0F, 1.0F);
         }
         setTilted(tilted);
+        markFluidSubscriptionDirty();
+        invalidateFluidHandlers();
         setChanged();
+        if (!syncTiltedBlockState(level, tilted)) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+        return true;
+    }
+
+    private boolean syncTiltedBlockState(Level level, boolean tilted) {
+        BlockState state = getBlockState();
+        if (!state.hasProperty(ZirnoxReactorBlock.TILTED) || state.getValue(ZirnoxReactorBlock.TILTED) == tilted) {
+            return false;
+        }
+        level.setBlock(worldPosition, state.setValue(ZirnoxReactorBlock.TILTED, tilted), Block.UPDATE_CLIENTS);
         return true;
     }
 
@@ -702,8 +718,8 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         for (int i = 0; i < decay; i++) {
             heat += ZirnoxFuelRuntime.heat(stack);
-            ZirnoxRodItem.incrementLifeTime(stack);
-            if (ZirnoxRodItem.getLifeTime(stack) > stack.getMaxDamage()) {
+            ItemZirnoxRod.incrementLifeTime(stack);
+            if (ItemZirnoxRod.getLifeTime(stack) > stack.getMaxDamage()) {
                 ItemStack product = ZirnoxFuelRuntime.product(stack);
                 items.setStackInSlot(slot, product.isEmpty() ? ItemStack.EMPTY : product.copy());
                 break;

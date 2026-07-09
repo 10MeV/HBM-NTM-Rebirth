@@ -9,7 +9,9 @@
     "amount": 50
   },
   "solid_input": {
-    "item": "hbm_ntm_rebirth:stone_resource_bauxite"
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:stone_resource_bauxite"
+    }
   },
   "duration": 80
 }

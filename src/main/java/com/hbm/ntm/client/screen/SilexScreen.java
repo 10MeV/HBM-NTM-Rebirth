@@ -60,7 +60,7 @@ public class SilexScreen extends AbstractContainerScreen<SilexMenu> {
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
         LaserWavelength wavelength = LaserWavelength.byOrdinal(menu.getModeOrdinal());
         if (wavelength != LaserWavelength.NULL) {
-            Component label = Component.translatable(wavelengthNameKey(wavelength)).withStyle(wavelength.textColor());
+            Component label = Component.translatable(wavelength.displayNameKey()).withStyle(wavelength.textColor());
             graphics.drawString(font, label, 100 + (32 - font.width(label) / 2), 16, 0, false);
         }
     }
@@ -114,16 +114,5 @@ public class SilexScreen extends AbstractContainerScreen<SilexMenu> {
             return Mth.hsvToRgb((System.currentTimeMillis() % 2500L) / 2500.0F, 0.5F, 1.0F);
         }
         return wavelength.guiColor();
-    }
-
-    private static String wavelengthNameKey(LaserWavelength wavelength) {
-        return switch (wavelength) {
-            case IR -> "wavelengths.name.ir";
-            case VISIBLE -> "wavelengths.name.visible";
-            case UV -> "wavelengths.name.uv";
-            case GAMMA -> "wavelengths.name.gamma";
-            case DRX -> "wavelengths.name.drx";
-            default -> "";
-        };
     }
 }

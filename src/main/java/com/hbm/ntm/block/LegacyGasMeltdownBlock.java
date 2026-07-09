@@ -1,8 +1,9 @@
 package com.hbm.ntm.block;
 
+import com.hbm.blocks.gas.BlockGasBase;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.radiation.ArmorUtil;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.RadiationUtil;
@@ -19,7 +20,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 @SuppressWarnings("deprecation")
-public class LegacyGasMeltdownBlock extends LegacyGasBlock {
+public class LegacyGasMeltdownBlock extends BlockGasBase {
     public LegacyGasMeltdownBlock(Properties properties) {
         super(properties, 0.1F, 0.4F, 0.1F);
     }
@@ -32,7 +33,7 @@ public class LegacyGasMeltdownBlock extends LegacyGasBlock {
             level.setBlock(radonPos, ModBlocks.GAS_RADON_DENSE.get().defaultBlockState(), Block.UPDATE_ALL);
         }
         if (level.canSeeSky(pos)) {
-            ChunkRadiationManager.incrementRadiation(level, pos, 5.0F);
+            ChunkRadiationManager.proxy.incrementRad(level, pos, 5.0F);
         }
         if (random.nextInt(350) == 0) {
             level.removeBlock(pos, false);

@@ -1,5 +1,5 @@
 {
-    "render_type":  "minecraft:cutout",
+    "render_type":  "minecraft:solid",
     "loader":  "forge:obj",
     "flip_v":  true,
   "automatic_culling": false,

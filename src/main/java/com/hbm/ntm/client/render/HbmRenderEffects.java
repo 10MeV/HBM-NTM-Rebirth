@@ -1,8 +1,6 @@
 package com.hbm.ntm.client.render;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.client.obj.LegacyLineRenderer;
-import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.config.HbmClientConfig;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
@@ -32,8 +30,9 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
 public final class HbmRenderEffects {
@@ -49,15 +48,27 @@ public final class HbmRenderEffects {
     private static final int TOREX_SHOCK_POST_FLASH_VISIBLE_TICKS = 120;
     private static final int NUCLEAR_FLASH_COVER_TICKS = 100;
     private static final int MIN_POST_FLASH_WARP_TICKS = 80;
+    private static final int MAX_CACHED_SPHERE_VERTEX_COUNT = 196_608;
 
     private static final List<Shockwave> ACTIVE = new ArrayList<>();
+    private static final Map<SphereMeshKey, SphereMesh> SPHERE_MESHES =
+            new LinkedHashMap<>(8, 0.75F, true);
+    private static int cachedSphereVertexCount;
     private static ShaderInstance warpWorldShader;
+    private static Uniform useTypeUniform;
+    private static Uniform timeUniform;
+    private static Uniform intensityUniform;
     private static TextureTarget sceneCopy;
     private static long lastDebugLogMillis;
 
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         event.registerShader(new ShaderInstance(event.getResourceProvider(), WARP_WORLD,
-                DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL), shader -> warpWorldShader = shader);
+                DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL), shader -> {
+            warpWorldShader = shader;
+            useTypeUniform = shader.getUniform("useType");
+            timeUniform = shader.getUniform("time");
+            intensityUniform = shader.getUniform("intensity");
+        });
     }
 
     public static void spawnNuclearWarpShockwave(double x, double y, double z, float waveScale, int lifetime) {
@@ -92,12 +103,14 @@ public final class HbmRenderEffects {
             return;
         }
         ACTIVE.add(new Shockwave(x, y, z, spec, Math.max(0, initialAge)));
-        debugLog("spawn warp_world shockwave active=" + ACTIVE.size()
-                + " pos=" + x + "," + y + "," + z
-                + " mode=" + spec.radiusMode
-                + " radiusScale=" + spec.radiusScale
-                + " lifetime=" + spec.lifetime
-                + " initialAge=" + initialAge);
+        if (debugWireframe()) {
+            debugLog("spawn warp_world shockwave active=" + ACTIVE.size()
+                    + " pos=" + x + "," + y + "," + z
+                    + " mode=" + spec.radiusMode
+                    + " radiusScale=" + spec.radiusScale
+                    + " lifetime=" + spec.lifetime
+                    + " initialAge=" + initialAge);
+        }
     }
 
     public static void tick() {
@@ -107,11 +120,10 @@ public final class HbmRenderEffects {
             return;
         }
 
-        Iterator<Shockwave> iterator = ACTIVE.iterator();
-        while (iterator.hasNext()) {
-            Shockwave shockwave = iterator.next();
+        for (int i = ACTIVE.size() - 1; i >= 0; i--) {
+            Shockwave shockwave = ACTIVE.get(i);
             if (shockwave.age++ >= shockwave.lifetime) {
-                iterator.remove();
+                ACTIVE.remove(i);
             }
         }
     }
@@ -134,9 +146,12 @@ public final class HbmRenderEffects {
         Vec3 cameraPos = camera.getPosition();
         float partialTick = event.getPartialTick();
         float time = minecraft.level.getGameTime() + partialTick;
-        debugLog("render stage=" + event.getStage() + " active=" + ACTIVE.size()
-                + " shader=" + (warpWorldShader != null)
-                + " target=" + mainTarget.width + "x" + mainTarget.height);
+        boolean debugWireframe = debugWireframe();
+        if (debugWireframe) {
+            debugLog("render stage=" + event.getStage() + " active=" + ACTIVE.size()
+                    + " shader=" + (warpWorldShader != null)
+                    + " target=" + mainTarget.width + "x" + mainTarget.height);
+        }
 
         RenderSystem.backupProjectionMatrix();
         RenderSystem.setProjectionMatrix(event.getProjectionMatrix(), VertexSorting.DISTANCE_TO_ORIGIN);
@@ -153,39 +168,39 @@ public final class HbmRenderEffects {
 
         RenderSystem.setShader(() -> warpWorldShader);
         warpWorldShader.setSampler("ScreenTexture", sceneCopy);
-        setUniform("useType", 1);
-        setUniform("time", time);
+        setUniform(useTypeUniform, 1);
+        setUniform(timeUniform, time);
 
-        boolean debugWireframe = debugWireframe();
-        for (Shockwave shockwave : ACTIVE) {
+        for (int i = 0; i < ACTIVE.size(); i++) {
+            Shockwave shockwave = ACTIVE.get(i);
             float progressAge = shockwave.age + partialTick;
             float alpha = shockwave.alpha(progressAge);
             if (alpha <= 0.0F) {
                 continue;
             }
             float radius = shockwave.radius(progressAge);
-            setUniform("intensity", Mth.clamp(alpha * shockwave.spec.intensity, 0.0F, 8.0F));
+            setUniform(intensityUniform, Mth.clamp(alpha * shockwave.spec.intensity, 0.0F, 8.0F));
 
             Tesselator tesselator = Tesselator.getInstance();
             BufferBuilder builder = tesselator.getBuilder();
             builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
             int segments = shockwave.spec.meshSegments;
             int rings = Math.max(6, segments / 3);
+            SphereMesh sphereMesh = cachedSphereMesh(rings, segments);
             float centerX = (float) (shockwave.x - cameraPos.x);
             float centerY = (float) (shockwave.y + shockwave.spec.yOffset - cameraPos.y);
             float centerZ = (float) (shockwave.z - cameraPos.z);
             buildSphere(builder,
+                    sphereMesh,
                     centerX,
                     centerY,
                     centerZ,
                     radius,
-                    Mth.clamp(alpha, 0.0F, 1.0F),
-                    rings,
-                    segments);
+                    Mth.clamp((int) (Mth.clamp(alpha, 0.0F, 1.0F) * 255.0F), 0, 255));
             BufferUploader.drawWithShader(builder.end());
 
             if (debugWireframe) {
-                renderDebugWireframe(tesselator, centerX, centerY, centerZ, radius, rings, segments, alpha);
+                renderDebugWireframe(tesselator, sphereMesh, centerX, centerY, centerZ, radius, alpha);
                 RenderSystem.setShader(() -> warpWorldShader);
             }
         }
@@ -221,8 +236,82 @@ public final class HbmRenderEffects {
         RenderSystem.viewport(0, 0, mainTarget.viewWidth, mainTarget.viewHeight);
     }
 
-    private static void buildSphere(BufferBuilder builder, float centerX, float centerY, float centerZ,
-            float radius, float alpha, int rings, int segments) {
+    private static void buildSphere(BufferBuilder builder, SphereMesh sphereMesh,
+            float centerX, float centerY, float centerZ, float radius, int alpha) {
+        float[] vertices = sphereMesh.vertices();
+        for (int offset = 0; offset < vertices.length; offset += 5) {
+            float nx = vertices[offset];
+            float ny = vertices[offset + 1];
+            float nz = vertices[offset + 2];
+            builder.vertex(centerX + nx * radius, centerY + ny * radius, centerZ + nz * radius)
+                    .uv(vertices[offset + 3], vertices[offset + 4])
+                    .color(255, 255, 255, alpha)
+                    .normal(nx, ny, nz)
+                    .endVertex();
+        }
+    }
+
+    private static void renderDebugWireframe(Tesselator tesselator, SphereMesh sphereMesh, float centerX, float centerY,
+            float centerZ, float radius, float alpha) {
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        int colorAlpha = Mth.clamp((int) (alpha * 180.0F), 32, 180);
+        float[] lines = sphereMesh.debugLines();
+        if (lines.length == 0) {
+            return;
+        }
+        BufferBuilder builder = tesselator.getBuilder();
+        builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
+        for (int offset = 0; offset < lines.length; offset += 6) {
+            putDebugLineVertex(builder, centerX, centerY, centerZ, radius,
+                    lines[offset], lines[offset + 1], lines[offset + 2], colorAlpha);
+            putDebugLineVertex(builder, centerX, centerY, centerZ, radius,
+                    lines[offset + 3], lines[offset + 4], lines[offset + 5], colorAlpha);
+        }
+        tesselator.end();
+    }
+
+    private static void putDebugLineVertex(BufferBuilder builder, float centerX, float centerY, float centerZ,
+            float radius, float nx, float ny, float nz, int alpha) {
+        builder.vertex(centerX + nx * radius, centerY + ny * radius, centerZ + nz * radius)
+                .color(0x5A, 0xDC, 0xFF, alpha)
+                .endVertex();
+    }
+
+    private static SphereMesh cachedSphereMesh(int rings, int segments) {
+        SphereMeshKey key = new SphereMeshKey(rings, segments);
+        synchronized (SPHERE_MESHES) {
+            SphereMesh cached = SPHERE_MESHES.get(key);
+            if (cached != null) {
+                return cached;
+            }
+        }
+        SphereMesh built = buildSphereMesh(rings, segments);
+        synchronized (SPHERE_MESHES) {
+            SphereMesh cached = SPHERE_MESHES.get(key);
+            if (cached != null) {
+                return cached;
+            }
+            SPHERE_MESHES.put(key, built);
+            cachedSphereVertexCount += built.vertexCount();
+            trimSphereMeshCache();
+            return built;
+        }
+    }
+
+    private static void trimSphereMeshCache() {
+        while (cachedSphereVertexCount > MAX_CACHED_SPHERE_VERTEX_COUNT && SPHERE_MESHES.size() > 1) {
+            Map.Entry<SphereMeshKey, SphereMesh> eldest = SPHERE_MESHES.entrySet().iterator().next();
+            cachedSphereVertexCount -= eldest.getValue().vertexCount();
+            SPHERE_MESHES.remove(eldest.getKey());
+        }
+    }
+
+    private static SphereMesh buildSphereMesh(int rings, int segments) {
+        int vertexCount = rings * segments * 4;
+        float[] vertices = new float[vertexCount * 5];
+        int vertexOffset = 0;
         for (int ring = 0; ring < rings; ring++) {
             float v0 = ring / (float) rings;
             float v1 = (ring + 1) / (float) rings;
@@ -235,100 +324,83 @@ public final class HbmRenderEffects {
                 float phi0 = (float) (Math.PI * 2.0D * u0);
                 float phi1 = (float) (Math.PI * 2.0D * u1);
 
-                putSphereVertex(builder, centerX, centerY, centerZ, radius, theta0, phi0, u0, v0, alpha);
-                putSphereVertex(builder, centerX, centerY, centerZ, radius, theta1, phi0, u0, v1, alpha);
-                putSphereVertex(builder, centerX, centerY, centerZ, radius, theta1, phi1, u1, v1, alpha);
-                putSphereVertex(builder, centerX, centerY, centerZ, radius, theta0, phi1, u1, v0, alpha);
+                vertexOffset = putSphereMeshVertex(vertices, vertexOffset, theta0, phi0, u0, v0);
+                vertexOffset = putSphereMeshVertex(vertices, vertexOffset, theta1, phi0, u0, v1);
+                vertexOffset = putSphereMeshVertex(vertices, vertexOffset, theta1, phi1, u1, v1);
+                vertexOffset = putSphereMeshVertex(vertices, vertexOffset, theta0, phi1, u1, v0);
             }
         }
+
+        float[] debugLines = buildDebugLines(rings, segments);
+        return new SphereMesh(vertexCount, vertices, debugLines);
     }
 
-    private static void putSphereVertex(BufferBuilder builder, float centerX, float centerY, float centerZ,
-            float radius, float theta, float phi, float u, float v, float alpha) {
+    private static int putSphereMeshVertex(float[] vertices, int offset, float theta, float phi, float u, float v) {
         float sinTheta = Mth.sin(theta);
-        float nx = sinTheta * Mth.cos(phi);
-        float ny = Mth.cos(theta);
-        float nz = sinTheta * Mth.sin(phi);
-        builder.vertex(centerX + nx * radius, centerY + ny * radius, centerZ + nz * radius)
-                .uv(u, v)
-                .color(255, 255, 255, Mth.clamp((int) (alpha * 255.0F), 0, 255))
-                .normal(nx, ny, nz)
-                .endVertex();
+        vertices[offset++] = sinTheta * Mth.cos(phi);
+        vertices[offset++] = Mth.cos(theta);
+        vertices[offset++] = sinTheta * Mth.sin(phi);
+        vertices[offset++] = u;
+        vertices[offset++] = v;
+        return offset;
     }
 
-    private static void renderDebugWireframe(Tesselator tesselator, float centerX, float centerY,
-            float centerZ, float radius, int rings, int segments, float alpha) {
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        int colorAlpha = Mth.clamp((int) (alpha * 180.0F), 32, 180);
-        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>(rings * segments + segments * 2);
+    private static float[] buildDebugLines(int rings, int segments) {
+        int verticalStep = Math.max(1, segments / 12);
+        int verticalSegments = (segments + verticalStep - 1) / verticalStep;
+        int lineCount = Math.max(0, rings - 1) * segments + verticalSegments * rings;
+        float[] lines = new float[lineCount * 6];
+        int offset = 0;
 
         for (int ring = 1; ring < rings; ring++) {
             float theta = (float) (Math.PI * ring / (float) rings);
             for (int segment = 0; segment < segments; segment++) {
                 float phi0 = (float) (Math.PI * 2.0D * segment / (float) segments);
                 float phi1 = (float) (Math.PI * 2.0D * (segment + 1) / (float) segments);
-                addDebugLine(lines, centerX, centerY, centerZ, radius, theta, phi0, theta, phi1, colorAlpha);
+                offset = addDebugLine(lines, offset, theta, phi0, theta, phi1);
             }
         }
 
-        for (int segment = 0; segment < segments; segment += Math.max(1, segments / 12)) {
+        for (int segment = 0; segment < segments; segment += verticalStep) {
             float phi = (float) (Math.PI * 2.0D * segment / (float) segments);
             for (int ring = 0; ring < rings; ring++) {
                 float theta0 = (float) (Math.PI * ring / (float) rings);
                 float theta1 = (float) (Math.PI * (ring + 1) / (float) rings);
-                addDebugLine(lines, centerX, centerY, centerZ, radius, theta0, phi, theta1, phi, colorAlpha);
+                offset = addDebugLine(lines, offset, theta0, phi, theta1, phi);
             }
         }
-
-        LegacyLineRenderer.drawPositionColorLines(tesselator, lines);
+        return lines;
     }
 
-    private static void addDebugLine(List<LegacyWavefrontModel.UntexturedLineTransient> lines,
-            float centerX, float centerY, float centerZ, float radius,
-            float theta0, float phi0, float theta1, float phi1, int alpha) {
-        Vec3 from = debugLinePoint(centerX, centerY, centerZ, radius, theta0, phi0);
-        Vec3 to = debugLinePoint(centerX, centerY, centerZ, radius, theta1, phi1);
-        lines.add(new LegacyWavefrontModel.UntexturedLineTransient(
-                from.x, from.y, from.z, to.x, to.y, to.z, 0x5ADCFF, alpha));
+    private static int addDebugLine(float[] lines, int offset, float theta0, float phi0, float theta1, float phi1) {
+        offset = putDebugLinePoint(lines, offset, theta0, phi0);
+        return putDebugLinePoint(lines, offset, theta1, phi1);
     }
 
-    private static Vec3 debugLinePoint(float centerX, float centerY, float centerZ,
-            float radius, float theta, float phi) {
+    private static int putDebugLinePoint(float[] lines, int offset, float theta, float phi) {
         float sinTheta = Mth.sin(theta);
-        float nx = sinTheta * Mth.cos(phi);
-        float ny = Mth.cos(theta);
-        float nz = sinTheta * Mth.sin(phi);
-        return new Vec3(centerX + nx * radius, centerY + ny * radius, centerZ + nz * radius);
+        lines[offset++] = sinTheta * Mth.cos(phi);
+        lines[offset++] = Mth.cos(theta);
+        lines[offset++] = sinTheta * Mth.sin(phi);
+        return offset;
     }
 
-    private static void setUniform(String name, int value) {
-        Uniform uniform = warpWorldShader.getUniform(name);
+    private static void setUniform(Uniform uniform, int value) {
         if (uniform != null) {
             uniform.set(value);
         }
     }
 
-    private static void setUniform(String name, float value) {
-        Uniform uniform = warpWorldShader.getUniform(name);
+    private static void setUniform(Uniform uniform, float value) {
         if (uniform != null) {
             uniform.set(value);
         }
     }
 
-    private static void setUniform(String name, float x, float y) {
-        Uniform uniform = warpWorldShader.getUniform(name);
-        if (uniform != null) {
-            uniform.set(x, y);
-        }
+    private record SphereMeshKey(int rings, int segments) {
     }
 
-    private static void setUniform(String name, float x, float y, float z, float w) {
-        Uniform uniform = warpWorldShader.getUniform(name);
-        if (uniform != null) {
-            uniform.set(x, y, z, w);
-        }
+    private record SphereMesh(int vertexCount, float[] vertices, float[] debugLines) {
     }
 
     private static boolean enabled() {

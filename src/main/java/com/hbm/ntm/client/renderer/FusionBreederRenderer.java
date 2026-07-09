@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.FusionBreederBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
@@ -11,6 +12,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederBlockEntity> {
     public FusionBreederRenderer(BlockEntityRendererProvider.Context context) {
@@ -22,6 +24,13 @@ public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederB
     }
 
     @Override
+    public boolean shouldRender(FusionBreederBlockEntity blockEntity, Vec3 cameraPos) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
@@ -29,6 +38,9 @@ public class FusionBreederRenderer implements BlockEntityRenderer<FusionBreederB
     @Override
     public void render(FusionBreederBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }

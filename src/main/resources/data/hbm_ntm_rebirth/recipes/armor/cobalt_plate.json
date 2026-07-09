@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:steel_plate"
+    },
+    "E": {
+      "item": "hbm_ntm_rebirth:billet_cobalt"
+    }
+  },
+  "pattern": [
+    " E ",
+    "ECE",
+    " E "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cobalt_plate"
+  },
+  "show_notification": true
+}

@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.FusionKlystronCreativeBlockEntity;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -9,6 +10,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class FusionKlystronCreativeRenderer implements BlockEntityRenderer<FusionKlystronCreativeBlockEntity> {
     public FusionKlystronCreativeRenderer(BlockEntityRendererProvider.Context context) {
@@ -17,6 +19,12 @@ public class FusionKlystronCreativeRenderer implements BlockEntityRenderer<Fusio
     @Override
     public boolean shouldRenderOffScreen(FusionKlystronCreativeBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(FusionKlystronCreativeBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -38,9 +46,11 @@ public class FusionKlystronCreativeRenderer implements BlockEntityRenderer<Fusio
         poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
         poseStack.translate(-1.0D, 0.0D, 0.0D);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            ObjFusionModels.renderKlystronPart(ObjFusionModels.KLYSTRON_LEGACY,
-                    ObjFusionModels.KLYSTRON_CREATIVE_TEXTURE, poseStack, buffer, light, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_CULL, "Klystron");
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                ObjFusionModels.renderKlystronPart(ObjFusionModels.KLYSTRON_LEGACY,
+                        ObjFusionModels.KLYSTRON_CREATIVE_TEXTURE, poseStack, buffer, light, packedOverlay,
+                        LegacyTexturedRenderMode.CUTOUT_CULL, "Klystron");
+            }
 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 poseStack.pushPose();

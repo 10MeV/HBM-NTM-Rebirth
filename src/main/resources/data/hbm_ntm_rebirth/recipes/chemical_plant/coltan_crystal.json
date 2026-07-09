@@ -1,0 +1,34 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 80,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:pain"
+    },
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:peroxide"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.coltancrystal",
+  "output_fluids": [
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:gem_tantalium"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:dust"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 57
+}

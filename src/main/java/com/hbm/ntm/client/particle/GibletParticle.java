@@ -31,6 +31,10 @@ public class GibletParticle extends TextureSheetParticle {
     private float prevRotationYaw;
     private final float momentumPitch;
     private final float momentumYaw;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private GibletParticle(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ,
             int gibType, SpriteSet sprites) {
@@ -47,6 +51,7 @@ public class GibletParticle extends TextureSheetParticle {
         this.momentumYaw = (float) this.random.nextGaussian() * 15.0F;
         this.momentumPitch = (float) this.random.nextGaussian() * 15.0F;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -86,6 +91,7 @@ public class GibletParticle extends TextureSheetParticle {
         this.prevRotationPitch = unwrapPrevious(this.prevRotationPitch, this.rotationPitch);
         this.prevRotationYaw = unwrapPrevious(this.prevRotationYaw, this.rotationYaw);
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -94,7 +100,7 @@ public class GibletParticle extends TextureSheetParticle {
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
     }
 
@@ -113,6 +119,13 @@ public class GibletParticle extends TextureSheetParticle {
             return previous < current ? previous + 360.0F : previous - 360.0F;
         }
         return previous;
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     public static final class Provider implements ParticleProvider<SimpleParticleType> {

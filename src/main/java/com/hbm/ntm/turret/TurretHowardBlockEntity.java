@@ -91,7 +91,8 @@ public class TurretHowardBlockEntity extends TurretBlockEntityBase {
             return;
         }
         BulletConfig config = getFirstConfigLoaded();
-        if (config != null && consumeAmmo(config)) {
+        if (config != null) {
+            consumeAmmo(config);
             loaded = 200;
             playTurretSound("hbm:turret.howard_reload", 4.0F, 1.0F);
         }

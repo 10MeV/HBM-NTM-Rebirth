@@ -1,6 +1,7 @@
 ﻿{
     "replace":  false,
     "values":  [
+                   "hbm_ntm_rebirth:ingot_biorubber",
                    "hbm_ntm_rebirth:ingot_rubber"
                ]
 }

@@ -15,6 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -26,6 +27,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -40,6 +42,7 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
     public static final int LEGACY_STYLE_COUNT = HbmFluidDuctVariants.STANDARD_STYLE_COUNT;
     public static final IntegerProperty LEGACY_STYLE = IntegerProperty.create("legacy_style", 0,
             LEGACY_STYLE_COUNT - 1);
+    public static final EnumProperty<ShapeVisual> SHAPE = EnumProperty.create("shape", ShapeVisual.class);
     private static final VoxelShape CORE = box(5.0D, 5.0D, 5.0D, 11.0D, 11.0D, 11.0D);
     private static final VoxelShape NORTH_ARM = box(5.0D, 5.0D, 0.0D, 11.0D, 11.0D, 5.0D);
     private static final VoxelShape EAST_ARM = box(11.0D, 5.0D, 5.0D, 16.0D, 11.0D, 11.0D);
@@ -56,12 +59,14 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
 
     public FluidPipeBlock(Properties properties) {
         super(properties);
-        registerDefaultState(defaultBlockState().setValue(LEGACY_STYLE, 0));
+        registerDefaultState(defaultBlockState()
+                .setValue(LEGACY_STYLE, 0)
+                .setValue(SHAPE, ShapeVisual.ISOLATED));
     }
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.INVISIBLE;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable
@@ -204,9 +209,35 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
     }
 
     @Override
+    protected BlockState getConnectionState(BlockState state, BlockGetter level, BlockPos pos) {
+        BlockState result = super.getConnectionState(state, level, pos);
+        return result.setValue(SHAPE, computeShapeVisual(
+                result.getValue(NORTH), result.getValue(EAST), result.getValue(SOUTH),
+                result.getValue(WEST), result.getValue(UP), result.getValue(DOWN)));
+    }
+
+    private static ShapeVisual computeShapeVisual(boolean north, boolean east, boolean south, boolean west,
+            boolean up, boolean down) {
+        int mask = connectionMask(north, east, south, west, up, down);
+        if (mask == 0) {
+            return ShapeVisual.ISOLATED;
+        }
+        if ((east || west) && !north && !south && !up && !down) {
+            return ShapeVisual.THROUGH_X;
+        }
+        if ((up || down) && !north && !south && !east && !west) {
+            return ShapeVisual.THROUGH_Y;
+        }
+        if ((north || south) && !east && !west && !up && !down) {
+            return ShapeVisual.THROUGH_Z;
+        }
+        return ShapeVisual.COMPLEX;
+    }
+
+    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(LEGACY_STYLE);
+        builder.add(LEGACY_STYLE, SHAPE);
     }
 
     public static int clampLegacyStyle(int style) {
@@ -215,6 +246,25 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
 
     public static int[] legacyCreativeStyles() {
         return HbmFluidDuctVariants.standardVisibleStyles();
+    }
+
+    public enum ShapeVisual implements StringRepresentable {
+        ISOLATED("isolated"),
+        THROUGH_X("through_x"),
+        THROUGH_Y("through_y"),
+        THROUGH_Z("through_z"),
+        COMPLEX("complex");
+
+        private final String serializedName;
+
+        ShapeVisual(String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String getSerializedName() {
+            return serializedName;
+        }
     }
 
 }

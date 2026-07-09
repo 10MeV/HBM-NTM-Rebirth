@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.barrelHeavySaturnite",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:heavy_barrels/saturnite" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:heavy_barrels/saturnite" }, "count": 1, "legacy_ore": "barrelHeavySaturnite" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Saturnite", "amount": 432 }
+  ],
+  "pools": [],
+  "source_order": 2256
+}

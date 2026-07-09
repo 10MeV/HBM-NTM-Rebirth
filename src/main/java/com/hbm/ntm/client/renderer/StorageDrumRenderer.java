@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.phys.Vec3;
 
 public class StorageDrumRenderer implements BlockEntityRenderer<StorageDrumBlockEntity> {
     public StorageDrumRenderer(BlockEntityRendererProvider.Context context) {
@@ -16,6 +17,11 @@ public class StorageDrumRenderer implements BlockEntityRenderer<StorageDrumBlock
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(StorageDrumBlockEntity blockEntity, Vec3 cameraPos) {
+        return false;
     }
 
     @Override

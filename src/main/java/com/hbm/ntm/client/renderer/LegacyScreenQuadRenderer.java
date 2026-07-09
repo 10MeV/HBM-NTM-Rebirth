@@ -152,11 +152,12 @@ public final class LegacyScreenQuadRenderer {
 
     public static void renderCrosshair(ResourceLocation texture, GuiGraphics graphics,
             int screenWidth, int screenHeight, Crosshair crosshair) {
-        CrosshairPlan plan = crosshairPlan(screenWidth, screenHeight, crosshair);
-        if (!plan.visible()) {
+        if (crosshair == null || crosshair == Crosshair.NONE) {
             return;
         }
-        pixelQuad(texture, graphics, plan.x(), plan.y(), plan.u(), plan.v(), plan.size(), plan.size(),
+        int size = crosshair.size();
+        pixelQuad(texture, graphics, screenWidth / 2 - size / 2, screenHeight / 2 - size / 2,
+                crosshair.textureX(), crosshair.textureY(), size, size,
                 256.0D, 256.0D, 0xFFFFFF, 255, BlendMode.INVERT_CROSSHAIR);
     }
 
@@ -173,13 +174,12 @@ public final class LegacyScreenQuadRenderer {
 
     public static void renderStingerLockon(ResourceLocation texture, GuiGraphics graphics,
             int screenWidth, int screenHeight, float lockon) {
-        StingerLockonPlan plan = stingerLockonPlan(screenWidth, screenHeight, lockon);
-        blit(texture, graphics, plan.frame().x(), plan.frame().y(), plan.frameTexture().u(), plan.frameTexture().v(),
-                plan.frame().width(), plan.frame().height());
-        if (plan.progress().width() > 0) {
-            blit(texture, graphics, plan.progress().x(), plan.progress().y(),
-                    plan.progressTexture().u(), plan.progressTexture().v(),
-                    plan.progress().width(), plan.progress().height());
+        int progress = Mth.clamp((int) (lockon * 28.0F), 0, 28);
+        int x = screenWidth / 2 - 15;
+        int y = screenHeight / 2 + 18;
+        blit(texture, graphics, x, y, 146, 18, 30, 10);
+        if (progress > 0) {
+            blit(texture, graphics, x + 1, y + 1, 147, 29, progress, 8);
         }
     }
 

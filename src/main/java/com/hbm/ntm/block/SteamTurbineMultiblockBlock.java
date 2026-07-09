@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -38,6 +39,11 @@ public class SteamTurbineMultiblockBlock extends LegacyVisibleMultiblockMachineB
             TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
         LegacyStandardInfoTooltip.append(tooltip, "machine_industrial_turbine");
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable

@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "kind": "hot",
+  "left": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:ingot_meteorite_forged"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:blade_meteorite"
+  },
+  "right": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:ingot_meteorite_forged"
+    }
+  },
+  "source_order": 29,
+  "tier": 3
+}

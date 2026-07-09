@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.block.BlastFurnaceBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.FluidReleaseType;
@@ -118,10 +119,12 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
             return;
         }
         boolean changed = furnace.tickServer(level, pos, state);
+        changed = furnace.syncTiltedBlockState(level, furnace.isTilted()) || changed;
         furnace.networkPackNT(100);
         if (changed) {
             furnace.setChanged();
-            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+            BlockState currentState = furnace.getBlockState();
+            level.sendBlockUpdated(pos, currentState, currentState, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -352,6 +355,16 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
                 || oldProgressing != progressing
                 || oldAirblast != airblastTank.getFill()
                 || oldFlue != flueTank.getFill();
+    }
+
+    private boolean syncTiltedBlockState(Level level, boolean tilted) {
+        BlockState state = getBlockState();
+        if (!state.hasProperty(BlastFurnaceBlock.TILTED)
+                || state.getValue(BlastFurnaceBlock.TILTED) == tilted) {
+            return false;
+        }
+        level.setBlock(worldPosition, state.setValue(BlastFurnaceBlock.TILTED, tilted), Block.UPDATE_CLIENTS);
+        return true;
     }
 
     @Nullable

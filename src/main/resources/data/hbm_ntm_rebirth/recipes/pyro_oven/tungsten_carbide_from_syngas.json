@@ -8,7 +8,8 @@
     "ingredient": {
       "tag": "forge:dusts/tungsten"
     },
-    "count": 1
+    "count": 1,
+    "legacy_ore": "dustTungsten"
   },
   "output_fluid": {
     "fluid": "SPENTSTEAM",
@@ -17,5 +18,6 @@
   "output_item": {
     "item": "hbm_ntm_rebirth:ingot_tungsten_carbide"
   },
-  "duration": 300
+  "duration": 300,
+  "source_order": 27
 }

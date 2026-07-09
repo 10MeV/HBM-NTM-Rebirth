@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:dusts/sodium"
+  "source_order": 8,
+  "input": {
+    "ingredient": {
+      "tag": "forge:dusts/sodium"
+    },
+    "count": 1,
+    "legacy_ore": "dustSodium"
   },
   "output": {
     "amount": 100,

@@ -25,8 +25,7 @@ public class GeigerItemRenderer extends BlockEntityWithoutLevelRenderer {
     @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = transformBounds(ObjUtilityModels.GEIGER_COUNTER.boundsAll(),
-                point -> rotateY(point.add(0.2D, 0.0D, 0.0D), 90.0F));
+        AABB bounds = transformedCommonBounds(ObjUtilityModels.GEIGER_COUNTER.boundsAll());
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
             applyInventoryTransform(poseStack, bounds);
@@ -68,39 +67,11 @@ public class GeigerItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    private static AABB transformBounds(AABB bounds, PointTransform transform) {
-        double minX = Double.POSITIVE_INFINITY;
-        double minY = Double.POSITIVE_INFINITY;
-        double minZ = Double.POSITIVE_INFINITY;
-        double maxX = Double.NEGATIVE_INFINITY;
-        double maxY = Double.NEGATIVE_INFINITY;
-        double maxZ = Double.NEGATIVE_INFINITY;
-
-        for (double x : new double[] { bounds.minX, bounds.maxX }) {
-            for (double y : new double[] { bounds.minY, bounds.maxY }) {
-                for (double z : new double[] { bounds.minZ, bounds.maxZ }) {
-                    Vec3 point = transform.apply(new Vec3(x, y, z));
-                    minX = Math.min(minX, point.x);
-                    minY = Math.min(minY, point.y);
-                    minZ = Math.min(minZ, point.z);
-                    maxX = Math.max(maxX, point.x);
-                    maxY = Math.max(maxY, point.y);
-                    maxZ = Math.max(maxZ, point.z);
-                }
-            }
-        }
-
-        return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    private static Vec3 rotateY(Vec3 point, float degrees) {
-        double radians = Math.toRadians(degrees);
-        double sin = Math.sin(radians);
-        double cos = Math.cos(radians);
-        return new Vec3(point.x * cos + point.z * sin, point.y, point.z * cos - point.x * sin);
-    }
-
-    private interface PointTransform {
-        Vec3 apply(Vec3 point);
+    private static AABB transformedCommonBounds(AABB bounds) {
+        double sin = LegacyTransformedBounds.sinDeg(90.0F);
+        double cos = LegacyTransformedBounds.cosDeg(90.0F);
+        return LegacyTransformedBounds.transform(bounds,
+                (x, y, z, accumulator) -> LegacyTransformedBounds.includeRotatedY(accumulator,
+                        x + 0.2D, y, z, sin, cos));
     }
 }

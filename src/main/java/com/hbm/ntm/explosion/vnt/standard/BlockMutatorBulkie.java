@@ -30,8 +30,12 @@ public class BlockMutatorBulkie implements BlockMutator {
         if (!state.isSolidRender(explosion.level(), pos)) {
             return;
         }
-        Vec3 offset = Vec3.atCenterOf(pos).subtract(explosion.position());
-        if (offset.length() >= explosion.size() - 0.5D) {
+        double threshold = explosion.size() - 0.5D;
+        Vec3 origin = explosion.position();
+        double dx = pos.getX() + 0.5D - origin.x;
+        double dy = pos.getY() + 0.5D - origin.y;
+        double dz = pos.getZ() + 0.5D - origin.z;
+        if (threshold <= 0.0D || dx * dx + dy * dy + dz * dz >= threshold * threshold) {
             explosion.level().setBlock(pos, replacement, 3);
         }
     }

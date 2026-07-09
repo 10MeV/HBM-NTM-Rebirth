@@ -49,33 +49,24 @@ public final class HbmBakedObjModelDiagnostics {
 
     private static Snapshot scan(ResourceManager resourceManager) {
         Map<ResourceLocation, Set<String>> modelBlocks = collectBlockstateModelReferences(resourceManager);
-        Map<ResourceLocation, Resource> modelResources = resourceManager.listResources("models/block",
+        Map<ResourceLocation, Resource> modelResources = resourceManager.listResources("models",
                 location -> HbmNtm.MOD_ID.equals(location.getNamespace()) && location.getPath().endsWith(".json"));
-        List<Entry> entries = new ArrayList<>();
         List<String> failures = new ArrayList<>();
-        for (Map.Entry<ResourceLocation, Set<String>> referencedModel : modelBlocks.entrySet()) {
-            ResourceLocation modelLocation = referencedModel.getKey();
-            Resource modelResource = modelResources.get(modelLocation);
-            if (modelResource == null) {
-                continue;
-            }
-            try (Reader reader = modelResource.openAsReader()) {
-                JsonElement element = JsonParser.parseReader(reader);
-                if (!element.isJsonObject()) {
-                    continue;
-                }
-                JsonObject json = element.getAsJsonObject();
-                if (!"forge:obj".equals(stringValue(json, "loader"))) {
-                    continue;
-                }
+        Map<String, ReferencedForgeObjModel> forgeObjModels =
+                collectReachableForgeObjModels(modelBlocks, modelResources, failures);
+        List<Entry> entries = new ArrayList<>();
+        for (ReferencedForgeObjModel referencedModel : forgeObjModels.values()) {
+            JsonObject json = referencedModel.json();
+            String modelKey = referencedModel.modelKey();
+            try {
                 ResourceLocation objLocation = objResourceLocation(stringValue(json, "model"));
                 if (objLocation == null) {
-                    failures.add(shortPath(modelLocation) + ":missing-model");
+                    failures.add(shortModelKey(modelKey) + ":missing-model");
                     continue;
                 }
                 Optional<Resource> objResource = resourceManager.getResource(objLocation);
                 if (objResource.isEmpty()) {
-                    failures.add(shortPath(modelLocation) + ":missing-obj=" + shortPath(objLocation));
+                    failures.add(shortModelKey(modelKey) + ":missing-obj=" + shortPath(objLocation));
                     continue;
                 }
                 ObjStats objStats = parseObj(objResource.get());
@@ -94,9 +85,9 @@ public final class HbmBakedObjModelDiagnostics {
                 String renderType = stringValue(json, "render_type");
                 Boolean automaticCulling = booleanValue(json, "automatic_culling");
                 entries.add(new Entry(
-                        modelLocation,
+                        modelKey,
                         objLocation,
-                        List.copyOf(referencedModel.getValue()),
+                        referencedModel.sortedBlocks(),
                         visibleTriangles,
                         visibleFaceVertices,
                         visibleGroups,
@@ -105,17 +96,103 @@ public final class HbmBakedObjModelDiagnostics {
                         renderType == null ? "default" : renderType,
                         automaticCulling));
             } catch (RuntimeException | IOException exception) {
-                failures.add(shortPath(modelLocation) + ":" + exception.getClass().getSimpleName());
+                failures.add(shortModelKey(modelKey) + ":" + exception.getClass().getSimpleName());
             }
         }
         entries.sort(Comparator.comparingLong(Entry::visibleTriangles).reversed()
-                .thenComparing(entry -> shortPath(entry.modelLocation())));
+                .thenComparing(Entry::modelKey));
         long totalVisibleTriangles = entries.stream().mapToLong(Entry::visibleTriangles).sum();
         long totalVisibleFaceVertices = entries.stream().mapToLong(Entry::visibleFaceVertices).sum();
         int cutoutModels = (int) entries.stream().filter(Entry::isCutout).count();
         int noAutomaticCullingModels = (int) entries.stream().filter(Entry::isAutomaticCullingDisabled).count();
         return new Snapshot(entries.size(), totalVisibleTriangles, totalVisibleFaceVertices, cutoutModels, noAutomaticCullingModels,
                 List.copyOf(entries), List.copyOf(failures));
+    }
+
+    private static Map<String, ReferencedForgeObjModel> collectReachableForgeObjModels(
+            Map<ResourceLocation, Set<String>> modelBlocks,
+            Map<ResourceLocation, Resource> modelResources,
+            List<String> failures) {
+        Map<String, ReferencedForgeObjModel> forgeModels = new LinkedHashMap<>();
+        for (Map.Entry<ResourceLocation, Set<String>> entry : modelBlocks.entrySet()) {
+            collectReachableForgeObjModels(entry.getKey(), entry.getValue(), modelResources,
+                    new HashSet<>(), forgeModels, failures);
+        }
+        return forgeModels;
+    }
+
+    private static void collectReachableForgeObjModels(ResourceLocation modelLocation, Set<String> blocks,
+            Map<ResourceLocation, Resource> modelResources, Set<ResourceLocation> visited,
+            Map<String, ReferencedForgeObjModel> forgeModels, List<String> failures) {
+        if (modelLocation == null || !HbmNtm.MOD_ID.equals(modelLocation.getNamespace()) || !visited.add(modelLocation)) {
+            return;
+        }
+        Resource resource = modelResources.get(modelLocation);
+        if (resource == null) {
+            failures.add(shortPath(modelLocation) + ":missing-json");
+            return;
+        }
+        try (Reader reader = resource.openAsReader()) {
+            JsonElement element = JsonParser.parseReader(reader);
+            if (!element.isJsonObject()) {
+                return;
+            }
+            collectReachableForgeObjModels(element.getAsJsonObject(), shortPath(modelLocation), blocks,
+                    modelResources, visited, forgeModels, failures);
+        } catch (RuntimeException | IOException exception) {
+            failures.add(shortPath(modelLocation) + ":" + exception.getClass().getSimpleName());
+        }
+    }
+
+    private static void collectReachableForgeObjModels(JsonObject json, String modelKey, Set<String> blocks,
+            Map<ResourceLocation, Resource> modelResources, Set<ResourceLocation> visited,
+            Map<String, ReferencedForgeObjModel> forgeModels, List<String> failures) {
+        if ("forge:obj".equals(stringValue(json, "loader"))) {
+            forgeModels.computeIfAbsent(modelKey, key -> new ReferencedForgeObjModel(key, json.deepCopy()))
+                    .addBlocks(blocks);
+            return;
+        }
+        ResourceLocation parentLocation = parentModelResourceLocation(stringValue(json, "parent"));
+        if (parentLocation != null && HbmNtm.MOD_ID.equals(parentLocation.getNamespace())) {
+            collectReachableForgeObjModels(parentLocation, blocks, modelResources, visited, forgeModels, failures);
+        }
+        collectNestedForgeObjModels(json.get("children"), modelKey + "#children", blocks, modelResources, visited,
+                forgeModels, failures);
+        collectNestedForgeObjModels(json.get("parts"), modelKey + "#parts", blocks, modelResources, visited,
+                forgeModels, failures);
+    }
+
+    private static void collectNestedForgeObjModels(JsonElement element, String modelKey, Set<String> blocks,
+            Map<ResourceLocation, Resource> modelResources, Set<ResourceLocation> visited,
+            Map<String, ReferencedForgeObjModel> forgeModels, List<String> failures) {
+        if (element == null || element.isJsonNull()) {
+            return;
+        }
+        if (element.isJsonArray()) {
+            int index = 0;
+            for (JsonElement child : element.getAsJsonArray()) {
+                collectNestedForgeObjModels(child, modelKey + "[" + index++ + "]", blocks, modelResources, visited,
+                        forgeModels, failures);
+            }
+            return;
+        }
+        if (!element.isJsonObject()) {
+            return;
+        }
+        JsonObject object = element.getAsJsonObject();
+        String model = stringValue(object, "model");
+        if ("forge:obj".equals(stringValue(object, "loader"))) {
+            collectReachableForgeObjModels(object, modelKey, blocks, modelResources, visited, forgeModels, failures);
+            return;
+        }
+        ResourceLocation modelLocation = blockModelResourceLocation(model);
+        if (modelLocation != null && HbmNtm.MOD_ID.equals(modelLocation.getNamespace())) {
+            collectReachableForgeObjModels(modelLocation, blocks, modelResources, visited, forgeModels, failures);
+        }
+        for (Map.Entry<String, JsonElement> child : object.entrySet()) {
+            collectNestedForgeObjModels(child.getValue(), modelKey + "." + child.getKey(), blocks, modelResources,
+                    visited, forgeModels, failures);
+        }
     }
 
     private static Map<ResourceLocation, Set<String>> collectBlockstateModelReferences(ResourceManager resourceManager) {
@@ -213,10 +290,22 @@ public final class HbmBakedObjModelDiagnostics {
     }
 
     private static ResourceLocation blockModelResourceLocation(String model) {
-        ResourceLocation location = parseResourceLocation(model);
+        ResourceLocation location = parseResourceLocation(model, HbmNtm.MOD_ID);
         if (location == null) {
             return null;
         }
+        return modelJsonLocation(location);
+    }
+
+    private static ResourceLocation parentModelResourceLocation(String model) {
+        ResourceLocation location = parseResourceLocation(model, "minecraft");
+        if (location == null) {
+            return null;
+        }
+        return modelJsonLocation(location);
+    }
+
+    private static ResourceLocation modelJsonLocation(ResourceLocation location) {
         String path = location.getPath();
         if (!path.startsWith("models/")) {
             path = "models/" + path;
@@ -228,7 +317,7 @@ public final class HbmBakedObjModelDiagnostics {
     }
 
     private static ResourceLocation objResourceLocation(String model) {
-        ResourceLocation location = parseResourceLocation(model);
+        ResourceLocation location = parseResourceLocation(model, HbmNtm.MOD_ID);
         if (location == null) {
             return null;
         }
@@ -239,11 +328,11 @@ public final class HbmBakedObjModelDiagnostics {
         return new ResourceLocation(location.getNamespace(), path);
     }
 
-    private static ResourceLocation parseResourceLocation(String value) {
+    private static ResourceLocation parseResourceLocation(String value, String defaultNamespace) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        String namespace = HbmNtm.MOD_ID;
+        String namespace = defaultNamespace;
         String path = value;
         int separator = value.indexOf(':');
         if (separator >= 0) {
@@ -322,6 +411,10 @@ public final class HbmBakedObjModelDiagnostics {
         return path;
     }
 
+    private static String shortModelKey(String modelKey) {
+        return modelKey == null || modelKey.isBlank() ? "-" : modelKey;
+    }
+
     private interface ModelReferenceSink {
         void accept(ResourceLocation modelLocation);
     }
@@ -333,8 +426,35 @@ public final class HbmBakedObjModelDiagnostics {
         private static final GroupStats EMPTY = new GroupStats(0L, 0L, 0L);
     }
 
+    private static final class ReferencedForgeObjModel {
+        private final String modelKey;
+        private final JsonObject json;
+        private final Set<String> blocks = new HashSet<>();
+
+        private ReferencedForgeObjModel(String modelKey, JsonObject json) {
+            this.modelKey = modelKey;
+            this.json = json;
+        }
+
+        private void addBlocks(Set<String> newBlocks) {
+            blocks.addAll(newBlocks);
+        }
+
+        private String modelKey() {
+            return modelKey;
+        }
+
+        private JsonObject json() {
+            return json;
+        }
+
+        private List<String> sortedBlocks() {
+            return blocks.stream().sorted().toList();
+        }
+    }
+
     private record Entry(
-            ResourceLocation modelLocation,
+            String modelKey,
             ResourceLocation objLocation,
             List<String> blocks,
             long visibleTriangles,
@@ -363,7 +483,7 @@ public final class HbmBakedObjModelDiagnostics {
                     culling,
                     visibleGroups,
                     totalGroups,
-                    shortPath(modelLocation));
+                    shortModelKey(modelKey));
         }
     }
 

@@ -1,17 +1,31 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.clusterpellets",
   "duration": 50,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:plates/steel" }, "count": 4, "legacy_ore": "plateSteel" },
-    { "ingredient": { "tag": "forge:ingots/any_high_explosive" }, "count": 1, "legacy_ore": "ingotAnyHighExplosive" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:pellet_cluster" }
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "legacy_ore": "ingotAnyHighExplosive"
+    }
   ],
+  "internal_name": "ass.clusterpellets",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pellet_cluster"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 194
 }

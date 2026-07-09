@@ -1,10 +1,15 @@
 {
   "type": "hbm_ntm_rebirth:press",
-  "stamp": "plate",
-  "ingredient": {
-    "item": "hbm_ntm_rebirth:ingot_copper"
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:copper_ingot"
+    },
+    "legacy_ore": "ingotCopper"
   },
   "result": {
     "item": "hbm_ntm_rebirth:plate_copper"
-  }
+  },
+  "source_order": 17,
+  "stamp": "plate"
 }

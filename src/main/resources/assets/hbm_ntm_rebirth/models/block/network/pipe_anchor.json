@@ -4,8 +4,13 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:solid",
+  "visibility": {
+    "Anchor": true,
+    "Ring": false,
+    "Pipe": false
+  },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/network/pipe_anchor",
-    "default": "hbm_ntm_rebirth:block/network/pipe_anchor"
+    "default": "hbm_ntm_rebirth:models/network/pipe_anchor"
   }
 }

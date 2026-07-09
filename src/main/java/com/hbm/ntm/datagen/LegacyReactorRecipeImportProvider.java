@@ -55,6 +55,7 @@ public final class LegacyReactorRecipeImportProvider implements DataProvider {
 
         saves.addAll(importBreeder(output, handlers));
         saves.addAll(importFuelPool(output, handlers));
+        LegacyRecipeReportUtil.addImportSummary(report, handlers);
         saves.add(DataProvider.saveStable(output, report, reportPath));
         return CompletableFuture.allOf(saves.toArray(CompletableFuture[]::new));
     }
@@ -75,6 +76,7 @@ public final class LegacyReactorRecipeImportProvider implements DataProvider {
             json.add("input", input.toJson());
             json.add("output", HbmItemOutput.of(outputStack).toJson());
             json.addProperty("flux", flux);
+            json.addProperty("source_order", sourceIndex);
 
             return new ImportedRecipe(new ResourceLocation(HbmNtm.MOD_ID,
                     "breeding_reactor/legacy_import_" + sourceIndex), json);
@@ -90,6 +92,7 @@ public final class LegacyReactorRecipeImportProvider implements DataProvider {
             json.addProperty("type", ModRecipes.FUEL_POOL.serializer().getId().toString());
             json.add("input", HbmIngredient.exact(inputStack).toJson());
             json.add("output", HbmItemOutput.of(outputStack).toJson());
+            json.addProperty("source_order", sourceIndex);
 
             return new ImportedRecipe(new ResourceLocation(HbmNtm.MOD_ID,
                     "fuel_pool/legacy_import_" + sourceIndex), json);

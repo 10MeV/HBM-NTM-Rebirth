@@ -1,0 +1,307 @@
+{
+  "recipes": [
+    {
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "dict",
+        "dustChlorocalcite"
+      ],
+      "output": [
+        "hbm:powder_calcium"
+      ]
+    },
+    {
+      "fluid": [
+        "MERCURY",
+        100
+      ],
+      "input": [
+        "dict",
+        "crystalCinnabar"
+      ],
+      "output": [
+        "hbm:sulfur"
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "minecraft:clay"
+      ],
+      "output": [
+        "minecraft:bricks"
+      ]
+    },
+    {
+      "fluid": [
+        "COALCREOSOTE",
+        150
+      ],
+      "input": [
+        "item",
+        "hbm:briquette"
+      ],
+      "output": [
+        "hbm:coke"
+      ]
+    },
+    {
+      "fluid": [
+        "COALCREOSOTE",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCoal"
+      ],
+      "output": [
+        "hbm:coke"
+      ]
+    },
+    {
+      "fluid": [
+        "COALCREOSOTE",
+        100
+      ],
+      "input": [
+        "dict",
+        "gemCoal"
+      ],
+      "output": [
+        "hbm:coke"
+      ]
+    },
+    {
+      "fluid": [
+        "LYE",
+        150
+      ],
+      "input": [
+        "item",
+        "hbm:chunk_ore",
+        1,
+        2
+      ],
+      "output": [
+        "hbm:powder_aluminium"
+      ]
+    },
+    {
+      "fluid": [
+        "CHLORINE",
+        100
+      ],
+      "input": [
+        "item",
+        "minecraft:glowstone_dust"
+      ],
+      "output": [
+        "hbm:sulfur"
+      ]
+    },
+    {
+      "fluid": [
+        "COALCREOSOTE",
+        100
+      ],
+      "input": [
+        "item",
+        "hbm:briquette",
+        1,
+        1
+      ],
+      "output": [
+        "hbm:coke",
+        1,
+        1
+      ]
+    },
+    {
+      "fluid": [
+        "COALCREOSOTE",
+        50
+      ],
+      "input": [
+        "dict",
+        "dustLignite"
+      ],
+      "output": [
+        "hbm:coke",
+        1,
+        1
+      ]
+    },
+    {
+      "fluid": [
+        "COALCREOSOTE",
+        50
+      ],
+      "input": [
+        "dict",
+        "gemLignite"
+      ],
+      "output": [
+        "hbm:coke",
+        1,
+        1
+      ]
+    },
+    {
+      "fluid": [
+        "CARBONDIOXIDE",
+        50
+      ],
+      "input": [
+        "dict",
+        "dustLimestone"
+      ],
+      "output": [
+        "hbm:powder_calcium"
+      ]
+    },
+    {
+      "fluid": [
+        "WOODOIL",
+        250
+      ],
+      "input": [
+        "dict",
+        "logWood"
+      ],
+      "output": [
+        "minecraft:coal",
+        1,
+        1
+      ]
+    },
+    {
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "dict",
+        "dustMolysite"
+      ],
+      "output": [
+        "minecraft:iron_ingot"
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "hbm:oil_tar",
+        1,
+        2
+      ],
+      "output": [
+        "hbm:coke"
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "hbm:oil_tar",
+        1,
+        1
+      ],
+      "output": [
+        "hbm:coke",
+        1,
+        2
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "hbm:oil_tar"
+      ],
+      "output": [
+        "hbm:coke",
+        1,
+        2
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "hbm:oil_tar",
+        1,
+        3
+      ],
+      "output": [
+        "hbm:coke"
+      ]
+    },
+    {
+      "fluid": [
+        "WOODOIL",
+        50
+      ],
+      "input": [
+        "dict",
+        "treeSapling"
+      ],
+      "output": [
+        "hbm:powder_ash"
+      ]
+    },
+    {
+      "fluid": [
+        "CHLORINE",
+        100
+      ],
+      "input": [
+        "dict",
+        "gemSodalite"
+      ],
+      "output": [
+        "hbm:powder_sodium"
+      ]
+    },
+    {
+      "fluid": [
+        "SODIUM",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustSodium"
+      ]
+    },
+    {
+      "fluid": [
+        "ETHANOL",
+        50
+      ],
+      "input": [
+        "item",
+        "minecraft:sugar_cane"
+      ],
+      "output": [
+        "minecraft:sugar",
+        2
+      ]
+    },
+    {
+      "fluid": [
+        "WOODOIL",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:briquette",
+        1,
+        2
+      ],
+      "output": [
+        "minecraft:coal",
+        1,
+        1
+      ]
+    }
+  ]
+}

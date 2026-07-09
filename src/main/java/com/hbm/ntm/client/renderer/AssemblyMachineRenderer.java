@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -13,6 +14,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMachineBlockEntity> {
     static final LegacyWavefrontModel MODEL = ObjMachineModels.ASSEMBLY_MACHINE_LEGACY;
@@ -20,6 +22,8 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
             MODEL.prepareRenderOnlyInCallOrder("Base");
     private static final LegacyWavefrontModel.SelectionHandle FRAME =
             MODEL.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle BASE_FRAME =
+            MODEL.prepareRenderOnlyInCallOrder("Base", "Frame");
     private static final LegacyWavefrontModel.SelectionHandle RING =
             MODEL.prepareRenderOnlyInCallOrder("Ring");
     private static final LegacyWavefrontModel.SelectionHandle RING_2 =
@@ -55,8 +59,14 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
     }
 
     @Override
+    public boolean shouldRender(AssemblyMachineBlockEntity assembler, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(assembler, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(assembler, getViewDistance());
+    }
+
+    @Override
     public void render(AssemblyMachineBlockEntity assembler, float partialTick, PoseStack poseStack,
-                       MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(assembler, getViewDistance())) {
             return;
         }
@@ -68,22 +78,16 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
             poseStack.translate(0.5D, 0.0D, 0.5D);
             poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + blockstateModelYRotation(state)));
 
-            renderModelPart("Base", poseStack, buffer, modelLight, packedOverlay);
-            if (assembler.shouldRenderFrame()) {
-                renderModelPart("Frame", poseStack, buffer, modelLight, packedOverlay);
-            }
+            renderStaticBaseFrame(assembler.shouldRenderFrame(), poseStack, buffer, modelLight, packedOverlay);
 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(assembler)) {
                 poseStack.pushPose();
-                LegacyTileRenderPlans.AssemblyMachinePlan plan = LegacyTileRenderPlans.assemblyMachinePlan(
-                        assembler.getRing(partialTick),
-                        assembler.getArm(0).getPositions(partialTick),
-                        assembler.getArm(1).getPositions(partialTick));
-                poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.ringDegrees()));
+                poseStack.mulPose(Axis.YP.rotationDegrees((float) assembler.getRing(partialTick)));
                 renderModelPart("Ring", poseStack, buffer, modelLight, packedOverlay);
-                for (LegacyTileRenderPlans.AssemblyArmPlan arm : plan.arms()) {
-                    renderArmPlan(poseStack, buffer, modelLight, packedOverlay, arm);
-                }
+                renderAssemblyMachineArm(poseStack, buffer, modelLight, packedOverlay,
+                        1, 1.0D, 1.0D, assembler.getArm(0).getPositions(partialTick));
+                renderAssemblyMachineArm(poseStack, buffer, modelLight, packedOverlay,
+                        2, -1.0D, -1.0D, assembler.getArm(1).getPositions(partialTick));
                 poseStack.popPose();
             }
 
@@ -96,33 +100,52 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         }
     }
 
-    private static void renderArmPlan(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            int packedOverlay,
-            LegacyTileRenderPlans.AssemblyArmPlan arm) {
+    private static void renderAssemblyMachineArm(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay, int suffix, double zSign, double rotationSign, double[] arm) {
         poseStack.pushPose();
-        for (LegacyTileRenderPlans.PivotedModelPartPlan part : arm.rotations()) {
-            applyPivot(poseStack, part);
-            renderModelPart(part.partName(), poseStack, buffer, packedLight, packedOverlay);
-        }
-        LegacyTileRenderPlans.TranslatedModelPartPlan tool = arm.tool();
-        if (tool != null && tool.active()) {
-            poseStack.translate(tool.translateX(), tool.translateY(), tool.translateZ());
-            renderModelPart(tool.partName(), poseStack, buffer, packedLight, packedOverlay);
-        }
+        renderPivotedPart("ArmLower" + suffix, poseStack, buffer, packedLight, packedOverlay,
+                LegacyTileRenderPlans.ASSEMBLY_ARM_LOWER_PIVOT_Y,
+                LegacyTileRenderPlans.ASSEMBLY_ARM_LOWER_PIVOT_Z * zSign,
+                rotationSign * armValue(arm, 0));
+        renderPivotedPart("ArmUpper" + suffix, poseStack, buffer, packedLight, packedOverlay,
+                LegacyTileRenderPlans.ASSEMBLY_ARM_UPPER_PIVOT_Y,
+                LegacyTileRenderPlans.ASSEMBLY_ARM_UPPER_PIVOT_Z * zSign,
+                rotationSign * armValue(arm, 1));
+        renderPivotedPart("Head" + suffix, poseStack, buffer, packedLight, packedOverlay,
+                LegacyTileRenderPlans.ASSEMBLY_ARM_HEAD_PIVOT_Y,
+                LegacyTileRenderPlans.ASSEMBLY_ARM_HEAD_PIVOT_Z * zSign,
+                rotationSign * armValue(arm, 2));
+        poseStack.translate(0.0D, armValue(arm, 3), 0.0D);
+        renderModelPart("Spike" + suffix, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void applyPivot(PoseStack poseStack, LegacyTileRenderPlans.PivotedModelPartPlan part) {
-        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) part.angleDegrees()));
-        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
+    private static void renderPivotedPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, double pivotY, double pivotZ, double angleDegrees) {
+        poseStack.translate(0.0D, pivotY, pivotZ);
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        poseStack.translate(0.0D, -pivotY, -pivotZ);
+        renderModelPart(partName, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    private static double armValue(double[] arm, int index) {
+        return arm != null && arm.length > index ? arm[index] : 0.0D;
     }
 
     private static void renderModelPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         renderModelPart(MODEL, partName, ObjMachineModels.ASSEMBLY_MACHINE_TEXTURE, poseStack, buffer,
                 packedLight, packedOverlay);
+    }
+
+    private static void renderStaticBaseFrame(boolean frameVisible, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return;
+        }
+        MODEL.renderOnlyInCallOrder(ObjMachineModels.ASSEMBLY_MACHINE_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, frameVisible ? BASE_FRAME : BASE,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
     }
 
     private static void renderModelPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,

@@ -130,7 +130,7 @@ public class CyclotronMenu extends AbstractContainerMenu {
                     CyclotronBlockEntity.SLOT_UPGRADE_1 + 1, false)) {
                 return ItemStack.EMPTY;
             }
-        } else if (CyclotronRecipeRuntime.isValidParticle(stack)) {
+        } else if (CyclotronRecipeRuntime.isValidParticle(blockEntity.getLevel(), stack)) {
             if (!moveItemStackTo(stack, CyclotronBlockEntity.SLOT_PARTICLE_START,
                     CyclotronBlockEntity.SLOT_PARTICLE_START + 3, false)) {
                 return ItemStack.EMPTY;

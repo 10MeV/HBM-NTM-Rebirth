@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [
+    "DPS",
+    " RD",
+    " D "
+  ],
+  "key": {
+    "D": {
+      "tag": "forge:ingots/dura_steel"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:part_generic_piston_pneumatic"
+    },
+    "S": {
+      "tag": "forge:shells/steel"
+    },
+    "R": {
+      "tag": "forge:ingots/rubber"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:boltgun"
+  }
+}

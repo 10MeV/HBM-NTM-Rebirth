@@ -2,12 +2,14 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.FusionPlasmaForgeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
-import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.TexturedObjPartGroup;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.TexturedQuadGroup;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.UntexturedQuadGroup;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -19,6 +21,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlasmaForgeBlockEntity> {
     public FusionPlasmaForgeRenderer(BlockEntityRendererProvider.Context context) {
@@ -27,6 +30,12 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
     @Override
     public boolean shouldRenderOffScreen(FusionPlasmaForgeBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(FusionPlasmaForgeBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -68,8 +77,9 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         }
         if (recipe != null && LegacyRecipeIconRenderer.shouldRenderWithin(blockEntity, 50.0D)) {
             double stellarFluxOffset = stellarFluxOffset(partialTick);
-            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                    queuedPose -> renderLegacyStellarFluxBeam(queuedPose, buffer, packedOverlay, stellarFluxOffset));
+            LegacyMachineEffectPresenter.enqueueTexturedQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                    HbmFluids.STELLAR_FLUX.getTexture(), LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                    group -> renderLegacyStellarFluxBeam(group, packedOverlay, stellarFluxOffset));
         }
         renderArticulatedEffects(blockEntity, poseStack, buffer, partialTick);
         poseStack.popPose();
@@ -102,11 +112,12 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         float glowRed = red * 2.0F;
         float glowGreen = green * 2.0F;
         float glowBlue = blue * 2.0F;
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
-            renderPlasmaForgeLayer(ObjFusionModels.PLASMA_GLOW_TEXTURE, queuedPose, buffer, packedOverlay,
+        LegacyMachineEffectPresenter.enqueueTexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                buffer, group -> {
+            renderPlasmaForgeLayer(group, ObjFusionModels.PLASMA_GLOW_TEXTURE, packedOverlay,
                     glowRed, glowGreen, glowBlue, 1.0F,
                     LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 0.0F, glowOffsetA);
-            renderPlasmaForgeLayer(ObjFusionModels.PLASMA_GLOW_TEXTURE, queuedPose, buffer, packedOverlay,
+            renderPlasmaForgeLayer(group, ObjFusionModels.PLASMA_GLOW_TEXTURE, packedOverlay,
                     glowRed, glowGreen, glowBlue, 1.0F,
                     LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 0.0F, glowOffsetB);
         });
@@ -175,8 +186,9 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         float green = blockEntity.getPlasmaG();
         float blue = blockEntity.getPlasmaB();
         double outerLen = 1.0D + Math.random() * 0.125D;
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                queuedPose -> renderLegacyJet(queuedPose, buffer, red, green, blue, outerLen));
+        LegacyMachineEffectPresenter.enqueueUntexturedQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 0,
+                group -> renderLegacyJet(group, red, green, blue, outerLen));
         poseStack.popPose();
     }
 
@@ -194,6 +206,14 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
                 uvScroll(uOffset, vOffset), "Plasma");
     }
 
+    private static void renderPlasmaForgeLayer(TexturedObjPartGroup group, ResourceLocation texture,
+            int packedOverlay, float red, float green, float blue, float alpha, LegacyTexturedRenderMode renderMode,
+            float uOffset, float vOffset) {
+        group.add(ObjFusionModels.PLASMA_FORGE_LEGACY, ObjFusionModels.plasmaForgePlasmaHandle(), texture,
+                LightTexture.FULL_BRIGHT, packedOverlay, colorByte(red), colorByte(green), colorByte(blue),
+                colorByte(alpha), false, renderMode, uvScroll(uOffset, vOffset));
+    }
+
     private static LegacyWavefrontModel.UvTransform uvScroll(float uOffset, float vOffset) {
         return LegacyWavefrontModel.UvTransform.dynamic(1.0F, 0.0F, 0.0F, 1.0F, uOffset, vOffset, 0.0F);
     }
@@ -208,30 +228,31 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         poseStack.translate(-x, -y, -z);
     }
 
-    private static void renderLegacyJet(PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderLegacyJet(UntexturedQuadGroup group,
             float red, float green, float blue, double outerLen) {
-        renderLegacyJetLayer(poseStack, buffer, red, green, blue, outerLen, 0.01D, 0.125D);
-        renderLegacyJetLayer(poseStack, buffer, red, green, blue, outerLen * 1.5D, 0.0625D * 1.5D, 0.125D);
+        int color = LegacyUntexturedQuadRenderer.rgb(red, green, blue);
+        renderLegacyJetLayer(group, color, outerLen, 0.01D, 0.125D);
+        renderLegacyJetLayer(group, color, outerLen * 1.5D, 0.0625D * 1.5D, 0.125D);
     }
 
-    private static void renderLegacyJetLayer(PoseStack poseStack, MultiBufferSource buffer,
-            float red, float green, float blue, double outerLen, double narrow, double side) {
+    private static void renderLegacyJetLayer(UntexturedQuadGroup group,
+            int color, double outerLen, double narrow, double side) {
         double near = 1.375D;
         double far = 1.625D;
         double y = 3.0D;
         double tipY = y - outerLen;
-        LegacyUntexturedQuadRenderer.quadRgbaF(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+        group.add(
                 near, y, side, far, y, side, far - narrow, tipY, side - narrow, near + narrow, tipY, side - narrow,
-                red, green, blue, 1.0F, 1.0F, 0.0F, 0.0F);
-        LegacyUntexturedQuadRenderer.quadRgbaF(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                color, 255, 255, 0, 0);
+        group.add(
                 near, y, -side, far, y, -side, far - narrow, tipY, -side + narrow, near + narrow, tipY, -side + narrow,
-                red, green, blue, 1.0F, 1.0F, 0.0F, 0.0F);
-        LegacyUntexturedQuadRenderer.quadRgbaF(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                color, 255, 255, 0, 0);
+        group.add(
                 near, y, side, near, y, -side, near + narrow, tipY, -side + narrow, near + narrow, tipY, side - narrow,
-                red, green, blue, 1.0F, 1.0F, 0.0F, 0.0F);
-        LegacyUntexturedQuadRenderer.quadRgbaF(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                color, 255, 255, 0, 0);
+        group.add(
                 far, y, side, far, y, -side, far - narrow, tipY, -side + narrow, far - narrow, tipY, side - narrow,
-                red, green, blue, 1.0F, 1.0F, 0.0F, 0.0F);
+                color, 255, 255, 0, 0);
     }
 
     private static double sps(double value) {
@@ -245,39 +266,34 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         return ((ticks + partialTick) / 15.0D) % 1.0D;
     }
 
-    private static void renderLegacyStellarFluxBeam(PoseStack poseStack,
-            MultiBufferSource buffer, int packedOverlay, double offset) {
+    private static void renderLegacyStellarFluxBeam(TexturedQuadGroup group, int packedOverlay, double offset) {
         double in = 0.4375D;
         double bottom = 1.0D;
         double beamHeight = 1.5D;
         double top = bottom + beamHeight;
-        LegacyTexturedQuadRenderer.quadWithComputedNormalAndVertexAlpha(HbmFluids.STELLAR_FLUX.getTexture(),
-                poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+        group.add(LightTexture.FULL_BRIGHT, packedOverlay,
+                -1.0F, 0.0F, 0.0F,
                 -in, bottom, in, offset + beamHeight, 0.0D, 255,
                 -in, top, in, offset, 0.0D, 0,
                 -in, top, -in, offset, 1.0D, 0,
                 -in, bottom, -in, offset + beamHeight, 1.0D, 255,
                 0xFFFFFF);
-        LegacyTexturedQuadRenderer.quadWithComputedNormalAndVertexAlpha(HbmFluids.STELLAR_FLUX.getTexture(),
-                poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+        group.add(LightTexture.FULL_BRIGHT, packedOverlay,
+                1.0F, 0.0F, 0.0F,
                 in, top, in, offset, 0.0D, 0,
                 in, bottom, in, offset + beamHeight, 0.0D, 255,
                 in, bottom, -in, offset + beamHeight, 1.0D, 255,
                 in, top, -in, offset, 1.0D, 0,
                 0xFFFFFF);
-        LegacyTexturedQuadRenderer.quadWithComputedNormalAndVertexAlpha(HbmFluids.STELLAR_FLUX.getTexture(),
-                poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+        group.add(LightTexture.FULL_BRIGHT, packedOverlay,
+                0.0F, 0.0F, 1.0F,
                 in, bottom, in, offset + beamHeight, 0.0D, 255,
                 in, top, in, offset, 0.0D, 0,
                 -in, top, in, offset, 1.0D, 0,
                 -in, bottom, in, offset + beamHeight, 1.0D, 255,
                 0xFFFFFF);
-        LegacyTexturedQuadRenderer.quadWithComputedNormalAndVertexAlpha(HbmFluids.STELLAR_FLUX.getTexture(),
-                poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+        group.add(LightTexture.FULL_BRIGHT, packedOverlay,
+                0.0F, 0.0F, -1.0F,
                 in, top, -in, offset, 0.0D, 0,
                 in, bottom, -in, offset + beamHeight, 0.0D, 255,
                 -in, bottom, -in, offset + beamHeight, 1.0D, 255,

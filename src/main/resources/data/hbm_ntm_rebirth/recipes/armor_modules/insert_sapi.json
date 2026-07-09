@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "K": {
+      "item": "hbm_ntm_rebirth:insert_kevlar"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    }
+  },
+  "pattern": [
+    "PKP",
+    "DPD",
+    "PKP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:insert_sapi"
+  },
+  "show_notification": true
+}

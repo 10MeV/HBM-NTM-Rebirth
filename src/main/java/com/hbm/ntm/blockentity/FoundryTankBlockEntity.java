@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import api.hbm.block.ICrucibleAcceptor;
 import com.hbm.inventory.material.MaterialShapes;
 import com.hbm.inventory.material.Mats.MaterialStack;
+import com.hbm.ntm.block.FoundryTankBlock;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import java.util.ArrayList;
@@ -20,6 +21,15 @@ public class FoundryTankBlockEntity extends FoundryBaseBlockEntity {
 
     public FoundryTankBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.FOUNDRY_TANK.get(), pos, state);
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && !level.isClientSide
+                && getBlockState().getBlock() instanceof FoundryTankBlock tankBlock) {
+            tankBlock.refreshConnectionState(level, worldPosition, getBlockState());
+        }
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FoundryTankBlockEntity tank) {

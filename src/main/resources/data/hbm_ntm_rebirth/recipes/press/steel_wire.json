@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/steel"
+    },
+    "legacy_ore": "ingotSteel"
+  },
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:wire_fine_steel"
+  },
+  "source_order": 36,
+  "stamp": "wire"
+}

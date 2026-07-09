@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:gems/volcanic"
+    },
+    "count": 1,
+    "legacy_ore": "gemVolcanic"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:gem_rad"
+  },
+  "source_order": 33
+}

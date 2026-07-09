@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.ferro",
+  "fallback_name": "Ferrouranium Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_ferrouranium" },
+  "frequency": 3,
+  "input": [
+    { "material": "Steel", "amount": 16 },
+    { "material": "Uranium238", "amount": 8 }
+  ],
+  "output": [
+    { "material": "Ferrouranium", "amount": 24 }
+  ],
+  "source_order": 5
+}

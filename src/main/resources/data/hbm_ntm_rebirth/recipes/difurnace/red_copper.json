@@ -1,0 +1,47 @@
+{
+  "type": "hbm_ntm_rebirth:difurnace",
+  "internal_name": "difurnace.redCopper",
+  "source_order": 5,
+  "inputs": [
+    {
+      "ingredient": [
+        {
+          "tag": "forge:ingots/copper"
+        },
+        {
+          "tag": "forge:plates/copper"
+        },
+        {
+          "tag": "forge:gems/copper"
+        },
+        {
+          "tag": "forge:dusts/copper"
+        }
+      ],
+      "count": 1,
+      "legacy_dictframe": "Copper"
+    },
+    {
+      "ingredient": [
+        {
+          "tag": "forge:ingots/redstone"
+        },
+        {
+          "tag": "forge:plates/redstone"
+        },
+        {
+          "tag": "forge:gems/redstone"
+        },
+        {
+          "tag": "forge:dusts/redstone"
+        }
+      ],
+      "count": 1,
+      "legacy_dictframe": "Redstone"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_red_copper",
+    "count": 2
+  }
+}

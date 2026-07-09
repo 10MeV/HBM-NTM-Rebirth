@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "item": "minecraft:sandstone" } },
-  "output": { "item": "minecraft:sand", "count": 4 }
+  "output": { "item": "minecraft:sand", "count": 4 },
+  "source_order": 31
 }

@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidDuctExhaustBlock;
 import com.hbm.ntm.block.HbmFluidNodeBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
@@ -17,9 +18,9 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
     private static final TextureSet[] BOX_TEXTURES_BY_METADATA = buildBoxTextures(false);
@@ -34,135 +35,153 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
     }
 
     @Override
+    public boolean shouldRender(T duct, Vec3 cameraPos) {
+        BlockState state = duct.getBlockState();
+        return state.getBlock() instanceof FluidDuctBoxBlock
+                && !usesChunkBakedStaticVisual(state)
+                && BlockEntityRenderer.super.shouldRender(duct, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(duct, getViewDistance());
+    }
+
+    @Override
     public void render(T duct, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay) {
         BlockState state = duct.getBlockState();
         if (!(state.getBlock() instanceof FluidDuctBoxBlock)) {
             return;
         }
-
-        int metadata = state.hasProperty(FluidDuctBoxBlock.LEGACY_METADATA)
-                ? state.getValue(FluidDuctBoxBlock.LEGACY_METADATA)
-                : 0;
-        int clampedMetadata = FluidDuctBoxBlock.clampLegacyMetadata(metadata);
-        boolean exhaust = state.getBlock() instanceof FluidDuctExhaustBlock;
-        TextureSet textures = exhaust ? EXHAUST_TEXTURES_BY_METADATA[clampedMetadata]
-                : BOX_TEXTURES_BY_METADATA[clampedMetadata];
-        int modelLight = LegacyRenderLighting.resolveMultiblockLight(duct, packedLight);
-        int color = 0xFFFFFF;
-        if (!exhaust
-                && FluidDuctBoxBlock.rectifyLegacyMaterial(clampedMetadata) == 2
-                && duct instanceof FluidPipeBlockEntity pipe
-                && pipe.getFluidType() != HbmFluids.NONE) {
-            color = ColorUtil.lightenColor(pipe.getFluidType().getColor(), 0.25D);
+        if (usesChunkBakedStaticVisual(state)) {
+            return;
         }
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(duct, getViewDistance())) {
+            return;
+        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(duct)) {
+            int metadata = state.hasProperty(FluidDuctBoxBlock.LEGACY_METADATA)
+                    ? state.getValue(FluidDuctBoxBlock.LEGACY_METADATA)
+                    : 0;
+            int clampedMetadata = FluidDuctBoxBlock.clampLegacyMetadata(metadata);
+            boolean exhaust = state.getBlock() instanceof FluidDuctExhaustBlock;
+            TextureSet textures = exhaust ? EXHAUST_TEXTURES_BY_METADATA[clampedMetadata]
+                    : BOX_TEXTURES_BY_METADATA[clampedMetadata];
+            int modelLight = LegacyRenderLighting.resolveMultiblockLight(duct, packedLight);
+            int color = 0xFFFFFF;
+            if (!exhaust
+                    && FluidDuctBoxBlock.rectifyLegacyMaterial(clampedMetadata) == 2
+                    && duct instanceof FluidPipeBlockEntity pipe
+                    && pipe.getFluidType() != HbmFluids.NONE) {
+                color = ColorUtil.lightenColor(pipe.getFluidType().getColor(), 0.25D);
+            }
 
-        boolean north = state.getValue(HbmFluidNodeBlock.NORTH);
-        boolean east = state.getValue(HbmFluidNodeBlock.EAST);
-        boolean south = state.getValue(HbmFluidNodeBlock.SOUTH);
-        boolean west = state.getValue(HbmFluidNodeBlock.WEST);
-        boolean up = state.getValue(HbmFluidNodeBlock.UP);
-        boolean down = state.getValue(HbmFluidNodeBlock.DOWN);
-        FluidDuctBoxBlock.DuctBounds bounds = FluidDuctBoxBlock.boundsFor(clampedMetadata);
-        int mask = (east ? 32 : 0)
-                | (west ? 16 : 0)
-                | (up ? 8 : 0)
-                | (down ? 4 : 0)
-                | (south ? 2 : 0)
-                | (north ? 1 : 0);
-        int count = (north ? 1 : 0) + (east ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0)
-                + (up ? 1 : 0) + (down ? 1 : 0);
+            boolean north = state.getValue(HbmFluidNodeBlock.NORTH);
+            boolean east = state.getValue(HbmFluidNodeBlock.EAST);
+            boolean south = state.getValue(HbmFluidNodeBlock.SOUTH);
+            boolean west = state.getValue(HbmFluidNodeBlock.WEST);
+            boolean up = state.getValue(HbmFluidNodeBlock.UP);
+            boolean down = state.getValue(HbmFluidNodeBlock.DOWN);
+            FluidDuctBoxBlock.DuctBounds bounds = FluidDuctBoxBlock.boundsFor(clampedMetadata);
+            int mask = (east ? 32 : 0)
+                    | (west ? 16 : 0)
+                    | (up ? 8 : 0)
+                    | (down ? 4 : 0)
+                    | (south ? 2 : 0)
+                    | (north ? 1 : 0);
+            int count = (north ? 1 : 0) + (east ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0)
+                    + (up ? 1 : 0) + (down ? 1 : 0);
+            LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(
+                    poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_CULL, 255);
 
-        if (mask == 0) {
-            renderBox(textures.junction(), poseStack, buffer, modelLight, packedOverlay, color,
-                    bounds.junctionLower(), bounds.junctionLower(),
-                    bounds.junctionLower(), bounds.junctionUpper(), bounds.junctionUpper(), bounds.junctionUpper());
-        } else if ((mask & 0b001111) == 0) {
-            renderStraightX(textures, poseStack, buffer, modelLight, packedOverlay, color,
-                    0.0D, bounds.lower(), bounds.lower(),
-                    1.0D, bounds.upper(), bounds.upper());
-        } else if ((mask & 0b111100) == 0) {
-            renderStraightZ(textures, poseStack, buffer, modelLight, packedOverlay, color,
-                    bounds.lower(), bounds.lower(), 0.0D,
-                    bounds.upper(), bounds.upper(), 1.0D);
-        } else if ((mask & 0b110011) == 0) {
-            renderStraightY(textures, poseStack, buffer, modelLight, packedOverlay, color,
-                    bounds.lower(), 0.0D, bounds.lower(),
-                    bounds.upper(), 1.0D, bounds.upper());
-        } else {
-            boolean simpleCurve = count == 2;
-            double coreMin = simpleCurve ? bounds.lower() : bounds.junctionLower();
-            double coreMax = simpleCurve ? bounds.upper() : bounds.junctionUpper();
-            renderConnectedBox(textures, poseStack, buffer, modelLight, packedOverlay, color,
-                    simpleCurve, north, east, south, west, up, down,
-                    coreMin, coreMin, coreMin, coreMax, coreMax, coreMax);
-            renderArms(textures, poseStack, buffer, modelLight, packedOverlay, color,
-                    bounds, simpleCurve, north, east, south, west, up, down);
+            if (mask == 0) {
+                renderBox(textures.junction(), batch, modelLight, packedOverlay, color,
+                        bounds.junctionLower(), bounds.junctionLower(),
+                        bounds.junctionLower(), bounds.junctionUpper(), bounds.junctionUpper(), bounds.junctionUpper());
+            } else if ((mask & 0b001111) == 0) {
+                renderStraightX(textures, batch, modelLight, packedOverlay, color,
+                        0.0D, bounds.lower(), bounds.lower(),
+                        1.0D, bounds.upper(), bounds.upper());
+            } else if ((mask & 0b111100) == 0) {
+                renderStraightZ(textures, batch, modelLight, packedOverlay, color,
+                        bounds.lower(), bounds.lower(), 0.0D,
+                        bounds.upper(), bounds.upper(), 1.0D);
+            } else if ((mask & 0b110011) == 0) {
+                renderStraightY(textures, batch, modelLight, packedOverlay, color,
+                        bounds.lower(), 0.0D, bounds.lower(),
+                        bounds.upper(), 1.0D, bounds.upper());
+            } else {
+                boolean simpleCurve = count == 2;
+                double coreMin = simpleCurve ? bounds.lower() : bounds.junctionLower();
+                double coreMax = simpleCurve ? bounds.upper() : bounds.junctionUpper();
+                renderConnectedBox(textures, batch, modelLight, packedOverlay, color,
+                        simpleCurve, north, east, south, west, up, down,
+                        coreMin, coreMin, coreMin, coreMax, coreMax, coreMax);
+                renderArms(textures, batch, modelLight, packedOverlay, color,
+                        bounds, simpleCurve, north, east, south, west, up, down);
+            }
         }
     }
 
-    private static void renderArms(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderArms(TextureSet textures, LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, int color, FluidDuctBoxBlock.DuctBounds bounds, boolean curve,
             boolean north, boolean east, boolean south, boolean west, boolean up, boolean down) {
         double armLower = curve ? bounds.lower() : bounds.junctionLower();
         double armUpper = curve ? bounds.upper() : bounds.junctionUpper();
         if (north) {
-            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+            renderConnectedBox(textures, batch, packedLight, packedOverlay, color,
                     curve, north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), 0.0D, bounds.upper(), bounds.upper(), armLower);
         }
         if (east) {
-            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+            renderConnectedBox(textures, batch, packedLight, packedOverlay, color,
                     curve, north, east, south, west, up, down,
                     armUpper, bounds.lower(), bounds.lower(), 1.0D, bounds.upper(), bounds.upper());
         }
         if (south) {
-            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+            renderConnectedBox(textures, batch, packedLight, packedOverlay, color,
                     curve, north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), armUpper, bounds.upper(), bounds.upper(), 1.0D);
         }
         if (west) {
-            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+            renderConnectedBox(textures, batch, packedLight, packedOverlay, color,
                     curve, north, east, south, west, up, down,
                     0.0D, bounds.lower(), bounds.lower(), armLower, bounds.upper(), bounds.upper());
         }
         if (up) {
-            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+            renderConnectedBox(textures, batch, packedLight, packedOverlay, color,
                     curve, north, east, south, west, up, down,
                     bounds.lower(), armUpper, bounds.lower(), bounds.upper(), 1.0D, bounds.upper());
         }
         if (down) {
-            renderConnectedBox(textures, poseStack, buffer, packedLight, packedOverlay, color,
+            renderConnectedBox(textures, batch, packedLight, packedOverlay, color,
                     curve, north, east, south, west, up, down,
                     bounds.lower(), 0.0D, bounds.lower(), bounds.upper(), armLower, bounds.upper());
         }
     }
 
-    private static void renderStraightX(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderStraightX(TextureSet textures, LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, int color, double minX, double minY, double minZ, double maxX,
             double maxY, double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.straight(),
-                textures.straight(), textures.end(), textures.end(), poseStack, buffer, packedLight, packedOverlay,
-                color, 255, LegacyTexturedRenderMode.CUTOUT_CULL, minX, minY, minZ, maxX, maxY, maxZ);
+                textures.straight(), textures.end(), textures.end(), batch, packedLight, packedOverlay,
+                color, 255, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderStraightY(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderStraightY(TextureSet textures, LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, int color, double minX, double minY, double minZ, double maxX,
             double maxY, double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.end(), textures.end(), textures.straight(),
-                textures.straight(), textures.straight(), textures.straight(), poseStack, buffer, packedLight,
-                packedOverlay, color, 255, LegacyTexturedRenderMode.CUTOUT_CULL, minX, minY, minZ, maxX, maxY, maxZ);
+                textures.straight(), textures.straight(), textures.straight(), batch, packedLight,
+                packedOverlay, color, 255, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderStraightZ(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderStraightZ(TextureSet textures, LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, int color, double minX, double minY, double minZ, double maxX,
             double maxY, double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.end(),
-                textures.end(), textures.straight(), textures.straight(), poseStack, buffer, packedLight,
-                packedOverlay, color, 255, LegacyTexturedRenderMode.CUTOUT_CULL, minX, minY, minZ, maxX, maxY, maxZ);
+                textures.end(), textures.straight(), textures.straight(), batch, packedLight,
+                packedOverlay, color, 255, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderConnectedBox(TextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderConnectedBox(TextureSet textures, LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, int color, boolean curve, boolean north, boolean east, boolean south,
             boolean west, boolean up, boolean down, double minX, double minY, double minZ, double maxX, double maxY,
             double maxZ) {
@@ -173,15 +192,15 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
                 faceTexture(textures, Direction.SOUTH, curve, north, east, south, west, up, down),
                 faceTexture(textures, Direction.EAST, curve, north, east, south, west, up, down),
                 faceTexture(textures, Direction.WEST, curve, north, east, south, west, up, down),
-                poseStack, buffer, packedLight, packedOverlay, color, 255, LegacyTexturedRenderMode.CUTOUT_CULL,
+                batch, packedLight, packedOverlay, color, 255,
                 minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderBox(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderBox(TextureAtlasSprite sprite, LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, int color, double minX, double minY, double minZ, double maxX,
             double maxY, double maxZ) {
-        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, poseStack, buffer, packedLight, packedOverlay,
-                color, 255, LegacyTexturedRenderMode.CUTOUT_CULL, minX, minY, minZ, maxX, maxY, maxZ);
+        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, batch, packedLight, packedOverlay,
+                color, 255, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     private static TextureAtlasSprite faceTexture(TextureSet textures, Direction face, boolean curve, boolean north,
@@ -241,6 +260,11 @@ public class FluidDuctBoxRenderer<T extends BlockEntity> implements BlockEntityR
     }
 
     private static TextureAtlasSprite sprite(String texture) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + texture);
+    }
+
+    private static boolean usesChunkBakedStaticVisual(BlockState state) {
+        return state.getBlock() instanceof FluidDuctBoxBlock
+                && !LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
     }
 }

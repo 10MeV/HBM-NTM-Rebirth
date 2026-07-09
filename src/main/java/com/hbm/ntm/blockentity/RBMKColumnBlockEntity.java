@@ -11,6 +11,7 @@ import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidNet;
@@ -109,6 +110,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -1188,6 +1190,9 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         if (!kind.control()) {
             return;
         }
+        if (kind.powered()) {
+            subscribePoweredControlRodReceiver();
+        }
         if (kind.automatic()) {
             RBMKControlRodPlanner.AutoTargetPlan target =
                     RBMKControlRodPlanner.planAutoTarget(heat, autoSettings());
@@ -1198,6 +1203,20 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         if (controlState.level() != before) {
             setChanged();
         }
+    }
+
+    private boolean subscribePoweredControlRodReceiver() {
+        return level != null
+                && !level.isClientSide
+                && isPoweredControlRod()
+                && HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, worldPosition, Direction.DOWN, this);
+    }
+
+    private boolean unsubscribePoweredControlRodReceiver() {
+        return level != null
+                && !level.isClientSide
+                && isPoweredControlRod()
+                && HbmEnergyUtil.unsubscribeReceiverFromNeighborNetwork(level, worldPosition, Direction.DOWN, this);
     }
 
     private void tickBaseThermal(Level level, BlockPos pos) {
@@ -1442,9 +1461,10 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
                 .getAllRecipesFor(ModRecipes.OUTGASSER.type().get())
                 .stream()
                 .filter(recipe -> recipe.matchesIgnoringCount(stack))
-                .sorted((left, right) -> Boolean.compare(
-                        left.input().legacyOreName() != null,
-                        right.input().legacyOreName() != null))
+                .sorted(Comparator
+                        .comparing((OutgasserRecipe recipe) -> recipe.input().legacyOreName() != null)
+                        .thenComparingInt(OutgasserRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
                 .findFirst()
                 .orElse(null);
     }
@@ -2234,6 +2254,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
     public void setRemoved() {
         if (level != null) {
             removeNeutronNodesForColumn(level);
+            unsubscribePoweredControlRodReceiver();
         }
         super.setRemoved();
     }
@@ -2242,6 +2263,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
     public void onChunkUnloaded() {
         if (level != null) {
             removeNeutronNodesForColumn(level);
+            unsubscribePoweredControlRodReceiver();
         }
         super.onChunkUnloaded();
     }

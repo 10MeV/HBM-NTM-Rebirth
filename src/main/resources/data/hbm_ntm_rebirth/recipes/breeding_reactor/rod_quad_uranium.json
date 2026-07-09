@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:breeding_reactor",
+  "source_order": 26,
   "flux": 600,
   "input": {
     "count": 1,

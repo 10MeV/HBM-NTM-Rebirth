@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.fueltank.large",
+  "duration": 200,
+  "power": 5000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:welded_plates/aluminium" }, "count": 8, "legacy_ore": "plateSextupleAluminum" },
+    { "ingredient": { "tag": "forge:plates/saturnite" }, "count": 12, "legacy_ore": "plateSaturnite" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:steel_scaffold" }, "count": 16 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:fuel_tank_large" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 23
+}

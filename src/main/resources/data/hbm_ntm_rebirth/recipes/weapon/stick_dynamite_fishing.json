@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:stick_dynamite"
+    },
+    {
+      "item": "hbm_ntm_rebirth:stick_dynamite"
+    },
+    {
+      "item": "hbm_ntm_rebirth:stick_dynamite"
+    },
+    {
+      "item": "minecraft:paper"
+    },
+    {
+      "tag": "forge:any/tar"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:stick_dynamite_fishing"
+  }
+}

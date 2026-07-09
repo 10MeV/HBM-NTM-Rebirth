@@ -4,13 +4,16 @@
   "duration": 400,
   "power": 1000,
   "input_items": [
-    { "ingredient": { "tag": "forge:sand" }, "count": 1 }
+    { "ingredient": { "tag": "forge:sand" }, "count": 1, "legacy_ore": "sand" }
   ],
   "input_fluids": [],
   "output_items": [
     { "item": "hbm_ntm_rebirth:nugget_silicon" }
   ],
   "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Silicon", "amount": 8 }
+  ],
   "pools": [],
   "source_order": 0
 }

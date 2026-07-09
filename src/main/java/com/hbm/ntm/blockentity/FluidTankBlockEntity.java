@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
@@ -37,12 +38,14 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -59,6 +62,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelProperty;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +85,8 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int MODE_BUFFER = 1;
     public static final int MODE_OUTPUT = 2;
     public static final int MODE_NONE = 3;
+    public static final ModelProperty<ResourceLocation> SMALL_TANK_TEXTURE_PROPERTY = new ModelProperty<>();
+    public static final ModelProperty<Boolean> SMALL_TANK_EXPLODED_PROPERTY = new ModelProperty<>();
 
     protected static final int DEFAULT_TANK_CAPACITY = 256_000;
     private static final long DEFAULT_TRANSFER_SPEED_FLOOR = 500L;
@@ -304,6 +311,32 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     public HbmFluidTank getTank() {
         return tank;
+    }
+
+    public ResourceLocation getSmallTankAtlasTexture() {
+        return smallTankAtlasTextureFor(tank.getTankType());
+    }
+
+    public static ResourceLocation smallTankAtlasTextureFor(FluidType type) {
+        if (type == null || type == HbmFluids.NONE || type.shouldRenderTankWithTint()) {
+            return smallTankAtlasTexture("none");
+        }
+        if (type.isAntimatter()) {
+            return smallTankAtlasTexture("danger");
+        }
+        CorrosiveFluidTrait corrosive = type.getTrait(CorrosiveFluidTrait.class);
+        if (corrosive != null && corrosive.isHighlyCorrosive()) {
+            return smallTankAtlasTexture("danger");
+        }
+        return smallTankAtlasTexture(type.getName());
+    }
+
+    public static int smallTankTintFor(FluidType type) {
+        return type != null && type.shouldRenderTankWithTint() ? type.getGuiTint() : 0xFFFFFF;
+    }
+
+    private static ResourceLocation smallTankAtlasTexture(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "block/tank/tank_" + name.toLowerCase(Locale.US));
     }
 
     public ItemStackHandler getItems() {
@@ -630,6 +663,9 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public void load(CompoundTag tag) {
+        boolean clientSmallTankModel = usesSmallTankBakedModel() && level != null && level.isClientSide;
+        ResourceLocation previousTexture = clientSmallTankModel ? getSmallTankAtlasTexture() : null;
+        boolean previousExploded = clientSmallTankModel && exploded;
         super.load(tag);
         loadInventory(tag);
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
@@ -642,6 +678,24 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         age = Math.floorMod(tag.getInt("age"), 20);
         lastComparatorPower = Math.max(0, Math.min(15, tag.getInt("lastComparatorPower")));
         invalidateFluidHandlers();
+        if (clientSmallTankModel
+                && (previousExploded != exploded || !previousTexture.equals(getSmallTankAtlasTexture()))) {
+            refreshSmallTankModelData();
+        }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        refreshSmallTankModelData();
+    }
+
+    @Override
+    public @NotNull ModelData getModelData() {
+        return ModelData.builder()
+                .with(SMALL_TANK_TEXTURE_PROPERTY, getSmallTankAtlasTexture())
+                .with(SMALL_TANK_EXPLODED_PROPERTY, exploded)
+                .build();
     }
 
     @Override
@@ -705,6 +759,18 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    private void refreshSmallTankModelData() {
+        if (usesSmallTankBakedModel() && level != null && level.isClientSide) {
+            requestModelDataUpdate();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_IMMEDIATE);
+        }
+    }
+
+    public boolean usesSmallTankBakedModel() {
+        return getType() == ModBlockEntities.FLUID_TANK.get();
     }
 
     protected void copyInventoryFrom(FluidTankBlockEntity other) {

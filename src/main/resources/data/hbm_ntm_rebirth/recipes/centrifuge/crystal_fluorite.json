@@ -1,10 +1,29 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/fluorite" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_fluorite"
+    },
+    "legacy_id": "hbm:crystal_fluorite",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:fluorite", "count": 4 },
-    { "item": "hbm_ntm_rebirth:fluorite", "count": 4 },
-    { "item": "hbm_ntm_rebirth:gem_sodalite", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
-  ]
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:fluorite"
+    },
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:fluorite"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:gem_sodalite"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_lithium_tiny"
+    }
+  ],
+  "source_order": 45
 }

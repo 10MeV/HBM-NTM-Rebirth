@@ -19,6 +19,7 @@ import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionType;
+import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.RotaryFurnaceRecipeRuntime;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -477,7 +478,7 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
 
         pourOutput(level, pos, state);
 
-        RotaryFurnaceRecipeRuntime.Recipe recipe = RotaryFurnaceRecipeRuntime.find(
+        RotaryFurnaceRecipeRuntime.Recipe recipe = RotaryFurnaceRecipeRuntime.find(level,
                 items.getStackInSlot(SLOT_INPUT_0),
                 items.getStackInSlot(SLOT_INPUT_1),
                 items.getStackInSlot(SLOT_INPUT_2));
@@ -572,7 +573,7 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
     }
 
     private void process(RotaryFurnaceRecipeRuntime.Recipe recipe) {
-        for (RotaryFurnaceRecipeRuntime.IngredientSpec ingredient : recipe.ingredients()) {
+        for (HbmIngredient ingredient : recipe.ingredients()) {
             consumeIngredient(ingredient);
         }
         if (recipe.fluid() != null) {
@@ -585,10 +586,10 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
         }
     }
 
-    private void consumeIngredient(RotaryFurnaceRecipeRuntime.IngredientSpec ingredient) {
+    private void consumeIngredient(HbmIngredient ingredient) {
         for (int slot = SLOT_INPUT_0; slot <= SLOT_INPUT_2; slot++) {
             ItemStack stack = items.getStackInSlot(slot);
-            if (ingredient.matches(stack)) {
+            if (ingredient.test(stack)) {
                 items.extractItem(slot, ingredient.count(), false);
                 return;
             }
@@ -610,12 +611,19 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
                 6.0D, true, output, MaterialShapes.INGOT.q(1), impact);
         output = leftover == null || leftover.isEmpty() ? null : leftover;
         if (output != null && previous != output.amount && impact.value() != null) {
+            double sourceX = pos.getX() + 0.5D + rot.getStepX() * 2.875D;
+            double sourceY = pos.getY() + 1.25D;
+            double sourceZ = pos.getZ() + 0.5D + rot.getStepZ() * 2.875D;
             ParticleUtil.spawnFoundryPour(level, impact.value(), output.material.moltenColor, rot,
-                    (float) impact.value().distanceTo(new Vec3(
-                            pos.getX() + 0.5D + rot.getStepX() * 2.875D,
-                            pos.getY() + 1.25D,
-                            pos.getZ() + 0.5D + rot.getStepZ() * 2.875D)));
+                    (float) distance(impact.value(), sourceX, sourceY, sourceZ));
         }
+    }
+
+    private static double distance(Vec3 point, double x, double y, double z) {
+        double dx = point.x - x;
+        double dy = point.y - y;
+        double dz = point.z - z;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     private void pollute(PollutionType type, float amount) {

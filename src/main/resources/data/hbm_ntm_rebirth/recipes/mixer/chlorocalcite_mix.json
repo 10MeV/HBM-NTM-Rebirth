@@ -13,7 +13,9 @@
     "amount": 500
   },
   "solid_input": {
-    "item": "hbm_ntm_rebirth:powder_flux"
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:powder_flux"
+    }
   },
   "duration": 50
 }

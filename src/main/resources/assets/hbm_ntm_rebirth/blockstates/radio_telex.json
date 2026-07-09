@@ -1,8 +1,19 @@
 {
   "variants": {
-    "facing=north": { "model": "hbm_ntm_rebirth:block/radio_telex_ber_empty" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/radio_telex_ber_empty" },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/radio_telex_ber_empty" },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/radio_telex_ber_empty" }
+    "facing=east": {
+      "model": "hbm_ntm_rebirth:block/machines/telex"
+    },
+    "facing=north": {
+      "model": "hbm_ntm_rebirth:block/machines/telex",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machines/telex",
+      "y": 270
+    },
+    "facing=west": {
+      "model": "hbm_ntm_rebirth:block/machines/telex",
+      "y": 180
+    }
   }
 }

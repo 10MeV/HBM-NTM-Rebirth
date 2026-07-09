@@ -3,23 +3,25 @@
   "duration": 600,
   "inputs": [
     {
+      "count": 1,
       "ingredient": {
         "tag": "forge:ingots/saturnite"
       },
-      "count": 1,
       "legacy_ore": "ingotSaturnite"
     },
     {
+      "count": 1,
       "ingredient": {
         "item": "hbm_ntm_rebirth:powder_meteorite"
       },
-      "count": 1,
       "legacy_item": "powder_meteorite"
     }
   ],
+  "name": "blast.starmetal",
   "outputs": [
     {
       "item": "hbm_ntm_rebirth:ingot_starmetal"
     }
-  ]
+  ],
+  "source_order": 10
 }

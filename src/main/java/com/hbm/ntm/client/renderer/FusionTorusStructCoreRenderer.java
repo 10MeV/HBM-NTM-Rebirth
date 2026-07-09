@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 public class FusionTorusStructCoreRenderer implements BlockEntityRenderer<FusionTorusStructCoreBlockEntity> {
     private static final TextureAtlasSprite BSCCO_WELDED =
@@ -37,15 +38,32 @@ public class FusionTorusStructCoreRenderer implements BlockEntityRenderer<Fusion
     }
 
     @Override
-    public void render(FusionTorusStructCoreBlockEntity blockEntity, float partialTick, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                queuedPose -> renderPreview(queuedPose, buffer, light));
+    public boolean shouldRender(FusionTorusStructCoreBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
-    private static void renderPreview(PoseStack poseStack, MultiBufferSource buffer, int light) {
+    @Override
+    public void render(FusionTorusStructCoreBlockEntity blockEntity, float partialTick, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            int alpha = LegacyBlockEntityRenderCulling.fadedStaticAlpha(
+                    LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA);
+            if (alpha <= 0) {
+                return;
+            }
+            int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
+
+            LegacyMachineEffectPresenter.enqueueAtlasSpriteQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                    poseStack, buffer, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                    quads -> renderPreview(quads, light, alpha));
+        }
+    }
+
+    private static void renderPreview(LegacyTexturedQuadRenderer.SpritePixelQuadSink quads, int light, int alpha) {
         for (int y = 0; y < FusionTorusStructCoreBlockEntity.LEGACY_LAYOUT_HEIGHT; y++) {
             for (int x = 0; x < FusionTorusStructCoreBlockEntity.LEGACY_LAYOUT_SIZE; x++) {
                 for (int z = 0; z < FusionTorusStructCoreBlockEntity.LEGACY_LAYOUT_SIZE; z++) {
@@ -55,9 +73,7 @@ public class FusionTorusStructCoreRenderer implements BlockEntityRenderer<Fusion
                     }
                     TextureAtlasSprite sprite = textureFor(component);
                     LegacyAtlasCuboidRenderer.smallBlock(sprite, sprite, sprite, sprite, sprite, sprite,
-                            poseStack, buffer, light, OverlayTexture.NO_OVERLAY, 0xFFFFFF,
-                            LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA,
-                            LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                            quads, light, OverlayTexture.NO_OVERLAY, 0xFFFFFF, alpha,
                             x - FusionTorusStructCoreBlockEntity.LEGACY_LAYOUT_RADIUS,
                             y,
                             z - FusionTorusStructCoreBlockEntity.LEGACY_LAYOUT_RADIUS);
@@ -75,6 +91,6 @@ public class FusionTorusStructCoreRenderer implements BlockEntityRenderer<Fusion
     }
 
     private static TextureAtlasSprite sprite(String name) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + name);
     }
 }

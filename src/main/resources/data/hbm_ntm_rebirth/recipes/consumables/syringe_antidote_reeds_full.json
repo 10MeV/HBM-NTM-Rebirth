@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "M": {
+      "item": "minecraft:sugar_cane"
+    },
+    "P": {
+      "item": "minecraft:pumpkin_seeds"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:syringe_empty"
+    }
+  },
+  "pattern": [
+    "SSS",
+    "PMP",
+    "SSS"
+  ],
+  "result": {
+    "count": 6,
+    "item": "hbm_ntm_rebirth:syringe_antidote"
+  }
+}

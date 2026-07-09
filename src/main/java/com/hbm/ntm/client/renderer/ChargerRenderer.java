@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.ChargerBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.ChargerBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
@@ -11,6 +12,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> {
     private static final LegacyWavefrontModel.SelectionHandle BASE =
@@ -38,6 +40,12 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
     }
 
     @Override
+    public boolean shouldRender(ChargerBlockEntity charger, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(charger, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(charger, getViewDistance());
+    }
+
+    @Override
     public void render(ChargerBlockEntity charger, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(charger, getViewDistance())) {
@@ -49,14 +57,15 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
                 LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(charger, poseStack.last().pose())) {
             poseStack.pushPose();
-            poseStack.translate(0.5D, 0.5D, 0.5D);
+            poseStack.translate(0.5D, 0.0D, 0.5D);
             orient(poseStack, state.hasProperty(ChargerBlock.FACING) ? state.getValue(ChargerBlock.FACING) : Direction.NORTH);
-            poseStack.translate(-0.5D, -0.5D, -0.5D);
             float time = charger.getSlide(partialTick);
             double extend = Math.min(1.0D, time * 2.0D);
             double swivel = Math.max(0.0D, (time - 0.5D) * 2.0D);
 
-            renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                renderPart(BASE, poseStack, buffer, modelLight, packedOverlay);
+            }
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(charger)) {
                 poseStack.pushPose();
                 applySlideFrame(poseStack, extend);
@@ -102,19 +111,11 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
 
     private static void orient(PoseStack poseStack, Direction facing) {
         switch (facing) {
-            case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
-            case NORTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-            case SOUTH -> poseStack.mulPose(Axis.XN.rotationDegrees(90.0F));
-            case WEST -> {
-                poseStack.mulPose(Axis.ZN.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-            }
             case EAST -> {
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
             }
-            default -> {
-            }
+            case SOUTH -> poseStack.mulPose(Axis.YP.rotationDegrees(270.0F));
+            case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            default -> poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
         }
     }
 }

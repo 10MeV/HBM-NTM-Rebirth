@@ -1,0 +1,46 @@
+{
+  "type": "hbm_ntm_rebirth:difurnace",
+  "internal_name": "difurnace.steelFromIngot",
+  "source_order": 0,
+  "inputs": [
+    {
+      "ingredient": [
+        {
+          "tag": "forge:ingots/iron"
+        },
+        {
+          "tag": "forge:plates/iron"
+        },
+        {
+          "tag": "forge:gems/iron"
+        },
+        {
+          "tag": "forge:dusts/iron"
+        }
+      ],
+      "count": 1,
+      "legacy_dictframe": "Iron"
+    },
+    {
+      "ingredient": [
+        {
+          "tag": "forge:ingots/coal"
+        },
+        {
+          "tag": "forge:plates/coal"
+        },
+        {
+          "tag": "forge:gems/coal"
+        },
+        {
+          "tag": "forge:dusts/coal"
+        }
+      ],
+      "count": 1,
+      "legacy_dictframe": "Coal"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_steel"
+  }
+}

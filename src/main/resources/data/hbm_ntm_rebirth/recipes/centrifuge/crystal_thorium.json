@@ -1,24 +1,28 @@
-﻿{
-    "type":  "hbm_ntm_rebirth:centrifuge",
-    "input":  {
-                  "ingredient":  {
-                                     "tag":  "forge:crystals/thorium"
-                                 }
-              },
-    "outputs":  [
-                    {
-                        "item":  "hbm_ntm_rebirth:powder_thorium",
-                        "count":  2
-                    },
-                    {
-                        "item":  "hbm_ntm_rebirth:powder_thorium",
-                        "count":  2
-                    },
-                    {
-                        "item":  "hbm_ntm_rebirth:powder_uranium"
-                    },
-                    {
-                        "item":  "hbm_ntm_rebirth:nugget_ra226"
-                    }
-                ]
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_thorium"
+    },
+    "legacy_id": "hbm:crystal_thorium",
+    "legacy_meta": 0
+  },
+  "outputs": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_thorium"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_thorium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_uranium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_ra226"
+    }
+  ],
+  "source_order": 37
 }

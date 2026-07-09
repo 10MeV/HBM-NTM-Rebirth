@@ -2,8 +2,10 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.HbmEnergyNodeBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.RedCableBlock;
 import com.hbm.ntm.block.RedCableBoxBlock;
+import com.hbm.ntm.block.RedWireCoatedCt;
 import com.hbm.ntm.block.RedWireCoatedBlock;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
@@ -21,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +40,11 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
     private static final LegacyWavefrontModel.SelectionHandle[] ARM_HANDLES = buildHandles(ARM_PARTS_BY_MASK);
     private static final BoxCableTextures[] BOX_CABLE_TEXTURES_BY_SIZE = buildBoxCableTextures();
     private static final BoxCableBounds[] BOX_CABLE_BOUNDS_BY_SIZE = buildBoxCableBounds();
+    private static final Direction[] RENDER_DIRECTIONS = Direction.values();
     private static final TextureAtlasSprite COATED_BASE = sprite("red_wire_coated");
     private static final TextureAtlasSprite COATED_CT = sprite("red_wire_coated_ct");
     private static final CtSpriteFragment[] COATED_FRAGMENTS = buildCoatedFragments();
+    private static final CoatedSubFaceDraw[][][] COATED_SUB_FACE_DRAWS_BY_FACE = buildCoatedSubFaceDrawsByFace();
 
     public RedCableRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -50,25 +55,35 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
     }
 
     @Override
+    public boolean shouldRender(RedCableBlockEntity cable, Vec3 cameraPos) {
+        return isRenderableCableState(cable.getBlockState())
+                && BlockEntityRenderer.super.shouldRender(cable, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(cable, getViewDistance());
+    }
+
+    @Override
     public void render(RedCableBlockEntity cable, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = cable.getBlockState();
-        int light = LegacyRenderLighting.resolveMultiblockLight(cable, packedLight);
-        if (state.getBlock() instanceof RedCableBoxBlock) {
-            renderBoxCable(state, poseStack, buffer, light, packedOverlay);
-            return;
-        }
-        if (state.getBlock() instanceof RedWireCoatedBlock) {
-            renderCoatedCable(cable, state, poseStack, buffer, light, packedOverlay);
-            return;
-        }
-        if (!(state.getBlock() instanceof RedCableBlock block) || !block.usesBlockEntityRenderer(state)) {
+        if (!isRenderableCableState(state)) {
             return;
         }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(cable, getViewDistance())) {
             return;
         }
-
+        int light = LegacyRenderLighting.resolveMultiblockLight(cable, packedLight);
+        if (state.getBlock() instanceof RedCableBoxBlock) {
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(cable)) {
+                renderBoxCable(state, poseStack, buffer, light, packedOverlay);
+            }
+            return;
+        }
+        if (state.getBlock() instanceof RedWireCoatedBlock) {
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(cable)) {
+                renderCoatedCable(cable, state, poseStack, buffer, light, packedOverlay);
+            }
+            return;
+        }
         boolean posX = state.getValue(HbmEnergyNodeBlock.EAST);
         boolean negX = state.getValue(HbmEnergyNodeBlock.WEST);
         boolean posY = state.getValue(HbmEnergyNodeBlock.UP);
@@ -81,6 +96,14 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         }
     }
 
+    private static boolean isRenderableCableState(BlockState state) {
+        return (state.getBlock() instanceof RedCableBoxBlock
+                        && LegacyMachineRenderShapes.renderChunkBakedStaticsInBer())
+                || (state.getBlock() instanceof RedWireCoatedBlock
+                        && LegacyMachineRenderShapes.renderChunkBakedStaticsInBer())
+                || (state.getBlock() instanceof RedCableBlock block && block.usesBlockEntityRenderer(state));
+    }
+
     static void renderItemCable(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ObjBlockModels.CABLE_NEO.renderOnlyInCallOrder(CABLE_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
                 ITEM_HANDLE);
@@ -91,7 +114,9 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         int clampedSize = clampBoxCableSize(size);
         BoxCableTextures textures = BOX_CABLE_TEXTURES_BY_SIZE[clampedSize];
         BoxCableBounds bounds = BOX_CABLE_BOUNDS_BY_SIZE[clampedSize];
-        renderBoxCableStraightZ(textures, poseStack, buffer, packedLight, packedOverlay,
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(
+                poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
+        renderBoxCableStraightZ(textures, batch, packedLight, packedOverlay,
                 bounds.lower(), bounds.lower(), 0.0D,
                 bounds.upper(), bounds.upper(), 1.0D);
     }
@@ -137,97 +162,102 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
                 | (north ? 1 : 0);
         int count = (north ? 1 : 0) + (east ? 1 : 0) + (south ? 1 : 0) + (west ? 1 : 0)
                 + (up ? 1 : 0) + (down ? 1 : 0);
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(
+                poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
 
         if (mask == 0) {
-            renderBoxCableCube(textures.junction(), poseStack, buffer, packedLight, packedOverlay,
+            renderBoxCableCube(textures.junction(), batch, packedLight, packedOverlay,
                     bounds.lower(), bounds.lower(), bounds.lower(), bounds.upper(), bounds.upper(), bounds.upper());
         } else if ((mask & 0b001111) == 0) {
-            renderBoxCableStraightX(textures, poseStack, buffer, packedLight, packedOverlay,
+            renderBoxCableStraightX(textures, batch, packedLight, packedOverlay,
                     0.0D, bounds.lower(), bounds.lower(),
                     1.0D, bounds.upper(), bounds.upper());
         } else if ((mask & 0b111100) == 0) {
-            renderBoxCableStraightZ(textures, poseStack, buffer, packedLight, packedOverlay,
+            renderBoxCableStraightZ(textures, batch, packedLight, packedOverlay,
                     bounds.lower(), bounds.lower(), 0.0D,
                     bounds.upper(), bounds.upper(), 1.0D);
         } else if ((mask & 0b110011) == 0) {
-            renderBoxCableStraightY(textures, poseStack, buffer, packedLight, packedOverlay,
+            renderBoxCableStraightY(textures, batch, packedLight, packedOverlay,
                     bounds.lower(), 0.0D, bounds.lower(),
                     bounds.upper(), 1.0D, bounds.upper());
         } else {
             boolean curve = count == 2;
-            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+            renderBoxCableConnected(textures, batch, packedLight, packedOverlay, curve,
                     north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), bounds.lower(), bounds.upper(), bounds.upper(), bounds.upper());
-            renderBoxCableArms(textures, poseStack, buffer, packedLight, packedOverlay, bounds,
+            renderBoxCableArms(textures, batch, packedLight, packedOverlay, bounds,
                     curve, north, east, south, west, up, down);
         }
     }
 
-    private static void renderBoxCableArms(BoxCableTextures textures, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderBoxCableArms(BoxCableTextures textures, LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, BoxCableBounds bounds, boolean curve, boolean north, boolean east,
             boolean south, boolean west, boolean up, boolean down) {
         if (north) {
-            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+            renderBoxCableConnected(textures, batch, packedLight, packedOverlay, curve,
                     north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), 0.0D, bounds.upper(), bounds.upper(), bounds.lower());
         }
         if (east) {
-            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+            renderBoxCableConnected(textures, batch, packedLight, packedOverlay, curve,
                     north, east, south, west, up, down,
                     bounds.upper(), bounds.lower(), bounds.lower(), 1.0D, bounds.upper(), bounds.upper());
         }
         if (south) {
-            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+            renderBoxCableConnected(textures, batch, packedLight, packedOverlay, curve,
                     north, east, south, west, up, down,
                     bounds.lower(), bounds.lower(), bounds.upper(), bounds.upper(), bounds.upper(), 1.0D);
         }
         if (west) {
-            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+            renderBoxCableConnected(textures, batch, packedLight, packedOverlay, curve,
                     north, east, south, west, up, down,
                     0.0D, bounds.lower(), bounds.lower(), bounds.lower(), bounds.upper(), bounds.upper());
         }
         if (up) {
-            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+            renderBoxCableConnected(textures, batch, packedLight, packedOverlay, curve,
                     north, east, south, west, up, down,
                     bounds.lower(), bounds.upper(), bounds.lower(), bounds.upper(), 1.0D, bounds.upper());
         }
         if (down) {
-            renderBoxCableConnected(textures, poseStack, buffer, packedLight, packedOverlay, curve,
+            renderBoxCableConnected(textures, batch, packedLight, packedOverlay, curve,
                     north, east, south, west, up, down,
                     bounds.lower(), 0.0D, bounds.lower(), bounds.upper(), bounds.lower(), bounds.upper());
         }
     }
 
-    private static void renderBoxCableStraightX(BoxCableTextures textures, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderBoxCableStraightX(BoxCableTextures textures,
+            LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, double minX, double minY, double minZ, double maxX, double maxY,
             double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.straight(),
-                textures.straight(), textures.end(), textures.end(), poseStack, buffer, packedLight, packedOverlay,
-                0xFFFFFF, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY, maxZ);
+                textures.straight(), textures.end(), textures.end(), batch, packedLight, packedOverlay,
+                0xFFFFFF, 255, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderBoxCableStraightY(BoxCableTextures textures, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderBoxCableStraightY(BoxCableTextures textures,
+            LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, double minX, double minY, double minZ, double maxX, double maxY,
             double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.end(), textures.end(), textures.straight(),
-                textures.straight(), textures.straight(), textures.straight(), poseStack, buffer, packedLight,
-                packedOverlay, 0xFFFFFF, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY,
+                textures.straight(), textures.straight(), textures.straight(), batch, packedLight,
+                packedOverlay, 0xFFFFFF, 255, minX, minY, minZ, maxX, maxY,
                 maxZ);
     }
 
-    private static void renderBoxCableStraightZ(BoxCableTextures textures, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderBoxCableStraightZ(BoxCableTextures textures,
+            LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, double minX, double minY, double minZ, double maxX, double maxY,
             double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.end(),
-                textures.end(), textures.straight(), textures.straight(), poseStack, buffer, packedLight,
-                packedOverlay, 0xFFFFFF, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY,
+                textures.end(), textures.straight(), textures.straight(), batch, packedLight,
+                packedOverlay, 0xFFFFFF, 255, minX, minY, minZ, maxX, maxY,
                 maxZ);
     }
 
-    private static void renderBoxCableConnected(BoxCableTextures textures, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay, boolean curve, boolean north, boolean east,
-            boolean south, boolean west, boolean up, boolean down, double minX, double minY, double minZ, double maxX,
-            double maxY, double maxZ) {
+    private static void renderBoxCableConnected(BoxCableTextures textures,
+            LegacyTexturedQuadRenderer.SpriteQuadBatch batch, int packedLight, int packedOverlay, boolean curve,
+            boolean north, boolean east, boolean south, boolean west, boolean up, boolean down, double minX,
+            double minY, double minZ, double maxX, double maxY, double maxZ) {
         LegacyAtlasCuboidRenderer.croppedCuboid(
                 boxCableFaceTexture(textures, Direction.UP, curve, north, east, south, west, up, down),
                 boxCableFaceTexture(textures, Direction.DOWN, curve, north, east, south, west, up, down),
@@ -235,15 +265,15 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
                 boxCableFaceTexture(textures, Direction.SOUTH, curve, north, east, south, west, up, down),
                 boxCableFaceTexture(textures, Direction.EAST, curve, north, east, south, west, up, down),
                 boxCableFaceTexture(textures, Direction.WEST, curve, north, east, south, west, up, down),
-                poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, 255,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY, maxZ);
+                batch, packedLight, packedOverlay, 0xFFFFFF, 255,
+                minX, minY, minZ, maxX, maxY, maxZ);
     }
 
-    private static void renderBoxCableCube(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+    private static void renderBoxCableCube(TextureAtlasSprite sprite, LegacyTexturedQuadRenderer.SpriteQuadBatch batch,
             int packedLight, int packedOverlay, double minX, double minY, double minZ, double maxX, double maxY,
             double maxZ) {
-        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, poseStack, buffer, packedLight, packedOverlay,
-                0xFFFFFF, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL, minX, minY, minZ, maxX, maxY, maxZ);
+        LegacyAtlasCuboidRenderer.croppedCuboid(sprite, batch, packedLight, packedOverlay,
+                0xFFFFFF, 255, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     private static TextureAtlasSprite boxCableFaceTexture(BoxCableTextures textures, Direction face, boolean curve,
@@ -281,149 +311,43 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockGetter level = cable.getLevel();
         BlockPos pos = cable.getBlockPos();
-        for (Direction face : Direction.values()) {
-            if (level != null && level.getBlockState(pos.relative(face)).is(state.getBlock())) {
+        RedWireCoatedCt.Data data = RedWireCoatedCt.compute(level, pos, state);
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch = null;
+        for (Direction face : RENDER_DIRECTIONS) {
+            if (!data.isFaceVisible(face)) {
                 continue;
             }
-            CoatedCtFace ctFace = coatedCtFace(level, pos, state, face);
-            renderCoatedFace(poseStack, buffer, packedLight, packedOverlay, face, ctFace);
+            if (batch == null) {
+                batch = LegacyTexturedQuadRenderer.spriteQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
+            }
+            renderCoatedFace(batch, packedLight, packedOverlay, face, data.face(face));
         }
     }
 
-    private static CoatedCtFace coatedCtFace(BlockGetter level, BlockPos pos, BlockState state, Direction face) {
-        boolean[] cons = new boolean[8];
-        int[][] dirs = ctAccess(face);
-        for (int i = 0; i < dirs.length; i++) {
-            int[] offset = dirs[i];
-            BlockPos neighbor = pos.offset(offset[0], offset[1], offset[2]);
-            cons[i] = level != null && level.getBlockState(neighbor).is(state.getBlock());
-        }
-        int tl = 0 | 0 | cornerType(cons[3], cons[0], cons[1]);
-        int tr = 0 | 1 | cornerType(cons[4], cons[2], cons[1]);
-        int bl = 2 | 0 | cornerType(cons[3], cons[5], cons[6]);
-        int br = 2 | 1 | cornerType(cons[4], cons[7], cons[6]);
-        return new CoatedCtFace(tl, tr, bl, br);
+    private static int ctFaceFragment(int ctFace, int index) {
+        int fragment = (ctFace >> (index * 5)) & 31;
+        return Math.max(0, Math.min(COATED_FRAGMENTS.length - 1, fragment));
     }
 
-    private static int[][] ctAccess(Direction face) {
-        return switch (face) {
-            case DOWN -> lexicalCoordinates(Direction.SOUTH, Direction.WEST);
-            case UP -> lexicalCoordinates(Direction.NORTH, Direction.WEST);
-            case NORTH -> lexicalCoordinates(Direction.UP, Direction.EAST);
-            case SOUTH -> lexicalCoordinates(Direction.UP, Direction.WEST);
-            case WEST -> lexicalCoordinates(Direction.UP, Direction.NORTH);
-            case EAST -> lexicalCoordinates(Direction.UP, Direction.SOUTH);
-        };
+    private static void renderCoatedFace(LegacyTexturedQuadRenderer.SpriteQuadBatch batch, int packedLight,
+            int packedOverlay, Direction face, int ctFace) {
+        CoatedSubFaceDraw[][] draws = COATED_SUB_FACE_DRAWS_BY_FACE[face.ordinal()];
+        drawCoatedSubFace(batch, packedLight, packedOverlay, face, draws[0][ctFaceFragment(ctFace, 0)]);
+        drawCoatedSubFace(batch, packedLight, packedOverlay, face, draws[1][ctFaceFragment(ctFace, 1)]);
+        drawCoatedSubFace(batch, packedLight, packedOverlay, face, draws[2][ctFaceFragment(ctFace, 2)]);
+        drawCoatedSubFace(batch, packedLight, packedOverlay, face, draws[3][ctFaceFragment(ctFace, 3)]);
     }
 
-    private static int[][] lexicalCoordinates(Direction up, Direction left) {
-        Direction down = up.getOpposite();
-        Direction right = left.getOpposite();
-        return new int[][] {
-                coordinatesFromSides(up, left),
-                coordinatesFromSides(up),
-                coordinatesFromSides(up, right),
-                coordinatesFromSides(left),
-                coordinatesFromSides(right),
-                coordinatesFromSides(down, left),
-                coordinatesFromSides(down),
-                coordinatesFromSides(down, right)
-        };
-    }
-
-    private static int[] coordinatesFromSides(Direction... directions) {
-        int x = 0;
-        int y = 0;
-        int z = 0;
-        for (Direction direction : directions) {
-            x += direction.getStepX();
-            y += direction.getStepY();
-            z += direction.getStepZ();
-        }
-        return new int[] { x, y, z };
-    }
-
-    private static int cornerType(boolean horizontal, boolean corner, boolean vertical) {
-        if (vertical && horizontal && corner) {
-            return 4;
-        } else if (vertical && horizontal) {
-            return 8;
-        } else if (vertical) {
-            return 16;
-        } else if (horizontal) {
-            return 12;
-        }
-        return 0;
-    }
-
-    private static void renderCoatedFace(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            int packedOverlay, Direction face, CoatedCtFace ctFace) {
-        FaceVertices vertices = faceVertices(face);
-        Vec3d topCenter = vertices.topLeft().average(vertices.topRight());
-        Vec3d bottomCenter = vertices.bottomLeft().average(vertices.bottomRight());
-        Vec3d centerLeft = vertices.topLeft().average(vertices.bottomLeft());
-        Vec3d centerRight = vertices.topRight().average(vertices.bottomRight());
-        Vec3d center = topCenter.average(bottomCenter);
-        drawCoatedSubFace(poseStack, buffer, packedLight, packedOverlay, face,
-                vertices.topLeft(), topCenter, centerLeft, center, ctFace.topLeft());
-        drawCoatedSubFace(poseStack, buffer, packedLight, packedOverlay, face,
-                topCenter, vertices.topRight(), center, centerRight, ctFace.topRight());
-        drawCoatedSubFace(poseStack, buffer, packedLight, packedOverlay, face,
-                centerLeft, center, vertices.bottomLeft(), bottomCenter, ctFace.bottomLeft());
-        drawCoatedSubFace(poseStack, buffer, packedLight, packedOverlay, face,
-                center, centerRight, bottomCenter, vertices.bottomRight(), ctFace.bottomRight());
-    }
-
-    private static void drawCoatedSubFace(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            int packedOverlay, Direction face, Vec3d topLeft, Vec3d topRight, Vec3d bottomLeft, Vec3d bottomRight,
-            int fragment) {
-        CtSpriteFragment sprite = ctSpriteFragment(fragment);
-        LegacyTexturedQuadRenderer.spriteQuad(sprite.sprite(), poseStack, buffer, packedLight, packedOverlay,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+    private static void drawCoatedSubFace(LegacyTexturedQuadRenderer.SpriteQuadBatch batch, int packedLight,
+            int packedOverlay, Direction face, CoatedSubFaceDraw draw) {
+        LegacyTexturedQuadRenderer.spritePixelQuadDirect(draw.sprite(), batch, packedLight, packedOverlay,
                 face.getStepX(), face.getStepY(), face.getStepZ(),
-                LegacyTexturedQuadRenderer.spritePixelVertex(topRight.x(), topRight.y(), topRight.z(),
-                        sprite.maxU(), sprite.minV()),
-                LegacyTexturedQuadRenderer.spritePixelVertex(topLeft.x(), topLeft.y(), topLeft.z(),
-                        sprite.minU(), sprite.minV()),
-                LegacyTexturedQuadRenderer.spritePixelVertex(bottomLeft.x(), bottomLeft.y(), bottomLeft.z(),
-                        sprite.minU(), sprite.maxV()),
-                LegacyTexturedQuadRenderer.spritePixelVertex(bottomRight.x(), bottomRight.y(), bottomRight.z(),
-                        sprite.maxU(), sprite.maxV()));
-    }
-
-    private static FaceVertices faceVertices(Direction face) {
-        return switch (face) {
-            case EAST -> new FaceVertices(
-                    new Vec3d(1.0D, 1.0D, 1.0D),
-                    new Vec3d(1.0D, 1.0D, 0.0D),
-                    new Vec3d(1.0D, 0.0D, 1.0D),
-                    new Vec3d(1.0D, 0.0D, 0.0D));
-            case WEST -> new FaceVertices(
-                    new Vec3d(0.0D, 1.0D, 0.0D),
-                    new Vec3d(0.0D, 1.0D, 1.0D),
-                    new Vec3d(0.0D, 0.0D, 0.0D),
-                    new Vec3d(0.0D, 0.0D, 1.0D));
-            case UP -> new FaceVertices(
-                    new Vec3d(0.0D, 1.0D, 0.0D),
-                    new Vec3d(1.0D, 1.0D, 0.0D),
-                    new Vec3d(0.0D, 1.0D, 1.0D),
-                    new Vec3d(1.0D, 1.0D, 1.0D));
-            case DOWN -> new FaceVertices(
-                    new Vec3d(0.0D, 0.0D, 1.0D),
-                    new Vec3d(1.0D, 0.0D, 1.0D),
-                    new Vec3d(0.0D, 0.0D, 0.0D),
-                    new Vec3d(1.0D, 0.0D, 0.0D));
-            case SOUTH -> new FaceVertices(
-                    new Vec3d(0.0D, 1.0D, 1.0D),
-                    new Vec3d(1.0D, 1.0D, 1.0D),
-                    new Vec3d(0.0D, 0.0D, 1.0D),
-                    new Vec3d(1.0D, 0.0D, 1.0D));
-            case NORTH -> new FaceVertices(
-                    new Vec3d(1.0D, 1.0D, 0.0D),
-                    new Vec3d(0.0D, 1.0D, 0.0D),
-                    new Vec3d(1.0D, 0.0D, 0.0D),
-                    new Vec3d(0.0D, 0.0D, 0.0D));
-        };
+                draw.x0(), draw.y0(), draw.z0(), draw.u0(), draw.v0(),
+                draw.x1(), draw.y1(), draw.z1(), draw.u1(), draw.v1(),
+                draw.x2(), draw.y2(), draw.z2(), draw.u2(), draw.v2(),
+                draw.x3(), draw.y3(), draw.z3(), draw.u3(), draw.v3(),
+                0xFFFFFF, 255);
     }
 
     private static CtSpriteFragment ctSpriteFragment(int type) {
@@ -459,7 +383,7 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
     }
 
     private static TextureAtlasSprite sprite(String texture) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + texture);
     }
 
     private static int clampBoxCableSize(int size) {
@@ -548,6 +472,109 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         return fragments;
     }
 
+    private static CoatedSubFaceDraw[][][] buildCoatedSubFaceDrawsByFace() {
+        CoatedSubFaceDraw[][][] draws = new CoatedSubFaceDraw[Direction.values().length][][];
+        for (Direction face : RENDER_DIRECTIONS) {
+            draws[face.ordinal()] = buildCoatedSubFaceDraws(face);
+        }
+        return draws;
+    }
+
+    private static CoatedSubFaceDraw[][] buildCoatedSubFaceDraws(Direction face) {
+        return switch (face) {
+            case EAST -> buildCoatedSubFaceDraws(
+                    1.0D, 1.0D, 1.0D,
+                    1.0D, 1.0D, 0.0D,
+                    1.0D, 0.0D, 1.0D,
+                    1.0D, 0.0D, 0.0D);
+            case WEST -> buildCoatedSubFaceDraws(
+                    0.0D, 1.0D, 0.0D,
+                    0.0D, 1.0D, 1.0D,
+                    0.0D, 0.0D, 0.0D,
+                    0.0D, 0.0D, 1.0D);
+            case UP -> buildCoatedSubFaceDraws(
+                    0.0D, 1.0D, 0.0D,
+                    1.0D, 1.0D, 0.0D,
+                    0.0D, 1.0D, 1.0D,
+                    1.0D, 1.0D, 1.0D);
+            case DOWN -> buildCoatedSubFaceDraws(
+                    0.0D, 0.0D, 1.0D,
+                    1.0D, 0.0D, 1.0D,
+                    0.0D, 0.0D, 0.0D,
+                    1.0D, 0.0D, 0.0D);
+            case SOUTH -> buildCoatedSubFaceDraws(
+                    0.0D, 1.0D, 1.0D,
+                    1.0D, 1.0D, 1.0D,
+                    0.0D, 0.0D, 1.0D,
+                    1.0D, 0.0D, 1.0D);
+            case NORTH -> buildCoatedSubFaceDraws(
+                    1.0D, 1.0D, 0.0D,
+                    0.0D, 1.0D, 0.0D,
+                    1.0D, 0.0D, 0.0D,
+                    0.0D, 0.0D, 0.0D);
+        };
+    }
+
+    private static CoatedSubFaceDraw[][] buildCoatedSubFaceDraws(double topLeftX, double topLeftY, double topLeftZ,
+            double topRightX, double topRightY, double topRightZ,
+            double bottomLeftX, double bottomLeftY, double bottomLeftZ,
+            double bottomRightX, double bottomRightY, double bottomRightZ) {
+        double topCenterX = average(topLeftX, topRightX);
+        double topCenterY = average(topLeftY, topRightY);
+        double topCenterZ = average(topLeftZ, topRightZ);
+        double bottomCenterX = average(bottomLeftX, bottomRightX);
+        double bottomCenterY = average(bottomLeftY, bottomRightY);
+        double bottomCenterZ = average(bottomLeftZ, bottomRightZ);
+        double centerLeftX = average(topLeftX, bottomLeftX);
+        double centerLeftY = average(topLeftY, bottomLeftY);
+        double centerLeftZ = average(topLeftZ, bottomLeftZ);
+        double centerRightX = average(topRightX, bottomRightX);
+        double centerRightY = average(topRightY, bottomRightY);
+        double centerRightZ = average(topRightZ, bottomRightZ);
+        double centerX = average(topCenterX, bottomCenterX);
+        double centerY = average(topCenterY, bottomCenterY);
+        double centerZ = average(topCenterZ, bottomCenterZ);
+
+        return new CoatedSubFaceDraw[][] {
+                buildCoatedFragmentDraws(topLeftX, topLeftY, topLeftZ,
+                        topCenterX, topCenterY, topCenterZ,
+                        centerLeftX, centerLeftY, centerLeftZ,
+                        centerX, centerY, centerZ),
+                buildCoatedFragmentDraws(topCenterX, topCenterY, topCenterZ,
+                        topRightX, topRightY, topRightZ,
+                        centerX, centerY, centerZ,
+                        centerRightX, centerRightY, centerRightZ),
+                buildCoatedFragmentDraws(centerLeftX, centerLeftY, centerLeftZ,
+                        centerX, centerY, centerZ,
+                        bottomLeftX, bottomLeftY, bottomLeftZ,
+                        bottomCenterX, bottomCenterY, bottomCenterZ),
+                buildCoatedFragmentDraws(centerX, centerY, centerZ,
+                        centerRightX, centerRightY, centerRightZ,
+                        bottomCenterX, bottomCenterY, bottomCenterZ,
+                        bottomRightX, bottomRightY, bottomRightZ)
+        };
+    }
+
+    private static CoatedSubFaceDraw[] buildCoatedFragmentDraws(double topLeftX, double topLeftY, double topLeftZ,
+            double topRightX, double topRightY, double topRightZ,
+            double bottomLeftX, double bottomLeftY, double bottomLeftZ,
+            double bottomRightX, double bottomRightY, double bottomRightZ) {
+        CoatedSubFaceDraw[] draws = new CoatedSubFaceDraw[COATED_FRAGMENTS.length];
+        for (int fragment = 0; fragment < draws.length; fragment++) {
+            CtSpriteFragment sprite = ctSpriteFragment(fragment);
+            draws[fragment] = new CoatedSubFaceDraw(sprite.sprite(),
+                    topRightX, topRightY, topRightZ, sprite.maxU(), sprite.minV(),
+                    topLeftX, topLeftY, topLeftZ, sprite.minU(), sprite.minV(),
+                    bottomLeftX, bottomLeftY, bottomLeftZ, sprite.minU(), sprite.maxV(),
+                    bottomRightX, bottomRightY, bottomRightZ, sprite.maxU(), sprite.maxV());
+        }
+        return draws;
+    }
+
+    private static double average(double a, double b) {
+        return (a + b) * 0.5D;
+    }
+
     private record BoxCableTextures(TextureAtlasSprite straight, TextureAtlasSprite end, TextureAtlasSprite curveTL,
                                     TextureAtlasSprite curveTR, TextureAtlasSprite curveBL,
                                     TextureAtlasSprite curveBR, TextureAtlasSprite junction) {
@@ -573,18 +600,13 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
         }
     }
 
-    private record CoatedCtFace(int topLeft, int topRight, int bottomLeft, int bottomRight) {
+    private record CoatedSubFaceDraw(TextureAtlasSprite sprite,
+                                     double x0, double y0, double z0, double u0, double v0,
+                                     double x1, double y1, double z1, double u1, double v1,
+                                     double x2, double y2, double z2, double u2, double v2,
+                                     double x3, double y3, double z3, double u3, double v3) {
     }
 
     private record CtSpriteFragment(TextureAtlasSprite sprite, double minU, double maxU, double minV, double maxV) {
-    }
-
-    private record FaceVertices(Vec3d topLeft, Vec3d topRight, Vec3d bottomLeft, Vec3d bottomRight) {
-    }
-
-    private record Vec3d(double x, double y, double z) {
-        Vec3d average(Vec3d other) {
-            return new Vec3d((x + other.x) * 0.5D, (y + other.y) * 0.5D, (z + other.z) * 0.5D);
-        }
     }
 }

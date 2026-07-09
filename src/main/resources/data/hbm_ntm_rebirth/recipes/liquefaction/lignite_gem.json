@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:gems/lignite"
+  "source_order": 2,
+  "input": {
+    "ingredient": {
+      "tag": "forge:gems/lignite"
+    },
+    "count": 1,
+    "legacy_ore": "gemLignite"
   },
   "output": {
     "amount": 50,

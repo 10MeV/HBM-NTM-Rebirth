@@ -1,9 +1,11 @@
 package com.hbm.main;
 
+import com.hbm.ntm.client.ClientTomImpactData;
 import com.hbm.util.i18n.I18nClient;
 import com.hbm.util.i18n.ITranslate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 /**
  * Client-side legacy proxy facade. Detailed renderer registration stays in
@@ -26,5 +28,20 @@ public class ClientProxy extends ServerProxy {
     @Override
     public String getLanguageCode() {
         return Minecraft.getInstance().getLanguageManager().getSelected();
+    }
+
+    @Override
+    public float getImpactDust(Level level) {
+        return ClientTomImpactData.getDustForClient(level);
+    }
+
+    @Override
+    public float getImpactFire(Level level) {
+        return ClientTomImpactData.getFireForClient(level);
+    }
+
+    @Override
+    public boolean getImpact(Level level) {
+        return ClientTomImpactData.getImpactForClient(level);
     }
 }

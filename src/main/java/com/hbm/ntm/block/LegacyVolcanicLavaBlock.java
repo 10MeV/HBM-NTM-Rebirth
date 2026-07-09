@@ -1,7 +1,9 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.damage.EntityDamageUtil;
+import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
+import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
@@ -35,9 +37,12 @@ public class LegacyVolcanicLavaBlock extends LiquidBlock {
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
         super.entityInside(state, level, pos, entity);
-        EntityDamageUtil.attackEntityFromNt(entity, level.damageSources().hotFloor(), 4.0F);
+        if (!entity.fireImmune()) {
+            EntityDamageUtil.attackEntityFromNt(entity, level.damageSources().lava(), 4.0F);
+            entity.setSecondsOnFire(15);
+        }
         if (radioactive && entity instanceof LivingEntity living) {
-            RadiationUtil.contaminate(living, 5.0F, true);
+            RadiationUtil.contaminate(living, HazardType.RADIATION, ContaminationType.CREATIVE, 5.0F);
         }
     }
 

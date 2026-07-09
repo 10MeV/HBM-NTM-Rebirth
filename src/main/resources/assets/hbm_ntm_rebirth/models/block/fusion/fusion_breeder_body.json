@@ -8,5 +8,5 @@
       "BreederAlt": false,
       "Breeder": true
   },
-  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/breeder", "default": "hbm_ntm_rebirth:block/fusion/breeder" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/breeder", "default": "hbm_ntm_rebirth:models/fusion/breeder" }
 }

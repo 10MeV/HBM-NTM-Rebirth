@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:lightoil_crack",
                   "amount":  3900
-              }
+              },
+    "source_order":  33
 }

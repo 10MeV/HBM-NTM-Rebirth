@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.FusionCollectorBlockEntity;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -9,6 +10,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollectorBlockEntity> {
     public FusionCollectorRenderer(BlockEntityRendererProvider.Context context) {
@@ -20,6 +22,13 @@ public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollec
     }
 
     @Override
+    public boolean shouldRender(FusionCollectorBlockEntity blockEntity, Vec3 cameraPos) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
@@ -27,6 +36,9 @@ public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollec
     @Override
     public void render(FusionCollectorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }

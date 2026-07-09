@@ -1,60 +1,55 @@
-﻿{
-    "type":  "hbm_ntm_rebirth:assembly_machine",
-    "internal_name":  "ass.mpw10taint",
-    "duration":  100,
-    "power":  100,
-    "input_items":  [
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:seg_10"
-                                           },
-                            "count":  1
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:plates/steel"
-                                           },
-                            "count":  12,
-                            "legacy_ore":  "plateSteel"
-                        },
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:det_cord"
-                                           },
-                            "count":  2
-                        },
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:powder_magic"
-                                           },
-                            "count":  12
-                        },
-                        {
-                            "ingredient":  {
-                                               "type":  "hbm_ntm_rebirth:fluid_container",
-                                               "fluid":  "hbm_ntm_rebirth:watz",
-                                               "amount":  1000
-                                           },
-                            "count":  1,
-                            "fluid_container":  {
-                                                    "fluid":  "hbm_ntm_rebirth:watz",
-                                                    "amount":  1000
-                                                }
-                        }
-                    ],
-    "input_fluids":  [
-
-                     ],
-    "output_items":  [
-                         {
-                             "item":  "hbm_ntm_rebirth:mp_warhead_10_taint"
-                         }
-                     ],
-    "output_fluids":  [
-
-                      ],
-    "pools":  [
-
-              ],
-    "source_order":  308
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:seg_10"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:det_cord"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_magic"
+      }
+    },
+    {
+      "count": 1,
+      "fluid_container": {
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:watz"
+      },
+      "ingredient": {
+        "type": "hbm_ntm_rebirth:fluid_container",
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:watz"
+      },
+      "legacy_ore": "container1000watz"
+    }
+  ],
+  "internal_name": "ass.mpw10taint",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:mp_warhead_10_taint"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 308
 }

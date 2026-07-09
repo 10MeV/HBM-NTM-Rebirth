@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
+import com.hbm.ntm.block.HeatBoilerBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.config.BoilerConfig;
@@ -120,7 +121,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         onFluidContentsChanged();
         setChanged();
         if (level != null) {
-            BlockState state = getBlockState();
+            BlockState state = syncVisualBlockState(level, worldPosition, getBlockState());
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
         }
     }
@@ -188,12 +189,27 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         steamTank.changeTankSize(feedTank.getMaxFill() * step.amountProduced() / step.amountRequired());
     }
 
+    private BlockState syncVisualBlockState(Level level, BlockPos pos, BlockState state) {
+        if (level == null || level.isClientSide || profile.industrial || !state.hasProperty(HeatBoilerBlock.VISUAL)) {
+            return state;
+        }
+        HeatBoilerBlock.BoilerVisualState visual = HeatBoilerBlock.visualState(
+                hasExploded, steamTank.getFill(), steamTank.getMaxFill());
+        if (state.getValue(HeatBoilerBlock.VISUAL) == visual) {
+            return state;
+        }
+        BlockState updated = state.setValue(HeatBoilerBlock.VISUAL, visual);
+        level.setBlock(pos, updated, Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
+        return updated;
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, BoilerBlockEntity blockEntity) {
         if (level.isClientSide) {
             return;
         }
         if (blockEntity.hasExploded) {
             blockEntity.active = false;
+            state = blockEntity.syncVisualBlockState(level, pos, state);
             blockEntity.networkPackNT(25);
             return;
         }
@@ -212,6 +228,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
                 && blockEntity.steamTank.getFill() >= blockEntity.steamTank.getMaxFill()
                 && BoilerConfig.canExplode()) {
             blockEntity.burst(level, pos);
+            state = blockEntity.syncVisualBlockState(level, pos, state);
             blockEntity.networkPackNT(25);
             blockEntity.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -220,6 +237,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         if (blockEntity.steamTank.getTankType() != HbmFluids.NONE && blockEntity.steamTank.getFill() > 0) {
             blockEntity.tryProvideFluidToPorts(blockEntity.steamTank.getTankType(), blockEntity.steamTank.getPressure(), blockEntity);
         }
+        state = blockEntity.syncVisualBlockState(level, pos, state);
         if (result.converted()) {
             blockEntity.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);

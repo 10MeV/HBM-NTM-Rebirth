@@ -7,6 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public record HazardEntry(HazardType type, float level, List<HazardModifier> modifiers) {
+    public HazardEntry {
+        level = finiteOrZero(level);
+        if (modifiers == null) {
+            modifiers = new ArrayList<>();
+        }
+    }
+
     public HazardEntry(HazardType type, float level) {
         this(type, level, new ArrayList<>());
     }
@@ -17,6 +24,10 @@ public record HazardEntry(HazardType type, float level, List<HazardModifier> mod
     }
 
     public float modifiedLevel(ItemStack stack, LivingEntity holder) {
-        return HazardModifier.applyAll(stack, holder, level, modifiers);
+        return finiteOrZero(HazardModifier.applyAll(stack, holder, level, modifiers));
+    }
+
+    private static float finiteOrZero(float value) {
+        return Float.isFinite(value) ? value : 0.0F;
     }
 }

@@ -1,0 +1,33 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.custom.blade_titanium",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "count":  1,
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:blade_titanium"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "arc_material_outputs":  [
+                                 {
+                                     "amount":  216,
+                                     "material":  "Titanium"
+                                 }
+                             ],
+    "pools":  [
+
+              ],
+    "source_order":  2269
+}

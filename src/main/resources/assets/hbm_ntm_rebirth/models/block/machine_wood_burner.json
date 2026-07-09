@@ -1,7 +1,20 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/wood_burner"
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/wood_burner.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.0, 0.0, 0.0],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+    "Cylinder": true
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/wood_burner",
+    "default": "hbm_ntm_rebirth:models/machines/wood_burner",
+    "texture0": "hbm_ntm_rebirth:models/machines/wood_burner"
+  }
 }

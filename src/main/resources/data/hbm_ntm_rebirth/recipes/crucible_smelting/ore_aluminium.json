@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/aluminium"
+    },
+    "legacy_ore": "oreAluminium"
+  },
+  "output": [
+    {
+      "amount": 144,
+      "material": "Aluminium"
+    },
+    {
+      "amount": 24,
+      "material": "Sodium"
+    },
+    {
+      "amount": 162,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 26
+}

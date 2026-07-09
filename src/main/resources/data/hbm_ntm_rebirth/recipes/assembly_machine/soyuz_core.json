@@ -1,21 +1,54 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.soyuzcore",
   "duration": 1200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:welded_plates/steel" }, "count": 16, "legacy_ore": "plateSextupleSteel" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:upgrade_speed_3" }, "count": 1 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:upgrade_power_3" }, "count": 1 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_controller" }, "count": 4, "legacy_id": "hbm:circuit", "legacy_meta": 13 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:battery_lithium" }, "count": 1, "legacy_id": "hbm:battery_pack", "legacy_meta": 2 }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:struct_soyuz_core" }
+  "input_items": [
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:welded_plates/steel"
+      },
+      "legacy_ore": "plateSextupleSteel"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_speed_3"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_power_3"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_controller"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 13
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:battery_lithium"
+      },
+      "legacy_id": "hbm:battery_pack",
+      "legacy_meta": 2
+    }
   ],
+  "internal_name": "ass.soyuzcore",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:struct_soyuz_core"
+    }
+  ],
   "pools": [
     "discover.soyuz"
-  ]
+  ],
+  "power": 100,
+  "source_order": 320
 }

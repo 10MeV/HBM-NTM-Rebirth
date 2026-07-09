@@ -7,8 +7,7 @@
       "count": 8,
       "ingredient": {
         "item": "minecraft:stone_bricks"
-      },
-      "legacy_id": "minecraft:stonebrick"
+      }
     },
     {
       "count": 8,
@@ -28,8 +27,7 @@
       "count": 2,
       "ingredient": {
         "item": "hbm_ntm_rebirth:motor"
-      },
-      "legacy_id": "hbm:motor"
+      }
     },
     {
       "count": 1,
@@ -37,7 +35,7 @@
         "item": "hbm_ntm_rebirth:circuit_analog"
       },
       "legacy_id": "hbm:circuit",
-      "legacy_meta": 3
+      "legacy_meta": 7
     }
   ],
   "internal_name": "ass.excavator",
@@ -49,5 +47,5 @@
   ],
   "pools": [],
   "power": 100,
-  "source_order": 119
+  "source_order": 106
 }

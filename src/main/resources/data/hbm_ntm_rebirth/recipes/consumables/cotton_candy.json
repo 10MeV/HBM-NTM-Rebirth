@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "food",
+  "pattern": [
+    " S ",
+    "SPS",
+    " H "
+  ],
+  "key": {
+    "S": { "item": "minecraft:sugar" },
+    "P": { "tag": "forge:nuggets/pu239" },
+    "H": { "item": "minecraft:stick" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:cotton_candy",
+    "count": 2
+  }
+}

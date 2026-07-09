@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:ingots/copper"
+    },
+    "G": {
+      "tag": "forge:glass"
+    },
+    "I": {
+      "tag": "forge:ingots/iron"
+    }
+  },
+  "pattern": [
+    "GIG",
+    "GCG"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:chemistry_set"
+  },
+  "show_notification": true
+}

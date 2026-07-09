@@ -1,11 +1,13 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.ChargerBlock;
-import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmChargeableItem;
+import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -24,7 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
-public class ChargerBlockEntity extends HbmEnergyBlockEntity {
+public class ChargerBlockEntity extends HbmEnergyBlockEntity implements HbmEnergyReceiver {
     private static final String TAG_USING = "usingTicks";
     private static final String TAG_LAST_USING = "lastUsingTicks";
     private static final String TAG_DELAY = "delay";
@@ -54,32 +56,28 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity {
         }
         charger.lastEnergySubscriptionDemand = demand;
 
-        boolean charged = charger.usingTicks >= MAX_USING_TICKS
-                && charger.energy.getPower() > 0L
-                && charger.chargeNearbyPlayers(level, pos);
-        if (charged) {
-            charger.delay = PARTICLE_TICKS;
+        boolean particles = charger.delay > 0;
+        if (particles && level.getGameTime() % 20L == 0L) {
+            LegacySoundPlayer.playSoundEffect(level, pos, "random.fizz", SoundSource.BLOCKS, 0.2F, 0.5F);
+        }
+        if (demand > 0L || particles) {
             charger.usingTicks = Math.min(MAX_USING_TICKS, charger.usingTicks + 1);
-        } else if (demand > 0L || charger.delay > 0) {
-            charger.usingTicks = Math.min(MAX_USING_TICKS, charger.usingTicks + 1);
-        } else if (charger.delay > 0) {
-            charger.delay--;
         } else {
             charger.usingTicks = Math.max(0, charger.usingTicks - 1);
         }
 
-        if (!charged && charger.delay > 0) {
+        if (charger.delay > 0) {
             charger.delay--;
         }
 
         if (previousUsing < 2 && charger.usingTicks >= 2) {
-            level.playSound(null, pos, SoundEvents.PISTON_EXTEND, SoundSource.BLOCKS, 0.5F, 1.0F);
+            level.playSound(null, pos, SoundEvents.PISTON_EXTEND, SoundSource.BLOCKS, 0.5F, 0.5F);
         } else if (previousUsing > 4 && charger.usingTicks <= 4) {
-            level.playSound(null, pos, SoundEvents.PISTON_CONTRACT, SoundSource.BLOCKS, 0.5F, 1.0F);
+            level.playSound(null, pos, SoundEvents.PISTON_CONTRACT, SoundSource.BLOCKS, 0.5F, 0.5F);
         }
 
         charger.networkPackNT(20);
-        if (previousUsing != charger.usingTicks || charged) {
+        if (previousUsing != charger.usingTicks || particles) {
             charger.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -112,30 +110,49 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity {
         return energy.getPower();
     }
 
-    private boolean chargeNearbyPlayers(Level level, BlockPos pos) {
-        boolean charged = false;
-        for (Player player : level.getEntitiesOfClass(Player.class, chargeBox(pos))) {
-            charged |= chargeStack(player.getItemBySlot(EquipmentSlot.HEAD));
-            charged |= chargeStack(player.getItemBySlot(EquipmentSlot.CHEST));
-            charged |= chargeStack(player.getItemBySlot(EquipmentSlot.LEGS));
-            charged |= chargeStack(player.getItemBySlot(EquipmentSlot.FEET));
-            charged |= chargeStack(player.getMainHandItem());
-            charged |= chargeStack(player.getOffhandItem());
+    @Override
+    public long getPower() {
+        return 0L;
+    }
+
+    @Override
+    public void setPower(long power) {
+    }
+
+    @Override
+    public long transferPower(long power) {
+        if (level == null || level.isClientSide || usingTicks < MAX_USING_TICKS || power <= 0L) {
+            return Math.max(0L, power);
         }
-        return charged;
+        long remaining = power;
+        for (Player player : level.getEntitiesOfClass(Player.class, chargeBox(worldPosition))) {
+            remaining = chargeStack(player.getMainHandItem(), remaining);
+            remaining = chargeStack(player.getItemBySlot(EquipmentSlot.FEET), remaining);
+            remaining = chargeStack(player.getItemBySlot(EquipmentSlot.LEGS), remaining);
+            remaining = chargeStack(player.getItemBySlot(EquipmentSlot.CHEST), remaining);
+            remaining = chargeStack(player.getItemBySlot(EquipmentSlot.HEAD), remaining);
+        }
+        if (remaining != power) {
+            delay = PARTICLE_TICKS;
+            setChanged();
+        }
+        return remaining;
+    }
+
+    private long chargeNearbyEquipmentDemand(Level level, BlockPos pos) {
+        long demand = 0L;
+        for (Player player : level.getEntitiesOfClass(Player.class, chargeBox(pos))) {
+            demand += chargeDemand(player.getMainHandItem());
+            demand += chargeDemand(player.getItemBySlot(EquipmentSlot.FEET));
+            demand += chargeDemand(player.getItemBySlot(EquipmentSlot.LEGS));
+            demand += chargeDemand(player.getItemBySlot(EquipmentSlot.CHEST));
+            demand += chargeDemand(player.getItemBySlot(EquipmentSlot.HEAD));
+        }
+        return Math.max(0L, demand);
     }
 
     private long collectChargeDemand(Level level, BlockPos pos) {
-        long demand = 0L;
-        for (Player player : level.getEntitiesOfClass(Player.class, chargeBox(pos))) {
-            demand += chargeDemand(player.getItemBySlot(EquipmentSlot.HEAD));
-            demand += chargeDemand(player.getItemBySlot(EquipmentSlot.CHEST));
-            demand += chargeDemand(player.getItemBySlot(EquipmentSlot.LEGS));
-            demand += chargeDemand(player.getItemBySlot(EquipmentSlot.FEET));
-            demand += chargeDemand(player.getMainHandItem());
-            demand += chargeDemand(player.getOffhandItem());
-        }
-        return Math.max(0L, demand);
+        return chargeNearbyEquipmentDemand(level, pos);
     }
 
     private long chargeDemand(ItemStack stack) {
@@ -145,14 +162,17 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity {
         return Math.max(0L, Math.min(battery.getMaxCharge(stack) - battery.getCharge(stack), battery.getChargeRate(stack)));
     }
 
-    private boolean chargeStack(ItemStack stack) {
-        if (stack.isEmpty() || energy.getPower() <= 0L) {
-            return false;
+    private long chargeStack(ItemStack stack, long power) {
+        if (stack.isEmpty() || power <= 0L || !(stack.getItem() instanceof HbmChargeableItem battery)) {
+            return power;
         }
-        long before = energy.getPower();
-        long after = HbmBatteryTransfer.chargeItemsFromPower(stack, before, energy.getMaxPower());
-        energy.setPower(after);
-        return after != before;
+        long toCharge = Math.min(battery.getMaxCharge(stack) - battery.getCharge(stack), battery.getChargeRate(stack));
+        toCharge = Math.min(toCharge, Math.max(power / 5L, 1L));
+        if (toCharge > 0L) {
+            battery.chargeBattery(stack, toCharge);
+            power -= toCharge;
+        }
+        return power;
     }
 
     private Direction inputSide() {
@@ -167,6 +187,14 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity {
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return side == null || side == inputSide() ? HbmEnergySideMode.INPUT : HbmEnergySideMode.NONE;
+    }
+
+    @Override
+    protected boolean subscribeEnergyReceiverToSide(Direction side) {
+        return level != null
+                && !level.isClientSide
+                && canReceiveEnergy(side)
+                && HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, worldPosition, side, this);
     }
 
     @Override

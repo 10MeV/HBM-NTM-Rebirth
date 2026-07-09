@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 64,
+      "ingredient": {
+        "tag": "forge:dense_wires/copper"
+      },
+      "legacy_ore": "wireDenseCopper"
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "tag": "forge:dense_wires/copper"
+      },
+      "legacy_ore": "wireDenseCopper"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_chlorophyte"
+      }
+    }
+  ],
+  "internal_name": "ass.pachlorophyte",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pa_coil_chlorophyte"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 157
+}

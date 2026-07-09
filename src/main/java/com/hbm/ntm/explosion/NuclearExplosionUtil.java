@@ -88,6 +88,14 @@ public final class NuclearExplosionUtil {
         return spawned;
     }
 
+    private static boolean spawnFleijaLoaded(Level level, double x, double y, double z, int radius) {
+        boolean spawned = addLoaded(level, NukeExplosionMk3Entity.statFacFleija(level, x, y, z, radius));
+        if (spawned) {
+            add(level, CloudFleijaEntity.create(level, x, y, z, radius));
+        }
+        return spawned;
+    }
+
     public static boolean spawnSolinium(Level level, double x, double y, double z, int radius) {
         return spawnSolinium(level, x, y, z, radius, x, y, z);
     }
@@ -176,6 +184,10 @@ public final class NuclearExplosionUtil {
 
     public static boolean spawnMissileDoomsdayRusted(Level level, double x, double y, double z) {
         return spawnNuclearWithFalloutLoaded(level, missileRadius(), x, y, z, 100);
+    }
+
+    public static boolean spawnMissileAntiSchrabidium(Level level, double x, double y, double z) {
+        return spawnFleijaLoaded(level, x, y, z, antiSchrabRadius());
     }
 
     public static void explodeFatman(Level level, double x, double y, double z) {

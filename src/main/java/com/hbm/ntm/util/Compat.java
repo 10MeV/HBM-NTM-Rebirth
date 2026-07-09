@@ -8,6 +8,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,7 +28,8 @@ public final class Compat {
     public static final String MOD_EIDS = com.hbm.ntm.compat.Compat.MOD_EIDS;
     public static final String MOD_ANG = com.hbm.ntm.compat.Compat.MOD_ANG;
     public static final String MOD_TOR = com.hbm.ntm.compat.Compat.MOD_TOR;
-    public static final String MOD_OC = "opencomputers";
+    public static final String MOD_OPENCOMPUTERS = com.hbm.ntm.compat.Compat.MOD_OPENCOMPUTERS;
+    public static final String MOD_OC = com.hbm.ntm.compat.Compat.MOD_OC;
 
     public static com.hbm.ntm.compat.Compat.CompatHazmatReport lastCompatHazmatReport;
 
@@ -79,7 +81,7 @@ public final class Compat {
     }
 
     public static List<ItemStack> scrapeItemFromME(ItemStack meDrive) {
-        return List.of();
+        return com.hbm.ntm.compat.Compat.scrapeItemFromME(meDrive);
     }
 
     public static com.hbm.ntm.compat.Compat.CompatHazmatReport registerCompatHazmat() {
@@ -88,17 +90,25 @@ public final class Compat {
     }
 
     public static void registerCompatFluidContainers() {
+        com.hbm.ntm.compat.Compat.registerCompatFluidContainers();
     }
 
     public static void handleRailcraftNonsense() {
+        com.hbm.ntm.compat.Compat.handleRailcraftNonsense();
     }
 
     public static Class<?> getChunkBiomeHook() {
-        return null;
+        return com.hbm.ntm.compat.Compat.getChunkBiomeHook();
+    }
+
+    public static Method getBiomeShortArray;
+
+    public static Method getBiomeShortArray() {
+        return com.hbm.ntm.compat.Compat.getBiomeShortArray();
     }
 
     public static short[] getBiomeShortArray(Object instance) {
-        return null;
+        return com.hbm.ntm.compat.Compat.getBiomeShortArray(instance);
     }
 
     public static BlockEntity getTileStandard(Level level, int x, int y, int z) {
@@ -110,6 +120,7 @@ public final class Compat {
     }
 
     public static void blacklistAccelerator(Class<?> clazz) {
+        com.hbm.ntm.compat.Compat.blacklistAccelerator(clazz);
     }
 
     public static ResourceLocation resource(String namespace, String path) {

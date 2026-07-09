@@ -1,10 +1,25 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/uranium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/uranium"
+    },
+    "legacy_ore": "oreUranium"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_uranium" },
-    { "item": "hbm_ntm_rebirth:powder_uranium" },
-    { "item": "hbm_ntm_rebirth:nugget_ra226" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_uranium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_uranium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_ra226"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 16
 }

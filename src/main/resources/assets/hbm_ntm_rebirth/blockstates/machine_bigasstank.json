@@ -1,19 +1,34 @@
 {
   "variants": {
-    "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_bigasstank",
-      "y": 90
+    "facing=east,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/bigasstank",
+      "y": 180
     },
-    "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machine_bigasstank"
-    },
-    "facing=south": {
+    "facing=east,tilted=true": {
       "model": "hbm_ntm_rebirth:block/machine_bigasstank",
       "y": 180
     },
-    "facing=west": {
+    "facing=north,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/bigasstank",
+      "y": 270
+    },
+    "facing=north,tilted=true": {
       "model": "hbm_ntm_rebirth:block/machine_bigasstank",
       "y": 270
+    },
+    "facing=south,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/bigasstank",
+      "y": 90
+    },
+    "facing=south,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_bigasstank",
+      "y": 90
+    },
+    "facing=west,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/bigasstank"
+    },
+    "facing=west,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_bigasstank"
     }
   }
 }

@@ -1,19 +1,44 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.rtg",
   "duration": 200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "item": "hbm_ntm_rebirth:rtg_unit" }, "count": 3 },
-    { "ingredient": { "tag": "forge:plates/steel" }, "count": 4, "legacy_ore": "plateSteel" },
-    { "ingredient": { "tag": "forge:wires/mingrade" }, "count": 16, "legacy_ore": "wireFineMingrade" },
-    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 4, "legacy_ore": "ingotAnyPlastic" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:machine_rtg_grey" }
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rtg_unit"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:wires/mingrade"
+      },
+      "legacy_ore": "wireFineMingrade"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    }
   ],
+  "internal_name": "ass.rtg",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_rtg_grey"
+    }
+  ],
   "pools": [],
-  "source_order": 93
+  "power": 100,
+  "source_order": 86
 }

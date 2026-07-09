@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:plate_paa"
+    },
+    "I": {
+      "tag": "forge:glass_panes"
+    },
+    "P": {
+      "tag": "forge:plates/iron"
+    }
+  },
+  "pattern": [
+    "EEE",
+    "IEI",
+    " P "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:hazmat_paa_helmet"
+  },
+  "show_notification": true
+}

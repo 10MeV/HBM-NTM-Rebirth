@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "BGB",
+    "SAS",
+    "BSB"
+  ],
+  "key": {
+    "B": {
+      "tag": "forge:ingots/beryllium"
+    },
+    "G": {
+      "item": "minecraft:iron_bars"
+    },
+    "S": {
+      "tag": "forge:ingots/steel"
+    },
+    "A": {
+      "type": "forge:nbt",
+      "item": "hbm_ntm_rebirth:rad_absorber",
+      "nbt": "{hbmLegacyVariant:0}"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:decon"
+  },
+  "show_notification": true
+}

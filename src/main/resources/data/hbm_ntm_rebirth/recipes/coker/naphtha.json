@@ -5,10 +5,11 @@
                },
     "byproduct":  {
                       "fluid":  "hbm_ntm_rebirth:naphtha_coker",
-                      "amount":  990
+                      "amount":  1900
                   },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:naphtha",
-                  "amount":  9900
-              }
+                  "amount":  19000
+              },
+    "source_order":  7
 }

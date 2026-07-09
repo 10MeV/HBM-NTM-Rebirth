@@ -4,6 +4,8 @@ import com.hbm.inventory.material.MaterialShapes;
 import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.inventory.material.NTMMaterial;
+import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -14,8 +16,11 @@ import java.util.Map;
 import java.util.function.Supplier;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,10 +39,45 @@ public final class CrucibleRecipeRuntime {
         return RECIPES;
     }
 
+    public static List<Recipe> recipes(@Nullable Level level) {
+        return level == null ? recipes() : recipes(level.getRecipeManager());
+    }
+
+    public static List<Recipe> recipes(@Nullable RecipeManager recipeManager) {
+        if (recipeManager == null) {
+            return recipes();
+        }
+        List<Recipe> recipes = recipeManager.getAllRecipesFor(ModRecipes.CRUCIBLE.type().get()).stream()
+                .sorted(Comparator.comparingInt(CrucibleRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
+                .map(CrucibleRecipe::runtimeRecipe)
+                .toList();
+        return recipes.isEmpty() ? RECIPES : recipes;
+    }
+
     @Nullable
     public static Recipe find(String internalName) {
         String normalized = normalize(internalName);
         return NULL_RECIPE.equals(normalized) ? null : BY_NAME.get(normalized);
+    }
+
+    @Nullable
+    public static Recipe find(@Nullable Level level, String internalName) {
+        return level == null ? find(internalName) : find(level.getRecipeManager(), internalName);
+    }
+
+    @Nullable
+    public static Recipe find(@Nullable RecipeManager recipeManager, String internalName) {
+        String normalized = normalize(internalName);
+        if (NULL_RECIPE.equals(normalized)) {
+            return null;
+        }
+        for (Recipe recipe : recipes(recipeManager)) {
+            if (recipe.internalName().equals(normalized)) {
+                return recipe;
+            }
+        }
+        return null;
     }
 
     public static String normalize(@Nullable String recipe) {
@@ -50,6 +90,10 @@ public final class CrucibleRecipeRuntime {
 
     public static boolean canSelect(@Nullable String recipe) {
         return isNullSelection(recipe) || find(recipe) != null;
+    }
+
+    public static boolean canSelect(@Nullable Level level, @Nullable String recipe) {
+        return isNullSelection(recipe) || find(level, recipe) != null;
     }
 
     public static boolean matchesSearch(Recipe recipe, String query) {
@@ -251,57 +295,71 @@ public final class CrucibleRecipeRuntime {
 
     private static List<Recipe> registerDefaults() {
         List<Recipe> recipes = new ArrayList<>();
-        add(recipes, "crucible.steel", "Steel", ModItems.STEEL_INGOT,
+        add(recipes, "crucible.steel", "Steel Production", ModItems.STEEL_INGOT,
                 in(ms(Mats.MAT_IRON, NUGGET * 2), ms(Mats.MAT_CARBON, NUGGET * 3), ms(Mats.MAT_FLUX, NUGGET)),
-                out(ms(Mats.MAT_STEEL, NUGGET * 2)), 20);
-        add(recipes, "crucible.redcopper", "Red Copper", "ingot_red_copper",
+                out(ms(Mats.MAT_STEEL, NUGGET * 2)), 20, 0);
+        addBlock(recipes, "crucible.hematite", "Iron Production from Hematite", "stone_resource_hematite",
+                in(ms(Mats.MAT_HEMATITE, INGOT * 2), ms(Mats.MAT_FLUX, NUGGET * 2)),
+                out(ms(Mats.MAT_IRON, INGOT), ms(Mats.MAT_SLAG, NUGGET * 3)), 6, 1);
+        addBlock(recipes, "crucible.malachite", "Copper Production from Malachite", "stone_resource_malachite",
+                in(ms(Mats.MAT_MALACHITE, INGOT * 2), ms(Mats.MAT_FLUX, NUGGET * 2)),
+                out(ms(Mats.MAT_COPPER, INGOT), ms(Mats.MAT_SLAG, NUGGET * 3)), 6, 2);
+        add(recipes, "crucible.redcopper", "Red Copper Production", "ingot_red_copper",
                 in(ms(Mats.MAT_COPPER, NUGGET), ms(Mats.MAT_REDSTONE, NUGGET)),
-                out(ms(Mats.MAT_MINGRADE, NUGGET * 2)), 2);
-        add(recipes, "crucible.hss", "High-Speed Steel", "ingot_dura_steel",
+                out(ms(Mats.MAT_MINGRADE, NUGGET * 2)), 2, 3);
+        add(recipes, "crucible.hss", "High-Speed Steel Production", "ingot_dura_steel",
                 in(ms(Mats.MAT_STEEL, NUGGET * 5), ms(Mats.MAT_TUNGSTEN, NUGGET * 3), ms(Mats.MAT_COBALT, NUGGET)),
-                out(ms(Mats.MAT_DURA, NUGGET * 9)), 9);
-        add(recipes, "crucible.ferro", "Ferrouranium", "ingot_ferrouranium",
+                out(ms(Mats.MAT_DURA, NUGGET * 9)), 9, 4);
+        add(recipes, "crucible.ferro", "Ferrouranium Production", "ingot_ferrouranium",
                 in(ms(Mats.MAT_STEEL, NUGGET * 2), ms(Mats.MAT_U238, NUGGET)),
-                out(ms(Mats.MAT_FERRO, NUGGET * 3)), 3);
-        add(recipes, "crucible.tcalloy", "Technetium Steel", "ingot_tcalloy",
+                out(ms(Mats.MAT_FERRO, NUGGET * 3)), 3, 5);
+        add(recipes, "crucible.tcalloy", "Technetium Steel Production", "ingot_tcalloy",
                 in(ms(Mats.MAT_STEEL, NUGGET * 8), ms(Mats.MAT_TECHNETIUM, NUGGET)),
-                out(ms(Mats.MAT_TCALLOY, INGOT)), 9);
-        add(recipes, "crucible.cdalloy", "Cadmium Steel", "ingot_cdalloy",
+                out(ms(Mats.MAT_TCALLOY, INGOT)), 9, 6);
+        add(recipes, "crucible.cdalloy", "Cadmium Steel Production", "ingot_cdalloy",
                 in(ms(Mats.MAT_STEEL, NUGGET * 8), ms(Mats.MAT_CADMIUM, NUGGET)),
-                out(ms(Mats.MAT_CDALLOY, INGOT)), 9);
-        add(recipes, "crucible.bbronze", "Bismuth Bronze", "ingot_bismuth_bronze",
+                out(ms(Mats.MAT_CDALLOY, INGOT)), 9, 7);
+        add(recipes, "crucible.bbronze", "Bismuth Bronze Production", "ingot_bismuth_bronze",
                 in(ms(Mats.MAT_COPPER, NUGGET * 8), ms(Mats.MAT_BISMUTH, NUGGET), ms(Mats.MAT_FLUX, NUGGET * 3)),
-                out(ms(Mats.MAT_BBRONZE, INGOT), ms(Mats.MAT_SLAG, NUGGET * 3)), 9);
-        add(recipes, "crucible.abronze", "Arsenic Bronze", "ingot_arsenic_bronze",
+                out(ms(Mats.MAT_BBRONZE, INGOT), ms(Mats.MAT_SLAG, NUGGET * 3)), 9, 8);
+        add(recipes, "crucible.abronze", "Arsenic Bronze Production", "ingot_arsenic_bronze",
                 in(ms(Mats.MAT_COPPER, NUGGET * 8), ms(Mats.MAT_ARSENIC, NUGGET), ms(Mats.MAT_FLUX, NUGGET * 3)),
-                out(ms(Mats.MAT_ABRONZE, INGOT), ms(Mats.MAT_SLAG, NUGGET * 3)), 9);
-        add(recipes, "crucible.cmb", "CMB Steel", "ingot_combine_steel",
+                out(ms(Mats.MAT_ABRONZE, INGOT), ms(Mats.MAT_SLAG, NUGGET * 3)), 9, 9);
+        add(recipes, "crucible.cmb", "CMB Steel Production", "ingot_combine_steel",
                 in(ms(Mats.MAT_MAGTUNG, NUGGET * 6), ms(Mats.MAT_MUD, NUGGET * 3)),
-                out(ms(Mats.MAT_CMB, INGOT)), 3);
-        add(recipes, "crucible.magtung", "Magnetized Tungsten", "ingot_magnetized_tungsten",
+                out(ms(Mats.MAT_CMB, INGOT)), 3, 10);
+        add(recipes, "crucible.magtung", "Magnetized Tungsten Production", "ingot_magnetized_tungsten",
                 in(ms(Mats.MAT_TUNGSTEN, INGOT), ms(Mats.MAT_SCHRABIDIUM, NUGGET)),
-                out(ms(Mats.MAT_MAGTUNG, INGOT)), 3);
-        add(recipes, "crucible.bscco", "BSCCO", "ingot_bscco",
+                out(ms(Mats.MAT_MAGTUNG, INGOT)), 3, 11);
+        add(recipes, "crucible.bscco", "BSCCO Production", "ingot_bscco",
                 in(ms(Mats.MAT_BISMUTH, NUGGET * 2), ms(Mats.MAT_STRONTIUM, NUGGET * 2),
                         ms(Mats.MAT_CALCIUM, NUGGET * 2), ms(Mats.MAT_COPPER, NUGGET * 3)),
-                out(ms(Mats.MAT_BSCCO, INGOT)), 3);
+                out(ms(Mats.MAT_BSCCO, INGOT)), 3, 12);
         return List.copyOf(recipes);
     }
 
-    private static void add(List<Recipe> recipes, String name, String fallbackName, RegistryObject<? extends net.minecraft.world.item.Item> icon,
-            List<MaterialStack> input, List<MaterialStack> output, int frequency) {
+    private static void add(List<Recipe> recipes, String name, String fallbackName, Supplier<? extends ItemLike> icon,
+            List<MaterialStack> input, List<MaterialStack> output, int frequency, int sourceOrder) {
         recipes.add(new Recipe(name, fallbackName, () -> {
             ItemLike itemLike = icon.get();
             return new ItemStack(itemLike);
         }, List.copyOf(input), List.copyOf(output),
-                Math.max(1, frequency)));
+                Math.max(1, frequency), sourceOrder));
     }
 
     private static void add(List<Recipe> recipes, String name, String fallbackName, String legacyIcon,
-            List<MaterialStack> input, List<MaterialStack> output, int frequency) {
+            List<MaterialStack> input, List<MaterialStack> output, int frequency, int sourceOrder) {
         RegistryObject<? extends net.minecraft.world.item.Item> icon = ModItems.legacyItem(legacyIcon);
         if (icon != null) {
-            add(recipes, name, fallbackName, icon, input, output, frequency);
+            add(recipes, name, fallbackName, icon, input, output, frequency, sourceOrder);
+        }
+    }
+
+    private static void addBlock(List<Recipe> recipes, String name, String fallbackName, String legacyBlock,
+            List<MaterialStack> input, List<MaterialStack> output, int frequency, int sourceOrder) {
+        RegistryObject<? extends net.minecraft.world.level.block.Block> icon = ModBlocks.legacyBlock(legacyBlock);
+        if (icon != null) {
+            add(recipes, name, fallbackName, icon, input, output, frequency, sourceOrder);
         }
     }
 
@@ -318,7 +376,7 @@ public final class CrucibleRecipeRuntime {
     }
 
     public record Recipe(String internalName, String fallbackName, Supplier<ItemStack> iconFactory, List<MaterialStack> input,
-                         List<MaterialStack> output, int frequency) {
+                         List<MaterialStack> output, int frequency, int sourceOrder) {
         public Recipe {
             iconFactory = iconFactory == null ? () -> ItemStack.EMPTY : iconFactory;
             input = List.copyOf(input);
@@ -331,7 +389,7 @@ public final class CrucibleRecipeRuntime {
         }
 
         public String translationKey() {
-            return "recipe." + internalName;
+            return internalName;
         }
     }
 }

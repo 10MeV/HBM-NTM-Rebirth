@@ -108,6 +108,9 @@ public class BlockPos implements Cloneable {
         if (!(object instanceof BlockPos pos)) {
             return false;
         }
+        if (!object.getClass().getPackageName().equals(BlockPos.class.getPackageName())) {
+            return false;
+        }
         return x == pos.x && y == pos.y && z == pos.z;
     }
 

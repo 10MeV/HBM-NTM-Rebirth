@@ -1,0 +1,13 @@
+{
+    "type":  "minecraft:crafting_shapeless",
+    "category":  "misc",
+    "ingredients":  [
+                        {
+                            "item":  "hbm_ntm_rebirth:billet_gh336"
+                        }
+                    ],
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:nugget_gh336",
+                   "count":  6
+               }
+}

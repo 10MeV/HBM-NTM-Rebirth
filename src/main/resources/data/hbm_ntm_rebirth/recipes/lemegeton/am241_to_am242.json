@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/americium241"
+    },
+    "count": 1,
+    "legacy_ore": "ingotAmericium241"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_am242"
+  },
+  "source_order": 22
+}

@@ -3,6 +3,8 @@ package com.hbm.ntm.client.obj;
 import java.awt.Color;
 
 public final class LegacyRenderColor {
+    private static final ThreadLocal<float[]> HSB_SCRATCH = ThreadLocal.withInitial(() -> new float[3]);
+
     public static int color(int red, int green, int blue) {
         return clamp(red) << 16 | clamp(green) << 8 | clamp(blue);
     }
@@ -113,12 +115,12 @@ public final class LegacyRenderColor {
     }
 
     public static boolean isColorful(int rgb) {
-        float[] hsb = Color.RGBtoHSB(red(rgb), green(rgb), blue(rgb), new float[3]);
+        float[] hsb = Color.RGBtoHSB(red(rgb), green(rgb), blue(rgb), HSB_SCRATCH.get());
         return hsb[1] > 0.25F && hsb[2] > 0.25F;
     }
 
     public static double brightness(int rgb) {
-        float[] hsb = Color.RGBtoHSB(red(rgb), green(rgb), blue(rgb), new float[3]);
+        float[] hsb = Color.RGBtoHSB(red(rgb), green(rgb), blue(rgb), HSB_SCRATCH.get());
         return hsb[2];
     }
 

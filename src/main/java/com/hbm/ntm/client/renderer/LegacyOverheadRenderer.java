@@ -218,27 +218,40 @@ public final class LegacyOverheadRenderer {
 
     public static void legacyDualPassLabel(Font font, MultiBufferSource buffer, PoseStack poseStack,
             Quaternionf cameraRotation, Vec3 position, String label, int color) {
-        legacyDualPassLabel(font, buffer, poseStack, cameraRotation, position, label, color, color, TAG_BACKGROUND);
+        legacyDualPassLabel(font, buffer, poseStack, cameraRotation,
+                position.x, position.y, position.z, label, color, color, TAG_BACKGROUND);
     }
 
     public static void legacyDualPassLabel(Font font, MultiBufferSource buffer, PoseStack poseStack,
             Quaternionf cameraRotation, Vec3 position, String label, int color, int seeThroughColor, int backgroundColor) {
+        legacyDualPassLabel(font, buffer, poseStack, cameraRotation,
+                position.x, position.y, position.z, label, color, seeThroughColor, backgroundColor);
+    }
+
+    public static void legacyDualPassLabel(Font font, MultiBufferSource buffer, PoseStack poseStack,
+            Quaternionf cameraRotation, double x, double y, double z, String label, int color) {
+        legacyDualPassLabel(font, buffer, poseStack, cameraRotation, x, y, z, label, color, color, TAG_BACKGROUND);
+    }
+
+    public static void legacyDualPassLabel(Font font, MultiBufferSource buffer, PoseStack poseStack,
+            Quaternionf cameraRotation, double labelX, double labelY, double labelZ, String label,
+            int color, int seeThroughColor, int backgroundColor) {
         if (label == null || label.isEmpty()) {
             return;
         }
 
         poseStack.pushPose();
-        poseStack.translate(position.x, position.y, position.z);
-        poseStack.mulPose(new Quaternionf(cameraRotation));
+        poseStack.translate(labelX, labelY, labelZ);
+        poseStack.mulPose(cameraRotation);
         float scale = -TAG_SCALE;
         poseStack.scale(scale, scale, -scale);
 
-        float x = -font.width(label) * 0.5F;
+        float textX = -font.width(label) * 0.5F;
         int opaqueColor = 0xFF000000 | (color & 0xFFFFFF);
         int opaqueSeeThroughColor = 0xFF000000 | (seeThroughColor & 0xFFFFFF);
-        font.drawInBatch(label, x, 0.0F, opaqueSeeThroughColor, false,
+        font.drawInBatch(label, textX, 0.0F, opaqueSeeThroughColor, false,
                 poseStack.last().pose(), buffer, Font.DisplayMode.SEE_THROUGH, backgroundColor, LightTexture.FULL_BRIGHT);
-        font.drawInBatch(label, x, 0.0F, opaqueColor, false,
+        font.drawInBatch(label, textX, 0.0F, opaqueColor, false,
                 poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
         poseStack.popPose();
     }

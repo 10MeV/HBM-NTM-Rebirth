@@ -6,6 +6,7 @@ import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.AchievementHandler;
 import com.hbm.ntm.util.ContaminationUtil;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -18,12 +19,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.phys.Vec3;
 
 public class DigammaSpearEntity extends Entity {
     private static final EntityDataAccessor<Integer> TICKS_IN_GROUND =
             SynchedEntityData.defineId(DigammaSpearEntity.class, EntityDataSerializers.INT);
+    private static final double DIGAMMA_CIRCUIT_RADIUS_SQ = 20.0D * 20.0D;
 
     public int ticksInGround;
 
@@ -55,8 +55,7 @@ public class DigammaSpearEntity extends Entity {
             if (!level().isClientSide) {
                 spawnFallingDigammaBlast((ServerLevel) level());
             } else {
-                double y = level().getHeight(Heightmap.Types.WORLD_SURFACE,
-                        Mth.floor(getX()), Mth.floor(getZ())) + 2.0D;
+                double y = WorldUtil.legacyGetHeightValue(level(), Mth.floor(getX()), Mth.floor(getZ())) + 2.0D;
                 ParticleUtil.spawnSmokeRadialDigamma(level(), getX(), y, getZ(), 5);
             }
 
@@ -74,9 +73,10 @@ public class DigammaSpearEntity extends Entity {
     private void spawnFallingDigammaBlast(ServerLevel level) {
         double x = getX() + random.nextGaussian() * 25.0D;
         double z = getZ() + random.nextGaussian() * 25.0D;
-        double y = level.getHeight(Heightmap.Types.WORLD_SURFACE, Mth.floor(x), Mth.floor(z)) + 2.0D;
-        double horizontalDistance = new Vec3(x - getX(), 0.0D, z - getZ()).length();
-        ExplosionNT.ExAttrib digamma = horizontalDistance < 20.0D
+        double y = WorldUtil.legacyGetHeightValue(level, Mth.floor(x), Mth.floor(z)) + 2.0D;
+        double deltaX = x - getX();
+        double deltaZ = z - getZ();
+        ExplosionNT.ExAttrib digamma = deltaX * deltaX + deltaZ * deltaZ < DIGAMMA_CIRCUIT_RADIUS_SQ
                 ? ExplosionNT.ExAttrib.DIGAMMA_CIRCUIT
                 : ExplosionNT.ExAttrib.DIGAMMA;
 

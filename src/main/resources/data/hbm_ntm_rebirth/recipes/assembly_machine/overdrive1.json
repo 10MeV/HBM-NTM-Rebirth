@@ -1,20 +1,51 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.overdrive1",
   "duration": 200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "item": "hbm_ntm_rebirth:upgrade_speed_3" }, "count": 1 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:upgrade_effect_3" }, "count": 1 },
-    { "ingredient": { "tag": "forge:ingots/saturnite" }, "count": 16, "legacy_ore": "ingotSaturnite" },
-    { "ingredient": { "tag": "forge:ingots/any_hardplastic" }, "count": 16, "legacy_ore": "ingotAnyHardPlastic" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 16, "legacy_id": "hbm:circuit", "legacy_meta": 9 }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:upgrade_overdrive_1" }
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_speed_3"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_effect_3"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/saturnite"
+      },
+      "legacy_ore": "ingotSaturnite"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 9
+    }
   ],
+  "internal_name": "ass.overdrive1",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:upgrade_overdrive_1"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 189
 }

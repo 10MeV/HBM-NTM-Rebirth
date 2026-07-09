@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.redcopper",
+  "fallback_name": "Red Copper Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_red_copper" },
+  "frequency": 2,
+  "input": [
+    { "material": "Copper", "amount": 8 },
+    { "material": "Redstone", "amount": 8 }
+  ],
+  "output": [
+    { "material": "Mingrade", "amount": 16 }
+  ],
+  "source_order": 3
+}

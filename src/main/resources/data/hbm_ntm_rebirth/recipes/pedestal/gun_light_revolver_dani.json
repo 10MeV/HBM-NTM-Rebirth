@@ -1,0 +1,49 @@
+{
+  "type": "hbm_ntm_rebirth:pedestal",
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/lead"
+      },
+      "count": 1,
+      "legacy_ore": "plateLead"
+    },
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/gold"
+      },
+      "count": 1,
+      "legacy_ore": "plateGold"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:gun_light_revolver"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:plates/gold"
+      },
+      "count": 1,
+      "legacy_ore": "plateGold"
+    },
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:plates/lead"
+      },
+      "count": 1,
+      "legacy_ore": "plateLead"
+    },
+    null
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:gun_light_revolver_dani"
+  },
+  "extra": "none",
+  "set": 0,
+  "source_order": 0
+}

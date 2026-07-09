@@ -372,6 +372,10 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
         return displayStack.copy();
     }
 
+    public boolean hasDisplayStack() {
+        return !displayStack.isEmpty();
+    }
+
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
     }

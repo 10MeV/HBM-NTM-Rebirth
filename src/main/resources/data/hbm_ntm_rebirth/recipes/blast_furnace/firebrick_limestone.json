@@ -1,0 +1,28 @@
+{
+  "type": "hbm_ntm_rebirth:blast_furnace",
+  "duration": 800,
+  "inputs": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ores/limestone"
+      },
+      "legacy_ore": "oreLimestone"
+    },
+    {
+      "count": 6,
+      "ingredient": {
+        "item": "minecraft:clay_ball"
+      },
+      "legacy_item": "minecraft:clay_ball"
+    }
+  ],
+  "name": "blast.firebrickLimestone",
+  "outputs": [
+    {
+      "count": 8,
+      "item": "hbm_ntm_rebirth:ingot_firebrick"
+    }
+  ],
+  "source_order": 13
+}

@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "auto_switch_group": "autoswitch.weldPlates",
+  "duration": 600,
+  "ignitionTemp": 500000,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:reformgas"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:cast_plates/combine_steel"
+      },
+      "legacy_ore": "plateCastCMBSteel"
+    }
+  ],
+  "internal_name": "plsm.weldcmb",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:plate_welded_combine_steel"
+    }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 116
+}

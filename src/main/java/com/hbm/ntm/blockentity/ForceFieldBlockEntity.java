@@ -205,12 +205,15 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
         outside.clear();
         inside.clear();
         Vec3 center = Vec3.atCenterOf(worldPosition);
+        double radSqr = rad * rad;
         AABB box = new AABB(
                 center.x - (rad + 25.0D), center.y - (rad + 25.0D), center.z - (rad + 25.0D),
                 center.x + (rad + 25.0D), center.y + (rad + 25.0D), center.z + (rad + 25.0D));
         for (Entity entity : level.getEntities((Entity) null, box, entity -> !(entity instanceof Player))) {
-            double dist = center.distanceTo(entity.position());
-            boolean out = dist > rad;
+            double deltaX = center.x - entity.getX();
+            double deltaY = center.y - entity.getY();
+            double deltaZ = center.z - entity.getZ();
+            boolean out = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > radSqr;
             if (!oldOutside.contains(entity) && !oldInside.contains(entity)) {
                 (out ? outside : inside).add(entity);
             } else if (oldOutside.contains(entity) && !out) {
@@ -242,16 +245,18 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
 
     private double getMotionWithFallback(Entity entity) {
         Vec3 current = entity.getDeltaMovement();
-        Vec3 fallback = new Vec3(entity.getX() - entity.yo, entity.getY() - entity.yo, entity.getZ() - entity.zo);
-        double currentSpeed = current.length();
-        double fallbackSpeed = fallback.length();
-        if (currentSpeed == 0.0D) {
-            return fallbackSpeed;
+        double currentSpeedSqr = current.lengthSqr();
+        double fallbackX = entity.getX() - entity.yo;
+        double fallbackY = entity.getY() - entity.yo;
+        double fallbackZ = entity.getZ() - entity.zo;
+        double fallbackSpeedSqr = fallbackX * fallbackX + fallbackY * fallbackY + fallbackZ * fallbackZ;
+        if (currentSpeedSqr == 0.0D) {
+            return Math.sqrt(fallbackSpeedSqr);
         }
-        if (fallbackSpeed == 0.0D) {
-            return currentSpeed;
+        if (fallbackSpeedSqr == 0.0D) {
+            return Math.sqrt(currentSpeedSqr);
         }
-        return Math.min(currentSpeed, fallbackSpeed);
+        return Math.sqrt(Math.min(currentSpeedSqr, fallbackSpeedSqr));
     }
 
     public ItemStackHandler getItems() {

@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 64,
+      "ingredient": {
+        "tag": "forge:dense_wires/niobium"
+      },
+      "legacy_ore": "wireDenseNiobium"
+    },
+    {
+      "count": 64,
+      "ingredient": {
+        "tag": "forge:dense_wires/titanium"
+      },
+      "legacy_ore": "wireDenseTitanium"
+    }
+  ],
+  "internal_name": "ass.panbti",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pa_coil_niobium"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 155
+}

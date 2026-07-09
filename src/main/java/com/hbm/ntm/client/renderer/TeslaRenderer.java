@@ -5,12 +5,12 @@ import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class TeslaRenderer implements BlockEntityRenderer<TeslaBlockEntity> {
     public TeslaRenderer(BlockEntityRendererProvider.Context context) {
@@ -22,6 +22,13 @@ public class TeslaRenderer implements BlockEntityRenderer<TeslaBlockEntity> {
     }
 
     @Override
+    public boolean shouldRender(TeslaBlockEntity blockEntity, Vec3 cameraPos) {
+        return blockEntity.hasTargets()
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
     }
@@ -29,30 +36,39 @@ public class TeslaRenderer implements BlockEntityRenderer<TeslaBlockEntity> {
     @Override
     public void render(TeslaBlockEntity tesla, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        Level level = tesla.getLevel();
+        if (level == null || !tesla.hasTargets()) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(tesla, getViewDistance())) {
             return;
         }
-        Level level = tesla.getLevel();
-        if (level == null || tesla.getTargets().isEmpty()) {
+        List<TeslaBlockEntity.TeslaTarget> targetSnapshot = tesla.getTargets();
+        if (targetSnapshot.isEmpty()) {
             return;
         }
 
-        List<LegacyTileRenderPlans.TeslaTargetPlan> targets = new ArrayList<>();
-        for (TeslaBlockEntity.TeslaTarget target : tesla.getTargets()) {
-            targets.add(new LegacyTileRenderPlans.TeslaTargetPlan(target.x(), target.y(), target.z()));
-        }
         var source = tesla.sourcePosition();
-        LegacyTileRenderPlans.TeslaBeamPlan plan = LegacyTileRenderPlans.teslaBeamPlan(
-                source.x, source.y, source.z, targets, level.getGameTime());
-        if (!plan.active()) {
-            return;
-        }
+        double sourceX = source.x;
+        double sourceY = source.y;
+        double sourceZ = source.z;
+        int start = (int) (level.getGameTime() % 1000L) + 1;
 
         poseStack.pushPose();
         poseStack.translate(0.5D, TeslaBlockEntity.OFFSET, 0.5D);
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
-            for (LegacyTileRenderPlans.TeslaTargetBeamPlan beam : plan.targetBeams()) {
-                LegacyBeamRenderer.beam(queuedPose, buffer, beam.beam());
+        LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                false, beams -> {
+            for (TeslaBlockEntity.TeslaTarget target : targetSnapshot) {
+                double dx = target.x() - sourceX;
+                double dy = target.y() - sourceY;
+                double dz = target.z() - sourceZ;
+                double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                beams.add(-dx, dy, -dz,
+                        LegacyBeamRenderer.WaveType.RANDOM,
+                        LegacyTileRenderPlans.TESLA_BEAM_COLOR, LegacyTileRenderPlans.TESLA_BEAM_COLOR,
+                        start, (int) (length * 5.0D),
+                        LegacyTileRenderPlans.TESLA_BEAM_SIZE, LegacyTileRenderPlans.TESLA_BEAM_LAYERS,
+                        LegacyTileRenderPlans.TESLA_BEAM_THICKNESS);
             }
         });
         poseStack.popPose();

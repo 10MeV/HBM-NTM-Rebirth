@@ -4,5 +4,18 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
-  "textures": { "particle": "hbm_ntm_rebirth:block/machines/mining_laser", "default": "hbm_ntm_rebirth:block/machines/mining_laser" }
+  "transform": {
+    "translation": [0.5, -1.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Base": true,
+    "Pivot": false,
+    "Laser": false
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/mining_laser",
+    "default": "hbm_ntm_rebirth:models/machines/mining_laser_base"
+  }
 }

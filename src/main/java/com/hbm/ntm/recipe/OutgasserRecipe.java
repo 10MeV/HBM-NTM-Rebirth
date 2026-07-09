@@ -30,9 +30,15 @@ public class OutgasserRecipe implements Recipe<Container> {
     private final Optional<ItemStack> solidOutput;
     private final Optional<HbmFluidStack> fluidOutput;
     private final boolean fusionOnly;
+    private final int sourceOrder;
 
     public OutgasserRecipe(ResourceLocation id, HbmIngredient input, Optional<ItemStack> solidOutput,
             Optional<HbmFluidStack> fluidOutput, boolean fusionOnly) {
+        this(id, input, solidOutput, fluidOutput, fusionOnly, Integer.MAX_VALUE);
+    }
+
+    public OutgasserRecipe(ResourceLocation id, HbmIngredient input, Optional<ItemStack> solidOutput,
+            Optional<HbmFluidStack> fluidOutput, boolean fusionOnly, int sourceOrder) {
         if (solidOutput.isEmpty() && fluidOutput.isEmpty()) {
             throw new IllegalArgumentException("Outgasser recipe must have a solid or fluid output");
         }
@@ -41,6 +47,7 @@ public class OutgasserRecipe implements Recipe<Container> {
         this.solidOutput = solidOutput.map(ItemStack::copy);
         this.fluidOutput = fluidOutput;
         this.fusionOnly = fusionOnly;
+        this.sourceOrder = sourceOrder;
     }
 
     public HbmIngredient input() {
@@ -57,6 +64,10 @@ public class OutgasserRecipe implements Recipe<Container> {
 
     public boolean fusionOnly() {
         return fusionOnly;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
     }
 
     public boolean matches(ItemStack stack) {
@@ -138,10 +149,11 @@ public class OutgasserRecipe implements Recipe<Container> {
                     ? Optional.of(readFluidStack(GsonHelper.getAsJsonObject(json, "fluid_output")))
                     : Optional.empty();
             boolean fusionOnly = GsonHelper.getAsBoolean(json, "fusion_only", false);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
             if (solidOutput.isEmpty() && fluidOutput.isEmpty()) {
                 throw new JsonSyntaxException("Outgasser recipe " + id + " has no outputs");
             }
-            return new OutgasserRecipe(id, input, solidOutput, fluidOutput, fusionOnly);
+            return new OutgasserRecipe(id, input, solidOutput, fluidOutput, fusionOnly, sourceOrder);
         }
 
         @Nullable
@@ -155,7 +167,8 @@ public class OutgasserRecipe implements Recipe<Container> {
                     ? Optional.of(readFluidStack(buffer))
                     : Optional.empty();
             boolean fusionOnly = buffer.readBoolean();
-            return new OutgasserRecipe(id, input, solidOutput, fluidOutput, fusionOnly);
+            int sourceOrder = buffer.readVarInt();
+            return new OutgasserRecipe(id, input, solidOutput, fluidOutput, fusionOnly, sourceOrder);
         }
 
         @Override
@@ -166,6 +179,7 @@ public class OutgasserRecipe implements Recipe<Container> {
             buffer.writeBoolean(recipe.fluidOutput.isPresent());
             recipe.fluidOutput.ifPresent(fluid -> writeFluidStack(buffer, fluid));
             buffer.writeBoolean(recipe.fusionOnly);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
 
         private static ItemStack readItemStack(JsonObject object, String name) {

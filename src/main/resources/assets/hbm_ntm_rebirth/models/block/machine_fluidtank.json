@@ -1,7 +1,19 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/fluidtank"
+{
+  "loader": "hbm_ntm_rebirth:fluid_tank_loader",
+  "model": "hbm_ntm_rebirth:models/block/machines/fluidtank.obj",
+  "exploded_model": "hbm_ntm_rebirth:models/fluidtank_exploded.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/tank/tank_frame",
+    "default": "hbm_ntm_rebirth:block/tank/tank_frame",
+    "frame": "hbm_ntm_rebirth:block/tank/tank_frame",
+    "tank": "hbm_ntm_rebirth:block/tank/tank_none",
+    "inner": "hbm_ntm_rebirth:block/tank/tank_inner"
+  }
 }

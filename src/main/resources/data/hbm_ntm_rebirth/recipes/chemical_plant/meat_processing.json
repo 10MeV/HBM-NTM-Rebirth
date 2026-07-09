@@ -1,0 +1,43 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "custom_localization": true,
+  "duration": 200,
+  "icon": {
+    "item": "hbm_ntm_rebirth:glyphid_meat"
+  },
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:foods/glyphid_meat"
+      },
+      "legacy_ore": "glyphidMeat"
+    }
+  ],
+  "internal_name": "chem.meatprocessing",
+  "output_fluids": [
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:salient"
+    }
+  ],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:sulfur"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:niter"
+    }
+  ],
+  "pools": [],
+  "power": 200,
+  "source_order": 43
+}

@@ -44,7 +44,7 @@ public class RunningConfig {
             if (getter != null) {
                 try {
                     value = getter.get();
-                } catch (IllegalStateException ignored) {
+                } catch (IllegalStateException | NullPointerException ignored) {
                     // Forge config may not be loaded yet while legacy facade classes initialize.
                 }
             }

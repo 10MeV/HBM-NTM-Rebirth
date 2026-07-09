@@ -1,6 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:combination_oven",
-  "input": { "ingredient": { "tag": "minecraft:logs" } },
+  "input": { "ingredient": { "tag": "minecraft:logs" }, "legacy_ore": "logWood" },
   "output_item": { "item": "minecraft:charcoal" },
   "output_fluid": { "fluid": "WOODOIL", "amount": 250 }
 }

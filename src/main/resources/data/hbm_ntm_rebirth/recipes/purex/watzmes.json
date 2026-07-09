@@ -1,4 +1,4 @@
-﻿{
+{
     "type":  "hbm_ntm_rebirth:purex",
     "internal_name":  "purex.watzmes",
     "duration":  60,
@@ -45,6 +45,6 @@
               ],
     "auto_switch_group":  "autoswitch.watz",
     "name_wrapper":  "purex.recycle",
-    "source_order":  381
+    "source_order": 37
 }
 

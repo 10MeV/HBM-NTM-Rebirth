@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:dusts/lead"
+  "source_order": 10,
+  "input": {
+    "ingredient": {
+      "tag": "forge:dusts/lead"
+    },
+    "count": 1,
+    "legacy_ore": "dustLead"
   },
   "output": {
     "amount": 100,

@@ -11,5 +11,6 @@
     "output2":  {
                     "fluid":  "hbm_ntm_rebirth:aromatics",
                     "amount":  20
-                }
+                },
+    "source_order":  1
 }

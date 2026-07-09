@@ -1,7 +1,22 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/industrial_turbine"
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/industrial_turbine.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+    "Flywheel": false,
+    "Gauge": false,
+    "Turbine": true
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/industrial_turbine",
+    "default": "hbm_ntm_rebirth:block/machines/industrial_turbine",
+    "texture0": "hbm_ntm_rebirth:block/machines/industrial_turbine"
+  }
 }

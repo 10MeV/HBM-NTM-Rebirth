@@ -70,6 +70,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -90,6 +91,8 @@ public final class LegacyWavefrontModel {
     private static final int SELECTION_CACHE_LIMIT = 256;
     private static final String NO_FALLBACK_DETAIL = "none";
     private static final int MAX_FALLBACK_DETAIL_LENGTH = 240;
+    private static final Matrix4f IDENTITY_POSITION = new Matrix4f();
+    private static final Matrix3f IDENTITY_NORMAL = new Matrix3f();
     private static final RenderBackend RENDER_BACKEND = new ExperimentalGpuPreparedRenderBackend(new CpuPreparedRenderBackend());
     private static final CacheMetrics CACHE_METRICS = new CacheMetrics();
 
@@ -99,7 +102,7 @@ public final class LegacyWavefrontModel {
     private final List<Group> groupOrder = new ArrayList<>();
     private final Map<SelectionCacheKey, SelectionCacheEntry> selectionCache = new LinkedHashMap<>();
     private final Set<String> missingPartWarnings = new LinkedHashSet<>();
-    private boolean smoothing = true;
+    private volatile boolean smoothing = true;
     private boolean loaded;
     private boolean failed;
     private boolean mixedMode;
@@ -158,291 +161,270 @@ public final class LegacyWavefrontModel {
         return vboView;
     }
 
-    public synchronized void renderPart(String partName, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    public void renderPart(String partName, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    public synchronized void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    public void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255);
     }
 
-    public synchronized void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false);
     }
 
-    public synchronized void renderPartTranslucent(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartTranslucent(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false,
                 LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, UvTransform.DEFAULT);
     }
 
-    public synchronized void renderPartAdditive(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartAdditive(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false,
                 LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, UvTransform.DEFAULT);
     }
 
-    public synchronized void renderPartWithUvScroll(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartWithUvScroll(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, float uOffset, float vOffset) {
         renderPartWithUvScroll(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255, uOffset, vOffset);
     }
 
-    public synchronized void renderPartWithUvScroll(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartWithUvScroll(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, float uOffset, float vOffset) {
         renderPartWithUvTransform(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay,
                 red, green, blue, alpha, 1.0F, 1.0F, uOffset, vOffset);
     }
 
-    public synchronized void renderPartWithUvTransform(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartWithUvTransform(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             float uScale, float vScale, float uOffset, float vOffset) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, new UvTransform(uScale, 0.0F, 0.0F, vScale, uOffset, vOffset, 0.0F));
     }
 
-    public synchronized void renderPartWithLegacyTextureMatrix(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartWithLegacyTextureMatrix(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             float uScale, float vScale, float uTranslate, float vTranslate) {
         renderPartWithUvTransform(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay,
                 red, green, blue, alpha, uScale, vScale, uTranslate * uScale, vTranslate * vScale);
     }
 
-    public synchronized void renderPartWithLegacyTextureMatrix(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartWithLegacyTextureMatrix(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             float uScale, float vScale, float rotationDegrees, float uTranslate, float vTranslate) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, legacyTextureMatrix(uScale, vScale, rotationDegrees, uTranslate, vTranslate));
     }
 
-    public synchronized void renderPartWithLegacyTextureMatrixCull(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartWithLegacyTextureMatrixCull(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             float uScale, float vScale, float uTranslate, float vTranslate) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false,
                 LegacyTexturedRenderMode.CUTOUT_CULL, legacyTextureMatrix(uScale, vScale, 0.0F, uTranslate, vTranslate));
     }
 
-    public synchronized void renderPartGlintWithLegacyTextureMatrix(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartGlintWithLegacyTextureMatrix(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             float uScale, float vScale, float rotationDegrees, float uTranslate, float vTranslate) {
         renderPart(partName, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false,
                 LegacyTexturedRenderMode.GLINT_EQUAL_DEPTH, legacyTextureMatrix(uScale, vScale, rotationDegrees, uTranslate, vTranslate));
     }
 
-    public synchronized void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedPartBatch(partName);
+        if (batch == null) {
             return;
         }
-        List<Group> groups = groupsByName.get(normalize(partName));
-        boolean rendered = groups != null && !groups.isEmpty();
-        if (rendered) {
-            renderPreparedBatch(selectedBatch(SelectionCacheMode.ONLY, partName), textureLocation, poseStack, buffer,
-                    packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
-        }
-        if (!rendered) {
-            warnMissingPart(partName);
-        }
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
+                alpha, legacyShadow, smoothing, renderMode, uvTransform);
     }
 
-    public synchronized void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPart(String partName, ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedPartBatch(partName);
+        if (batch == null) {
             return;
         }
-        List<Group> groups = groupsByName.get(normalize(partName));
-        boolean rendered = groups != null && !groups.isEmpty();
-        if (rendered) {
-            renderPreparedBatch(selectedBatch(SelectionCacheMode.ONLY, partName), textureLocation, poseStack, buffer,
-                    packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing,
-                    LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
-        }
-        if (!rendered) {
-            warnMissingPart(partName);
-        }
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
+                alpha, legacyShadow, smoothing, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
-    public synchronized void renderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians, boolean legacyShadow) {
         renderWithSprite(sprite, poseStack, buffer, packedLight, packedOverlay, yawRadians, pitchRadians, rollRadians,
                 255, 255, 255, 255, legacyShadow);
     }
 
-    public synchronized void renderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians,
             int red, int green, int blue, int alpha, boolean legacyShadow) {
         renderWithSprite(sprite, poseStack, buffer, packedLight, packedOverlay, yawRadians, pitchRadians, rollRadians,
                 red, green, blue, alpha, legacyShadow, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
-    public synchronized void renderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians,
             int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = allPreparedBatchForRender(false);
+        if (batch == null) {
             return;
         }
         poseStack.pushPose();
         LegacyObjTransforms.applyObjUtilRotation(poseStack, yawRadians, pitchRadians, rollRadians);
-        renderPreparedBatchWithSprite(allPreparedBatch(), sprite, poseStack, buffer, packedLight, packedOverlay,
+        renderPreparedBatchWithSprite(batch, sprite, poseStack, buffer, packedLight, packedOverlay,
                 red, green, blue, alpha, legacyShadow, false, renderMode, uvTransform);
         poseStack.popPose();
     }
 
-    public synchronized void renderPartWithSprite(String partName, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartWithSprite(String partName, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians, boolean legacyShadow) {
         renderPartWithSprite(partName, sprite, poseStack, buffer, packedLight, packedOverlay, yawRadians, pitchRadians, rollRadians,
                 255, 255, 255, 255, legacyShadow);
     }
 
-    public synchronized void renderPartWithSprite(String partName, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartWithSprite(String partName, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians,
             int red, int green, int blue, int alpha, boolean legacyShadow) {
         renderPartWithSprite(partName, sprite, poseStack, buffer, packedLight, packedOverlay, yawRadians, pitchRadians, rollRadians,
                 red, green, blue, alpha, legacyShadow, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
-    public synchronized void renderPartWithSprite(String partName, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartWithSprite(String partName, TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, float yawRadians, float pitchRadians, float rollRadians,
             int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedLastGroupBatch(partName);
+        if (batch == null) {
             return;
         }
         poseStack.pushPose();
         LegacyObjTransforms.applyObjUtilRotation(poseStack, yawRadians, pitchRadians, rollRadians);
-        renderPreparedBatchWithSprite(selectedBatch(SelectionCacheMode.LAST_GROUP, partName), sprite, poseStack, buffer,
+        renderPreparedBatchWithSprite(batch, sprite, poseStack, buffer,
                 packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, true, renderMode, uvTransform);
         poseStack.popPose();
     }
 
-    public synchronized void renderPartClipped(String name, ResourceLocation textureLocation, PoseStack poseStack,
+    public void renderPartClipped(String name, ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             boolean legacyShadow, LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
             double clipX, double clipY, double clipZ, double clipD) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = clippedPartBatch(name, clipX, clipY, clipZ, clipD);
+        if (batch == null) {
             return;
         }
-        List<Group> groups = groupsByName.get(normalize(name));
-        boolean rendered = groups != null && !groups.isEmpty();
-        if (rendered) {
-            PreparedBatch batch = PreparedBatch.clippedFrom(groups, "clipped:" + normalize(name),
-                    clipX, clipY, clipZ, clipD);
-            RENDER_BACKEND.renderTexturedTransient(batch, textureLocation, poseStack, buffer, packedLight,
-                    packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform,
-                    RenderBackendFallbackReason.TEXTURED_CLIPPED);
-        }
-        if (!rendered) {
-            warnMissingPart(name);
-        }
+        RENDER_BACKEND.renderTexturedTransient(batch, textureLocation, poseStack, buffer, packedLight,
+                packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform,
+                RenderBackendFallbackReason.TEXTURED_CLIPPED);
     }
 
-    public synchronized void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha) {
         renderPartUntextured(partName, poseStack, buffer, red, green, blue, alpha, false);
     }
 
-    public synchronized void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, boolean additive) {
         renderPartUntextured(partName, poseStack, buffer, red, green, blue, alpha,
                 additive ? LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE : LegacyTexturedRenderMode.CUTOUT_NO_CULL);
     }
 
-    public synchronized void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderPartUntextured(String partName, PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedPartBatch(partName);
+        if (batch == null) {
             return;
         }
-        List<Group> groups = groupsByName.get(normalize(partName));
-        boolean rendered = groups != null && !groups.isEmpty();
-        if (rendered) {
-            renderPreparedBatchUntextured(selectedBatch(SelectionCacheMode.ONLY, partName), poseStack, buffer,
-                    red, green, blue, alpha, renderMode);
-        }
-        if (!rendered) {
-            warnMissingPart(partName);
-        }
+        renderPreparedBatchUntextured(batch, poseStack, buffer, red, green, blue, alpha, renderMode);
     }
 
-    public synchronized void renderAll(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    public void renderAll(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    public synchronized void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    public void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255);
     }
 
-    public synchronized void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha) {
         renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, false);
     }
 
-    public synchronized void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow) {
         renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
-    public synchronized void renderAll(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+    public void renderAll(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay, LegacyTexturedRenderMode renderMode) {
         renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255, false,
                 renderMode, UvTransform.DEFAULT);
     }
 
-    public synchronized void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
         renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255, false,
                 renderMode, UvTransform.DEFAULT);
     }
 
-    public synchronized void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             boolean translucent, float uOffset, float vOffset) {
         renderAll(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, legacyShadow,
                 renderMode(translucent), uvTransform(uOffset, vOffset));
     }
 
-    public synchronized void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAll(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = allPreparedBatchForRender(true);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(allPreparedBatch(), textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, smoothing, renderMode, uvTransform);
     }
 
-    public synchronized void renderAllUntextured(PoseStack poseStack, MultiBufferSource buffer, int red, int green, int blue, int alpha) {
+    public boolean prepareTexturedAllSequence(TexturedPreparedSequence sequence, ResourceLocation textureLocation,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
+            boolean legacyShadow, LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
+            RenderBackendFallbackReason fallbackReason) {
+        if (sequence == null) {
+            throw new IllegalArgumentException("sequence");
+        }
+        PreparedBatch batch = allPreparedBatchForRender(true);
+        if (batch == null || batch.empty()) {
+            sequence.clear();
+            return false;
+        }
+        return RENDER_BACKEND.prepareTexturedCpuSequence(sequence, batch, textureLocation, buffer, packedLight,
+                packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform,
+                fallbackReason);
+    }
+
+    public void renderAllUntextured(PoseStack poseStack, MultiBufferSource buffer, int red, int green, int blue, int alpha) {
         renderAllUntextured(poseStack, buffer, red, green, blue, alpha, false);
     }
 
-    public synchronized void renderAllUntextured(PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAllUntextured(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, boolean additive) {
         renderAllUntextured(poseStack, buffer, red, green, blue, alpha,
                 additive ? LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE : LegacyTexturedRenderMode.CUTOUT_NO_CULL);
     }
 
-    private synchronized void renderAllUntextured(PoseStack poseStack, MultiBufferSource buffer,
+    private void renderAllUntextured(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = allPreparedBatchForRender(true);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatchUntextured(allPreparedBatch(), poseStack, buffer, red, green, blue, alpha, renderMode);
+        renderPreparedBatchUntextured(batch, poseStack, buffer, red, green, blue, alpha, renderMode);
     }
 
     public static boolean renderUntexturedTransientQuad(PoseStack poseStack, MultiBufferSource buffer,
@@ -642,92 +624,86 @@ public final class LegacyWavefrontModel {
         }
     }
 
-    public synchronized void renderOnly(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... groupNames) {
+    public void renderOnly(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... groupNames) {
         renderOnly(textureLocation, poseStack, buffer, packedLight, packedOverlay, groupNames);
     }
 
-    public synchronized void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... groupNames) {
+    public void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... groupNames) {
         renderOnly(textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255, groupNames);
     }
 
-    public synchronized void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, String... groupNames) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedBatchForRender(SelectionCacheMode.ONLY, true, true, groupNames);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(selectedBatch(SelectionCacheMode.ONLY, groupNames), textureLocation, poseStack, buffer,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer,
                 packedLight, packedOverlay, red, green, blue, alpha, false, smoothing,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
-        warnMissingNamedGroups(groupNames);
     }
 
-    public synchronized void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, String... groupNames) {
         renderOnlyUntextured(poseStack, buffer, red, green, blue, alpha, false, groupNames);
     }
 
-    public synchronized void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, boolean additive, String... groupNames) {
         renderOnlyUntextured(poseStack, buffer, red, green, blue, alpha,
                 additive ? LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE : LegacyTexturedRenderMode.CUTOUT_NO_CULL,
                 groupNames);
     }
 
-    public synchronized void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode, String... groupNames) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedBatchForRender(SelectionCacheMode.ONLY, true, true, groupNames);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatchUntextured(selectedBatch(SelectionCacheMode.ONLY, groupNames), poseStack, buffer, red, green, blue, alpha, renderMode);
-        warnMissingNamedGroups(groupNames);
+        renderPreparedBatchUntextured(batch, poseStack, buffer, red, green, blue, alpha, renderMode);
     }
 
-    public synchronized void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, SelectionHandle selection) {
         renderSelectionUntextured(poseStack, buffer, red, green, blue, alpha,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, selection);
     }
 
-    public synchronized void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyUntextured(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode, SelectionHandle selection) {
         renderSelectionUntextured(poseStack, buffer, red, green, blue, alpha, renderMode, selection);
     }
 
-    public synchronized void renderOnlyUntexturedClipped(PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyUntexturedClipped(PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode, SelectionHandle selection,
             double clipX, double clipY, double clipZ, double clipD) {
         renderSelectionUntexturedClipped(poseStack, buffer, red, green, blue, alpha, renderMode,
                 selection, clipX, clipY, clipZ, clipD);
     }
 
-    public synchronized void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, String... groupNames) {
         renderOnly(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT, groupNames);
     }
 
-    public synchronized void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             boolean translucent, float uOffset, float vOffset, String... groupNames) {
         renderOnly(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, renderMode(translucent), uvTransform(uOffset, vOffset), groupNames);
     }
 
-    public synchronized void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnly(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform, String... groupNames) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedBatchForRender(SelectionCacheMode.ONLY, true, true, groupNames);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(selectedBatch(SelectionCacheMode.ONLY, groupNames), textureLocation, poseStack, buffer,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer,
                 packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
-        warnMissingNamedGroups(groupNames);
     }
 
     public SelectionHandle prepareRenderOnlyInCallOrder(String... groupNames) {
@@ -746,25 +722,25 @@ public final class LegacyWavefrontModel {
                 excludedGroupNames == null ? new String[0] : excludedGroupNames.clone());
     }
 
-    public synchronized void renderOnlyInCallOrder(PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyInCallOrder(PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, SelectionHandle selection) {
         renderOnlyInCallOrder(textureLocation, poseStack, buffer, packedLight, packedOverlay, selection);
     }
 
-    public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack,
+    public void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, SelectionHandle selection) {
         renderSelection(textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255,
                 false, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT, selection);
     }
 
-    public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack,
+    public void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, SelectionHandle selection,
             LegacyTexturedRenderMode renderMode) {
         renderSelection(textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255,
                 false, renderMode, UvTransform.DEFAULT, selection);
     }
 
-    public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack,
+    public void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             boolean legacyShadow, LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
             SelectionHandle selection) {
@@ -772,54 +748,51 @@ public final class LegacyWavefrontModel {
                 legacyShadow, renderMode, uvTransform, selection);
     }
 
-    public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack,
+    public void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue,
             int alpha, boolean legacyShadow, SelectionHandle selection) {
         renderSelection(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT, selection);
     }
 
-    public synchronized void renderOnlyInCallOrderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack,
+    public void renderOnlyInCallOrderWithSprite(TextureAtlasSprite sprite, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, SelectionHandle selection) {
         renderSelectionWithSprite(sprite, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255,
                 false, true, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT, selection);
     }
 
-    public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, String... groupNames) {
         renderOnlyInCallOrder(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT, groupNames);
     }
 
-    public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             boolean translucent, float uOffset, float vOffset, String... groupNames) {
         renderOnlyInCallOrder(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, renderMode(translucent), uvTransform(uOffset, vOffset), groupNames);
     }
 
-    public synchronized void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform, String... groupNames) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedBatchForRender(SelectionCacheMode.CALL_ORDER, true, true, groupNames);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(selectedBatch(SelectionCacheMode.CALL_ORDER, groupNames), textureLocation, poseStack, buffer,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer,
                 packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
-        warnMissingNamedGroups(groupNames);
     }
 
     private void renderSelection(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform, SelectionHandle selection) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedBatch(selection);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(selection.batch(this), textureLocation, poseStack, buffer, packedLight, packedOverlay,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay,
                 red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
         warnMissingNamedGroups(selection.rawNames());
     }
@@ -828,106 +801,100 @@ public final class LegacyWavefrontModel {
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             boolean partBrightness, LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
             SelectionHandle selection) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedBatch(selection);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatchWithSprite(selection.batch(this), sprite, poseStack, buffer, packedLight, packedOverlay,
+        renderPreparedBatchWithSprite(batch, sprite, poseStack, buffer, packedLight, packedOverlay,
                 red, green, blue, alpha, legacyShadow, partBrightness, renderMode, uvTransform);
         warnMissingNamedGroups(selection.rawNames());
     }
 
     private void renderSelectionUntextured(PoseStack poseStack, MultiBufferSource buffer, int red, int green,
             int blue, int alpha, LegacyTexturedRenderMode renderMode, SelectionHandle selection) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedBatch(selection);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatchUntextured(selection.batch(this), poseStack, buffer, red, green, blue, alpha, renderMode);
+        renderPreparedBatchUntextured(batch, poseStack, buffer, red, green, blue, alpha, renderMode);
         warnMissingNamedGroups(selection.rawNames());
     }
 
     private void renderSelectionUntexturedClipped(PoseStack poseStack, MultiBufferSource buffer, int red, int green,
             int blue, int alpha, LegacyTexturedRenderMode renderMode, SelectionHandle selection,
             double clipX, double clipY, double clipZ, double clipD) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        List<Group> groups = selectedGroups(selection);
+        if (groups == null) {
             return;
         }
-        PreparedBatch batch = PreparedBatch.clippedFrom(selection.groups(this), "clipped-selection",
-                clipX, clipY, clipZ, clipD);
+        PreparedBatch batch = PreparedBatch.clippedFrom(groups, "clipped-selection", clipX, clipY, clipZ, clipD);
         RENDER_BACKEND.renderUntexturedTransient(batch, poseStack, buffer, red, green, blue, alpha, renderMode,
                 RenderBackendFallbackReason.UNTEXTURED_CLIPPED);
         warnMissingNamedGroups(selection.rawNames());
     }
 
-    public synchronized void renderAllExcept(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... excludedGroupNames) {
+    public void renderAllExcept(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... excludedGroupNames) {
         renderAllExcept(textureLocation, poseStack, buffer, packedLight, packedOverlay, excludedGroupNames);
     }
 
-    public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... excludedGroupNames) {
+    public void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... excludedGroupNames) {
         renderAllExcept(textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255, excludedGroupNames);
     }
 
-    public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, String... excludedGroupNames) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedBatchForRender(SelectionCacheMode.ALL_EXCEPT, true, false, excludedGroupNames);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(selectedBatch(SelectionCacheMode.ALL_EXCEPT, excludedGroupNames), textureLocation, poseStack, buffer,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer,
                 packedLight, packedOverlay, red, green, blue, alpha, false, smoothing,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
-    public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow, String... excludedGroupNames) {
         renderAllExcept(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT, excludedGroupNames);
     }
 
-    public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             boolean translucent, float uOffset, float vOffset, String... excludedGroupNames) {
         renderAllExcept(textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                 legacyShadow, renderMode(translucent), uvTransform(uOffset, vOffset), excludedGroupNames);
     }
 
-    public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
+    public void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean legacyShadow,
             LegacyTexturedRenderMode renderMode, UvTransform uvTransform, String... excludedGroupNames) {
-        rejectMixedModeDirectRender();
-        ensureLoaded();
-        if (failed) {
+        PreparedBatch batch = selectedBatchForRender(SelectionCacheMode.ALL_EXCEPT, true, false, excludedGroupNames);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(selectedBatch(SelectionCacheMode.ALL_EXCEPT, excludedGroupNames), textureLocation, poseStack, buffer,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer,
                 packedLight, packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
     }
 
-    public synchronized void renderAllExcept(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+    public void renderAllExcept(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay, SelectionHandle selection) {
         renderAllExcept(textureLocation, poseStack, buffer, packedLight, packedOverlay, selection);
     }
 
-    public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack,
+    public void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, SelectionHandle selection) {
         renderAllExcept(textureLocation, poseStack, buffer, packedLight, packedOverlay, selection,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL);
     }
 
-    public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack,
+    public void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, SelectionHandle selection,
             LegacyTexturedRenderMode renderMode) {
         renderAllExcept(textureLocation, poseStack, buffer, packedLight, packedOverlay,
                 255, 255, 255, 255, false, renderMode, UvTransform.DEFAULT, selection);
     }
 
-    public synchronized void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack,
+    public void renderAllExcept(ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             boolean legacyShadow, LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
             SelectionHandle selection) {
@@ -935,49 +902,40 @@ public final class LegacyWavefrontModel {
                 legacyShadow, renderMode, uvTransform, selection);
     }
 
-    public synchronized void tessellateAll(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ensureLoaded();
-        if (failed) {
+    public void tessellateAll(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        PreparedBatch batch = allPreparedBatchForRender(false);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(allPreparedBatch(), textureLocation, poseStack, buffer, packedLight, packedOverlay,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay,
                 255, 255, 255, 255, false, smoothing, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
-    public synchronized void tessellateOnly(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... groupNames) {
-        ensureLoaded();
-        if (failed) {
+    public void tessellateOnly(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... groupNames) {
+        PreparedBatch batch = selectedBatchForRender(SelectionCacheMode.ONLY, false, true, groupNames);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(selectedBatch(SelectionCacheMode.ONLY, groupNames), textureLocation, poseStack, buffer,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer,
                 packedLight, packedOverlay, 255, 255, 255, 255, false, smoothing,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
-        warnMissingNamedGroups(groupNames);
     }
 
-    public synchronized void tessellatePart(String partName, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ensureLoaded();
-        if (failed) {
+    public void tessellatePart(String partName, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        PreparedBatch batch = selectedPartBatch(partName);
+        if (batch == null) {
             return;
         }
-        List<Group> groups = groupsByName.get(normalize(partName));
-        boolean rendered = groups != null && !groups.isEmpty();
-        if (rendered) {
-            renderPreparedBatch(selectedBatch(SelectionCacheMode.ONLY, partName), textureLocation, poseStack, buffer,
-                    packedLight, packedOverlay, 255, 255, 255, 255, false, smoothing,
-                    LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
-        }
-        if (!rendered) {
-            warnMissingPart(partName);
-        }
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255,
+                255, false, smoothing, LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
 
-    public synchronized void tessellateAllExcept(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... excludedGroupNames) {
-        ensureLoaded();
-        if (failed) {
+    public void tessellateAllExcept(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, String... excludedGroupNames) {
+        PreparedBatch batch = selectedBatchForRender(SelectionCacheMode.ALL_EXCEPT, false, false, excludedGroupNames);
+        if (batch == null) {
             return;
         }
-        renderPreparedBatch(selectedBatch(SelectionCacheMode.ALL_EXCEPT, excludedGroupNames), textureLocation, poseStack, buffer,
+        renderPreparedBatch(batch, textureLocation, poseStack, buffer,
                 packedLight, packedOverlay, 255, 255, 255, 255, false, smoothing,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, UvTransform.DEFAULT);
     }
@@ -1051,7 +1009,7 @@ public final class LegacyWavefrontModel {
     }
 
     public static void flushRenderBackend(RenderBackendFlushStage stage, Matrix4f projectionMatrix) {
-        RENDER_BACKEND.flush(stage, projectionMatrix == null ? null : new Matrix4f(projectionMatrix));
+        RENDER_BACKEND.flush(stage, projectionMatrix);
     }
 
     private static ModelCacheSnapshot modelCacheSnapshot() {
@@ -1564,7 +1522,7 @@ public final class LegacyWavefrontModel {
                 .endVertex();
     }
 
-    private void ensureLoaded() {
+    private synchronized void ensureLoaded() {
         if (loaded || failed) {
             return;
         }
@@ -1928,7 +1886,7 @@ public final class LegacyWavefrontModel {
         CACHE_METRICS.recordAllPreparedBatchBuild();
     }
 
-    private PreparedBatch allPreparedBatch() {
+    private synchronized PreparedBatch allPreparedBatch() {
         if (allPreparedBatch == null) {
             allPreparedBatch = PreparedBatch.from(groupOrder, stableAllBatchKey());
             CACHE_METRICS.recordAllPreparedBatchBuild();
@@ -1936,12 +1894,102 @@ public final class LegacyWavefrontModel {
         return allPreparedBatch;
     }
 
-    private List<Group> selectedGroups(SelectionCacheMode mode, String... names) {
+    private synchronized List<Group> selectedGroups(SelectionCacheMode mode, String... names) {
         return selectedEntry(mode, names).groups();
     }
 
-    private PreparedBatch selectedBatch(SelectionCacheMode mode, String... names) {
+    private synchronized PreparedBatch selectedBatch(SelectionCacheMode mode, String... names) {
         return selectedEntry(mode, names).batch();
+    }
+
+    private synchronized PreparedBatch selectedBatch(SelectionHandle selection) {
+        rejectMixedModeDirectRender();
+        ensureLoaded();
+        if (failed) {
+            return null;
+        }
+        return selection.batch(this);
+    }
+
+    private synchronized List<Group> selectedGroups(SelectionHandle selection) {
+        rejectMixedModeDirectRender();
+        ensureLoaded();
+        if (failed) {
+            return null;
+        }
+        return selection.groups(this);
+    }
+
+    private synchronized PreparedBatch allPreparedBatchForRender(boolean rejectMixedMode) {
+        if (rejectMixedMode) {
+            rejectMixedModeDirectRender();
+        }
+        ensureLoaded();
+        if (failed) {
+            return null;
+        }
+        return allPreparedBatch();
+    }
+
+    private synchronized PreparedBatch selectedBatchForRender(SelectionCacheMode mode, boolean rejectMixedMode,
+            boolean warnMissing, String... names) {
+        if (rejectMixedMode) {
+            rejectMixedModeDirectRender();
+        }
+        ensureLoaded();
+        if (failed) {
+            return null;
+        }
+        PreparedBatch batch = selectedBatch(mode, names);
+        if (warnMissing) {
+            warnMissingNamedGroups(names);
+        }
+        return batch;
+    }
+
+    private synchronized PreparedBatch selectedPartBatch(String partName) {
+        rejectMixedModeDirectRender();
+        ensureLoaded();
+        if (failed) {
+            return null;
+        }
+        List<Group> groups = groupsByName.get(normalize(partName));
+        boolean rendered = groups != null && !groups.isEmpty();
+        if (!rendered) {
+            warnMissingPart(partName);
+            return null;
+        }
+        return selectedBatch(SelectionCacheMode.ONLY, partName);
+    }
+
+    private synchronized PreparedBatch selectedLastGroupBatch(String partName) {
+        ensureLoaded();
+        if (failed) {
+            return null;
+        }
+        List<Group> groups = groupsByName.get(normalize(partName));
+        boolean rendered = groups != null && !groups.isEmpty();
+        if (!rendered) {
+            warnMissingPart(partName);
+            return null;
+        }
+        return selectedBatch(SelectionCacheMode.LAST_GROUP, partName);
+    }
+
+    private synchronized PreparedBatch clippedPartBatch(String partName, double clipX, double clipY, double clipZ,
+            double clipD) {
+        rejectMixedModeDirectRender();
+        ensureLoaded();
+        if (failed) {
+            return null;
+        }
+        List<Group> groups = groupsByName.get(normalize(partName));
+        boolean rendered = groups != null && !groups.isEmpty();
+        if (!rendered) {
+            warnMissingPart(partName);
+            return null;
+        }
+        return PreparedBatch.clippedFrom(groups, "clipped:" + normalize(partName), clipX, clipY, clipZ, clipD);
     }
 
     private SelectionCacheEntry selectedEntry(SelectionCacheMode mode, String... names) {
@@ -2079,7 +2127,7 @@ public final class LegacyWavefrontModel {
 
     private static UvTransform legacyTextureMatrix(float uScale, float vScale, float rotationDegrees,
             float uTranslate, float vTranslate, boolean gpuMeshCacheable) {
-        float radians = (float) Math.toRadians(rotationDegrees);
+        float radians = rotationDegrees * Mth.DEG_TO_RAD;
         float cos = (float) Math.cos(radians);
         float sin = (float) Math.sin(radians);
         return new UvTransform(
@@ -2133,7 +2181,7 @@ public final class LegacyWavefrontModel {
         }
     }
 
-    private void warnMissingParts(Set<String> requested, Set<String> rendered) {
+    private synchronized void warnMissingParts(Set<String> requested, Set<String> rendered) {
         for (String key : requested) {
             if (!rendered.contains(key)) {
                 warnMissingPart(key);
@@ -2141,7 +2189,7 @@ public final class LegacyWavefrontModel {
         }
     }
 
-    private void warnMissingNamedGroups(String... names) {
+    private synchronized void warnMissingNamedGroups(String... names) {
         if (names == null) {
             return;
         }
@@ -2153,7 +2201,7 @@ public final class LegacyWavefrontModel {
         }
     }
 
-    private void warnMissingPart(String partName) {
+    private synchronized void warnMissingPart(String partName) {
         String key = normalize(partName);
         if (key.isEmpty() || missingPartWarnings.contains(key)) {
             return;
@@ -2695,6 +2743,110 @@ public final class LegacyWavefrontModel {
             boolean instancedDraws) {
     }
 
+    public static final class TexturedPreparedSequence {
+        private ExperimentalGpuPreparedRenderBackend optimizedBackend;
+        private CpuPreparedRenderBackend cpuBackend;
+        private PreparedBatch batch;
+        private ResourceLocation textureLocation;
+        private MultiBufferSource buffer;
+        private int packedLight;
+        private int packedOverlay;
+        private int red;
+        private int green;
+        private int blue;
+        private int alpha;
+        private boolean legacyShadow;
+        private boolean smoothing;
+        private LegacyTexturedRenderMode renderMode;
+        private UvTransform uvTransform;
+        private RenderBackendFallbackReason fallbackReason = RenderBackendFallbackReason.NONE;
+        private LegacyTexturedRenderMode cachedAlphaMode;
+        private VertexConsumer quadConsumer;
+        private VertexConsumer triangleConsumer;
+
+        public void render(PoseStack poseStack) {
+            if (batch == null || batch.empty()) {
+                return;
+            }
+            PoseStack.Pose pose = poseStack.last();
+            Matrix4f position = pose.pose();
+            Matrix3f normal = pose.normal();
+            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, normal).withAlpha(alpha);
+            if (alphaMode != cachedAlphaMode) {
+                cachedAlphaMode = alphaMode;
+                quadConsumer = null;
+                triangleConsumer = null;
+            }
+            if (optimizedBackend != null && fallbackReason != RenderBackendFallbackReason.NONE) {
+                optimizedBackend.recordGpuFallback(fallbackReason, batch.vertexCount(),
+                        ExperimentalGpuPreparedRenderBackend.fallbackDetail("gpu-textured-sequence",
+                                fallbackReason, batch, textureLocation, renderMode, 1));
+            } else {
+                cpuBackend.recordCpuFallback(fallbackReason, batch.vertexCount());
+            }
+            cpuBackend.recordTexturedBatch(batch, textureLocation, alphaMode);
+            List<PreparedVertex> quadVertices = batch.quadVertices();
+            if (!quadVertices.isEmpty()) {
+                cpuBackend.recordTexturedDrawCall();
+                if (quadConsumer == null) {
+                    quadConsumer = buffer.getBuffer(alphaMode.renderType(textureLocation, VertexFormat.Mode.QUADS));
+                }
+                emitPreparedVertices(quadVertices, quadConsumer, position, normal, packedLight, packedOverlay,
+                        red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
+            }
+            List<PreparedVertex> triangleVertices = batch.triangleVertices();
+            if (!triangleVertices.isEmpty()) {
+                cpuBackend.recordTexturedDrawCall();
+                if (triangleConsumer == null) {
+                    triangleConsumer = buffer.getBuffer(alphaMode.renderType(textureLocation,
+                            VertexFormat.Mode.TRIANGLES));
+                }
+                emitPreparedVertices(triangleVertices, triangleConsumer, position, normal, packedLight,
+                        packedOverlay, red, green, blue, alpha, legacyShadow, smoothing, uvTransform);
+            }
+        }
+
+        public void clear() {
+            optimizedBackend = null;
+            cpuBackend = null;
+            batch = null;
+            textureLocation = null;
+            buffer = null;
+            renderMode = null;
+            uvTransform = null;
+            fallbackReason = RenderBackendFallbackReason.NONE;
+            cachedAlphaMode = null;
+            quadConsumer = null;
+            triangleConsumer = null;
+        }
+
+        private void prepare(ExperimentalGpuPreparedRenderBackend optimizedBackend,
+                CpuPreparedRenderBackend cpuBackend, PreparedBatch batch, ResourceLocation textureLocation,
+                MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue,
+                int alpha, boolean legacyShadow, boolean smoothing, LegacyTexturedRenderMode renderMode,
+                UvTransform uvTransform, RenderBackendFallbackReason fallbackReason) {
+            this.optimizedBackend = optimizedBackend;
+            this.cpuBackend = cpuBackend;
+            this.batch = batch;
+            this.textureLocation = textureLocation;
+            this.buffer = buffer;
+            this.packedLight = packedLight;
+            this.packedOverlay = packedOverlay;
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+            this.alpha = alpha;
+            this.legacyShadow = legacyShadow;
+            this.smoothing = smoothing;
+            this.renderMode = renderMode;
+            this.uvTransform = uvTransform;
+            this.fallbackReason = fallbackReason == null ? RenderBackendFallbackReason.NONE : fallbackReason;
+            this.cachedAlphaMode = null;
+            this.quadConsumer = null;
+            this.triangleConsumer = null;
+        }
+    }
+
     public enum RenderBackendFallbackReason {
         NONE,
         TEXTURED_CLIPPED,
@@ -2744,57 +2896,57 @@ public final class LegacyWavefrontModel {
     }
 
     private static final class CacheMetrics {
-        private final AtomicLong groupPreparedBuilds = new AtomicLong();
-        private final AtomicLong groupPreparedVertices = new AtomicLong();
-        private final AtomicLong allPreparedBatchBuilds = new AtomicLong();
-        private final AtomicLong selectionCacheHits = new AtomicLong();
-        private final AtomicLong selectionCacheMisses = new AtomicLong();
-        private final AtomicLong selectionCacheClears = new AtomicLong();
-        private final AtomicLong selectionCacheEmptyBuilds = new AtomicLong();
-        private final AtomicLong selectionCachePreparedBatchBuilds = new AtomicLong();
-        private final AtomicLong selectionHandleRefreshes = new AtomicLong();
-        private final AtomicLong selectionHandleEmptyBuilds = new AtomicLong();
-        private final AtomicLong selectionHandlePreparedBatchBuilds = new AtomicLong();
+        private long groupPreparedBuilds;
+        private long groupPreparedVertices;
+        private long allPreparedBatchBuilds;
+        private long selectionCacheHits;
+        private long selectionCacheMisses;
+        private long selectionCacheClears;
+        private long selectionCacheEmptyBuilds;
+        private long selectionCachePreparedBatchBuilds;
+        private long selectionHandleRefreshes;
+        private long selectionHandleEmptyBuilds;
+        private long selectionHandlePreparedBatchBuilds;
 
         private void recordGroupPrepared(int vertices) {
-            groupPreparedBuilds.incrementAndGet();
-            groupPreparedVertices.addAndGet(vertices);
+            groupPreparedBuilds++;
+            groupPreparedVertices += vertices;
         }
 
         private void recordAllPreparedBatchBuild() {
-            allPreparedBatchBuilds.incrementAndGet();
+            allPreparedBatchBuilds++;
         }
 
         private void recordSelectionCacheHit() {
-            selectionCacheHits.incrementAndGet();
+            selectionCacheHits++;
         }
 
         private void recordSelectionCacheMiss() {
-            selectionCacheMisses.incrementAndGet();
+            selectionCacheMisses++;
         }
 
         private void recordSelectionCacheClear() {
-            selectionCacheClears.incrementAndGet();
+            selectionCacheClears++;
         }
 
         private void recordSelectionCacheEmptyBuild() {
-            selectionCacheEmptyBuilds.incrementAndGet();
+            selectionCacheEmptyBuilds++;
         }
 
         private void recordSelectionCachePreparedBatchBuild() {
-            selectionCachePreparedBatchBuilds.incrementAndGet();
+            selectionCachePreparedBatchBuilds++;
         }
 
         private void recordSelectionHandleRefresh() {
-            selectionHandleRefreshes.incrementAndGet();
+            selectionHandleRefreshes++;
         }
 
         private void recordSelectionHandleEmptyBuild() {
-            selectionHandleEmptyBuilds.incrementAndGet();
+            selectionHandleEmptyBuilds++;
         }
 
         private void recordSelectionHandlePreparedBatchBuild() {
-            selectionHandlePreparedBatchBuilds.incrementAndGet();
+            selectionHandlePreparedBatchBuilds++;
         }
     }
 
@@ -2810,6 +2962,15 @@ public final class LegacyWavefrontModel {
 
         void renderUntextured(PreparedBatch batch, PoseStack poseStack, MultiBufferSource buffer,
                 int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode);
+
+        default boolean prepareTexturedCpuSequence(TexturedPreparedSequence sequence, PreparedBatch batch,
+                ResourceLocation textureLocation, MultiBufferSource buffer, int packedLight, int packedOverlay,
+                int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing,
+                LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
+                RenderBackendFallbackReason fallbackReason) {
+            sequence.clear();
+            return false;
+        }
 
         default void renderTexturedTransient(PreparedBatch batch, ResourceLocation textureLocation,
                 PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
@@ -2894,6 +3055,7 @@ public final class LegacyWavefrontModel {
     private static final class ExperimentalGpuPreparedRenderBackend implements RenderBackend {
         private static final int MAX_GPU_MESHES = 512;
         private static final int INSTANCED_VERTEX_STRIDE_BYTES = 44;
+        private static final int[] NO_LIGHTMAP_SLOTS = new int[0];
         private static final Matrix4f OPTIMIZED_SHADER_IDENTITY = new Matrix4f();
         private static final ResourceLocation IRIS_UNTEXTURED_WHITE_TEXTURE =
                 new ResourceLocation(HbmNtm.MOD_ID, "dynamic/iris_untextured_white");
@@ -2950,30 +3112,66 @@ public final class LegacyWavefrontModel {
         private final Map<InstancedBatchKey, InstancedBatch> pendingInstancedBatches = new LinkedHashMap<>();
         private final Map<IrisCompanionQueueKey, IrisCompanionQueuedBatch> pendingIrisCompanionBatches =
                 new LinkedHashMap<>();
+        private final List<InstancedBatch> instancedFlushScratch = new ArrayList<>();
+        private final List<IrisCompanionQueuedBatch> irisCompanionFlushScratch = new ArrayList<>();
+        private final List<IrisCompanionQueuedDraw> irisNormalAlphaDrawScratch = new ArrayList<>();
+        private final List<MdiPreparedGroup> mdiPreparedGroupScratch = new ArrayList<>();
+        private final List<InstancedBatch> mdiPreparedBatchScratch = new ArrayList<>();
+        private final List<InstancedBatch> mdiNoSlotBatchScratch = new ArrayList<>();
+        private final List<InstancedBatch> mdiEligibleBatchScratch = new ArrayList<>();
+        private final Map<MdiDrawGroupKey, MdiDrawGroup> mdiDrawGroupScratch = new LinkedHashMap<>();
+        private final List<MdiDrawGroup> mdiDrawGroupPool = new ArrayList<>();
+        private final Set<InstancedInstance> instancedDuplicateScratch = new HashSet<>();
+        private final Set<IrisCompanionQueuedInstance> irisCompanionDuplicateScratch = new HashSet<>();
+        private final Set<InstancedBatch> mdiDrawnBatchScratch = new HashSet<>();
+        private PreparedBatch lastInstancedMeshBatch;
+        private VertexFormat.Mode lastInstancedMeshSourceMode;
+        private boolean lastInstancedMeshSmoothing;
+        private GpuMeshKind lastInstancedMeshKind;
+        private TextureAtlasSprite lastInstancedMeshSprite;
+        private List<PreparedVertex> lastInstancedMeshVertices;
+        private InstancedMesh lastInstancedMesh;
+        private InstancedBatch lastPendingInstancedBatch;
+        private InstancedMesh lastPendingInstancedMesh;
+        private ResourceLocation lastPendingInstancedTexture;
+        private LegacyTexturedRenderMode lastPendingInstancedRenderMode;
+        private IrisCompanionQueuedBatch lastPendingIrisCompanionBatch;
+        private GpuMeshKind lastPendingIrisCompanionKind;
+        private String lastPendingIrisCompanionStablePartKey;
+        private int lastPendingIrisCompanionGeometryHash;
+        private TextureAtlasSprite lastPendingIrisCompanionSprite;
+        private int lastPendingIrisCompanionSourceVertices;
+        private VertexFormat.Mode lastPendingIrisCompanionSourceMode;
+        private boolean lastPendingIrisCompanionSmoothing;
+        private UvTransform lastPendingIrisCompanionUvTransform;
+        private ResourceLocation lastPendingIrisCompanionTexture;
+        private LegacyTexturedRenderMode lastPendingIrisCompanionRenderMode;
+        private int mdiDrawGroupPoolCursor;
+        private int[] irisQueuedLightmapSlotScratch = NO_LIGHTMAP_SLOTS;
         private ByteBuffer instancedUploadScratch;
         private final AtomicLong gpuBufferBytes = new AtomicLong();
         private final AtomicLong gpuUploadAttempts = new AtomicLong();
         private final AtomicLong gpuUploadFailures = new AtomicLong();
-        private final AtomicLong gpuDrawCalls = new AtomicLong();
-        private final AtomicLong gpuFallbackBatches = new AtomicLong();
-        private final AtomicLong gpuFallbackVertices = new AtomicLong();
+        private long gpuDrawCalls;
+        private long gpuFallbackBatches;
+        private long gpuFallbackVertices;
         private final AtomicLong irisMeshBytes = new AtomicLong();
-        private final AtomicLong irisEligibleBatches = new AtomicLong();
-        private final AtomicLong irisDrawCalls = new AtomicLong();
-        private final AtomicLong irisShadowDrawCalls = new AtomicLong();
-        private final AtomicLong irisFallbackBatches = new AtomicLong();
-        private final AtomicLong irisFallbackVertices = new AtomicLong();
+        private long irisEligibleBatches;
+        private long irisDrawCalls;
+        private long irisShadowDrawCalls;
+        private long irisFallbackBatches;
+        private long irisFallbackVertices;
         private final AtomicLong irisUploadAttempts = new AtomicLong();
         private final AtomicLong irisUploadFailures = new AtomicLong();
-        private final AtomicLong irisLightmapStorageFailures = new AtomicLong();
-        private final AtomicLong irisLightmapSlotReuses = new AtomicLong();
-        private final AtomicLong irisLightmapSlotUploads = new AtomicLong();
-        private final AtomicLong irisLightmapStagingFallbacks = new AtomicLong();
-        private final AtomicLong irisShaderAttributeCacheHits = new AtomicLong();
-        private final AtomicLong irisShaderAttributeCacheMisses = new AtomicLong();
-        private final AtomicLong irisShaderAttributeGenerationInvalidations = new AtomicLong();
-        private final AtomicLong irisShaderAttributePrimedSkips = new AtomicLong();
-        private final AtomicLong irisShaderAttributeVaoBindFailures = new AtomicLong();
+        private long irisLightmapStorageFailures;
+        private long irisLightmapSlotReuses;
+        private long irisLightmapSlotUploads;
+        private long irisLightmapStagingFallbacks;
+        private long irisShaderAttributeCacheHits;
+        private long irisShaderAttributeCacheMisses;
+        private long irisShaderAttributeGenerationInvalidations;
+        private long irisShaderAttributePrimedSkips;
+        private long irisShaderAttributeVaoBindFailures;
         private long currentFrameIrisEligibleBatches;
         private long currentFrameIrisDrawCalls;
         private long currentFrameIrisShadowDrawCalls;
@@ -2988,27 +3186,27 @@ public final class LegacyWavefrontModel {
         private long currentFrameIrisShaderAttributeGenerationInvalidations;
         private long currentFrameIrisShaderAttributePrimedSkips;
         private long currentFrameIrisShaderAttributeVaoBindFailures;
-        private final AtomicLong lastFrameIrisEligibleBatches = new AtomicLong();
-        private final AtomicLong lastFrameIrisDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameIrisShadowDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameIrisFallbackBatches = new AtomicLong();
-        private final AtomicLong lastFrameIrisFallbackVertices = new AtomicLong();
-        private final AtomicLong lastFrameIrisLightmapStorageFailures = new AtomicLong();
-        private final AtomicLong lastFrameIrisLightmapSlotReuses = new AtomicLong();
-        private final AtomicLong lastFrameIrisLightmapSlotUploads = new AtomicLong();
-        private final AtomicLong lastFrameIrisLightmapStagingFallbacks = new AtomicLong();
-        private final AtomicLong lastFrameIrisShaderAttributeCacheHits = new AtomicLong();
-        private final AtomicLong lastFrameIrisShaderAttributeCacheMisses = new AtomicLong();
-        private final AtomicLong lastFrameIrisShaderAttributeGenerationInvalidations = new AtomicLong();
-        private final AtomicLong lastFrameIrisShaderAttributePrimedSkips = new AtomicLong();
-        private final AtomicLong lastFrameIrisShaderAttributeVaoBindFailures = new AtomicLong();
-        private final AtomicLong irisQueuedBatches = new AtomicLong();
-        private final AtomicLong irisQueuedInstances = new AtomicLong();
-        private final AtomicLong irisQueuedFlushes = new AtomicLong();
-        private final AtomicLong irisQueuedDrawCalls = new AtomicLong();
-        private final AtomicLong irisQueuedFallbackBatches = new AtomicLong();
-        private final AtomicLong irisQueuedFallbackInstances = new AtomicLong();
-        private final AtomicLong irisQueuedDuplicateInstances = new AtomicLong();
+        private long lastFrameIrisEligibleBatches;
+        private long lastFrameIrisDrawCalls;
+        private long lastFrameIrisShadowDrawCalls;
+        private long lastFrameIrisFallbackBatches;
+        private long lastFrameIrisFallbackVertices;
+        private long lastFrameIrisLightmapStorageFailures;
+        private long lastFrameIrisLightmapSlotReuses;
+        private long lastFrameIrisLightmapSlotUploads;
+        private long lastFrameIrisLightmapStagingFallbacks;
+        private long lastFrameIrisShaderAttributeCacheHits;
+        private long lastFrameIrisShaderAttributeCacheMisses;
+        private long lastFrameIrisShaderAttributeGenerationInvalidations;
+        private long lastFrameIrisShaderAttributePrimedSkips;
+        private long lastFrameIrisShaderAttributeVaoBindFailures;
+        private long irisQueuedBatches;
+        private long irisQueuedInstances;
+        private long irisQueuedFlushes;
+        private long irisQueuedDrawCalls;
+        private long irisQueuedFallbackBatches;
+        private long irisQueuedFallbackInstances;
+        private long irisQueuedDuplicateInstances;
         private long currentFrameIrisQueuedBatches;
         private long currentFrameIrisQueuedInstances;
         private long currentFrameIrisQueuedFlushes;
@@ -3016,59 +3214,59 @@ public final class LegacyWavefrontModel {
         private long currentFrameIrisQueuedFallbackBatches;
         private long currentFrameIrisQueuedFallbackInstances;
         private long currentFrameIrisQueuedDuplicateInstances;
-        private final AtomicLong lastFrameIrisQueuedBatches = new AtomicLong();
-        private final AtomicLong lastFrameIrisQueuedInstances = new AtomicLong();
-        private final AtomicLong lastFrameIrisQueuedFlushes = new AtomicLong();
-        private final AtomicLong lastFrameIrisQueuedDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameIrisQueuedFallbackBatches = new AtomicLong();
-        private final AtomicLong lastFrameIrisQueuedFallbackInstances = new AtomicLong();
-        private final AtomicLong lastFrameIrisQueuedDuplicateInstances = new AtomicLong();
-        private final AtomicLong instancedQueuedBatches = new AtomicLong();
-        private final AtomicLong instancedQueuedInstances = new AtomicLong();
-        private final AtomicLong instancedFlushes = new AtomicLong();
-        private final AtomicLong instancedDrawCalls = new AtomicLong();
-        private final AtomicLong instancedFallbackBatches = new AtomicLong();
-        private final AtomicLong instancedFallbackInstances = new AtomicLong();
-        private final AtomicLong instancedOverflowBatches = new AtomicLong();
-        private final AtomicLong instancedOverflowInstances = new AtomicLong();
-        private final AtomicLong instancedDuplicateInstances = new AtomicLong();
-        private final AtomicLong optimizedFlushCalls = new AtomicLong();
-        private final AtomicLong optimizedDuplicateFlushCalls = new AtomicLong();
-        private final AtomicLong optimizedDuplicatePresentSkips = new AtomicLong();
-        private final AtomicLong optimizedFlushNanos = new AtomicLong();
-        private final AtomicLong optimizedDrawStateRestoreFailures = new AtomicLong();
-        private final AtomicLong staleInstancedBatches = new AtomicLong();
-        private final AtomicLong staleInstancedInstances = new AtomicLong();
-        private final AtomicLong staleIrisCompanionBatches = new AtomicLong();
-        private final AtomicLong staleIrisCompanionInstances = new AtomicLong();
-        private final AtomicLong instancedAdditiveQueuedBatches = new AtomicLong();
-        private final AtomicLong instancedAdditiveQueuedInstances = new AtomicLong();
-        private final AtomicLong instancedAdditiveDrawCalls = new AtomicLong();
-        private final AtomicLong instancedAdditiveFallbackBatches = new AtomicLong();
-        private final AtomicLong instancedAdditiveFallbackInstances = new AtomicLong();
-        private final AtomicLong instancedAdditiveOverflowBatches = new AtomicLong();
-        private final AtomicLong instancedAdditiveOverflowInstances = new AtomicLong();
-        private final AtomicLong mdiEligibleFlushes = new AtomicLong();
-        private final AtomicLong mdiEligibleBatches = new AtomicLong();
-        private final AtomicLong mdiFallbackFlushes = new AtomicLong();
-        private final AtomicLong mdiFallbackBatches = new AtomicLong();
-        private final AtomicLong mdiDrawCalls = new AtomicLong();
-        private final AtomicLong mdiMultiDrawCalls = new AtomicLong();
-        private final AtomicLong mdiIndirectCommands = new AtomicLong();
-        private final AtomicLong mdiNoSlotBatches = new AtomicLong();
-        private final AtomicLong mdiNoSlotInstances = new AtomicLong();
-        private final AtomicLong mdiPartialDrawFailures = new AtomicLong();
-        private final AtomicLong mdiStalePreparedGroups = new AtomicLong();
-        private final AtomicLong mdiStalePreparedCommands = new AtomicLong();
-        private final AtomicLong mdiDispatchDisableEvents = new AtomicLong();
-        private final AtomicLong mdiAtlasRepackFailures = new AtomicLong();
-        private final AtomicLong mdiAtlasInitFailures = new AtomicLong();
-        private final AtomicLong mdiAdditiveEligibleBatches = new AtomicLong();
-        private final AtomicLong mdiAdditiveFallbackBatches = new AtomicLong();
-        private final AtomicLong mdiAdditiveDrawCalls = new AtomicLong();
-        private final AtomicLong mdiAdditiveIndirectCommands = new AtomicLong();
-        private final AtomicLong mdiAdditiveNoSlotBatches = new AtomicLong();
-        private final AtomicLong mdiAdditiveNoSlotInstances = new AtomicLong();
+        private long lastFrameIrisQueuedBatches;
+        private long lastFrameIrisQueuedInstances;
+        private long lastFrameIrisQueuedFlushes;
+        private long lastFrameIrisQueuedDrawCalls;
+        private long lastFrameIrisQueuedFallbackBatches;
+        private long lastFrameIrisQueuedFallbackInstances;
+        private long lastFrameIrisQueuedDuplicateInstances;
+        private long instancedQueuedBatches;
+        private long instancedQueuedInstances;
+        private long instancedFlushes;
+        private long instancedDrawCalls;
+        private long instancedFallbackBatches;
+        private long instancedFallbackInstances;
+        private long instancedOverflowBatches;
+        private long instancedOverflowInstances;
+        private long instancedDuplicateInstances;
+        private long optimizedFlushCalls;
+        private long optimizedDuplicateFlushCalls;
+        private long optimizedDuplicatePresentSkips;
+        private long optimizedFlushNanos;
+        private long optimizedDrawStateRestoreFailures;
+        private long staleInstancedBatches;
+        private long staleInstancedInstances;
+        private long staleIrisCompanionBatches;
+        private long staleIrisCompanionInstances;
+        private long instancedAdditiveQueuedBatches;
+        private long instancedAdditiveQueuedInstances;
+        private long instancedAdditiveDrawCalls;
+        private long instancedAdditiveFallbackBatches;
+        private long instancedAdditiveFallbackInstances;
+        private long instancedAdditiveOverflowBatches;
+        private long instancedAdditiveOverflowInstances;
+        private long mdiEligibleFlushes;
+        private long mdiEligibleBatches;
+        private long mdiFallbackFlushes;
+        private long mdiFallbackBatches;
+        private long mdiDrawCalls;
+        private long mdiMultiDrawCalls;
+        private long mdiIndirectCommands;
+        private long mdiNoSlotBatches;
+        private long mdiNoSlotInstances;
+        private long mdiPartialDrawFailures;
+        private long mdiStalePreparedGroups;
+        private long mdiStalePreparedCommands;
+        private long mdiDispatchDisableEvents;
+        private long mdiAtlasRepackFailures;
+        private long mdiAtlasInitFailures;
+        private long mdiAdditiveEligibleBatches;
+        private long mdiAdditiveFallbackBatches;
+        private long mdiAdditiveDrawCalls;
+        private long mdiAdditiveIndirectCommands;
+        private long mdiAdditiveNoSlotBatches;
+        private long mdiAdditiveNoSlotInstances;
         private long currentFrameMdiEligibleFlushes;
         private long currentFrameMdiEligibleBatches;
         private long currentFrameMdiFallbackFlushes;
@@ -3091,28 +3289,28 @@ public final class LegacyWavefrontModel {
         private long currentFrameMdiAdditiveIndirectCommands;
         private long currentFrameMdiAdditiveNoSlotBatches;
         private long currentFrameMdiAdditiveNoSlotInstances;
-        private final AtomicLong lastFrameMdiEligibleFlushes = new AtomicLong();
-        private final AtomicLong lastFrameMdiEligibleBatches = new AtomicLong();
-        private final AtomicLong lastFrameMdiFallbackFlushes = new AtomicLong();
-        private final AtomicLong lastFrameMdiFallbackBatches = new AtomicLong();
-        private final AtomicLong lastFrameMdiDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameMdiMultiDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameMdiIndirectCommands = new AtomicLong();
-        private final AtomicLong lastFrameMdiNoSlotBatches = new AtomicLong();
-        private final AtomicLong lastFrameMdiNoSlotInstances = new AtomicLong();
-        private final AtomicLong lastFrameMdiPartialDrawFailures = new AtomicLong();
-        private final AtomicLong lastFrameMdiStalePreparedGroups = new AtomicLong();
-        private final AtomicLong lastFrameMdiStalePreparedCommands = new AtomicLong();
-        private final AtomicLong lastFrameMdiDispatchDisableEvents = new AtomicLong();
-        private final AtomicLong lastFrameMdiAtlasRepackFailures = new AtomicLong();
-        private final AtomicLong lastFrameMdiAtlasInitFailures = new AtomicLong();
-        private final AtomicLong lastFrameOptimizedDrawStateRestoreFailures = new AtomicLong();
-        private final AtomicLong lastFrameMdiAdditiveEligibleBatches = new AtomicLong();
-        private final AtomicLong lastFrameMdiAdditiveFallbackBatches = new AtomicLong();
-        private final AtomicLong lastFrameMdiAdditiveDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameMdiAdditiveIndirectCommands = new AtomicLong();
-        private final AtomicLong lastFrameMdiAdditiveNoSlotBatches = new AtomicLong();
-        private final AtomicLong lastFrameMdiAdditiveNoSlotInstances = new AtomicLong();
+        private long lastFrameMdiEligibleFlushes;
+        private long lastFrameMdiEligibleBatches;
+        private long lastFrameMdiFallbackFlushes;
+        private long lastFrameMdiFallbackBatches;
+        private long lastFrameMdiDrawCalls;
+        private long lastFrameMdiMultiDrawCalls;
+        private long lastFrameMdiIndirectCommands;
+        private long lastFrameMdiNoSlotBatches;
+        private long lastFrameMdiNoSlotInstances;
+        private long lastFrameMdiPartialDrawFailures;
+        private long lastFrameMdiStalePreparedGroups;
+        private long lastFrameMdiStalePreparedCommands;
+        private long lastFrameMdiDispatchDisableEvents;
+        private long lastFrameMdiAtlasRepackFailures;
+        private long lastFrameMdiAtlasInitFailures;
+        private long lastFrameOptimizedDrawStateRestoreFailures;
+        private long lastFrameMdiAdditiveEligibleBatches;
+        private long lastFrameMdiAdditiveFallbackBatches;
+        private long lastFrameMdiAdditiveDrawCalls;
+        private long lastFrameMdiAdditiveIndirectCommands;
+        private long lastFrameMdiAdditiveNoSlotBatches;
+        private long lastFrameMdiAdditiveNoSlotInstances;
         private long currentFrameInstancedQueuedBatches;
         private long currentFrameInstancedQueuedInstances;
         private long currentFrameInstancedDrawCalls;
@@ -3137,41 +3335,46 @@ public final class LegacyWavefrontModel {
         private long currentFrameInstancedAdditiveFallbackInstances;
         private long currentFrameInstancedAdditiveOverflowBatches;
         private long currentFrameInstancedAdditiveOverflowInstances;
-        private final AtomicLong lastFrameInstancedQueuedBatches = new AtomicLong();
-        private final AtomicLong lastFrameInstancedQueuedInstances = new AtomicLong();
-        private final AtomicLong lastFrameInstancedDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameInstancedFallbackBatches = new AtomicLong();
-        private final AtomicLong lastFrameInstancedFallbackInstances = new AtomicLong();
-        private final AtomicLong lastFrameInstancedOverflowBatches = new AtomicLong();
-        private final AtomicLong lastFrameInstancedOverflowInstances = new AtomicLong();
-        private final AtomicLong lastFrameInstancedDuplicateInstances = new AtomicLong();
-        private final AtomicLong lastFrameOptimizedFlushCalls = new AtomicLong();
-        private final AtomicLong lastFrameOptimizedDuplicateFlushCalls = new AtomicLong();
-        private final AtomicLong lastFrameOptimizedDuplicatePresentSkips = new AtomicLong();
-        private final AtomicLong lastFrameOptimizedFlushNanos = new AtomicLong();
-        private final AtomicLong lastFrameStaleInstancedBatches = new AtomicLong();
-        private final AtomicLong lastFrameStaleInstancedInstances = new AtomicLong();
-        private final AtomicLong lastFrameStaleIrisCompanionBatches = new AtomicLong();
-        private final AtomicLong lastFrameStaleIrisCompanionInstances = new AtomicLong();
-        private final AtomicLong lastFrameInstancedAdditiveQueuedBatches = new AtomicLong();
-        private final AtomicLong lastFrameInstancedAdditiveQueuedInstances = new AtomicLong();
-        private final AtomicLong lastFrameInstancedAdditiveDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameInstancedAdditiveFallbackBatches = new AtomicLong();
-        private final AtomicLong lastFrameInstancedAdditiveFallbackInstances = new AtomicLong();
-        private final AtomicLong lastFrameInstancedAdditiveOverflowBatches = new AtomicLong();
-        private final AtomicLong lastFrameInstancedAdditiveOverflowInstances = new AtomicLong();
+        private long lastFrameInstancedQueuedBatches;
+        private long lastFrameInstancedQueuedInstances;
+        private long lastFrameInstancedDrawCalls;
+        private long lastFrameInstancedFallbackBatches;
+        private long lastFrameInstancedFallbackInstances;
+        private long lastFrameInstancedOverflowBatches;
+        private long lastFrameInstancedOverflowInstances;
+        private long lastFrameInstancedDuplicateInstances;
+        private long lastFrameOptimizedFlushCalls;
+        private long lastFrameOptimizedDuplicateFlushCalls;
+        private long lastFrameOptimizedDuplicatePresentSkips;
+        private long lastFrameOptimizedFlushNanos;
+        private long lastFrameStaleInstancedBatches;
+        private long lastFrameStaleInstancedInstances;
+        private long lastFrameStaleIrisCompanionBatches;
+        private long lastFrameStaleIrisCompanionInstances;
+        private long lastFrameInstancedAdditiveQueuedBatches;
+        private long lastFrameInstancedAdditiveQueuedInstances;
+        private long lastFrameInstancedAdditiveDrawCalls;
+        private long lastFrameInstancedAdditiveFallbackBatches;
+        private long lastFrameInstancedAdditiveFallbackInstances;
+        private long lastFrameInstancedAdditiveOverflowBatches;
+        private long lastFrameInstancedAdditiveOverflowInstances;
         private long currentFrameGpuDrawCalls;
         private long currentFrameGpuFallbackBatches;
         private long currentFrameGpuFallbackVertices;
-        private final AtomicLong lastFrameGpuDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameGpuFallbackBatches = new AtomicLong();
-        private final AtomicLong lastFrameGpuFallbackVertices = new AtomicLong();
+        private long lastFrameGpuDrawCalls;
+        private long lastFrameGpuFallbackBatches;
+        private long lastFrameGpuFallbackVertices;
         private volatile RenderBackendFallbackReason lastGpuFallbackReason = RenderBackendFallbackReason.NONE;
         private volatile String lastGpuFallbackDetail = NO_FALLBACK_DETAIL;
         private volatile boolean mdiCapsResolved;
         private volatile boolean mdiDrawIndirectSupported;
         private volatile boolean mdiMultiDrawIndirectSupported;
         private volatile boolean mdiBaseInstanceSupported;
+        private volatile boolean mdiCoreDrawArraysIndirectSupported;
+        private volatile boolean mdiArbDrawArraysIndirectSupported;
+        private volatile boolean mdiCoreMultiDrawArraysIndirectSupported;
+        private volatile boolean mdiArbMultiDrawArraysIndirectSupported;
+        private volatile boolean mdiCommandMemoryBarrierSupported;
         private volatile boolean mdiDispatchDisabled;
         private ShaderInstance optimizedUniformShader;
         private int optimizedUniformProgram = -1;
@@ -3182,6 +3385,22 @@ public final class LegacyWavefrontModel {
         private Uniform optimizedFogEndUniform;
         private Uniform optimizedFogColorUniform;
         private Uniform optimizedFadeAlphaUniform;
+        private ShaderInstance optimizedUniformValueShader;
+        private int optimizedUniformValueProgram = -1;
+        private long optimizedUniformValuePipelineGeneration = -1L;
+        private final Matrix4f optimizedLastProjectionMatrix = new Matrix4f();
+        private boolean optimizedProjectionUniformValid;
+        private boolean optimizedModelViewIdentityUniformValid;
+        private boolean optimizedFogStartUniformValid;
+        private boolean optimizedFogEndUniformValid;
+        private boolean optimizedFogColorUniformValid;
+        private boolean optimizedFadeAlphaOneUniformValid;
+        private float optimizedLastFogStart;
+        private float optimizedLastFogEnd;
+        private int optimizedLastFogColorRed = Integer.MIN_VALUE;
+        private int optimizedLastFogColorGreen = Integer.MIN_VALUE;
+        private int optimizedLastFogColorBlue = Integer.MIN_VALUE;
+        private int optimizedLastFogColorAlpha = Integer.MIN_VALUE;
         private RenderBackendFallbackReason lastInstancedQueueFallbackReason = RenderBackendFallbackReason.NONE;
         private RenderBackendFallbackReason lastIrisCompanionFallbackReason = RenderBackendFallbackReason.NONE;
         private boolean warnedGpuMeshOffThreadUpload;
@@ -3194,6 +3413,21 @@ public final class LegacyWavefrontModel {
 
         private ExperimentalGpuPreparedRenderBackend(RenderBackend cpuFallback) {
             this.cpuFallback = cpuFallback;
+        }
+
+        @Override
+        public boolean prepareTexturedCpuSequence(TexturedPreparedSequence sequence, PreparedBatch batch,
+                ResourceLocation textureLocation, MultiBufferSource buffer, int packedLight, int packedOverlay,
+                int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing,
+                LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
+                RenderBackendFallbackReason fallbackReason) {
+            if (cpuFallback instanceof CpuPreparedRenderBackend cpu) {
+                sequence.prepare(this, cpu, batch, textureLocation, buffer, packedLight, packedOverlay, red, green,
+                        blue, alpha, legacyShadow, smoothing, renderMode, uvTransform, fallbackReason);
+                return true;
+            }
+            sequence.clear();
+            return false;
         }
 
         private static ResourceLocation irisUntexturedWhiteTexture() {
@@ -3306,7 +3540,7 @@ public final class LegacyWavefrontModel {
                 }
                 if (flags.instancingEnabled() && canUseInstancedPath(alphaMode)) {
                     if (queueInstanced(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
-                            alpha, smoothing, alphaMode, uvTransform)) {
+                            alpha, smoothing, alphaMode, uvTransform, flags.useSlicedLight())) {
                         return;
                     }
                 }
@@ -3435,7 +3669,7 @@ public final class LegacyWavefrontModel {
                 }
                 if (flags.instancingEnabled() && canUseInstancedPath(alphaMode)) {
                     if (queueInstancedSprite(batch, sprite, poseStack, buffer, packedLight, packedOverlay, red, green,
-                            blue, alpha, alphaMode, uvTransform)) {
+                            blue, alpha, alphaMode, uvTransform, flags.useSlicedLight())) {
                         return;
                     }
                 }
@@ -3522,7 +3756,7 @@ public final class LegacyWavefrontModel {
                 }
                 if (flags.instancingEnabled() && canUseInstancedUntexturedPath(resolvedRenderMode, alpha)) {
                     if (queueInstancedUntextured(batch, poseStack, buffer, red, green, blue, alpha,
-                            resolvedRenderMode)) {
+                            resolvedRenderMode, flags.useSlicedLight())) {
                         return;
                     }
                 }
@@ -4455,8 +4689,13 @@ public final class LegacyWavefrontModel {
 
         private boolean queueInstanced(PreparedBatch batch, ResourceLocation textureLocation, PoseStack poseStack,
                 MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
-                boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+                boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
+                boolean useSlicedLight) {
             clearInstancedQueueFallback();
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
             if (!UvTransform.DEFAULT.equals(uvTransform)) {
                 recordInstancedQueueFallback(RenderBackendFallbackReason.GPU_UNSUPPORTED_UV_TRANSFORM, 1, renderMode,
                         fallbackDetail("instanced-queue-textured",
@@ -4478,22 +4717,23 @@ public final class LegacyWavefrontModel {
                                 renderMode, 1));
                 return false;
             }
-            List<InstancedMesh> meshesToQueue = new ArrayList<>(2);
+            boolean queued = false;
             if (!batch.quadVertices().isEmpty()) {
-                meshesToQueue.add(instancedMeshFor(batch, VertexFormat.Mode.QUADS, smoothing,
+                InstancedMesh mesh = instancedMeshFor(batch, VertexFormat.Mode.QUADS, smoothing,
                         GpuMeshKind.TEXTURED, null,
-                        batch.quadVertices()));
+                        batch.quadVertices());
+                queueInstanced(mesh, textureLocation, renderMode, poseStack, buffer, packedLight, packedOverlay,
+                        red, green, blue, alpha, uvTransform, fadeAlpha, useSlicedLight);
+                queued = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
-                meshesToQueue.add(instancedMeshFor(batch, VertexFormat.Mode.TRIANGLES, smoothing,
+                InstancedMesh mesh = instancedMeshFor(batch, VertexFormat.Mode.TRIANGLES, smoothing,
                         GpuMeshKind.TEXTURED, null,
-                        batch.triangleVertices()));
-            }
-            for (InstancedMesh mesh : meshesToQueue) {
+                        batch.triangleVertices());
                 queueInstanced(mesh, textureLocation, renderMode, poseStack, buffer, packedLight, packedOverlay,
-                        red, green, blue, alpha, uvTransform);
+                        red, green, blue, alpha, uvTransform, fadeAlpha, useSlicedLight);
+                queued = true;
             }
-            boolean queued = !meshesToQueue.isEmpty();
             if (queued) {
                 clearInstancedQueueFallback();
             }
@@ -4502,8 +4742,12 @@ public final class LegacyWavefrontModel {
 
         private boolean queueInstancedSprite(PreparedBatch batch, TextureAtlasSprite sprite, PoseStack poseStack,
                 MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
-                LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+                LegacyTexturedRenderMode renderMode, UvTransform uvTransform, boolean useSlicedLight) {
             clearInstancedQueueFallback();
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
             if (!UvTransform.DEFAULT.equals(uvTransform)) {
                 recordInstancedQueueFallback(RenderBackendFallbackReason.GPU_UNSUPPORTED_UV_TRANSFORM, 1, renderMode,
                         fallbackDetail("instanced-queue-sprite",
@@ -4525,22 +4769,23 @@ public final class LegacyWavefrontModel {
                                 InventoryMenu.BLOCK_ATLAS, renderMode, 1));
                 return false;
             }
-            List<InstancedMesh> meshesToQueue = new ArrayList<>(2);
+            boolean queued = false;
             if (!batch.quadVertices().isEmpty()) {
-                meshesToQueue.add(instancedMeshFor(batch, VertexFormat.Mode.QUADS, false,
+                InstancedMesh mesh = instancedMeshFor(batch, VertexFormat.Mode.QUADS, false,
                         GpuMeshKind.SPRITE, sprite,
-                        batch.quadVertices()));
+                        batch.quadVertices());
+                queueInstanced(mesh, InventoryMenu.BLOCK_ATLAS, renderMode, poseStack, buffer, packedLight,
+                        packedOverlay, red, green, blue, alpha, uvTransform, fadeAlpha, useSlicedLight);
+                queued = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
-                meshesToQueue.add(instancedMeshFor(batch, VertexFormat.Mode.TRIANGLES, false,
+                InstancedMesh mesh = instancedMeshFor(batch, VertexFormat.Mode.TRIANGLES, false,
                         GpuMeshKind.SPRITE, sprite,
-                        batch.triangleVertices()));
-            }
-            for (InstancedMesh mesh : meshesToQueue) {
+                        batch.triangleVertices());
                 queueInstanced(mesh, InventoryMenu.BLOCK_ATLAS, renderMode, poseStack, buffer, packedLight,
-                        packedOverlay, red, green, blue, alpha, uvTransform);
+                        packedOverlay, red, green, blue, alpha, uvTransform, fadeAlpha, useSlicedLight);
+                queued = true;
             }
-            boolean queued = !meshesToQueue.isEmpty();
             if (queued) {
                 clearInstancedQueueFallback();
             }
@@ -4548,8 +4793,13 @@ public final class LegacyWavefrontModel {
         }
 
         private boolean queueInstancedUntextured(PreparedBatch batch, PoseStack poseStack, MultiBufferSource buffer,
-                int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
+                int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode,
+                boolean useSlicedLight) {
             clearInstancedQueueFallback();
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
             if (HbmOptimizedRenderShaders.blockUntexturedInstancedShader() == null) {
                 recordInstancedQueueFallback(RenderBackendFallbackReason.INSTANCING_SHADER_UNAVAILABLE, 1, renderMode,
                         fallbackDetail("instanced-queue-untextured",
@@ -4564,20 +4814,23 @@ public final class LegacyWavefrontModel {
                                 InventoryMenu.BLOCK_ATLAS, renderMode, 1));
                 return false;
             }
-            List<InstancedMesh> meshesToQueue = new ArrayList<>(2);
+            boolean queued = false;
             if (!batch.quadVertices().isEmpty()) {
-                meshesToQueue.add(instancedMeshFor(batch, VertexFormat.Mode.QUADS, false,
-                        GpuMeshKind.UNTEXTURED, null, batch.quadVertices()));
+                InstancedMesh mesh = instancedMeshFor(batch, VertexFormat.Mode.QUADS, false,
+                        GpuMeshKind.UNTEXTURED, null, batch.quadVertices());
+                queueInstanced(mesh, InventoryMenu.BLOCK_ATLAS, renderMode, poseStack, buffer,
+                        LightTexture.FULL_BRIGHT, 0, red, green, blue, alpha, UvTransform.DEFAULT, fadeAlpha,
+                        useSlicedLight);
+                queued = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
-                meshesToQueue.add(instancedMeshFor(batch, VertexFormat.Mode.TRIANGLES, false,
-                        GpuMeshKind.UNTEXTURED, null, batch.triangleVertices()));
-            }
-            for (InstancedMesh mesh : meshesToQueue) {
+                InstancedMesh mesh = instancedMeshFor(batch, VertexFormat.Mode.TRIANGLES, false,
+                        GpuMeshKind.UNTEXTURED, null, batch.triangleVertices());
                 queueInstanced(mesh, InventoryMenu.BLOCK_ATLAS, renderMode, poseStack, buffer,
-                        LightTexture.FULL_BRIGHT, 0, red, green, blue, alpha, UvTransform.DEFAULT);
+                        LightTexture.FULL_BRIGHT, 0, red, green, blue, alpha, UvTransform.DEFAULT, fadeAlpha,
+                        useSlicedLight);
+                queued = true;
             }
-            boolean queued = !meshesToQueue.isEmpty();
             if (queued) {
                 clearInstancedQueueFallback();
             }
@@ -4586,27 +4839,25 @@ public final class LegacyWavefrontModel {
 
         private void queueInstanced(InstancedMesh mesh, ResourceLocation textureLocation, LegacyTexturedRenderMode renderMode,
                 PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
-                int red, int green, int blue, int alpha, UvTransform uvTransform) {
-            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+                int red, int green, int blue, int alpha, UvTransform uvTransform, float fadeAlpha,
+                boolean useSlicedLight) {
             if (fadeAlpha < 0.0F) {
                 return;
             }
             boolean faded = fadeAlpha < 0.999F;
             LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
-            InstancedBatchKey key = new InstancedBatchKey(mesh.key(), textureLocation, effectiveRenderMode);
-            InstancedBatch batch = pendingInstancedBatches.computeIfAbsent(key,
-                    ignored -> new InstancedBatch(mesh, textureLocation, effectiveRenderMode));
+            InstancedBatch batch = pendingInstancedBatch(mesh, textureLocation, effectiveRenderMode);
             boolean newBatch = batch.instances().isEmpty();
-            Matrix4f modelView = poseStack.last().pose();
-            batch.instances().add(InstancedInstance.from(modelView,
-                    mesh.sampleInstanceLightProbe(modelView, packedLight), packedOverlay, red, green, blue, alpha,
-                    fadeAlpha));
-            batch.fallbacks().add(InstancedFallbackInstance.from(poseStack.last(), buffer, packedLight, packedOverlay,
-                    red, green, blue, alpha, uvTransform, fadeAlpha));
-            instancedQueuedInstances.incrementAndGet();
+            PoseStack.Pose pose = poseStack.last();
+            Matrix4f modelView = pose.pose();
+            boolean sampleSlicedLight = packedLight != LightTexture.FULL_BRIGHT && useSlicedLight;
+            batch.instances().add(InstancedInstance.from(pose, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, uvTransform, fadeAlpha,
+                    mesh.sampleInstanceLightProbe(modelView, packedLight, sampleSlicedLight)));
+            instancedQueuedInstances++;
             currentFrameInstancedQueuedInstances++;
             if (isInstancedAdditiveMode(effectiveRenderMode)) {
-                instancedAdditiveQueuedInstances.incrementAndGet();
+                instancedAdditiveQueuedInstances++;
                 currentFrameInstancedAdditiveQueuedInstances++;
             }
             if (HbmRenderFrameCulling.shouldRecordObjInstancedHotParts()) {
@@ -4617,10 +4868,10 @@ public final class LegacyWavefrontModel {
                 HbmRenderFrameCulling.recordObjInstancedQueue(1, newBatch, faded);
             }
             if (newBatch) {
-                instancedQueuedBatches.incrementAndGet();
+                instancedQueuedBatches++;
                 currentFrameInstancedQueuedBatches++;
                 if (isInstancedAdditiveMode(effectiveRenderMode)) {
-                    instancedAdditiveQueuedBatches.incrementAndGet();
+                    instancedAdditiveQueuedBatches++;
                     currentFrameInstancedAdditiveQueuedBatches++;
                 }
             }
@@ -4642,17 +4893,23 @@ public final class LegacyWavefrontModel {
         private boolean queueIrisCompanion(PreparedBatch batch, ResourceLocation textureLocation, PoseStack poseStack,
                 MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
                 boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
             boolean queued = false;
             if (!batch.quadVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.TEXTURED, batch.stableKey(), batch.quadVertices(),
-                        VertexFormat.Mode.QUADS, null, textureLocation, renderMode, poseStack, buffer, packedLight,
-                        packedOverlay, red, green, blue, alpha, smoothing, uvTransform);
+                        batch.geometryHash(), VertexFormat.Mode.QUADS, null, textureLocation, renderMode,
+                        poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, smoothing,
+                        uvTransform, fadeAlpha);
                 queued = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.TEXTURED, batch.stableKey(), batch.triangleVertices(),
-                        VertexFormat.Mode.TRIANGLES, null, textureLocation, renderMode, poseStack, buffer,
-                        packedLight, packedOverlay, red, green, blue, alpha, smoothing, uvTransform);
+                        batch.geometryHash(), VertexFormat.Mode.TRIANGLES, null, textureLocation, renderMode,
+                        poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, smoothing,
+                        uvTransform, fadeAlpha);
                 queued = true;
             }
             return queued;
@@ -4661,17 +4918,23 @@ public final class LegacyWavefrontModel {
         private boolean queueIrisCompanionSprite(PreparedBatch batch, TextureAtlasSprite sprite, PoseStack poseStack,
                 MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
                 LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
             boolean queued = false;
             if (!batch.quadVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.SPRITE, batch.stableKey(), batch.quadVertices(),
-                        VertexFormat.Mode.QUADS, sprite, InventoryMenu.BLOCK_ATLAS, renderMode, poseStack, buffer,
-                        packedLight, packedOverlay, red, green, blue, alpha, false, uvTransform);
+                        batch.geometryHash(), VertexFormat.Mode.QUADS, sprite, InventoryMenu.BLOCK_ATLAS,
+                        renderMode, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                        false, uvTransform, fadeAlpha);
                 queued = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.SPRITE, batch.stableKey(), batch.triangleVertices(),
-                        VertexFormat.Mode.TRIANGLES, sprite, InventoryMenu.BLOCK_ATLAS, renderMode, poseStack,
-                        buffer, packedLight, packedOverlay, red, green, blue, alpha, false, uvTransform);
+                        batch.geometryHash(), VertexFormat.Mode.TRIANGLES, sprite, InventoryMenu.BLOCK_ATLAS,
+                        renderMode, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                        false, uvTransform, fadeAlpha);
                 queued = true;
             }
             return queued;
@@ -4680,43 +4943,48 @@ public final class LegacyWavefrontModel {
         private boolean queueIrisCompanionUntextured(PreparedBatch batch, PoseStack poseStack,
                 MultiBufferSource buffer, int red, int green, int blue, int alpha,
                 LegacyTexturedRenderMode renderMode) {
+            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+            if (fadeAlpha < 0.0F) {
+                return true;
+            }
             ResourceLocation textureLocation = irisUntexturedWhiteTexture();
             boolean queued = false;
             if (!batch.quadVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.UNTEXTURED, batch.stableKey(), batch.quadVertices(),
-                        VertexFormat.Mode.QUADS, null, textureLocation, renderMode, poseStack, buffer,
-                        LightTexture.FULL_BRIGHT, 0, red, green, blue, alpha, false, UvTransform.DEFAULT);
+                        batch.geometryHash(), VertexFormat.Mode.QUADS, null, textureLocation, renderMode,
+                        poseStack, buffer,
+                        LightTexture.FULL_BRIGHT, 0, red, green, blue, alpha, false, UvTransform.DEFAULT,
+                        fadeAlpha);
                 queued = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.UNTEXTURED, batch.stableKey(), batch.triangleVertices(),
-                        VertexFormat.Mode.TRIANGLES, null, textureLocation, renderMode, poseStack, buffer,
-                        LightTexture.FULL_BRIGHT, 0, red, green, blue, alpha, false, UvTransform.DEFAULT);
+                        batch.geometryHash(), VertexFormat.Mode.TRIANGLES, null, textureLocation, renderMode,
+                        poseStack, buffer,
+                        LightTexture.FULL_BRIGHT, 0, red, green, blue, alpha, false, UvTransform.DEFAULT,
+                        fadeAlpha);
                 queued = true;
             }
             return queued;
         }
 
         private void queueIrisCompanionPart(GpuMeshKind kind, String stablePartKey, List<PreparedVertex> vertices,
-                VertexFormat.Mode sourceMode, TextureAtlasSprite sprite, ResourceLocation textureLocation,
-                LegacyTexturedRenderMode renderMode, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-                int packedOverlay, int red, int green, int blue, int alpha, boolean smoothing,
-                UvTransform uvTransform) {
-            float fadeAlpha = HbmRenderFrameCulling.currentStaticModelFade();
+                int geometryHash, VertexFormat.Mode sourceMode, TextureAtlasSprite sprite,
+                ResourceLocation textureLocation, LegacyTexturedRenderMode renderMode, PoseStack poseStack,
+                MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue,
+                int alpha, boolean smoothing, UvTransform uvTransform, float fadeAlpha) {
             if (fadeAlpha < 0.0F) {
                 return;
             }
             boolean faded = fadeAlpha < 0.999F;
             LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
-            IrisCompanionQueueKey key = new IrisCompanionQueueKey(kind, stablePartKey,
-                    sourceGeometryHash(sourceMode, vertices), sprite, vertices.size(), sourceMode, smoothing,
-                    uvTransform, textureLocation, effectiveRenderMode);
-            IrisCompanionQueuedBatch batch = pendingIrisCompanionBatches.computeIfAbsent(key,
-                    ignored -> new IrisCompanionQueuedBatch(key, List.copyOf(vertices)));
+            IrisCompanionQueuedBatch batch = pendingIrisCompanionBatch(kind, stablePartKey, geometryHash, sprite,
+                    vertices.size(), sourceMode, smoothing, uvTransform, textureLocation, effectiveRenderMode,
+                    vertices);
             boolean newBatch = batch.instances().isEmpty();
             batch.instances().add(IrisCompanionQueuedInstance.from(poseStack.last(), buffer, packedLight,
                     packedOverlay, red, green, blue, alpha, fadeAlpha));
-            irisQueuedInstances.incrementAndGet();
+            irisQueuedInstances++;
             currentFrameIrisQueuedInstances++;
             if (HbmRenderFrameCulling.shouldRecordObjInstancedHotParts()) {
                 HbmRenderFrameCulling.recordObjInstancedQueue(
@@ -4726,13 +4994,17 @@ public final class LegacyWavefrontModel {
                 HbmRenderFrameCulling.recordObjInstancedQueue(1, newBatch, faded);
             }
             if (newBatch) {
-                irisQueuedBatches.incrementAndGet();
+                irisQueuedBatches++;
                 currentFrameIrisQueuedBatches++;
             }
         }
 
         private InstancedMesh instancedMeshFor(PreparedBatch batch, VertexFormat.Mode sourceMode, boolean smoothing,
                 GpuMeshKind kind, TextureAtlasSprite sprite, List<PreparedVertex> vertices) {
+            InstancedMesh cached = lastInstancedMesh(batch, sourceMode, smoothing, kind, sprite, vertices);
+            if (cached != null) {
+                return cached;
+            }
             InstancedMeshKey key = new InstancedMeshKey(kind, batch.stableKey(), batch.geometryHash(), sprite,
                     vertices.size(), sourceMode, smoothing);
             if (failedInstancedKeys.contains(key)) {
@@ -4741,6 +5013,7 @@ public final class LegacyWavefrontModel {
             synchronized (instancedMeshes) {
                 InstancedMesh existing = instancedMeshes.get(key);
                 if (existing != null) {
+                    rememberLastInstancedMesh(batch, sourceMode, smoothing, kind, sprite, vertices, existing);
                     return existing;
                 }
                 gpuUploadAttempts.incrementAndGet();
@@ -4748,6 +5021,7 @@ public final class LegacyWavefrontModel {
                     InstancedMesh created = uploadInstancedMesh(key, sourceMode, smoothing, vertices);
                     instancedMeshes.put(key, created);
                     gpuBufferBytes.addAndGet(created.byteSize());
+                    rememberLastInstancedMesh(batch, sourceMode, smoothing, kind, sprite, vertices, created);
                     return created;
                 } catch (RuntimeException exception) {
                     if (!HbmInstancedGlCompat.isInstancingUnavailable(exception)) {
@@ -4759,10 +5033,129 @@ public final class LegacyWavefrontModel {
             }
         }
 
-        private static int sourceGeometryHash(VertexFormat.Mode sourceMode, List<PreparedVertex> vertices) {
-            return sourceMode == VertexFormat.Mode.QUADS
-                    ? PreparedBatch.geometryHash(vertices, List.of())
-                    : PreparedBatch.geometryHash(List.of(), vertices);
+        private InstancedMesh lastInstancedMesh(PreparedBatch batch, VertexFormat.Mode sourceMode, boolean smoothing,
+                GpuMeshKind kind, TextureAtlasSprite sprite, List<PreparedVertex> vertices) {
+            InstancedMesh mesh = lastInstancedMesh;
+            if (mesh == null || mesh.closed().get()) {
+                return null;
+            }
+            return lastInstancedMeshBatch == batch
+                    && lastInstancedMeshSourceMode == sourceMode
+                    && lastInstancedMeshSmoothing == smoothing
+                    && lastInstancedMeshKind == kind
+                    && lastInstancedMeshSprite == sprite
+                    && lastInstancedMeshVertices == vertices
+                    ? mesh
+                    : null;
+        }
+
+        private void rememberLastInstancedMesh(PreparedBatch batch, VertexFormat.Mode sourceMode, boolean smoothing,
+                GpuMeshKind kind, TextureAtlasSprite sprite, List<PreparedVertex> vertices, InstancedMesh mesh) {
+            lastInstancedMeshBatch = batch;
+            lastInstancedMeshSourceMode = sourceMode;
+            lastInstancedMeshSmoothing = smoothing;
+            lastInstancedMeshKind = kind;
+            lastInstancedMeshSprite = sprite;
+            lastInstancedMeshVertices = vertices;
+            lastInstancedMesh = mesh;
+        }
+
+        private void clearLastInstancedMesh() {
+            lastInstancedMeshBatch = null;
+            lastInstancedMeshSourceMode = null;
+            lastInstancedMeshSmoothing = false;
+            lastInstancedMeshKind = null;
+            lastInstancedMeshSprite = null;
+            lastInstancedMeshVertices = null;
+            lastInstancedMesh = null;
+        }
+
+        private InstancedBatch pendingInstancedBatch(InstancedMesh mesh, ResourceLocation textureLocation,
+                LegacyTexturedRenderMode renderMode) {
+            InstancedBatch cached = lastPendingInstancedBatch;
+            if (cached != null
+                    && lastPendingInstancedMesh == mesh
+                    && lastPendingInstancedRenderMode == renderMode
+                    && sameNullable(lastPendingInstancedTexture, textureLocation)) {
+                return cached;
+            }
+            InstancedBatchKey key = new InstancedBatchKey(mesh.key(), textureLocation, renderMode);
+            InstancedBatch batch = pendingInstancedBatches.get(key);
+            if (batch == null) {
+                batch = new InstancedBatch(key, mesh, textureLocation, renderMode);
+                pendingInstancedBatches.put(key, batch);
+            }
+            lastPendingInstancedBatch = batch;
+            lastPendingInstancedMesh = mesh;
+            lastPendingInstancedTexture = textureLocation;
+            lastPendingInstancedRenderMode = renderMode;
+            return batch;
+        }
+
+        private void clearPendingInstancedBatches() {
+            pendingInstancedBatches.clear();
+            lastPendingInstancedBatch = null;
+            lastPendingInstancedMesh = null;
+            lastPendingInstancedTexture = null;
+            lastPendingInstancedRenderMode = null;
+        }
+
+        private IrisCompanionQueuedBatch pendingIrisCompanionBatch(GpuMeshKind kind, String stablePartKey,
+                int geometryHash, TextureAtlasSprite sprite, int sourceVertices, VertexFormat.Mode sourceMode,
+                boolean smoothing, UvTransform uvTransform, ResourceLocation textureLocation,
+                LegacyTexturedRenderMode renderMode, List<PreparedVertex> vertices) {
+            IrisCompanionQueuedBatch cached = lastPendingIrisCompanionBatch;
+            if (cached != null
+                    && lastPendingIrisCompanionKind == kind
+                    && lastPendingIrisCompanionGeometryHash == geometryHash
+                    && lastPendingIrisCompanionSprite == sprite
+                    && lastPendingIrisCompanionSourceVertices == sourceVertices
+                    && lastPendingIrisCompanionSourceMode == sourceMode
+                    && lastPendingIrisCompanionSmoothing == smoothing
+                    && sameNullable(lastPendingIrisCompanionStablePartKey, stablePartKey)
+                    && sameNullable(lastPendingIrisCompanionUvTransform, uvTransform)
+                    && sameNullable(lastPendingIrisCompanionTexture, textureLocation)
+                    && lastPendingIrisCompanionRenderMode == renderMode) {
+                return cached;
+            }
+            IrisCompanionQueueKey key = new IrisCompanionQueueKey(kind, stablePartKey, geometryHash, sprite,
+                    sourceVertices, sourceMode, smoothing, uvTransform, textureLocation, renderMode);
+            IrisCompanionQueuedBatch batch = pendingIrisCompanionBatches.get(key);
+            if (batch == null) {
+                batch = new IrisCompanionQueuedBatch(key, vertices);
+                pendingIrisCompanionBatches.put(key, batch);
+            }
+            lastPendingIrisCompanionBatch = batch;
+            lastPendingIrisCompanionKind = kind;
+            lastPendingIrisCompanionStablePartKey = stablePartKey;
+            lastPendingIrisCompanionGeometryHash = geometryHash;
+            lastPendingIrisCompanionSprite = sprite;
+            lastPendingIrisCompanionSourceVertices = sourceVertices;
+            lastPendingIrisCompanionSourceMode = sourceMode;
+            lastPendingIrisCompanionSmoothing = smoothing;
+            lastPendingIrisCompanionUvTransform = uvTransform;
+            lastPendingIrisCompanionTexture = textureLocation;
+            lastPendingIrisCompanionRenderMode = renderMode;
+            return batch;
+        }
+
+        private static boolean sameNullable(Object left, Object right) {
+            return left == right || (left != null && left.equals(right));
+        }
+
+        private void clearPendingIrisCompanionBatches() {
+            pendingIrisCompanionBatches.clear();
+            lastPendingIrisCompanionBatch = null;
+            lastPendingIrisCompanionKind = null;
+            lastPendingIrisCompanionStablePartKey = null;
+            lastPendingIrisCompanionGeometryHash = 0;
+            lastPendingIrisCompanionSprite = null;
+            lastPendingIrisCompanionSourceVertices = 0;
+            lastPendingIrisCompanionSourceMode = null;
+            lastPendingIrisCompanionSmoothing = false;
+            lastPendingIrisCompanionUvTransform = null;
+            lastPendingIrisCompanionTexture = null;
+            lastPendingIrisCompanionRenderMode = null;
         }
 
         private boolean canAttemptGpuMeshUpload() {
@@ -4794,7 +5187,7 @@ public final class LegacyWavefrontModel {
                 }
                 return RenderBackendFallbackReason.GPU_NOT_RENDER_THREAD;
             }
-            if (!HbmInstancedGlCompat.supportsDrawArraysInstancing()) {
+            if (!HbmRenderFrameFlags.current().instancingGlReady()) {
                 if (!warnedInstancedGlUnavailableUpload) {
                     warnedInstancedGlUnavailableUpload = true;
                     HbmNtm.LOGGER.warn(
@@ -5172,9 +5565,7 @@ public final class LegacyWavefrontModel {
             }
             BufferBuilder builder = new BufferBuilder(Math.max(256, vertices.size() * 40));
             builder.begin(drawMode, DefaultVertexFormat.NEW_ENTITY);
-            PoseStack identityStack = new PoseStack();
-            PoseStack.Pose identity = identityStack.last();
-            emitPreparedVertices(vertices, builder, identity.pose(), identity.normal(), packedLight, packedOverlay,
+            emitPreparedVertices(vertices, builder, IDENTITY_POSITION, IDENTITY_NORMAL, packedLight, packedOverlay,
                     red, green, blue, alpha, false, smoothing, uvTransform);
             BufferBuilder.RenderedBuffer renderedBuffer = builder.end();
             return uploadVertexBuffer(renderedBuffer, Math.max(0L, (long) vertices.size() * 40L),
@@ -5190,9 +5581,7 @@ public final class LegacyWavefrontModel {
             }
             BufferBuilder builder = new BufferBuilder(Math.max(256, vertices.size() * 40));
             builder.begin(drawMode, DefaultVertexFormat.NEW_ENTITY);
-            PoseStack identityStack = new PoseStack();
-            PoseStack.Pose identity = identityStack.last();
-            emitPreparedVerticesWithSprite(vertices, sprite, builder, identity.pose(), identity.normal(),
+            emitPreparedVerticesWithSprite(vertices, sprite, builder, IDENTITY_POSITION, IDENTITY_NORMAL,
                     packedLight, packedOverlay, red, green, blue, alpha, false, false, uvTransform);
             BufferBuilder.RenderedBuffer renderedBuffer = builder.end();
             return uploadVertexBuffer(renderedBuffer, Math.max(0L, (long) vertices.size() * 40L),
@@ -5207,8 +5596,7 @@ public final class LegacyWavefrontModel {
             }
             BufferBuilder builder = new BufferBuilder(Math.max(256, vertices.size() * 16));
             builder.begin(drawMode, DefaultVertexFormat.POSITION_COLOR);
-            PoseStack identityStack = new PoseStack();
-            emitPreparedVerticesUntextured(vertices, builder, identityStack.last().pose(), red, green, blue, alpha);
+            emitPreparedVerticesUntextured(vertices, builder, IDENTITY_POSITION, red, green, blue, alpha);
             BufferBuilder.RenderedBuffer renderedBuffer = builder.end();
             return uploadVertexBuffer(renderedBuffer, Math.max(0L, (long) vertices.size() * 16L),
                     "cached untextured mesh");
@@ -5270,7 +5658,7 @@ public final class LegacyWavefrontModel {
                     stateGuard.close();
                 }
             }
-            gpuDrawCalls.incrementAndGet();
+            gpuDrawCalls++;
             currentFrameGpuDrawCalls++;
         }
 
@@ -5309,7 +5697,7 @@ public final class LegacyWavefrontModel {
                 return false;
             }
             boolean drew = false;
-            irisEligibleBatches.incrementAndGet();
+            irisEligibleBatches++;
             currentFrameIrisEligibleBatches++;
             if (!batch.quadVertices().isEmpty()) {
                 IrisCompanionMesh mesh = irisCompanionMeshFor(batch, VertexFormat.Mode.QUADS, kind, sprite,
@@ -5352,7 +5740,7 @@ public final class LegacyWavefrontModel {
                 return false;
             }
             boolean drew = false;
-            irisEligibleBatches.incrementAndGet();
+            irisEligibleBatches++;
             currentFrameIrisEligibleBatches++;
             if (!batch.quadVertices().isEmpty()) {
                 drawIrisTransientCompanionPart(batch, VertexFormat.Mode.QUADS, kind, sprite, textureLocation,
@@ -5379,8 +5767,7 @@ public final class LegacyWavefrontModel {
                 boolean shadowPass, float fadeAlpha, List<PreparedVertex> vertices) {
             LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, fadeAlpha < 0.999F);
             IrisCompanionMeshKey key = new IrisCompanionMeshKey(kind, "transient:" + batch.stableKey(),
-                    sourceGeometryHash(sourceMode, vertices), sprite, vertices.size(), sourceMode, smoothing,
-                    uvTransform);
+                    batch.geometryHash(), sprite, vertices.size(), sourceMode, smoothing, uvTransform);
             irisUploadAttempts.incrementAndGet();
             IrisCompanionMesh mesh;
             try {
@@ -5464,17 +5851,15 @@ public final class LegacyWavefrontModel {
             }
             BufferBuilder builder = new BufferBuilder(Math.max(256, triangleVertices.size() * 56));
             builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.NEW_ENTITY);
-            PoseStack identityStack = new PoseStack();
-            PoseStack.Pose identity = identityStack.last();
             if (key.kind() == GpuMeshKind.UNTEXTURED) {
-                emitPreparedVertices(triangleVertices, builder, identity.pose(), identity.normal(),
+                emitPreparedVertices(triangleVertices, builder, IDENTITY_POSITION, IDENTITY_NORMAL,
                         LightTexture.FULL_BRIGHT, 0, 255, 255, 255, 255, false, false, UvTransform.DEFAULT);
             } else if (key.sprite() == null) {
-                emitPreparedVertices(triangleVertices, builder, identity.pose(), identity.normal(), packedLight,
+                emitPreparedVertices(triangleVertices, builder, IDENTITY_POSITION, IDENTITY_NORMAL, packedLight,
                         packedOverlay, red, green, blue, alpha, false, smoothing, key.uvTransform());
             } else {
-                emitPreparedVerticesWithSprite(triangleVertices, key.sprite(), builder, identity.pose(),
-                        identity.normal(), packedLight, packedOverlay, red, green, blue, alpha, false, false,
+                emitPreparedVerticesWithSprite(triangleVertices, key.sprite(), builder, IDENTITY_POSITION,
+                        IDENTITY_NORMAL, packedLight, packedOverlay, red, green, blue, alpha, false, false,
                         key.uvTransform());
             }
             BufferBuilder.RenderedBuffer renderedBuffer = builder.end();
@@ -5630,8 +6015,9 @@ public final class LegacyWavefrontModel {
                 mesh.bind();
                 mesh.prepareForShader(shader);
                 int lightmapSlot = preparedLightmapSlot;
-                if (!shadowPass && lightmapSlot < 0) {
-                    lightmapSlot = mesh.preparePerVertexLightmapSlot(modelView, packedLight);
+                if (!shadowPass && lightmapSlot < 0 && requiresPerVertexLightmap(packedLight)) {
+                    lightmapSlot = mesh.preparePerVertexLightmapSlot(modelView, packedLight,
+                            HbmRenderFrameFlags.current().useSlicedLight());
                     if (mesh.consumeLightmapStorageFailureFlag()) {
                         recordIrisLightmapStorageFailure();
                     }
@@ -5649,13 +6035,13 @@ public final class LegacyWavefrontModel {
                 mesh.bindVaoIfNeeded();
                 GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.vertexCount());
                 HbmIrisRenderBatch.recordDraw(shadowPass);
-                irisDrawCalls.incrementAndGet();
+                irisDrawCalls++;
                 currentFrameIrisDrawCalls++;
                 if (shadowPass) {
-                    irisShadowDrawCalls.incrementAndGet();
+                    irisShadowDrawCalls++;
                     currentFrameIrisShadowDrawCalls++;
                 }
-                gpuDrawCalls.incrementAndGet();
+                gpuDrawCalls++;
                 currentFrameGpuDrawCalls++;
                 success = true;
             } finally {
@@ -5672,38 +6058,46 @@ public final class LegacyWavefrontModel {
             if (pendingInstancedBatches.isEmpty()) {
                 return;
             }
-            List<InstancedBatch> batches = new ArrayList<>(pendingInstancedBatches.values());
-            pendingInstancedBatches.clear();
-            instancedFlushes.incrementAndGet();
-            coalesceDuplicateInstancedInstances(batches);
-            sortInstancedTailBatches(batches);
-            if (drawMdiBatchesIfAvailable(batches, projectionMatrix)) {
-                return;
-            }
-            for (InstancedBatch batch : batches) {
-                if (batch.instances().isEmpty()) {
-                    continue;
+            List<InstancedBatch> batches = instancedFlushScratch;
+            batches.clear();
+            batches.addAll(pendingInstancedBatches.values());
+            clearPendingInstancedBatches();
+            try {
+                instancedFlushes++;
+                coalesceDuplicateInstancedInstances(batches);
+                sortInstancedTailBatches(batches);
+                if (drawMdiBatchesIfAvailable(batches, projectionMatrix)) {
+                    return;
                 }
-                try {
-                    if (!drawInstancedBatch(batch, projectionMatrix)) {
-                        drawInstancedCpuFallback(batch, RenderBackendFallbackReason.INSTANCING_SHADER_UNAVAILABLE);
+                for (InstancedBatch batch : batches) {
+                    if (batch.instances().isEmpty()) {
+                        continue;
                     }
-                } catch (InstancedBatchDrawException exception) {
-                    int fallbackStart = exception.fallbackStartIndex();
-                    int fallbackInstances = instancedFallbackCount(batch, fallbackStart);
-                    recordInstancedFallback(RenderBackendFallbackReason.INSTANCING_DRAW_FAILED,
-                            fallbackInstances, batch.renderMode());
-                    drawInstancedCpuFallback(batch, RenderBackendFallbackReason.INSTANCING_DRAW_FAILED, fallbackStart);
-                    HbmNtm.LOGGER.debug(
-                            "Failed to draw legacy OBJ instanced batch {} after {} submitted instance(s); CPU fallback covers remaining {} instance(s)",
-                            batch.key(), Math.min(fallbackStart, batch.instances().size()), fallbackInstances,
-                            exception.getCause() != null ? exception.getCause() : exception);
-                } catch (RuntimeException exception) {
-                    recordInstancedFallback(RenderBackendFallbackReason.INSTANCING_DRAW_FAILED,
-                            batch.instances().size(), batch.renderMode());
-                    drawInstancedCpuFallback(batch, RenderBackendFallbackReason.INSTANCING_DRAW_FAILED);
-                    HbmNtm.LOGGER.debug("Failed to draw legacy OBJ instanced batch {}", batch.key(), exception);
+                    try {
+                        if (!drawInstancedBatch(batch, projectionMatrix)) {
+                            drawInstancedCpuFallback(batch,
+                                    RenderBackendFallbackReason.INSTANCING_SHADER_UNAVAILABLE);
+                        }
+                    } catch (InstancedBatchDrawException exception) {
+                        int fallbackStart = exception.fallbackStartIndex();
+                        int fallbackInstances = instancedFallbackCount(batch, fallbackStart);
+                        recordInstancedFallback(RenderBackendFallbackReason.INSTANCING_DRAW_FAILED,
+                                fallbackInstances, batch.renderMode());
+                        drawInstancedCpuFallback(batch, RenderBackendFallbackReason.INSTANCING_DRAW_FAILED,
+                                fallbackStart);
+                        HbmNtm.LOGGER.debug(
+                                "Failed to draw legacy OBJ instanced batch {} after {} submitted instance(s); CPU fallback covers remaining {} instance(s)",
+                                batch.key(), Math.min(fallbackStart, batch.instances().size()), fallbackInstances,
+                                exception.getCause() != null ? exception.getCause() : exception);
+                    } catch (RuntimeException exception) {
+                        recordInstancedFallback(RenderBackendFallbackReason.INSTANCING_DRAW_FAILED,
+                                batch.instances().size(), batch.renderMode());
+                        drawInstancedCpuFallback(batch, RenderBackendFallbackReason.INSTANCING_DRAW_FAILED);
+                        HbmNtm.LOGGER.debug("Failed to draw legacy OBJ instanced batch {}", batch.key(), exception);
+                    }
                 }
+            } finally {
+                batches.clear();
             }
         }
 
@@ -5711,54 +6105,65 @@ public final class LegacyWavefrontModel {
             if (pendingIrisCompanionBatches.isEmpty()) {
                 return;
             }
-            List<IrisCompanionQueuedBatch> batches = new ArrayList<>(pendingIrisCompanionBatches.values());
-            pendingIrisCompanionBatches.clear();
-            coalesceDuplicateIrisCompanionInstances(batches);
-            irisQueuedFlushes.incrementAndGet();
-            currentFrameIrisQueuedFlushes++;
-            boolean shadowPass = HbmShaderCompatibilityDetector.isRenderingShadowPass();
-            ShaderInstance shader = HbmIrisExtendedShaderAccess.getBlockEntityShader(shadowPass);
-            if (shader == null) {
-                drawIrisQueuedCpuFallbacks(batches, RenderBackendFallbackReason.IRIS_SHADER_UNAVAILABLE);
-                return;
-            }
-            List<IrisCompanionQueuedDraw> normalAlphaDraws = new ArrayList<>();
-            for (IrisCompanionQueuedBatch batch : batches) {
-                if (batch.instances().isEmpty()) {
-                    continue;
+            List<IrisCompanionQueuedBatch> batches = irisCompanionFlushScratch;
+            batches.clear();
+            batches.addAll(pendingIrisCompanionBatches.values());
+            clearPendingIrisCompanionBatches();
+            try {
+                coalesceDuplicateIrisCompanionInstances(batches);
+                irisQueuedFlushes++;
+                currentFrameIrisQueuedFlushes++;
+                boolean shadowPass = HbmShaderCompatibilityDetector.isRenderingShadowPass();
+                ShaderInstance shader = HbmIrisExtendedShaderAccess.getBlockEntityShader(shadowPass);
+                if (shader == null) {
+                    drawIrisQueuedCpuFallbacks(batches, RenderBackendFallbackReason.IRIS_SHADER_UNAVAILABLE);
+                    return;
                 }
-                if (isIrisCompanionNormalAlphaMode(batch.key().renderMode())) {
-                    recordIrisEligibleBatch();
+                List<IrisCompanionQueuedDraw> normalAlphaDraws = null;
+                for (IrisCompanionQueuedBatch batch : batches) {
+                    if (batch.instances().isEmpty()) {
+                        continue;
+                    }
+                    if (isIrisCompanionNormalAlphaMode(batch.key().renderMode())) {
+                        recordIrisEligibleBatch();
+                        try {
+                            if (normalAlphaDraws == null) {
+                                normalAlphaDraws = irisNormalAlphaDrawScratch;
+                                normalAlphaDraws.clear();
+                            }
+                            collectIrisQueuedDrawsWithPreparedLightmapSlots(batch, normalAlphaDraws, !shadowPass);
+                        } catch (RuntimeException exception) {
+                            drawIrisQueuedCpuFallback(batch, RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED);
+                            HbmNtm.LOGGER.debug(
+                                    "Failed to prepare legacy OBJ queued Iris normal-alpha companion batch {}",
+                                    batch.key(), exception);
+                        }
+                        continue;
+                    }
                     try {
-                        collectIrisQueuedDrawsWithPreparedLightmapSlots(batch, normalAlphaDraws, !shadowPass);
+                        drawIrisQueuedBatch(batch, shader, projectionMatrix, shadowPass);
+                    } catch (IrisCompanionQueuedBatchDrawException exception) {
+                        int fallbackStart = exception.fallbackStartIndex();
+                        List<IrisCompanionQueuedInstance> fallbackInstances =
+                                irisQueuedFallbackInstances(batch, fallbackStart);
+                        drawIrisQueuedCpuFallback(batch, fallbackInstances,
+                                RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED);
+                        HbmNtm.LOGGER.debug(
+                                "Failed to draw legacy OBJ queued Iris companion batch {} after {} submitted instance(s); CPU fallback covers remaining {} instance(s)",
+                                batch.key(), Math.min(fallbackStart, batch.instances().size()),
+                                fallbackInstances.size(),
+                                exception.getCause() != null ? exception.getCause() : exception);
                     } catch (RuntimeException exception) {
                         drawIrisQueuedCpuFallback(batch, RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED);
-                        HbmNtm.LOGGER.debug(
-                                "Failed to prepare legacy OBJ queued Iris normal-alpha companion batch {}",
+                        HbmNtm.LOGGER.debug("Failed to draw legacy OBJ queued Iris companion batch {}",
                                 batch.key(), exception);
                     }
-                    continue;
                 }
-                try {
-                    drawIrisQueuedBatch(batch, shader, projectionMatrix, shadowPass);
-                } catch (IrisCompanionQueuedBatchDrawException exception) {
-                    int fallbackStart = exception.fallbackStartIndex();
-                    List<IrisCompanionQueuedInstance> fallbackInstances =
-                            irisQueuedFallbackInstances(batch, fallbackStart);
-                    drawIrisQueuedCpuFallback(batch, fallbackInstances,
-                            RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED);
-                    HbmNtm.LOGGER.debug(
-                            "Failed to draw legacy OBJ queued Iris companion batch {} after {} submitted instance(s); CPU fallback covers remaining {} instance(s)",
-                            batch.key(), Math.min(fallbackStart, batch.instances().size()),
-                            fallbackInstances.size(),
-                            exception.getCause() != null ? exception.getCause() : exception);
-                } catch (RuntimeException exception) {
-                    drawIrisQueuedCpuFallback(batch, RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED);
-                    HbmNtm.LOGGER.debug("Failed to draw legacy OBJ queued Iris companion batch {}",
-                            batch.key(), exception);
-                }
+                drawIrisNormalAlphaQueuedDraws(normalAlphaDraws, shader, projectionMatrix, shadowPass);
+            } finally {
+                irisNormalAlphaDrawScratch.clear();
+                batches.clear();
             }
-            drawIrisNormalAlphaQueuedDraws(normalAlphaDraws, shader, projectionMatrix, shadowPass);
         }
 
         private void drawIrisQueuedBatch(IrisCompanionQueuedBatch batch, ShaderInstance shader,
@@ -5770,7 +6175,8 @@ public final class LegacyWavefrontModel {
                         batch.sourceVertices());
                 int[] lightmapSlots = prepareIrisQueuedLightmapSlots(mesh, batch.instances(), !shadowPass);
                 for (int i = 0; i < batch.instances().size(); i++) {
-                    drawIrisQueuedInstance(batch, batch.instances().get(i), shader, mesh, lightmapSlots[i],
+                    drawIrisQueuedInstance(batch, batch.instances().get(i), shader, mesh,
+                            preparedLightmapSlot(lightmapSlots, i),
                             projectionMatrix, shadowPass);
                     submittedInstances = i + 1;
                 }
@@ -5781,19 +6187,32 @@ public final class LegacyWavefrontModel {
 
         private int[] prepareIrisQueuedLightmapSlots(IrisCompanionMesh mesh,
                 List<IrisCompanionQueuedInstance> instances, boolean preparePerVertexLightmap) {
-            int[] slots = new int[instances.size()];
-            Arrays.fill(slots, -1);
-            if (!preparePerVertexLightmap || HbmShaderCompatibilityDetector.isRenderingShadowPass()) {
-                return slots;
+            if (!preparePerVertexLightmap) {
+                return NO_LIGHTMAP_SLOTS;
+            }
+            int firstPerVertexLightmapIndex = -1;
+            for (int i = 0; i < instances.size(); i++) {
+                if (requiresPerVertexLightmap(instances.get(i).packedLight())) {
+                    firstPerVertexLightmapIndex = i;
+                    break;
+                }
+            }
+            if (firstPerVertexLightmapIndex < 0) {
+                return NO_LIGHTMAP_SLOTS;
             }
             if (!mesh.ensureLightmapSlotStorage(instances.size())) {
                 recordIrisLightmapStorageFailure();
-                return slots;
+                return NO_LIGHTMAP_SLOTS;
             }
-            for (int i = 0; i < instances.size(); i++) {
+            int[] slots = irisQueuedLightmapSlotScratch(instances.size());
+            boolean useSlicedLight = HbmRenderFrameFlags.current().useSlicedLight();
+            for (int i = firstPerVertexLightmapIndex; i < instances.size(); i++) {
                 IrisCompanionQueuedInstance instance = instances.get(i);
+                if (!requiresPerVertexLightmap(instance.packedLight())) {
+                    continue;
+                }
                 slots[i] = mesh.preparePerVertexLightmapSlot(instance.position(), instance.packedLight(),
-                        instances.size());
+                        instances.size(), useSlicedLight);
                 if (mesh.consumeLightmapStorageFailureFlag()) {
                     recordIrisLightmapStorageFailure();
                 }
@@ -5802,9 +6221,25 @@ public final class LegacyWavefrontModel {
             return slots;
         }
 
+        private int[] irisQueuedLightmapSlotScratch(int count) {
+            if (irisQueuedLightmapSlotScratch.length < count) {
+                irisQueuedLightmapSlotScratch = new int[count];
+            }
+            Arrays.fill(irisQueuedLightmapSlotScratch, 0, count, -1);
+            return irisQueuedLightmapSlotScratch;
+        }
+
+        private static int preparedLightmapSlot(int[] slots, int index) {
+            return slots.length == 0 ? -1 : slots[index];
+        }
+
         private void recordIrisEligibleBatch() {
-            irisEligibleBatches.incrementAndGet();
+            irisEligibleBatches++;
             currentFrameIrisEligibleBatches++;
+        }
+
+        private static boolean requiresPerVertexLightmap(int packedLight) {
+            return packedLight != LightTexture.FULL_BRIGHT;
         }
 
         private void collectIrisQueuedDraws(IrisCompanionQueuedBatch batch, List<IrisCompanionQueuedDraw> draws) {
@@ -5822,13 +6257,14 @@ public final class LegacyWavefrontModel {
                     batch.sourceVertices());
             int[] lightmapSlots = prepareIrisQueuedLightmapSlots(mesh, batch.instances(), preparePerVertexLightmap);
             for (int i = 0; i < batch.instances().size(); i++) {
-                draws.add(new IrisCompanionQueuedDraw(batch, batch.instances().get(i), mesh, lightmapSlots[i]));
+                draws.add(new IrisCompanionQueuedDraw(batch, batch.instances().get(i), mesh,
+                        preparedLightmapSlot(lightmapSlots, i)));
             }
         }
 
         private void drawIrisNormalAlphaQueuedDraws(List<IrisCompanionQueuedDraw> draws, ShaderInstance shader,
                 Matrix4f projectionMatrix, boolean shadowPass) {
-            if (draws.isEmpty()) {
+            if (draws == null || draws.isEmpty()) {
                 return;
             }
             draws.sort((left, right) -> Float.compare(right.instance().sortDepthSq(), left.instance().sortDepthSq()));
@@ -5886,27 +6322,38 @@ public final class LegacyWavefrontModel {
                     instance.position(), instance.packedLight(), instance.packedOverlay(), instance.red(),
                     instance.green(), instance.blue(), instance.alpha(), shader, shadowPass,
                     preparedLightmapSlot, projectionMatrix, instance.fadeAlpha());
-            irisQueuedDrawCalls.incrementAndGet();
+            irisQueuedDrawCalls++;
             currentFrameIrisQueuedDrawCalls++;
         }
 
         private void drawIrisQueuedCpuFallbacks(List<IrisCompanionQueuedBatch> batches,
                 RenderBackendFallbackReason reason) {
-            List<IrisCompanionQueuedDraw> normalAlphaDraws = new ArrayList<>();
+            List<IrisCompanionQueuedDraw> normalAlphaDraws = null;
             for (IrisCompanionQueuedBatch batch : batches) {
                 if (batch.instances().isEmpty()) {
                     continue;
                 }
                 if (isIrisCompanionNormalAlphaMode(batch.key().renderMode())) {
+                    if (normalAlphaDraws == null) {
+                        normalAlphaDraws = irisNormalAlphaDrawScratch;
+                        normalAlphaDraws.clear();
+                    }
                     collectIrisQueuedDraws(batch, normalAlphaDraws);
                     continue;
                 }
                 drawIrisQueuedCpuFallback(batch, reason);
             }
-            normalAlphaDraws.sort((left, right) -> Float.compare(right.instance().sortDepthSq(),
-                    left.instance().sortDepthSq()));
-            for (IrisCompanionQueuedDraw draw : normalAlphaDraws) {
-                drawIrisQueuedCpuFallback(draw.batch(), draw.instance(), reason);
+            if (normalAlphaDraws == null || normalAlphaDraws.isEmpty()) {
+                return;
+            }
+            try {
+                normalAlphaDraws.sort((left, right) -> Float.compare(right.instance().sortDepthSq(),
+                        left.instance().sortDepthSq()));
+                for (IrisCompanionQueuedDraw draw : normalAlphaDraws) {
+                    drawIrisQueuedCpuFallback(draw.batch(), draw.instance(), reason);
+                }
+            } finally {
+                irisNormalAlphaDrawScratch.clear();
             }
         }
 
@@ -5973,154 +6420,323 @@ public final class LegacyWavefrontModel {
             if (!flags.mdiEnabled() || batches.isEmpty()) {
                 return false;
             }
-            List<InstancedBatch> eligible = new ArrayList<>();
-            for (InstancedBatch batch : batches) {
-                if (!batch.instances().isEmpty()
-                        && !isInstancedNormalAlphaMode(batch.renderMode())
-                        && !isGlintRenderMode(batch.renderMode())) {
-                    eligible.add(batch);
-                }
-            }
-            int eligibleBatches = eligible.size();
-            if (eligibleBatches <= 0) {
-                return false;
-            }
-            mdiEligibleFlushes.incrementAndGet();
-            mdiEligibleBatches.addAndGet(eligibleBatches);
-            currentFrameMdiEligibleFlushes++;
-            currentFrameMdiEligibleBatches += eligibleBatches;
-            recordMdiAdditiveEligible(eligible);
-            ensureMdiCapabilities();
-            if (!mdiAvailable()) {
-                recordMdiFallback(eligibleBatches, eligible,
-                        RenderBackendFallbackReason.MDI_UNAVAILABLE, "mdi-unavailable");
-                recordMdiAdditiveFallback(eligible);
-                return false;
-            }
+            List<InstancedBatch> eligible = null;
             try {
-                if (!drawMdiBatches(eligible, projectionMatrix, flags)) {
-                    recordMdiFallback(eligibleBatches);
-                    recordMdiAdditiveFallback(eligible);
+                boolean allEligible = true;
+                int eligibleBatches = 0;
+                int eligibleInstances = 0;
+                int additiveEligibleBatches = 0;
+                int additiveEligibleInstances = 0;
+                boolean needsTexturedShader = false;
+                boolean needsUntexturedShader = false;
+                for (int i = 0; i < batches.size(); i++) {
+                    InstancedBatch batch = batches.get(i);
+                    if (isMdiEligibleBatch(batch)) {
+                        eligibleBatches++;
+                        int instances = batch.instances().size();
+                        eligibleInstances += instances;
+                        if (isInstancedAdditiveMode(batch.renderMode())) {
+                            additiveEligibleBatches++;
+                            additiveEligibleInstances += instances;
+                        }
+                        if (batch.mesh().key().kind() == GpuMeshKind.UNTEXTURED) {
+                            needsUntexturedShader = true;
+                        } else {
+                            needsTexturedShader = true;
+                        }
+                        if (!allEligible) {
+                            if (eligible == null) {
+                                eligible = mdiEligibleScratch();
+                            }
+                            eligible.add(batch);
+                        }
+                    } else if (allEligible) {
+                        allEligible = false;
+                        if (eligibleBatches > 0) {
+                            eligible = mdiEligibleScratch();
+                            eligible.addAll(batches.subList(0, i));
+                        }
+                    }
+                }
+                if (eligibleBatches <= 0) {
                     return false;
                 }
-                batches.removeAll(eligible);
-                return batches.isEmpty();
-            } catch (MdiPartialDrawException exception) {
-                recordMdiPartialDrawFailure();
-                disableMdiDispatchAfterFailure();
-                HbmNtm.LOGGER.error(
-                        "Legacy OBJ MDI dispatch failed after draw submission; suppressing fallback only for submitted MDI groups and using ordinary instancing for remaining batches until backend clear",
-                        exception);
-                batches.removeAll(exception.suppressFallbackBatches());
-                return batches.isEmpty();
-            } catch (RuntimeException exception) {
-                disableMdiDispatchAfterFailure();
-                recordMdiFallback(eligibleBatches, eligible,
-                        RenderBackendFallbackReason.MDI_UNAVAILABLE, "mdi-dispatch");
-                recordMdiAdditiveFallback(eligible);
-                HbmNtm.LOGGER.error(
-                        "Legacy OBJ MDI dispatch failed before draw submission; using ordinary instancing for future flushes until backend clear",
-                        exception);
-                return false;
+                List<InstancedBatch> mdiBatches = allEligible ? batches : eligible;
+                mdiEligibleFlushes++;
+                mdiEligibleBatches += eligibleBatches;
+                currentFrameMdiEligibleFlushes++;
+                currentFrameMdiEligibleBatches += eligibleBatches;
+                recordMdiAdditiveEligible(additiveEligibleBatches);
+                ensureMdiCapabilities();
+                if (!mdiAvailable()) {
+                    recordMdiFallback(eligibleBatches, mdiBatches,
+                            RenderBackendFallbackReason.MDI_UNAVAILABLE, "mdi-unavailable", eligibleInstances);
+                    recordMdiAdditiveFallback(additiveEligibleBatches);
+                    return false;
+                }
+                try {
+                    try {
+                        MdiDrawResult drawResult = drawMdiBatches(mdiBatches, projectionMatrix, flags,
+                                needsTexturedShader, needsUntexturedShader, eligibleInstances,
+                                additiveEligibleInstances);
+                        if (!drawResult.drew()) {
+                            recordMdiFallback(eligibleBatches);
+                            recordMdiAdditiveFallback(additiveEligibleBatches);
+                            return false;
+                        }
+                        removeDrawnMdiBatches(batches, drawResult.drawnBatches());
+                        return batches.isEmpty();
+                    } finally {
+                        clearMdiPrepareScratch();
+                    }
+                } catch (MdiPartialDrawException exception) {
+                    recordMdiPartialDrawFailure();
+                    disableMdiDispatchAfterFailure();
+                    HbmNtm.LOGGER.error(
+                            "Legacy OBJ MDI dispatch failed after draw submission; suppressing fallback only for submitted MDI groups and using ordinary instancing for remaining batches until backend clear",
+                            exception);
+                    removeDrawnMdiBatches(batches, exception.suppressFallbackBatches());
+                    return batches.isEmpty();
+                } catch (RuntimeException exception) {
+                    disableMdiDispatchAfterFailure();
+                    recordMdiFallback(eligibleBatches, mdiBatches,
+                            RenderBackendFallbackReason.MDI_UNAVAILABLE, "mdi-dispatch", eligibleInstances);
+                    recordMdiAdditiveFallback(additiveEligibleBatches);
+                    HbmNtm.LOGGER.error(
+                            "Legacy OBJ MDI dispatch failed before draw submission; using ordinary instancing for future flushes until backend clear",
+                            exception);
+                    return false;
+                }
+            } finally {
+                clearMdiEligibleScratch();
+                clearMdiDrawGroupScratch();
             }
         }
 
-        private boolean drawMdiBatches(List<InstancedBatch> batches, Matrix4f projectionMatrix,
-                HbmRenderFrameFlags.Snapshot flags) {
-            if (!allMdiShadersReady(batches)) {
+        private List<InstancedBatch> mdiEligibleScratch() {
+            mdiEligibleBatchScratch.clear();
+            return mdiEligibleBatchScratch;
+        }
+
+        private void clearMdiEligibleScratch() {
+            mdiEligibleBatchScratch.clear();
+        }
+
+        private void clearMdiPrepareScratch() {
+            mdiPreparedGroupScratch.clear();
+            mdiPreparedBatchScratch.clear();
+            mdiNoSlotBatchScratch.clear();
+        }
+
+        private void clearMdiDrawGroupScratch() {
+            mdiDrawGroupScratch.clear();
+            for (int i = 0; i < mdiDrawGroupPoolCursor; i++) {
+                mdiDrawGroupPool.get(i).clear();
+            }
+            mdiDrawGroupPoolCursor = 0;
+        }
+
+        private static boolean isMdiEligibleBatch(InstancedBatch batch) {
+            return !batch.instances().isEmpty()
+                    && !isInstancedNormalAlphaMode(batch.renderMode())
+                    && !isGlintRenderMode(batch.renderMode());
+        }
+
+        private void removeDrawnMdiBatches(List<InstancedBatch> batches, List<InstancedBatch> drawnBatches) {
+            if (batches.isEmpty() || drawnBatches.isEmpty()) {
+                return;
+            }
+            if (batches == drawnBatches) {
+                batches.clear();
+                return;
+            }
+            if (batches.size() == drawnBatches.size()) {
+                boolean sameOrder = true;
+                for (int i = 0; i < batches.size(); i++) {
+                    if (batches.get(i) != drawnBatches.get(i)) {
+                        sameOrder = false;
+                        break;
+                    }
+                }
+                if (sameOrder) {
+                    batches.clear();
+                    return;
+                }
+            }
+            Set<InstancedBatch> drawn = mdiDrawnBatchScratch;
+            try {
+                drawn.clear();
+                drawn.addAll(drawnBatches);
+                batches.removeIf(drawn::contains);
+            } finally {
+                drawn.clear();
+            }
+        }
+
+        private MdiDrawResult drawMdiBatches(List<InstancedBatch> batches, Matrix4f projectionMatrix,
+                HbmRenderFrameFlags.Snapshot flags, boolean needsTexturedShader, boolean needsUntexturedShader,
+                int totalInstances, int additiveInstances) {
+            if (!allMdiShadersReady(needsTexturedShader, needsUntexturedShader)) {
                 recordInstancedFallback(RenderBackendFallbackReason.INSTANCING_SHADER_UNAVAILABLE,
-                        totalInstances(batches),
+                        totalInstances,
                         fallbackDetail("mdi-shader", RenderBackendFallbackReason.INSTANCING_SHADER_UNAVAILABLE,
-                                batches, totalInstances(batches)));
-                recordInstancedAdditiveFallback(totalAdditiveInstances(batches));
-                return false;
+                                batches, totalInstances));
+                recordInstancedAdditiveFallback(additiveInstances);
+                return MdiDrawResult.FAILED;
             }
-            Map<MdiDrawGroupKey, List<InstancedBatch>> groups = new LinkedHashMap<>();
-            for (InstancedBatch batch : batches) {
-                MdiDrawGroupKey key = new MdiDrawGroupKey(batch.mesh().key().kind(), batch.textureLocation(),
-                        batch.renderMode());
-                groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(batch);
-            }
-            List<MdiPreparedGroup> preparedGroups = new ArrayList<>();
-            List<InstancedBatch> preparedBatches = new ArrayList<>();
-            List<InstancedBatch> noSlotBatches = new ArrayList<>();
-            if (!prepareMdiGroups(groups, preparedGroups, preparedBatches, noSlotBatches)) {
+            MdiDrawGroups drawGroups = collectMdiDrawGroups(batches, totalInstances);
+            clearMdiPrepareScratch();
+            List<MdiPreparedGroup> preparedGroups = mdiPreparedGroupScratch;
+            List<InstancedBatch> preparedBatches = mdiPreparedBatchScratch;
+            List<InstancedBatch> noSlotBatches = mdiNoSlotBatchScratch;
+            if (!prepareMdiGroups(drawGroups, preparedGroups, preparedBatches, noSlotBatches)) {
                 if (!noSlotBatches.isEmpty()) {
                     recordMdiNoSlot(noSlotBatches);
                 } else {
                     recordMdiFallbackDetail(RenderBackendFallbackReason.MDI_UNAVAILABLE, "mdi-prepare",
-                            batches, totalInstances(batches));
+                            batches, totalInstances);
                 }
-                return false;
+                return MdiDrawResult.FAILED;
             }
             if (recordStaleMdiPreparedGroups(preparedGroups, "prepare")) {
                 preparedGroups.clear();
                 preparedBatches.clear();
                 noSlotBatches.clear();
-                if (!prepareMdiGroups(groups, preparedGroups, preparedBatches, noSlotBatches)) {
+                if (!prepareMdiGroups(drawGroups, preparedGroups, preparedBatches, noSlotBatches)) {
                     if (!noSlotBatches.isEmpty()) {
                         recordMdiNoSlot(noSlotBatches);
                     } else {
                         recordMdiFallbackDetail(RenderBackendFallbackReason.MDI_UNAVAILABLE, "mdi-reprepare",
-                                batches, totalInstances(batches));
+                                batches, totalInstances);
                     }
-                    return false;
+                    return MdiDrawResult.FAILED;
                 }
                 if (recordStaleMdiPreparedGroups(preparedGroups, "reprepare")) {
                     recordMdiNoSlot(preparedBatches);
                     recordMdiNoSlot(noSlotBatches);
-                    return false;
+                    return MdiDrawResult.FAILED;
                 }
             }
             if (preparedBatches.isEmpty()) {
-                return false;
+                return MdiDrawResult.FAILED;
             }
             recordMdiNoSlot(noSlotBatches);
-            batches.clear();
-            batches.addAll(preparedBatches);
             int pendingBatchCount = preparedBatches.size() + noSlotBatches.size();
             int droppedNoSlotCount = noSlotBatches.size();
             boolean drew = false;
-            List<InstancedBatch> suppressFallbackBatches = new ArrayList<>();
-            for (MdiPreparedGroup prepared : preparedGroups) {
+            int completedGroups = 0;
+            for (int groupIndex = 0; groupIndex < preparedGroups.size(); groupIndex++) {
+                MdiPreparedGroup prepared = preparedGroups.get(groupIndex);
                 try {
                     drawMdiPreparedGroup(prepared, projectionMatrix, pendingBatchCount, droppedNoSlotCount, flags);
-                    suppressFallbackBatches.addAll(prepared.batches());
                     drew = true;
+                    completedGroups++;
                 } catch (MdiPreparedGroupDrawException exception) {
-                    if (exception.submittedCommandCount() > 0) {
-                        suppressFallbackBatches.addAll(submittedMdiBatches(prepared,
-                                exception.submittedCommandCount()));
-                    }
                     if (drew || exception.drawSubmitted()) {
+                        List<InstancedBatch> suppressFallbackBatches = submittedMdiBatches(preparedGroups,
+                                completedGroups, prepared, exception.submittedCommandCount());
                         throw new MdiPartialDrawException(exception, suppressFallbackBatches);
                     }
                     throw exception;
                 }
             }
-            return drew;
+            return drew ? new MdiDrawResult(true, preparedBatches) : MdiDrawResult.FAILED;
         }
 
-        private boolean prepareMdiGroups(Map<MdiDrawGroupKey, List<InstancedBatch>> groups,
+        private MdiDrawGroups collectMdiDrawGroups(List<InstancedBatch> batches, int totalInstances) {
+            clearMdiDrawGroupScratch();
+            if (batches.isEmpty()) {
+                return MdiDrawGroups.EMPTY;
+            }
+            MdiDrawGroupKey firstKey = mdiDrawGroupKey(batches.get(0));
+            int firstGroupInstances = batches.get(0).instances().size();
+            Map<MdiDrawGroupKey, MdiDrawGroup> groups = null;
+            for (int i = 1; i < batches.size(); i++) {
+                InstancedBatch batch = batches.get(i);
+                int batchInstances = batch.instances().size();
+                if (groups == null && sameMdiDrawGroup(batch, firstKey)) {
+                    firstGroupInstances += batchInstances;
+                    continue;
+                }
+                MdiDrawGroupKey key = mdiDrawGroupKey(batch);
+                if (groups == null) {
+                    groups = mdiDrawGroupScratch;
+                    MdiDrawGroup firstGroup = acquireMdiDrawGroup(firstKey);
+                    firstGroup.addAll(batches, 0, i, firstGroupInstances);
+                    groups.put(firstKey, firstGroup);
+                }
+                MdiDrawGroup group = groups.get(key);
+                if (group == null) {
+                    group = acquireMdiDrawGroup(key);
+                    groups.put(key, group);
+                }
+                group.add(batch, batchInstances);
+            }
+            if (groups == null) {
+                return new MdiDrawGroups(new MdiDrawGroup(firstKey, batches, totalInstances), Map.of());
+            }
+            return new MdiDrawGroups(null, groups);
+        }
+
+        private MdiDrawGroup acquireMdiDrawGroup(MdiDrawGroupKey key) {
+            MdiDrawGroup group;
+            if (mdiDrawGroupPoolCursor < mdiDrawGroupPool.size()) {
+                group = mdiDrawGroupPool.get(mdiDrawGroupPoolCursor);
+            } else {
+                group = new MdiDrawGroup();
+                mdiDrawGroupPool.add(group);
+            }
+            mdiDrawGroupPoolCursor++;
+            group.reset(key);
+            return group;
+        }
+
+        private static MdiDrawGroupKey mdiDrawGroupKey(InstancedBatch batch) {
+            return new MdiDrawGroupKey(batch.mesh().key().kind(), batch.textureLocation(), batch.renderMode());
+        }
+
+        private static boolean sameMdiDrawGroup(InstancedBatch batch, MdiDrawGroupKey key) {
+            return batch.mesh().key().kind() == key.kind()
+                    && batch.textureLocation().equals(key.textureLocation())
+                    && batch.renderMode() == key.renderMode();
+        }
+
+        private boolean prepareMdiGroups(MdiDrawGroups drawGroups,
                 List<MdiPreparedGroup> preparedGroups, List<InstancedBatch> preparedBatches,
                 List<InstancedBatch> noSlotBatches) {
             mdiAtlas.beginPreparePass();
-            for (Map.Entry<MdiDrawGroupKey, List<InstancedBatch>> entry : groups.entrySet()) {
-                int noSlotStart = noSlotBatches.size();
-                MdiPreparedGroup prepared = mdiAtlas.prepare(entry.getKey(), entry.getValue(), noSlotBatches);
-                if (prepared == null || prepared.commandCount() <= 0) {
-                    if (mdiAtlas.initializationFailed()) {
-                        return false;
-                    }
-                    if (noSlotBatches.size() == noSlotStart) {
-                        noSlotBatches.addAll(entry.getValue());
-                    }
-                    continue;
-                }
-                preparedGroups.add(prepared);
-                preparedBatches.addAll(prepared.batches());
+            if (drawGroups.isEmpty()) {
+                return true;
             }
-            return !preparedGroups.isEmpty();
+            if (drawGroups.isSingleGroup()) {
+                return prepareMdiGroup(drawGroups.singleGroup(), preparedGroups, preparedBatches, noSlotBatches);
+            }
+            for (MdiDrawGroup group : drawGroups.groupedBatches().values()) {
+                if (!prepareMdiGroup(group, preparedGroups, preparedBatches, noSlotBatches)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean prepareMdiGroup(MdiDrawGroup group,
+                List<MdiPreparedGroup> preparedGroups, List<InstancedBatch> preparedBatches,
+                List<InstancedBatch> noSlotBatches) {
+            int noSlotStart = noSlotBatches.size();
+            MdiPreparedGroup prepared = mdiAtlas.prepare(group.key(), group.batches(), group.instances(),
+                    noSlotBatches);
+            if (prepared == null || prepared.commandCount() <= 0) {
+                if (mdiAtlas.initializationFailed()) {
+                    return false;
+                }
+                if (noSlotBatches.size() == noSlotStart) {
+                    noSlotBatches.addAll(group.batches());
+                }
+                return true;
+            }
+            preparedGroups.add(prepared);
+            preparedBatches.addAll(prepared.batches());
+            return true;
         }
 
         private boolean recordStaleMdiPreparedGroups(List<MdiPreparedGroup> preparedGroups, String phase) {
@@ -6136,8 +6752,8 @@ public final class LegacyWavefrontModel {
             if (staleGroups <= 0) {
                 return false;
             }
-            mdiStalePreparedGroups.addAndGet(staleGroups);
-            mdiStalePreparedCommands.addAndGet(staleCommands);
+            mdiStalePreparedGroups += staleGroups;
+            mdiStalePreparedCommands += staleCommands;
             currentFrameMdiStalePreparedGroups += staleGroups;
             currentFrameMdiStalePreparedCommands += staleCommands;
             logMdiStalePreparedGroups(preparedGroups, phase, layoutGeneration, staleGroups, staleCommands);
@@ -6176,18 +6792,10 @@ public final class LegacyWavefrontModel {
             }
         }
 
-        private boolean allMdiShadersReady(List<InstancedBatch> batches) {
-            boolean needsTextured = false;
-            boolean needsUntextured = false;
-            for (InstancedBatch batch : batches) {
-                if (batch.mesh().key().kind() == GpuMeshKind.UNTEXTURED) {
-                    needsUntextured = true;
-                } else {
-                    needsTextured = true;
-                }
-            }
-            return (!needsTextured || HbmOptimizedRenderShaders.blockLitInstancedShader() != null)
-                    && (!needsUntextured || HbmOptimizedRenderShaders.blockUntexturedInstancedShader() != null);
+        private boolean allMdiShadersReady(boolean needsTexturedShader, boolean needsUntexturedShader) {
+            return (!needsTexturedShader || HbmOptimizedRenderShaders.blockLitInstancedShader() != null)
+                    && (!needsUntexturedShader
+                            || HbmOptimizedRenderShaders.blockUntexturedInstancedShader() != null);
         }
 
         private void drawMdiPreparedGroup(MdiPreparedGroup prepared, Matrix4f projectionMatrix,
@@ -6235,15 +6843,12 @@ public final class LegacyWavefrontModel {
                 mdiAtlas.orphanIndirectBufferIfConfigured(flags);
                 GL15.glBufferSubData(GL40.GL_DRAW_INDIRECT_BUFFER, 0L, prepared.commandBytes());
                 barrierMdiIndirectCommandsIfAvailable();
-                GLCapabilities dispatchCapabilities = HbmInstancedGlCompat.currentCapabilities();
-                boolean canMultiDraw = dispatchCapabilities != null
-                        && (dispatchCapabilities.glMultiDrawArraysIndirect != 0L
-                                || dispatchCapabilities.GL_ARB_multi_draw_indirect);
-                boolean canSingleDraw = dispatchCapabilities != null
-                        && (dispatchCapabilities.glDrawArraysIndirect != 0L
-                                || dispatchCapabilities.GL_ARB_draw_indirect);
+                boolean canMultiDraw = mdiCoreMultiDrawArraysIndirectSupported
+                        || mdiArbMultiDrawArraysIndirectSupported;
+                boolean canSingleDraw = mdiCoreDrawArraysIndirectSupported
+                        || mdiArbDrawArraysIndirectSupported;
                 if (canMultiDraw) {
-                    if (dispatchCapabilities.glMultiDrawArraysIndirect != 0L) {
+                    if (mdiCoreMultiDrawArraysIndirectSupported) {
                         GL43.glMultiDrawArraysIndirect(GL11.GL_TRIANGLES, 0L, prepared.commandCount(),
                                 MdiPreparedGroup.COMMAND_STRIDE_BYTES);
                     } else {
@@ -6257,7 +6862,7 @@ public final class LegacyWavefrontModel {
                 } else if (canSingleDraw) {
                     for (int i = 0; i < prepared.commandCount(); i++) {
                         long commandOffset = (long) i * MdiPreparedGroup.COMMAND_STRIDE_BYTES;
-                        if (dispatchCapabilities.glDrawArraysIndirect != 0L) {
+                        if (mdiCoreDrawArraysIndirectSupported) {
                             GL40.glDrawArraysIndirect(GL11.GL_TRIANGLES, commandOffset);
                         } else {
                             ARBDrawIndirect.glDrawArraysIndirect(GL11.GL_TRIANGLES, commandOffset);
@@ -6300,7 +6905,7 @@ public final class LegacyWavefrontModel {
         }
 
         private void recordMdiPartialDrawFailure() {
-            mdiPartialDrawFailures.incrementAndGet();
+            mdiPartialDrawFailures++;
             currentFrameMdiPartialDrawFailures++;
         }
 
@@ -6309,17 +6914,17 @@ public final class LegacyWavefrontModel {
                 return;
             }
             mdiDispatchDisabled = true;
-            mdiDispatchDisableEvents.incrementAndGet();
+            mdiDispatchDisableEvents++;
             currentFrameMdiDispatchDisableEvents++;
         }
 
         private void recordMdiAtlasRepackFailure() {
-            mdiAtlasRepackFailures.incrementAndGet();
+            mdiAtlasRepackFailures++;
             currentFrameMdiAtlasRepackFailures++;
         }
 
         private void recordMdiAtlasInitFailure() {
-            mdiAtlasInitFailures.incrementAndGet();
+            mdiAtlasInitFailures++;
             currentFrameMdiAtlasInitFailures++;
         }
 
@@ -6332,12 +6937,27 @@ public final class LegacyWavefrontModel {
             return prepared.batches().subList(0, count);
         }
 
+        private static List<InstancedBatch> submittedMdiBatches(List<MdiPreparedGroup> preparedGroups,
+                int completedGroups, MdiPreparedGroup failedGroup, int submittedCommandCount) {
+            int completed = Math.max(0, Math.min(completedGroups, preparedGroups.size()));
+            List<InstancedBatch> submittedInFailedGroup = submittedMdiBatches(failedGroup, submittedCommandCount);
+            if (completed <= 0) {
+                return submittedInFailedGroup;
+            }
+            List<InstancedBatch> submitted = new ArrayList<>(completed + submittedInFailedGroup.size());
+            for (int i = 0; i < completed; i++) {
+                submitted.addAll(preparedGroups.get(i).batches());
+            }
+            submitted.addAll(submittedInFailedGroup);
+            return submitted;
+        }
+
         private void barrierMdiIndirectCommandsIfAvailable() {
+            if (!mdiCommandMemoryBarrierSupported) {
+                return;
+            }
             try {
-                GLCapabilities capabilities = HbmInstancedGlCompat.currentCapabilities();
-                if (capabilities != null && capabilities.glMemoryBarrier != 0L) {
-                    GL42.glMemoryBarrier(GL42.GL_COMMAND_BARRIER_BIT);
-                }
+                GL42.glMemoryBarrier(GL42.GL_COMMAND_BARRIER_BIT);
             } catch (RuntimeException ignored) {
                 // Optional command-fetch barrier; unsupported drivers use the existing dispatch path.
             }
@@ -6473,35 +7093,20 @@ public final class LegacyWavefrontModel {
             return total;
         }
 
-        private static int totalAdditiveInstances(List<InstancedBatch> batches) {
-            int total = 0;
-            for (InstancedBatch batch : batches) {
-                if (isInstancedAdditiveMode(batch.renderMode())) {
-                    total += batch.instances().size();
-                }
-            }
-            return total;
-        }
-
-        private static int countAdditiveBatches(List<InstancedBatch> batches) {
-            int total = 0;
-            for (InstancedBatch batch : batches) {
-                if (isInstancedAdditiveMode(batch.renderMode()) && !batch.instances().isEmpty()) {
-                    total++;
-                }
-            }
-            return total;
-        }
-
         private void coalesceDuplicateInstancedInstances(List<InstancedBatch> batches) {
             long removed = 0L;
-            for (InstancedBatch batch : batches) {
-                removed += batch.removeDuplicateInstances();
+            Set<InstancedInstance> seen = instancedDuplicateScratch;
+            try {
+                for (InstancedBatch batch : batches) {
+                    removed += batch.removeDuplicateInstances(seen);
+                }
+            } finally {
+                seen.clear();
             }
             if (removed <= 0L) {
                 return;
             }
-            instancedDuplicateInstances.addAndGet(removed);
+            instancedDuplicateInstances += removed;
             currentFrameInstancedDuplicateInstances += removed;
             if (HbmClientConfig.renderBackendDiagnostics()) {
                 HbmNtm.LOGGER.debug("Coalesced {} duplicate legacy OBJ instanced submissions in current frame",
@@ -6511,13 +7116,18 @@ public final class LegacyWavefrontModel {
 
         private void coalesceDuplicateIrisCompanionInstances(List<IrisCompanionQueuedBatch> batches) {
             long removed = 0L;
-            for (IrisCompanionQueuedBatch batch : batches) {
-                removed += batch.removeDuplicateInstances();
+            Set<IrisCompanionQueuedInstance> seen = irisCompanionDuplicateScratch;
+            try {
+                for (IrisCompanionQueuedBatch batch : batches) {
+                    removed += batch.removeDuplicateInstances(seen);
+                }
+            } finally {
+                seen.clear();
             }
             if (removed <= 0L) {
                 return;
             }
-            irisQueuedDuplicateInstances.addAndGet(removed);
+            irisQueuedDuplicateInstances += removed;
             currentFrameIrisQueuedDuplicateInstances += removed;
             if (HbmClientConfig.renderBackendDiagnostics()) {
                 HbmNtm.LOGGER.debug("Coalesced {} duplicate legacy OBJ Iris companion submissions in current frame",
@@ -6526,35 +7136,60 @@ public final class LegacyWavefrontModel {
         }
 
         private static void sortInstancedTailBatches(List<InstancedBatch> batches) {
-            batches.sort((left, right) -> {
-                int leftPriority = instancedTailPriority(left.renderMode());
-                int rightPriority = instancedTailPriority(right.renderMode());
-                if (leftPriority != rightPriority) {
-                    return Integer.compare(leftPriority, rightPriority);
-                }
-                if (isInstancedNormalAlphaMode(left.renderMode())) {
-                    return Float.compare(right.maxSortDepthSq(), left.maxSortDepthSq());
-                }
-                return 0;
-            });
+            int previousPriority = 0;
+            int normalAlphaBatches = 0;
+            boolean needsBatchSort = false;
             for (InstancedBatch batch : batches) {
+                int priority = instancedTailPriority(batch.renderMode());
+                if (priority < previousPriority) {
+                    needsBatchSort = true;
+                }
+                previousPriority = priority;
                 if (isInstancedNormalAlphaMode(batch.renderMode())) {
-                    batch.sortBackToFront();
+                    normalAlphaBatches++;
+                }
+            }
+            if (normalAlphaBatches > 1) {
+                needsBatchSort = true;
+            }
+            if (needsBatchSort) {
+                batches.sort((left, right) -> {
+                    int leftPriority = instancedTailPriority(left.renderMode());
+                    int rightPriority = instancedTailPriority(right.renderMode());
+                    if (leftPriority != rightPriority) {
+                        return Integer.compare(leftPriority, rightPriority);
+                    }
+                    if (isInstancedNormalAlphaMode(left.renderMode())) {
+                        return Float.compare(right.maxSortDepthSq(), left.maxSortDepthSq());
+                    }
+                    return 0;
+                });
+            }
+            if (normalAlphaBatches > 0) {
+                for (InstancedBatch batch : batches) {
+                    if (isInstancedNormalAlphaMode(batch.renderMode())) {
+                        batch.sortBackToFront();
+                    }
                 }
             }
         }
 
         private void recordMdiFallback(int eligibleBatches) {
-            mdiFallbackFlushes.incrementAndGet();
-            mdiFallbackBatches.addAndGet(eligibleBatches);
+            mdiFallbackFlushes++;
+            mdiFallbackBatches += eligibleBatches;
             currentFrameMdiFallbackFlushes++;
             currentFrameMdiFallbackBatches += eligibleBatches;
         }
 
         private void recordMdiFallback(int eligibleBatches, List<InstancedBatch> batches,
                 RenderBackendFallbackReason reason, String path) {
+            recordMdiFallback(eligibleBatches, batches, reason, path, totalInstances(batches));
+        }
+
+        private void recordMdiFallback(int eligibleBatches, List<InstancedBatch> batches,
+                RenderBackendFallbackReason reason, String path, int instances) {
             recordMdiFallback(eligibleBatches);
-            recordMdiFallbackDetail(reason, path, batches, totalInstances(batches));
+            recordMdiFallbackDetail(reason, path, batches, instances);
         }
 
         private void recordMdiFallbackDetail(RenderBackendFallbackReason reason, String path,
@@ -6566,24 +7201,24 @@ public final class LegacyWavefrontModel {
         private void recordMdiDraw(int drawCalls, int commandCount, boolean multiDraw,
                 LegacyTexturedRenderMode renderMode) {
             int safeDrawCalls = Math.max(1, drawCalls);
-            mdiDrawCalls.addAndGet(safeDrawCalls);
-            mdiIndirectCommands.addAndGet(commandCount);
+            mdiDrawCalls += safeDrawCalls;
+            mdiIndirectCommands += commandCount;
             currentFrameMdiDrawCalls += safeDrawCalls;
             currentFrameMdiIndirectCommands += commandCount;
-            instancedDrawCalls.addAndGet(safeDrawCalls);
+            instancedDrawCalls += safeDrawCalls;
             currentFrameInstancedDrawCalls += safeDrawCalls;
-            gpuDrawCalls.addAndGet(safeDrawCalls);
+            gpuDrawCalls += safeDrawCalls;
             currentFrameGpuDrawCalls += safeDrawCalls;
             if (isInstancedAdditiveMode(renderMode)) {
-                mdiAdditiveDrawCalls.addAndGet(safeDrawCalls);
-                mdiAdditiveIndirectCommands.addAndGet(commandCount);
+                mdiAdditiveDrawCalls += safeDrawCalls;
+                mdiAdditiveIndirectCommands += commandCount;
                 currentFrameMdiAdditiveDrawCalls += safeDrawCalls;
                 currentFrameMdiAdditiveIndirectCommands += commandCount;
-                instancedAdditiveDrawCalls.addAndGet(safeDrawCalls);
+                instancedAdditiveDrawCalls += safeDrawCalls;
                 currentFrameInstancedAdditiveDrawCalls += safeDrawCalls;
             }
             if (multiDraw) {
-                mdiMultiDrawCalls.incrementAndGet();
+                mdiMultiDrawCalls++;
                 currentFrameMdiMultiDrawCalls++;
             }
         }
@@ -6639,21 +7274,19 @@ public final class LegacyWavefrontModel {
             }
         }
 
-        private void recordMdiAdditiveEligible(List<InstancedBatch> batches) {
-            int additiveBatches = countAdditiveBatches(batches);
+        private void recordMdiAdditiveEligible(int additiveBatches) {
             if (additiveBatches <= 0) {
                 return;
             }
-            mdiAdditiveEligibleBatches.addAndGet(additiveBatches);
+            mdiAdditiveEligibleBatches += additiveBatches;
             currentFrameMdiAdditiveEligibleBatches += additiveBatches;
         }
 
-        private void recordMdiAdditiveFallback(List<InstancedBatch> batches) {
-            int additiveBatches = countAdditiveBatches(batches);
+        private void recordMdiAdditiveFallback(int additiveBatches) {
             if (additiveBatches <= 0) {
                 return;
             }
-            mdiAdditiveFallbackBatches.addAndGet(additiveBatches);
+            mdiAdditiveFallbackBatches += additiveBatches;
             currentFrameMdiAdditiveFallbackBatches += additiveBatches;
         }
 
@@ -6677,13 +7310,13 @@ public final class LegacyWavefrontModel {
             }
             recordMdiFallbackDetail(RenderBackendFallbackReason.MDI_NO_SLOT, "mdi-no-slot",
                     batches, instanceCount);
-            mdiNoSlotBatches.addAndGet(batchCount);
-            mdiNoSlotInstances.addAndGet(instanceCount);
+            mdiNoSlotBatches += batchCount;
+            mdiNoSlotInstances += instanceCount;
             currentFrameMdiNoSlotBatches += batchCount;
             currentFrameMdiNoSlotInstances += instanceCount;
             if (additiveBatchCount > 0) {
-                mdiAdditiveNoSlotBatches.addAndGet(additiveBatchCount);
-                mdiAdditiveNoSlotInstances.addAndGet(additiveInstanceCount);
+                mdiAdditiveNoSlotBatches += additiveBatchCount;
+                mdiAdditiveNoSlotInstances += additiveInstanceCount;
                 currentFrameMdiAdditiveNoSlotBatches += additiveBatchCount;
                 currentFrameMdiAdditiveNoSlotInstances += additiveInstanceCount;
             }
@@ -6707,21 +7340,38 @@ public final class LegacyWavefrontModel {
                     if (capabilities == null) {
                         return;
                     }
-                    boolean singleDrawIndirect = capabilities.glDrawArraysIndirect != 0L
-                            || capabilities.GL_ARB_draw_indirect;
-                    boolean multiDrawIndirect = capabilities.glMultiDrawArraysIndirect != 0L
-                            || capabilities.GL_ARB_multi_draw_indirect;
+                    boolean coreDrawIndirect = capabilities.glDrawArraysIndirect != 0L;
+                    boolean arbDrawIndirect = capabilities.GL_ARB_draw_indirect;
+                    boolean coreMultiDrawIndirect = capabilities.glMultiDrawArraysIndirect != 0L;
+                    boolean arbMultiDrawIndirect = capabilities.GL_ARB_multi_draw_indirect;
+                    boolean singleDrawIndirect = coreDrawIndirect || arbDrawIndirect;
+                    boolean multiDrawIndirect = coreMultiDrawIndirect || arbMultiDrawIndirect;
                     mdiDrawIndirectSupported = singleDrawIndirect || multiDrawIndirect;
                     mdiMultiDrawIndirectSupported = multiDrawIndirect;
                     mdiBaseInstanceSupported = capabilities.glDrawArraysInstancedBaseInstance != 0L
                             || capabilities.GL_ARB_base_instance;
+                    mdiCoreDrawArraysIndirectSupported = coreDrawIndirect;
+                    mdiArbDrawArraysIndirectSupported = arbDrawIndirect;
+                    mdiCoreMultiDrawArraysIndirectSupported = coreMultiDrawIndirect;
+                    mdiArbMultiDrawArraysIndirectSupported = arbMultiDrawIndirect;
+                    mdiCommandMemoryBarrierSupported = capabilities.glMemoryBarrier != 0L;
                 } catch (RuntimeException exception) {
-                    mdiDrawIndirectSupported = false;
-                    mdiMultiDrawIndirectSupported = false;
-                    mdiBaseInstanceSupported = false;
+                    clearMdiCapabilityCache();
                 }
                 mdiCapsResolved = true;
             }
+        }
+
+        private void clearMdiCapabilityCache() {
+            mdiCapsResolved = false;
+            mdiDrawIndirectSupported = false;
+            mdiMultiDrawIndirectSupported = false;
+            mdiBaseInstanceSupported = false;
+            mdiCoreDrawArraysIndirectSupported = false;
+            mdiArbDrawArraysIndirectSupported = false;
+            mdiCoreMultiDrawArraysIndirectSupported = false;
+            mdiArbMultiDrawArraysIndirectSupported = false;
+            mdiCommandMemoryBarrierSupported = false;
         }
 
         private boolean drawInstancedBatch(InstancedBatch batch, Matrix4f projectionMatrix) {
@@ -6833,30 +7483,31 @@ public final class LegacyWavefrontModel {
                 HbmRenderFrameLight.prepareBlockLitSamplers(shader, baseTexture);
             }
             updateOptimizedUniformCache(shader);
+            updateOptimizedUniformValueOwner(shader);
+            Matrix4f resolvedProjection = projectionMatrix != null ? projectionMatrix
+                    : RenderSystem.getProjectionMatrix();
             if (optimizedProjMatUniform != null) {
-                optimizedProjMatUniform.set(projectionMatrix != null ? projectionMatrix
-                        : RenderSystem.getProjectionMatrix());
+                setOptimizedProjectionUniformIfChanged(optimizedProjMatUniform, resolvedProjection);
             } else if (shader.PROJECTION_MATRIX != null) {
-                shader.PROJECTION_MATRIX.set(projectionMatrix != null ? projectionMatrix
-                        : RenderSystem.getProjectionMatrix());
+                setOptimizedProjectionUniformIfChanged(shader.PROJECTION_MATRIX, resolvedProjection);
             }
             if (optimizedModelViewUniform != null) {
-                optimizedModelViewUniform.set(OPTIMIZED_SHADER_IDENTITY);
+                setOptimizedIdentityModelViewUniformIfNeeded(optimizedModelViewUniform);
             } else if (shader.MODEL_VIEW_MATRIX != null) {
-                shader.MODEL_VIEW_MATRIX.set(OPTIMIZED_SHADER_IDENTITY);
+                setOptimizedIdentityModelViewUniformIfNeeded(shader.MODEL_VIEW_MATRIX);
             }
             if (optimizedFogStartUniform != null) {
-                optimizedFogStartUniform.set(RenderSystem.getShaderFogStart());
+                setOptimizedFogStartUniformIfChanged(RenderSystem.getShaderFogStart());
             }
             if (optimizedFogEndUniform != null) {
-                optimizedFogEndUniform.set(RenderSystem.getShaderFogEnd());
+                setOptimizedFogEndUniformIfChanged(RenderSystem.getShaderFogEnd());
             }
             if (optimizedFogColorUniform != null) {
                 float[] color = RenderSystem.getShaderFogColor();
-                optimizedFogColorUniform.set(color[0], color[1], color[2], color[3]);
+                setOptimizedFogColorUniformIfChanged(color);
             }
             if (optimizedFadeAlphaUniform != null) {
-                optimizedFadeAlphaUniform.set(1.0F);
+                setOptimizedFadeAlphaOneUniformIfNeeded();
             }
         }
 
@@ -6880,12 +7531,103 @@ public final class LegacyWavefrontModel {
             optimizedFadeAlphaUniform = shader == null ? null : shader.getUniform("FadeAlpha");
         }
 
+        private void updateOptimizedUniformValueOwner(ShaderInstance shader) {
+            int program = shader == null ? -1 : shader.getId();
+            long generation = HbmShaderCompatibilityDetector.pipelineGeneration();
+            if (optimizedUniformValueShader == shader
+                    && optimizedUniformValueProgram == program
+                    && optimizedUniformValuePipelineGeneration == generation
+                    && optimizedUniformValueShader != null) {
+                return;
+            }
+            optimizedUniformValueShader = shader;
+            optimizedUniformValueProgram = program;
+            optimizedUniformValuePipelineGeneration = generation;
+            clearOptimizedUniformValueCache();
+        }
+
+        private void setOptimizedProjectionUniformIfChanged(Uniform uniform, Matrix4f projectionMatrix) {
+            if (!optimizedProjectionUniformValid || !optimizedLastProjectionMatrix.equals(projectionMatrix)) {
+                uniform.set(projectionMatrix);
+                optimizedLastProjectionMatrix.set(projectionMatrix);
+                optimizedProjectionUniformValid = true;
+            }
+        }
+
+        private void setOptimizedIdentityModelViewUniformIfNeeded(Uniform uniform) {
+            if (!optimizedModelViewIdentityUniformValid) {
+                uniform.set(OPTIMIZED_SHADER_IDENTITY);
+                optimizedModelViewIdentityUniformValid = true;
+            }
+        }
+
+        private void setOptimizedFogStartUniformIfChanged(float fogStart) {
+            if (!optimizedFogStartUniformValid
+                    || Float.floatToIntBits(optimizedLastFogStart) != Float.floatToIntBits(fogStart)) {
+                optimizedFogStartUniform.set(fogStart);
+                optimizedLastFogStart = fogStart;
+                optimizedFogStartUniformValid = true;
+            }
+        }
+
+        private void setOptimizedFogEndUniformIfChanged(float fogEnd) {
+            if (!optimizedFogEndUniformValid
+                    || Float.floatToIntBits(optimizedLastFogEnd) != Float.floatToIntBits(fogEnd)) {
+                optimizedFogEndUniform.set(fogEnd);
+                optimizedLastFogEnd = fogEnd;
+                optimizedFogEndUniformValid = true;
+            }
+        }
+
+        private void setOptimizedFogColorUniformIfChanged(float[] color) {
+            int red = Float.floatToIntBits(color[0]);
+            int green = Float.floatToIntBits(color[1]);
+            int blue = Float.floatToIntBits(color[2]);
+            int alpha = Float.floatToIntBits(color[3]);
+            if (!optimizedFogColorUniformValid
+                    || optimizedLastFogColorRed != red
+                    || optimizedLastFogColorGreen != green
+                    || optimizedLastFogColorBlue != blue
+                    || optimizedLastFogColorAlpha != alpha) {
+                optimizedFogColorUniform.set(color[0], color[1], color[2], color[3]);
+                optimizedLastFogColorRed = red;
+                optimizedLastFogColorGreen = green;
+                optimizedLastFogColorBlue = blue;
+                optimizedLastFogColorAlpha = alpha;
+                optimizedFogColorUniformValid = true;
+            }
+        }
+
+        private void setOptimizedFadeAlphaOneUniformIfNeeded() {
+            if (!optimizedFadeAlphaOneUniformValid) {
+                optimizedFadeAlphaUniform.set(1.0F);
+                optimizedFadeAlphaOneUniformValid = true;
+            }
+        }
+
+        private void clearOptimizedUniformValueCache() {
+            optimizedProjectionUniformValid = false;
+            optimizedModelViewIdentityUniformValid = false;
+            optimizedFogStartUniformValid = false;
+            optimizedFogEndUniformValid = false;
+            optimizedFogColorUniformValid = false;
+            optimizedFadeAlphaOneUniformValid = false;
+            optimizedLastFogStart = 0.0F;
+            optimizedLastFogEnd = 0.0F;
+            optimizedLastFogColorRed = Integer.MIN_VALUE;
+            optimizedLastFogColorGreen = Integer.MIN_VALUE;
+            optimizedLastFogColorBlue = Integer.MIN_VALUE;
+            optimizedLastFogColorAlpha = Integer.MIN_VALUE;
+        }
+
         private ByteBuffer instancedSliceBytes(InstancedBatch batch, int start, int end) {
             int requiredBytes = (end - start) * InstancedInstance.FLOATS * 4;
             ByteBuffer instanceBytes = ensureInstancedUploadScratch(requiredBytes);
+            long baseAddress = MemoryUtil.memAddress(instanceBytes);
             for (int i = start; i < end; i++) {
-                batch.instances().get(i).write(instanceBytes);
+                batch.instances().get(i).write(baseAddress + (long) (i - start) * InstancedInstance.FLOATS * 4L);
             }
+            instanceBytes.position(requiredBytes);
             instanceBytes.flip();
             return instanceBytes;
         }
@@ -6920,12 +7662,12 @@ public final class LegacyWavefrontModel {
         }
 
         private void recordInstancedDrawCall(LegacyTexturedRenderMode renderMode) {
-            instancedDrawCalls.incrementAndGet();
+            instancedDrawCalls++;
             currentFrameInstancedDrawCalls++;
-            gpuDrawCalls.incrementAndGet();
+            gpuDrawCalls++;
             currentFrameGpuDrawCalls++;
             if (isInstancedAdditiveMode(renderMode)) {
-                instancedAdditiveDrawCalls.incrementAndGet();
+                instancedAdditiveDrawCalls++;
                 currentFrameInstancedAdditiveDrawCalls++;
             }
         }
@@ -6936,13 +7678,13 @@ public final class LegacyWavefrontModel {
             if (overflow <= 0) {
                 return;
             }
-            instancedOverflowBatches.incrementAndGet();
-            instancedOverflowInstances.addAndGet(overflow);
+            instancedOverflowBatches++;
+            instancedOverflowInstances += overflow;
             currentFrameInstancedOverflowBatches++;
             currentFrameInstancedOverflowInstances += overflow;
             if (isInstancedAdditiveMode(renderMode)) {
-                instancedAdditiveOverflowBatches.incrementAndGet();
-                instancedAdditiveOverflowInstances.addAndGet(overflow);
+                instancedAdditiveOverflowBatches++;
+                instancedAdditiveOverflowInstances += overflow;
                 currentFrameInstancedAdditiveOverflowBatches++;
                 currentFrameInstancedAdditiveOverflowInstances += overflow;
             }
@@ -6956,7 +7698,7 @@ public final class LegacyWavefrontModel {
                 int startIndex) {
             InstancedMesh mesh = batch.mesh();
             int start = clampedFallbackStart(batch, startIndex);
-            int fallbackCount = batch.fallbacks().size() - start;
+            int fallbackCount = batch.instances().size() - start;
             if (fallbackCount <= 0) {
                 return;
             }
@@ -6967,8 +7709,8 @@ public final class LegacyWavefrontModel {
                     ? LegacyUntexturedQuadRenderer.type(batch.renderMode(), 255, mesh.sourceMode())
                     : batch.renderMode().renderType(batch.textureLocation(), mesh.sourceMode());
             TextureAtlasSprite sprite = mesh.key().sprite();
-            for (int i = start; i < batch.fallbacks().size(); i++) {
-                InstancedFallbackInstance fallback = batch.fallbacks().get(i);
+            for (int i = start; i < batch.instances().size(); i++) {
+                InstancedInstance fallback = batch.instances().get(i);
                 if (consumer == null || fallback.buffer() != activeBuffer) {
                     activeBuffer = fallback.buffer();
                     consumer = fallback.buffer().getBuffer(renderType);
@@ -6994,11 +7736,11 @@ public final class LegacyWavefrontModel {
 
         private static int instancedFallbackCount(InstancedBatch batch, int startIndex) {
             int start = clampedFallbackStart(batch, startIndex);
-            return Math.max(0, batch.fallbacks().size() - start);
+            return Math.max(0, batch.instances().size() - start);
         }
 
         private static int clampedFallbackStart(InstancedBatch batch, int startIndex) {
-            return Math.max(0, Math.min(startIndex, batch.fallbacks().size()));
+            return Math.max(0, Math.min(startIndex, batch.instances().size()));
         }
 
         private static int fadedAlpha(int alpha, float fadeAlpha) {
@@ -7027,8 +7769,8 @@ public final class LegacyWavefrontModel {
             }
             lastGpuFallbackReason = reason == null ? RenderBackendFallbackReason.NONE : reason;
             lastGpuFallbackDetail = sanitizeFallbackDetail(detail);
-            gpuFallbackBatches.incrementAndGet();
-            gpuFallbackVertices.addAndGet(vertices);
+            gpuFallbackBatches++;
+            gpuFallbackVertices += vertices;
             currentFrameGpuFallbackBatches++;
             currentFrameGpuFallbackVertices += vertices;
         }
@@ -7043,8 +7785,8 @@ public final class LegacyWavefrontModel {
             }
             lastGpuFallbackReason = reason == null ? RenderBackendFallbackReason.NONE : reason;
             lastGpuFallbackDetail = sanitizeFallbackDetail(detail);
-            irisFallbackBatches.incrementAndGet();
-            irisFallbackVertices.addAndGet(vertices);
+            irisFallbackBatches++;
+            irisFallbackVertices += vertices;
             currentFrameIrisFallbackBatches++;
             currentFrameIrisFallbackVertices += vertices;
         }
@@ -7070,54 +7812,54 @@ public final class LegacyWavefrontModel {
             if (instances <= 0) {
                 return;
             }
-            irisQueuedFallbackBatches.incrementAndGet();
-            irisQueuedFallbackInstances.addAndGet(instances);
+            irisQueuedFallbackBatches++;
+            irisQueuedFallbackInstances += instances;
             currentFrameIrisQueuedFallbackBatches++;
             currentFrameIrisQueuedFallbackInstances += instances;
         }
 
         private void recordIrisLightmapStorageFailure() {
-            irisLightmapStorageFailures.incrementAndGet();
+            irisLightmapStorageFailures++;
             currentFrameIrisLightmapStorageFailures++;
         }
 
         private void recordIrisLightmapSlotReuse() {
-            irisLightmapSlotReuses.incrementAndGet();
+            irisLightmapSlotReuses++;
             currentFrameIrisLightmapSlotReuses++;
         }
 
         private void recordIrisLightmapSlotUpload() {
-            irisLightmapSlotUploads.incrementAndGet();
+            irisLightmapSlotUploads++;
             currentFrameIrisLightmapSlotUploads++;
         }
 
         private void recordIrisLightmapStagingFallback() {
-            irisLightmapStagingFallbacks.incrementAndGet();
+            irisLightmapStagingFallbacks++;
             currentFrameIrisLightmapStagingFallbacks++;
         }
 
         private void recordIrisShaderAttributeCacheHit() {
-            irisShaderAttributeCacheHits.incrementAndGet();
+            irisShaderAttributeCacheHits++;
             currentFrameIrisShaderAttributeCacheHits++;
         }
 
         private void recordIrisShaderAttributeCacheMiss() {
-            irisShaderAttributeCacheMisses.incrementAndGet();
+            irisShaderAttributeCacheMisses++;
             currentFrameIrisShaderAttributeCacheMisses++;
         }
 
         private void recordIrisShaderAttributeGenerationInvalidation() {
-            irisShaderAttributeGenerationInvalidations.incrementAndGet();
+            irisShaderAttributeGenerationInvalidations++;
             currentFrameIrisShaderAttributeGenerationInvalidations++;
         }
 
         private void recordIrisShaderAttributePrimedSkip() {
-            irisShaderAttributePrimedSkips.incrementAndGet();
+            irisShaderAttributePrimedSkips++;
             currentFrameIrisShaderAttributePrimedSkips++;
         }
 
         private void recordIrisShaderAttributeVaoBindFailure() {
-            irisShaderAttributeVaoBindFailures.incrementAndGet();
+            irisShaderAttributeVaoBindFailures++;
             currentFrameIrisShaderAttributeVaoBindFailures++;
         }
 
@@ -7167,13 +7909,13 @@ public final class LegacyWavefrontModel {
             }
             lastGpuFallbackReason = reason == null ? RenderBackendFallbackReason.NONE : reason;
             lastGpuFallbackDetail = sanitizeFallbackDetail(detail);
-            instancedFallbackBatches.incrementAndGet();
-            instancedFallbackInstances.addAndGet(instances);
+            instancedFallbackBatches++;
+            instancedFallbackInstances += instances;
             currentFrameInstancedFallbackBatches++;
             currentFrameInstancedFallbackInstances += instances;
             if (additive) {
-                instancedAdditiveFallbackBatches.incrementAndGet();
-                instancedAdditiveFallbackInstances.addAndGet(instances);
+                instancedAdditiveFallbackBatches++;
+                instancedAdditiveFallbackInstances += instances;
                 currentFrameInstancedAdditiveFallbackBatches++;
                 currentFrameInstancedAdditiveFallbackInstances += instances;
             }
@@ -7239,8 +7981,8 @@ public final class LegacyWavefrontModel {
             if (instances <= 0) {
                 return;
             }
-            instancedAdditiveFallbackBatches.incrementAndGet();
-            instancedAdditiveFallbackInstances.addAndGet(instances);
+            instancedAdditiveFallbackBatches++;
+            instancedAdditiveFallbackInstances += instances;
             currentFrameInstancedAdditiveFallbackBatches++;
             currentFrameInstancedAdditiveFallbackInstances += instances;
         }
@@ -7267,14 +8009,16 @@ public final class LegacyWavefrontModel {
                 instancedToClose = new ArrayList<>(instancedMeshes.values());
                 instancedMeshes.clear();
                 failedInstancedKeys.clear();
-                pendingInstancedBatches.clear();
-                pendingIrisCompanionBatches.clear();
+                clearLastInstancedMesh();
+                clearPendingInstancedBatches();
+                clearPendingIrisCompanionBatches();
                 clearInstancedUploadScratch();
             }
             closeLater(toClose);
             closeIrisLater(irisToClose);
             closeInstancedLater(instancedToClose);
             clearOptimizedUniformCache();
+            clearMdiCapabilityCache();
             mdiDispatchDisabled = false;
             mdiAtlas.resetLater();
             cpuFallback.clear(reason);
@@ -7290,6 +8034,10 @@ public final class LegacyWavefrontModel {
             optimizedFogEndUniform = null;
             optimizedFogColorUniform = null;
             optimizedFadeAlphaUniform = null;
+            optimizedUniformValueShader = null;
+            optimizedUniformValueProgram = -1;
+            optimizedUniformValuePipelineGeneration = -1L;
+            clearOptimizedUniformValueCache();
         }
 
         @Override
@@ -7310,17 +8058,24 @@ public final class LegacyWavefrontModel {
 
         @Override
         public void flush(RenderBackendFlushStage stage, Matrix4f projectionMatrix) {
-            Matrix4f resolvedProjection = projectionMatrix != null ? new Matrix4f(projectionMatrix)
-                    : new Matrix4f(RenderSystem.getProjectionMatrix());
             if (stage == RenderBackendFlushStage.AFTER_BLOCK_ENTITIES || stage == RenderBackendFlushStage.MANUAL) {
                 long startedNanos = System.nanoTime();
                 boolean presentAllowed = recordOptimizedFlushAttempt(stage);
                 if (presentAllowed) {
                     try {
                         HbmIrisRenderBatch.closePersistentIfActive();
-                        flushIrisCompanionBatches(resolvedProjection);
+                        Matrix4f resolvedProjection = null;
+                        if (!pendingIrisCompanionBatches.isEmpty()) {
+                            resolvedProjection = resolveProjectionMatrix(projectionMatrix);
+                            flushIrisCompanionBatches(resolvedProjection);
+                        }
                         HbmIrisRenderBatch.closePersistentIfActive();
-                        flushInstancedBatches(resolvedProjection);
+                        if (!pendingInstancedBatches.isEmpty()) {
+                            if (resolvedProjection == null) {
+                                resolvedProjection = resolveProjectionMatrix(projectionMatrix);
+                            }
+                            flushInstancedBatches(resolvedProjection);
+                        }
                     } catch (Throwable throwable) {
                         discardPendingBackendFlush(stage, throwable);
                     } finally {
@@ -7342,17 +8097,21 @@ public final class LegacyWavefrontModel {
             }
         }
 
+        private static Matrix4f resolveProjectionMatrix(Matrix4f projectionMatrix) {
+            return projectionMatrix != null ? projectionMatrix : RenderSystem.getProjectionMatrix();
+        }
+
         private boolean recordOptimizedFlushAttempt(RenderBackendFlushStage stage) {
-            optimizedFlushCalls.incrementAndGet();
+            optimizedFlushCalls++;
             long previousFrameFlushes = currentFrameOptimizedFlushCalls++;
             if (previousFrameFlushes > 0L) {
-                optimizedDuplicateFlushCalls.incrementAndGet();
+                optimizedDuplicateFlushCalls++;
                 currentFrameOptimizedDuplicateFlushCalls++;
             }
             if (stage == RenderBackendFlushStage.AFTER_BLOCK_ENTITIES) {
                 long previousFramePresents = currentFrameOptimizedAfterBlockEntityPresents++;
                 if (previousFramePresents > 0L) {
-                    optimizedDuplicatePresentSkips.incrementAndGet();
+                    optimizedDuplicatePresentSkips++;
                     currentFrameOptimizedDuplicatePresentSkips++;
                     return false;
                 }
@@ -7364,12 +8123,12 @@ public final class LegacyWavefrontModel {
             if (nanos <= 0L) {
                 return;
             }
-            optimizedFlushNanos.addAndGet(nanos);
+            optimizedFlushNanos += nanos;
             currentFrameOptimizedFlushNanos += nanos;
         }
 
         private void recordOptimizedDrawStateRestoreFailure() {
-            optimizedDrawStateRestoreFailures.incrementAndGet();
+            optimizedDrawStateRestoreFailures++;
             currentFrameOptimizedDrawStateRestoreFailures++;
         }
 
@@ -7377,8 +8136,8 @@ public final class LegacyWavefrontModel {
             HbmNtm.LOGGER.error(
                     "Legacy OBJ render backend flush failed at {}; discarding pending instanced/companion batches",
                     stage, throwable);
-            pendingInstancedBatches.clear();
-            pendingIrisCompanionBatches.clear();
+            clearPendingInstancedBatches();
+            clearPendingIrisCompanionBatches();
             try {
                 HbmIrisRenderBatch.closePersistentIfActive();
             } catch (Throwable closeFailure) {
@@ -7395,12 +8154,12 @@ public final class LegacyWavefrontModel {
             int irisBatches = pendingIrisCompanionBatches.size();
             long irisInstances = countPendingIrisCompanionInstances();
 
-            pendingInstancedBatches.clear();
-            pendingIrisCompanionBatches.clear();
-            staleInstancedBatches.addAndGet(instancedBatches);
-            staleInstancedInstances.addAndGet(instancedInstances);
-            staleIrisCompanionBatches.addAndGet(irisBatches);
-            staleIrisCompanionInstances.addAndGet(irisInstances);
+            clearPendingInstancedBatches();
+            clearPendingIrisCompanionBatches();
+            staleInstancedBatches += instancedBatches;
+            staleInstancedInstances += instancedInstances;
+            staleIrisCompanionBatches += irisBatches;
+            staleIrisCompanionInstances += irisInstances;
             currentFrameStaleInstancedBatches += instancedBatches;
             currentFrameStaleInstancedInstances += instancedInstances;
             currentFrameStaleIrisCompanionBatches += irisBatches;
@@ -7440,145 +8199,145 @@ public final class LegacyWavefrontModel {
         @Override
         public void endFrame() {
             discardStaleOptimizedQueuesAtFrameEnd();
-            lastFrameInstancedQueuedBatches.set(currentFrameInstancedQueuedBatches);
+            lastFrameInstancedQueuedBatches = currentFrameInstancedQueuedBatches;
             currentFrameInstancedQueuedBatches = 0L;
-            lastFrameInstancedQueuedInstances.set(currentFrameInstancedQueuedInstances);
+            lastFrameInstancedQueuedInstances = currentFrameInstancedQueuedInstances;
             currentFrameInstancedQueuedInstances = 0L;
-            lastFrameInstancedDrawCalls.set(currentFrameInstancedDrawCalls);
+            lastFrameInstancedDrawCalls = currentFrameInstancedDrawCalls;
             currentFrameInstancedDrawCalls = 0L;
-            lastFrameInstancedFallbackBatches.set(currentFrameInstancedFallbackBatches);
+            lastFrameInstancedFallbackBatches = currentFrameInstancedFallbackBatches;
             currentFrameInstancedFallbackBatches = 0L;
-            lastFrameInstancedFallbackInstances.set(currentFrameInstancedFallbackInstances);
+            lastFrameInstancedFallbackInstances = currentFrameInstancedFallbackInstances;
             currentFrameInstancedFallbackInstances = 0L;
-            lastFrameInstancedOverflowBatches.set(currentFrameInstancedOverflowBatches);
+            lastFrameInstancedOverflowBatches = currentFrameInstancedOverflowBatches;
             currentFrameInstancedOverflowBatches = 0L;
-            lastFrameInstancedOverflowInstances.set(currentFrameInstancedOverflowInstances);
+            lastFrameInstancedOverflowInstances = currentFrameInstancedOverflowInstances;
             currentFrameInstancedOverflowInstances = 0L;
-            lastFrameInstancedDuplicateInstances.set(currentFrameInstancedDuplicateInstances);
+            lastFrameInstancedDuplicateInstances = currentFrameInstancedDuplicateInstances;
             currentFrameInstancedDuplicateInstances = 0L;
-            lastFrameOptimizedFlushCalls.set(currentFrameOptimizedFlushCalls);
+            lastFrameOptimizedFlushCalls = currentFrameOptimizedFlushCalls;
             currentFrameOptimizedFlushCalls = 0L;
-            lastFrameOptimizedDuplicateFlushCalls.set(currentFrameOptimizedDuplicateFlushCalls);
+            lastFrameOptimizedDuplicateFlushCalls = currentFrameOptimizedDuplicateFlushCalls;
             currentFrameOptimizedDuplicateFlushCalls = 0L;
-            lastFrameOptimizedDuplicatePresentSkips.set(currentFrameOptimizedDuplicatePresentSkips);
+            lastFrameOptimizedDuplicatePresentSkips = currentFrameOptimizedDuplicatePresentSkips;
             currentFrameOptimizedDuplicatePresentSkips = 0L;
             currentFrameOptimizedAfterBlockEntityPresents = 0L;
-            lastFrameOptimizedFlushNanos.set(currentFrameOptimizedFlushNanos);
+            lastFrameOptimizedFlushNanos = currentFrameOptimizedFlushNanos;
             currentFrameOptimizedFlushNanos = 0L;
-            lastFrameOptimizedDrawStateRestoreFailures.set(currentFrameOptimizedDrawStateRestoreFailures);
+            lastFrameOptimizedDrawStateRestoreFailures = currentFrameOptimizedDrawStateRestoreFailures;
             currentFrameOptimizedDrawStateRestoreFailures = 0L;
-            lastFrameStaleInstancedBatches.set(currentFrameStaleInstancedBatches);
+            lastFrameStaleInstancedBatches = currentFrameStaleInstancedBatches;
             currentFrameStaleInstancedBatches = 0L;
-            lastFrameStaleInstancedInstances.set(currentFrameStaleInstancedInstances);
+            lastFrameStaleInstancedInstances = currentFrameStaleInstancedInstances;
             currentFrameStaleInstancedInstances = 0L;
-            lastFrameStaleIrisCompanionBatches.set(currentFrameStaleIrisCompanionBatches);
+            lastFrameStaleIrisCompanionBatches = currentFrameStaleIrisCompanionBatches;
             currentFrameStaleIrisCompanionBatches = 0L;
-            lastFrameStaleIrisCompanionInstances.set(currentFrameStaleIrisCompanionInstances);
+            lastFrameStaleIrisCompanionInstances = currentFrameStaleIrisCompanionInstances;
             currentFrameStaleIrisCompanionInstances = 0L;
-            lastFrameInstancedAdditiveQueuedBatches.set(currentFrameInstancedAdditiveQueuedBatches);
+            lastFrameInstancedAdditiveQueuedBatches = currentFrameInstancedAdditiveQueuedBatches;
             currentFrameInstancedAdditiveQueuedBatches = 0L;
-            lastFrameInstancedAdditiveQueuedInstances.set(currentFrameInstancedAdditiveQueuedInstances);
+            lastFrameInstancedAdditiveQueuedInstances = currentFrameInstancedAdditiveQueuedInstances;
             currentFrameInstancedAdditiveQueuedInstances = 0L;
-            lastFrameInstancedAdditiveDrawCalls.set(currentFrameInstancedAdditiveDrawCalls);
+            lastFrameInstancedAdditiveDrawCalls = currentFrameInstancedAdditiveDrawCalls;
             currentFrameInstancedAdditiveDrawCalls = 0L;
-            lastFrameInstancedAdditiveFallbackBatches.set(currentFrameInstancedAdditiveFallbackBatches);
+            lastFrameInstancedAdditiveFallbackBatches = currentFrameInstancedAdditiveFallbackBatches;
             currentFrameInstancedAdditiveFallbackBatches = 0L;
-            lastFrameInstancedAdditiveFallbackInstances.set(currentFrameInstancedAdditiveFallbackInstances);
+            lastFrameInstancedAdditiveFallbackInstances = currentFrameInstancedAdditiveFallbackInstances;
             currentFrameInstancedAdditiveFallbackInstances = 0L;
-            lastFrameInstancedAdditiveOverflowBatches.set(currentFrameInstancedAdditiveOverflowBatches);
+            lastFrameInstancedAdditiveOverflowBatches = currentFrameInstancedAdditiveOverflowBatches;
             currentFrameInstancedAdditiveOverflowBatches = 0L;
-            lastFrameInstancedAdditiveOverflowInstances.set(currentFrameInstancedAdditiveOverflowInstances);
+            lastFrameInstancedAdditiveOverflowInstances = currentFrameInstancedAdditiveOverflowInstances;
             currentFrameInstancedAdditiveOverflowInstances = 0L;
-            lastFrameMdiEligibleFlushes.set(currentFrameMdiEligibleFlushes);
+            lastFrameMdiEligibleFlushes = currentFrameMdiEligibleFlushes;
             currentFrameMdiEligibleFlushes = 0L;
-            lastFrameMdiEligibleBatches.set(currentFrameMdiEligibleBatches);
+            lastFrameMdiEligibleBatches = currentFrameMdiEligibleBatches;
             currentFrameMdiEligibleBatches = 0L;
-            lastFrameMdiFallbackFlushes.set(currentFrameMdiFallbackFlushes);
+            lastFrameMdiFallbackFlushes = currentFrameMdiFallbackFlushes;
             currentFrameMdiFallbackFlushes = 0L;
-            lastFrameMdiFallbackBatches.set(currentFrameMdiFallbackBatches);
+            lastFrameMdiFallbackBatches = currentFrameMdiFallbackBatches;
             currentFrameMdiFallbackBatches = 0L;
-            lastFrameMdiDrawCalls.set(currentFrameMdiDrawCalls);
+            lastFrameMdiDrawCalls = currentFrameMdiDrawCalls;
             currentFrameMdiDrawCalls = 0L;
-            lastFrameMdiMultiDrawCalls.set(currentFrameMdiMultiDrawCalls);
+            lastFrameMdiMultiDrawCalls = currentFrameMdiMultiDrawCalls;
             currentFrameMdiMultiDrawCalls = 0L;
-            lastFrameMdiIndirectCommands.set(currentFrameMdiIndirectCommands);
+            lastFrameMdiIndirectCommands = currentFrameMdiIndirectCommands;
             currentFrameMdiIndirectCommands = 0L;
-            lastFrameMdiNoSlotBatches.set(currentFrameMdiNoSlotBatches);
+            lastFrameMdiNoSlotBatches = currentFrameMdiNoSlotBatches;
             currentFrameMdiNoSlotBatches = 0L;
-            lastFrameMdiNoSlotInstances.set(currentFrameMdiNoSlotInstances);
+            lastFrameMdiNoSlotInstances = currentFrameMdiNoSlotInstances;
             currentFrameMdiNoSlotInstances = 0L;
-            lastFrameMdiPartialDrawFailures.set(currentFrameMdiPartialDrawFailures);
+            lastFrameMdiPartialDrawFailures = currentFrameMdiPartialDrawFailures;
             currentFrameMdiPartialDrawFailures = 0L;
-            lastFrameMdiStalePreparedGroups.set(currentFrameMdiStalePreparedGroups);
+            lastFrameMdiStalePreparedGroups = currentFrameMdiStalePreparedGroups;
             currentFrameMdiStalePreparedGroups = 0L;
-            lastFrameMdiStalePreparedCommands.set(currentFrameMdiStalePreparedCommands);
+            lastFrameMdiStalePreparedCommands = currentFrameMdiStalePreparedCommands;
             currentFrameMdiStalePreparedCommands = 0L;
-            lastFrameMdiDispatchDisableEvents.set(currentFrameMdiDispatchDisableEvents);
+            lastFrameMdiDispatchDisableEvents = currentFrameMdiDispatchDisableEvents;
             currentFrameMdiDispatchDisableEvents = 0L;
-            lastFrameMdiAtlasRepackFailures.set(currentFrameMdiAtlasRepackFailures);
+            lastFrameMdiAtlasRepackFailures = currentFrameMdiAtlasRepackFailures;
             currentFrameMdiAtlasRepackFailures = 0L;
-            lastFrameMdiAtlasInitFailures.set(currentFrameMdiAtlasInitFailures);
+            lastFrameMdiAtlasInitFailures = currentFrameMdiAtlasInitFailures;
             currentFrameMdiAtlasInitFailures = 0L;
-            lastFrameMdiAdditiveEligibleBatches.set(currentFrameMdiAdditiveEligibleBatches);
+            lastFrameMdiAdditiveEligibleBatches = currentFrameMdiAdditiveEligibleBatches;
             currentFrameMdiAdditiveEligibleBatches = 0L;
-            lastFrameMdiAdditiveFallbackBatches.set(currentFrameMdiAdditiveFallbackBatches);
+            lastFrameMdiAdditiveFallbackBatches = currentFrameMdiAdditiveFallbackBatches;
             currentFrameMdiAdditiveFallbackBatches = 0L;
-            lastFrameMdiAdditiveDrawCalls.set(currentFrameMdiAdditiveDrawCalls);
+            lastFrameMdiAdditiveDrawCalls = currentFrameMdiAdditiveDrawCalls;
             currentFrameMdiAdditiveDrawCalls = 0L;
-            lastFrameMdiAdditiveIndirectCommands.set(currentFrameMdiAdditiveIndirectCommands);
+            lastFrameMdiAdditiveIndirectCommands = currentFrameMdiAdditiveIndirectCommands;
             currentFrameMdiAdditiveIndirectCommands = 0L;
-            lastFrameMdiAdditiveNoSlotBatches.set(currentFrameMdiAdditiveNoSlotBatches);
+            lastFrameMdiAdditiveNoSlotBatches = currentFrameMdiAdditiveNoSlotBatches;
             currentFrameMdiAdditiveNoSlotBatches = 0L;
-            lastFrameMdiAdditiveNoSlotInstances.set(currentFrameMdiAdditiveNoSlotInstances);
+            lastFrameMdiAdditiveNoSlotInstances = currentFrameMdiAdditiveNoSlotInstances;
             currentFrameMdiAdditiveNoSlotInstances = 0L;
-            lastFrameGpuDrawCalls.set(currentFrameGpuDrawCalls);
+            lastFrameGpuDrawCalls = currentFrameGpuDrawCalls;
             currentFrameGpuDrawCalls = 0L;
-            lastFrameGpuFallbackBatches.set(currentFrameGpuFallbackBatches);
+            lastFrameGpuFallbackBatches = currentFrameGpuFallbackBatches;
             currentFrameGpuFallbackBatches = 0L;
-            lastFrameGpuFallbackVertices.set(currentFrameGpuFallbackVertices);
+            lastFrameGpuFallbackVertices = currentFrameGpuFallbackVertices;
             currentFrameGpuFallbackVertices = 0L;
-            lastFrameIrisEligibleBatches.set(currentFrameIrisEligibleBatches);
+            lastFrameIrisEligibleBatches = currentFrameIrisEligibleBatches;
             currentFrameIrisEligibleBatches = 0L;
-            lastFrameIrisDrawCalls.set(currentFrameIrisDrawCalls);
+            lastFrameIrisDrawCalls = currentFrameIrisDrawCalls;
             currentFrameIrisDrawCalls = 0L;
-            lastFrameIrisShadowDrawCalls.set(currentFrameIrisShadowDrawCalls);
+            lastFrameIrisShadowDrawCalls = currentFrameIrisShadowDrawCalls;
             currentFrameIrisShadowDrawCalls = 0L;
-            lastFrameIrisFallbackBatches.set(currentFrameIrisFallbackBatches);
+            lastFrameIrisFallbackBatches = currentFrameIrisFallbackBatches;
             currentFrameIrisFallbackBatches = 0L;
-            lastFrameIrisFallbackVertices.set(currentFrameIrisFallbackVertices);
+            lastFrameIrisFallbackVertices = currentFrameIrisFallbackVertices;
             currentFrameIrisFallbackVertices = 0L;
-            lastFrameIrisLightmapStorageFailures.set(currentFrameIrisLightmapStorageFailures);
+            lastFrameIrisLightmapStorageFailures = currentFrameIrisLightmapStorageFailures;
             currentFrameIrisLightmapStorageFailures = 0L;
-            lastFrameIrisLightmapSlotReuses.set(currentFrameIrisLightmapSlotReuses);
+            lastFrameIrisLightmapSlotReuses = currentFrameIrisLightmapSlotReuses;
             currentFrameIrisLightmapSlotReuses = 0L;
-            lastFrameIrisLightmapSlotUploads.set(currentFrameIrisLightmapSlotUploads);
+            lastFrameIrisLightmapSlotUploads = currentFrameIrisLightmapSlotUploads;
             currentFrameIrisLightmapSlotUploads = 0L;
-            lastFrameIrisLightmapStagingFallbacks.set(currentFrameIrisLightmapStagingFallbacks);
+            lastFrameIrisLightmapStagingFallbacks = currentFrameIrisLightmapStagingFallbacks;
             currentFrameIrisLightmapStagingFallbacks = 0L;
-            lastFrameIrisShaderAttributeCacheHits.set(currentFrameIrisShaderAttributeCacheHits);
+            lastFrameIrisShaderAttributeCacheHits = currentFrameIrisShaderAttributeCacheHits;
             currentFrameIrisShaderAttributeCacheHits = 0L;
-            lastFrameIrisShaderAttributeCacheMisses.set(currentFrameIrisShaderAttributeCacheMisses);
+            lastFrameIrisShaderAttributeCacheMisses = currentFrameIrisShaderAttributeCacheMisses;
             currentFrameIrisShaderAttributeCacheMisses = 0L;
-            lastFrameIrisShaderAttributeGenerationInvalidations.set(
-                    currentFrameIrisShaderAttributeGenerationInvalidations);
+            lastFrameIrisShaderAttributeGenerationInvalidations =
+                    currentFrameIrisShaderAttributeGenerationInvalidations;
             currentFrameIrisShaderAttributeGenerationInvalidations = 0L;
-            lastFrameIrisShaderAttributePrimedSkips.set(currentFrameIrisShaderAttributePrimedSkips);
+            lastFrameIrisShaderAttributePrimedSkips = currentFrameIrisShaderAttributePrimedSkips;
             currentFrameIrisShaderAttributePrimedSkips = 0L;
-            lastFrameIrisShaderAttributeVaoBindFailures.set(currentFrameIrisShaderAttributeVaoBindFailures);
+            lastFrameIrisShaderAttributeVaoBindFailures = currentFrameIrisShaderAttributeVaoBindFailures;
             currentFrameIrisShaderAttributeVaoBindFailures = 0L;
-            lastFrameIrisQueuedBatches.set(currentFrameIrisQueuedBatches);
+            lastFrameIrisQueuedBatches = currentFrameIrisQueuedBatches;
             currentFrameIrisQueuedBatches = 0L;
-            lastFrameIrisQueuedInstances.set(currentFrameIrisQueuedInstances);
+            lastFrameIrisQueuedInstances = currentFrameIrisQueuedInstances;
             currentFrameIrisQueuedInstances = 0L;
-            lastFrameIrisQueuedFlushes.set(currentFrameIrisQueuedFlushes);
+            lastFrameIrisQueuedFlushes = currentFrameIrisQueuedFlushes;
             currentFrameIrisQueuedFlushes = 0L;
-            lastFrameIrisQueuedDrawCalls.set(currentFrameIrisQueuedDrawCalls);
+            lastFrameIrisQueuedDrawCalls = currentFrameIrisQueuedDrawCalls;
             currentFrameIrisQueuedDrawCalls = 0L;
-            lastFrameIrisQueuedFallbackBatches.set(currentFrameIrisQueuedFallbackBatches);
+            lastFrameIrisQueuedFallbackBatches = currentFrameIrisQueuedFallbackBatches;
             currentFrameIrisQueuedFallbackBatches = 0L;
-            lastFrameIrisQueuedFallbackInstances.set(currentFrameIrisQueuedFallbackInstances);
+            lastFrameIrisQueuedFallbackInstances = currentFrameIrisQueuedFallbackInstances;
             currentFrameIrisQueuedFallbackInstances = 0L;
-            lastFrameIrisQueuedDuplicateInstances.set(currentFrameIrisQueuedDuplicateInstances);
+            lastFrameIrisQueuedDuplicateInstances = currentFrameIrisQueuedDuplicateInstances;
             currentFrameIrisQueuedDuplicateInstances = 0L;
             HbmIrisRenderBatch.endFrame();
             cpuFallback.endFrame();
@@ -7588,9 +8347,9 @@ public final class LegacyWavefrontModel {
         public RenderBackendSnapshot snapshot() {
             RenderBackendSnapshot cpu = cpuFallback.snapshot();
             boolean experimentalEnabled = HbmRenderFrameFlags.current().experimentalGpuBackendEnabled();
-            long totalDrawCalls = cpu.estimatedDrawCalls() + gpuDrawCalls.get();
+            long totalDrawCalls = cpu.estimatedDrawCalls() + gpuDrawCalls;
             long currentDrawCalls = cpu.currentFrameEstimatedDrawCalls() + currentFrameGpuDrawCalls;
-            long lastDrawCalls = cpu.lastFrameEstimatedDrawCalls() + lastFrameGpuDrawCalls.get();
+            long lastDrawCalls = cpu.lastFrameEstimatedDrawCalls() + lastFrameGpuDrawCalls;
             return new RenderBackendSnapshot(
                     experimentalEnabled ? "experimental_gpu_mesh_with_cpu_fallback" : cpu.name(),
                     experimentalEnabled,
@@ -7627,13 +8386,13 @@ public final class LegacyWavefrontModel {
                     cpu.untexturedBatches(),
                     cpu.untexturedVertices(),
                     totalDrawCalls,
-                    cpu.texturedDrawCalls() + gpuDrawCalls.get(),
+                    cpu.texturedDrawCalls() + gpuDrawCalls,
                     cpu.spriteDrawCalls(),
                     cpu.untexturedDrawCalls(),
                     cpu.textureSwitches(),
                     cpu.renderModeSwitches(),
-                    cpu.cpuFallbackBatches() + gpuFallbackBatches.get(),
-                    cpu.cpuFallbackVertices() + gpuFallbackVertices.get(),
+                    cpu.cpuFallbackBatches() + gpuFallbackBatches,
+                    cpu.cpuFallbackVertices() + gpuFallbackVertices,
                     cpu.texturedClippedFallbackBatches(),
                     cpu.texturedClippedFallbackVertices(),
                     cpu.untexturedClippedFallbackBatches(),
@@ -7656,32 +8415,32 @@ public final class LegacyWavefrontModel {
                     gpuBufferBytes.get() + irisMeshBytes.get() + mdiAtlas.byteCapacity(),
                     gpuUploadAttempts.get(),
                     gpuUploadFailures.get(),
-                    gpuDrawCalls.get(),
-                    gpuFallbackBatches.get(),
-                    gpuFallbackVertices.get(),
-                    instancedQueuedBatches.get(),
-                    instancedQueuedInstances.get(),
-                    instancedFlushes.get(),
-                    instancedDrawCalls.get(),
-                    instancedFallbackBatches.get(),
-                    instancedFallbackInstances.get(),
-                    instancedOverflowBatches.get(),
-                    instancedOverflowInstances.get(),
+                    gpuDrawCalls,
+                    gpuFallbackBatches,
+                    gpuFallbackVertices,
+                    instancedQueuedBatches,
+                    instancedQueuedInstances,
+                    instancedFlushes,
+                    instancedDrawCalls,
+                    instancedFallbackBatches,
+                    instancedFallbackInstances,
+                    instancedOverflowBatches,
+                    instancedOverflowInstances,
                     experimentalEnabled && mdiAvailable(),
                     experimentalEnabled && mdiDrawIndirectSupported,
                     experimentalEnabled && mdiMultiDrawIndirectSupported,
                     experimentalEnabled && mdiBaseInstanceSupported,
-                    mdiEligibleFlushes.get(),
-                    mdiEligibleBatches.get(),
-                    mdiFallbackFlushes.get(),
-                    mdiFallbackBatches.get(),
-                    mdiDrawCalls.get(),
-                    mdiMultiDrawCalls.get(),
-                    mdiIndirectCommands.get(),
+                    mdiEligibleFlushes,
+                    mdiEligibleBatches,
+                    mdiFallbackFlushes,
+                    mdiFallbackBatches,
+                    mdiDrawCalls,
+                    mdiMultiDrawCalls,
+                    mdiIndirectCommands,
                     mdiAtlas.partCount(),
                     mdiAtlas.byteCapacity(),
-                    mdiNoSlotBatches.get(),
-                    mdiNoSlotInstances.get(),
+                    mdiNoSlotBatches,
+                    mdiNoSlotInstances,
                     currentFrameMdiEligibleFlushes,
                     currentFrameMdiEligibleBatches,
                     currentFrameMdiFallbackFlushes,
@@ -7690,38 +8449,38 @@ public final class LegacyWavefrontModel {
                     currentFrameMdiIndirectCommands,
                     currentFrameMdiNoSlotBatches,
                     currentFrameMdiNoSlotInstances,
-                    lastFrameMdiEligibleFlushes.get(),
-                    lastFrameMdiEligibleBatches.get(),
-                    lastFrameMdiFallbackFlushes.get(),
-                    lastFrameMdiFallbackBatches.get(),
-                    lastFrameMdiDrawCalls.get(),
-                    lastFrameMdiIndirectCommands.get(),
-                    lastFrameMdiNoSlotBatches.get(),
-                    lastFrameMdiNoSlotInstances.get(),
+                    lastFrameMdiEligibleFlushes,
+                    lastFrameMdiEligibleBatches,
+                    lastFrameMdiFallbackFlushes,
+                    lastFrameMdiFallbackBatches,
+                    lastFrameMdiDrawCalls,
+                    lastFrameMdiIndirectCommands,
+                    lastFrameMdiNoSlotBatches,
+                    lastFrameMdiNoSlotInstances,
                     currentFrameInstancedQueuedBatches,
                     currentFrameInstancedQueuedInstances,
                     currentFrameInstancedDrawCalls,
                     currentFrameInstancedOverflowBatches,
                     currentFrameInstancedOverflowInstances,
-                    lastFrameInstancedQueuedBatches.get(),
-                    lastFrameInstancedQueuedInstances.get(),
-                    lastFrameInstancedDrawCalls.get(),
-                    lastFrameInstancedOverflowBatches.get(),
-                    lastFrameInstancedOverflowInstances.get(),
+                    lastFrameInstancedQueuedBatches,
+                    lastFrameInstancedQueuedInstances,
+                    lastFrameInstancedDrawCalls,
+                    lastFrameInstancedOverflowBatches,
+                    lastFrameInstancedOverflowInstances,
                     currentFrameGpuDrawCalls,
                     currentFrameGpuFallbackBatches,
                     currentFrameGpuFallbackVertices,
-                    lastFrameGpuDrawCalls.get(),
-                    lastFrameGpuFallbackBatches.get(),
-                    lastFrameGpuFallbackVertices.get(),
+                    lastFrameGpuDrawCalls,
+                    lastFrameGpuFallbackBatches,
+                    lastFrameGpuFallbackVertices,
                     cpu.lastFrameTexturedBatches(),
                     cpu.lastFrameTexturedVertices(),
                     cpu.lastFrameSpriteBatches(),
                     cpu.lastFrameSpriteVertices(),
                     cpu.lastFrameUntexturedBatches(),
                     cpu.lastFrameUntexturedVertices(),
-                    cpu.lastFrameCpuFallbackBatches() + lastFrameGpuFallbackBatches.get(),
-                    cpu.lastFrameCpuFallbackVertices() + lastFrameGpuFallbackVertices.get(),
+                    cpu.lastFrameCpuFallbackBatches() + lastFrameGpuFallbackBatches,
+                    cpu.lastFrameCpuFallbackVertices() + lastFrameGpuFallbackVertices,
                     cpu.lastFrameBackendFlushes(),
                     lastDrawCalls,
                     cpu.lastFrameTextureSwitches());
@@ -7731,13 +8490,13 @@ public final class LegacyWavefrontModel {
         public RenderBackendAdditiveSnapshot additiveSnapshot() {
             return new RenderBackendAdditiveSnapshot(
                     new InstancedAdditiveSnapshot(
-                            instancedAdditiveQueuedBatches.get(),
-                            instancedAdditiveQueuedInstances.get(),
-                            instancedAdditiveDrawCalls.get(),
-                            instancedAdditiveFallbackBatches.get(),
-                            instancedAdditiveFallbackInstances.get(),
-                            instancedAdditiveOverflowBatches.get(),
-                            instancedAdditiveOverflowInstances.get(),
+                            instancedAdditiveQueuedBatches,
+                            instancedAdditiveQueuedInstances,
+                            instancedAdditiveDrawCalls,
+                            instancedAdditiveFallbackBatches,
+                            instancedAdditiveFallbackInstances,
+                            instancedAdditiveOverflowBatches,
+                            instancedAdditiveOverflowInstances,
                             currentFrameInstancedAdditiveQueuedBatches,
                             currentFrameInstancedAdditiveQueuedInstances,
                             currentFrameInstancedAdditiveDrawCalls,
@@ -7745,88 +8504,88 @@ public final class LegacyWavefrontModel {
                             currentFrameInstancedAdditiveFallbackInstances,
                             currentFrameInstancedAdditiveOverflowBatches,
                             currentFrameInstancedAdditiveOverflowInstances,
-                            lastFrameInstancedAdditiveQueuedBatches.get(),
-                            lastFrameInstancedAdditiveQueuedInstances.get(),
-                            lastFrameInstancedAdditiveDrawCalls.get(),
-                            lastFrameInstancedAdditiveFallbackBatches.get(),
-                            lastFrameInstancedAdditiveFallbackInstances.get(),
-                            lastFrameInstancedAdditiveOverflowBatches.get(),
-                            lastFrameInstancedAdditiveOverflowInstances.get()),
+                            lastFrameInstancedAdditiveQueuedBatches,
+                            lastFrameInstancedAdditiveQueuedInstances,
+                            lastFrameInstancedAdditiveDrawCalls,
+                            lastFrameInstancedAdditiveFallbackBatches,
+                            lastFrameInstancedAdditiveFallbackInstances,
+                            lastFrameInstancedAdditiveOverflowBatches,
+                            lastFrameInstancedAdditiveOverflowInstances),
                     new MdiAdditiveSnapshot(
-                            mdiAdditiveEligibleBatches.get(),
-                            mdiAdditiveFallbackBatches.get(),
-                            mdiAdditiveDrawCalls.get(),
-                            mdiAdditiveIndirectCommands.get(),
-                            mdiAdditiveNoSlotBatches.get(),
-                            mdiAdditiveNoSlotInstances.get(),
+                            mdiAdditiveEligibleBatches,
+                            mdiAdditiveFallbackBatches,
+                            mdiAdditiveDrawCalls,
+                            mdiAdditiveIndirectCommands,
+                            mdiAdditiveNoSlotBatches,
+                            mdiAdditiveNoSlotInstances,
                             currentFrameMdiAdditiveEligibleBatches,
                             currentFrameMdiAdditiveFallbackBatches,
                             currentFrameMdiAdditiveDrawCalls,
                             currentFrameMdiAdditiveIndirectCommands,
                             currentFrameMdiAdditiveNoSlotBatches,
                             currentFrameMdiAdditiveNoSlotInstances,
-                            lastFrameMdiAdditiveEligibleBatches.get(),
-                            lastFrameMdiAdditiveFallbackBatches.get(),
-                            lastFrameMdiAdditiveDrawCalls.get(),
-                            lastFrameMdiAdditiveIndirectCommands.get(),
-                            lastFrameMdiAdditiveNoSlotBatches.get(),
-                            lastFrameMdiAdditiveNoSlotInstances.get()));
+                            lastFrameMdiAdditiveEligibleBatches,
+                            lastFrameMdiAdditiveFallbackBatches,
+                            lastFrameMdiAdditiveDrawCalls,
+                            lastFrameMdiAdditiveIndirectCommands,
+                            lastFrameMdiAdditiveNoSlotBatches,
+                            lastFrameMdiAdditiveNoSlotInstances));
         }
 
         @Override
         public RenderBackendInstancingSnapshot instancingSnapshot() {
             return new RenderBackendInstancingSnapshot(
-                    optimizedFlushCalls.get(),
+                    optimizedFlushCalls,
                     currentFrameOptimizedFlushCalls,
-                    lastFrameOptimizedFlushCalls.get(),
-                    optimizedDuplicateFlushCalls.get(),
+                    lastFrameOptimizedFlushCalls,
+                    optimizedDuplicateFlushCalls,
                     currentFrameOptimizedDuplicateFlushCalls,
-                    lastFrameOptimizedDuplicateFlushCalls.get(),
-                    optimizedDuplicatePresentSkips.get(),
+                    lastFrameOptimizedDuplicateFlushCalls,
+                    optimizedDuplicatePresentSkips,
                     currentFrameOptimizedDuplicatePresentSkips,
-                    lastFrameOptimizedDuplicatePresentSkips.get(),
-                    optimizedFlushNanos.get(),
+                    lastFrameOptimizedDuplicatePresentSkips,
+                    optimizedFlushNanos,
                     currentFrameOptimizedFlushNanos,
-                    lastFrameOptimizedFlushNanos.get(),
-                    optimizedDrawStateRestoreFailures.get(),
+                    lastFrameOptimizedFlushNanos,
+                    optimizedDrawStateRestoreFailures,
                     currentFrameOptimizedDrawStateRestoreFailures,
-                    lastFrameOptimizedDrawStateRestoreFailures.get(),
-                    instancedDuplicateInstances.get(),
+                    lastFrameOptimizedDrawStateRestoreFailures,
+                    instancedDuplicateInstances,
                     currentFrameInstancedDuplicateInstances,
-                    lastFrameInstancedDuplicateInstances.get(),
-                    staleInstancedBatches.get(),
-                    staleInstancedInstances.get(),
-                    staleIrisCompanionBatches.get(),
-                    staleIrisCompanionInstances.get(),
+                    lastFrameInstancedDuplicateInstances,
+                    staleInstancedBatches,
+                    staleInstancedInstances,
+                    staleIrisCompanionBatches,
+                    staleIrisCompanionInstances,
                     currentFrameStaleInstancedBatches,
                     currentFrameStaleInstancedInstances,
                     currentFrameStaleIrisCompanionBatches,
                     currentFrameStaleIrisCompanionInstances,
-                    lastFrameStaleInstancedBatches.get(),
-                    lastFrameStaleInstancedInstances.get(),
-                    lastFrameStaleIrisCompanionBatches.get(),
-                    lastFrameStaleIrisCompanionInstances.get(),
-                    mdiPartialDrawFailures.get(),
+                    lastFrameStaleInstancedBatches,
+                    lastFrameStaleInstancedInstances,
+                    lastFrameStaleIrisCompanionBatches,
+                    lastFrameStaleIrisCompanionInstances,
+                    mdiPartialDrawFailures,
                     currentFrameMdiPartialDrawFailures,
-                    lastFrameMdiPartialDrawFailures.get(),
-                    mdiStalePreparedGroups.get(),
+                    lastFrameMdiPartialDrawFailures,
+                    mdiStalePreparedGroups,
                     currentFrameMdiStalePreparedGroups,
-                    lastFrameMdiStalePreparedGroups.get(),
-                    mdiStalePreparedCommands.get(),
+                    lastFrameMdiStalePreparedGroups,
+                    mdiStalePreparedCommands,
                     currentFrameMdiStalePreparedCommands,
-                    lastFrameMdiStalePreparedCommands.get(),
+                    lastFrameMdiStalePreparedCommands,
                     mdiDispatchDisabled,
-                    mdiDispatchDisableEvents.get(),
+                    mdiDispatchDisableEvents,
                     currentFrameMdiDispatchDisableEvents,
-                    lastFrameMdiDispatchDisableEvents.get(),
+                    lastFrameMdiDispatchDisableEvents,
                     currentFrameMdiMultiDrawCalls,
-                    lastFrameMdiMultiDrawCalls.get(),
-                    mdiAtlasRepackFailures.get(),
+                    lastFrameMdiMultiDrawCalls,
+                    mdiAtlasRepackFailures,
                     currentFrameMdiAtlasRepackFailures,
-                    lastFrameMdiAtlasRepackFailures.get(),
-                    mdiAtlasInitFailures.get(),
+                    lastFrameMdiAtlasRepackFailures,
+                    mdiAtlasInitFailures,
                     currentFrameMdiAtlasInitFailures,
-                    lastFrameMdiAtlasInitFailures.get());
+                    lastFrameMdiAtlasInitFailures);
         }
 
         private int gpuMeshCount() {
@@ -7849,74 +8608,74 @@ public final class LegacyWavefrontModel {
                 return new RenderBackendIrisSnapshot(
                         irisMeshes.size(),
                         irisMeshBytes.get(),
-                        irisEligibleBatches.get(),
-                        irisDrawCalls.get(),
-                        irisFallbackBatches.get(),
-                        irisFallbackVertices.get(),
+                        irisEligibleBatches,
+                        irisDrawCalls,
+                        irisFallbackBatches,
+                        irisFallbackVertices,
                         irisUploadAttempts.get(),
                         irisUploadFailures.get(),
                         currentFrameIrisEligibleBatches,
                         currentFrameIrisDrawCalls,
                         currentFrameIrisFallbackBatches,
                         currentFrameIrisFallbackVertices,
-                        lastFrameIrisEligibleBatches.get(),
-                        lastFrameIrisDrawCalls.get(),
-                        lastFrameIrisFallbackBatches.get(),
-                        lastFrameIrisFallbackVertices.get(),
-                        irisShadowDrawCalls.get(),
+                        lastFrameIrisEligibleBatches,
+                        lastFrameIrisDrawCalls,
+                        lastFrameIrisFallbackBatches,
+                        lastFrameIrisFallbackVertices,
+                        irisShadowDrawCalls,
                         currentFrameIrisShadowDrawCalls,
-                        lastFrameIrisShadowDrawCalls.get(),
-                        irisLightmapStorageFailures.get(),
+                        lastFrameIrisShadowDrawCalls,
+                        irisLightmapStorageFailures,
                         currentFrameIrisLightmapStorageFailures,
-                        lastFrameIrisLightmapStorageFailures.get(),
-                        irisLightmapSlotReuses.get(),
+                        lastFrameIrisLightmapStorageFailures,
+                        irisLightmapSlotReuses,
                         currentFrameIrisLightmapSlotReuses,
-                        lastFrameIrisLightmapSlotReuses.get(),
-                        irisLightmapSlotUploads.get(),
+                        lastFrameIrisLightmapSlotReuses,
+                        irisLightmapSlotUploads,
                         currentFrameIrisLightmapSlotUploads,
-                        lastFrameIrisLightmapSlotUploads.get(),
-                        irisLightmapStagingFallbacks.get(),
+                        lastFrameIrisLightmapSlotUploads,
+                        irisLightmapStagingFallbacks,
                         currentFrameIrisLightmapStagingFallbacks,
-                        lastFrameIrisLightmapStagingFallbacks.get(),
+                        lastFrameIrisLightmapStagingFallbacks,
                         new IrisCompanionShaderSnapshot(
-                                irisShaderAttributeCacheHits.get(),
+                                irisShaderAttributeCacheHits,
                                 currentFrameIrisShaderAttributeCacheHits,
-                                lastFrameIrisShaderAttributeCacheHits.get(),
-                                irisShaderAttributeCacheMisses.get(),
+                                lastFrameIrisShaderAttributeCacheHits,
+                                irisShaderAttributeCacheMisses,
                                 currentFrameIrisShaderAttributeCacheMisses,
-                                lastFrameIrisShaderAttributeCacheMisses.get(),
-                                irisShaderAttributeGenerationInvalidations.get(),
+                                lastFrameIrisShaderAttributeCacheMisses,
+                                irisShaderAttributeGenerationInvalidations,
                                 currentFrameIrisShaderAttributeGenerationInvalidations,
-                                lastFrameIrisShaderAttributeGenerationInvalidations.get(),
-                                irisShaderAttributePrimedSkips.get(),
+                                lastFrameIrisShaderAttributeGenerationInvalidations,
+                                irisShaderAttributePrimedSkips,
                                 currentFrameIrisShaderAttributePrimedSkips,
-                                lastFrameIrisShaderAttributePrimedSkips.get(),
-                                irisShaderAttributeVaoBindFailures.get(),
+                                lastFrameIrisShaderAttributePrimedSkips,
+                                irisShaderAttributeVaoBindFailures,
                                 currentFrameIrisShaderAttributeVaoBindFailures,
-                                lastFrameIrisShaderAttributeVaoBindFailures.get()),
+                                lastFrameIrisShaderAttributeVaoBindFailures),
                         HbmIrisRenderBatch.snapshot(),
                         new IrisCompanionQueueSnapshot(
-                                irisQueuedBatches.get(),
-                                irisQueuedInstances.get(),
-                                irisQueuedFlushes.get(),
-                                irisQueuedDrawCalls.get(),
-                                irisQueuedFallbackBatches.get(),
-                                irisQueuedFallbackInstances.get(),
+                                irisQueuedBatches,
+                                irisQueuedInstances,
+                                irisQueuedFlushes,
+                                irisQueuedDrawCalls,
+                                irisQueuedFallbackBatches,
+                                irisQueuedFallbackInstances,
                                 currentFrameIrisQueuedBatches,
                                 currentFrameIrisQueuedInstances,
                                 currentFrameIrisQueuedFlushes,
                                 currentFrameIrisQueuedDrawCalls,
                                 currentFrameIrisQueuedFallbackBatches,
                                 currentFrameIrisQueuedFallbackInstances,
-                                irisQueuedDuplicateInstances.get(),
+                                irisQueuedDuplicateInstances,
                                 currentFrameIrisQueuedDuplicateInstances,
-                                lastFrameIrisQueuedDuplicateInstances.get(),
-                                lastFrameIrisQueuedBatches.get(),
-                                lastFrameIrisQueuedInstances.get(),
-                                lastFrameIrisQueuedFlushes.get(),
-                                lastFrameIrisQueuedDrawCalls.get(),
-                                lastFrameIrisQueuedFallbackBatches.get(),
-                                lastFrameIrisQueuedFallbackInstances.get()));
+                                lastFrameIrisQueuedDuplicateInstances,
+                                lastFrameIrisQueuedBatches,
+                                lastFrameIrisQueuedInstances,
+                                lastFrameIrisQueuedFlushes,
+                                lastFrameIrisQueuedDrawCalls,
+                                lastFrameIrisQueuedFallbackBatches,
+                                lastFrameIrisQueuedFallbackInstances));
             }
         }
 
@@ -7953,14 +8712,13 @@ public final class LegacyWavefrontModel {
             }
 
             private synchronized MdiPreparedGroup prepare(MdiDrawGroupKey key, List<InstancedBatch> batches,
-                    List<InstancedBatch> noSlotBatches) {
+                    int totalInstances, List<InstancedBatch> noSlotBatches) {
                 if (batches.isEmpty()) {
                     return null;
                 }
                 if (!ensureReady()) {
                     return null;
                 }
-                int totalInstances = totalInstances(batches);
                 if (totalInstances <= 0) {
                     return null;
                 }
@@ -7974,39 +8732,65 @@ public final class LegacyWavefrontModel {
                         (int) instanceBytesRequired);
                 ByteBuffer commandBytes = prepareScratch(commandPrepareScratch, scratchIndex,
                         (int) commandBytesRequired);
-                List<MdiSubDraw> subDraws = new ArrayList<>(batches.size());
-                List<InstancedBatch> preparedBatches = new ArrayList<>(batches.size());
+                boolean captureSubDraws = HbmMdiRenderDiag.isVerboseSubdrawsEnabled();
+                List<MdiSubDraw> subDraws = captureSubDraws ? new ArrayList<>(batches.size()) : List.of();
+                List<InstancedBatch> preparedBatches = null;
                 int baseInstance = 0;
                 int commandCount = 0;
                 int preparedInstances = 0;
-                for (InstancedBatch batch : batches) {
+                long instanceBaseAddress = MemoryUtil.memAddress(instanceBytes);
+                long commandBaseAddress = MemoryUtil.memAddress(commandBytes);
+                for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
+                    InstancedBatch batch = batches.get(batchIndex);
                     if (batch.instances().isEmpty()) {
+                        preparedBatches = prepareFilteredMdiBatches(batches, preparedBatches, batchIndex);
                         continue;
                     }
                     MdiSlot slot = slotFor(batch.mesh());
                     if (slot == null) {
                         noSlotBatches.add(batch);
+                        preparedBatches = prepareFilteredMdiBatches(batches, preparedBatches, batchIndex);
                         continue;
                     }
+                    int batchInstances = batch.instances().size();
                     for (InstancedInstance instance : batch.instances()) {
-                        instance.write(instanceBytes);
+                        instance.write(instanceBaseAddress
+                                + (long) preparedInstances * InstancedInstance.FLOATS * 4L);
+                        preparedInstances++;
                     }
-                    MdiPreparedGroup.writeDrawArraysIndirectCommand(commandBytes, slot.vertexCount(),
-                            batch.instances().size(), slot.firstVertex(), baseInstance);
-                    subDraws.add(new MdiSubDraw(commandCount, batch.mesh().key(), slot.firstVertex(),
-                            slot.vertexCount(), baseInstance, batch.instances().size()));
-                    preparedBatches.add(batch);
-                    baseInstance += batch.instances().size();
-                    preparedInstances += batch.instances().size();
+                    MdiPreparedGroup.writeDrawArraysIndirectCommand(commandBaseAddress
+                            + (long) commandCount * MdiPreparedGroup.COMMAND_STRIDE_BYTES,
+                            slot.vertexCount(), batchInstances, slot.firstVertex(), baseInstance);
+                    if (captureSubDraws) {
+                        subDraws.add(new MdiSubDraw(commandCount, batch.mesh().key(), slot.firstVertex(),
+                                slot.vertexCount(), baseInstance, batchInstances));
+                    }
+                    if (preparedBatches != null) {
+                        preparedBatches.add(batch);
+                    }
+                    baseInstance += batchInstances;
                     commandCount++;
                 }
                 if (commandCount <= 0 || preparedInstances <= 0) {
                     return null;
                 }
+                instanceBytes.position((int) ((long) preparedInstances * InstancedInstance.FLOATS * 4L));
                 instanceBytes.flip();
+                commandBytes.position(commandCount * MdiPreparedGroup.COMMAND_STRIDE_BYTES);
                 commandBytes.flip();
-                return new MdiPreparedGroup(key, List.copyOf(preparedBatches), instanceBytes, commandBytes,
-                        commandCount, preparedInstances, layoutGeneration, List.copyOf(subDraws));
+                return new MdiPreparedGroup(key, preparedBatches != null ? preparedBatches : batches,
+                        instanceBytes, commandBytes,
+                        commandCount, preparedInstances, layoutGeneration, subDraws);
+            }
+
+            private static List<InstancedBatch> prepareFilteredMdiBatches(List<InstancedBatch> batches,
+                    List<InstancedBatch> preparedBatches, int skippedBatchIndex) {
+                if (preparedBatches != null) {
+                    return preparedBatches;
+                }
+                List<InstancedBatch> filtered = new ArrayList<>(batches.size());
+                filtered.addAll(batches.subList(0, skippedBatchIndex));
+                return filtered;
             }
 
             private ByteBuffer prepareScratch(List<ByteBuffer> buffers, int index, int requiredBytes) {
@@ -8275,13 +9059,8 @@ public final class LegacyWavefrontModel {
                 if (!flags.instanceVboOrphanBeforeUpload()) {
                     return;
                 }
-                MdiBindingGuard guard = MdiBindingGuard.snapshot(false);
-                try {
-                    GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, instanceVboId);
-                    GL15.glBufferData(GL15.GL_ARRAY_BUFFER, instanceCapacityBytes, GL15.GL_STREAM_DRAW);
-                } finally {
-                    guard.restore();
-                }
+                // drawMdiPreparedGroup binds instanceVboId immediately before this call.
+                GL15.glBufferData(GL15.GL_ARRAY_BUFFER, instanceCapacityBytes, GL15.GL_STREAM_DRAW);
             }
 
             private void ensureIndirectCapacity(int requiredBytes) {
@@ -8312,13 +9091,8 @@ public final class LegacyWavefrontModel {
                 if (!flags.instanceVboOrphanBeforeUpload()) {
                     return;
                 }
-                MdiBindingGuard guard = MdiBindingGuard.snapshot(true);
-                try {
-                    GL15.glBindBuffer(GL40.GL_DRAW_INDIRECT_BUFFER, indirectBufferId);
-                    GL15.glBufferData(GL40.GL_DRAW_INDIRECT_BUFFER, indirectCapacityBytes, GL15.GL_STREAM_DRAW);
-                } finally {
-                    guard.restore();
-                }
+                // drawMdiPreparedGroup binds indirectBufferId immediately before this call.
+                GL15.glBufferData(GL40.GL_DRAW_INDIRECT_BUFFER, indirectCapacityBytes, GL15.GL_STREAM_DRAW);
             }
 
             private static final class MdiBindingGuard {
@@ -8386,7 +9160,7 @@ public final class LegacyWavefrontModel {
             }
 
             private void enableVertexAttribArraysOnBoundVao() {
-                if (vaoId == 0 || GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING) != vaoId) {
+                if (vaoId == 0) {
                     return;
                 }
                 for (int attribute = 0; attribute <= 13; attribute++) {
@@ -8589,6 +9363,9 @@ public final class LegacyWavefrontModel {
         private void closeInstancedAndEvictMdiLater(InstancedMesh mesh) {
             if (mesh == null) {
                 return;
+            }
+            if (lastInstancedMesh == mesh) {
+                clearLastInstancedMesh();
             }
             Runnable closer = () -> {
                 mdiAtlas.evictNow(mesh);
@@ -8925,18 +9702,24 @@ public final class LegacyWavefrontModel {
                 }
             }
 
-            private int preparePerVertexLightmapSlot(Matrix4f modelView, int packedLight) {
-                return preparePerVertexLightmapSlot(modelView, packedLight, MIN_LIGHTMAP_SLOT_CAPACITY);
+            private int preparePerVertexLightmapSlot(Matrix4f modelView, int packedLight,
+                    boolean useSlicedLight) {
+                return preparePerVertexLightmapSlot(modelView, packedLight, MIN_LIGHTMAP_SLOT_CAPACITY,
+                        useSlicedLight);
             }
 
-            private int preparePerVertexLightmapSlot(Matrix4f modelView, int packedLight, int requiredSlots) {
-                return preparePerVertexLightmapSlot(samplePerVertexLightProbe(modelView, packedLight),
+            private int preparePerVertexLightmapSlot(Matrix4f modelView, int packedLight, int requiredSlots,
+                    boolean useSlicedLight) {
+                return preparePerVertexLightmapSlot(samplePerVertexLightProbe(modelView, packedLight, useSlicedLight),
                         requiredSlots);
             }
 
             private LegacyRenderLighting.SlicedLightProbe samplePerVertexLightProbe(Matrix4f modelView,
-                    int packedLight) {
-                if (HbmRenderFrameFlags.current().useSlicedLight()) {
+                    int packedLight, boolean useSlicedLight) {
+                if (packedLight == LightTexture.FULL_BRIGHT) {
+                    return LegacyRenderLighting.SlicedLightProbe.uniform(packedLight);
+                }
+                if (useSlicedLight) {
                     return bounds.sampleSlicedLightProbe(modelView, lightSampleKey, packedLight);
                 }
                 return LegacyRenderLighting.SlicedLightProbe.from(bounds.sampleLightProbe(modelView, lightSampleKey,
@@ -9720,21 +10503,21 @@ public final class LegacyWavefrontModel {
         private final AtomicLong manualFlushes = new AtomicLong();
         private final AtomicLong backendFlushGeneration = new AtomicLong();
         private volatile RenderBackendFlushStage lastFlushStage = RenderBackendFlushStage.MANUAL;
-        private final AtomicLong texturedBatches = new AtomicLong();
-        private final AtomicLong texturedVertices = new AtomicLong();
-        private final AtomicLong spriteBatches = new AtomicLong();
-        private final AtomicLong spriteVertices = new AtomicLong();
-        private final AtomicLong untexturedBatches = new AtomicLong();
-        private final AtomicLong untexturedVertices = new AtomicLong();
-        private final AtomicLong texturedDrawCalls = new AtomicLong();
-        private final AtomicLong spriteDrawCalls = new AtomicLong();
-        private final AtomicLong untexturedDrawCalls = new AtomicLong();
-        private final AtomicLong textureSwitches = new AtomicLong();
-        private final AtomicLong renderModeSwitches = new AtomicLong();
-        private final AtomicLong texturedClippedFallbackBatches = new AtomicLong();
-        private final AtomicLong texturedClippedFallbackVertices = new AtomicLong();
-        private final AtomicLong untexturedClippedFallbackBatches = new AtomicLong();
-        private final AtomicLong untexturedClippedFallbackVertices = new AtomicLong();
+        private long texturedBatches;
+        private long texturedVertices;
+        private long spriteBatches;
+        private long spriteVertices;
+        private long untexturedBatches;
+        private long untexturedVertices;
+        private long texturedDrawCalls;
+        private long spriteDrawCalls;
+        private long untexturedDrawCalls;
+        private long textureSwitches;
+        private long renderModeSwitches;
+        private long texturedClippedFallbackBatches;
+        private long texturedClippedFallbackVertices;
+        private long untexturedClippedFallbackBatches;
+        private long untexturedClippedFallbackVertices;
         private final AtomicLong frameGeneration = new AtomicLong();
         private long currentFrameTexturedBatches;
         private long currentFrameTexturedVertices;
@@ -9747,21 +10530,32 @@ public final class LegacyWavefrontModel {
         private long currentFrameBackendFlushes;
         private long currentFrameEstimatedDrawCalls;
         private long currentFrameTextureSwitches;
-        private final AtomicLong lastFrameTexturedBatches = new AtomicLong();
-        private final AtomicLong lastFrameTexturedVertices = new AtomicLong();
-        private final AtomicLong lastFrameSpriteBatches = new AtomicLong();
-        private final AtomicLong lastFrameSpriteVertices = new AtomicLong();
-        private final AtomicLong lastFrameUntexturedBatches = new AtomicLong();
-        private final AtomicLong lastFrameUntexturedVertices = new AtomicLong();
-        private final AtomicLong lastFrameCpuFallbackBatches = new AtomicLong();
-        private final AtomicLong lastFrameCpuFallbackVertices = new AtomicLong();
-        private final AtomicLong lastFrameBackendFlushes = new AtomicLong();
-        private final AtomicLong lastFrameEstimatedDrawCalls = new AtomicLong();
-        private final AtomicLong lastFrameTextureSwitches = new AtomicLong();
+        private long lastFrameTexturedBatches;
+        private long lastFrameTexturedVertices;
+        private long lastFrameSpriteBatches;
+        private long lastFrameSpriteVertices;
+        private long lastFrameUntexturedBatches;
+        private long lastFrameUntexturedVertices;
+        private long lastFrameCpuFallbackBatches;
+        private long lastFrameCpuFallbackVertices;
+        private long lastFrameBackendFlushes;
+        private long lastFrameEstimatedDrawCalls;
+        private long lastFrameTextureSwitches;
         private volatile ResourceLocation lastTextureLocation;
         private volatile TextureAtlasSprite lastSprite;
         private volatile LegacyTexturedRenderMode lastRenderMode;
         private volatile RenderBackendFallbackReason lastFallbackReason = RenderBackendFallbackReason.NONE;
+
+        @Override
+        public boolean prepareTexturedCpuSequence(TexturedPreparedSequence sequence, PreparedBatch batch,
+                ResourceLocation textureLocation, MultiBufferSource buffer, int packedLight, int packedOverlay,
+                int red, int green, int blue, int alpha, boolean legacyShadow, boolean smoothing,
+                LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
+                RenderBackendFallbackReason fallbackReason) {
+            sequence.prepare(null, this, batch, textureLocation, buffer, packedLight, packedOverlay, red, green,
+                    blue, alpha, legacyShadow, smoothing, renderMode, uvTransform, fallbackReason);
+            return true;
+        }
 
         @Override
         public void renderTextured(PreparedBatch batch, ResourceLocation textureLocation, PoseStack poseStack,
@@ -9770,8 +10564,8 @@ public final class LegacyWavefrontModel {
             if (batch.empty()) {
                 return;
             }
-            texturedBatches.incrementAndGet();
-            texturedVertices.addAndGet(batch.vertexCount());
+            texturedBatches++;
+            texturedVertices += batch.vertexCount();
             currentFrameTexturedBatches++;
             currentFrameTexturedVertices += batch.vertexCount();
             VertexConsumer quadConsumer = null;
@@ -9801,6 +10595,15 @@ public final class LegacyWavefrontModel {
             }
         }
 
+        private void recordTexturedBatch(PreparedBatch batch, ResourceLocation textureLocation,
+                LegacyTexturedRenderMode renderMode) {
+            texturedBatches++;
+            texturedVertices += batch.vertexCount();
+            currentFrameTexturedBatches++;
+            currentFrameTexturedVertices += batch.vertexCount();
+            recordTextureAndMode(textureLocation, renderMode);
+        }
+
         @Override
         public void renderSprite(PreparedBatch batch, TextureAtlasSprite sprite, PoseStack poseStack,
                 MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
@@ -9809,8 +10612,8 @@ public final class LegacyWavefrontModel {
             if (batch.empty()) {
                 return;
             }
-            spriteBatches.incrementAndGet();
-            spriteVertices.addAndGet(batch.vertexCount());
+            spriteBatches++;
+            spriteVertices += batch.vertexCount();
             currentFrameSpriteBatches++;
             currentFrameSpriteVertices += batch.vertexCount();
             VertexConsumer quadConsumer = null;
@@ -9846,8 +10649,8 @@ public final class LegacyWavefrontModel {
             if (batch.empty()) {
                 return;
             }
-            untexturedBatches.incrementAndGet();
-            untexturedVertices.addAndGet(batch.vertexCount());
+            untexturedBatches++;
+            untexturedVertices += batch.vertexCount();
             currentFrameUntexturedBatches++;
             currentFrameUntexturedVertices += batch.vertexCount();
             PoseStack.Pose pose = poseStack.last();
@@ -9912,12 +10715,12 @@ public final class LegacyWavefrontModel {
             lastFallbackReason = resolvedFallback;
             switch (resolvedFallback) {
                 case TEXTURED_CLIPPED -> {
-                    texturedClippedFallbackBatches.incrementAndGet();
-                    texturedClippedFallbackVertices.addAndGet(vertices);
+                    texturedClippedFallbackBatches++;
+                    texturedClippedFallbackVertices += vertices;
                 }
                 case UNTEXTURED_CLIPPED -> {
-                    untexturedClippedFallbackBatches.incrementAndGet();
-                    untexturedClippedFallbackVertices.addAndGet(vertices);
+                    untexturedClippedFallbackBatches++;
+                    untexturedClippedFallbackVertices += vertices;
                 }
                 case NONE -> {
                 }
@@ -9929,7 +10732,7 @@ public final class LegacyWavefrontModel {
         private void recordTextureAndMode(ResourceLocation textureLocation, LegacyTexturedRenderMode renderMode) {
             ResourceLocation previousTexture = lastTextureLocation;
             if (previousTexture == null || !previousTexture.equals(textureLocation)) {
-                textureSwitches.incrementAndGet();
+                textureSwitches++;
                 currentFrameTextureSwitches++;
                 lastTextureLocation = textureLocation;
             }
@@ -9939,7 +10742,7 @@ public final class LegacyWavefrontModel {
         private void recordSpriteAndMode(TextureAtlasSprite sprite, LegacyTexturedRenderMode renderMode) {
             TextureAtlasSprite previousSprite = lastSprite;
             if (previousSprite != sprite) {
-                textureSwitches.incrementAndGet();
+                textureSwitches++;
                 currentFrameTextureSwitches++;
                 lastSprite = sprite;
             }
@@ -9949,76 +10752,76 @@ public final class LegacyWavefrontModel {
         private void recordRenderMode(LegacyTexturedRenderMode renderMode) {
             LegacyTexturedRenderMode previousRenderMode = lastRenderMode;
             if (previousRenderMode != renderMode) {
-                renderModeSwitches.incrementAndGet();
+                renderModeSwitches++;
                 lastRenderMode = renderMode;
             }
         }
 
         private void recordTexturedDrawCall() {
-            texturedDrawCalls.incrementAndGet();
+            texturedDrawCalls++;
             currentFrameEstimatedDrawCalls++;
         }
 
         private void recordSpriteDrawCall() {
-            spriteDrawCalls.incrementAndGet();
+            spriteDrawCalls++;
             currentFrameEstimatedDrawCalls++;
         }
 
         private void recordUntexturedDrawCall() {
-            untexturedDrawCalls.incrementAndGet();
+            untexturedDrawCalls++;
             currentFrameEstimatedDrawCalls++;
         }
 
         @Override
         public void endFrame() {
-            lastFrameTexturedBatches.set(currentFrameTexturedBatches);
+            lastFrameTexturedBatches = currentFrameTexturedBatches;
             currentFrameTexturedBatches = 0L;
-            lastFrameTexturedVertices.set(currentFrameTexturedVertices);
+            lastFrameTexturedVertices = currentFrameTexturedVertices;
             currentFrameTexturedVertices = 0L;
-            lastFrameSpriteBatches.set(currentFrameSpriteBatches);
+            lastFrameSpriteBatches = currentFrameSpriteBatches;
             currentFrameSpriteBatches = 0L;
-            lastFrameSpriteVertices.set(currentFrameSpriteVertices);
+            lastFrameSpriteVertices = currentFrameSpriteVertices;
             currentFrameSpriteVertices = 0L;
-            lastFrameUntexturedBatches.set(currentFrameUntexturedBatches);
+            lastFrameUntexturedBatches = currentFrameUntexturedBatches;
             currentFrameUntexturedBatches = 0L;
-            lastFrameUntexturedVertices.set(currentFrameUntexturedVertices);
+            lastFrameUntexturedVertices = currentFrameUntexturedVertices;
             currentFrameUntexturedVertices = 0L;
-            lastFrameCpuFallbackBatches.set(currentFrameCpuFallbackBatches);
+            lastFrameCpuFallbackBatches = currentFrameCpuFallbackBatches;
             currentFrameCpuFallbackBatches = 0L;
-            lastFrameCpuFallbackVertices.set(currentFrameCpuFallbackVertices);
+            lastFrameCpuFallbackVertices = currentFrameCpuFallbackVertices;
             currentFrameCpuFallbackVertices = 0L;
-            lastFrameBackendFlushes.set(currentFrameBackendFlushes);
+            lastFrameBackendFlushes = currentFrameBackendFlushes;
             currentFrameBackendFlushes = 0L;
-            lastFrameEstimatedDrawCalls.set(currentFrameEstimatedDrawCalls);
+            lastFrameEstimatedDrawCalls = currentFrameEstimatedDrawCalls;
             currentFrameEstimatedDrawCalls = 0L;
-            lastFrameTextureSwitches.set(currentFrameTextureSwitches);
+            lastFrameTextureSwitches = currentFrameTextureSwitches;
             currentFrameTextureSwitches = 0L;
             frameGeneration.incrementAndGet();
         }
 
         @Override
         public RenderBackendSnapshot snapshot() {
-            long texturedClippedBatches = texturedClippedFallbackBatches.get();
-            long texturedClippedVertices = texturedClippedFallbackVertices.get();
-            long untexturedClippedBatches = untexturedClippedFallbackBatches.get();
-            long untexturedClippedVertices = untexturedClippedFallbackVertices.get();
+            long texturedClippedBatches = texturedClippedFallbackBatches;
+            long texturedClippedVertices = texturedClippedFallbackVertices;
+            long untexturedClippedBatches = untexturedClippedFallbackBatches;
+            long untexturedClippedVertices = untexturedClippedFallbackVertices;
             return new RenderBackendSnapshot(
                     "cpu_prepared_vertex_consumer",
                     false,
                     true,
                     CAPABILITIES,
                     modelCacheSnapshot(),
-                    CACHE_METRICS.groupPreparedBuilds.get(),
-                    CACHE_METRICS.groupPreparedVertices.get(),
-                    CACHE_METRICS.allPreparedBatchBuilds.get(),
-                    CACHE_METRICS.selectionCacheHits.get(),
-                    CACHE_METRICS.selectionCacheMisses.get(),
-                    CACHE_METRICS.selectionCacheClears.get(),
-                    CACHE_METRICS.selectionCacheEmptyBuilds.get(),
-                    CACHE_METRICS.selectionCachePreparedBatchBuilds.get(),
-                    CACHE_METRICS.selectionHandleRefreshes.get(),
-                    CACHE_METRICS.selectionHandleEmptyBuilds.get(),
-                    CACHE_METRICS.selectionHandlePreparedBatchBuilds.get(),
+                    CACHE_METRICS.groupPreparedBuilds,
+                    CACHE_METRICS.groupPreparedVertices,
+                    CACHE_METRICS.allPreparedBatchBuilds,
+                    CACHE_METRICS.selectionCacheHits,
+                    CACHE_METRICS.selectionCacheMisses,
+                    CACHE_METRICS.selectionCacheClears,
+                    CACHE_METRICS.selectionCacheEmptyBuilds,
+                    CACHE_METRICS.selectionCachePreparedBatchBuilds,
+                    CACHE_METRICS.selectionHandleRefreshes,
+                    CACHE_METRICS.selectionHandleEmptyBuilds,
+                    CACHE_METRICS.selectionHandlePreparedBatchBuilds,
                     reloadClears.get(),
                     backendClears.get(),
                     clientDisconnectClears.get(),
@@ -10031,18 +10834,18 @@ public final class LegacyWavefrontModel {
                     manualFlushes.get(),
                     backendFlushGeneration.get(),
                     lastFlushStage,
-                    texturedBatches.get(),
-                    texturedVertices.get(),
-                    spriteBatches.get(),
-                    spriteVertices.get(),
-                    untexturedBatches.get(),
-                    untexturedVertices.get(),
-                    texturedDrawCalls.get() + spriteDrawCalls.get() + untexturedDrawCalls.get(),
-                    texturedDrawCalls.get(),
-                    spriteDrawCalls.get(),
-                    untexturedDrawCalls.get(),
-                    textureSwitches.get(),
-                    renderModeSwitches.get(),
+                    texturedBatches,
+                    texturedVertices,
+                    spriteBatches,
+                    spriteVertices,
+                    untexturedBatches,
+                    untexturedVertices,
+                    texturedDrawCalls + spriteDrawCalls + untexturedDrawCalls,
+                    texturedDrawCalls,
+                    spriteDrawCalls,
+                    untexturedDrawCalls,
+                    textureSwitches,
+                    renderModeSwitches,
                     texturedClippedBatches + untexturedClippedBatches,
                     texturedClippedVertices + untexturedClippedVertices,
                     texturedClippedBatches,
@@ -10125,17 +10928,17 @@ public final class LegacyWavefrontModel {
                     0L,
                     0L,
                     0L,
-                    lastFrameTexturedBatches.get(),
-                    lastFrameTexturedVertices.get(),
-                    lastFrameSpriteBatches.get(),
-                    lastFrameSpriteVertices.get(),
-                    lastFrameUntexturedBatches.get(),
-                    lastFrameUntexturedVertices.get(),
-                    lastFrameCpuFallbackBatches.get(),
-                    lastFrameCpuFallbackVertices.get(),
-                    lastFrameBackendFlushes.get(),
-                    lastFrameEstimatedDrawCalls.get(),
-                    lastFrameTextureSwitches.get());
+                    lastFrameTexturedBatches,
+                    lastFrameTexturedVertices,
+                    lastFrameSpriteBatches,
+                    lastFrameSpriteVertices,
+                    lastFrameUntexturedBatches,
+                    lastFrameUntexturedVertices,
+                    lastFrameCpuFallbackBatches,
+                    lastFrameCpuFallbackVertices,
+                    lastFrameBackendFlushes,
+                    lastFrameEstimatedDrawCalls,
+                    lastFrameTextureSwitches);
         }
     }
 
@@ -10461,6 +11264,87 @@ public final class LegacyWavefrontModel {
                                    LegacyTexturedRenderMode renderMode) {
     }
 
+    private record MdiDrawGroups(MdiDrawGroup singleGroup,
+                                 Map<MdiDrawGroupKey, MdiDrawGroup> groupedBatches) {
+        private static final MdiDrawGroups EMPTY = new MdiDrawGroups(null, Map.of());
+
+        private boolean isEmpty() {
+            return singleGroup == null && groupedBatches.isEmpty();
+        }
+
+        private boolean isSingleGroup() {
+            return singleGroup != null;
+        }
+    }
+
+    private static final class MdiDrawGroup {
+        private final List<InstancedBatch> ownedBatches = new ArrayList<>();
+        private MdiDrawGroupKey key;
+        private List<InstancedBatch> batches = ownedBatches;
+        private int instances;
+
+        private MdiDrawGroup() {
+        }
+
+        private MdiDrawGroup(MdiDrawGroupKey key) {
+            reset(key);
+        }
+
+        private MdiDrawGroup(MdiDrawGroupKey key, List<InstancedBatch> batches, int instances) {
+            resetBorrowed(key, batches, instances);
+        }
+
+        private void reset(MdiDrawGroupKey key) {
+            this.key = key;
+            this.batches = ownedBatches;
+            this.ownedBatches.clear();
+            this.instances = 0;
+        }
+
+        private void resetBorrowed(MdiDrawGroupKey key, List<InstancedBatch> batches, int instances) {
+            this.key = key;
+            this.batches = batches;
+            this.instances = Math.max(0, instances);
+        }
+
+        private void clear() {
+            key = null;
+            instances = 0;
+            if (batches == ownedBatches) {
+                ownedBatches.clear();
+            } else {
+                batches = ownedBatches;
+                ownedBatches.clear();
+            }
+        }
+
+        private void add(InstancedBatch batch, int instances) {
+            batches.add(batch);
+            this.instances += Math.max(0, instances);
+        }
+
+        private void addAll(List<InstancedBatch> source, int fromIndex, int toIndex, int instances) {
+            int from = Math.max(0, fromIndex);
+            int to = Math.max(from, Math.min(toIndex, source.size()));
+            for (int i = from; i < to; i++) {
+                batches.add(source.get(i));
+            }
+            this.instances += Math.max(0, instances);
+        }
+
+        private MdiDrawGroupKey key() {
+            return key;
+        }
+
+        private List<InstancedBatch> batches() {
+            return batches;
+        }
+
+        private int instances() {
+            return instances;
+        }
+    }
+
     private record MdiSubDraw(int commandIndex, InstancedMeshKey meshKey, int firstVertex, int vertexCount,
                               int baseInstance, int instanceCount) {
     }
@@ -10471,22 +11355,19 @@ public final class LegacyWavefrontModel {
         private static final int COMMAND_PACKED_BYTES = 16;
         private static final int COMMAND_STRIDE_BYTES = 32;
 
-        private static void writeDrawArraysIndirectCommand(ByteBuffer commandBytes, int count, int primCount,
+        private static void writeDrawArraysIndirectCommand(long address, int count, int primCount,
                 int first, int baseInstance) {
-            int rowStart = commandBytes.position();
-            commandBytes.putInt(count);
-            commandBytes.putInt(primCount);
-            commandBytes.putInt(first);
-            commandBytes.putInt(baseInstance);
-            int payloadBytes = commandBytes.position() - rowStart;
-            if (payloadBytes != COMMAND_PACKED_BYTES) {
-                throw new IllegalStateException("Unexpected DrawArraysIndirectCommand payload size: "
-                        + payloadBytes);
-            }
-            while (commandBytes.position() < rowStart + COMMAND_STRIDE_BYTES) {
-                commandBytes.putInt(0);
-            }
+            MemoryUtil.memPutInt(address, count);
+            MemoryUtil.memPutInt(address + 4L, primCount);
+            MemoryUtil.memPutInt(address + 8L, first);
+            MemoryUtil.memPutInt(address + 12L, baseInstance);
+            MemoryUtil.memPutLong(address + COMMAND_PACKED_BYTES, 0L);
+            MemoryUtil.memPutLong(address + COMMAND_PACKED_BYTES + 8L, 0L);
         }
+    }
+
+    private record MdiDrawResult(boolean drew, List<InstancedBatch> drawnBatches) {
+        private static final MdiDrawResult FAILED = new MdiDrawResult(false, List.of());
     }
 
     private static final class MdiPreparedGroupDrawException extends RuntimeException {
@@ -10548,6 +11429,66 @@ public final class LegacyWavefrontModel {
         }
     }
 
+    private static <T> int removeDuplicateEntries(List<T> entries, Set<T> seen) {
+        int size = entries.size();
+        if (size <= 1) {
+            return 0;
+        }
+        if (size <= 4) {
+            return removeDuplicateEntriesSmall(entries);
+        }
+        seen.clear();
+        int write = 0;
+        int removed = 0;
+        try {
+            for (int read = 0; read < size; read++) {
+                T entry = entries.get(read);
+                if (seen.add(entry)) {
+                    if (write != read) {
+                        entries.set(write, entry);
+                    }
+                    write++;
+                } else {
+                    removed++;
+                }
+            }
+            if (removed > 0) {
+                entries.subList(write, size).clear();
+            }
+            return removed;
+        } finally {
+            seen.clear();
+        }
+    }
+
+    private static <T> int removeDuplicateEntriesSmall(List<T> entries) {
+        int size = entries.size();
+        int write = 0;
+        int removed = 0;
+        for (int read = 0; read < size; read++) {
+            T entry = entries.get(read);
+            boolean duplicate = false;
+            for (int i = 0; i < write; i++) {
+                if (entry.equals(entries.get(i))) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (duplicate) {
+                removed++;
+                continue;
+            }
+            if (write != read) {
+                entries.set(write, entry);
+            }
+            write++;
+        }
+        if (removed > 0) {
+            entries.subList(write, size).clear();
+        }
+        return removed;
+    }
+
     private static final class IrisCompanionQueuedBatch {
         private final IrisCompanionQueueKey key;
         private final List<PreparedVertex> sourceVertices;
@@ -10570,55 +11511,138 @@ public final class LegacyWavefrontModel {
             return instances;
         }
 
-        private int removeDuplicateInstances() {
-            if (instances.size() <= 1) {
-                return 0;
-            }
-            Set<IrisCompanionQueuedInstanceKey> seen = new LinkedHashSet<>(instances.size());
-            List<IrisCompanionQueuedInstance> uniqueInstances = new ArrayList<>(instances.size());
-            int removed = 0;
-            for (IrisCompanionQueuedInstance instance : instances) {
-                if (seen.add(new IrisCompanionQueuedInstanceKey(instance))) {
-                    uniqueInstances.add(instance);
-                } else {
-                    removed++;
-                }
-            }
-            if (removed > 0) {
-                instances.clear();
-                instances.addAll(uniqueInstances);
-            }
-            return removed;
+        private int removeDuplicateInstances(Set<IrisCompanionQueuedInstance> seen) {
+            return removeDuplicateEntries(instances, seen);
         }
     }
 
-    private record IrisCompanionQueuedInstance(Matrix4f position, Matrix3f normal, MultiBufferSource buffer,
-                                               int packedLight, int packedOverlay, int red, int green, int blue,
-                                               int alpha, float fadeAlpha, float sortDepthSq) {
+    private static final class IrisCompanionQueuedInstance {
+        private final float p0;
+        private final float p1;
+        private final float p2;
+        private final float p3;
+        private final float p4;
+        private final float p5;
+        private final float p6;
+        private final float p7;
+        private final float p8;
+        private final float p9;
+        private final float p10;
+        private final float p11;
+        private final float p12;
+        private final float p13;
+        private final float p14;
+        private final float p15;
+        private final float n0;
+        private final float n1;
+        private final float n2;
+        private final float n3;
+        private final float n4;
+        private final float n5;
+        private final float n6;
+        private final float n7;
+        private final float n8;
+        private final MultiBufferSource buffer;
+        private final int packedLight;
+        private final int packedOverlay;
+        private final int red;
+        private final int green;
+        private final int blue;
+        private final int alpha;
+        private final float fadeAlpha;
+        private int contentHash;
+        private boolean contentHashComputed;
+        private final float sortDepthSq;
+
+        private IrisCompanionQueuedInstance(PoseStack.Pose pose, MultiBufferSource buffer, int packedLight,
+                int packedOverlay, int red, int green, int blue, int alpha, float fadeAlpha) {
+            Matrix4f position = pose.pose();
+            Matrix3f normal = pose.normal();
+            this.p0 = position.m00();
+            this.p1 = position.m01();
+            this.p2 = position.m02();
+            this.p3 = position.m03();
+            this.p4 = position.m10();
+            this.p5 = position.m11();
+            this.p6 = position.m12();
+            this.p7 = position.m13();
+            this.p8 = position.m20();
+            this.p9 = position.m21();
+            this.p10 = position.m22();
+            this.p11 = position.m23();
+            this.p12 = position.m30();
+            this.p13 = position.m31();
+            this.p14 = position.m32();
+            this.p15 = position.m33();
+            this.n0 = normal.m00();
+            this.n1 = normal.m01();
+            this.n2 = normal.m02();
+            this.n3 = normal.m10();
+            this.n4 = normal.m11();
+            this.n5 = normal.m12();
+            this.n6 = normal.m20();
+            this.n7 = normal.m21();
+            this.n8 = normal.m22();
+            this.buffer = buffer;
+            this.packedLight = packedLight;
+            this.packedOverlay = packedOverlay;
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+            this.alpha = alpha;
+            this.fadeAlpha = Float.isFinite(fadeAlpha) ? Mth.clamp(fadeAlpha, 0.0F, 1.0F) : 1.0F;
+            this.sortDepthSq = viewSortDepthSq(position);
+        }
+
         private static IrisCompanionQueuedInstance from(PoseStack.Pose pose, MultiBufferSource buffer, int packedLight,
                 int packedOverlay, int red, int green, int blue, int alpha, float fadeAlpha) {
-            float clampedFade = Float.isFinite(fadeAlpha) ? Mth.clamp(fadeAlpha, 0.0F, 1.0F) : 1.0F;
-            return new IrisCompanionQueuedInstance(new Matrix4f(pose.pose()), new Matrix3f(pose.normal()), buffer,
-                    packedLight, packedOverlay, red, green, blue, alpha, clampedFade, viewSortDepthSq(pose.pose()));
+            return new IrisCompanionQueuedInstance(pose, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                    fadeAlpha);
         }
-    }
 
-    private static final class IrisCompanionQueuedInstanceKey {
-        private final IrisCompanionQueuedInstance instance;
-        private final int hash;
+        private Matrix4f position() {
+            return new Matrix4f(p0, p1, p2, p3, p4, p5, p6, p7,
+                    p8, p9, p10, p11, p12, p13, p14, p15);
+        }
 
-        private IrisCompanionQueuedInstanceKey(IrisCompanionQueuedInstance instance) {
-            this.instance = instance;
-            int result = matrixHash(instance.position());
-            result = 31 * result + matrixHash(instance.normal());
-            result = 31 * result + instance.packedLight();
-            result = 31 * result + instance.packedOverlay();
-            result = 31 * result + instance.red();
-            result = 31 * result + instance.green();
-            result = 31 * result + instance.blue();
-            result = 31 * result + instance.alpha();
-            result = 31 * result + Float.floatToIntBits(instance.fadeAlpha());
-            this.hash = result;
+        private Matrix3f normal() {
+            return new Matrix3f(n0, n1, n2, n3, n4, n5, n6, n7, n8);
+        }
+
+        private MultiBufferSource buffer() {
+            return buffer;
+        }
+
+        private int packedLight() {
+            return packedLight;
+        }
+
+        private int packedOverlay() {
+            return packedOverlay;
+        }
+
+        private int red() {
+            return red;
+        }
+
+        private int green() {
+            return green;
+        }
+
+        private int blue() {
+            return blue;
+        }
+
+        private int alpha() {
+            return alpha;
+        }
+
+        private float fadeAlpha() {
+            return fadeAlpha;
+        }
+
+        private float sortDepthSq() {
+            return sortDepthSq;
         }
 
         @Override
@@ -10626,88 +11650,104 @@ public final class LegacyWavefrontModel {
             if (this == object) {
                 return true;
             }
-            if (!(object instanceof IrisCompanionQueuedInstanceKey other)) {
+            if (!(object instanceof IrisCompanionQueuedInstance other)) {
                 return false;
             }
-            return instance.packedLight() == other.instance.packedLight()
-                    && instance.packedOverlay() == other.instance.packedOverlay()
-                    && instance.red() == other.instance.red()
-                    && instance.green() == other.instance.green()
-                    && instance.blue() == other.instance.blue()
-                    && instance.alpha() == other.instance.alpha()
-                    && Float.floatToIntBits(instance.fadeAlpha())
-                    == Float.floatToIntBits(other.instance.fadeAlpha())
-                    && matrixEquals(instance.position(), other.instance.position())
-                    && matrixEquals(instance.normal(), other.instance.normal());
+            return packedLight == other.packedLight
+                    && packedOverlay == other.packedOverlay
+                    && red == other.red
+                    && green == other.green
+                    && blue == other.blue
+                    && alpha == other.alpha
+                    && Float.floatToIntBits(fadeAlpha) == Float.floatToIntBits(other.fadeAlpha)
+                    && same(p0, other.p0)
+                    && same(p1, other.p1)
+                    && same(p2, other.p2)
+                    && same(p3, other.p3)
+                    && same(p4, other.p4)
+                    && same(p5, other.p5)
+                    && same(p6, other.p6)
+                    && same(p7, other.p7)
+                    && same(p8, other.p8)
+                    && same(p9, other.p9)
+                    && same(p10, other.p10)
+                    && same(p11, other.p11)
+                    && same(p12, other.p12)
+                    && same(p13, other.p13)
+                    && same(p14, other.p14)
+                    && same(p15, other.p15)
+                    && same(n0, other.n0)
+                    && same(n1, other.n1)
+                    && same(n2, other.n2)
+                    && same(n3, other.n3)
+                    && same(n4, other.n4)
+                    && same(n5, other.n5)
+                    && same(n6, other.n6)
+                    && same(n7, other.n7)
+                    && same(n8, other.n8);
         }
 
         @Override
         public int hashCode() {
+            if (!contentHashComputed) {
+                contentHash = computeContentHash();
+                contentHashComputed = true;
+            }
+            return contentHash;
+        }
+
+        private int computeContentHash() {
+            int hash = matrix4Hash();
+            hash = 31 * hash + matrix3Hash();
+            hash = 31 * hash + packedLight;
+            hash = 31 * hash + packedOverlay;
+            hash = 31 * hash + red;
+            hash = 31 * hash + green;
+            hash = 31 * hash + blue;
+            hash = 31 * hash + alpha;
+            hash = 31 * hash + Float.floatToIntBits(fadeAlpha);
             return hash;
         }
 
-        private static int matrixHash(Matrix4f matrix) {
-            int result = Float.floatToIntBits(matrix.m00());
-            result = 31 * result + Float.floatToIntBits(matrix.m01());
-            result = 31 * result + Float.floatToIntBits(matrix.m02());
-            result = 31 * result + Float.floatToIntBits(matrix.m03());
-            result = 31 * result + Float.floatToIntBits(matrix.m10());
-            result = 31 * result + Float.floatToIntBits(matrix.m11());
-            result = 31 * result + Float.floatToIntBits(matrix.m12());
-            result = 31 * result + Float.floatToIntBits(matrix.m13());
-            result = 31 * result + Float.floatToIntBits(matrix.m20());
-            result = 31 * result + Float.floatToIntBits(matrix.m21());
-            result = 31 * result + Float.floatToIntBits(matrix.m22());
-            result = 31 * result + Float.floatToIntBits(matrix.m23());
-            result = 31 * result + Float.floatToIntBits(matrix.m30());
-            result = 31 * result + Float.floatToIntBits(matrix.m31());
-            result = 31 * result + Float.floatToIntBits(matrix.m32());
-            result = 31 * result + Float.floatToIntBits(matrix.m33());
-            return result;
+        private int matrix4Hash() {
+            int hash = Float.floatToIntBits(p0);
+            hash = appendHash(hash, p1);
+            hash = appendHash(hash, p2);
+            hash = appendHash(hash, p3);
+            hash = appendHash(hash, p4);
+            hash = appendHash(hash, p5);
+            hash = appendHash(hash, p6);
+            hash = appendHash(hash, p7);
+            hash = appendHash(hash, p8);
+            hash = appendHash(hash, p9);
+            hash = appendHash(hash, p10);
+            hash = appendHash(hash, p11);
+            hash = appendHash(hash, p12);
+            hash = appendHash(hash, p13);
+            hash = appendHash(hash, p14);
+            hash = appendHash(hash, p15);
+            return hash;
         }
 
-        private static int matrixHash(Matrix3f matrix) {
-            int result = Float.floatToIntBits(matrix.m00());
-            result = 31 * result + Float.floatToIntBits(matrix.m01());
-            result = 31 * result + Float.floatToIntBits(matrix.m02());
-            result = 31 * result + Float.floatToIntBits(matrix.m10());
-            result = 31 * result + Float.floatToIntBits(matrix.m11());
-            result = 31 * result + Float.floatToIntBits(matrix.m12());
-            result = 31 * result + Float.floatToIntBits(matrix.m20());
-            result = 31 * result + Float.floatToIntBits(matrix.m21());
-            result = 31 * result + Float.floatToIntBits(matrix.m22());
-            return result;
+        private int matrix3Hash() {
+            int hash = Float.floatToIntBits(n0);
+            hash = appendHash(hash, n1);
+            hash = appendHash(hash, n2);
+            hash = appendHash(hash, n3);
+            hash = appendHash(hash, n4);
+            hash = appendHash(hash, n5);
+            hash = appendHash(hash, n6);
+            hash = appendHash(hash, n7);
+            hash = appendHash(hash, n8);
+            return hash;
         }
 
-        private static boolean matrixEquals(Matrix4f left, Matrix4f right) {
-            return Float.floatToIntBits(left.m00()) == Float.floatToIntBits(right.m00())
-                    && Float.floatToIntBits(left.m01()) == Float.floatToIntBits(right.m01())
-                    && Float.floatToIntBits(left.m02()) == Float.floatToIntBits(right.m02())
-                    && Float.floatToIntBits(left.m03()) == Float.floatToIntBits(right.m03())
-                    && Float.floatToIntBits(left.m10()) == Float.floatToIntBits(right.m10())
-                    && Float.floatToIntBits(left.m11()) == Float.floatToIntBits(right.m11())
-                    && Float.floatToIntBits(left.m12()) == Float.floatToIntBits(right.m12())
-                    && Float.floatToIntBits(left.m13()) == Float.floatToIntBits(right.m13())
-                    && Float.floatToIntBits(left.m20()) == Float.floatToIntBits(right.m20())
-                    && Float.floatToIntBits(left.m21()) == Float.floatToIntBits(right.m21())
-                    && Float.floatToIntBits(left.m22()) == Float.floatToIntBits(right.m22())
-                    && Float.floatToIntBits(left.m23()) == Float.floatToIntBits(right.m23())
-                    && Float.floatToIntBits(left.m30()) == Float.floatToIntBits(right.m30())
-                    && Float.floatToIntBits(left.m31()) == Float.floatToIntBits(right.m31())
-                    && Float.floatToIntBits(left.m32()) == Float.floatToIntBits(right.m32())
-                    && Float.floatToIntBits(left.m33()) == Float.floatToIntBits(right.m33());
+        private static int appendHash(int hash, float value) {
+            return 31 * hash + Float.floatToIntBits(value);
         }
 
-        private static boolean matrixEquals(Matrix3f left, Matrix3f right) {
-            return Float.floatToIntBits(left.m00()) == Float.floatToIntBits(right.m00())
-                    && Float.floatToIntBits(left.m01()) == Float.floatToIntBits(right.m01())
-                    && Float.floatToIntBits(left.m02()) == Float.floatToIntBits(right.m02())
-                    && Float.floatToIntBits(left.m10()) == Float.floatToIntBits(right.m10())
-                    && Float.floatToIntBits(left.m11()) == Float.floatToIntBits(right.m11())
-                    && Float.floatToIntBits(left.m12()) == Float.floatToIntBits(right.m12())
-                    && Float.floatToIntBits(left.m20()) == Float.floatToIntBits(right.m20())
-                    && Float.floatToIntBits(left.m21()) == Float.floatToIntBits(right.m21())
-                    && Float.floatToIntBits(left.m22()) == Float.floatToIntBits(right.m22());
+        private static boolean same(float left, float right) {
+            return Float.floatToIntBits(left) == Float.floatToIntBits(right);
         }
     }
 
@@ -10717,11 +11757,10 @@ public final class LegacyWavefrontModel {
         private final ResourceLocation textureLocation;
         private final LegacyTexturedRenderMode renderMode;
         private final List<InstancedInstance> instances = new ArrayList<>();
-        private final List<InstancedFallbackInstance> fallbacks = new ArrayList<>();
 
-        private InstancedBatch(InstancedMesh mesh, ResourceLocation textureLocation,
+        private InstancedBatch(InstancedBatchKey key, InstancedMesh mesh, ResourceLocation textureLocation,
                 LegacyTexturedRenderMode renderMode) {
-            this.key = new InstancedBatchKey(mesh.key(), textureLocation, renderMode);
+            this.key = key;
             this.mesh = mesh;
             this.textureLocation = textureLocation;
             this.renderMode = renderMode;
@@ -10747,10 +11786,6 @@ public final class LegacyWavefrontModel {
             return instances;
         }
 
-        private List<InstancedFallbackInstance> fallbacks() {
-            return fallbacks;
-        }
-
         private float maxSortDepthSq() {
             float max = 0.0F;
             for (InstancedInstance instance : instances) {
@@ -10763,112 +11798,148 @@ public final class LegacyWavefrontModel {
             if (instances.size() <= 1) {
                 return;
             }
-            List<Integer> order = new ArrayList<>(instances.size());
-            for (int i = 0; i < instances.size(); i++) {
-                order.add(i);
-            }
-            order.sort((left, right) -> Float.compare(instances.get(right).sortDepthSq(),
-                    instances.get(left).sortDepthSq()));
-            List<InstancedInstance> sortedInstances = new ArrayList<>(instances.size());
-            List<InstancedFallbackInstance> sortedFallbacks = new ArrayList<>(fallbacks.size());
-            for (int index : order) {
-                sortedInstances.add(instances.get(index));
-                sortedFallbacks.add(fallbacks.get(index));
-            }
-            instances.clear();
-            instances.addAll(sortedInstances);
-            fallbacks.clear();
-            fallbacks.addAll(sortedFallbacks);
+            instances.sort((left, right) -> Float.compare(right.sortDepthSq(), left.sortDepthSq()));
         }
 
-        private int removeDuplicateInstances() {
-            if (instances.size() <= 1) {
-                return 0;
-            }
-            Set<InstancedInstanceKey> seen = new LinkedHashSet<>(instances.size());
-            List<InstancedInstance> uniqueInstances = new ArrayList<>(instances.size());
-            List<InstancedFallbackInstance> uniqueFallbacks = new ArrayList<>(fallbacks.size());
-            int removed = 0;
-            for (int i = 0; i < instances.size(); i++) {
-                InstancedInstance instance = instances.get(i);
-                if (seen.add(new InstancedInstanceKey(instance))) {
-                    uniqueInstances.add(instance);
-                    if (i < fallbacks.size()) {
-                        uniqueFallbacks.add(fallbacks.get(i));
-                    }
-                } else {
-                    removed++;
-                }
-            }
-            if (removed > 0) {
-                instances.clear();
-                instances.addAll(uniqueInstances);
-                fallbacks.clear();
-                fallbacks.addAll(uniqueFallbacks);
-            }
-            return removed;
+        private int removeDuplicateInstances(Set<InstancedInstance> seen) {
+            return removeDuplicateEntries(instances, seen);
         }
     }
 
-    private static final class InstancedInstanceKey {
-        private final InstancedInstance instance;
-        private final int hash;
-
-        private InstancedInstanceKey(InstancedInstance instance) {
-            this.instance = instance;
-            this.hash = instance.dataHash();
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) {
-                return true;
-            }
-            if (!(object instanceof InstancedInstanceKey other)) {
-                return false;
-            }
-            return instance.dataEquals(other.instance);
-        }
-
-        @Override
-        public int hashCode() {
-            return hash;
-        }
-    }
-
-    private record InstancedInstance(float[] data, float sortDepthSq) {
+    private static final class InstancedInstance {
         private static final int FLOATS = 40;
 
-        private static InstancedInstance from(Matrix4f modelView, LegacyRenderLighting.SlicedLightProbe lightProbe,
-                int packedOverlay,
-                int red, int green, int blue, int alpha, float fadeAlpha) {
-            float[] data = new float[FLOATS];
-            data[0] = finiteOrDefault(modelView.m00(), 1.0F);
-            data[1] = finiteOrDefault(modelView.m01(), 0.0F);
-            data[2] = finiteOrDefault(modelView.m02(), 0.0F);
-            data[3] = finiteOrDefault(modelView.m03(), 0.0F);
-            data[4] = finiteOrDefault(modelView.m10(), 0.0F);
-            data[5] = finiteOrDefault(modelView.m11(), 1.0F);
-            data[6] = finiteOrDefault(modelView.m12(), 0.0F);
-            data[7] = finiteOrDefault(modelView.m13(), 0.0F);
-            data[8] = finiteOrDefault(modelView.m20(), 0.0F);
-            data[9] = finiteOrDefault(modelView.m21(), 0.0F);
-            data[10] = finiteOrDefault(modelView.m22(), 1.0F);
-            data[11] = finiteOrDefault(modelView.m23(), 0.0F);
-            data[12] = finiteOrDefault(modelView.m30(), 0.0F);
-            data[13] = finiteOrDefault(modelView.m31(), 0.0F);
-            data[14] = finiteOrDefault(modelView.m32(), 0.0F);
-            data[15] = finiteOrDefault(modelView.m33(), 1.0F);
-            writePackedSlicedLight(data, 16, lightProbe);
-            data[32] = red / 255.0F;
-            data[33] = green / 255.0F;
-            data[34] = blue / 255.0F;
-            data[35] = alpha / 255.0F;
-            data[36] = packedOverlay & 0xFFFF;
-            data[37] = packedOverlay >>> 16 & 0xFFFF;
-            data[38] = finiteClampedUnitOrDefault(fadeAlpha, 1.0F);
-            data[39] = 0.0F;
-            return new InstancedInstance(data, viewSortDepthSq(modelView));
+        private final float f0;
+        private final float f1;
+        private final float f2;
+        private final float f3;
+        private final float f4;
+        private final float f5;
+        private final float f6;
+        private final float f7;
+        private final float f8;
+        private final float f9;
+        private final float f10;
+        private final float f11;
+        private final float f12;
+        private final float f13;
+        private final float f14;
+        private final float f15;
+        private final float f16;
+        private final float f17;
+        private final float f18;
+        private final float f19;
+        private final float f20;
+        private final float f21;
+        private final float f22;
+        private final float f23;
+        private final float f24;
+        private final float f25;
+        private final float f26;
+        private final float f27;
+        private final float f28;
+        private final float f29;
+        private final float f30;
+        private final float f31;
+        private final float f32;
+        private final float f33;
+        private final float f34;
+        private final float f35;
+        private final float f36;
+        private final float f37;
+        private final float f38;
+        private final float f39;
+        private final float n0;
+        private final float n1;
+        private final float n2;
+        private final float n3;
+        private final float n4;
+        private final float n5;
+        private final float n6;
+        private final float n7;
+        private final float n8;
+        private final MultiBufferSource buffer;
+        private final int packedLight;
+        private final int packedOverlay;
+        private final int red;
+        private final int green;
+        private final int blue;
+        private final int alpha;
+        private final UvTransform uvTransform;
+        private int dataHash;
+        private boolean dataHashComputed;
+        private final float sortDepthSq;
+
+        private InstancedInstance(PoseStack.Pose pose, MultiBufferSource buffer, int packedLight,
+                int packedOverlay, int red, int green, int blue, int alpha, UvTransform uvTransform,
+                float fadeAlpha, LegacyRenderLighting.SlicedLightProbe lightProbe) {
+            Matrix4f modelView = pose.pose();
+            Matrix3f normal = pose.normal();
+            this.f0 = finiteOrDefault(modelView.m00(), 1.0F);
+            this.f1 = finiteOrDefault(modelView.m01(), 0.0F);
+            this.f2 = finiteOrDefault(modelView.m02(), 0.0F);
+            this.f3 = finiteOrDefault(modelView.m03(), 0.0F);
+            this.f4 = finiteOrDefault(modelView.m10(), 0.0F);
+            this.f5 = finiteOrDefault(modelView.m11(), 1.0F);
+            this.f6 = finiteOrDefault(modelView.m12(), 0.0F);
+            this.f7 = finiteOrDefault(modelView.m13(), 0.0F);
+            this.f8 = finiteOrDefault(modelView.m20(), 0.0F);
+            this.f9 = finiteOrDefault(modelView.m21(), 0.0F);
+            this.f10 = finiteOrDefault(modelView.m22(), 1.0F);
+            this.f11 = finiteOrDefault(modelView.m23(), 0.0F);
+            this.f12 = finiteOrDefault(modelView.m30(), 0.0F);
+            this.f13 = finiteOrDefault(modelView.m31(), 0.0F);
+            this.f14 = finiteOrDefault(modelView.m32(), 0.0F);
+            this.f15 = finiteOrDefault(modelView.m33(), 1.0F);
+            this.f16 = packedLightFloat(lightProbe, 0);
+            this.f17 = packedLightFloat(lightProbe, 1);
+            this.f18 = packedLightFloat(lightProbe, 2);
+            this.f19 = packedLightFloat(lightProbe, 3);
+            this.f20 = packedLightFloat(lightProbe, 4);
+            this.f21 = packedLightFloat(lightProbe, 5);
+            this.f22 = packedLightFloat(lightProbe, 6);
+            this.f23 = packedLightFloat(lightProbe, 7);
+            this.f24 = packedLightFloat(lightProbe, 8);
+            this.f25 = packedLightFloat(lightProbe, 9);
+            this.f26 = packedLightFloat(lightProbe, 10);
+            this.f27 = packedLightFloat(lightProbe, 11);
+            this.f28 = packedLightFloat(lightProbe, 12);
+            this.f29 = packedLightFloat(lightProbe, 13);
+            this.f30 = packedLightFloat(lightProbe, 14);
+            this.f31 = packedLightFloat(lightProbe, 15);
+            this.f32 = red / 255.0F;
+            this.f33 = green / 255.0F;
+            this.f34 = blue / 255.0F;
+            this.f35 = alpha / 255.0F;
+            this.f36 = packedOverlay & 0xFFFF;
+            this.f37 = packedOverlay >>> 16 & 0xFFFF;
+            this.f38 = finiteClampedUnitOrDefault(fadeAlpha, 1.0F);
+            this.f39 = 0.0F;
+            this.n0 = normal.m00();
+            this.n1 = normal.m01();
+            this.n2 = normal.m02();
+            this.n3 = normal.m10();
+            this.n4 = normal.m11();
+            this.n5 = normal.m12();
+            this.n6 = normal.m20();
+            this.n7 = normal.m21();
+            this.n8 = normal.m22();
+            this.buffer = buffer;
+            this.packedLight = packedLight;
+            this.packedOverlay = packedOverlay;
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+            this.alpha = alpha;
+            this.uvTransform = uvTransform;
+            this.sortDepthSq = viewSortDepthSq(modelView);
+        }
+
+        private static InstancedInstance from(PoseStack.Pose pose, MultiBufferSource buffer, int packedLight,
+                int packedOverlay, int red, int green, int blue, int alpha, UvTransform uvTransform,
+                float fadeAlpha, LegacyRenderLighting.SlicedLightProbe lightProbe) {
+            return new InstancedInstance(pose, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                    uvTransform, fadeAlpha, lightProbe);
         }
 
         private static float finiteOrDefault(float value, float fallback) {
@@ -10882,39 +11953,213 @@ public final class LegacyWavefrontModel {
             return Mth.clamp(value, 0.0F, 1.0F);
         }
 
-        private static void writePackedSlicedLight(float[] data, int offset,
-                LegacyRenderLighting.SlicedLightProbe lightProbe) {
-            for (int i = 0; i < 16; i++) {
-                int packedLight = lightProbe.probe(i);
-                data[offset + i] = LightTexture.block(packedLight) + LightTexture.sky(packedLight) * 16.0F;
+        private static float packedLightFloat(LegacyRenderLighting.SlicedLightProbe lightProbe, int index) {
+            int packedLight = lightProbe.probe(index);
+            return LightTexture.block(packedLight) + LightTexture.sky(packedLight) * 16.0F;
+        }
+
+        private void write(long address) {
+            MemoryUtil.memPutFloat(address, f0);
+            MemoryUtil.memPutFloat(address + 4L, f1);
+            MemoryUtil.memPutFloat(address + 8L, f2);
+            MemoryUtil.memPutFloat(address + 12L, f3);
+            MemoryUtil.memPutFloat(address + 16L, f4);
+            MemoryUtil.memPutFloat(address + 20L, f5);
+            MemoryUtil.memPutFloat(address + 24L, f6);
+            MemoryUtil.memPutFloat(address + 28L, f7);
+            MemoryUtil.memPutFloat(address + 32L, f8);
+            MemoryUtil.memPutFloat(address + 36L, f9);
+            MemoryUtil.memPutFloat(address + 40L, f10);
+            MemoryUtil.memPutFloat(address + 44L, f11);
+            MemoryUtil.memPutFloat(address + 48L, f12);
+            MemoryUtil.memPutFloat(address + 52L, f13);
+            MemoryUtil.memPutFloat(address + 56L, f14);
+            MemoryUtil.memPutFloat(address + 60L, f15);
+            MemoryUtil.memPutFloat(address + 64L, f16);
+            MemoryUtil.memPutFloat(address + 68L, f17);
+            MemoryUtil.memPutFloat(address + 72L, f18);
+            MemoryUtil.memPutFloat(address + 76L, f19);
+            MemoryUtil.memPutFloat(address + 80L, f20);
+            MemoryUtil.memPutFloat(address + 84L, f21);
+            MemoryUtil.memPutFloat(address + 88L, f22);
+            MemoryUtil.memPutFloat(address + 92L, f23);
+            MemoryUtil.memPutFloat(address + 96L, f24);
+            MemoryUtil.memPutFloat(address + 100L, f25);
+            MemoryUtil.memPutFloat(address + 104L, f26);
+            MemoryUtil.memPutFloat(address + 108L, f27);
+            MemoryUtil.memPutFloat(address + 112L, f28);
+            MemoryUtil.memPutFloat(address + 116L, f29);
+            MemoryUtil.memPutFloat(address + 120L, f30);
+            MemoryUtil.memPutFloat(address + 124L, f31);
+            MemoryUtil.memPutFloat(address + 128L, f32);
+            MemoryUtil.memPutFloat(address + 132L, f33);
+            MemoryUtil.memPutFloat(address + 136L, f34);
+            MemoryUtil.memPutFloat(address + 140L, f35);
+            MemoryUtil.memPutFloat(address + 144L, f36);
+            MemoryUtil.memPutFloat(address + 148L, f37);
+            MemoryUtil.memPutFloat(address + 152L, f38);
+            MemoryUtil.memPutFloat(address + 156L, f39);
+        }
+
+        private float sortDepthSq() {
+            return sortDepthSq;
+        }
+
+        private Matrix4f position() {
+            return new Matrix4f(f0, f1, f2, f3, f4, f5, f6, f7,
+                    f8, f9, f10, f11, f12, f13, f14, f15);
+        }
+
+        private Matrix3f normal() {
+            return new Matrix3f(n0, n1, n2, n3, n4, n5, n6, n7, n8);
+        }
+
+        private MultiBufferSource buffer() {
+            return buffer;
+        }
+
+        private int packedLight() {
+            return packedLight;
+        }
+
+        private int packedOverlay() {
+            return packedOverlay;
+        }
+
+        private int red() {
+            return red;
+        }
+
+        private int green() {
+            return green;
+        }
+
+        private int blue() {
+            return blue;
+        }
+
+        private int alpha() {
+            return alpha;
+        }
+
+        private UvTransform uvTransform() {
+            return uvTransform;
+        }
+
+        private float fadeAlpha() {
+            return f38;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) {
+                return true;
             }
-        }
-
-        private void write(ByteBuffer bytes) {
-            for (float value : data) {
-                bytes.putFloat(value);
+            if (!(object instanceof InstancedInstance other)) {
+                return false;
             }
+            return same(f0, other.f0)
+                    && same(f1, other.f1)
+                    && same(f2, other.f2)
+                    && same(f3, other.f3)
+                    && same(f4, other.f4)
+                    && same(f5, other.f5)
+                    && same(f6, other.f6)
+                    && same(f7, other.f7)
+                    && same(f8, other.f8)
+                    && same(f9, other.f9)
+                    && same(f10, other.f10)
+                    && same(f11, other.f11)
+                    && same(f12, other.f12)
+                    && same(f13, other.f13)
+                    && same(f14, other.f14)
+                    && same(f15, other.f15)
+                    && same(f16, other.f16)
+                    && same(f17, other.f17)
+                    && same(f18, other.f18)
+                    && same(f19, other.f19)
+                    && same(f20, other.f20)
+                    && same(f21, other.f21)
+                    && same(f22, other.f22)
+                    && same(f23, other.f23)
+                    && same(f24, other.f24)
+                    && same(f25, other.f25)
+                    && same(f26, other.f26)
+                    && same(f27, other.f27)
+                    && same(f28, other.f28)
+                    && same(f29, other.f29)
+                    && same(f30, other.f30)
+                    && same(f31, other.f31)
+                    && same(f32, other.f32)
+                    && same(f33, other.f33)
+                    && same(f34, other.f34)
+                    && same(f35, other.f35)
+                    && same(f36, other.f36)
+                    && same(f37, other.f37)
+                    && same(f38, other.f38)
+                    && same(f39, other.f39);
         }
 
-        private int dataHash() {
-            return Arrays.hashCode(data);
+        @Override
+        public int hashCode() {
+            if (!dataHashComputed) {
+                dataHash = computeDataHash();
+                dataHashComputed = true;
+            }
+            return dataHash;
         }
 
-        private boolean dataEquals(InstancedInstance other) {
-            return Arrays.equals(data, other.data);
+        private int computeDataHash() {
+            int result = 1;
+            result = appendHash(result, f0);
+            result = appendHash(result, f1);
+            result = appendHash(result, f2);
+            result = appendHash(result, f3);
+            result = appendHash(result, f4);
+            result = appendHash(result, f5);
+            result = appendHash(result, f6);
+            result = appendHash(result, f7);
+            result = appendHash(result, f8);
+            result = appendHash(result, f9);
+            result = appendHash(result, f10);
+            result = appendHash(result, f11);
+            result = appendHash(result, f12);
+            result = appendHash(result, f13);
+            result = appendHash(result, f14);
+            result = appendHash(result, f15);
+            result = appendHash(result, f16);
+            result = appendHash(result, f17);
+            result = appendHash(result, f18);
+            result = appendHash(result, f19);
+            result = appendHash(result, f20);
+            result = appendHash(result, f21);
+            result = appendHash(result, f22);
+            result = appendHash(result, f23);
+            result = appendHash(result, f24);
+            result = appendHash(result, f25);
+            result = appendHash(result, f26);
+            result = appendHash(result, f27);
+            result = appendHash(result, f28);
+            result = appendHash(result, f29);
+            result = appendHash(result, f30);
+            result = appendHash(result, f31);
+            result = appendHash(result, f32);
+            result = appendHash(result, f33);
+            result = appendHash(result, f34);
+            result = appendHash(result, f35);
+            result = appendHash(result, f36);
+            result = appendHash(result, f37);
+            result = appendHash(result, f38);
+            result = appendHash(result, f39);
+            return result;
         }
-    }
 
-    private record InstancedFallbackInstance(Matrix4f position, Matrix3f normal, MultiBufferSource buffer,
-                                             int packedLight, int packedOverlay, int red, int green, int blue,
-                                             int alpha, UvTransform uvTransform, float fadeAlpha,
-                                             float sortDepthSq) {
-        private static InstancedFallbackInstance from(PoseStack.Pose pose, MultiBufferSource buffer, int packedLight,
-                int packedOverlay, int red, int green, int blue, int alpha, UvTransform uvTransform,
-                float fadeAlpha) {
-            return new InstancedFallbackInstance(new Matrix4f(pose.pose()), new Matrix3f(pose.normal()), buffer,
-                    packedLight, packedOverlay, red, green, blue, alpha, uvTransform, fadeAlpha,
-                    viewSortDepthSq(pose.pose()));
+        private static int appendHash(int hash, float value) {
+            return 31 * hash + Float.floatToIntBits(value);
+        }
+
+        private static boolean same(float left, float right) {
+            return Float.floatToIntBits(left) == Float.floatToIntBits(right);
         }
     }
 
@@ -10934,15 +12179,19 @@ public final class LegacyWavefrontModel {
             return bounds.sampleLightProbe(modelView, lightSampleKey, packedLight);
         }
 
-        private LegacyRenderLighting.SlicedLightProbe sampleInstanceLightProbe(Matrix4f modelView, int packedLight) {
-            if (HbmRenderFrameFlags.current().useSlicedLight()) {
+        private LegacyRenderLighting.SlicedLightProbe sampleInstanceLightProbe(Matrix4f modelView, int packedLight,
+                boolean useSlicedLight) {
+            if (packedLight == LightTexture.FULL_BRIGHT) {
+                return LegacyRenderLighting.SlicedLightProbe.uniform(packedLight);
+            }
+            if (useSlicedLight) {
                 return bounds.sampleSlicedLightProbe(modelView, lightSampleKey, packedLight);
             }
             return LegacyRenderLighting.SlicedLightProbe.from(sampleLightProbe(modelView, packedLight));
         }
 
         private void enableVertexAttribArraysOnBoundVao() {
-            if (vaoId == 0 || GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING) != vaoId) {
+            if (vaoId == 0) {
                 return;
             }
             for (int attribute = 0; attribute <= 13; attribute++) {

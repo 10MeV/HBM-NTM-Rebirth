@@ -15,6 +15,7 @@ import com.hbm.ntm.client.obj.LegacyBeamRenderer.WaveType;
 import com.hbm.ntm.client.obj.LegacyBillboardRenderer;
 import com.hbm.ntm.client.obj.LegacyBillboardRenderer.CameraBasis;
 import com.hbm.ntm.client.obj.LegacySparkRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedLineRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
@@ -22,9 +23,11 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.hbm.ntm.client.obj.ObjWeaponModels;
+import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.item.ChargeThrowerItem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
@@ -48,10 +51,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.Random;
+import org.joml.Matrix4f;
 
 public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEntity> {
     private static final ResourceLocation PROJECTILES_MODEL =
@@ -103,6 +106,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     private static final ResourceLocation FLARE_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/flare.png");
     private static final ResourceLocation WIRE_GREYSCALE = ObjNetworkModels.texture("wire_greyscale");
+    private static final ThreadLocal<LegacyWavefrontModel.TexturedPreparedSequence> ORB_TEXTURED_SEQUENCE =
+            ThreadLocal.withInitial(LegacyWavefrontModel.TexturedPreparedSequence::new);
     private static final ResourceLocation BLADE_TITANIUM =
             new ResourceLocation(HbmNtm.MOD_ID, "blade_titanium");
     private static final LegacyWavefrontModel PROJECTILES =
@@ -135,6 +140,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             LEADBURSTER.prepareRenderOnlyInCallOrder("Based.001");
     private static final LegacyWavefrontModel.SelectionHandle LEADBURSTER_BACKLIGHT =
             LEADBURSTER.prepareRenderOnlyInCallOrder("Backlight");
+    private static final ThreadLocal<BlockPos.MutableBlockPos> CHARGE_WIRE_LIGHT_POS =
+            ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
     private final ModelPart bulletCube;
 
     public BulletProjectileRenderer(EntityRendererProvider.Context context) {
@@ -195,7 +202,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             return;
         }
         if (style != BulletStyle.BLADE) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(new Random(entity.getId()).nextInt(90) - 45.0F));
+            poseStack.mulPose(Axis.XP.rotationDegrees(LegacyRenderRandom.seeded(entity.getId()).nextInt(90) - 45.0F));
         }
 
         switch (style) {
@@ -235,126 +242,163 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         if (length <= 0.0D) {
             length = BulletProjectileTickUtil.LEGACY_BEAM_RANGE;
         }
-        Vec3 delta = legacyBeamDelta(entity, partialTick, length);
+        double motionX = entity.getDeltaMovement().x;
+        double motionY = entity.getDeltaMovement().y;
+        double motionZ = entity.getDeltaMovement().z;
+        double motionLengthSqr = motionX * motionX + motionY * motionY + motionZ * motionZ;
+        double deltaX;
+        double deltaY;
+        double deltaZ;
+        if (motionLengthSqr > 1.0E-7D) {
+            double scale = length / Math.sqrt(motionLengthSqr);
+            deltaX = motionX * scale;
+            deltaY = motionY * scale;
+            deltaZ = motionZ * scale;
+        } else {
+            float yawDegrees = Mth.lerp(partialTick, entity.yRotO, entity.getYRot());
+            float pitchDegrees = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+            float yawRadians = yawDegrees * Mth.DEG_TO_RAD;
+            float pitchRadians = pitchDegrees * Mth.DEG_TO_RAD;
+            float cosPitch = Mth.cos(pitchRadians);
+            deltaX = Mth.sin(yawRadians) * cosPitch * length;
+            deltaY = Mth.sin(pitchRadians) * length;
+            deltaZ = Mth.cos(yawRadians) * cosPitch * length;
+        }
         double age = Mth.clamp(1.0D - ((double) entity.tickCount - 2.0D + partialTick)
                 / Math.max(1.0D, entity.config() == null ? 1.0D : entity.config().maxAge()), 0.0D, 1.0D);
         if (age <= 0.0D) {
             return;
         }
         if (trail == BulletTrail.SEDNA_FOLLY) {
-            renderLegacyFollyBeam(entity, age, delta, poseStack, buffer);
+            renderLegacyFollyBeam(entity, age, deltaX, deltaY, deltaZ, length, poseStack, buffer);
             return;
         }
         if (style == BulletStyle.TAU) {
             boolean charge = Byte.toUnsignedInt(entity.trailId()) == 1;
-            renderLegacyTauBeam(entity, age, delta, charge, poseStack, buffer);
+            renderLegacyTauBeam(entity, age, deltaX, deltaY, deltaZ, length, charge, poseStack, buffer);
             return;
         }
         switch (trail) {
-            case SEDNA_LIGHTNING -> renderLegacyLightningBeam(entity, age, delta, 0.5D, poseStack, buffer);
-            case SEDNA_LIGHTNING_SUB -> renderLegacyLightningBeam(entity, age, delta, 0.15D, poseStack, buffer);
-            case SEDNA_CRACKLE -> renderLegacyBeamBar(age, delta, 0xE3D692, 0xFFFFFF, poseStack, buffer);
-            case SEDNA_BLACK_LIGHTNING -> renderLegacyBeamBar(age, delta, 0x4C3093, 0x000000, poseStack, buffer);
-            case SEDNA_NI4NI -> renderLegacyBeamBar(age, delta, 0xAAD2E5, 0xFFFFFF, poseStack, buffer);
-            case LASER -> renderLegacyLaserBeam(entity, age, delta, 0x80, 0x15, 0x15, poseStack, buffer);
-            case LACUNAE -> renderLegacyLaserBeam(entity, age, delta, 0x60, 0x15, 0x80, poseStack, buffer);
-            case WORM -> renderLegacyLaserBeam(entity, age, delta, 0x15, 0x80, 0x15, poseStack, buffer);
-            case GLASS_CYAN -> renderLegacyLaserBeam(entity, age, delta, 0x15, 0x15, 0x80, poseStack, buffer);
-            default -> renderLegacyLaserBeam(entity, age, delta, 0x15, 0x15, 0x15, poseStack, buffer);
+            case SEDNA_LIGHTNING ->
+                    renderLegacyLightningBeam(entity, age, deltaX, deltaY, deltaZ, length, 0.5D, poseStack, buffer);
+            case SEDNA_LIGHTNING_SUB ->
+                    renderLegacyLightningBeam(entity, age, deltaX, deltaY, deltaZ, length, 0.15D, poseStack, buffer);
+            case SEDNA_CRACKLE ->
+                    renderLegacyBeamBar(age, deltaX, deltaY, deltaZ, length, 0xE3D692, 0xFFFFFF, poseStack, buffer);
+            case SEDNA_BLACK_LIGHTNING ->
+                    renderLegacyBeamBar(age, deltaX, deltaY, deltaZ, length, 0x4C3093, 0x000000, poseStack, buffer);
+            case SEDNA_NI4NI ->
+                    renderLegacyBeamBar(age, deltaX, deltaY, deltaZ, length, 0xAAD2E5, 0xFFFFFF, poseStack, buffer);
+            case LASER ->
+                    renderLegacyLaserBeam(entity, age, deltaX, deltaY, deltaZ, length, 0x80, 0x15, 0x15,
+                            poseStack, buffer);
+            case LACUNAE ->
+                    renderLegacyLaserBeam(entity, age, deltaX, deltaY, deltaZ, length, 0x60, 0x15, 0x80,
+                            poseStack, buffer);
+            case WORM ->
+                    renderLegacyLaserBeam(entity, age, deltaX, deltaY, deltaZ, length, 0x15, 0x80, 0x15,
+                            poseStack, buffer);
+            case GLASS_CYAN ->
+                    renderLegacyLaserBeam(entity, age, deltaX, deltaY, deltaZ, length, 0x15, 0x15, 0x80,
+                            poseStack, buffer);
+            default ->
+                    renderLegacyLaserBeam(entity, age, deltaX, deltaY, deltaZ, length, 0x15, 0x15, 0x15,
+                            poseStack, buffer);
         }
     }
 
-    private static Vec3 legacyBeamDelta(BulletProjectileEntity entity, float partialTick, double length) {
-        Vec3 motion = entity.getDeltaMovement();
-        Vec3 direction = motion.lengthSqr() > 1.0E-7D
-                ? motion.normalize()
-                : legacyBulletRotationDirection(Mth.lerp(partialTick, entity.yRotO, entity.getYRot()),
-                        Mth.lerp(partialTick, entity.xRotO, entity.getXRot()));
-        return direction.scale(length);
-    }
-
-    private static Vec3 legacyBulletRotationDirection(float yawDegrees, float pitchDegrees) {
-        float yaw = yawDegrees * Mth.DEG_TO_RAD;
-        float pitch = pitchDegrees * Mth.DEG_TO_RAD;
-        return new Vec3(Mth.sin(yaw) * Mth.cos(pitch), Mth.sin(pitch), Mth.cos(yaw) * Mth.cos(pitch));
-    }
-
-    private static void renderLegacyLightningBeam(BulletProjectileEntity entity, double age, Vec3 delta,
-            double baseScale, PoseStack poseStack, MultiBufferSource buffer) {
+    private static void renderLegacyLightningBeam(BulletProjectileEntity entity, double age,
+            double deltaX, double deltaY, double deltaZ, double length, double baseScale,
+            PoseStack poseStack, MultiBufferSource buffer) {
         double widthScale = age / 2.0D + baseScale;
         double scale = 0.075D;
         int colorInner = scaledColor(0x20, 0x20, 0x40, age);
         int colorOuter = scaledColor(0x40, 0x40, 0x80, age);
-        int segments = legacyBeamSegments(delta);
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, delta.x, delta.y, delta.z, WaveType.RANDOM,
+        int segments = legacyBeamSegments(length);
+        LegacyBeamRenderer.DirectSolidBeamBatch beamBatch =
+                LegacyBeamRenderer.directSolidBeamBatch(poseStack, buffer, false);
+        LegacyBeamRenderer.solidBeam(beamBatch, deltaX, deltaY, deltaZ, WaveType.RANDOM,
                 colorInner, colorInner, entity.tickCount / 3, segments, (float) (scale * widthScale),
                 4, (float) (0.25F * widthScale));
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, delta.x, delta.y, delta.z, WaveType.RANDOM,
+        LegacyBeamRenderer.solidBeam(beamBatch, deltaX, deltaY, deltaZ, WaveType.RANDOM,
                 colorOuter, colorOuter, entity.tickCount, segments, (float) (scale * 7.0D * widthScale),
                 2, (float) (0.0625F * widthScale));
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, delta.x, delta.y, delta.z, WaveType.RANDOM,
+        LegacyBeamRenderer.solidBeam(beamBatch, deltaX, deltaY, deltaZ, WaveType.RANDOM,
                 colorOuter, colorOuter, entity.tickCount / 2, segments, (float) (scale * 7.0D * widthScale),
                 2, (float) (0.0625F * widthScale));
     }
 
-    private static void renderLegacyTauBeam(BulletProjectileEntity entity, double age, Vec3 delta, boolean charge,
+    private static void renderLegacyTauBeam(BulletProjectileEntity entity, double age,
+            double deltaX, double deltaY, double deltaZ, double length, boolean charge,
             PoseStack poseStack, MultiBufferSource buffer) {
         double widthScale = age / 2.0D + 0.5D;
         int colorInner = charge ? scaledColor(0x60, 0x50, 0x30, age) : scaledColor(0x30, 0x25, 0x10, age);
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, delta.x, delta.y, delta.z, WaveType.RANDOM,
-                colorInner, colorInner, (entity.tickCount + entity.getId()) / 2, legacyBeamSegments(delta),
+        LegacyBeamRenderer.DirectSolidBeamBatch beamBatch =
+                LegacyBeamRenderer.directSolidBeamBatch(poseStack, buffer, false);
+        LegacyBeamRenderer.solidBeam(beamBatch, deltaX, deltaY, deltaZ, WaveType.RANDOM,
+                colorInner, colorInner, (entity.tickCount + entity.getId()) / 2, legacyBeamSegments(length),
                 (float) (0.075D * widthScale), 2, 0.0625F);
         double barScale = age * 2.0D;
-        renderLegacyBeamBar(delta, charge ? 0xFFF0A0 : 0xFFBF00, 0xFFFFFF, Math.max(0.01D, barScale),
-                poseStack, buffer);
+        renderLegacyBeamBar(beamBatch, deltaX, deltaY, deltaZ, length, charge ? 0xFFF0A0 : 0xFFBF00, 0xFFFFFF,
+                Math.max(0.01D, barScale));
     }
 
-    private static void renderLegacyLaserBeam(BulletProjectileEntity entity, double age, Vec3 delta,
-            int red, int green, int blue, PoseStack poseStack, MultiBufferSource buffer) {
+    private static void renderLegacyLaserBeam(BulletProjectileEntity entity, double age,
+            double deltaX, double deltaY, double deltaZ, double length, int red, int green, int blue,
+            PoseStack poseStack, MultiBufferSource buffer) {
         double widthScale = age / 2.0D + 0.5D;
         int colorInner = scaledColor(red, green, blue, age);
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, delta.x, delta.y, delta.z, WaveType.RANDOM,
-                colorInner, colorInner, entity.tickCount / 3, legacyBeamSegments(delta), 0.0F,
+        LegacyBeamRenderer.solidBeam(poseStack, buffer, deltaX, deltaY, deltaZ, WaveType.RANDOM,
+                colorInner, colorInner, entity.tickCount / 3, legacyBeamSegments(length), 0.0F,
                 4, (float) (0.025F * widthScale));
     }
 
-    private static void renderLegacyFollyBeam(BulletProjectileEntity entity, double age, Vec3 delta,
-            PoseStack poseStack, MultiBufferSource buffer) {
+    private static void renderLegacyFollyBeam(BulletProjectileEntity entity, double age,
+            double deltaX, double deltaY, double deltaZ, double length, PoseStack poseStack, MultiBufferSource buffer) {
         renderLegacyBeamFlare((1.0D - age) * 7.5D + 1.5D, 0.5F * (float) age, 0.75F * (float) age,
                 poseStack, buffer);
         double widthScale = (1.0D - age) * 25.0D + 2.5D;
         int colorInner = scaledColor(0x20, 0x20, 0x20, age);
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, delta.x, delta.y, delta.z, WaveType.RANDOM,
-                colorInner, colorInner, entity.tickCount / 3, legacyBeamSegments(delta), 0.0F,
+        LegacyBeamRenderer.solidBeam(poseStack, buffer, deltaX, deltaY, deltaZ, WaveType.RANDOM,
+                colorInner, colorInner, entity.tickCount / 3, legacyBeamSegments(length), 0.0F,
                 8, (float) (0.0625F * widthScale));
     }
 
-    private static void renderLegacyBeamBar(double age, Vec3 delta, int dark, int light,
-            PoseStack poseStack, MultiBufferSource buffer) {
-        renderLegacyBeamBar(delta, dark, light, Math.max(0.01D, age * 5.0D), poseStack, buffer);
+    private static void renderLegacyBeamBar(double age, double deltaX, double deltaY, double deltaZ, double length,
+            int dark, int light, PoseStack poseStack, MultiBufferSource buffer) {
+        renderLegacyBeamBar(deltaX, deltaY, deltaZ, length, dark, light, Math.max(0.01D, age * 5.0D),
+                poseStack, buffer);
     }
 
-    private static void renderLegacyBeamBar(Vec3 delta, int dark, int light, double widthScale,
-            PoseStack poseStack, MultiBufferSource buffer) {
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, delta.x, delta.y, delta.z, WaveType.RANDOM,
-                dark, light, 0, Math.max(1, (int) Math.ceil(delta.length())), 0.0F,
+    private static void renderLegacyBeamBar(double deltaX, double deltaY, double deltaZ, double length,
+            int dark, int light, double widthScale, PoseStack poseStack, MultiBufferSource buffer) {
+        LegacyBeamRenderer.solidBeam(poseStack, buffer, deltaX, deltaY, deltaZ, WaveType.RANDOM,
+                dark, light, 0, Math.max(1, (int) Math.ceil(length)), 0.0F,
+                2, (float) (0.03125D * widthScale));
+    }
+
+    private static void renderLegacyBeamBar(LegacyBeamRenderer.DirectSolidBeamBatch beamBatch,
+            double deltaX, double deltaY, double deltaZ, double length,
+            int dark, int light, double widthScale) {
+        LegacyBeamRenderer.solidBeam(beamBatch, deltaX, deltaY, deltaZ, WaveType.RANDOM,
+                dark, light, 0, Math.max(1, (int) Math.ceil(length)), 0.0F,
                 2, (float) (0.03125D * widthScale));
     }
 
     private static void renderLegacyBeamFlare(double scale, float outerAlpha, float innerAlpha,
             PoseStack poseStack, MultiBufferSource buffer) {
-        CameraBasis cameraBasis = LegacyBillboardRenderer.currentCameraBasis();
-        LegacyBillboardRenderer.billboardRgbaF(FLARE_TEXTURE, poseStack, buffer,
+        CameraBasis cameraBasis = LegacyBillboardRenderer.currentCameraBasisScratch();
+        double innerScale = scale * 0.5D;
+        LegacyBillboardRenderer.billboardPairRgbaF(FLARE_TEXTURE, poseStack, buffer,
                 LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, cameraBasis,
-                0.0D, 0.0D, 0.0D, scale, scale, 1.0F, 1.0F, 1.0F, outerAlpha, LightTexture.FULL_BRIGHT);
-        scale *= 0.5D;
-        LegacyBillboardRenderer.billboardRgbaF(FLARE_TEXTURE, poseStack, buffer,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, cameraBasis,
-                0.0D, 0.0D, 0.0D, scale, scale, 1.0F, 1.0F, 1.0F, innerAlpha, LightTexture.FULL_BRIGHT);
+                0.0D, 0.0D, 0.0D,
+                scale, scale, 1.0F, 1.0F, 1.0F, outerAlpha,
+                innerScale, innerScale, 1.0F, 1.0F, 1.0F, innerAlpha,
+                LightTexture.FULL_BRIGHT);
     }
 
-    private static int legacyBeamSegments(Vec3 delta) {
-        return Math.max(1, (int) (delta.length() / 2.0D + 1.0D));
+    private static int legacyBeamSegments(double length) {
+        return Math.max(1, (int) (length / 2.0D + 1.0D));
     }
 
     private static int scaledColor(int red, int green, int blue, double age) {
@@ -388,14 +432,14 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
 
         double scale = Math.min(5.0D, (entity.tickCount + partialTick - 2.0F) * 0.5D)
                 * (0.8D + entity.level().random.nextDouble() * 0.4D);
-        CameraBasis cameraBasis = LegacyBillboardRenderer.currentCameraBasis();
-        LegacyBillboardRenderer.billboardRgbaF(FLARE_TEXTURE, poseStack, buffer,
+        CameraBasis cameraBasis = LegacyBillboardRenderer.currentCameraBasisScratch();
+        double innerScale = scale * 0.5D;
+        LegacyBillboardRenderer.billboardPairRgbaF(FLARE_TEXTURE, poseStack, buffer,
                 LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, cameraBasis,
-                0.0D, 0.0D, 0.0D, scale, scale, red, green, blue, 0.5F, LightTexture.FULL_BRIGHT);
-        scale *= 0.5D;
-        LegacyBillboardRenderer.billboardRgbaF(FLARE_TEXTURE, poseStack, buffer,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, cameraBasis,
-                0.0D, 0.0D, 0.0D, scale, scale, 1.0F, 1.0F, 1.0F, 0.75F, LightTexture.FULL_BRIGHT);
+                0.0D, 0.0D, 0.0D,
+                scale, scale, red, green, blue, 0.5F,
+                innerScale, innerScale, 1.0F, 1.0F, 1.0F, 0.75F,
+                LightTexture.FULL_BRIGHT);
     }
 
     private static boolean renderLegacySpecialProjectile(int trail, BulletProjectileEntity entity, float partialTick,
@@ -509,42 +553,55 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             return;
         }
 
-        Vec3 bulletPos = new Vec3(
-                Mth.lerp(partialTick, entity.xOld, entity.getX()),
-                Mth.lerp(partialTick, entity.yOld, entity.getY()),
-                Mth.lerp(partialTick, entity.zOld, entity.getZ()));
-        Vec3 playerPos = new Vec3(
-                Mth.lerp(partialTick, player.xOld, player.getX()),
-                Mth.lerp(partialTick, player.yOld, player.getY()),
-                Mth.lerp(partialTick, player.zOld, player.getZ()));
+        double bulletX = Mth.lerp(partialTick, entity.xOld, entity.getX());
+        double bulletY = Mth.lerp(partialTick, entity.yOld, entity.getY());
+        double bulletZ = Mth.lerp(partialTick, entity.zOld, entity.getZ());
+        double playerX = Mth.lerp(partialTick, player.xOld, player.getX());
+        double playerY = Mth.lerp(partialTick, player.yOld, player.getY());
+        double playerZ = Mth.lerp(partialTick, player.zOld, player.getZ());
         float yaw = Mth.lerp(partialTick, player.yRotO, player.getYRot());
         float pitch = Mth.lerp(partialTick, player.xRotO, player.getXRot());
-        Vec3 offset = rotateLegacyChargeWireOffset(new Vec3(0.125D, 0.25D, -0.75D), yaw, pitch);
-        Vec3 target = new Vec3(playerPos.x - offset.x, playerPos.y + player.getEyeHeight() - offset.y,
-                playerPos.z - offset.z);
-        Vec3 delta = target.subtract(bulletPos);
-        double length = delta.length();
+        double pitchRadians = -pitch * Mth.DEG_TO_RAD;
+        double cosPitch = Math.cos(pitchRadians);
+        double sinPitch = Math.sin(pitchRadians);
+        double offsetY = 0.25D * cosPitch - 0.75D * sinPitch;
+        double pitchRotatedZ = -0.75D * cosPitch - 0.25D * sinPitch;
+        double yawRadians = -yaw * Mth.DEG_TO_RAD;
+        double cosYaw = Math.cos(yawRadians);
+        double sinYaw = Math.sin(yawRadians);
+        double offsetX = 0.125D * cosYaw + pitchRotatedZ * sinYaw;
+        double offsetZ = pitchRotatedZ * cosYaw - 0.125D * sinYaw;
+        double deltaX = playerX - offsetX - bulletX;
+        double deltaY = playerY + player.getEyeHeight() - offsetY - bulletY;
+        double deltaZ = playerZ - offsetZ - bulletZ;
+        double length = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
         if (length <= 1.0E-7D) {
             return;
         }
 
         double hang = Math.min(length / 15.0D, 0.5D);
-        WireOffsets offsets = legacyChargeWireOffsets(delta, 0.03125D);
+        WireOffsets offsets = legacyChargeWireOffsets(deltaX, deltaY, deltaZ, 0.03125D);
+        BlockPos.MutableBlockPos lightPos = CHARGE_WIRE_LIGHT_POS.get();
+        VertexConsumer wireConsumer = LegacyTexturedQuadRenderer.vertexAlphaConsumer(WIRE_GREYSCALE, buffer,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        PoseStack.Pose wirePose = poseStack.last();
         for (int j = 0; j < 10; j++) {
             int k = j + 1;
             double sagJ = Math.sin(j / 10.0D * Math.PI) * hang;
             double sagK = Math.sin(k / 10.0D * Math.PI) * hang;
             double sagMean = (sagJ + sagK) * 0.5D;
-            Vec3 sample = delta.scale((j + 0.5D) / 10.0D).subtract(0.0D, sagMean, 0.0D);
-            int light = LevelRenderer.getLightColor(entity.level(), BlockPos.containing(bulletPos.add(sample)));
-            LegacyTexturedLineRenderer.wrappedLineSegment(WIRE_GREYSCALE, poseStack, buffer,
-                    light, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
-                    delta.x * j / 10.0D,
-                    delta.y * j / 10.0D - sagJ,
-                    delta.z * j / 10.0D,
-                    delta.x * k / 10.0D,
-                    delta.y * k / 10.0D - sagK,
-                    delta.z * k / 10.0D,
+            double sampleScale = (j + 0.5D) / 10.0D;
+            lightPos.set(bulletX + deltaX * sampleScale, bulletY + deltaY * sampleScale - sagMean,
+                    bulletZ + deltaZ * sampleScale);
+            int light = LevelRenderer.getLightColor(entity.level(), lightPos);
+            LegacyTexturedLineRenderer.wrappedLineSegment(wireConsumer, wirePose,
+                    light, OverlayTexture.NO_OVERLAY,
+                    deltaX * j / 10.0D,
+                    deltaY * j / 10.0D - sagJ,
+                    deltaZ * j / 10.0D,
+                    deltaX * k / 10.0D,
+                    deltaY * k / 10.0D - sagK,
+                    deltaZ * k / 10.0D,
                     offsets.iX(), offsets.iY(), offsets.iZ(), offsets.jX(), offsets.jZ(), 8.0D,
                     0x606060, 255);
         }
@@ -559,25 +616,10 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         return stack.getItem() instanceof ChargeThrowerItem && ChargeThrowerItem.getLastHook(stack) == entity.getId();
     }
 
-    private static Vec3 rotateLegacyChargeWireOffset(Vec3 offset, float yawDegrees, float pitchDegrees) {
-        double pitch = -pitchDegrees * Mth.DEG_TO_RAD;
-        double cosPitch = Math.cos(pitch);
-        double sinPitch = Math.sin(pitch);
-        double y = offset.y * cosPitch + offset.z * sinPitch;
-        double z = offset.z * cosPitch - offset.y * sinPitch;
-
-        double yaw = -yawDegrees * Mth.DEG_TO_RAD;
-        double cosYaw = Math.cos(yaw);
-        double sinYaw = Math.sin(yaw);
-        double x = offset.x * cosYaw + z * sinYaw;
-        double rz = z * cosYaw - offset.x * sinYaw;
-        return new Vec3(x, y, rz);
-    }
-
-    private static WireOffsets legacyChargeWireOffsets(Vec3 delta, double girth) {
-        double horizontal = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
-        double yaw = Math.atan2(delta.x, delta.z);
-        double pitch = Math.atan2(delta.y, horizontal);
+    private static WireOffsets legacyChargeWireOffsets(double deltaX, double deltaY, double deltaZ, double girth) {
+        double horizontal = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
+        double yaw = Math.atan2(deltaX, deltaZ);
+        double pitch = Math.atan2(deltaY, horizontal);
         double newPitch = pitch + Math.PI * 0.5D;
         double newYaw = yaw + Math.PI * 0.5D;
         double iZ = Math.cos(yaw) * Math.cos(newPitch) * girth;
@@ -669,25 +711,28 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         }
         double scaledWidthF = widthF / 1.5D;
         double scaledWidthB = widthB / 1.5D;
-        sednaQuad(poseStack, buffer, dark, light,
+        LegacyUntexturedQuadRenderer.DirectQuadBatch batch =
+                LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        sednaQuad(batch, dark, light,
                 length, scaledWidthB, -scaledWidthB, length, scaledWidthB, scaledWidthB,
                 0.0D, scaledWidthF, scaledWidthF, 0.0D, scaledWidthF, -scaledWidthF);
-        sednaQuad(poseStack, buffer, dark, light,
+        sednaQuad(batch, dark, light,
                 length, -scaledWidthB, -scaledWidthB, length, -scaledWidthB, scaledWidthB,
                 0.0D, -scaledWidthF, scaledWidthF, 0.0D, -scaledWidthF, -scaledWidthF);
-        sednaQuad(poseStack, buffer, dark, light,
+        sednaQuad(batch, dark, light,
                 length, -scaledWidthB, scaledWidthB, length, scaledWidthB, scaledWidthB,
                 0.0D, scaledWidthF, scaledWidthF, 0.0D, -scaledWidthF, scaledWidthF);
-        sednaQuad(poseStack, buffer, dark, light,
+        sednaQuad(batch, dark, light,
                 length, -scaledWidthB, -scaledWidthB, length, scaledWidthB, -scaledWidthB,
                 0.0D, scaledWidthF, -scaledWidthF, 0.0D, -scaledWidthF, -scaledWidthF);
-        LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+        LegacyUntexturedQuadRenderer.quadDirect(batch,
                 length, scaledWidthB, scaledWidthB,
                 length, scaledWidthB, -scaledWidthB,
                 length, -scaledWidthB, -scaledWidthB,
                 length, -scaledWidthB, scaledWidthB,
                 dark, 255, 255, 255, 255);
-        LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+        LegacyUntexturedQuadRenderer.quadDirect(batch,
                 0.0D, scaledWidthF, scaledWidthF,
                 0.0D, scaledWidthF, -scaledWidthF,
                 0.0D, -scaledWidthF, -scaledWidthF,
@@ -695,11 +740,10 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
                 light, 255, 255, 255, 255);
     }
 
-    private static void sednaQuad(PoseStack poseStack, MultiBufferSource buffer, int dark, int light,
+    private static void sednaQuad(LegacyUntexturedQuadRenderer.DirectQuadBatch batch, int dark, int light,
             double x0, double y0, double z0, double x1, double y1, double z1,
             double x2, double y2, double z2, double x3, double y3, double z3) {
-        LegacyWavefrontModel.renderUntexturedVertexColorTransientQuad(poseStack, buffer,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+        LegacyUntexturedQuadRenderer.quadDirect(batch,
                 x0, y0, z0, dark, 255,
                 x1, y1, z1, dark, 255,
                 x2, y2, z2, light, 255,
@@ -719,39 +763,54 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     private static void renderOrb(int trail, BulletProjectileEntity entity, float partialTick,
             PoseStack poseStack, MultiBufferSource buffer) {
         if (trail == 0) {
-            renderOrbSphere(poseStack, buffer);
-            poseStack.pushPose();
-            poseStack.scale(0.3F, 0.3F, 0.3F);
-            renderOrbSphere(poseStack, buffer);
-            poseStack.popPose();
-            int timeSeed = (int) ((entity.tickCount + partialTick) * 5.0F);
-            for (int i = 0; i < 5; i++) {
-                LegacySparkRenderer.renderSpark(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
-                        timeSeed + 100 * i, 0.0D, 0.0D, 0.0D,
-                        0.5F, 2, 2, 0x8080FF, 0xFFFFFF);
+            LegacyWavefrontModel.TexturedPreparedSequence orbSequence = ORB_TEXTURED_SEQUENCE.get();
+            boolean prepared = ObjEffectModels.SPHERE_UV.prepareTexturedAllSequence(orbSequence, TOM_FLAME, buffer,
+                    LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 255, 255, 255, 255, false,
+                    LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, LegacyWavefrontModel.UvTransform.DEFAULT,
+                    LegacyWavefrontModel.RenderBackendFallbackReason.NONE);
+            if (prepared) {
+                try {
+                    orbSequence.render(poseStack);
+                    poseStack.pushPose();
+                    try {
+                        poseStack.scale(0.3F, 0.3F, 0.3F);
+                        orbSequence.render(poseStack);
+                    } finally {
+                        poseStack.popPose();
+                    }
+                } finally {
+                    orbSequence.clear();
+                }
             }
+            renderOrbSparks(entity, partialTick, poseStack, buffer, 5, 0.5F, 2, 2, 0x8080FF, 0xFFFFFF);
             return;
         }
         if (trail == 1) {
             poseStack.pushPose();
             poseStack.scale(0.5F, 0.5F, 0.5F);
-            ObjEffectModels.SPHERE_UV.renderAllUntextured(poseStack, buffer, 128, 0, 0, 128, true);
+            VertexConsumer sphereConsumer = ObjEffectModels.dynamicUntexturedConsumer(buffer, 128, true);
+            Matrix4f spherePosition = poseStack.last().pose();
+            ObjEffectModels.renderSphereUvDynamicUntextured(sphereConsumer, spherePosition, 128, 0, 0, 128);
             poseStack.scale(0.75F, 0.75F, 0.75F);
-            ObjEffectModels.SPHERE_UV.renderAllUntextured(poseStack, buffer, 128, 0, 0, 128, true);
+            ObjEffectModels.renderSphereUvDynamicUntextured(sphereConsumer, spherePosition, 128, 0, 0, 128);
             poseStack.popPose();
-            int timeSeed = (int) ((entity.tickCount + partialTick) * 5.0F);
-            for (int i = 0; i < 3; i++) {
-                LegacySparkRenderer.renderSpark(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
-                        timeSeed + 100 * i, 0.0D, 0.0D, 0.0D,
-                        1.0F, 2, 3, 0xFF0000, 0xFF8080);
-            }
+            renderOrbSparks(entity, partialTick, poseStack, buffer, 3, 1.0F, 2, 3, 0xFF0000, 0xFF8080);
         }
     }
 
-    private static void renderOrbSphere(PoseStack poseStack, MultiBufferSource buffer) {
-        ObjEffectModels.SPHERE_UV.renderAll(TOM_FLAME, poseStack, buffer, LightTexture.FULL_BRIGHT,
-                OverlayTexture.NO_OVERLAY, 255, 255, 255, 255, false,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, LegacyWavefrontModel.UvTransform.DEFAULT);
+    private static void renderOrbSparks(BulletProjectileEntity entity, float partialTick,
+            PoseStack poseStack, MultiBufferSource buffer, int count, float length, int min, int max,
+            int color1, int color2) {
+        int timeSeed = (int) ((entity.tickCount + partialTick) * 5.0F);
+        VertexConsumer outer = LegacySparkRenderer.outerLineConsumer(buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
+        VertexConsumer inner = LegacySparkRenderer.innerLineConsumer(buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE);
+        PoseStack.Pose pose = poseStack.last();
+        for (int i = 0; i < count; i++) {
+            LegacySparkRenderer.renderSpark(pose, outer, inner, timeSeed + 100 * i, 0.0D, 0.0D, 0.0D,
+                    length, min, max, color1, color2);
+        }
     }
 
     private static void renderTau(BulletProjectileEntity entity, int trail, float partialTick,
@@ -775,6 +834,9 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             return;
         }
 
+        LegacyUntexturedQuadRenderer.DirectQuadBatch batch =
+                LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 0);
         for (int i = 0; i < nodes.size() - 1; i++) {
             BulletTauTrailUtil.TauTrailNode node = nodes.get(i);
             BulletTauTrailUtil.TauTrailNode past = nodes.get(i + 1);
@@ -783,20 +845,20 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             if (nodeAlpha == 0.0D && pastAlpha == 0.0D) {
                 break;
             }
-            tauRibbon(poseStack, buffer, node.offset().x, node.offset().y, node.offset().z,
+            tauRibbon(batch, node.offset().x, node.offset().y, node.offset().z,
                     past.offset().x, past.offset().y, past.offset().z, scale, red, green, blue,
                     (float) nodeAlpha, (float) pastAlpha);
-            tauRibbon(poseStack, buffer, node.offset().x, node.offset().y, node.offset().z,
+            tauRibbon(batch, node.offset().x, node.offset().y, node.offset().z,
                     past.offset().x, past.offset().y, past.offset().z, -scale, red, green, blue,
                     (float) nodeAlpha, (float) pastAlpha);
         }
     }
 
-    private static void tauRibbon(PoseStack poseStack, MultiBufferSource buffer,
+    private static void tauRibbon(LegacyUntexturedQuadRenderer.DirectQuadBatch batch,
             double nodeX, double nodeY, double nodeZ, double pastX, double pastY, double pastZ,
             double yOffset, float red, float green, float blue, float nodeAlpha, float pastAlpha) {
         float outerAlpha = 0.25F;
-        LegacyUntexturedQuadRenderer.quadRgbaF(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+        LegacyUntexturedQuadRenderer.quadRgbaFDirect(batch,
                 nodeX, nodeY, nodeZ,
                 nodeX, nodeY + yOffset, nodeZ,
                 pastX, pastY + yOffset, pastZ,
@@ -885,7 +947,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
                 blue = 0.90F;
             }
             default -> {
-                Random random = new Random(entityId * (long) entityId);
+                Random random = LegacyRenderRandom.seeded(entityId * (long) entityId);
                 red = random.nextInt(2) * 0.6F;
                 green = random.nextInt(2) * 0.6F;
                 blue = random.nextInt(2) * 0.6F;
@@ -897,34 +959,39 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.scale(-1.0F, 1.0F, 1.0F);
         poseStack.scale(2.0F, 2.0F, 2.0F);
         int color = rgb(red, green, blue);
-        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 3, -1, -1, 3, 1, -1);
-        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 3, 1, 1, 3, -1, 1);
-        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 3, -1, 1, 3, -1, -1);
-        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 3, 1, -1, 3, 1, 1);
-        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 4, -0.5F, -0.5F, 4, 0.5F, -0.5F);
-        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 4, 0.5F, 0.5F, 4, -0.5F, 0.5F);
-        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 4, -0.5F, 0.5F, 4, -0.5F, -0.5F);
-        triangle(poseStack, buffer, color, 1.0F, 6, 0, 0, 4, 0.5F, -0.5F, 4, 0.5F, 0.5F);
-        tailQuad(poseStack, buffer, red, green, blue, 4, 0.5F, -0.5F, 4, 0.5F, 0.5F, 0, 0.5F, 0.5F, 0, 0.5F, -0.5F);
-        tailQuad(poseStack, buffer, red, green, blue, 4, -0.5F, -0.5F, 4, -0.5F, 0.5F, 0, -0.5F, 0.5F, 0, -0.5F, -0.5F);
-        tailQuad(poseStack, buffer, red, green, blue, 4, -0.5F, 0.5F, 4, 0.5F, 0.5F, 0, 0.5F, 0.5F, 0, -0.5F, 0.5F);
-        tailQuad(poseStack, buffer, red, green, blue, 4, -0.5F, -0.5F, 4, 0.5F, -0.5F, 0, 0.5F, -0.5F, 0, -0.5F, -0.5F);
+        LegacyUntexturedQuadRenderer.DirectTriangleBatch triangleBatch =
+                LegacyUntexturedQuadRenderer.directTriangleBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 0);
+        triangle(triangleBatch, color, 1.0F, 6, 0, 0, 3, -1, -1, 3, 1, -1);
+        triangle(triangleBatch, color, 1.0F, 6, 0, 0, 3, 1, 1, 3, -1, 1);
+        triangle(triangleBatch, color, 1.0F, 6, 0, 0, 3, -1, 1, 3, -1, -1);
+        triangle(triangleBatch, color, 1.0F, 6, 0, 0, 3, 1, -1, 3, 1, 1);
+        triangle(triangleBatch, color, 1.0F, 6, 0, 0, 4, -0.5F, -0.5F, 4, 0.5F, -0.5F);
+        triangle(triangleBatch, color, 1.0F, 6, 0, 0, 4, 0.5F, 0.5F, 4, -0.5F, 0.5F);
+        triangle(triangleBatch, color, 1.0F, 6, 0, 0, 4, -0.5F, 0.5F, 4, -0.5F, -0.5F);
+        triangle(triangleBatch, color, 1.0F, 6, 0, 0, 4, 0.5F, -0.5F, 4, 0.5F, 0.5F);
+        LegacyUntexturedQuadRenderer.DirectQuadBatch tailBatch =
+                LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 0);
+        tailQuad(tailBatch, red, green, blue, 4, 0.5F, -0.5F, 4, 0.5F, 0.5F, 0, 0.5F, 0.5F, 0, 0.5F, -0.5F);
+        tailQuad(tailBatch, red, green, blue, 4, -0.5F, -0.5F, 4, -0.5F, 0.5F, 0, -0.5F, 0.5F, 0, -0.5F, -0.5F);
+        tailQuad(tailBatch, red, green, blue, 4, -0.5F, 0.5F, 4, 0.5F, 0.5F, 0, 0.5F, 0.5F, 0, -0.5F, 0.5F);
+        tailQuad(tailBatch, red, green, blue, 4, -0.5F, -0.5F, 4, 0.5F, -0.5F, 0, 0.5F, -0.5F, 0, -0.5F, -0.5F);
         poseStack.popPose();
     }
 
-    private static void triangle(PoseStack poseStack, MultiBufferSource buffer, int color, float alpha,
+    private static void triangle(LegacyUntexturedQuadRenderer.DirectTriangleBatch batch, int color, float alpha,
             float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
-        LegacyWavefrontModel.renderUntexturedVertexColorTransientTriangle(poseStack, buffer,
-                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+        LegacyUntexturedQuadRenderer.triangleDirect(batch,
                 x1, y1, z1, color, alpha(alpha),
                 x2, y2, z2, color, 0,
                 x3, y3, z3, color, 0);
     }
 
-    private static void tailQuad(PoseStack poseStack, MultiBufferSource buffer, float red, float green, float blue,
+    private static void tailQuad(LegacyUntexturedQuadRenderer.DirectQuadBatch batch, float red, float green, float blue,
             float x1, float y1, float z1, float x2, float y2, float z2,
             float x3, float y3, float z3, float x4, float y4, float z4) {
-        LegacyUntexturedQuadRenderer.quadRgbaF(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+        LegacyUntexturedQuadRenderer.quadRgbaFDirect(batch,
                 x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
                 red, green, blue, 1.0F, 1.0F, 0.0F, 0.0F);
     }

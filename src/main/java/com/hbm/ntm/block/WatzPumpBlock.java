@@ -3,6 +3,7 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.blockentity.WatzPumpBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -20,6 +21,11 @@ public class WatzPumpBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new WatzPumpBlockEntity(pos, state);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override

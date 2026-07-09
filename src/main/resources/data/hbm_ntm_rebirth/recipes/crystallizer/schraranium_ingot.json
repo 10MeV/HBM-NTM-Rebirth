@@ -4,5 +4,6 @@
   "fluid": { "fluid": "PEROXIDE", "amount": 500 },
   "input": { "ingredient": { "tag": "forge:ingots/schraranium" }, "legacy_ore": "ingotSchraranium" },
   "output": { "item": "hbm_ntm_rebirth:crystal_schraranium" },
-  "productivity": 0.05
+  "productivity": 0.05,
+  "source_order": 28
 }

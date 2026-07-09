@@ -111,7 +111,7 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
     }
 
     private static TextureAtlasSprite sprite(String texture) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + texture);
     }
 
     private static ResourceLocation[] buildPipeTextures(boolean overlay) {

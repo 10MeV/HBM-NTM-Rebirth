@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public class RustedLaunchPadRenderer implements BlockEntityRenderer<RustedLaunchPadBlockEntity> {
     public RustedLaunchPadRenderer(BlockEntityRendererProvider.Context context) {
@@ -21,6 +22,13 @@ public class RustedLaunchPadRenderer implements BlockEntityRenderer<RustedLaunch
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(RustedLaunchPadBlockEntity launchPad, Vec3 cameraPos) {
+        return launchPad.isMissileLoaded()
+                && BlockEntityRenderer.super.shouldRender(launchPad, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(launchPad, getViewDistance());
     }
 
     @Override

@@ -1,11 +1,6 @@
 {
   "multipart": [
     {
-      "when": { "overlay": "true" },
-      "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_paintable_overlay" }
-    },
-    {
-      "when": { "overlay": "false" },
       "apply": { "model": "hbm_ntm_rebirth:block/fluid_duct_paintable" }
     }
   ]

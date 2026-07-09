@@ -52,7 +52,7 @@ public class CraneSplitterBlock extends LegacyXrMultiblockBlock implements Entit
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override

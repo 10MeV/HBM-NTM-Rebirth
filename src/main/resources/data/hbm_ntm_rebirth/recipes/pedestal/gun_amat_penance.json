@@ -1,0 +1,75 @@
+{
+  "type": "hbm_ntm_rebirth:pedestal",
+  "input": [
+    {
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "count": 1,
+      "legacy_ore": "ingotStarmetal"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/dura_steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastDuraSteel"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "count": 1,
+      "legacy_ore": "ingotStarmetal"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:weapon_mod_special_silencer"
+      },
+      "count": 1,
+      "legacy_id": "hbm:weapon_mod_special",
+      "legacy_meta": 0
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:gun_amat"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:weapon_mod_special_furniture_black"
+      },
+      "count": 1,
+      "legacy_id": "hbm:weapon_mod_special",
+      "legacy_meta": 7
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "count": 1,
+      "legacy_ore": "ingotStarmetal"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/dura_steel"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastDuraSteel"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/starmetal"
+      },
+      "count": 1,
+      "legacy_ore": "ingotStarmetal"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:gun_amat_penance"
+  },
+  "extra": "none",
+  "set": 0,
+  "source_order": 5
+}

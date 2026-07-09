@@ -25,6 +25,8 @@ public final class ClientInformMessages {
     private static final int LINE_HEIGHT = 10;
     private static final Map<Integer, Notice> NOTICES = new LinkedHashMap<>();
     private static final List<ClientInformMessageListener> LISTENERS = new ArrayList<>();
+    private static final List<Notice> RENDER_NOTICES = new ArrayList<>();
+    private static final Comparator<Notice> NOTICE_DURATION_ORDER = Comparator.comparingInt(Notice::durationMillis);
 
     public static void show(Component message, int id, int millis) {
         int duration = millis > 0 ? millis : DEFAULT_MILLIS;
@@ -42,33 +44,59 @@ public final class ClientInformMessages {
 
         long now = System.currentTimeMillis();
         Font font = Minecraft.getInstance().font;
+        RENDER_NOTICES.clear();
 
         Iterator<Map.Entry<Integer, Notice>> iterator = NOTICES.entrySet().iterator();
         while (iterator.hasNext()) {
             Notice notice = iterator.next().getValue();
             if (notice.expiresAtMillis <= now) {
                 iterator.remove();
+            } else {
+                RENDER_NOTICES.add(notice);
             }
         }
-        if (NOTICES.isEmpty()) {
+        if (RENDER_NOTICES.isEmpty()) {
             return;
         }
 
-        InformHudPlan plan = informHudPlan(width, height, font, now);
-        graphics.fill(plan.background().x(), plan.background().y(),
-                plan.background().x() + plan.background().width(),
-                plan.background().y() + plan.background().height(),
-                plan.backgroundColor());
-        for (InformMessagePlan message : plan.messages()) {
-            graphics.drawString(font, message.message(), message.x(), message.y(), message.argbColor(), false);
+        try {
+            RENDER_NOTICES.sort(NOTICE_DURATION_ORDER);
+            int longest = 0;
+            for (Notice notice : RENDER_NOTICES) {
+                longest = Math.max(longest, font.width(notice.message()));
+            }
+
+            int mode = HbmClientConfig.infoPosition();
+            int x = switch (mode) {
+                case 1 -> width - longest - 15;
+                case 2 -> width / 2 + 7;
+                case 3 -> width / 2 - longest - 6;
+                default -> 15;
+            } + HbmClientConfig.infoOffsetHorizontal();
+            int y = (mode == 0 || mode == 1 ? 15 : height / 2 + 7) + HbmClientConfig.infoOffsetVertical();
+
+            graphics.fill(x - BACKGROUND_LEFT_PADDING, y - BACKGROUND_TOP_PADDING,
+                    x + longest + BACKGROUND_RIGHT_PADDING,
+                    y + RENDER_NOTICES.size() * LINE_HEIGHT + BACKGROUND_BOTTOM_PADDING,
+                    BACKGROUND_COLOR);
+            int offset = 0;
+            for (Notice notice : RENDER_NOTICES) {
+                graphics.drawString(font, notice.message(), x, y + offset, fadeColor(notice, now), false);
+                offset += LINE_HEIGHT;
+            }
+        } finally {
+            RENDER_NOTICES.clear();
         }
     }
 
     public static InformHudPlan informHudPlan(int width, int height, Font font, long now) {
-        List<Notice> notices = NOTICES.values().stream()
-                .filter(notice -> notice.expiresAtMillis() > now)
-                .sorted(Comparator.comparingInt(Notice::durationMillis))
-                .toList();
+        List<Notice> notices = new ArrayList<>();
+        for (Notice notice : NOTICES.values()) {
+            if (notice.expiresAtMillis() > now) {
+                notices.add(notice);
+            }
+        }
+        notices.sort(NOTICE_DURATION_ORDER);
         int longest = 0;
         for (Notice notice : notices) {
             longest = Math.max(longest, font.width(notice.message()));

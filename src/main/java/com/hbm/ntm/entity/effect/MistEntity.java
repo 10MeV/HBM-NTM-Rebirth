@@ -1,12 +1,12 @@
 package com.hbm.ntm.entity.effect;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
 import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
 import com.hbm.ntm.particle.ParticleUtil;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -67,10 +67,7 @@ public class MistEntity extends Entity {
             spawnClientParticles();
             return;
         }
-        if (tickCount >= getMaxAge()) {
-            discard();
-            return;
-        }
+        boolean expired = tickCount >= getMaxAge();
 
         FluidType type = getFluidType();
         releaseVentRadiation(type);
@@ -86,6 +83,9 @@ public class MistEntity extends Entity {
         List<Entity> affected = level().getEntities(this, area(), Entity::isAlive);
         for (Entity entity : affected) {
             affect(type, entity, intensity);
+        }
+        if (expired) {
+            discard();
         }
     }
 
@@ -131,7 +131,7 @@ public class MistEntity extends Entity {
     private void releaseVentRadiation(FluidType type) {
         VentRadiationFluidTrait trait = type.getTrait(VentRadiationFluidTrait.class);
         if (trait != null) {
-            ChunkRadiationManager.incrementRadiation(level(), blockPosition(), trait.getRadiationPerMb() * 2.0F);
+            ChunkRadiationManager.proxy.incrementRad(level(), blockPosition(), trait.getRadiationPerMb() * 2.0F);
         }
     }
 

@@ -53,16 +53,13 @@ public class TurretBiometryItem extends Item {
         int count = Math.max(0, tag.getInt(TAG_PLAYER_COUNT));
         List<String> names = new ArrayList<>(count);
         for (int index = 0; index < count; index++) {
-            String name = tag.getString(TAG_PLAYER_PREFIX + index);
-            if (!name.isBlank()) {
-                names.add(name);
-            }
+            names.add(tag.getString(TAG_PLAYER_PREFIX + index));
         }
         return names;
     }
 
     public static void addName(ItemStack stack, String name) {
-        if (name == null || name.isBlank()) {
+        if (name == null) {
             return;
         }
         CompoundTag tag = stack.getOrCreateTag();

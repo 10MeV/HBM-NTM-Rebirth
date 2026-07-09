@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:outgasser",
+  "source_order": 12,
   "input": {
     "ingredient": {
       "item": "minecraft:mushroom_stew"

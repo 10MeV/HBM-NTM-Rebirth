@@ -1,0 +1,46 @@
+{
+  "type": "hbm_ntm_rebirth:difurnace",
+  "internal_name": "difurnace.steelFromCoke",
+  "source_order": 1,
+  "inputs": [
+    {
+      "ingredient": [
+        {
+          "tag": "forge:ingots/iron"
+        },
+        {
+          "tag": "forge:plates/iron"
+        },
+        {
+          "tag": "forge:gems/iron"
+        },
+        {
+          "tag": "forge:dusts/iron"
+        }
+      ],
+      "count": 1,
+      "legacy_dictframe": "Iron"
+    },
+    {
+      "ingredient": [
+        {
+          "tag": "forge:ingots/any_coke"
+        },
+        {
+          "tag": "forge:plates/any_coke"
+        },
+        {
+          "tag": "forge:gems/any_coke"
+        },
+        {
+          "tag": "forge:dusts/any_coke"
+        }
+      ],
+      "count": 1,
+      "legacy_dictframe": "AnyCoke"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_steel"
+  }
+}

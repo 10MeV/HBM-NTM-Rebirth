@@ -1,10 +1,25 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_tektite" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:powder_tektite"
+    }
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_meteorite_tiny" },
-    { "item": "hbm_ntm_rebirth:powder_paleogenite_tiny" },
-    { "item": "hbm_ntm_rebirth:powder_meteorite_tiny" },
-    { "item": "hbm_ntm_rebirth:dust", "count": 6 }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_meteorite_tiny"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_paleogenite_tiny"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_meteorite_tiny"
+    },
+    {
+      "count": 6,
+      "item": "hbm_ntm_rebirth:dust"
+    }
+  ],
+  "source_order": 26
 }

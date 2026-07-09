@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 public class BedrockOreDepositRenderer implements BlockEntityRenderer<BedrockOreDepositBlockEntity> {
     private static final double SURFACE_OFFSET = 0.001D;
@@ -27,16 +28,32 @@ public class BedrockOreDepositRenderer implements BlockEntityRenderer<BedrockOre
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+    }
+
+    @Override
+    public boolean shouldRender(BedrockOreDepositBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(BedrockOreDepositBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        TextureAtlasSprite overlay = OVERLAYS[Math.floorMod(blockEntity.getShape(), OVERLAYS.length)];
-        LegacyAtlasCuboidRenderer.croppedCuboid(overlay, poseStack, buffer, packedLight,
-                OverlayTexture.NO_OVERLAY, blockEntity.getColor(), 255, LegacyTexturedRenderMode.CUTOUT_CULL,
-                -SURFACE_OFFSET, -SURFACE_OFFSET, -SURFACE_OFFSET,
-                1.0D + SURFACE_OFFSET, 1.0D + SURFACE_OFFSET, 1.0D + SURFACE_OFFSET);
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            TextureAtlasSprite overlay = OVERLAYS[Math.floorMod(blockEntity.getShape(), OVERLAYS.length)];
+            LegacyAtlasCuboidRenderer.croppedCuboid(overlay, poseStack, buffer, packedLight,
+                    OverlayTexture.NO_OVERLAY, blockEntity.getColor(), 255, LegacyTexturedRenderMode.CUTOUT_CULL,
+                    -SURFACE_OFFSET, -SURFACE_OFFSET, -SURFACE_OFFSET,
+                    1.0D + SURFACE_OFFSET, 1.0D + SURFACE_OFFSET, 1.0D + SURFACE_OFFSET);
+        }
     }
 
     private static TextureAtlasSprite sprite(String name) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + name);
     }
 }

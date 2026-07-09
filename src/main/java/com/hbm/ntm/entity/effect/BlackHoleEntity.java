@@ -30,6 +30,13 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class BlackHoleEntity extends Entity {
+    private static final double LEGACY_PULL_SPEED = 0.1D;
+    private static final double LEGACY_ENTITY_SWIRL_RADIANS = Math.PI / 12.0D;
+    private static final double LEGACY_ENTITY_SWIRL_COS = Math.cos(LEGACY_ENTITY_SWIRL_RADIANS);
+    private static final double LEGACY_ENTITY_SWIRL_SIN = Math.sin(LEGACY_ENTITY_SWIRL_RADIANS);
+    private static final double MIN_PULL_DISTANCE_SQR = 1.0E-8D;
+    private static final double MOTION_DAMPING = 0.99D;
+
     protected static final EntityDataAccessor<Float> SIZE =
             SynchedEntityData.defineId(BlackHoleEntity.class, EntityDataSerializers.FLOAT);
     protected static final EntityDataAccessor<Boolean> BREAKS_BLOCKS =
@@ -72,8 +79,9 @@ public class BlackHoleEntity extends Entity {
             pullEntities(size);
         }
 
-        setPos(getX() + getDeltaMovement().x, getY() + getDeltaMovement().y, getZ() + getDeltaMovement().z);
-        setDeltaMovement(getDeltaMovement().scale(0.99D));
+        Vec3 motion = getDeltaMovement();
+        setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
+        setDeltaMovement(motion.x * MOTION_DAMPING, motion.y * MOTION_DAMPING, motion.z * MOTION_DAMPING);
     }
 
     protected void breakBlocks(float size) {
@@ -83,12 +91,20 @@ public class BlackHoleEntity extends Entity {
         int rays = Math.max(1, Mth.ceil(size * 2.0F));
         int length = Math.max(1, Mth.ceil(size * 15.0F));
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        double originX = getX();
+        double originY = getY();
+        double originZ = getZ();
         for (int ray = 0; ray < rays; ray++) {
-            Vec3 direction = randomSphereDirection();
+            double phi = random.nextDouble() * Math.PI * 2.0D;
+            double cosTheta = random.nextDouble() * 2.0D - 1.0D;
+            double theta = Math.acos(cosTheta);
+            double directionX = Math.sin(theta) * Math.cos(phi);
+            double directionY = Math.sin(theta) * Math.sin(phi);
+            double directionZ = Math.cos(theta);
             for (int i = 0; i < length; i++) {
-                cursor.set(Mth.floor(getX() + direction.x * i),
-                        Mth.floor(getY() + direction.y * i),
-                        Mth.floor(getZ() + direction.z * i));
+                cursor.set(Mth.floor(originX + directionX * i),
+                        Mth.floor(originY + directionY * i),
+                        Mth.floor(originZ + directionZ * i));
                 if (serverLevel.isOutsideBuildHeight(cursor)) {
                     continue;
                 }
@@ -111,18 +127,13 @@ public class BlackHoleEntity extends Entity {
         }
     }
 
-    private Vec3 randomSphereDirection() {
-        double phi = random.nextDouble() * Math.PI * 2.0D;
-        double cosTheta = random.nextDouble() * 2.0D - 1.0D;
-        double theta = Math.acos(cosTheta);
-        double x = Math.sin(theta) * Math.cos(phi);
-        double y = Math.sin(theta) * Math.sin(phi);
-        double z = Math.cos(theta);
-        return new Vec3(x, y, z);
-    }
-
     protected void pullEntities(float size) {
         double range = size * 15.0D;
+        double rangeSqr = range * range;
+        double damageRange = size * 1.5D;
+        double centerX = getX();
+        double centerY = getY();
+        double centerZ = getZ();
         AABB bounds = getBoundingBox().inflate(range);
         List<Entity> entities = level().getEntities(this, bounds, entity -> entity.isAlive() && !entity.isSpectator());
         for (Entity entity : entities) {
@@ -133,23 +144,34 @@ public class BlackHoleEntity extends Entity {
                 convertFallingBlockToRubble(fallingBlock);
             }
 
-            Vec3 pull = position().subtract(entity.position());
-            double distance = pull.length();
-            if (distance <= 0.0001D || distance > range) {
+            double pullX = centerX - entity.getX();
+            double pullY = centerY - entity.getY();
+            double pullZ = centerZ - entity.getZ();
+            double distanceSqr = pullX * pullX + pullY * pullY + pullZ * pullZ;
+            if (distanceSqr <= MIN_PULL_DISTANCE_SQR || distanceSqr > rangeSqr) {
                 continue;
             }
-            Vec3 direction = pull.normalize();
+            double distance = Math.sqrt(distanceSqr);
+            double directionX = pullX / distance;
+            double directionY = pullY / distance;
+            double directionZ = pullZ / distance;
             if (!(entity instanceof ItemEntity)) {
-                direction = rotateAroundY(direction, Math.toRadians(15.0D));
+                double rotatedX = directionX * LEGACY_ENTITY_SWIRL_COS + directionZ * LEGACY_ENTITY_SWIRL_SIN;
+                double rotatedZ = directionZ * LEGACY_ENTITY_SWIRL_COS - directionX * LEGACY_ENTITY_SWIRL_SIN;
+                directionX = rotatedX;
+                directionZ = rotatedZ;
             }
 
-            entity.setDeltaMovement(entity.getDeltaMovement().add(direction.x * 0.1D, direction.y * 0.2D, direction.z * 0.1D));
+            Vec3 entityMotion = entity.getDeltaMovement();
+            entity.setDeltaMovement(entityMotion.x + directionX * LEGACY_PULL_SPEED,
+                    entityMotion.y + directionY * LEGACY_PULL_SPEED * 2.0D,
+                    entityMotion.z + directionZ * LEGACY_PULL_SPEED);
             entity.hurtMarked = true;
 
             if (entity instanceof BlackHoleEntity) {
                 continue;
             }
-            if (distance < size * 1.5D) {
+            if (distance < damageRange) {
                 EntityDamageUtil.attackEntityFromNt(entity, ModDamageSources.blackhole(level(), this), 1000.0F);
                 if (!(entity instanceof LivingEntity)) {
                     entity.discard();
@@ -175,12 +197,6 @@ public class BlackHoleEntity extends Entity {
         rubble.setDeltaMovement(motion);
         fallingBlock.discard();
         serverLevel.addFreshEntity(rubble);
-    }
-
-    private static Vec3 rotateAroundY(Vec3 vec, double radians) {
-        double cos = Math.cos(radians);
-        double sin = Math.sin(radians);
-        return new Vec3(vec.x * cos + vec.z * sin, vec.y, vec.z * cos - vec.x * sin);
     }
 
     private boolean annihilatesBlackHole(ItemStack stack) {

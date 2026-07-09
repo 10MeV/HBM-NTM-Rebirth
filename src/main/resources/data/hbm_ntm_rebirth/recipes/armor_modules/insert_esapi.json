@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "K": {
+      "item": "hbm_ntm_rebirth:insert_sapi"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "S": {
+      "tag": "forge:plates/weapon_steel"
+    }
+  },
+  "pattern": [
+    "PKP",
+    "DSD",
+    "PKP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:insert_esapi"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/bomb_float_top",
+    "up": "hbm_ntm_rebirth:block/bomb_float_top",
+    "north": "hbm_ntm_rebirth:block/bomb_float",
+    "south": "hbm_ntm_rebirth:block/bomb_float",
+    "west": "hbm_ntm_rebirth:block/bomb_float",
+    "east": "hbm_ntm_rebirth:block/bomb_float",
+    "particle": "hbm_ntm_rebirth:block/bomb_float"
+  }
+}

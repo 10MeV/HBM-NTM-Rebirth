@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 600,
+  "fluid": { "fluid": "SCHRABIDIC", "amount": 1000 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_impure_osmiridium" } },
+  "output": { "item": "hbm_ntm_rebirth:crystal_osmiridium" },
+  "source_order": 56
+}

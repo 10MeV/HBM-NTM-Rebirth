@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "top": "hbm_ntm_rebirth:block/foundry_tank_top",
+    "outer": "hbm_ntm_rebirth:block/foundry_tank_upper",
+    "inner": "hbm_ntm_rebirth:block/foundry_tank_inner",
+    "particle": "hbm_ntm_rebirth:block/foundry_tank_side"
+  },
+  "elements": [
+    {
+      "from": [14, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "east": { "texture": "#outer" },
+        "west": { "texture": "#inner" },
+        "up": { "texture": "#top" }
+      }
+    }
+  ]
+}

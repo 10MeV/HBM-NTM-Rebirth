@@ -1,0 +1,13 @@
+{
+    "type":  "minecraft:crafting_shapeless",
+    "category":  "misc",
+    "ingredients":  [
+                        {
+                            "item":  "hbm_ntm_rebirth:powder_actinium"
+                        }
+                    ],
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:powder_actinium_tiny",
+                   "count":  9
+               }
+}

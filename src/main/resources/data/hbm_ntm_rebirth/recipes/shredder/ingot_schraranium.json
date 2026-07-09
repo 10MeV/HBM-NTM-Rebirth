@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:ingot_schraranium" } },
+  "output": { "item": "hbm_ntm_rebirth:nugget_schrabidium", "count": 2 },
+  "source_order": 75
+}

@@ -5,6 +5,7 @@ import com.hbm.ntm.blockentity.SmallCoolingTowerBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -18,6 +19,17 @@ public class CoolingTowerBlock extends LegacyVisibleMultiblockMachineBlock {
     public CoolingTowerBlock(Properties properties, LegacyMachineDefinition definition, Kind kind) {
         super(properties, definition);
         this.kind = kind;
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return usesChunkBakedStaticModel()
+                ? LegacyMachineRenderShapes.chunkBakedStaticOrEntity()
+                : super.getRenderShape(state);
+    }
+
+    public boolean usesChunkBakedStaticModel() {
+        return true;
     }
 
     @Nullable

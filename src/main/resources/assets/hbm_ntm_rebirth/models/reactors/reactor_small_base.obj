@@ -1,5 +1,6 @@
 # Blender v2.76 (sub 0) OBJ File: 'reactor_small_base.blend'
 # www.blender.org
+mtllib breeding_reactor_fixed.mtl
 o Cube_Cube.001
 v 0.500000 1.750000 -0.500000
 v 0.500000 1.000000 -0.500000
@@ -517,6 +518,7 @@ vn -0.936300 -0.351100 0.000000
 vn 0.000000 -0.351100 0.936300
 vn 0.936300 -0.351100 0.000000
 s off
+usemtl None
 f 27/1/1 28/2/1 26/3/1 25/7/1
 f 31/4/2 32/5/2 28/6/2 27/95/2
 f 7/1/2 8/2/2 4/3/2 3/7/2

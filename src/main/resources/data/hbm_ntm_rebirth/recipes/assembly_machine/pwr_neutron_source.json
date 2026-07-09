@@ -6,7 +6,7 @@
     {
       "count": 1,
       "ingredient": {
-        "tag": "forge:plates/welded_zirconium"
+        "tag": "forge:welded_plates/zirconium"
       },
       "legacy_ore": "plateWeldedZirconium"
     },

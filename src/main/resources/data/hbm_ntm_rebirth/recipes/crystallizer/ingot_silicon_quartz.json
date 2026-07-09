@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 100,
+  "fluid": { "fluid": "OXYGEN", "amount": 250 },
+  "input": {
+    "ingredient": { "tag": "forge:ingots/silicon" },
+    "legacy_ore": "ingotSilicon"
+  },
+  "output": { "item": "minecraft:quartz", "count": 2 },
+  "productivity": 0.1,
+  "source_order": 30
+}

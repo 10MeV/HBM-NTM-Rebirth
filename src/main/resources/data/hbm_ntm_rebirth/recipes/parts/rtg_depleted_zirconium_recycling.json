@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:pellet_rtg_depleted_zirconium"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:billet_zirconium",
+    "count": 3
+  }
+}

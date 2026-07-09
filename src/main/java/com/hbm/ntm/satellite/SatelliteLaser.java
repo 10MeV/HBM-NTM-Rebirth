@@ -1,9 +1,9 @@
 package com.hbm.ntm.satellite;
 
 import com.hbm.ntm.entity.logic.DeathBlastEntity;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class SatelliteLaser extends Satellite {
     private long lastOperationMillis;
@@ -45,9 +45,8 @@ public final class SatelliteLaser extends Satellite {
             return false;
         }
         lastOperationMillis = System.currentTimeMillis();
-        SatelliteSavedData.get(level).markDirty();
 
-        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+        int y = WorldUtil.legacyGetHeightValue(level, x, z);
         DeathBlastEntity blast = new DeathBlastEntity(level);
         blast.setPos(x, y, z);
         level.addFreshEntity(blast);

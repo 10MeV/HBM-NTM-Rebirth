@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:rotary_furnace",
+  "output": {
+    "material": "Steel",
+    "amount": 144
+  },
+  "duration": 100,
+  "steam": 100,
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:ingots/iron"
+      },
+      "count": 1,
+      "legacy_ore": "ingotIron"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:gems/any_coke"
+      },
+      "count": 1,
+      "legacy_ore": "gemAnyCoke"
+    }
+  ],
+  "source_order": 1
+}

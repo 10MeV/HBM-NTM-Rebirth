@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.MiningLaserBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
@@ -12,8 +13,6 @@ import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -40,6 +39,12 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
     }
 
     @Override
+    public boolean shouldRender(MiningLaserBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }
@@ -63,17 +68,31 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
         double vx = tx - blockEntity.getBlockPos().getX();
         double vy = ty - blockEntity.getBlockPos().getY() + 3.0D;
         double vz = tz - blockEntity.getBlockPos().getZ();
-        Vec3 normal = new Vec3(vx, vy, vz).normalize().scale(1.5D);
-        Vec3 beam = new Vec3(vx - normal.x, vy - normal.y, vz - normal.z);
-        double yaw = Math.toDegrees(Math.atan2(beam.x, beam.z));
-        double horizontal = Math.sqrt(beam.x * beam.x + beam.z * beam.z);
-        double pitch = Math.toDegrees(Math.atan2(beam.y, horizontal));
+        double targetLength = Math.sqrt(vx * vx + vy * vy + vz * vz);
+        double normalX = 0.0D;
+        double normalY = 0.0D;
+        double normalZ = 0.0D;
+        if (targetLength >= 1.0E-4D) {
+            double normalScale = 1.5D / targetLength;
+            normalX = vx * normalScale;
+            normalY = vy * normalScale;
+            normalZ = vz * normalScale;
+        }
+        double beamX = vx - normalX;
+        double beamY = vy - normalY;
+        double beamZ = vz - normalZ;
+        double yaw = Math.toDegrees(Math.atan2(beamX, beamZ));
+        double horizontal = Math.sqrt(beamX * beamX + beamZ * beamZ);
+        double pitch = Math.toDegrees(Math.atan2(beamY, horizontal));
+        double beamLength = Math.sqrt(beamX * beamX + beamY * beamY + beamZ * beamZ);
 
         poseStack.pushPose();
         poseStack.translate(0.5D, -1.0D, 0.5D);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            renderModelPart("Base", ObjMachineModels.MINING_LASER_BASE_TEXTURE, poseStack, buffer, modelLight,
-                    packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                renderModelPart("Base", ObjMachineModels.MINING_LASER_BASE_TEXTURE, poseStack, buffer, modelLight,
+                        packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+            }
 
             poseStack.pushPose();
             poseStack.mulPose(Axis.YP.rotationDegrees((float) yaw));
@@ -92,20 +111,18 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
         }
 
         if (blockEntity.hasBeam()) {
-            poseStack.translate(normal.x, normal.y - 1.0D, normal.z);
-            int range = (int) Math.ceil(beam.length() * 0.5D);
-            int ticks = blockEntity.getLevel() == null ? 0 : (int) blockEntity.getLevel().getGameTime();
-            List<LegacyBeamRenderer.BeamPlan> beams = new ArrayList<>(3);
-            for (int offset = 0; offset < 360; offset += 120) {
-                beams.add(LegacyBeamRenderer.beamPlan(beam.x, beam.y, beam.z,
+            poseStack.translate(normalX, normalY - 1.0D, normalZ);
+            int range = (int) Math.ceil(beamLength * 0.5D);
+            int start = blockEntity.getLevel() == null ? 0
+                    : (int) (blockEntity.getLevel().getGameTime() * -25L % 360L);
+            int segments = Math.max(1, range * 2);
+            LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                    false, beams -> {
+                for (int offset = 0; offset < 360; offset += 120) {
+                    beams.add(beamX, beamY, beamZ,
                         LegacyBeamRenderer.WaveType.SPIRAL,
-                        LegacyBeamRenderer.BeamType.SOLID,
                         0xA00000, 0xA00000,
-                        ticks * -25 + offset, Math.max(1, range * 2), 0.075F, 3, 0.025F));
-            }
-            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
-                for (LegacyBeamRenderer.BeamPlan beamPlan : beams) {
-                    LegacyBeamRenderer.beam(queuedPose, buffer, beamPlan);
+                        start + offset, segments, 0.075F, 3, 0.025F);
                 }
             });
         }

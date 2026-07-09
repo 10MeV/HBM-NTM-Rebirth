@@ -1,0 +1,43 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 600,
+  "ignitionTemp": 10000000,
+  "input_fluids": [
+    {
+      "amount": 4000,
+      "fluid": "hbm_ntm_rebirth:stellar_flux"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:cast_plates/any_bismoid_bronze"
+      },
+      "legacy_ore": "plateCastAnyBismoidBronze"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:welded_plates/combine_steel"
+      },
+      "legacy_ore": "plateWeldedCMBSteel"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ingot_cft"
+      }
+    }
+  ],
+  "internal_name": "plsm.hde",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:part_generic_hde"
+    }
+  ],
+  "pools": [],
+  "power": 25000000,
+  "source_order": 106
+}

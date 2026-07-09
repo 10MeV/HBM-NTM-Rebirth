@@ -165,6 +165,8 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
             subscribeEnergyReceiverToSide(side);
         }
         if (energyPortDistance > 1) {
+            // Legacy radar retries external energy subscriptions on its 20 tick refresh cadence.
+            markEnergyPortSubscriptionsDirty();
             subscribeEnergyReceiverToPorts();
         }
     }

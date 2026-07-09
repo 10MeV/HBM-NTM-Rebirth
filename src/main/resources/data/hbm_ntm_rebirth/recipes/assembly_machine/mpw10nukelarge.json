@@ -1,62 +1,58 @@
-﻿{
-    "type":  "hbm_ntm_rebirth:assembly_machine",
-    "internal_name":  "ass.mpw10nukelarge",
-    "duration":  200,
-    "power":  100,
-    "input_items":  [
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:seg_10"
-                                           },
-                            "count":  1
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:plates/weapon_steel"
-                                           },
-                            "count":  16,
-                            "legacy_ore":  "plateWeaponSteel"
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:billets/pu239"
-                                           },
-                            "count":  6,
-                            "legacy_ore":  "billetPu239"
-                        },
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:neutron_reflector"
-                                           },
-                            "count":  8
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:ingots/any_high_explosive"
-                                           },
-                            "count":  12,
-                            "legacy_ore":  "ingotAnyHighExplosive"
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:circuits/controller"
-                                           },
-                            "count":  1
-                        }
-                    ],
-    "input_fluids":  [
-
-                     ],
-    "output_items":  [
-                         {
-                             "item":  "hbm_ntm_rebirth:mp_warhead_10_nuclear_large"
-                         }
-                     ],
-    "output_fluids":  [
-
-                      ],
-    "pools":  [
-
-              ],
-    "source_order":  307
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:seg_10"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:plates/weapon_steel"
+      },
+      "legacy_ore": "plateWeaponSteel"
+    },
+    {
+      "count": 6,
+      "ingredient": {
+        "tag": "forge:billets/pu239"
+      },
+      "legacy_ore": "billetPu239"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:neutron_reflector"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_controller"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 13
+    }
+  ],
+  "internal_name": "ass.mpw10nukelarge",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:mp_warhead_10_nuclear_large"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 307
 }

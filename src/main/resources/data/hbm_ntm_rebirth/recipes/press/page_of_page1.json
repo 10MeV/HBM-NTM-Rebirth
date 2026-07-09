@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:paper"
+    },
+    "legacy_id": "minecraft:paper",
+    "legacy_meta": 0
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:page_of_page1"
+  },
+  "source_order": 40,
+  "stamp": "printing1"
+}

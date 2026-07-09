@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/titanium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_titanium"
+    },
+    "legacy_id": "hbm:crystal_titanium",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_titanium", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_titanium", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_iron" },
-    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_titanium"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_titanium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_iron"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_lithium_tiny"
+    }
+  ],
+  "source_order": 39
 }

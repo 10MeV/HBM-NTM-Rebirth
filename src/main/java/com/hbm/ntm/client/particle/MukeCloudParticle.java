@@ -14,7 +14,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
@@ -97,20 +96,25 @@ public class MukeCloudParticle extends Particle implements HbmDeferredParticleRe
         double y = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y();
         double z = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
         float scale = this.quadSize;
-        Quaternionf rotation = camera.rotation();
-        Vector3f right = new Vector3f(1.0F, 0.0F, 0.0F).rotate(rotation).mul(scale);
-        Vector3f up = new Vector3f(0.0F, 1.0F, 0.0F).rotate(rotation).mul(scale);
+        Vector3f[] basis = HbmDeferredParticleRenderer.cameraBillboardBasis(camera, 1.0F);
+        Vector3f rightUnit = basis[0];
+        Vector3f upUnit = basis[1];
+        float rightX = rightUnit.x() * scale;
+        float rightZ = rightUnit.z() * scale;
+        float upX = upUnit.x() * scale;
+        float upZ = upUnit.z() * scale;
         float centerX = (float) x;
         float centerY = (float) y;
         float centerZ = (float) z;
+        ResourceLocation texture = this.balefire ? BALEFIRE_TEXTURE : TEXTURE;
+        VertexConsumer cloudConsumer = HbmDeferredParticleRenderer.texturedNoDepthWriteConsumer(texture, buffer);
 
         // Legacy ParticleMukeCloud fixes vertical height to +/-scale; only X/Z follow the camera-facing basis.
-        HbmDeferredParticleRenderer.renderTexturedNoDepthWriteQuad(this.balefire ? BALEFIRE_TEXTURE : TEXTURE,
-                buffer, LightTexture.FULL_BRIGHT, 0.0F, 1.0F, 0.0F,
-                centerX - right.x() - up.x(), centerY - scale, centerZ - right.z() - up.z(), uMax, vMax,
-                centerX - right.x() + up.x(), centerY + scale, centerZ - right.z() + up.z(), uMax, vMin,
-                centerX + right.x() + up.x(), centerY + scale, centerZ + right.z() + up.z(), uMin, vMin,
-                centerX + right.x() - up.x(), centerY - scale, centerZ + right.z() - up.z(), uMin, vMax,
+        HbmDeferredParticleRenderer.emitTexturedNoDepthWriteQuad(cloudConsumer, LightTexture.FULL_BRIGHT,
+                centerX - rightX - upX, centerY - scale, centerZ - rightZ - upZ, uMax, vMax,
+                centerX - rightX + upX, centerY + scale, centerZ - rightZ + upZ, uMax, vMin,
+                centerX + rightX + upX, centerY + scale, centerZ + rightZ + upZ, uMin, vMin,
+                centerX + rightX - upX, centerY - scale, centerZ + rightZ - upZ, uMin, vMax,
                 0xFFFFFF, 255);
     }
 

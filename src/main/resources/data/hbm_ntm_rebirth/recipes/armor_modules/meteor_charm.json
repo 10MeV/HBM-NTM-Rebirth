@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "tag": "forge:gems/volcanic"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:fragment_meteorite"
+    }
+  },
+  "pattern": [
+    " M ",
+    "MDM",
+    " M "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:meteor_charm"
+  },
+  "show_notification": true
+}

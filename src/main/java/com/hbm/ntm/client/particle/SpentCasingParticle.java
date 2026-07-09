@@ -18,16 +18,17 @@ import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 @OnlyIn(Dist.CLIENT)
 public class SpentCasingParticle extends Particle {
@@ -66,7 +67,11 @@ public class SpentCasingParticle extends Particle {
     private final int maxSmokeGen;
     private final double smokeLift;
     private final int nodeLife;
-    private final List<SmokeNode> smokeNodes = new ArrayList<>();
+    private double[] smokeNodeX = new double[0];
+    private double[] smokeNodeY = new double[0];
+    private double[] smokeNodeZ = new double[0];
+    private float[] smokeNodeAlpha = new float[0];
+    private int smokeNodeCount;
     private float rotationPitch;
     private float prevRotationPitch;
     private float rotationYaw;
@@ -79,6 +84,9 @@ public class SpentCasingParticle extends Particle {
     private double previousSmokeRenderX;
     private double previousSmokeRenderY;
     private double previousSmokeRenderZ;
+    private final BlockPos.MutableBlockPos fluidSamplePos = new BlockPos.MutableBlockPos();
+    private final PoseStack modelPose = new PoseStack();
+    private final PoseStack smokePose = new PoseStack();
 
     public SpentCasingParticle(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ,
             float yaw, float pitch, float momentumPitch, float momentumYaw, String name, boolean smoking, int smokeLife,
@@ -98,6 +106,9 @@ public class SpentCasingParticle extends Particle {
         this.maxSmokeGen = Math.max(0, smokeLife);
         this.smokeLift = smokeLift;
         this.nodeLife = Math.max(1, nodeLife);
+        if (smoking && this.maxSmokeGen > 0) {
+            ensureSmokeNodeCapacity(this.maxSmokeGen + 1);
+        }
         this.lifetime = definition.maxAge();
         this.gravity = 1.0F;
         this.hasPhysics = true;
@@ -186,21 +197,46 @@ public class SpentCasingParticle extends Particle {
     }
 
     private void updateSmoke() {
-        if (this.age > this.maxSmokeGen && !this.smokeNodes.isEmpty()) {
-            this.smokeNodes.clear();
+        if (this.age > this.maxSmokeGen && this.smokeNodeCount > 0) {
+            this.smokeNodeCount = 0;
         }
         if (!this.smoking || this.age > this.maxSmokeGen) {
             return;
         }
-        for (SmokeNode node : this.smokeNodes) {
-            node.x += this.random.nextGaussian() * SMOKE_JITTER;
-            node.z += this.random.nextGaussian() * SMOKE_JITTER;
-            node.y += this.smokeLift * MODEL_SCALE;
-            node.alpha = Math.max(0.0F, node.alpha - 1.0F / this.nodeLife);
+        for (int i = 0; i < this.smokeNodeCount; i++) {
+            this.smokeNodeX[i] += this.random.nextGaussian() * SMOKE_JITTER;
+            this.smokeNodeZ[i] += this.random.nextGaussian() * SMOKE_JITTER;
+            this.smokeNodeY[i] += this.smokeLift * MODEL_SCALE;
+            this.smokeNodeAlpha[i] = Math.max(0.0F, this.smokeNodeAlpha[i] - 1.0F / this.nodeLife);
         }
-        if (this.age < this.maxSmokeGen) {
-            this.smokeNodes.add(new SmokeNode(0.0D, 0.0D, 0.0D, this.smokeNodes.isEmpty() ? 0.0F : 1.0F));
+        if (this.age < this.maxSmokeGen || isInWaterLikeLegacy()) {
+            appendSmokeNode(0.0D, 0.0D, 0.0D, this.smokeNodeCount == 0 ? 0.0F : 1.0F);
         }
+    }
+
+    private void appendSmokeNode(double x, double y, double z, float alpha) {
+        ensureSmokeNodeCapacity(this.smokeNodeCount + 1);
+        this.smokeNodeX[this.smokeNodeCount] = x;
+        this.smokeNodeY[this.smokeNodeCount] = y;
+        this.smokeNodeZ[this.smokeNodeCount] = z;
+        this.smokeNodeAlpha[this.smokeNodeCount] = alpha;
+        this.smokeNodeCount++;
+    }
+
+    private void ensureSmokeNodeCapacity(int required) {
+        if (required <= this.smokeNodeX.length) {
+            return;
+        }
+        int newLength = Math.max(required, Math.max(2, this.smokeNodeX.length * 2));
+        this.smokeNodeX = Arrays.copyOf(this.smokeNodeX, newLength);
+        this.smokeNodeY = Arrays.copyOf(this.smokeNodeY, newLength);
+        this.smokeNodeZ = Arrays.copyOf(this.smokeNodeZ, newLength);
+        this.smokeNodeAlpha = Arrays.copyOf(this.smokeNodeAlpha, newLength);
+    }
+
+    private boolean isInWaterLikeLegacy() {
+        return this.level.getFluidState(this.fluidSamplePos.set(Mth.floor(this.x), Mth.floor(this.y), Mth.floor(this.z)))
+                .is(FluidTags.WATER);
     }
 
     private void playBounceSound() {
@@ -222,7 +258,8 @@ public class SpentCasingParticle extends Particle {
         double renderX = Mth.lerp(partialTick, this.xo, this.x);
         double renderY = Mth.lerp(partialTick, this.yo, this.y);
         double renderZ = Mth.lerp(partialTick, this.zo, this.z);
-        PoseStack poseStack = new PoseStack();
+        PoseStack poseStack = this.modelPose;
+        poseStack.setIdentity();
         poseStack.translate(renderX - cameraPos.x(), renderY - cameraPos.y() - this.bbHeight / 4.0F + this.definition.scaleY() * 0.01F,
                 renderZ - cameraPos.z());
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
@@ -238,7 +275,7 @@ public class SpentCasingParticle extends Particle {
         }
         buffer.endBatch();
 
-        if (!this.smokeNodes.isEmpty()) {
+        if (this.smokeNodeCount > 0) {
             renderSmokeTrail(camera, partialTick);
         }
     }
@@ -260,31 +297,31 @@ public class SpentCasingParticle extends Particle {
         double deltaX = this.previousSmokeRenderX - renderX;
         double deltaY = this.previousSmokeRenderY - renderY;
         double deltaZ = this.previousSmokeRenderZ - renderZ;
-        for (SmokeNode node : this.smokeNodes) {
-            node.x += deltaX;
-            node.y += deltaY;
-            node.z += deltaZ;
+        for (int i = 0; i < this.smokeNodeCount; i++) {
+            this.smokeNodeX[i] += deltaX;
+            this.smokeNodeY[i] += deltaY;
+            this.smokeNodeZ[i] += deltaZ;
         }
         float width = this.definition.scaleX() * 0.5F * MODEL_SCALE;
         float yaw = camera.getYRot() * Mth.DEG_TO_RAD;
         float offX = Mth.cos(-yaw) * width;
         float offZ = Mth.sin(-yaw) * width;
         float timeAlpha = 1.0F - this.age / (float) Math.max(1, this.maxSmokeGen);
-        PoseStack poseStack = new PoseStack();
+        PoseStack poseStack = this.smokePose;
+        poseStack.setIdentity();
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
         VertexConsumer smokeConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.translucentNoCullType());
         PoseStack.Pose pose = poseStack.last();
-        for (int i = 0; i + 1 < this.smokeNodes.size(); i++) {
-            SmokeNode node = this.smokeNodes.get(i);
-            SmokeNode past = this.smokeNodes.get(i + 1);
-            int nodeAlpha = Mth.clamp((int) (255.0F * node.alpha * Math.max(0.0F, timeAlpha)), 0, 255);
-            int pastAlpha = Mth.clamp((int) (255.0F * past.alpha * Math.max(0.0F, timeAlpha)), 0, 255);
-            double nodeX = originX + node.x;
-            double nodeY = originY + node.y;
-            double nodeZ = originZ + node.z;
-            double pastX = originX + past.x;
-            double pastY = originY + past.y;
-            double pastZ = originZ + past.z;
+        for (int i = 0; i + 1 < this.smokeNodeCount; i++) {
+            int pastIndex = i + 1;
+            int nodeAlpha = Mth.clamp((int) (255.0F * this.smokeNodeAlpha[i] * Math.max(0.0F, timeAlpha)), 0, 255);
+            int pastAlpha = Mth.clamp((int) (255.0F * this.smokeNodeAlpha[pastIndex] * Math.max(0.0F, timeAlpha)), 0, 255);
+            double nodeX = originX + this.smokeNodeX[i];
+            double nodeY = originY + this.smokeNodeY[i];
+            double nodeZ = originZ + this.smokeNodeZ[i];
+            double pastX = originX + this.smokeNodeX[pastIndex];
+            double pastY = originY + this.smokeNodeY[pastIndex];
+            double pastZ = originZ + this.smokeNodeZ[pastIndex];
             LegacyUntexturedQuadRenderer.quad(smokeConsumer, pose,
                     nodeX, nodeY, nodeZ,
                     nodeX + offX, nodeY, nodeZ + offZ,
@@ -343,19 +380,5 @@ public class SpentCasingParticle extends Particle {
             return previous - 360.0F;
         }
         return previous;
-    }
-
-    private static final class SmokeNode {
-        private double x;
-        private double y;
-        private double z;
-        private float alpha;
-
-        private SmokeNode(double x, double y, double z, float alpha) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.alpha = alpha;
-        }
     }
 }

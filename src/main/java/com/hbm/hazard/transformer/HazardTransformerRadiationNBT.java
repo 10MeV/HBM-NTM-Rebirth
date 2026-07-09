@@ -16,6 +16,10 @@ public class HazardTransformerRadiationNBT extends HazardTransformerBase {
             new com.hbm.ntm.radiation.NbtRadiationHazardTransformer();
 
     @Override
+    public void transformPre(ItemStack stack, List<HazardEntry> entries) {
+    }
+
+    @Override
     public void transformPost(ItemStack stack, List<HazardEntry> entries) {
         List<com.hbm.ntm.radiation.HazardEntry> modernEntries = toModernEntries(entries);
         delegate.transformPost(stack, modernEntries);

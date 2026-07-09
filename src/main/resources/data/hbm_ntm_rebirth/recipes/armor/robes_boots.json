@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "P": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rag"
+    }
+  },
+  "pattern": [
+    "R R",
+    "P P"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:robes_boots"
+  },
+  "show_notification": true
+}

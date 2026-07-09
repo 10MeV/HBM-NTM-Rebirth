@@ -22,6 +22,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -44,6 +45,7 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
 
     public AssemblyMachineBlock(Properties properties) {
         super(properties);
+        registerDefaultState(defaultBlockState().setValue(LegacyFrameRenderState.FRAME, false));
     }
 
     @Override
@@ -132,7 +134,13 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(LegacyFrameRenderState.FRAME);
     }
 
     @Override

@@ -1,0 +1,42 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.custom.ore_titanium",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "count":  1,
+                            "ingredient":  {
+                                               "tag":  "forge:ores/titanium"
+                                           },
+                            "legacy_ore":  "oreTitanium"
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "arc_material_outputs":  [
+                                 {
+                                     "amount":  144,
+                                     "material":  "Titanium"
+                                 },
+                                 {
+                                     "amount":  24,
+                                     "material":  "Iron"
+                                 },
+                                 {
+                                     "amount":  162,
+                                     "material":  "Stone"
+                                 }
+                             ],
+    "pools":  [
+
+              ],
+    "source_order":  2285
+}

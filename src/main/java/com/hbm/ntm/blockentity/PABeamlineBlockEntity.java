@@ -7,6 +7,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
@@ -28,7 +29,7 @@ public class PABeamlineBlockEntity extends PABlockEntity implements PAParticleUs
     @Override
     public void serverTick() {
         if (level != null && !level.isClientSide && level.getGameTime() % 150L == 0L) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            syncWindowBlockState(true);
         }
     }
 
@@ -46,9 +47,7 @@ public class PABeamlineBlockEntity extends PABlockEntity implements PAParticleUs
     public void toggleWindow() {
         window = !window;
         setChanged();
-        if (level != null) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        }
+        syncWindowBlockState(true);
     }
 
     public boolean hasWindow() {
@@ -96,6 +95,12 @@ public class PABeamlineBlockEntity extends PABlockEntity implements PAParticleUs
     }
 
     @Override
+    public void onLoad() {
+        super.onLoad();
+        syncWindowBlockState(false);
+    }
+
+    @Override
     protected void savePa(CompoundTag tag) {
         tag.putBoolean(TAG_WINDOW, window);
         tag.putBoolean(TAG_DID_PASS, didPass);
@@ -105,5 +110,20 @@ public class PABeamlineBlockEntity extends PABlockEntity implements PAParticleUs
     @Override
     public AABB getRenderBoundingBox() {
         return new AABB(worldPosition).inflate(1.0D, 0.0D, 1.0D);
+    }
+
+    private void syncWindowBlockState(boolean forcePacket) {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        BlockState state = getBlockState();
+        if (state.hasProperty(ParticleAcceleratorBlock.WINDOW)
+                && state.getValue(ParticleAcceleratorBlock.WINDOW) != window) {
+            BlockState updated = state.setValue(ParticleAcceleratorBlock.WINDOW, window);
+            level.setBlock(worldPosition, updated, Block.UPDATE_ALL);
+            level.sendBlockUpdated(worldPosition, state, updated, Block.UPDATE_ALL);
+        } else if (forcePacket) {
+            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
+        }
     }
 }

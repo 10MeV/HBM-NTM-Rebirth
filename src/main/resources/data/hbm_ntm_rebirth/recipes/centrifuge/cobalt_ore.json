@@ -1,10 +1,26 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/cobalt" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/cobalt"
+    },
+    "legacy_ore": "oreCobalt"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_cobalt", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_iron" },
-    { "item": "hbm_ntm_rebirth:powder_copper" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_cobalt"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_iron"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_copper"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 25
 }

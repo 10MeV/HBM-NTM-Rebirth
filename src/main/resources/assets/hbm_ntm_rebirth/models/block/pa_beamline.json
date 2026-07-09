@@ -3,5 +3,19 @@
   "model": "hbm_ntm_rebirth:models/particleaccelerator/beamline.obj",
   "automatic_culling": false,
   "flip_v": true,
-  "textures": { "particle": "hbm_ntm_rebirth:block/particleaccelerator/beamline", "default": "hbm_ntm_rebirth:block/particleaccelerator/beamline" }
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Beamline": true,
+    "BeamlineWindow": false,
+    "BeamlineGlass": false
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/particleaccelerator/beamline",
+    "default": "hbm_ntm_rebirth:block/particleaccelerator/beamline"
+  }
 }

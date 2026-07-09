@@ -1,0 +1,33 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.custom.pipes_steel",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "count":  1,
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:pipes_steel"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "arc_material_outputs":  [
+                                 {
+                                     "amount":  1944,
+                                     "material":  "Steel"
+                                 }
+                             ],
+    "pools":  [
+
+              ],
+    "source_order":  2278
+}

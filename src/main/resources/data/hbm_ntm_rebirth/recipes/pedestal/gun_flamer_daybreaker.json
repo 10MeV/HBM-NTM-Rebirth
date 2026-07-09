@@ -1,0 +1,73 @@
+{
+  "type": "hbm_ntm_rebirth:pedestal",
+  "input": [
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/gold"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastGold"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:canned_slime"
+      },
+      "count": 1,
+      "legacy_id": "hbm:canned_conserve",
+      "legacy_meta": 5
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/gold"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastGold"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/white_phosphorus"
+      },
+      "count": 1,
+      "legacy_ore": "ingotWhitePhosphorus"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:gun_flamer"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/white_phosphorus"
+      },
+      "count": 1,
+      "legacy_ore": "ingotWhitePhosphorus"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/gold"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastGold"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:stick_dynamite"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "tag": "forge:cast_plates/gold"
+      },
+      "count": 1,
+      "legacy_ore": "plateCastGold"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:gun_flamer_daybreaker"
+  },
+  "extra": "sun",
+  "set": 0,
+  "source_order": 6
+}

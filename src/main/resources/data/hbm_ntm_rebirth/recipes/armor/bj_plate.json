@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor_desh"
+    },
+    "N": {
+      "item": "hbm_ntm_rebirth:plate_armor_lunar"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:starmetal_plate"
+    }
+  },
+  "pattern": [
+    "N N",
+    "MSM",
+    "NCN"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bj_plate"
+  },
+  "show_notification": true
+}

@@ -8,10 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 public final class ClientSatelliteData {
     public static Optional<SatelliteSnapshot> current() {
         return ClientPanelData.get(HbmNetworkActions.SATELLITE_PANEL)
-                .map(data -> {
-                    Satellite satellite = Satellite.load(data.legacyType(), data.data());
-                    return satellite == null ? null : new SatelliteSnapshot(satellite, data.data().copy());
-                });
+                .map(ClientSatelliteData::readLegacyPanelSnapshot);
     }
 
     public static Optional<SatelliteSnapshot> current(int frequency) {
@@ -26,6 +23,19 @@ public final class ClientSatelliteData {
         public String legacyName() {
             return data.getString("legacyName");
         }
+    }
+
+    private static SatelliteSnapshot readLegacyPanelSnapshot(ClientPanelData.PanelData data) {
+        Satellite satellite = Satellite.create(data.legacyType());
+        if (satellite == null) {
+            return null;
+        }
+        CompoundTag tag = data.data() == null ? new CompoundTag() : data.data().copy();
+        try {
+            satellite.readFromNBT(tag);
+        } catch (Exception ignored) {
+        }
+        return new SatelliteSnapshot(satellite, tag.copy());
     }
 
     private ClientSatelliteData() {

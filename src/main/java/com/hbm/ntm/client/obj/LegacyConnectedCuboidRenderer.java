@@ -34,7 +34,9 @@ public final class LegacyConnectedCuboidRenderer {
     public static void cableClassic(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
             boolean posX, boolean negX, boolean posY, boolean negY, boolean posZ, boolean negZ) {
-        RenderTarget target = new RenderTarget(poseStack, buffer, packedLight, packedOverlay, renderMode);
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(poseStack,
+                buffer, renderMode, 255);
+        RenderTarget target = new RenderTarget(batch, packedLight, packedOverlay);
         if (!posY) {
             coreTop(sprite, target);
         } else {
@@ -74,200 +76,204 @@ public final class LegacyConnectedCuboidRenderer {
 
     private static void coreTop(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, 1.0F, 0.0F,
-                v(CORE_MAX, CORE_MAX, CORE_MIN, CORE_U1, CORE_V0, TOP),
-                v(CORE_MIN, CORE_MAX, CORE_MIN, CORE_U0, CORE_V0, TOP),
-                v(CORE_MIN, CORE_MAX, CORE_MAX, CORE_U0, CORE_V1, TOP),
-                v(CORE_MAX, CORE_MAX, CORE_MAX, CORE_U1, CORE_V1, TOP));
+                CORE_MAX, CORE_MAX, CORE_MIN, CORE_U1, CORE_V0,
+                CORE_MIN, CORE_MAX, CORE_MIN, CORE_U0, CORE_V0,
+                CORE_MIN, CORE_MAX, CORE_MAX, CORE_U0, CORE_V1,
+                CORE_MAX, CORE_MAX, CORE_MAX, CORE_U1, CORE_V1, TOP);
     }
 
     private static void coreBottom(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, -1.0F, 0.0F,
-                v(CORE_MIN, CORE_MIN, CORE_MIN, CORE_U0, CORE_V0, BOTTOM),
-                v(CORE_MAX, CORE_MIN, CORE_MIN, CORE_U1, CORE_V0, BOTTOM),
-                v(CORE_MAX, CORE_MIN, CORE_MAX, CORE_U1, CORE_V1, BOTTOM),
-                v(CORE_MIN, CORE_MIN, CORE_MAX, CORE_U0, CORE_V1, BOTTOM));
+                CORE_MIN, CORE_MIN, CORE_MIN, CORE_U0, CORE_V0,
+                CORE_MAX, CORE_MIN, CORE_MIN, CORE_U1, CORE_V0,
+                CORE_MAX, CORE_MIN, CORE_MAX, CORE_U1, CORE_V1,
+                CORE_MIN, CORE_MIN, CORE_MAX, CORE_U0, CORE_V1, BOTTOM);
     }
 
     private static void coreEast(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 1.0F, 0.0F, 0.0F,
-                v(CORE_MAX, CORE_MAX, CORE_MIN, CORE_U1, CORE_V0, DARK),
-                v(CORE_MAX, CORE_MAX, CORE_MAX, CORE_U0, CORE_V0, DARK),
-                v(CORE_MAX, CORE_MIN, CORE_MAX, CORE_U0, CORE_V1, DARK),
-                v(CORE_MAX, CORE_MIN, CORE_MIN, CORE_U1, CORE_V1, DARK));
+                CORE_MAX, CORE_MAX, CORE_MIN, CORE_U1, CORE_V0,
+                CORE_MAX, CORE_MAX, CORE_MAX, CORE_U0, CORE_V0,
+                CORE_MAX, CORE_MIN, CORE_MAX, CORE_U0, CORE_V1,
+                CORE_MAX, CORE_MIN, CORE_MIN, CORE_U1, CORE_V1, DARK);
     }
 
     private static void coreWest(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, -1.0F, 0.0F, 0.0F,
-                v(CORE_MIN, CORE_MAX, CORE_MAX, CORE_U1, CORE_V0, DARK),
-                v(CORE_MIN, CORE_MAX, CORE_MIN, CORE_U0, CORE_V0, DARK),
-                v(CORE_MIN, CORE_MIN, CORE_MIN, CORE_U0, CORE_V1, DARK),
-                v(CORE_MIN, CORE_MIN, CORE_MAX, CORE_U1, CORE_V1, DARK));
+                CORE_MIN, CORE_MAX, CORE_MAX, CORE_U1, CORE_V0,
+                CORE_MIN, CORE_MAX, CORE_MIN, CORE_U0, CORE_V0,
+                CORE_MIN, CORE_MIN, CORE_MIN, CORE_U0, CORE_V1,
+                CORE_MIN, CORE_MIN, CORE_MAX, CORE_U1, CORE_V1, DARK);
     }
 
     private static void coreSouth(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, 0.0F, 1.0F,
-                v(CORE_MAX, CORE_MAX, CORE_MAX, CORE_U1, CORE_V0, BRIGHT),
-                v(CORE_MIN, CORE_MAX, CORE_MAX, CORE_U0, CORE_V0, BRIGHT),
-                v(CORE_MIN, CORE_MIN, CORE_MAX, CORE_U0, CORE_V1, BRIGHT),
-                v(CORE_MAX, CORE_MIN, CORE_MAX, CORE_U1, CORE_V1, BRIGHT));
+                CORE_MAX, CORE_MAX, CORE_MAX, CORE_U1, CORE_V0,
+                CORE_MIN, CORE_MAX, CORE_MAX, CORE_U0, CORE_V0,
+                CORE_MIN, CORE_MIN, CORE_MAX, CORE_U0, CORE_V1,
+                CORE_MAX, CORE_MIN, CORE_MAX, CORE_U1, CORE_V1, BRIGHT);
     }
 
     private static void coreNorth(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, 0.0F, -1.0F,
-                v(CORE_MIN, CORE_MAX, CORE_MIN, CORE_U1, CORE_V0, BRIGHT),
-                v(CORE_MAX, CORE_MAX, CORE_MIN, CORE_U0, CORE_V0, BRIGHT),
-                v(CORE_MAX, CORE_MIN, CORE_MIN, CORE_U0, CORE_V1, BRIGHT),
-                v(CORE_MIN, CORE_MIN, CORE_MIN, CORE_U1, CORE_V1, BRIGHT));
+                CORE_MIN, CORE_MAX, CORE_MIN, CORE_U1, CORE_V0,
+                CORE_MAX, CORE_MAX, CORE_MIN, CORE_U0, CORE_V0,
+                CORE_MAX, CORE_MIN, CORE_MIN, CORE_U0, CORE_V1,
+                CORE_MIN, CORE_MIN, CORE_MIN, CORE_U1, CORE_V1, BRIGHT);
     }
 
     private static void armPosY(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, 0.0F, -1.0F,
-                v(CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0, BRIGHT),
-                v(CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1, BRIGHT),
-                v(CORE_MIN, MAX, CORE_MIN, SIDE_U1, SIDE_V1, BRIGHT),
-                v(CORE_MAX, MAX, CORE_MIN, SIDE_U1, SIDE_V0, BRIGHT));
+                CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1,
+                CORE_MIN, MAX, CORE_MIN, SIDE_U1, SIDE_V1,
+                CORE_MAX, MAX, CORE_MIN, SIDE_U1, SIDE_V0, BRIGHT);
         quad(sprite, target, 1.0F, 0.0F, 0.0F,
-                v(CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0, DARK),
-                v(CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1, DARK),
-                v(CORE_MAX, MAX, CORE_MIN, SIDE_U1, SIDE_V1, DARK),
-                v(CORE_MAX, MAX, CORE_MAX, SIDE_U1, SIDE_V0, DARK));
+                CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1,
+                CORE_MAX, MAX, CORE_MIN, SIDE_U1, SIDE_V1,
+                CORE_MAX, MAX, CORE_MAX, SIDE_U1, SIDE_V0, DARK);
         quad(sprite, target, 0.0F, 0.0F, 1.0F,
-                v(CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0, BRIGHT),
-                v(CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1, BRIGHT),
-                v(CORE_MAX, MAX, CORE_MAX, SIDE_U1, SIDE_V1, BRIGHT),
-                v(CORE_MIN, MAX, CORE_MAX, SIDE_U1, SIDE_V0, BRIGHT));
+                CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1,
+                CORE_MAX, MAX, CORE_MAX, SIDE_U1, SIDE_V1,
+                CORE_MIN, MAX, CORE_MAX, SIDE_U1, SIDE_V0, BRIGHT);
         quad(sprite, target, -1.0F, 0.0F, 0.0F,
-                v(CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0, DARK),
-                v(CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1, DARK),
-                v(CORE_MIN, MAX, CORE_MAX, SIDE_U1, SIDE_V1, DARK),
-                v(CORE_MIN, MAX, CORE_MIN, SIDE_U1, SIDE_V0, DARK));
+                CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1,
+                CORE_MIN, MAX, CORE_MAX, SIDE_U1, SIDE_V1,
+                CORE_MIN, MAX, CORE_MIN, SIDE_U1, SIDE_V0, DARK);
     }
 
     private static void armNegY(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, 0.0F, -1.0F,
-                v(CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0, BRIGHT),
-                v(CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1, BRIGHT),
-                v(CORE_MAX, MIN, CORE_MIN, SIDE_U1, SIDE_V1, BRIGHT),
-                v(CORE_MIN, MIN, CORE_MIN, SIDE_U1, SIDE_V0, BRIGHT));
+                CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1,
+                CORE_MAX, MIN, CORE_MIN, SIDE_U1, SIDE_V1,
+                CORE_MIN, MIN, CORE_MIN, SIDE_U1, SIDE_V0, BRIGHT);
         quad(sprite, target, 1.0F, 0.0F, 0.0F,
-                v(CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0, DARK),
-                v(CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1, DARK),
-                v(CORE_MAX, MIN, CORE_MAX, SIDE_U1, SIDE_V1, DARK),
-                v(CORE_MAX, MIN, CORE_MIN, SIDE_U1, SIDE_V0, DARK));
+                CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1,
+                CORE_MAX, MIN, CORE_MAX, SIDE_U1, SIDE_V1,
+                CORE_MAX, MIN, CORE_MIN, SIDE_U1, SIDE_V0, DARK);
         quad(sprite, target, 0.0F, 0.0F, 1.0F,
-                v(CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0, BRIGHT),
-                v(CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1, BRIGHT),
-                v(CORE_MIN, MIN, CORE_MAX, SIDE_U1, SIDE_V1, BRIGHT),
-                v(CORE_MAX, MIN, CORE_MAX, SIDE_U1, SIDE_V0, BRIGHT));
+                CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1,
+                CORE_MIN, MIN, CORE_MAX, SIDE_U1, SIDE_V1,
+                CORE_MAX, MIN, CORE_MAX, SIDE_U1, SIDE_V0, BRIGHT);
         quad(sprite, target, -1.0F, 0.0F, 0.0F,
-                v(CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0, DARK),
-                v(CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1, DARK),
-                v(CORE_MIN, MIN, CORE_MIN, SIDE_U1, SIDE_V1, DARK),
-                v(CORE_MIN, MIN, CORE_MAX, SIDE_U1, SIDE_V0, DARK));
+                CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1,
+                CORE_MIN, MIN, CORE_MIN, SIDE_U1, SIDE_V1,
+                CORE_MIN, MIN, CORE_MAX, SIDE_U1, SIDE_V0, DARK);
     }
 
     private static void armPosX(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, 1.0F, 0.0F,
-                v(CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0, TOP),
-                v(CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1, TOP),
-                v(MAX, CORE_MAX, CORE_MAX, SIDE_U1, SIDE_V1, TOP),
-                v(MAX, CORE_MAX, CORE_MIN, SIDE_U1, SIDE_V0, TOP));
+                CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1,
+                MAX, CORE_MAX, CORE_MAX, SIDE_U1, SIDE_V1,
+                MAX, CORE_MAX, CORE_MIN, SIDE_U1, SIDE_V0, TOP);
         quad(sprite, target, 0.0F, 0.0F, -1.0F,
-                v(CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0, BRIGHT),
-                v(CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1, BRIGHT),
-                v(MAX, CORE_MAX, CORE_MIN, SIDE_U1, SIDE_V1, BRIGHT),
-                v(MAX, CORE_MIN, CORE_MIN, SIDE_U1, SIDE_V0, BRIGHT));
+                CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1,
+                MAX, CORE_MAX, CORE_MIN, SIDE_U1, SIDE_V1,
+                MAX, CORE_MIN, CORE_MIN, SIDE_U1, SIDE_V0, BRIGHT);
         quad(sprite, target, 0.0F, -1.0F, 0.0F,
-                v(CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0, BOTTOM),
-                v(CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1, BOTTOM),
-                v(MAX, CORE_MIN, CORE_MIN, SIDE_U1, SIDE_V1, BOTTOM),
-                v(MAX, CORE_MIN, CORE_MAX, SIDE_U1, SIDE_V0, BOTTOM));
+                CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1,
+                MAX, CORE_MIN, CORE_MIN, SIDE_U1, SIDE_V1,
+                MAX, CORE_MIN, CORE_MAX, SIDE_U1, SIDE_V0, BOTTOM);
         quad(sprite, target, 0.0F, 0.0F, 1.0F,
-                v(CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0, BRIGHT),
-                v(CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1, BRIGHT),
-                v(MAX, CORE_MIN, CORE_MAX, SIDE_U1, SIDE_V1, BRIGHT),
-                v(MAX, CORE_MAX, CORE_MAX, SIDE_U1, SIDE_V0, BRIGHT));
+                CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1,
+                MAX, CORE_MIN, CORE_MAX, SIDE_U1, SIDE_V1,
+                MAX, CORE_MAX, CORE_MAX, SIDE_U1, SIDE_V0, BRIGHT);
     }
 
     private static void armNegX(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, 1.0F, 0.0F,
-                v(CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0, TOP),
-                v(CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1, TOP),
-                v(MIN, CORE_MAX, CORE_MIN, SIDE_U1, SIDE_V1, TOP),
-                v(MIN, CORE_MAX, CORE_MAX, SIDE_U1, SIDE_V0, TOP));
+                CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1,
+                MIN, CORE_MAX, CORE_MIN, SIDE_U1, SIDE_V1,
+                MIN, CORE_MAX, CORE_MAX, SIDE_U1, SIDE_V0, TOP);
         quad(sprite, target, 0.0F, 0.0F, -1.0F,
-                v(CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0, BRIGHT),
-                v(CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1, BRIGHT),
-                v(MIN, CORE_MIN, CORE_MIN, SIDE_U1, SIDE_V1, BRIGHT),
-                v(MIN, CORE_MAX, CORE_MIN, SIDE_U1, SIDE_V0, BRIGHT));
+                CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1,
+                MIN, CORE_MIN, CORE_MIN, SIDE_U1, SIDE_V1,
+                MIN, CORE_MAX, CORE_MIN, SIDE_U1, SIDE_V0, BRIGHT);
         quad(sprite, target, 0.0F, -1.0F, 0.0F,
-                v(CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0, BOTTOM),
-                v(CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1, BOTTOM),
-                v(MIN, CORE_MIN, CORE_MAX, SIDE_U1, SIDE_V1, BOTTOM),
-                v(MIN, CORE_MIN, CORE_MIN, SIDE_U1, SIDE_V0, BOTTOM));
+                CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1,
+                MIN, CORE_MIN, CORE_MAX, SIDE_U1, SIDE_V1,
+                MIN, CORE_MIN, CORE_MIN, SIDE_U1, SIDE_V0, BOTTOM);
         quad(sprite, target, 0.0F, 0.0F, 1.0F,
-                v(CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0, BRIGHT),
-                v(CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1, BRIGHT),
-                v(MIN, CORE_MAX, CORE_MAX, SIDE_U1, SIDE_V1, BRIGHT),
-                v(MIN, CORE_MIN, CORE_MAX, SIDE_U1, SIDE_V0, BRIGHT));
+                CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1,
+                MIN, CORE_MAX, CORE_MAX, SIDE_U1, SIDE_V1,
+                MIN, CORE_MIN, CORE_MAX, SIDE_U1, SIDE_V0, BRIGHT);
     }
 
     private static void armPosZ(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, 1.0F, 0.0F,
-                v(CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0, TOP),
-                v(CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1, TOP),
-                v(CORE_MIN, CORE_MAX, MAX, SIDE_U1, SIDE_V1, TOP),
-                v(CORE_MAX, CORE_MAX, MAX, SIDE_U1, SIDE_V0, TOP));
+                CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1,
+                CORE_MIN, CORE_MAX, MAX, SIDE_U1, SIDE_V1,
+                CORE_MAX, CORE_MAX, MAX, SIDE_U1, SIDE_V0, TOP);
         quad(sprite, target, -1.0F, 0.0F, 0.0F,
-                v(CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0, DARK),
-                v(CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1, DARK),
-                v(CORE_MIN, CORE_MIN, MAX, SIDE_U1, SIDE_V1, DARK),
-                v(CORE_MIN, CORE_MAX, MAX, SIDE_U1, SIDE_V0, DARK));
+                CORE_MIN, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1,
+                CORE_MIN, CORE_MIN, MAX, SIDE_U1, SIDE_V1,
+                CORE_MIN, CORE_MAX, MAX, SIDE_U1, SIDE_V0, DARK);
         quad(sprite, target, 0.0F, -1.0F, 0.0F,
-                v(CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0, BOTTOM),
-                v(CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1, BOTTOM),
-                v(CORE_MAX, CORE_MIN, MAX, SIDE_U1, SIDE_V1, BOTTOM),
-                v(CORE_MIN, CORE_MIN, MAX, SIDE_U1, SIDE_V0, BOTTOM));
+                CORE_MIN, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V1,
+                CORE_MAX, CORE_MIN, MAX, SIDE_U1, SIDE_V1,
+                CORE_MIN, CORE_MIN, MAX, SIDE_U1, SIDE_V0, BOTTOM);
         quad(sprite, target, 1.0F, 0.0F, 0.0F,
-                v(CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0, DARK),
-                v(CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1, DARK),
-                v(CORE_MAX, CORE_MAX, MAX, SIDE_U1, SIDE_V1, DARK),
-                v(CORE_MAX, CORE_MIN, MAX, SIDE_U1, SIDE_V0, DARK));
+                CORE_MAX, CORE_MIN, CORE_MAX, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MAX, CORE_MAX, SIDE_U0, SIDE_V1,
+                CORE_MAX, CORE_MAX, MAX, SIDE_U1, SIDE_V1,
+                CORE_MAX, CORE_MIN, MAX, SIDE_U1, SIDE_V0, DARK);
     }
 
     private static void armNegZ(TextureAtlasSprite sprite, RenderTarget target) {
         quad(sprite, target, 0.0F, 1.0F, 0.0F,
-                v(CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0, TOP),
-                v(CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1, TOP),
-                v(CORE_MAX, CORE_MAX, MIN, SIDE_U1, SIDE_V1, TOP),
-                v(CORE_MIN, CORE_MAX, MIN, SIDE_U1, SIDE_V0, TOP));
+                CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1,
+                CORE_MAX, CORE_MAX, MIN, SIDE_U1, SIDE_V1,
+                CORE_MIN, CORE_MAX, MIN, SIDE_U1, SIDE_V0, TOP);
         quad(sprite, target, -1.0F, 0.0F, 0.0F,
-                v(CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0, DARK),
-                v(CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1, DARK),
-                v(CORE_MIN, CORE_MAX, MIN, SIDE_U1, SIDE_V1, DARK),
-                v(CORE_MIN, CORE_MIN, MIN, SIDE_U1, SIDE_V0, DARK));
+                CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V1,
+                CORE_MIN, CORE_MAX, MIN, SIDE_U1, SIDE_V1,
+                CORE_MIN, CORE_MIN, MIN, SIDE_U1, SIDE_V0, DARK);
         quad(sprite, target, 0.0F, -1.0F, 0.0F,
-                v(CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0, BOTTOM),
-                v(CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1, BOTTOM),
-                v(CORE_MIN, CORE_MIN, MIN, SIDE_U1, SIDE_V1, BOTTOM),
-                v(CORE_MAX, CORE_MIN, MIN, SIDE_U1, SIDE_V0, BOTTOM));
+                CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MIN, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1,
+                CORE_MIN, CORE_MIN, MIN, SIDE_U1, SIDE_V1,
+                CORE_MAX, CORE_MIN, MIN, SIDE_U1, SIDE_V0, BOTTOM);
         quad(sprite, target, 1.0F, 0.0F, 0.0F,
-                v(CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0, DARK),
-                v(CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1, DARK),
-                v(CORE_MAX, CORE_MIN, MIN, SIDE_U1, SIDE_V1, DARK),
-                v(CORE_MAX, CORE_MAX, MIN, SIDE_U1, SIDE_V0, DARK));
-    }
-
-    private static LegacyTexturedQuadRenderer.Vertex v(double x, double y, double z, double u, double v, int color) {
-        return LegacyTexturedQuadRenderer.spritePixelVertex(x, y, z, u, v, color, 255);
+                CORE_MAX, CORE_MAX, CORE_MIN, SIDE_U0, SIDE_V0,
+                CORE_MAX, CORE_MIN, CORE_MIN, SIDE_U0, SIDE_V1,
+                CORE_MAX, CORE_MIN, MIN, SIDE_U1, SIDE_V1,
+                CORE_MAX, CORE_MAX, MIN, SIDE_U1, SIDE_V0, DARK);
     }
 
     private static void quad(TextureAtlasSprite sprite, RenderTarget target,
             float normalX, float normalY, float normalZ,
-            LegacyTexturedQuadRenderer.Vertex v0, LegacyTexturedQuadRenderer.Vertex v1,
-            LegacyTexturedQuadRenderer.Vertex v2, LegacyTexturedQuadRenderer.Vertex v3) {
-        LegacyTexturedQuadRenderer.spriteQuad(sprite, target.poseStack(), target.buffer(), target.packedLight(),
-                target.packedOverlay(), target.renderMode(), normalX, normalY, normalZ, v0, v1, v2, v3);
+            double x0, double y0, double z0, double u0, double v0,
+            double x1, double y1, double z1, double u1, double v1,
+            double x2, double y2, double z2, double u2, double v2,
+            double x3, double y3, double z3, double u3, double v3,
+            int color) {
+        LegacyTexturedQuadRenderer.spritePixelQuadDirect(sprite, target.batch(),
+                target.packedLight(), target.packedOverlay(), normalX, normalY, normalZ,
+                x0, y0, z0, u0, v0,
+                x1, y1, z1, u1, v1,
+                x2, y2, z2, u2, v2,
+                x3, y3, z3, u3, v3,
+                color, 255);
     }
 
     private static int shade(float value) {
@@ -278,7 +284,7 @@ public final class LegacyConnectedCuboidRenderer {
     private LegacyConnectedCuboidRenderer() {
     }
 
-    private record RenderTarget(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
-                                LegacyTexturedRenderMode renderMode) {
+    private record RenderTarget(LegacyTexturedQuadRenderer.SpriteQuadBatch batch, int packedLight,
+                                int packedOverlay) {
     }
 }

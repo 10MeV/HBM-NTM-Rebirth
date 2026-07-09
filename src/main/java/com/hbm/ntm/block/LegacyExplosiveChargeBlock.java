@@ -67,7 +67,7 @@ public class LegacyExplosiveChargeBlock extends Block implements ChainExplodable
 
     private void explodeAt(Level level, double x, double y, double z) {
         if (kind == Kind.NUCLEAR) {
-            NuclearExplosionUtil.spawnMissileNuclear(level, x, y, z);
+            NuclearExplosionUtil.spawnNuclear(level, NuclearExplosionUtil.missileRadius(), x, y, z);
         } else {
             new ExplosionNT(level, null, x, y, z, 15.0F)
                     .overrideResolution(64)

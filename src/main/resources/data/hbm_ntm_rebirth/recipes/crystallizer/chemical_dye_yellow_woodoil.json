@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 20,
+  "fluid": { "fluid": "WOODOIL", "amount": 100 },
+  "input": {
+    "ingredient": { "tag": "forge:dusts/tungsten" },
+    "legacy_ore": "dustTungsten"
+  },
+  "output": { "item": "hbm_ntm_rebirth:chemical_dye_yellow", "count": 4 },
+  "productivity": 0.15,
+  "source_order": 381
+}

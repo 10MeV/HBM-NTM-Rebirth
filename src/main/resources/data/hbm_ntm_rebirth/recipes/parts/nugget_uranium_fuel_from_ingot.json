@@ -1,0 +1,13 @@
+{
+    "type":  "minecraft:crafting_shapeless",
+    "category":  "misc",
+    "ingredients":  [
+                        {
+                            "item":  "hbm_ntm_rebirth:ingot_uranium_fuel"
+                        }
+                    ],
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:nugget_uranium_fuel",
+                   "count":  9
+               }
+}

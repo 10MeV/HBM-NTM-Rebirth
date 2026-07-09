@@ -1,19 +1,51 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.satelliteradar",
   "duration": 600,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:shells/steel" }, "count": 3, "legacy_ore": "shellSteel" },
-    { "ingredient": { "tag": "forge:cast_plates/titanium" }, "count": 12, "legacy_ore": "plateCastTitanium" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:magnetron" }, "count": 12 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:coil_gold" }, "count": 16 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 4, "legacy_id": "hbm:circuit", "legacy_meta": 9 }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:sat_head_radar" }
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:shells/steel"
+      },
+      "legacy_ore": "shellSteel"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:cast_plates/titanium"
+      },
+      "legacy_ore": "plateCastTitanium"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:magnetron"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:coil_gold"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 9
+    }
   ],
+  "internal_name": "ass.satelliteradar",
   "output_fluids": [],
-  "pools": []
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:sat_head_radar"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 326
 }

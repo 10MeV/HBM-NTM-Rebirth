@@ -1,19 +1,44 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.mpt15bfshort",
   "duration": 200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "item": "hbm_ntm_rebirth:seg_15" }, "count": 1 },
-    { "ingredient": { "tag": "forge:pipes/dura_steel" }, "count": 5, "legacy_ore": "ntmpipeDuraSteel" },
-    { "ingredient": { "tag": "forge:cast_plates/tungsten" }, "count": 8, "legacy_ore": "plateCastTungsten" },
-    { "ingredient": { "tag": "forge:plates/saturnite" }, "count": 8, "legacy_ore": "plateSaturnite" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:mp_thruster_15_balefire_short" }
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:seg_15"
+      }
+    },
+    {
+      "count": 5,
+      "ingredient": {
+        "tag": "forge:pipes/dura_steel"
+      },
+      "legacy_ore": "ntmpipeDuraSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:cast_plates/tungsten"
+      },
+      "legacy_ore": "plateCastTungsten"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/saturnite"
+      },
+      "legacy_ore": "plateSaturnite"
+    }
   ],
+  "internal_name": "ass.mpt15bfshort",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:mp_thruster_15_balefire_short"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 280
 }

@@ -1,7 +1,7 @@
 package com.hbm.items.tool;
 
 import com.hbm.ntm.item.GeigerCounterItem;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
@@ -31,6 +31,6 @@ public class ItemGeigerCounter extends GeigerCounterItem {
     }
 
     public static int check(Level level, int x, int y, int z) {
-        return (int) Math.ceil(ChunkRadiationManager.getRadiation(level, new BlockPos(x, y, z)));
+        return (int) Math.ceil(ChunkRadiationManager.proxy.getRadiation(level, new BlockPos(x, y, z)));
     }
 }

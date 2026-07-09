@@ -2,6 +2,7 @@ package com.hbm.ntm.util;
 
 import com.hbm.ntm.api.fluid.HbmFluidContainerRegisterListener;
 import com.hbm.ntm.api.fluid.HbmFluidRegisterListener;
+import com.hbm.ntm.api.recipe.IRecipeRegisterListener;
 import com.hbm.ntm.api.recipe.RecipeRegisterListener;
 import com.hbm.ntm.compat.CompatCustomWarheadRegistry;
 import com.hbm.ntm.compat.CompatRecipeRegistry;
@@ -122,6 +123,10 @@ public final class CompatExternal {
 
     public static void registerRecipeRegisterListener(RecipeRegisterListener listener) {
         com.hbm.ntm.compat.CompatExternal.registerRecipeRegisterListener(listener);
+    }
+
+    public static void registerLegacyRecipeRegisterListener(IRecipeRegisterListener listener) {
+        com.hbm.ntm.compat.CompatExternal.registerLegacyRecipeRegisterListener(listener);
     }
 
     public static void registerFluidRegisterListener(HbmFluidRegisterListener listener) {

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "F": {
+      "item": "hbm_ntm_rebirth:rag"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:ring_starmetal"
+    }
+  },
+  "pattern": [
+    "FSF",
+    "   ",
+    "FSF"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bismuth_legs"
+  },
+  "show_notification": true
+}

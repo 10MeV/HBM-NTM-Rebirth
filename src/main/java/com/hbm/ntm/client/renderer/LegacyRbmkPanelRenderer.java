@@ -9,6 +9,7 @@ import com.hbm.ntm.client.obj.ObjRbmkModels;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.util.HbmMathUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -102,6 +103,28 @@ public final class LegacyRbmkPanelRenderer {
     public static final double NUMITRON_DIGIT_H = 13.0D / NUMITRON_DIGIT_SCALE;
     public static final int NUMITRON_DIGITS = 7;
     public static final long NUMITRON_LEFT_DIGIT_MASK = 0x40L;
+    private static final long[] EMPTY_GRAPH_VALUES = new long[0];
+    private static final DigitUv BLANK_DIGIT_UV = new DigitUv(0.0D, 0.0D, true);
+    private static final DigitUv DOT_DIGIT_UV = new DigitUv(0.9D, 0.5D, false);
+    private static final DigitUv MINUS_DIGIT_UV = new DigitUv(0.8D, 0.5D, false);
+    private static final DigitUv KILO_DIGIT_UV = new DigitUv(0.0D, 0.5D, false);
+    private static final DigitUv MEGA_DIGIT_UV = new DigitUv(0.1D, 0.5D, false);
+    private static final DigitUv GIGA_DIGIT_UV = new DigitUv(0.2D, 0.5D, false);
+    private static final DigitUv TERA_DIGIT_UV = new DigitUv(0.3D, 0.5D, false);
+    private static final DigitUv PETA_DIGIT_UV = new DigitUv(0.4D, 0.5D, false);
+    private static final DigitUv EXA_DIGIT_UV = new DigitUv(0.5D, 0.5D, false);
+    private static final DigitUv[] NUMBER_DIGIT_UVS = new DigitUv[] {
+            new DigitUv(0.0D, 0.0D, false),
+            new DigitUv(0.1D, 0.0D, false),
+            new DigitUv(0.2D, 0.0D, false),
+            new DigitUv(0.3D, 0.0D, false),
+            new DigitUv(0.4D, 0.0D, false),
+            new DigitUv(0.5D, 0.0D, false),
+            new DigitUv(0.6D, 0.0D, false),
+            new DigitUv(0.7D, 0.0D, false),
+            new DigitUv(0.8D, 0.0D, false),
+            new DigitUv(0.9D, 0.0D, false)
+    };
 
     public static final double GRAPH_ROW_STEP = -0.5D;
     public static final double GRAPH_Y_START = 0.25D;
@@ -275,6 +298,8 @@ public final class LegacyRbmkPanelRenderer {
             RBMKPanelPlanner.NumitronUnit unit) {
         String value = numitronValue(unit);
         long activeDigits = unit == null ? 0L : unit.activeDigits();
+        VertexConsumer digitConsumer = null;
+        PoseStack.Pose digitPose = null;
         for (int i = 0; i < NUMITRON_DIGITS; i++) {
             if ((activeDigits & (NUMITRON_LEFT_DIGIT_MASK >> i)) == 0L) {
                 continue;
@@ -285,17 +310,23 @@ public final class LegacyRbmkPanelRenderer {
                 continue;
             }
             double zOffset = (i - 3) * NUMITRON_DIGIT_Z_STEP;
-            LegacyTexturedQuadRenderer.quad(ObjRbmkModels.NUMITRON_LIGHTS_TEXTURE, poseStack, buffer,
-                    LightTexture.FULL_BRIGHT, packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+            if (digitConsumer == null) {
+                digitConsumer = LegacyTexturedQuadRenderer.vertexAlphaConsumer(
+                        ObjRbmkModels.NUMITRON_LIGHTS_TEXTURE, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+                digitPose = poseStack.last();
+            }
+            LegacyTexturedQuadRenderer.quadWithVertexAlpha(digitConsumer, digitPose,
+                    LightTexture.FULL_BRIGHT, packedOverlay,
                     0.0F, 1.0F, 0.0F,
-                    LegacyTexturedQuadRenderer.vertex(NUMITRON_DIGIT_X, -NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y,
-                            NUMITRON_DIGIT_W - zOffset, uv.u(), uv.v() + 0.5D, 0xFFFFFF, 255),
-                    LegacyTexturedQuadRenderer.vertex(NUMITRON_DIGIT_X, NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y,
-                            NUMITRON_DIGIT_W - zOffset, uv.u(), uv.v(), 0xFFFFFF, 255),
-                    LegacyTexturedQuadRenderer.vertex(NUMITRON_DIGIT_X, NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y,
-                            -NUMITRON_DIGIT_W - zOffset, uv.u() + 0.1D, uv.v(), 0xFFFFFF, 255),
-                    LegacyTexturedQuadRenderer.vertex(NUMITRON_DIGIT_X, -NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y,
-                            -NUMITRON_DIGIT_W - zOffset, uv.u() + 0.1D, uv.v() + 0.5D, 0xFFFFFF, 255));
+                    NUMITRON_DIGIT_X, -NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y, NUMITRON_DIGIT_W - zOffset,
+                    uv.u(), uv.v() + 0.5D, 255,
+                    NUMITRON_DIGIT_X, NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y, NUMITRON_DIGIT_W - zOffset,
+                    uv.u(), uv.v(), 255,
+                    NUMITRON_DIGIT_X, NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y, -NUMITRON_DIGIT_W - zOffset,
+                    uv.u() + 0.1D, uv.v(), 255,
+                    NUMITRON_DIGIT_X, -NUMITRON_DIGIT_H + NUMITRON_DIGIT_Y, -NUMITRON_DIGIT_W - zOffset,
+                    uv.u() + 0.1D, uv.v() + 0.5D, 255,
+                    0xFFFFFF);
         }
     }
 
@@ -321,35 +352,43 @@ public final class LegacyRbmkPanelRenderer {
         }
         if (value.length() < NUMITRON_DIGITS && value.charAt(0) == '-' && unit.leadingZeroes()) {
             value = value.substring(1);
-            while (value.length() < NUMITRON_DIGITS - 1) {
-                value = "0" + value;
+            StringBuilder builder = new StringBuilder(NUMITRON_DIGITS);
+            builder.append('-');
+            for (int i = value.length(); i < NUMITRON_DIGITS - 1; i++) {
+                builder.append('0');
             }
-            return "-" + value;
+            builder.append(value);
+            return builder.toString();
         }
-        String fill = unit.leadingZeroes() ? "0" : " ";
-        while (value.length() < NUMITRON_DIGITS) {
-            value = fill + value;
+        char fill = unit.leadingZeroes() ? '0' : ' ';
+        if (value.length() < NUMITRON_DIGITS) {
+            StringBuilder builder = new StringBuilder(NUMITRON_DIGITS);
+            for (int i = value.length(); i < NUMITRON_DIGITS; i++) {
+                builder.append(fill);
+            }
+            builder.append(value);
+            return builder.toString();
         }
         return value;
     }
 
     public static DigitUv digitUv(char character) {
         return switch (character) {
-            case ' ' -> new DigitUv(0.0D, 0.0D, true);
-            case '.' -> new DigitUv(0.9D, 0.5D, false);
-            case '-' -> new DigitUv(0.8D, 0.5D, false);
-            case 'k' -> new DigitUv(0.0D, 0.5D, false);
-            case 'M' -> new DigitUv(0.1D, 0.5D, false);
-            case 'G' -> new DigitUv(0.2D, 0.5D, false);
-            case 'T' -> new DigitUv(0.3D, 0.5D, false);
-            case 'P' -> new DigitUv(0.4D, 0.5D, false);
-            case 'E' -> new DigitUv(0.5D, 0.5D, false);
+            case ' ' -> BLANK_DIGIT_UV;
+            case '.' -> DOT_DIGIT_UV;
+            case '-' -> MINUS_DIGIT_UV;
+            case 'k' -> KILO_DIGIT_UV;
+            case 'M' -> MEGA_DIGIT_UV;
+            case 'G' -> GIGA_DIGIT_UV;
+            case 'T' -> TERA_DIGIT_UV;
+            case 'P' -> PETA_DIGIT_UV;
+            case 'E' -> EXA_DIGIT_UV;
             default -> {
                 int digit = character - '0';
                 if (digit >= 0 && digit <= 9) {
-                    yield new DigitUv(0.1D * digit, 0.0D, false);
+                    yield NUMBER_DIGIT_UVS[digit];
                 }
-                yield new DigitUv(0.8D, 0.5D, false);
+                yield MINUS_DIGIT_UV;
             }
         };
     }
@@ -384,13 +423,16 @@ public final class LegacyRbmkPanelRenderer {
 
     public static void renderGraphLines(PoseStack poseStack, MultiBufferSource buffer,
             RBMKPanelPlanner.GraphUnit unit) {
-        long[] values = unit == null ? new long[0] : unit.values();
+        long[] values = unit == null ? EMPTY_GRAPH_VALUES : unit.values();
         if (values.length < 2) {
             return;
         }
         long lowest = graphLowest(unit);
         long highest = graphHighest(unit);
         long range = Math.max(highest - lowest, 1L);
+        VertexConsumer graphConsumer = LegacyLineRenderer.consumer(buffer, 2.0F,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
+        PoseStack.Pose graphPose = poseStack.last();
         for (int i = 0; i < values.length - 1; i++) {
             double x0 = GRAPH_LINE_X;
             double y0 = graphY(clampLong(values[i], lowest, highest), lowest, range);
@@ -398,8 +440,7 @@ public final class LegacyRbmkPanelRenderer {
             double x1 = GRAPH_LINE_X;
             double y1 = graphY(clampLong(values[i + 1], lowest, highest), lowest, range);
             double z1 = graphZ(i + 1, values.length);
-            LegacyLineRenderer.line(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
-                    2.0F, x0, y0, z0, x1, y1, z1, 0x00FF00, 255);
+            LegacyLineRenderer.line(graphConsumer, graphPose, x0, y0, z0, x1, y1, z1, 0x00FF00, 255);
         }
     }
 

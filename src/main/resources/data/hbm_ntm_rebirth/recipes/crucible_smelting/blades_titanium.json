@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:blades_titanium"
+    }
+  },
+  "output": [
+    {
+      "amount": 288,
+      "material": "Titanium"
+    }
+  ],
+  "source_order": 10
+}

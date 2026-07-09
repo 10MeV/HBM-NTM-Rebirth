@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:dusts/lignite"
+  "source_order": 3,
+  "input": {
+    "ingredient": {
+      "tag": "forge:dusts/lignite"
+    },
+    "count": 1,
+    "legacy_ore": "dustLignite"
   },
   "output": {
     "amount": 50,

@@ -47,7 +47,7 @@ public final class RadiationConfig {
             cleanupDeadDirt = com.hbm.ntm.config.RadiationConfig.cleanupDeadDirtEnabled();
             enableContamination = com.hbm.ntm.config.RadiationConfig.contaminationEnabled();
             enableChunkRads = com.hbm.ntm.config.RadiationConfig.chunkRadiationEnabled();
-            enablePRISM = false;
+            enablePRISM = com.hbm.ntm.config.RadiationConfig.prismRadiationEnabled();
             disableAsbestos = com.hbm.ntm.config.RadiationConfig.asbestosHazardDisabled();
             disableCoal = com.hbm.ntm.config.RadiationConfig.coalHazardDisabled();
             disableHot = com.hbm.ntm.config.RadiationConfig.hotHazardDisabled();
@@ -64,7 +64,7 @@ public final class RadiationConfig {
             sootFogThreshold = com.hbm.ntm.config.RadiationConfig.pollutionSootFogThreshold();
             sootFogDivisor = com.hbm.ntm.config.RadiationConfig.pollutionSootFogDivisor();
             smokeStackSootMult = com.hbm.ntm.config.RadiationConfig.pollutionSmokeStackSootMultiplier();
-        } catch (IllegalStateException ignored) {
+        } catch (IllegalStateException | NullPointerException ignored) {
             // Keep legacy defaults until Forge finishes loading the modern config.
         }
     }
@@ -196,6 +196,10 @@ public final class RadiationConfig {
 
     public static void loadFromConfig(Object ignored) {
         syncFromModern();
+        if (enablePRISM) {
+            com.hbm.handler.radiation.ChunkRadiationManager.proxy =
+                    new com.hbm.handler.radiation.ChunkRadiationHandlerPRISM();
+        }
     }
 
     private RadiationConfig() {

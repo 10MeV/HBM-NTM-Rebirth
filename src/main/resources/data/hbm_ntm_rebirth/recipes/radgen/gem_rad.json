@@ -1,0 +1,14 @@
+{
+    "type":  "hbm_ntm_rebirth:radgen",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:gem_rad"
+                                 }
+              },
+    "power":  25000,
+    "duration":  36000,
+    "source_order":  27,
+    "output":  {
+                   "item":  "minecraft:diamond"
+               }
+}

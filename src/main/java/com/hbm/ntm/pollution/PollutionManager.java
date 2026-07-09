@@ -4,10 +4,10 @@ import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.pollution.PollutionSavedData.PollutionGridPos;
 import com.hbm.ntm.pollution.PollutionSavedData.PollutionSample;
 import com.hbm.ntm.radiation.ArmorUtil;
-import com.hbm.ntm.radiation.LegacyRadiationWorldUtil;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmMobEquipmentUtil;
+import com.hbm.ntm.world.WorldUtil;
 import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
@@ -69,8 +69,7 @@ public final class PollutionManager {
     }
 
     public static void incrementPollution(Level level, PollutionGridPos pos, PollutionType type, float amount) {
-        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null || type == null
-                || amount == 0.0F) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null || type == null) {
             return;
         }
         getData(serverLevel).add(pos, type, amount * RadiationConfig.pollutionMultiplier());
@@ -88,11 +87,10 @@ public final class PollutionManager {
     }
 
     public static void incrementPollution(Level level, PollutionGridPos pos, PollutionSample amounts) {
-        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null
-                || !hasAnyFiniteNonZero(amounts)) {
+        if (!isEnabled() || !(level instanceof ServerLevel serverLevel) || pos == null || amounts == null) {
             return;
         }
-        getData(serverLevel).addClamped(pos, scaledFinite(amounts, RadiationConfig.pollutionMultiplier()));
+        getData(serverLevel).addClamped(pos, scaled(amounts, RadiationConfig.pollutionMultiplier()));
     }
 
     public static void decrementPollution(Level level, BlockPos pos, PollutionType type, float amount) {
@@ -274,6 +272,23 @@ public final class PollutionManager {
             return;
         }
         getData(serverLevel).set(pos, sample);
+    }
+
+    public static void clearPollutionData(Level level, BlockPos pos) {
+        if (pos == null) {
+            return;
+        }
+        clearPollutionData(level, PollutionGridPos.ofBlock(pos));
+    }
+
+    public static void clearPollutionData(Level level, PollutionGridPos pos) {
+        if (!(level instanceof ServerLevel serverLevel) || pos == null) {
+            return;
+        }
+        PollutionSavedData data = getExistingData(serverLevel);
+        if (data != null) {
+            data.remove(pos);
+        }
     }
 
     public static void updatePollutionData(Level level, BlockPos pos, Consumer<PollutionSample> updater) {
@@ -661,7 +676,7 @@ public final class PollutionManager {
                     continue;
                 }
 
-                int y = LegacyRadiationWorldUtil.legacyHeightValue(level, x, z) - level.random.nextInt(3) + 1;
+                int y = WorldUtil.legacyGetHeightValue(level, x, z) - level.random.nextInt(3) + 1;
                 y = Math.max(level.getMinBuildHeight(), Math.min(y, level.getMaxBuildHeight() - 1));
                 BlockPos blockPos = new BlockPos(x, y, z);
                 BlockState state = level.getBlockState(blockPos);
@@ -760,6 +775,14 @@ public final class PollutionManager {
             if (Float.isFinite(value) && value != 0.0F) {
                 scaled.set(type, value * multiplier);
             }
+        }
+        return scaled;
+    }
+
+    private static PollutionSample scaled(PollutionSample sample, float multiplier) {
+        PollutionSample scaled = new PollutionSample();
+        for (PollutionType type : PollutionType.orderedValues()) {
+            scaled.set(type, sample.get(type) * multiplier);
         }
         return scaled;
     }

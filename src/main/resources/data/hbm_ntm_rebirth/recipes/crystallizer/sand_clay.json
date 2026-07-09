@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 20,
+  "fluid": { "fluid": "COLLOID", "amount": 1000 },
+  "input": { "ingredient": { "tag": "forge:sand" }, "legacy_ore": "sand" },
+  "output": { "item": "minecraft:clay" },
+  "source_order": 401
+}

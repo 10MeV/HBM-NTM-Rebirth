@@ -1,0 +1,51 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "count": 16
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "count": 4
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_pcb"
+      },
+      "count": 8
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "count": 2,
+      "legacy_ore": "ingotRubber"
+    }
+  ],
+  "solder": [
+    {
+      "ingredient": {
+        "tag": "forge:wires/lead"
+      },
+      "count": 8,
+      "legacy_ore": "wireFineLead"
+    }
+  ],
+  "fluid": {
+    "fluid": "SULFURIC_ACID",
+    "amount": 1000
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:circuit_advanced"
+  },
+  "duration": 300,
+  "consumption": 1000,
+  "source_order": 2
+}

@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:particle_accelerator",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:particle_strange"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_magic"
+      },
+      "count": 1
+    }
+  ],
+  "momentum": 12500,
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:particle_sparkticle"
+    },
+    {
+      "item": "hbm_ntm_rebirth:dust"
+    }
+  ],
+  "source_order": 7
+}

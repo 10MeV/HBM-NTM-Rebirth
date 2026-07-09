@@ -1,6 +1,6 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.DfcMachineBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.item.AmsLensItem;
@@ -12,6 +12,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -103,8 +104,8 @@ public class DfcStabilizerBlockEntity extends HbmEnergyBlockEntity
     }
 
     private Direction facing() {
-        return getBlockState().hasProperty(HorizontalMachineBlock.FACING)
-                ? getBlockState().getValue(HorizontalMachineBlock.FACING)
+        return getBlockState().hasProperty(DfcMachineBlock.FACING)
+                ? getBlockState().getValue(DfcMachineBlock.FACING)
                 : Direction.NORTH;
     }
 
@@ -148,7 +149,6 @@ public class DfcStabilizerBlockEntity extends HbmEnergyBlockEntity
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
         tag.putInt("watts", watts);
-        tag.putInt("beam", beam);
     }
 
     @Override
@@ -156,7 +156,22 @@ public class DfcStabilizerBlockEntity extends HbmEnergyBlockEntity
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
         watts = tag.getInt("watts");
-        beam = tag.getInt("beam");
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = saveWithoutMetadata();
+        tag.putInt("beam", beam);
+        data.writeNbt(tag);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        CompoundTag tag = data.readNbt();
+        if (tag != null) {
+            load(tag);
+            beam = tag.getInt("beam");
+        }
     }
 
     @Override

@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.fueltank.small",
+  "duration": 60,
+  "power": 1000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/aluminium" }, "count": 6, "legacy_ore": "plateAluminum" },
+    { "ingredient": { "tag": "forge:plates/copper" }, "count": 4, "legacy_ore": "plateCopper" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:steel_scaffold" }, "count": 4 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:fuel_tank_small" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 21
+}

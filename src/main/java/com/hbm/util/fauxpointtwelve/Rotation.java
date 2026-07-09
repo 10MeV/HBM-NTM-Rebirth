@@ -13,9 +13,7 @@ public enum Rotation {
     COUNTERCLOCKWISE_90;
 
     public Rotation add(Rotation rotation) {
-        return fromModern(toModern().add(rotation == null
-                ? com.hbm.ntm.util.fauxpointtwelve.Rotation.NONE
-                : rotation.toModern()));
+        return fromModern(toModern().add(rotation.toModern()));
     }
 
     public com.hbm.ntm.util.fauxpointtwelve.Rotation toModern() {
@@ -28,9 +26,6 @@ public enum Rotation {
     }
 
     public static Rotation fromModern(com.hbm.ntm.util.fauxpointtwelve.Rotation rotation) {
-        if (rotation == null) {
-            return NONE;
-        }
         return switch (rotation) {
             case NONE -> NONE;
             case CLOCKWISE_90 -> CLOCKWISE_90;
@@ -41,5 +36,15 @@ public enum Rotation {
 
     public static Rotation getBlockRotation(Direction direction) {
         return fromModern(com.hbm.ntm.util.fauxpointtwelve.Rotation.getBlockRotation(direction));
+    }
+
+    public static Rotation getBlockRotation(ForgeDirection direction) {
+        return switch (direction) {
+            case NORTH -> NONE;
+            case SOUTH -> CLOCKWISE_180;
+            case EAST -> COUNTERCLOCKWISE_90;
+            case WEST -> CLOCKWISE_90;
+            default -> NONE;
+        };
     }
 }

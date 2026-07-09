@@ -20,8 +20,6 @@ import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
-import com.hbm.ntm.satellite.LegacySatelliteType;
-import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.sound.LegacySoundPlayer;
@@ -92,8 +90,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
             return switch (slot) {
                 case SLOT_ROCKET -> stack.is(ModItems.MISSILE_SOYUZ.get());
                 case SLOT_DESIGNATOR -> stack.getItem() instanceof DesignatorItem || hasLegacyDesignatorCoords(stack);
-                case SLOT_SATELLITE -> Satellite.getTypeFromStack(stack).isPresent();
-                case SLOT_ORBITAL -> stack.is(ModItems.MISSILE_SOYUZ_LANDER.get());
+                case SLOT_SATELLITE, SLOT_ORBITAL -> true;
                 case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 default -> true;
             };
@@ -291,18 +288,21 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (mode == MODE_CARGO) {
             return 0;
         }
-        return Satellite.getTypeFromStack(items.getStackInSlot(SLOT_SATELLITE)).isPresent() ? 2 : 1;
+        return items.getStackInSlot(SLOT_SATELLITE).isEmpty() ? 1 : 2;
     }
 
     public int orbitalStatus() {
         if (mode == MODE_CARGO) {
             return 0;
         }
-        LegacySatelliteType type = Satellite.getTypeFromStack(items.getStackInSlot(SLOT_SATELLITE)).orElse(null);
-        if (type == LegacySatelliteType.HORIZONS || type == LegacySatelliteType.LUNAR_MINER) {
+        if (requiresOrbitalModule(items.getStackInSlot(SLOT_SATELLITE))) {
             return items.getStackInSlot(SLOT_ORBITAL).is(ModItems.MISSILE_SOYUZ_LANDER.get()) ? 2 : 1;
         }
         return 0;
+    }
+
+    private static boolean requiresOrbitalModule(ItemStack stack) {
+        return stack.is(ModItems.SAT_GERALD.get()) || stack.is(ModItems.SAT_LUNAR_MINER.get());
     }
 
     private boolean isDesignatorReady(ItemStack stack) {

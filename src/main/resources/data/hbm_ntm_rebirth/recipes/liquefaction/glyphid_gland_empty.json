@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
+  "source_order": 26,
   "ingredient": {
     "item": "hbm_ntm_rebirth:glyphid_gland_empty"
   },

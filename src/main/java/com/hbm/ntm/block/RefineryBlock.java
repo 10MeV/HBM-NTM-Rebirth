@@ -24,10 +24,14 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -36,14 +40,29 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
+    public static final BooleanProperty EXPLODED = BooleanProperty.create("exploded");
+    public static final BooleanProperty TILTED = BooleanProperty.create("tilted");
+
     public RefineryBlock(Properties properties, LegacyMachineDefinition definition) {
         super(properties, definition);
+        registerDefaultState(defaultBlockState()
+                .setValue(EXPLODED, false)
+                .setValue(TILTED, false));
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new RefineryBlockEntity(pos, state);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        if ((state.hasProperty(EXPLODED) && state.getValue(EXPLODED))
+                || (state.hasProperty(TILTED) && state.getValue(TILTED))) {
+            return super.getRenderShape(state);
+        }
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override
@@ -133,5 +152,11 @@ public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
             tanks.add(tank);
         }
         return tanks;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(EXPLODED, TILTED);
     }
 }

@@ -2,6 +2,7 @@ package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.energy.HbmLegacyWireRenderMath;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
@@ -26,17 +27,58 @@ public final class LegacyTexturedLineRenderer {
             int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
             double x0, double y0, double z0, double x1, double y1, double z1,
             boolean hang, int color, int alpha) {
+        pylonLine(pylonLineBatch(texture, poseStack, buffer, packedLight, packedOverlay, renderMode),
+                x0, y0, z0, x1, y1, z1, hang, color, alpha);
+    }
+
+    public static PylonLineBatch pylonLineBatch(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        return pylonLineBatch(texture, poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+    }
+
+    public static PylonLineBatch pylonLineBatch(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
+        return new PylonLineBatch(
+                LegacyTexturedQuadRenderer.vertexAlphaConsumer(texture, buffer, renderMode),
+                poseStack.last(),
+                packedLight,
+                packedOverlay);
+    }
+
+    public static void pylonLine(PylonLineBatch batch, double x0, double y0, double z0,
+            double x1, double y1, double z1, boolean hang, int color) {
+        pylonLine(batch, x0, y0, z0, x1, y1, z1, hang, color, 255);
+    }
+
+    public static void pylonLine(PylonLineBatch batch, double x0, double y0, double z0,
+            double x1, double y1, double z1, boolean hang, int color, int alpha) {
         WireOffsets offsets = pylonWireOffsets(x0, y0, z0, x1, y1, z1, PYLON_WIRE_GIRTH);
         if (!hang) {
-            wrappedLineSegment(texture, poseStack, buffer, packedLight, packedOverlay, renderMode,
+            wrappedLineSegment(batch.consumer(), batch.pose(), batch.packedLight(), batch.packedOverlay(),
                     x0, y0, z0, x1, y1, z1,
                     offsets.iX(), offsets.iY(), offsets.iZ(), offsets.jX(), offsets.jZ(),
                     PYLON_WIRE_U_WRAP_PER_BLOCK, color, alpha);
             return;
         }
-        for (WireSubSegment segment : saggedPylonSegments(x0, y0, z0, x1, y1, z1, PYLON_HANG_SEGMENTS)) {
-            wrappedLineSegment(texture, poseStack, buffer, packedLight, packedOverlay, renderMode,
-                    segment.x0(), segment.y0(), segment.z0(), segment.x1(), segment.y1(), segment.z1(),
+        int safeCount = Math.max(1, PYLON_HANG_SEGMENTS);
+        double deltaX = x1 - x0;
+        double deltaY = y1 - y0;
+        double deltaZ = z1 - z0;
+        double length = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        double sag = HbmLegacyWireRenderMath.pylonHang(length);
+        for (int i = 0; i < safeCount; i++) {
+            double j = i;
+            double k = i + 1.0D;
+            double sagJ = pylonSag(j, safeCount, sag);
+            double sagK = pylonSag(k, safeCount, sag);
+            wrappedLineSegment(batch.consumer(), batch.pose(), batch.packedLight(), batch.packedOverlay(),
+                    x0 + deltaX * j / safeCount,
+                    y0 + deltaY * j / safeCount - sagJ,
+                    z0 + deltaZ * j / safeCount,
+                    x0 + deltaX * k / safeCount,
+                    y0 + deltaY * k / safeCount - sagK,
+                    z0 + deltaZ * k / safeCount,
                     offsets.iX(), offsets.iY(), offsets.iZ(), offsets.jX(), offsets.jZ(),
                     PYLON_WIRE_U_WRAP_PER_BLOCK, color, alpha);
         }
@@ -109,6 +151,16 @@ public final class LegacyTexturedLineRenderer {
             double x0, double y0, double z0, double x1, double y1, double z1,
             double iX, double iY, double iZ, double jX, double jZ, double uWrapPerBlock,
             int color, int alpha) {
+        VertexConsumer consumer = LegacyTexturedQuadRenderer.vertexAlphaConsumer(texture, buffer, renderMode);
+        wrappedLineSegment(consumer, poseStack.last(), packedLight, packedOverlay,
+                x0, y0, z0, x1, y1, z1, iX, iY, iZ, jX, jZ, uWrapPerBlock, color, alpha);
+    }
+
+    public static void wrappedLineSegment(VertexConsumer consumer, PoseStack.Pose pose,
+            int packedLight, int packedOverlay,
+            double x0, double y0, double z0, double x1, double y1, double z1,
+            double iX, double iY, double iZ, double jX, double jZ, double uWrapPerBlock,
+            int color, int alpha) {
         double deltaX = x1 - x0;
         double deltaY = y1 - y0;
         double deltaZ = z1 - z0;
@@ -122,18 +174,18 @@ public final class LegacyTexturedLineRenderer {
         }
 
         int rgb = color & 0xFFFFFF;
-        LegacyTexturedQuadRenderer.quadWithComputedNormal(texture, poseStack, buffer, packedLight, packedOverlay,
-                renderMode,
-                LegacyTexturedQuadRenderer.vertex(x0 + iX, y0 + iY, z0 + iZ, 0.0D, 0.0D, rgb, alpha),
-                LegacyTexturedQuadRenderer.vertex(x0 - iX, y0 - iY, z0 - iZ, 0.0D, 1.0D, rgb, alpha),
-                LegacyTexturedQuadRenderer.vertex(x1 - iX, y1 - iY, z1 - iZ, wrap, 1.0D, rgb, alpha),
-                LegacyTexturedQuadRenderer.vertex(x1 + iX, y1 + iY, z1 + iZ, wrap, 0.0D, rgb, alpha));
-        LegacyTexturedQuadRenderer.quadWithComputedNormal(texture, poseStack, buffer, packedLight, packedOverlay,
-                renderMode,
-                LegacyTexturedQuadRenderer.vertex(x0 + jX, y0, z0 + jZ, 0.0D, 0.0D, rgb, alpha),
-                LegacyTexturedQuadRenderer.vertex(x0 - jX, y0, z0 - jZ, 0.0D, 1.0D, rgb, alpha),
-                LegacyTexturedQuadRenderer.vertex(x1 - jX, y1, z1 - jZ, wrap, 1.0D, rgb, alpha),
-                LegacyTexturedQuadRenderer.vertex(x1 + jX, y1, z1 + jZ, wrap, 0.0D, rgb, alpha));
+        LegacyTexturedQuadRenderer.quadWithComputedNormalDirect(consumer, pose, packedLight, packedOverlay,
+                x0 + iX, y0 + iY, z0 + iZ, 0.0D, 0.0D, alpha,
+                x0 - iX, y0 - iY, z0 - iZ, 0.0D, 1.0D, alpha,
+                x1 - iX, y1 - iY, z1 - iZ, wrap, 1.0D, alpha,
+                x1 + iX, y1 + iY, z1 + iZ, wrap, 0.0D, alpha,
+                rgb);
+        LegacyTexturedQuadRenderer.quadWithComputedNormalDirect(consumer, pose, packedLight, packedOverlay,
+                x0 + jX, y0, z0 + jZ, 0.0D, 0.0D, alpha,
+                x0 - jX, y0, z0 - jZ, 0.0D, 1.0D, alpha,
+                x1 - jX, y1, z1 - jZ, wrap, 1.0D, alpha,
+                x1 + jX, y1, z1 + jZ, wrap, 0.0D, alpha,
+                rgb);
     }
 
     public static WireWrap wireWrap(double x0, double y0, double z0, double x1, double y1, double z1,
@@ -157,6 +209,10 @@ public final class LegacyTexturedLineRenderer {
             double x0, double y0, double z0,
             double x1, double y1, double z1,
             double sampleX, double sampleY, double sampleZ) {
+    }
+
+    public record PylonLineBatch(VertexConsumer consumer, PoseStack.Pose pose,
+            int packedLight, int packedOverlay) {
     }
 
     private LegacyTexturedLineRenderer() {

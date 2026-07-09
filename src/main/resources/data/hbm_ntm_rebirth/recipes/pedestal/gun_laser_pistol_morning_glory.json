@@ -1,0 +1,50 @@
+{
+  "type": "hbm_ntm_rebirth:pedestal",
+  "input": [
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:morning_glory"
+      },
+      "count": 1
+    },
+    null,
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:item_secret_selenium_steel"
+      },
+      "count": 2,
+      "legacy_id": "hbm:item_secret",
+      "legacy_meta": 2
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:gun_laser_pistol"
+      },
+      "count": 1
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:item_secret_selenium_steel"
+      },
+      "count": 2,
+      "legacy_id": "hbm:item_secret",
+      "legacy_meta": 2
+    },
+    null,
+    {
+      "ingredient": {
+        "tag": "forge:gems/emerald"
+      },
+      "count": 16,
+      "legacy_ore": "gemEmerald"
+    },
+    null
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:gun_laser_pistol_morning_glory"
+  },
+  "extra": "none",
+  "set": 0,
+  "source_order": 9
+}

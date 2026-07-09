@@ -14,6 +14,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -26,6 +27,11 @@ import org.jetbrains.annotations.Nullable;
 public class LegacyLargeTurbineBlock extends LegacyVisibleMultiblockMachineBlock {
     public LegacyLargeTurbineBlock(Properties properties, LegacyMachineDefinition definition) {
         super(properties, definition);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override

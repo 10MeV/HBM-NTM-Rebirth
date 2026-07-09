@@ -10,5 +10,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:vitriol",
                   "amount":  4000
-              }
+              },
+    "source_order":  32
 }

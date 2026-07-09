@@ -272,7 +272,8 @@ public record LegacyMachineDefinition(
         }
 
         public Builder modelTranslation(double x, double y, double z) {
-            return modelTranslation(facing -> new Vec3(x, y, z));
+            Vec3 translation = new Vec3(x, y, z);
+            return modelTranslation(facing -> translation);
         }
 
         public Builder postModelYRotation(Function<Direction, Float> postModelYRotationFactory) {

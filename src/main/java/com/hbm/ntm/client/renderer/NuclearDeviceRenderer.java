@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceBlockEntity> {
     private static final ResourceLocation GADGET_TEXTURE = ObjNukeModels.texture("gadget");
@@ -130,6 +131,12 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
     @Override
     public boolean shouldRenderOffScreen(NuclearDeviceBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(NuclearDeviceBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override

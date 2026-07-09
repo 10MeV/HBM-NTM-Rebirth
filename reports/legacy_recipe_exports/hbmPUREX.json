@@ -1,0 +1,2596 @@
+{
+  "recipes": [
+    {
+      "duration": 600,
+      "inputFluid": [
+        [
+          "NITRIC_ACID",
+          1000
+        ],
+        [
+          "HYDROGEN",
+          4000
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:billet_uranium_fuel"
+        ],
+        [
+          "item",
+          "hbm:billet_zirconium",
+          3
+        ]
+      ],
+      "name": "purex.uzh",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:billet_uzh",
+            4
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pile",
+      "duration": 40,
+      "inputFluid": [
+        [
+          "SULFURIC_ACID",
+          100
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pile_rod_plutonium"
+        ]
+      ],
+      "name": "purex.pilepu",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:billet_pu_mix",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:billet_uranium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:plate_iron",
+            2
+          ]
+        ]
+      ],
+      "power": 100
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pile",
+      "duration": 40,
+      "inputFluid": [
+        [
+          "SULFURIC_ACID",
+          100
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pile_rod_pu239"
+        ]
+      ],
+      "name": "purex.pilepu239",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:billet_pu239"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:billet_pu_mix"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:billet_uranium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:plate_iron",
+            2
+          ]
+        ]
+      ],
+      "power": 100
+    },
+    {
+      "autoSwitchGroup": "autoswitch.zirnox",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_natural_uranium"
+        ]
+      ],
+      "name": "purex.zirnoxnu",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_u238"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu239"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            2
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.zirnox",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_uranium"
+        ]
+      ],
+      "name": "purex.zirnoxmeu",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_plutonium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            2
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.zirnox",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_thorium"
+        ]
+      ],
+      "name": "purex.zirnoxthmeu",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_u238"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_th232"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_u233",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            2
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.zirnox",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_mox"
+        ]
+      ],
+      "name": "purex.zirnoxmox",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_u238"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            3
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.zirnox",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_plutonium"
+        ]
+      ],
+      "name": "purex.zirnoxmep",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            3
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.zirnox",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_u233"
+        ]
+      ],
+      "name": "purex.zirnoxheu233",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_u235"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_neptunium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            3
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.zirnox",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_u235"
+        ]
+      ],
+      "name": "purex.zirnoxheu235",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu238"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_neptunium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            3
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.zirnox",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_schrabidium"
+        ]
+      ],
+      "name": "purex.zirnoxles",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_beryllium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu239"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            2
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.zirnox",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_zfb_mox"
+        ]
+      ],
+      "name": "purex.zirnoxzfbmox",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_zirconium",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny"
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.plate",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_plate_mox"
+        ]
+      ],
+      "name": "purex.platemox",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:powder_sr90_tiny"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:powder_cs137_tiny"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            4
+          ]
+        ]
+      ],
+      "power": 1500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.plate",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_plate_pu238be"
+        ]
+      ],
+      "name": "purex.platepu238be",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_beryllium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu238"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:powder_coal_tiny",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_lead",
+            2
+          ]
+        ]
+      ],
+      "power": 1500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.plate",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_plate_pu239"
+        ]
+      ],
+      "name": "purex.platepu239",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu240",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:powder_cs137_tiny"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            5
+          ]
+        ]
+      ],
+      "power": 1500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.plate",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_plate_ra226be"
+        ]
+      ],
+      "name": "purex.platera226be",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_beryllium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_polonium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:powder_coal_tiny"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_lead"
+          ]
+        ]
+      ],
+      "power": 1500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.plate",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_plate_sa326"
+        ]
+      ],
+      "name": "purex.platesa326",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_solinium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:powder_neodymium_tiny"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_tantalium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            6
+          ]
+        ]
+      ],
+      "power": 1500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.plate",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_plate_u233"
+        ]
+      ],
+      "name": "purex.plateu233",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_u235"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:powder_i131_tiny"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:powder_sr90_tiny"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            6
+          ]
+        ]
+      ],
+      "power": 1500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.plate",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_plate_u235"
+        ]
+      ],
+      "name": "purex.plateu235",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_neptunium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu238"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            6
+          ]
+        ]
+      ],
+      "power": 1500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted"
+        ]
+      ],
+      "name": "purex.pwrmeu",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_u238",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_plutonium",
+            4
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            3
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          1
+        ]
+      ],
+      "name": "purex.pwrheu233",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_u235",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu238",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            5
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          2
+        ]
+      ],
+      "name": "purex.pwrheu235",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_neptunium",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu238",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            5
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          3
+        ]
+      ],
+      "name": "purex.pwrmen",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_u238",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu239",
+            4
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            3
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          4
+        ]
+      ],
+      "name": "purex.pwrhen237",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu238",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu239",
+            4
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            5
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          5
+        ]
+      ],
+      "name": "purex.pwrmox",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_u238",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu240",
+            4
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            3
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          6
+        ]
+      ],
+      "name": "purex.pwrmep",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_lead",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix",
+            4
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            3
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          7
+        ]
+      ],
+      "name": "purex.pwrhep239",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu240",
+            4
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            5
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          8
+        ]
+      ],
+      "name": "purex.pwrhep241",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_lead",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_zirconium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            6
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          9
+        ]
+      ],
+      "name": "purex.pwrmea",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_lead",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_zirconium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            6
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          10
+        ]
+      ],
+      "name": "purex.pwrhea242",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_lead",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_zirconium",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            6
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          11
+        ]
+      ],
+      "name": "purex.pwrhes326",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_solinium",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_lead",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_euphemium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            6
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          12
+        ]
+      ],
+      "name": "purex.pwrhes327",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_australium",
+            4
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_lead"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_euphemium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            6
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          13
+        ]
+      ],
+      "name": "purex.pwrbfbam",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_am_mix",
+            9
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_bismuth",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny"
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.pwr",
+      "duration": 100,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          14
+        ]
+      ],
+      "name": "purex.pwrbfpu241",
+      "nameWrapper": "purex.recycle",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu241",
+            9
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu_mix",
+            2
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_bismuth",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny"
+          ]
+        ]
+      ],
+      "power": 2500
+    },
+    {
+      "duration": 20,
+      "inputFluid": [
+        [
+          "THORIUM_SALT_DEPLETED",
+          16000
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:nugget_th232",
+          2
+        ]
+      ],
+      "name": "purex.thoriumsalt",
+      "outputFluid": [
+        [
+          "THORIUM_SALT",
+          16000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_u233"
+          ],
+          0.5
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny"
+          ],
+          0.25
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_schrabidium"
+        ]
+      ],
+      "name": "purex.watzschrab",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_solinium",
+            15
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_euphemium",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_hes"
+        ]
+      ],
+      "name": "purex.watzhes",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_solinium",
+            17
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_euphemium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_mes"
+        ]
+      ],
+      "name": "purex.watzmes",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_solinium",
+            12
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_tantalium",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_les"
+        ]
+      ],
+      "name": "purex.watzles",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_solinium",
+            9
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_tantalium",
+            9
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_hen"
+        ]
+      ],
+      "name": "purex.watzhen",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu239",
+            12
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_meu"
+        ]
+      ],
+      "name": "purex.watzmeu",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu239",
+            12
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_bismuth",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_mep"
+        ]
+      ],
+      "name": "purex.watzmep",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_pu241",
+            12
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_bismuth",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_lead"
+        ]
+      ],
+      "name": "purex.watzlead",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_lead",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_bismuth",
+            12
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_boron"
+        ]
+      ],
+      "name": "purex.watzboron",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:powder_coal_tiny",
+            12
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_co60",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.watz",
+      "duration": 60,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          500
+        ],
+        [
+          "NITRIC_ACID",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:watz_pellet_depleted_du"
+        ]
+      ],
+      "name": "purex.watzdu",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "WATZ",
+          1000
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_polonium",
+            12
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_pu238",
+            6
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste",
+            2
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "duration": 300,
+      "inputItem": [
+        [
+          "item",
+          "hbm:icf_pellet_depleted"
+        ]
+      ],
+      "name": "purex.icf",
+      "nameWrapper": "purex.recycle",
+      "outputFluid": [
+        [
+          "HELIUM4",
+          1250
+        ]
+      ],
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_pellet_empty"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:pellet_charged"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:powder_iron"
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "duration": 100,
+      "inputFluid": [
+        [
+          "WASTEFLUID",
+          1000
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:sand_lead"
+        ]
+      ],
+      "name": "purex.vitliquid",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_vitrified"
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "duration": 100,
+      "inputFluid": [
+        [
+          "WASTEGAS",
+          1000
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:sand_lead"
+        ]
+      ],
+      "name": "purex.vitgaseous",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_vitrified"
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "duration": 300,
+      "inputItem": [
+        [
+          "item",
+          "hbm:sand_lead"
+        ],
+        [
+          "item",
+          "hbm:nuclear_waste",
+          4
+        ]
+      ],
+      "name": "purex.vitsolid",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_vitrified",
+            4
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "duration": 200,
+      "inputFluid": [
+        [
+          "KEROSENE",
+          2000
+        ],
+        [
+          "NITRIC_ACID",
+          1000
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:ingot_schraranium"
+        ]
+      ],
+      "name": "purex.schraranium",
+      "nameWrapper": "purex.schrab",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:nugget_schrabidium",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_uranium",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_neptunium",
+            2
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.schrab",
+      "duration": 200,
+      "inputFluid": [
+        [
+          "SOLVENT",
+          4000
+        ],
+        [
+          "SCHRABIDIC",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:waste_plutonium"
+        ]
+      ],
+      "name": "purex.schrabzirnox",
+      "nameWrapper": "purex.schrab",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:powder_schrabidium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            4
+          ]
+        ]
+      ],
+      "power": 50000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.schrab",
+      "duration": 200,
+      "inputFluid": [
+        [
+          "SOLVENT",
+          4000
+        ],
+        [
+          "SCHRABIDIC",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          6
+        ]
+      ],
+      "name": "purex.schrabpwr",
+      "nameWrapper": "purex.schrab",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:powder_schrabidium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            4
+          ]
+        ]
+      ],
+      "power": 50000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.schrab",
+      "duration": 200,
+      "inputFluid": [
+        [
+          "SOLVENT",
+          4000
+        ],
+        [
+          "SCHRABIDIC",
+          250
+        ]
+      ],
+      "inputItem": [
+        [
+          "item",
+          "hbm:pwr_fuel_depleted",
+          1,
+          3
+        ]
+      ],
+      "name": "purex.schrabmen",
+      "nameWrapper": "purex.schrab",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:powder_schrabidium"
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nugget_technetium",
+            3
+          ]
+        ],
+        [
+          "single",
+          [
+            "hbm:nuclear_waste_tiny",
+            4
+          ]
+        ]
+      ],
+      "power": 50000
+    }
+  ]
+}

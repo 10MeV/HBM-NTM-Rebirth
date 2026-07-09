@@ -25,6 +25,13 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
     }
 
     @Override
+    public boolean shouldRender(SolderingStationBlockEntity blockEntity, Vec3 cameraPos) {
+        return blockEntity.hasDisplayStack()
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }
@@ -32,6 +39,9 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
     @Override
     public void render(SolderingStationBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!blockEntity.hasDisplayStack()) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }

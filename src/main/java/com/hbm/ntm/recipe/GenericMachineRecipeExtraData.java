@@ -2,30 +2,47 @@ package com.hbm.ntm.recipe;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.ntm.pollution.PollutionType;
 import net.minecraft.network.FriendlyByteBuf;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
                                             Optional<Fusion> fusion,
-                                            Optional<Pollution> pollution) {
+                                            Optional<Pollution> pollution,
+                                            List<MaterialStack> arcMaterialOutputs) {
     public static final GenericMachineRecipeExtraData EMPTY =
-            new GenericMachineRecipeExtraData(Optional.empty(), Optional.empty(), Optional.empty());
+            new GenericMachineRecipeExtraData(Optional.empty(), Optional.empty(), Optional.empty(), List.of());
 
     public GenericMachineRecipeExtraData {
         plasmaForge = plasmaForge == null ? Optional.empty() : plasmaForge;
         fusion = fusion == null ? Optional.empty() : fusion;
         pollution = pollution == null ? Optional.empty() : pollution;
+        arcMaterialOutputs = copyMaterialStacks(arcMaterialOutputs);
+    }
+
+    public GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
+            Optional<Fusion> fusion, Optional<Pollution> pollution) {
+        this(plasmaForge, fusion, pollution, List.of());
+    }
+
+    public GenericMachineRecipeExtraData withArcMaterialOutputs(List<MaterialStack> outputs) {
+        return new GenericMachineRecipeExtraData(plasmaForge, fusion, pollution, outputs);
     }
 
     public static GenericMachineRecipeExtraData fromJson(JsonObject json) {
         Optional<PlasmaForge> plasma = readPlasmaForge(json);
         Optional<Fusion> fusion = readFusion(json);
         Optional<Pollution> pollution = readPollution(json);
-        return plasma.isEmpty() && fusion.isEmpty() && pollution.isEmpty()
+        List<MaterialStack> arcMaterialOutputs = readArcMaterialOutputs(json);
+        return plasma.isEmpty() && fusion.isEmpty() && pollution.isEmpty() && arcMaterialOutputs.isEmpty()
                 ? EMPTY
-                : new GenericMachineRecipeExtraData(plasma, fusion, pollution);
+                : new GenericMachineRecipeExtraData(plasma, fusion, pollution, arcMaterialOutputs);
     }
 
     public JsonObject toJson() {
@@ -48,6 +65,13 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
             json.addProperty("pollutionType", pollutionData.type().name());
             json.addProperty("pollutionAmount", pollutionData.amount());
         });
+        if (!arcMaterialOutputs.isEmpty()) {
+            JsonArray outputs = new JsonArray();
+            for (MaterialStack stack : arcMaterialOutputs) {
+                outputs.add(MaterialStackJsonUtil.toJson(stack));
+            }
+            json.add("arc_material_outputs", outputs);
+        }
     }
 
     public void toNetwork(FriendlyByteBuf buffer) {
@@ -67,6 +91,7 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
             buffer.writeEnum(pollutionData.type());
             buffer.writeFloat(pollutionData.amount());
         });
+        buffer.writeCollection(arcMaterialOutputs, MaterialStackJsonUtil::writeNetwork);
     }
 
     public static GenericMachineRecipeExtraData fromNetwork(FriendlyByteBuf buffer) {
@@ -80,9 +105,10 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
         Optional<Pollution> pollution = buffer.readBoolean()
                 ? Optional.of(new Pollution(buffer.readEnum(PollutionType.class), buffer.readFloat()))
                 : Optional.empty();
-        return plasma.isEmpty() && fusion.isEmpty() && pollution.isEmpty()
+        List<MaterialStack> arcMaterialOutputs = buffer.readList(MaterialStackJsonUtil::readNetwork);
+        return plasma.isEmpty() && fusion.isEmpty() && pollution.isEmpty() && arcMaterialOutputs.isEmpty()
                 ? EMPTY
-                : new GenericMachineRecipeExtraData(plasma, fusion, pollution);
+                : new GenericMachineRecipeExtraData(plasma, fusion, pollution, arcMaterialOutputs);
     }
 
     private static Optional<PlasmaForge> readPlasmaForge(JsonObject json) {
@@ -130,6 +156,32 @@ public record GenericMachineRecipeExtraData(Optional<PlasmaForge> plasmaForge,
                     + json.get("pollutionType").getAsString());
         }
         return Optional.of(new Pollution(type, amount));
+    }
+
+    private static List<MaterialStack> readArcMaterialOutputs(JsonObject json) {
+        if (!json.has("arc_material_outputs")) {
+            return List.of();
+        }
+        JsonArray array = json.getAsJsonArray("arc_material_outputs");
+        List<MaterialStack> outputs = new ArrayList<>();
+        for (int i = 0; i < array.size(); i++) {
+            JsonElement element = array.get(i);
+            outputs.add(MaterialStackJsonUtil.readRequired(element, "arc_material_outputs[" + i + "]"));
+        }
+        return outputs;
+    }
+
+    private static List<MaterialStack> copyMaterialStacks(List<MaterialStack> stacks) {
+        if (stacks == null || stacks.isEmpty()) {
+            return List.of();
+        }
+        List<MaterialStack> copy = new ArrayList<>();
+        for (MaterialStack stack : stacks) {
+            if (stack != null && !stack.isEmpty()) {
+                copy.add(stack.copy());
+            }
+        }
+        return List.copyOf(copy);
     }
 
     private static boolean hasFusionFields(JsonObject json) {

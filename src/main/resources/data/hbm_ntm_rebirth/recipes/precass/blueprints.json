@@ -1,0 +1,47 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "internal_name": "precass.blueprints",
+  "duration": 6000,
+  "power": 20000,
+  "input_items": [
+    {
+      "ingredient": {
+        "item": "minecraft:paper"
+      },
+      "count": 16
+    },
+    {
+      "ingredient": {
+        "tag": "forge:dyes/blue"
+      },
+      "count": 16,
+      "legacy_ore": "dyeBlue"
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:pufferfish"
+      },
+      "count": 4
+    }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    {
+      "type": "one_of",
+      "entries": [
+        {
+          "item": "hbm_ntm_rebirth:blueprint_folder",
+          "weight": 10
+        },
+        {
+          "item": "minecraft:paper",
+          "count": 16,
+          "weight": 90
+        }
+      ]
+    }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 0
+}

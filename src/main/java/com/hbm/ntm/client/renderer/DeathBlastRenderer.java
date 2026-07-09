@@ -5,14 +5,23 @@ import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.entity.logic.DeathBlastEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import org.joml.Matrix4f;
 
 public class DeathBlastRenderer extends EntityRenderer<DeathBlastEntity> {
     private static final double BEAM_HEIGHT = 250.0D;
+    private static final float DIAGONAL = 0.70710677F;
+    private static final float[] BEAM_UNIT_X = {
+            1.0F, DIAGONAL, 0.0F, -DIAGONAL, -1.0F, -DIAGONAL, 0.0F, DIAGONAL, 1.0F
+    };
+    private static final float[] BEAM_UNIT_Z = {
+            0.0F, DIAGONAL, 1.0F, DIAGONAL, 0.0F, -DIAGONAL, -1.0F, -DIAGONAL, 0.0F
+    };
 
     public DeathBlastRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -21,23 +30,24 @@ public class DeathBlastRenderer extends EntityRenderer<DeathBlastEntity> {
     @Override
     public void render(DeathBlastEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
-        renderBeam(poseStack, buffer, 0.5F, 255, 0, 0, 180);
-        renderBeam(poseStack, buffer, 0.25F, 255, 0, 255, 180);
+        VertexConsumer beamConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.type(
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 180));
+        PoseStack.Pose beamPose = poseStack.last();
+        renderBeam(beamConsumer, beamPose, 0.5F, 255, 0, 0, 180);
+        renderBeam(beamConsumer, beamPose, 0.25F, 255, 0, 255, 180);
         renderOrb(entity, partialTick, poseStack, buffer);
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }
 
-    private static void renderBeam(PoseStack poseStack, MultiBufferSource buffer, float radius,
+    private static void renderBeam(VertexConsumer consumer, PoseStack.Pose pose, float radius,
             int red, int green, int blue, int alpha) {
         int color = (red << 16) | (green << 8) | blue;
         for (int i = 0; i < 8; i++) {
-            double first = Math.toRadians(i * 45.0D);
-            double second = Math.toRadians((i + 1) * 45.0D);
-            float x1 = Mth.cos((float) first) * radius;
-            float z1 = Mth.sin((float) first) * radius;
-            float x2 = Mth.cos((float) second) * radius;
-            float z2 = Mth.sin((float) second) * radius;
-            LegacyUntexturedQuadRenderer.quad(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+            float x1 = BEAM_UNIT_X[i] * radius;
+            float z1 = BEAM_UNIT_Z[i] * radius;
+            float x2 = BEAM_UNIT_X[i + 1] * radius;
+            float z2 = BEAM_UNIT_Z[i + 1] * radius;
+            LegacyUntexturedQuadRenderer.quad(consumer, pose,
                     x1, BEAM_HEIGHT, z1,
                     x1, 0.0D, z1,
                     x2, 0.0D, z2,
@@ -58,11 +68,14 @@ public class DeathBlastRenderer extends EntityRenderer<DeathBlastEntity> {
 
         poseStack.pushPose();
         poseStack.scale((float) scale, (float) scale, (float) scale);
-        ObjEffectModels.SPHERE_NEW.renderAllUntextured(poseStack, buffer, 255, 0, 255, alpha, true);
+        Matrix4f position = poseStack.last().pose();
+        VertexConsumer innerConsumer = ObjEffectModels.dynamicUntexturedConsumer(buffer, alpha, true);
+        ObjEffectModels.renderSphereNewDynamicUntextured(innerConsumer, position, 255, 0, 255, alpha);
         poseStack.scale(1.25F, 1.25F, 1.25F);
         int outerAlpha = Math.max(1, alpha / 8);
+        VertexConsumer outerConsumer = ObjEffectModels.dynamicUntexturedConsumer(buffer, outerAlpha, true);
         for (int i = 0; i < 8; i++) {
-            ObjEffectModels.SPHERE_NEW.renderAllUntextured(poseStack, buffer, 255, 0, 0, outerAlpha, true);
+            ObjEffectModels.renderSphereNewDynamicUntextured(outerConsumer, position, 255, 0, 0, outerAlpha);
             poseStack.scale(1.05F, 1.05F, 1.05F);
         }
         poseStack.popPose();

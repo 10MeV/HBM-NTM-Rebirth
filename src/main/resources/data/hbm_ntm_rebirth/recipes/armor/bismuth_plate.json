@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:laser_crystal_bismuth"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:rag"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_bismuth"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:crystal_rare"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:ring_starmetal"
+    },
+    "W": {
+      "tag": "forge:wires/gold"
+    }
+  },
+  "pattern": [
+    "RWR",
+    "PCP",
+    "SFS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bismuth_plate"
+  },
+  "show_notification": true
+}

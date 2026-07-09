@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.menu.ResearchReactorMenu;
 import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
@@ -8,7 +9,6 @@ import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.api.tile.IInfoProviderEC;
 import com.hbm.ntm.compat.CompatEnergyControl;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.recipe.ResearchReactorFuelRuntime;
 import com.hbm.ntm.recipe.ResearchReactorFuelRuntime.FuelSpec;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -119,7 +119,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
             return;
         }
         if (reactor.rodLevel > 0.0D && reactor.heat > 0 && !reactor.fullyShielded()) {
-            ChunkRadiationManager.incrementRadiation(level, pos, reactor.heat / (float) MAX_HEAT * 50.0F);
+            ChunkRadiationManager.proxy.incrementRad(level, pos, reactor.heat / (float) MAX_HEAT * 50.0F);
         }
         reactor.networkPackNT(150);
         if (changed) {
@@ -203,7 +203,7 @@ public class ResearchReactorBlockEntity extends BlockEntity
         level.setBlock(worldPosition.above(), ModBlocks.CORIUM_BLOCK.get().defaultBlockState(), Block.UPDATE_ALL);
         level.setBlock(worldPosition.above(2), ModBlocks.legacyBlock("deco_steel").get().defaultBlockState(),
                 Block.UPDATE_ALL);
-        ChunkRadiationManager.incrementRadiation(level, worldPosition, 50.0F);
+        ChunkRadiationManager.proxy.incrementRad(level, worldPosition, 50.0F);
         markRadiationElementalTargets(level);
     }
 

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "G": {
+      "tag": "forge:glass"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    }
+  },
+  "pattern": [
+    "P P",
+    "GCG"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:night_vision"
+  },
+  "show_notification": true
+}

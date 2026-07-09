@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:dusts/any_smokeless"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:safety_fuse"
+    },
+    "S": {
+      "tag": "forge:bolts/steel"
+    }
+  },
+  "pattern": [
+    "C",
+    "S",
+    "F"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:grenade_fuze_impact"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": {
+      "tag": "forge:plates/iron"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "T": {
+      "item": "minecraft:tnt"
+    }
+  },
+  "pattern": [
+    "ITI",
+    " S ",
+    " S "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ullapool_caber"
+  },
+  "show_notification": true
+}

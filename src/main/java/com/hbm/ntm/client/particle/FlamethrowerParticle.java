@@ -32,6 +32,10 @@ public class FlamethrowerParticle extends TextureSheetParticle implements HbmDef
     private final float baseGreen;
     private final float baseBlue;
     private final float rollSpeed;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private FlamethrowerParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites, int legacyType) {
         super(level, x, y, z);
@@ -65,6 +69,7 @@ public class FlamethrowerParticle extends TextureSheetParticle implements HbmDef
         }
         this.updateVisuals(0.0F);
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -85,6 +90,7 @@ public class FlamethrowerParticle extends TextureSheetParticle implements HbmDef
         this.move(this.xd, this.yd, this.zd);
         this.updateVisuals((float) this.age / (float) this.lifetime);
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -96,11 +102,18 @@ public class FlamethrowerParticle extends TextureSheetParticle implements HbmDef
     public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         this.updateVisuals((this.age + partialTick) / (float) this.lifetime);
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(
-                buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite()), camera, partialTick,
+                HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer), camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     private void updateVisuals(float progress) {

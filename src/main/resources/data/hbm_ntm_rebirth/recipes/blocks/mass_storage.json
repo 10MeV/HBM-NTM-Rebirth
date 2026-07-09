@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:crate_steel"
+    },
+    "I": {
+      "tag": "forge:ingots/titanium"
+    },
+    "L": {
+      "tag": "forge:circuits/vacuum_tube"
+    }
+  },
+  "pattern": [
+    " L ",
+    "ICI",
+    " I "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:mass_storage"
+  },
+  "show_notification": true
+}

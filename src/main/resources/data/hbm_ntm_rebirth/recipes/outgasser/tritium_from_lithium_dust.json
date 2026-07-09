@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:outgasser",
+  "source_order": 2,
   "input": {
     "ingredient": {
       "tag": "forge:dusts/lithium"

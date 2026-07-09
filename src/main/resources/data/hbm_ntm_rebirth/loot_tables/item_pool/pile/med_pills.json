@@ -49,6 +49,22 @@
               "function": "minecraft:set_count"
             }
           ],
+          "name": "hbm_ntm_rebirth:iv_blood",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
           "name": "hbm_ntm_rebirth:siox",
           "weight": 5
         }

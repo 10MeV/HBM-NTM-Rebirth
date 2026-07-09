@@ -47,6 +47,12 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
     }
 
     @Override
+    public boolean shouldRender(OreSlopperBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }

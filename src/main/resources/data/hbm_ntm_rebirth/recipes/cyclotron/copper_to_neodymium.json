@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:cyclotron",
+  "particle": { "ingredient": { "item": "hbm_ntm_rebirth:part_copper" }, "count": 1 },
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_strontium" }, "count": 1 },
+  "output": { "item": "hbm_ntm_rebirth:powder_neodymium" },
+  "antimatter": 15,
+  "source_order": 33
+}

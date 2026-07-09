@@ -1,0 +1,11 @@
+{
+  "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmCrucibleSmelting.json",
+  "exported_recipe_count": 45,
+  "failures": [],
+  "legacy_file": "hbmCrucibleSmelting.json",
+  "modern_recipe_type": "crucible_smelting",
+  "skipped_recipe_count": 0,
+  "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/crucible_smelting",
+  "status": "exported",
+  "written_file_count": 1
+}

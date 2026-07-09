@@ -1,0 +1,36 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 200,
+      "fluid": "hbm_ntm_rebirth:gas"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:dusts/saltpeter"
+      },
+      "legacy_ore": "dustSaltpeter"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_sawdust"
+      }
+    }
+  ],
+  "internal_name": "chem.cordite",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:cordite"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 58
+}

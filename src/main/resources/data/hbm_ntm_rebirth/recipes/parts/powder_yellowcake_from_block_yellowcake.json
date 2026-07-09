@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:block_yellowcake"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:powder_yellowcake",
+    "count": 9
+  }
+}

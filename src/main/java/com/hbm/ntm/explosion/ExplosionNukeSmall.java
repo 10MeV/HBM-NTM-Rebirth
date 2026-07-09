@@ -3,9 +3,7 @@ package com.hbm.ntm.explosion;
 import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.explosion.ExplosionNT.ExAttrib;
 import com.hbm.ntm.particle.ParticleUtil;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.sound.LegacySoundPlayer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
 import java.util.Arrays;
@@ -57,8 +55,10 @@ public final class ExplosionNukeSmall {
                 int distance = Math.abs(i) + Math.abs(j);
                 if (distance < 4) {
                     float amount = 50.0F / (distance + 1.0F) * radMod;
-                    ChunkRadiationManager.incrementRadiation(level,
-                            BlockPos.containing(Math.floor(x + i * 16.0D), Math.floor(y), Math.floor(z + j * 16.0D)),
+                    com.hbm.handler.radiation.ChunkRadiationManager.proxy.incrementRad(level,
+                            (int) Math.floor(x + i * 16.0D),
+                            (int) Math.floor(y),
+                            (int) Math.floor(z + j * 16.0D),
                             amount);
                 }
             }

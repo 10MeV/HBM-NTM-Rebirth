@@ -20,6 +20,10 @@ public class MukeWaveParticle extends TextureSheetParticle implements HbmDeferre
 
     private final SpriteSet sprites;
     private final float waveScale;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private MukeWaveParticle(ClientLevel level, double x, double y, double z, float waveScale, int lifetime, SpriteSet sprites) {
         super(level, x, y, z);
@@ -29,6 +33,7 @@ public class MukeWaveParticle extends TextureSheetParticle implements HbmDeferre
         this.hasPhysics = false;
         this.alpha = 1.0F;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     public static MukeWaveParticle create(ClientLevel level, double x, double y, double z, float waveScale, int lifetime) {
@@ -57,17 +62,25 @@ public class MukeWaveParticle extends TextureSheetParticle implements HbmDeferre
         if (alpha <= 0.0F) {
             return;
         }
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetAdditiveNoDepthWrite());
+        VertexConsumer consumer = HbmDeferredParticleRenderer.particleSheetAdditiveNoDepthWriteConsumer(buffer);
         float scale = (float) (1.0D - Math.exp(progressAge * -0.125D)) * this.waveScale;
-        double x = Mth.lerp(partialTick, this.xo, this.x) - camera.getPosition().x();
-        double y = Mth.lerp(partialTick, this.yo, this.y) - camera.getPosition().y() - 0.25D;
-        double z = Mth.lerp(partialTick, this.zo, this.z) - camera.getPosition().z();
+        var cameraPos = camera.getPosition();
+        double x = Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x();
+        double y = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y() - 0.25D;
+        double z = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
         HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT,
-                x - scale, y, z - scale, getU1(), getV1(),
-                x - scale, y, z + scale, getU1(), getV0(),
-                x + scale, y, z + scale, getU0(), getV0(),
-                x + scale, y, z - scale, getU0(), getV1(),
+                x - scale, y, z - scale, this.cachedU1, this.cachedV1,
+                x - scale, y, z + scale, this.cachedU1, this.cachedV0,
+                x + scale, y, z + scale, this.cachedU0, this.cachedV0,
+                x + scale, y, z - scale, this.cachedU0, this.cachedV1,
                 1.0F, 1.0F, 1.0F, alpha);
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     @Override

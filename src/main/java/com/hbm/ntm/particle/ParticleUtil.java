@@ -7,6 +7,7 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -686,11 +687,22 @@ public final class ParticleUtil {
             if (!level.isEmptyBlock(pos.relative(direction))) {
                 continue;
             }
-            Vec3 point = randomLegacyOpenFacePoint(pos, direction, rand);
+            double x = pos.getX() + 0.5D + direction.getStepX() + rand.nextDouble() * 3.0D - 1.5D;
+            double y = pos.getY() + 0.5D + direction.getStepY() + rand.nextDouble() * 3.0D - 1.5D;
+            double z = pos.getZ() + 0.5D + direction.getStepZ() + rand.nextDouble() * 3.0D - 1.5D;
+            if (direction.getStepX() != 0) {
+                x = pos.getX() + 0.5D + direction.getStepX() * 0.5D + rand.nextDouble() * direction.getStepX();
+            }
+            if (direction.getStepY() != 0) {
+                y = pos.getY() + 0.5D + direction.getStepY() * 0.5D + rand.nextDouble() * direction.getStepY();
+            }
+            if (direction.getStepZ() != 0) {
+                z = pos.getZ() + 0.5D + direction.getStepZ() * 0.5D + rand.nextDouble() * direction.getStepZ();
+            }
             if (schrab) {
-                spawnSchrabFog(level, point.x, point.y, point.z);
+                spawnSchrabFog(level, x, y, z);
             } else {
-                spawnTownAura(level, point.x, point.y, point.z);
+                spawnTownAura(level, x, y, z);
             }
         }
     }
@@ -1285,11 +1297,19 @@ public final class ParticleUtil {
         if (level == null) {
             return;
         }
-        Vec3 motion = legacyLocalToWorld(sideMotion, heightMotion, frontMotion, pitch, yaw);
+        double pitchRadians = -pitch * Mth.DEG_TO_RAD;
+        double pitchCos = Math.cos(pitchRadians);
+        double pitchSin = Math.sin(pitchRadians);
+        double motionY = heightMotion * pitchCos + frontMotion * pitchSin;
+        double motionZPitch = frontMotion * pitchCos - heightMotion * pitchSin;
+
+        double yawRadians = -yaw * Mth.DEG_TO_RAD;
+        double yawCos = Math.cos(yawRadians);
+        double yawSin = Math.sin(yawRadians);
         spawnCasing(level, x, y, z,
-                motion.x() + level.random.nextGaussian() * motionVariance,
-                motion.y() + level.random.nextGaussian() * motionVariance,
-                motion.z() + level.random.nextGaussian() * motionVariance,
+                sideMotion * yawCos + motionZPitch * yawSin + level.random.nextGaussian() * motionVariance,
+                motionY + level.random.nextGaussian() * motionVariance,
+                motionZPitch * yawCos - sideMotion * yawSin + level.random.nextGaussian() * motionVariance,
                 yaw, pitch, momentumPitch, momentumYaw, name, smoking, smokeLife, smokeLift, nodeLife);
     }
 
@@ -1313,22 +1333,37 @@ public final class ParticleUtil {
             return;
         }
         double adjustedHeightOffset = shooter.isShiftKeyDown() ? heightOffset - 0.075D : heightOffset;
-        Vec3 offset = legacyLocalToWorld(sideOffset, adjustedHeightOffset, frontOffset, shooter.getXRot(), shooter.getYRot());
-        Vec3 localMotion = legacyLocalToWorld(sideMotion, heightMotion, frontMotion, shooter.getXRot(), shooter.getYRot());
+        float pitch = shooter.getXRot();
+        float yaw = shooter.getYRot();
+        double pitchRadians = -pitch * Mth.DEG_TO_RAD;
+        double pitchCos = Math.cos(pitchRadians);
+        double pitchSin = Math.sin(pitchRadians);
+        double offsetY = adjustedHeightOffset * pitchCos + frontOffset * pitchSin;
+        double offsetZPitch = frontOffset * pitchCos - adjustedHeightOffset * pitchSin;
+        double motionYLocal = heightMotion * pitchCos + frontMotion * pitchSin;
+        double motionZPitch = frontMotion * pitchCos - heightMotion * pitchSin;
+
+        double yawRadians = -yaw * Mth.DEG_TO_RAD;
+        double yawCos = Math.cos(yawRadians);
+        double yawSin = Math.sin(yawRadians);
+        double offsetX = sideOffset * yawCos + offsetZPitch * yawSin;
+        double offsetZ = offsetZPitch * yawCos - sideOffset * yawSin;
+        double motionXLocal = sideMotion * yawCos + motionZPitch * yawSin;
+        double motionZLocal = motionZPitch * yawCos - sideMotion * yawSin;
         Vec3 entityMotion = shooter.getDeltaMovement();
         Level level = shooter.level();
-        double motionX = entityMotion.x() + localMotion.x() + level.random.nextGaussian() * motionVariance;
-        double motionY = entityMotion.y() + localMotion.y() + level.random.nextGaussian() * motionVariance;
-        double motionZ = entityMotion.z() + localMotion.z() + level.random.nextGaussian() * motionVariance;
+        double motionX = entityMotion.x() + motionXLocal + level.random.nextGaussian() * motionVariance;
+        double motionY = entityMotion.y() + motionYLocal + level.random.nextGaussian() * motionVariance;
+        double motionZ = entityMotion.z() + motionZLocal + level.random.nextGaussian() * motionVariance;
         if (shooter instanceof Player player && player.getAbilities().flying) {
             motionY -= 0.04D;
         }
         spawnCasing(level,
-                shooter.getX() + offset.x(),
-                shooter.getY() + shooter.getEyeHeight() + offset.y(),
-                shooter.getZ() + offset.z(),
+                shooter.getX() + offsetX,
+                shooter.getY() + shooter.getEyeHeight() + offsetY,
+                shooter.getZ() + offsetZ,
                 motionX, motionY, motionZ,
-                shooter.getYRot(), shooter.getXRot(), momentumPitch, momentumYaw,
+                yaw, pitch, momentumPitch, momentumYaw,
                 name, smoking, smokeLife, smokeLift, nodeLife);
     }
 
@@ -1704,11 +1739,11 @@ public final class ParticleUtil {
             return;
         }
         Direction dir = horizontalOrNorth(direction);
-        spawnFoundryPour(level,
-                new Vec3(pos.getX() + 0.5D + dir.getStepX() * horizontalOffset,
-                        pos.getY() + yOffset,
-                        pos.getZ() + 0.5D + dir.getStepZ() * horizontalOffset),
-                color, dir, length);
+        spawnFoundry(level,
+                pos.getX() + 0.5D + dir.getStepX() * horizontalOffset,
+                pos.getY() + yOffset,
+                pos.getZ() + 0.5D + dir.getStepZ() * horizontalOffset,
+                color, legacyDirectionOrdinal(dir), length, 0.625F, 0.625F);
     }
 
     public static void spawnFoundryOutletPour(Level level, BlockPos pos, Direction direction, int color, float length) {
@@ -1716,11 +1751,11 @@ public final class ParticleUtil {
             return;
         }
         Direction dir = horizontalOrNorth(direction);
-        spawnFoundryOutletPour(level,
-                new Vec3(pos.getX() + 0.5D - dir.getStepX() * 0.125D,
-                        pos.getY() + 0.125D,
-                        pos.getZ() + 0.5D - dir.getStepZ() * 0.125D),
-                color, dir, length);
+        spawnFoundry(level,
+                pos.getX() + 0.5D - dir.getStepX() * 0.125D,
+                pos.getY() + 0.125D,
+                pos.getZ() + 0.5D - dir.getStepZ() * 0.125D,
+                color, legacyDirectionOrdinal(dir), length, 0.0F, 0.375F);
     }
 
     public static void spawnChaosCloud(Level level, double x, double y, double z, double motionX, double motionY, double motionZ, String mode) {
@@ -1765,22 +1800,6 @@ public final class ParticleUtil {
             return random;
         }
         return level == null ? null : level.random;
-    }
-
-    private static Vec3 randomLegacyOpenFacePoint(BlockPos pos, Direction direction, RandomSource random) {
-        double x = pos.getX() + 0.5D + direction.getStepX() + random.nextDouble() * 3.0D - 1.5D;
-        double y = pos.getY() + 0.5D + direction.getStepY() + random.nextDouble() * 3.0D - 1.5D;
-        double z = pos.getZ() + 0.5D + direction.getStepZ() + random.nextDouble() * 3.0D - 1.5D;
-        if (direction.getStepX() != 0) {
-            x = pos.getX() + 0.5D + direction.getStepX() * 0.5D + random.nextDouble() * direction.getStepX();
-        }
-        if (direction.getStepY() != 0) {
-            y = pos.getY() + 0.5D + direction.getStepY() * 0.5D + random.nextDouble() * direction.getStepY();
-        }
-        if (direction.getStepZ() != 0) {
-            z = pos.getZ() + 0.5D + direction.getStepZ() * 0.5D + random.nextDouble() * direction.getStepZ();
-        }
-        return new Vec3(x, y, z);
     }
 
     private static CompoundTag smokeTag(String mode, int count) {
@@ -1864,19 +1883,6 @@ public final class ParticleUtil {
     private static float legacyPlasmaYaw(Direction direction) {
         Direction dir = horizontalOrNorth(direction);
         return dir == Direction.WEST || dir == Direction.EAST ? 90.0F : 0.0F;
-    }
-
-    private static Vec3 legacyLocalToWorld(double side, double height, double front, float pitchDegrees, float yawDegrees) {
-        double pitch = -Math.toRadians(pitchDegrees);
-        double pitchCos = Math.cos(pitch);
-        double pitchSin = Math.sin(pitch);
-        double yPitch = height * pitchCos + front * pitchSin;
-        double zPitch = front * pitchCos - height * pitchSin;
-
-        double yaw = -Math.toRadians(yawDegrees);
-        double yawCos = Math.cos(yaw);
-        double yawSin = Math.sin(yaw);
-        return new Vec3(side * yawCos + zPitch * yawSin, yPitch, zPitch * yawCos - side * yawSin);
     }
 
     public static void putBlockState(CompoundTag data, BlockState state) {

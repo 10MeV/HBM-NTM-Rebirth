@@ -28,7 +28,10 @@ public final class BulletSpecialSpawnUtil {
     public static final float LEGACY_GRENADE_HEAVY_PELLET_DAMAGE = 30.0F;
     public static final float LEGACY_GRENADE_LASER_DAMAGE = 30.0F;
     public static final double LEGACY_GRENADE_LASER_RANGE = 15.0D;
+    private static final double LEGACY_GRENADE_LASER_RANGE_SQ =
+            LEGACY_GRENADE_LASER_RANGE * LEGACY_GRENADE_LASER_RANGE;
     public static final double LIGHTNING_SPLIT_RANGE = 20.0D;
+    private static final double LIGHTNING_SPLIT_RANGE_SQ = LIGHTNING_SPLIT_RANGE * LIGHTNING_SPLIT_RANGE;
     public static final float SHREDDER_SUBMUNITION_GUN_SPREAD = 0.2F;
     public static final double SHREDDER_BLOCK_SIDE_OFFSET = 0.1D;
 
@@ -139,12 +142,14 @@ public final class BulletSpecialSpawnUtil {
             if (target == thrower) {
                 continue;
             }
-            Vec3 delta = new Vec3(target.getX() - origin.x,
-                    target.getY() + target.getBbHeight() / 2.0D - origin.y,
-                    target.getZ() - origin.z);
-            if (delta.length() > LEGACY_GRENADE_LASER_RANGE || delta.lengthSqr() <= 1.0E-7D) {
+            double deltaX = target.getX() - origin.x;
+            double deltaY = target.getY() + target.getBbHeight() / 2.0D - origin.y;
+            double deltaZ = target.getZ() - origin.z;
+            double deltaSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+            if (deltaSqr > LEGACY_GRENADE_LASER_RANGE_SQ || deltaSqr <= 1.0E-7D) {
                 continue;
             }
+            Vec3 delta = new Vec3(deltaX, deltaY, deltaZ);
             BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedMk4LaunchPlan(
                     LegacySednaRuntimeBulletConfigs.GRENADE_LASER, origin, delta.normalize(), 1.0F, 0.0F, roll);
             requests.add(new SpawnRequest(SpawnType.GRENADE_LASER_BEAM,
@@ -174,12 +179,14 @@ public final class BulletSpecialSpawnUtil {
             if (target == shooter || target == hitEntity) {
                 continue;
             }
-            Vec3 delta = new Vec3(target.getX() - impactPosition.x,
-                    target.getY() + target.getBbHeight() / 2.0D - impactPosition.y,
-                    target.getZ() - impactPosition.z);
-            if (delta.length() > LIGHTNING_SPLIT_RANGE || delta.lengthSqr() <= 1.0E-7D) {
+            double deltaX = target.getX() - impactPosition.x;
+            double deltaY = target.getY() + target.getBbHeight() / 2.0D - impactPosition.y;
+            double deltaZ = target.getZ() - impactPosition.z;
+            double deltaSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+            if (deltaSqr > LIGHTNING_SPLIT_RANGE_SQ || deltaSqr <= 1.0E-7D) {
                 continue;
             }
+            Vec3 delta = new Vec3(deltaX, deltaY, deltaZ);
             BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedMk4LaunchPlan(subBeam, impactPosition,
                     delta.normalize(), 1.0F, 0.0F, roll);
             requests.add(new SpawnRequest(SpawnType.LIGHTNING_SPLIT_SUB_BEAM, subBeam, plan, shooter, target,

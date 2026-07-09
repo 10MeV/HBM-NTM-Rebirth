@@ -1,20 +1,36 @@
 {
   "type": "hbm_ntm_rebirth:fusion_reactor",
-  "internal_name": "fus.dt",
+  "b": 0.6,
   "duration": 100,
-  "power": 25000,
-  "input_items": [],
+  "g": 0.2,
+  "icon": {
+    "item": "hbm_ntm_rebirth:gas_full",
+    "nbt": "{hbm_fluid:\"HELIUM4\",hbm_fluid_amount:0,hbm_fluid_pressure:0}"
+  },
+  "ignitionTemp": 750000,
   "input_fluids": [
-    { "fluid": "hbm_ntm_rebirth:deuterium", "amount": 10 },
-    { "fluid": "hbm_ntm_rebirth:tritium", "amount": 10 }
+    {
+      "amount": 10,
+      "fluid": "hbm_ntm_rebirth:deuterium"
+    },
+    {
+      "amount": 10,
+      "fluid": "hbm_ntm_rebirth:tritium"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "fus.dt",
+  "outputFlux": 100.0,
+  "outputTemp": 3750000,
+  "output_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:helium4"
+    }
   ],
   "output_items": [],
-  "output_fluids": [{ "fluid": "hbm_ntm_rebirth:helium4", "amount": 1000 }],
   "pools": [],
-  "ignitionTemp": 750000,
-  "outputTemp": 3750000,
-  "outputFlux": 100.0,
+  "power": 25000,
   "r": 1.0,
-  "g": 0.2,
-  "b": 0.2
+  "source_order": 2
 }

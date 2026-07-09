@@ -1,0 +1,11 @@
+{
+    "type":  "hbm_ntm_rebirth:radgen",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:scrap_nuclear"
+                                 }
+              },
+    "power":  50,
+    "duration":  6000,
+    "source_order":  26
+}

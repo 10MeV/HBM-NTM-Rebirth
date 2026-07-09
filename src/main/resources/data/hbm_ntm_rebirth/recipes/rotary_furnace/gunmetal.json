@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:rotary_furnace",
+  "output": {
+    "material": "Gunmetal",
+    "amount": 576
+  },
+  "duration": 200,
+  "steam": 100,
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "minecraft:copper_ingot"
+      },
+      "count": 3,
+      "legacy_ore": "ingotCopper"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/aluminium"
+      },
+      "count": 1,
+      "legacy_ore": "ingotAluminum"
+    }
+  ],
+  "source_order": 6
+}

@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.particle;
 
-import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -15,7 +14,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -99,7 +97,7 @@ public class LegacyDebrisParticle extends Particle {
         float z = (float) (Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z());
         float pitch = Mth.lerp(partialTick, this.prevRotationPitch, this.rotationPitch) * Mth.DEG_TO_RAD;
         float yaw = Mth.lerp(partialTick, this.prevRotationYaw, this.rotationYaw) * Mth.DEG_TO_RAD;
-        Quaternionf rotation = new Quaternionf().rotateY(pitch).rotateZ(yaw);
+        Quaternionf rotation = HbmDeferredParticleRenderer.scratchRotation().rotateY(pitch).rotateZ(yaw);
         int light = this.getLightColor(partialTick);
 
         for (DebrisCell cell : this.cells) {
@@ -126,38 +124,29 @@ public class LegacyDebrisParticle extends Particle {
         float x1 = x0 + 1.0F;
         float y1 = y0 + 1.0F;
         float z1 = z0 + 1.0F;
-        Vector3f[] corners = new Vector3f[] {
-                rotate(x0, y0, z0, rotation, originX, originY, originZ),
-                rotate(x0, y0, z1, rotation, originX, originY, originZ),
-                rotate(x0, y1, z0, rotation, originX, originY, originZ),
-                rotate(x0, y1, z1, rotation, originX, originY, originZ),
-                rotate(x1, y0, z0, rotation, originX, originY, originZ),
-                rotate(x1, y0, z1, rotation, originX, originY, originZ),
-                rotate(x1, y1, z0, rotation, originX, originY, originZ),
-                rotate(x1, y1, z1, rotation, originX, originY, originZ)
-        };
-        putFace(consumer, light, cell, corners[0], corners[2], corners[3], corners[1]);
-        putFace(consumer, light, cell, corners[4], corners[5], corners[7], corners[6]);
-        putFace(consumer, light, cell, corners[0], corners[1], corners[5], corners[4]);
-        putFace(consumer, light, cell, corners[2], corners[6], corners[7], corners[3]);
-        putFace(consumer, light, cell, corners[0], corners[4], corners[6], corners[2]);
-        putFace(consumer, light, cell, corners[1], corners[3], corners[7], corners[5]);
+        putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                x0, y0, z0, x0, y1, z0, x0, y1, z1, x0, y0, z1);
+        putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                x1, y0, z0, x1, y0, z1, x1, y1, z1, x1, y1, z0);
+        putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                x0, y0, z0, x0, y0, z1, x1, y0, z1, x1, y0, z0);
+        putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1);
+        putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0);
+        putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                x0, y0, z1, x0, y1, z1, x1, y1, z1, x1, y0, z1);
     }
 
-    private Vector3f rotate(float x, float y, float z, Quaternionf rotation, float originX, float originY, float originZ) {
-        return new Vector3f(x, y, z).rotate(rotation).add(originX, originY, originZ);
-    }
-
-    private void putFace(VertexConsumer consumer, int light, DebrisCell cell, Vector3f a, Vector3f b, Vector3f c, Vector3f d) {
-        LegacyTexturedQuadRenderer.emitParticleQuadIdentity(consumer, light,
-                particleVertex(cell, a, cell.u0, cell.v1),
-                particleVertex(cell, b, cell.u0, cell.v0),
-                particleVertex(cell, c, cell.u1, cell.v0),
-                particleVertex(cell, d, cell.u1, cell.v1));
-    }
-
-    private LegacyTexturedQuadRenderer.Vertex particleVertex(DebrisCell cell, Vector3f pos, float u, float v) {
-        return LegacyTexturedQuadRenderer.vertexRgbaF(pos.x(), pos.y(), pos.z(), u, v,
+    private void putFace(VertexConsumer consumer, Quaternionf rotation, int light, DebrisCell cell,
+            float originX, float originY, float originZ,
+            float ax, float ay, float az, float bx, float by, float bz,
+            float cx, float cy, float cz, float dx, float dy, float dz) {
+        HbmDeferredParticleRenderer.emitLocalParticleSheetQuad(consumer, light, rotation, originX, originY, originZ,
+                ax, ay, az, cell.u0, cell.v1,
+                bx, by, bz, cell.u0, cell.v0,
+                cx, cy, cz, cell.u1, cell.v0,
+                dx, dy, dz, cell.u1, cell.v1,
                 cell.red, cell.green, cell.blue, this.alpha);
     }
 

@@ -5,6 +5,7 @@
                },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:syngas",
-                  "amount":  2100
-              }
+                  "amount":  4300
+              },
+    "source_order":  39
 }

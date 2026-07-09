@@ -1,19 +1,16 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/heater_oilburner",
-      "y": 90
+      "model": "hbm_ntm_rebirth:block/heater_oilburner"
     },
     "facing=north": {
       "model": "hbm_ntm_rebirth:block/heater_oilburner"
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/heater_oilburner",
-      "y": 180
+      "model": "hbm_ntm_rebirth:block/heater_oilburner"
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/heater_oilburner",
-      "y": 270
+      "model": "hbm_ntm_rebirth:block/heater_oilburner"
     }
   }
 }

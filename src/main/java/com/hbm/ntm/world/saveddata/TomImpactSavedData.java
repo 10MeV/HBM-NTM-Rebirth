@@ -1,17 +1,20 @@
 package com.hbm.ntm.world.saveddata;
 
+import com.hbm.ntm.HbmNtm;
 import net.minecraft.nbt.CompoundTag;
+import com.hbm.util.fauxpointtwelve.NBTTagCompound;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import com.hbm.util.fauxpointtwelve.WorldSavedData;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-public class TomImpactSavedData extends SavedData {
+public class TomImpactSavedData extends WorldSavedData {
     public static final String DATA_NAME = "impactData";
     public static final String KEY = DATA_NAME;
     public static final String key = DATA_NAME;
@@ -30,31 +33,40 @@ public class TomImpactSavedData extends SavedData {
     private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
 
     public TomImpactSavedData() {
+        super(DATA_NAME);
     }
 
     public TomImpactSavedData(String tagName) {
-        this();
+        super(tagName);
+    }
+
+    private static TomImpactSavedData createData() {
+        return new com.hbm.saveddata.TomSaveData(DATA_NAME);
     }
 
     public static TomImpactSavedData load(CompoundTag tag) {
-        TomImpactSavedData data = new TomImpactSavedData();
-        data.dust = tag.getFloat(TAG_DUST);
-        data.fire = tag.getFloat(TAG_FIRE);
-        data.impact = tag.getBoolean(TAG_IMPACT);
-        data.loadDiagnostics = LoadDiagnostics.inspect(tag, data.snapshot());
+        TomImpactSavedData data = createData();
+        NBTTagCompound legacyTag = NBTTagCompound.copyOf(Objects.requireNonNull(tag, "tag"));
+        try {
+            data.readFromNBT(legacyTag);
+        } catch (Exception exception) {
+            HbmNtm.LOGGER.warn(
+                    "Keeping partially loaded TOM impact SavedData after legacy root read failure, matching 1.7.10 MapStorage.",
+                    exception);
+        }
         return data;
     }
 
     public static TomImpactSavedData forLevel(ServerLevel level) {
         TomImpactSavedData data = WorldSavedDataHelper.get(level, DATA_NAME, TomImpactSavedData::load,
-                TomImpactSavedData::new);
+                TomImpactSavedData::createData);
         lastCachedUnsafe = data;
         return data;
     }
 
     public static Optional<TomImpactSavedData> forLevel(Level level) {
         Optional<TomImpactSavedData> data = WorldSavedDataHelper.get(level, DATA_NAME, TomImpactSavedData::load,
-                TomImpactSavedData::new);
+                TomImpactSavedData::createData);
         data.ifPresent(value -> lastCachedUnsafe = value);
         return data;
     }
@@ -76,28 +88,20 @@ public class TomImpactSavedData extends SavedData {
     }
 
     public static Optional<TomImpactSavedData> getExisting(ServerLevel level) {
-        Optional<TomImpactSavedData> data = WorldSavedDataHelper.getExisting(level, DATA_NAME, TomImpactSavedData::load);
-        data.ifPresent(value -> lastCachedUnsafe = value);
-        return data;
+        return WorldSavedDataHelper.getExisting(level, DATA_NAME, TomImpactSavedData::load);
     }
 
     public static Optional<TomImpactSavedData> getExisting(MinecraftServer server) {
-        Optional<TomImpactSavedData> data = WorldSavedDataHelper.getExisting(server, DATA_NAME, TomImpactSavedData::load);
-        data.ifPresent(value -> lastCachedUnsafe = value);
-        return data;
+        return WorldSavedDataHelper.getExisting(server, DATA_NAME, TomImpactSavedData::load);
     }
 
     public static Optional<TomImpactSavedData> getExisting(MinecraftServer server, ResourceKey<Level> dimension) {
-        Optional<TomImpactSavedData> data = WorldSavedDataHelper.getExisting(server, dimension, DATA_NAME,
+        return WorldSavedDataHelper.getExisting(server, dimension, DATA_NAME,
                 TomImpactSavedData::load);
-        data.ifPresent(value -> lastCachedUnsafe = value);
-        return data;
     }
 
     public static Optional<TomImpactSavedData> getExisting(Level level) {
-        Optional<TomImpactSavedData> data = WorldSavedDataHelper.getExisting(level, DATA_NAME, TomImpactSavedData::load);
-        data.ifPresent(value -> lastCachedUnsafe = value);
-        return data;
+        return WorldSavedDataHelper.getExisting(level, DATA_NAME, TomImpactSavedData::load);
     }
 
     public static TomImpactSavedData getData(ServerLevel level) {
@@ -110,14 +114,14 @@ public class TomImpactSavedData extends SavedData {
 
     public static TomImpactSavedData getData(MinecraftServer server) {
         TomImpactSavedData data = WorldSavedDataHelper.get(server, DATA_NAME, TomImpactSavedData::load,
-                TomImpactSavedData::new);
+                TomImpactSavedData::createData);
         lastCachedUnsafe = data;
         return data;
     }
 
     public static Optional<TomImpactSavedData> getData(MinecraftServer server, ResourceKey<Level> dimension) {
         Optional<TomImpactSavedData> data = WorldSavedDataHelper.get(server, dimension, DATA_NAME,
-                TomImpactSavedData::load, TomImpactSavedData::new);
+                TomImpactSavedData::load, TomImpactSavedData::createData);
         data.ifPresent(value -> lastCachedUnsafe = value);
         return data;
     }
@@ -132,34 +136,30 @@ public class TomImpactSavedData extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag) {
-        tag.putFloat(TAG_DUST, dust);
-        tag.putFloat(TAG_FIRE, fire);
-        tag.putBoolean(TAG_IMPACT, impact);
-        return tag;
+        return super.save(tag);
     }
 
-    public void readFromNBT(CompoundTag tag) {
-        TomImpactSavedData loaded = load(tag == null ? new CompoundTag() : tag);
-        dust = loaded.dust;
-        fire = loaded.fire;
-        impact = loaded.impact;
-        loadDiagnostics = loaded.loadDiagnostics;
-        setDirty(false);
+    public void readFromNBT(NBTTagCompound tag) {
+        readLegacyImpactFields(Objects.requireNonNull(tag, "tag"));
+        loadDiagnostics = LoadDiagnostics.inspect(tag, snapshot());
     }
 
-    public void writeToNBT(CompoundTag tag) {
-        save(tag);
+    public void writeToNBT(NBTTagCompound tag) {
+        writeLegacyImpactFields(Objects.requireNonNull(tag, "tag"));
     }
 
     public boolean readLegacyImpact(CompoundTag tag) {
-        TomImpactSavedData loaded = load(tag == null ? new CompoundTag() : tag);
-        loadDiagnostics = loaded.loadDiagnostics;
+        NBTTagCompound legacyTag = NBTTagCompound.copyOf(Objects.requireNonNull(tag, "tag"));
+        Snapshot loaded = readLegacyImpactTag(legacyTag);
+        loadDiagnostics = LoadDiagnostics.inspect(legacyTag, loaded);
         return setImpactState(loaded.dust, loaded.fire, loaded.impact);
     }
 
     public void writeLegacyImpact(CompoundTag tag) {
         if (tag != null) {
-            save(tag);
+            tag.putFloat(TAG_DUST, dust);
+            tag.putFloat(TAG_FIRE, fire);
+            tag.putBoolean(TAG_IMPACT, impact);
         }
     }
 
@@ -170,11 +170,19 @@ public class TomImpactSavedData extends SavedData {
     }
 
     public static boolean hasAnyLegacyImpactTag(CompoundTag tag) {
-        return tag != null && (tag.contains(TAG_DUST) || tag.contains(TAG_FIRE) || tag.contains(TAG_IMPACT));
+        if (tag == null) {
+            return false;
+        }
+        NBTTagCompound legacyTag = NBTTagCompound.copyOf(tag);
+        return legacyTag.hasKey(TAG_DUST) || legacyTag.hasKey(TAG_FIRE) || legacyTag.hasKey(TAG_IMPACT);
     }
 
     public static boolean hasCompleteLegacyImpactTag(CompoundTag tag) {
-        return tag != null && tag.contains(TAG_DUST) && tag.contains(TAG_FIRE) && tag.contains(TAG_IMPACT);
+        if (tag == null) {
+            return false;
+        }
+        NBTTagCompound legacyTag = NBTTagCompound.copyOf(tag);
+        return legacyTag.hasKey(TAG_DUST) && legacyTag.hasKey(TAG_FIRE) && legacyTag.hasKey(TAG_IMPACT);
     }
 
     public static LoadDiagnostics inspectLegacyImpactTag(CompoundTag tag) {
@@ -330,11 +338,12 @@ public class TomImpactSavedData extends SavedData {
 
     public static Snapshot readSnapshotTag(CompoundTag tag) {
         CompoundTag source = tag == null ? new CompoundTag() : tag;
-        return new Snapshot(source.getFloat(TAG_DUST), source.getFloat(TAG_FIRE), source.getBoolean(TAG_IMPACT));
+        return readLegacyImpactTag(source);
     }
 
     public static Snapshot readLegacyImpactTag(CompoundTag tag) {
-        return readSnapshotTag(tag);
+        NBTTagCompound source = NBTTagCompound.copyOf(Objects.requireNonNull(tag, "tag"));
+        return new Snapshot(source.getFloat(TAG_DUST), source.getFloat(TAG_FIRE), source.getBoolean(TAG_IMPACT));
     }
 
     public static Snapshot readPermaSyncData(CompoundTag data) {
@@ -344,6 +353,18 @@ public class TomImpactSavedData extends SavedData {
 
     public void markDirty() {
         setDirty();
+    }
+
+    private void readLegacyImpactFields(NBTTagCompound tag) {
+        this.dust = tag.getFloat(TAG_DUST);
+        this.fire = tag.getFloat(TAG_FIRE);
+        this.impact = tag.getBoolean(TAG_IMPACT);
+    }
+
+    private void writeLegacyImpactFields(NBTTagCompound tag) {
+        tag.setFloat(TAG_DUST, dust);
+        tag.setFloat(TAG_FIRE, fire);
+        tag.setBoolean(TAG_IMPACT, impact);
     }
 
     public record Snapshot(float dust, float fire, boolean impact) {
@@ -405,8 +426,12 @@ public class TomImpactSavedData extends SavedData {
         }
 
         public static LoadDiagnostics inspect(CompoundTag tag, Snapshot snapshot) {
-            CompoundTag source = tag == null ? new CompoundTag() : tag;
             Snapshot value = snapshot == null ? Snapshot.EMPTY : snapshot;
+            if (tag instanceof NBTTagCompound legacyTag) {
+                return new LoadDiagnostics(legacyTag.hasKey(TAG_DUST), legacyTag.hasKey(TAG_FIRE),
+                        legacyTag.hasKey(TAG_IMPACT), Float.isFinite(value.dust()), Float.isFinite(value.fire()));
+            }
+            CompoundTag source = tag == null ? new CompoundTag() : tag;
             return new LoadDiagnostics(source.contains(TAG_DUST), source.contains(TAG_FIRE),
                     source.contains(TAG_IMPACT), Float.isFinite(value.dust()), Float.isFinite(value.fire()));
         }

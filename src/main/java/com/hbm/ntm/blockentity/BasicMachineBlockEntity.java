@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.hbm.ntm.item.ItemPressStamp;
 
+import java.util.Comparator;
 import java.util.List;
 
 public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyLoadedTile {
@@ -351,6 +352,8 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     private PressRecipe findMatchingPressRecipe(Level level) {
         SimpleContainer container = new SimpleContainer(items.getStackInSlot(SLOT_INPUT), items.getStackInSlot(SLOT_STAMP));
         return level.getRecipeManager().getAllRecipesFor(ModRecipes.PRESS.type().get()).stream()
+                .sorted(Comparator.comparingInt(PressRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
                 .filter(recipe -> recipe.matches(container, level))
                 .filter(this::canFitOutput)
                 .findFirst()

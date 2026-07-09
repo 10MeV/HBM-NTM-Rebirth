@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "M": {
+      "item": "hbm_ntm_rebirth:motor"
+    },
+    "S": {
+      "tag": "forge:ingots/steel"
+    },
+    "W": {
+      "item": "minecraft:red_wool"
+    }
+  },
+  "pattern": [
+    "M M",
+    "S S",
+    "W W"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:dieselsuit_legs"
+  },
+  "show_notification": true
+}

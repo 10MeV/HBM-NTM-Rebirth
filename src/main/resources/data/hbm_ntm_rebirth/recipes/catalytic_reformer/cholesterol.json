@@ -15,5 +15,6 @@
     "output2":  {
                     "fluid":  "hbm_ntm_rebirth:reformgas",
                     "amount":  35
-                }
+                },
+    "source_order":  8
 }

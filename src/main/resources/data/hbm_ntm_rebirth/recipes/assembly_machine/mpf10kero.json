@@ -1,43 +1,37 @@
-﻿{
-    "type":  "hbm_ntm_rebirth:assembly_machine",
-    "internal_name":  "ass.mpf10kero",
-    "duration":  100,
-    "power":  100,
-    "input_items":  [
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:seg_10"
-                                           },
-                            "count":  2
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:plates/aluminium"
-                                           },
-                            "count":  12,
-                            "legacy_ore":  "plateAluminum"
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:plates/steel"
-                                           },
-                            "count":  3,
-                            "legacy_ore":  "plateSteel"
-                        }
-                    ],
-    "input_fluids":  [
-
-                     ],
-    "output_items":  [
-                         {
-                             "item":  "hbm_ntm_rebirth:mp_fuselage_10_kerosene"
-                         }
-                     ],
-    "output_fluids":  [
-
-                      ],
-    "pools":  [
-
-              ],
-    "source_order":  289
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:seg_10"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:plates/aluminium"
+      },
+      "legacy_ore": "plateAluminum"
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    }
+  ],
+  "internal_name": "ass.mpf10kero",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:mp_fuselage_10_kerosene"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 289
 }

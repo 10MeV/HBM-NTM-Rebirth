@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/steel"
+    }
+  },
+  "pattern": [
+    "II",
+    " I",
+    " I"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:crowbar"
+  },
+  "show_notification": true
+}

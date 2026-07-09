@@ -42,6 +42,10 @@ public class MaterialShapes {
     private final int quantity;
     public final String[] prefixes;
 
+    public static void registerCompatShapes() {
+        // GT6 ore-dictionary compat shapes are intentionally not restored in the modern port.
+    }
+
     private MaterialShapes(int quantity, String... prefixes) {
         this.quantity = quantity;
         this.prefixes = prefixes;

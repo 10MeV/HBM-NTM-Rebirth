@@ -2,7 +2,8 @@
   "type": "hbm_ntm_rebirth:crystallizer",
   "duration": 600,
   "fluid": { "fluid": "PEROXIDE", "amount": 500 },
-  "input": { "ingredient": { "tag": "forge:ores/diamond" } },
+  "input": { "ingredient": { "tag": "forge:ores/diamond" }, "legacy_ore": "oreDiamond" },
   "output": { "item": "hbm_ntm_rebirth:crystal_diamond" },
-  "productivity": 0.05
+  "productivity": 0.05,
+  "source_order": 5
 }

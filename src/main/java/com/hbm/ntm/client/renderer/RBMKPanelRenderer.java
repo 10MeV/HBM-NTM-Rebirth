@@ -11,47 +11,59 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class RBMKPanelRenderer implements BlockEntityRenderer<RBMKPanelBlockEntity> {
     public RBMKPanelRenderer(BlockEntityRendererProvider.Context context) {
     }
 
     @Override
+    public boolean shouldRender(RBMKPanelBlockEntity panel, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(panel, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(panel, getViewDistance());
+    }
+
+    @Override
     public void render(RBMKPanelBlockEntity panel, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        BlockState state = panel.getBlockState();
-        Direction facing = state.hasProperty(RBMKPanelBlock.FACING)
-                ? state.getValue(RBMKPanelBlock.FACING) : Direction.NORTH;
-        int light = LegacyRenderLighting.resolveMultiblockLight(panel, packedLight);
-
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
-        switch (panel.panelType()) {
-            case GAUGE -> LegacyRbmkPanelRenderer.renderGauges(poseStack, buffer, light, packedOverlay,
-                    panel.gauges(), partialTick);
-            case GRAPH -> LegacyRbmkPanelRenderer.renderGraphs(poseStack, buffer, light, packedOverlay,
-                    panel.graphs());
-            case INDICATOR -> LegacyRbmkPanelRenderer.renderIndicators(poseStack, buffer, light, packedOverlay,
-                    panel.indicators());
-            case KEYPAD -> LegacyRbmkPanelRenderer.renderKeys(poseStack, buffer, light, packedOverlay,
-                    panel.keys());
-            case LEVER -> LegacyRbmkPanelRenderer.renderLevers(poseStack, buffer, light, packedOverlay,
-                    panel.levers(), partialTick);
-            case NUMITRON -> LegacyRbmkPanelRenderer.renderNumitrons(poseStack, buffer, light, packedOverlay,
-                    panel.numitrons());
-            case TERMINAL -> {
-                Font font = Minecraft.getInstance().font;
-                LegacyRbmkMachineRenderer.renderTerminalModel(poseStack, buffer, light, packedOverlay);
-                LegacyRbmkMachineRenderer.renderTerminalText(font, poseStack, buffer, panel.terminal(), "",
-                        (System.currentTimeMillis() / 500L) % 2L == 0L);
-            }
-            case DISPLAY -> {
-                LegacyRbmkDisplayRenderer.renderDisplay(poseStack, buffer, light, packedOverlay,
-                        panel.displayColumns());
-            }
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(panel, getViewDistance())) {
+            return;
         }
-        poseStack.popPose();
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(panel)) {
+            BlockState state = panel.getBlockState();
+            Direction facing = state.hasProperty(RBMKPanelBlock.FACING)
+                    ? state.getValue(RBMKPanelBlock.FACING) : Direction.NORTH;
+            int light = LegacyRenderLighting.resolveMultiblockLight(panel, packedLight);
+
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.0D, 0.5D);
+            poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
+            switch (panel.panelType()) {
+                case GAUGE -> LegacyRbmkPanelRenderer.renderGauges(poseStack, buffer, light, packedOverlay,
+                        panel.gauges(), partialTick);
+                case GRAPH -> LegacyRbmkPanelRenderer.renderGraphs(poseStack, buffer, light, packedOverlay,
+                        panel.graphs());
+                case INDICATOR -> LegacyRbmkPanelRenderer.renderIndicators(poseStack, buffer, light, packedOverlay,
+                        panel.indicators());
+                case KEYPAD -> LegacyRbmkPanelRenderer.renderKeys(poseStack, buffer, light, packedOverlay,
+                        panel.keys());
+                case LEVER -> LegacyRbmkPanelRenderer.renderLevers(poseStack, buffer, light, packedOverlay,
+                        panel.levers(), partialTick);
+                case NUMITRON -> LegacyRbmkPanelRenderer.renderNumitrons(poseStack, buffer, light, packedOverlay,
+                        panel.numitrons());
+                case TERMINAL -> {
+                    Font font = Minecraft.getInstance().font;
+                    LegacyRbmkMachineRenderer.renderTerminalModel(poseStack, buffer, light, packedOverlay);
+                    LegacyRbmkMachineRenderer.renderTerminalText(font, poseStack, buffer, panel.terminal(), "",
+                            (System.currentTimeMillis() / 500L) % 2L == 0L);
+                }
+                case DISPLAY -> {
+                    LegacyRbmkDisplayRenderer.renderDisplay(poseStack, buffer, light, packedOverlay,
+                            panel.displayColumnsRenderView());
+                }
+            }
+            poseStack.popPose();
+        }
     }
 
     private static float legacyYaw(Direction facing) {

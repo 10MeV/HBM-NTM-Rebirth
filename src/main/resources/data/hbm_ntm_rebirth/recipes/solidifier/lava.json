@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:lava",
                   "amount":  1000
-              }
+              },
+    "source_order":  1
 }

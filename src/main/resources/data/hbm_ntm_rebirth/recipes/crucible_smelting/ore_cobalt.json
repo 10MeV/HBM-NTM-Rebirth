@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/cobalt"
+    },
+    "legacy_ore": "oreCobalt"
+  },
+  "output": [
+    {
+      "amount": 72,
+      "material": "Cobalt"
+    },
+    {
+      "amount": 162,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 36
+}

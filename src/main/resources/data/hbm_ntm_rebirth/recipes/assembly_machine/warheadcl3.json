@@ -1,17 +1,29 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.warheadcl3",
   "duration": 400,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "item": "hbm_ntm_rebirth:warhead_generic_large" }, "count": 1 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:pellet_cluster" }, "count": 8 }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:warhead_cluster_large" }
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:warhead_generic_large"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:pellet_cluster"
+      }
+    }
   ],
+  "internal_name": "ass.warheadcl3",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:warhead_cluster_large"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 258
 }

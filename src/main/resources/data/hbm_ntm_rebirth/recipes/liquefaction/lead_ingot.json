@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:ingots/lead"
+  "source_order": 9,
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/lead"
+    },
+    "count": 1,
+    "legacy_ore": "ingotLead"
   },
   "output": {
     "amount": 100,

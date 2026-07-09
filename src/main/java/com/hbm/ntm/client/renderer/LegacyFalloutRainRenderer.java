@@ -3,7 +3,9 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUvAnimation;
+import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -58,22 +60,42 @@ public final class LegacyFalloutRainRenderer {
 
     public static ColumnStyle columnStyle(Random random, int timer, float partialTick,
             double distX, double distZ, int renderLayerCount) {
-        Random safeRandom = random == null ? new Random(0L) : random;
-        float fallVariation = FALL_VARIATION_BASE + safeRandom.nextFloat() * FALL_VARIATION_SPAN;
-        float swayVariation = safeRandom.nextFloat();
-        float distanceMod = Mth.sqrt((float) (distX * distX + distZ * distZ)) / Math.max(1, renderLayerCount);
-        float alpha = ((1.0F - distanceMod * distanceMod) * ALPHA_DISTANCE_SCALE + ALPHA_BASE);
-        return new ColumnStyle(
-                fallVariation,
-                swayVariation,
-                (float) LegacyUvAnimation.falloutRainSwayLoop(timer, partialTick),
-                alpha);
+        Random safeRandom = random == null ? LegacyRenderRandom.seeded(0L) : random;
+        return new ColumnStyle(fallVariation(safeRandom), swayVariation(safeRandom), swayLoop(timer, partialTick),
+                alpha(distX, distZ, renderLayerCount));
     }
 
     public static HeightSpan heightSpan(int centerY, int renderLayerCount, int precipitationHeight) {
-        int minHeight = Math.max(centerY - renderLayerCount, precipitationHeight);
-        int maxHeight = Math.max(centerY + renderLayerCount, precipitationHeight);
-        return new HeightSpan(minHeight, maxHeight);
+        return new HeightSpan(minHeight(centerY, renderLayerCount, precipitationHeight),
+                maxHeight(centerY, renderLayerCount, precipitationHeight));
+    }
+
+    public static int minHeight(int centerY, int renderLayerCount, int precipitationHeight) {
+        return Math.max(centerY - renderLayerCount, precipitationHeight);
+    }
+
+    public static int maxHeight(int centerY, int renderLayerCount, int precipitationHeight) {
+        return Math.max(centerY + renderLayerCount, precipitationHeight);
+    }
+
+    public static float fallVariation(Random random) {
+        Random safeRandom = random == null ? LegacyRenderRandom.seeded(0L) : random;
+        return FALL_VARIATION_BASE + safeRandom.nextFloat() * FALL_VARIATION_SPAN;
+    }
+
+    public static float swayVariation(Random random) {
+        Random safeRandom = random == null ? LegacyRenderRandom.seeded(0L) : random;
+        return safeRandom.nextFloat();
+    }
+
+    public static float swayLoop(int timer, float partialTick) {
+        return (float) LegacyUvAnimation.falloutRainSwayLoop(timer, partialTick);
+    }
+
+    public static float alpha(double distX, double distZ, int renderLayerCount) {
+        double range = Math.max(1, renderLayerCount);
+        double distanceModSqr = (distX * distX + distZ * distZ) / (range * range);
+        return (float) ((1.0D - distanceModSqr) * ALPHA_DISTANCE_SCALE + ALPHA_BASE);
     }
 
     public static int sampleLightY(int precipitationHeight, int cameraY) {
@@ -91,26 +113,50 @@ public final class LegacyFalloutRainRenderer {
                 || height.minY() == height.maxY()) {
             return;
         }
-        double u0 = LegacyUvAnimation.falloutRainU(0.0D, style.fallVariation(), FALL_SPEED);
-        double u1 = LegacyUvAnimation.falloutRainU(1.0D, style.fallVariation(), FALL_SPEED);
-        double minV = LegacyUvAnimation.falloutRainV(height.minY(), style.swayLoop(), style.swayVariation(), FALL_SPEED);
-        double maxV = LegacyUvAnimation.falloutRainV(height.maxY(), style.swayLoop(), style.swayVariation(), FALL_SPEED);
-        int alpha = LegacyTexturedQuadRenderer.alpha(style.alpha());
+        renderColumn(texture, poseStack, buffer, layerX, layerZ, height.minY(), height.maxY(), rainX, rainZ,
+                style.fallVariation(), style.swayVariation(), style.swayLoop(), style.alpha(), packedLight,
+                originX, originY, originZ);
+    }
 
-        LegacyTexturedQuadRenderer.quad(texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
-                LegacyTexturedRenderMode.TRANSLUCENT, 0.0F, 1.0F, 0.0F,
-                LegacyTexturedQuadRenderer.vertex(
-                layerX - rainX + 0.5D - originX, height.minY() - originY, layerZ - rainZ + 0.5D - originZ,
-                        u0, minV, 0xFFFFFF, alpha),
-                LegacyTexturedQuadRenderer.vertex(
-                layerX + rainX + 0.5D - originX, height.minY() - originY, layerZ + rainZ + 0.5D - originZ,
-                        u1, minV, 0xFFFFFF, alpha),
-                LegacyTexturedQuadRenderer.vertex(
-                layerX + rainX + 0.5D - originX, height.maxY() - originY, layerZ + rainZ + 0.5D - originZ,
-                        u1, maxV, 0xFFFFFF, alpha),
-                LegacyTexturedQuadRenderer.vertex(
-                layerX - rainX + 0.5D - originX, height.maxY() - originY, layerZ - rainZ + 0.5D - originZ,
-                        u0, maxV, 0xFFFFFF, alpha));
+    public static void renderColumn(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
+            int layerX, int layerZ, int minHeight, int maxHeight, float rainX, float rainZ,
+            float fallVariation, float swayVariation, float swayLoop, float alpha,
+            int packedLight, double originX, double originY, double originZ) {
+        if (texture == null || poseStack == null || buffer == null || minHeight == maxHeight) {
+            return;
+        }
+        VertexConsumer consumer = LegacyTexturedQuadRenderer.vertexAlphaConsumer(texture, buffer,
+                LegacyTexturedRenderMode.TRANSLUCENT);
+        renderColumn(consumer, poseStack.last(), layerX, layerZ, minHeight, maxHeight, rainX, rainZ,
+                fallVariation, swayVariation, swayLoop, alpha, packedLight, originX, originY, originZ);
+    }
+
+    public static void renderColumn(VertexConsumer consumer, PoseStack.Pose pose,
+            int layerX, int layerZ, int minHeight, int maxHeight, float rainX, float rainZ,
+            float fallVariation, float swayVariation, float swayLoop, float alpha,
+            int packedLight, double originX, double originY, double originZ) {
+        if (consumer == null || pose == null || minHeight == maxHeight) {
+            return;
+        }
+        double u0 = LegacyUvAnimation.falloutRainU(0.0D, fallVariation, FALL_SPEED);
+        double u1 = LegacyUvAnimation.falloutRainU(1.0D, fallVariation, FALL_SPEED);
+        double minV = LegacyUvAnimation.falloutRainV(minHeight, swayLoop, swayVariation, FALL_SPEED);
+        double maxV = LegacyUvAnimation.falloutRainV(maxHeight, swayLoop, swayVariation, FALL_SPEED);
+        int alphaInt = LegacyTexturedQuadRenderer.alpha(alpha);
+        double x0 = layerX - rainX + 0.5D - originX;
+        double z0 = layerZ - rainZ + 0.5D - originZ;
+        double x1 = layerX + rainX + 0.5D - originX;
+        double z1 = layerZ + rainZ + 0.5D - originZ;
+        double minY = minHeight - originY;
+        double maxY = maxHeight - originY;
+
+        LegacyTexturedQuadRenderer.quadWithVertexAlpha(consumer, pose, packedLight, OverlayTexture.NO_OVERLAY,
+                0.0F, 1.0F, 0.0F,
+                x0, minY, z0, u0, minV, alphaInt,
+                x1, minY, z1, u1, minV, alphaInt,
+                x1, maxY, z1, u1, maxV, alphaInt,
+                x0, maxY, z0, u0, maxV, alphaInt,
+                0xFFFFFF);
     }
 
     public record HeightSpan(int minY, int maxY) {

@@ -42,6 +42,7 @@ public final class HazardRegistry {
         TAG_BLACKLIST.clear();
         STACK_BLACKLIST.clear();
         TRANSFORMERS.clear();
+        com.hbm.hazard.HazardSystem.clearLegacyMirrors();
         registerTransformers();
         registerVanillaHazards();
         registerLegacyTagHazards();
@@ -120,11 +121,17 @@ public final class HazardRegistry {
         TRANSFORMERS.remove(transformer);
     }
 
-    private static void registerTransformers() {
-        TRANSFORMERS.add(new NbtRadiationHazardTransformer());
+    public static void registerDefaultTransformers() {
+        TRANSFORMERS.clear();
+        com.hbm.hazard.HazardSystem.trafos.clear();
+        com.hbm.hazard.HazardSystem.trafos.add(new com.hbm.hazard.transformer.HazardTransformerRadiationNBT());
         // LBSM hazard bypasses are intentionally not modernized; keep legacy standard-mode behavior.
-        TRANSFORMERS.add(new ContainerRadiationHazardTransformer());
-        TRANSFORMERS.add(new MeRadiationHazardTransformer());
+        com.hbm.hazard.HazardSystem.trafos.add(new com.hbm.hazard.transformer.HazardTransformerRadiationContainer());
+        com.hbm.hazard.HazardSystem.trafos.add(new com.hbm.hazard.transformer.HazardTransformerRadiationME());
+    }
+
+    private static void registerTransformers() {
+        registerDefaultTransformers();
     }
 
     private static void registerVanillaHazards() {
@@ -452,7 +459,6 @@ public final class HazardRegistry {
         registerBlockRad("block_euphemium_cluster", 500_000.0F);
         registerBlockRad("block_schrabidium_cluster", RadiationConstants.SA326 * RadiationConstants.BLOCK);
         registerBlockRad("block_tritium", 0.1F);
-        registerRad("fallout", RadiationConstants.FALLOUT * RadiationConstants.POWDER_MULTIPLIER * 2.0F);
         registerBlockRad("block_fallout", RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER);
         registerBlockByName("yellow_barrel", HazardType.RADIATION, RadiationConstants.WASTE * RadiationConstants.INGOT * 10.0F);
         registerBlockRad("ore_gneiss_gas", 1.0F);
@@ -904,14 +910,17 @@ public final class HazardRegistry {
     }
 
     public static void register(Item item, HazardType type, float level) {
-        ITEM_HAZARDS.computeIfAbsent(item, key -> new HazardData()).addEntry(type, level);
+        HazardData data = ITEM_HAZARDS.computeIfAbsent(item, key -> new com.hbm.hazard.HazardData());
+        data.addEntry(type, level);
+        ITEM_HAZARDS.put(item, com.hbm.hazard.HazardSystem.mirrorItem(item, data));
     }
 
     public static void register(Item item, HazardData data) {
-        ITEM_HAZARDS.put(item, data);
+        ITEM_HAZARDS.put(item, com.hbm.hazard.HazardSystem.mirrorItem(item, data));
     }
 
     public static HazardData remove(Item item) {
+        com.hbm.hazard.HazardSystem.unmirrorItem(item);
         return ITEM_HAZARDS.remove(item);
     }
 
@@ -938,14 +947,17 @@ public final class HazardRegistry {
     }
 
     public static void registerTag(TagKey<Item> tag, HazardType type, float level) {
-        TAG_HAZARDS.computeIfAbsent(tag, key -> new HazardData()).addEntry(type, level);
+        HazardData data = TAG_HAZARDS.computeIfAbsent(tag, key -> new com.hbm.hazard.HazardData());
+        data.addEntry(type, level);
+        TAG_HAZARDS.put(tag, com.hbm.hazard.HazardSystem.mirrorTag(tag, data));
     }
 
     public static void registerTag(TagKey<Item> tag, HazardData data) {
-        TAG_HAZARDS.put(tag, data);
+        TAG_HAZARDS.put(tag, com.hbm.hazard.HazardSystem.mirrorTag(tag, data));
     }
 
     public static HazardData removeTag(TagKey<Item> tag) {
+        com.hbm.hazard.HazardSystem.unmirrorTag(tag);
         return TAG_HAZARDS.remove(tag);
     }
 
@@ -973,14 +985,25 @@ public final class HazardRegistry {
         if (stack.isEmpty()) {
             return;
         }
-        STACK_HAZARDS.computeIfAbsent(HazardStackKey.of(stack), key -> new HazardData()).addEntry(type, level);
+        HazardStackKey key = HazardStackKey.of(stack);
+        HazardData data = STACK_HAZARDS.computeIfAbsent(key, ignored -> new com.hbm.hazard.HazardData());
+        data.addEntry(type, level);
+        STACK_HAZARDS.put(key, com.hbm.hazard.HazardSystem.mirrorStack(stack, data));
     }
 
     public static void registerStack(ItemStack stack, HazardData data) {
         if (stack.isEmpty()) {
             return;
         }
-        STACK_HAZARDS.put(HazardStackKey.of(stack), data);
+        STACK_HAZARDS.put(HazardStackKey.of(stack), com.hbm.hazard.HazardSystem.mirrorStack(stack, data));
+    }
+
+    public static HazardData removeStack(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return null;
+        }
+        com.hbm.hazard.HazardSystem.unmirrorStack(stack);
+        return STACK_HAZARDS.remove(HazardStackKey.of(stack));
     }
 
     public static void registerLegacyStateVariant(Item item, int variant, HazardType type, float level) {
@@ -1146,16 +1169,27 @@ public final class HazardRegistry {
 
     public static void blacklist(TagKey<Item> tag) {
         TAG_BLACKLIST.add(tag);
+        com.hbm.hazard.HazardSystem.mirrorTagBlacklist(tag);
     }
 
     public static boolean unblacklist(TagKey<Item> tag) {
+        com.hbm.hazard.HazardSystem.unmirrorTagBlacklist(tag);
         return TAG_BLACKLIST.remove(tag);
     }
 
     public static void blacklist(ItemStack stack) {
         if (!stack.isEmpty()) {
             STACK_BLACKLIST.add(HazardStackKey.of(stack));
+            com.hbm.hazard.HazardSystem.mirrorStackBlacklist(stack);
         }
+    }
+
+    public static boolean unblacklist(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        com.hbm.hazard.HazardSystem.unmirrorStackBlacklist(stack);
+        return STACK_BLACKLIST.remove(HazardStackKey.of(stack));
     }
 
     public static void blacklistLegacyMeta(ResourceLocation legacyId, int legacyMeta) {

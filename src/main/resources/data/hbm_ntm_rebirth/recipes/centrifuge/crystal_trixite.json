@@ -1,10 +1,29 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/trixite" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_trixite"
+    },
+    "legacy_id": "hbm:crystal_trixite",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_plutonium", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_cobalt", "count": 3 },
-    { "item": "hbm_ntm_rebirth:powder_niobium", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_nitan_mix" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_plutonium"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:powder_cobalt"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_niobium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_nitan_mix"
+    }
+  ],
+  "source_order": 52
 }

@@ -1,6 +1,6 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.DfcMachineBlock;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
@@ -111,8 +111,8 @@ public class DfcInjectorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private Direction facing() {
-        return getBlockState().hasProperty(HorizontalMachineBlock.FACING)
-                ? getBlockState().getValue(HorizontalMachineBlock.FACING)
+        return getBlockState().hasProperty(DfcMachineBlock.FACING)
+                ? getBlockState().getValue(DfcMachineBlock.FACING)
                 : Direction.NORTH;
     }
 
@@ -157,7 +157,6 @@ public class DfcInjectorBlockEntity extends HbmFluidNetworkBlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
-        tag.putInt("beam", beam);
         fuel1.writeToNbt(tag, "fuel1");
         fuel2.writeToNbt(tag, "fuel2");
     }
@@ -166,9 +165,21 @@ public class DfcInjectorBlockEntity extends HbmFluidNetworkBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
-        beam = tag.getInt("beam");
         fuel1.readFromNbt(tag, "fuel1");
         fuel2.readFromNbt(tag, "fuel2");
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("beam", beam);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        beam = tag.getInt("beam");
     }
 
     @Override

@@ -1,6 +1,6 @@
 {
   "type": "minecraft:crafting_shaped",
-  "category": "combat",
+  "category": "equipment",
   "key": {
     "B": {
       "item": "hbm_ntm_rebirth:battery_lead"

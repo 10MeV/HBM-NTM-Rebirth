@@ -3,6 +3,7 @@ package com.hbm.ntm.recipe;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.registry.ModItems;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,9 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.RegistryObject;
 
 public final class FuelPoolRecipes {
+    private static final Comparator<FuelPoolRecipe> RECIPE_ORDER =
+            Comparator.comparingInt(FuelPoolRecipe::sourceOrder)
+                    .thenComparing(recipe -> recipe.getId().toString());
     private static final List<String> LEGACY_DEPLETED_WASTE_ITEMS = List.of(
             "waste_natural_uranium",
             "waste_uranium",
@@ -44,7 +48,7 @@ public final class FuelPoolRecipes {
     }
 
     public static boolean isInput(Level level, ItemStack stack) {
-        return findRecipe(level, stack) != null || isInput(stack);
+        return level == null ? isInput(stack) : findRecipe(level, stack) != null;
     }
 
     public static ItemStack cool(ItemStack stack) {
@@ -59,8 +63,11 @@ public final class FuelPoolRecipes {
     }
 
     public static ItemStack cool(Level level, ItemStack stack) {
+        if (level == null) {
+            return cool(stack);
+        }
         FuelPoolRecipe recipe = findRecipe(level, stack);
-        return recipe == null ? cool(stack) : recipe.cool();
+        return recipe == null ? ItemStack.EMPTY : recipe.cool();
     }
 
     public static boolean canExtract(ItemStack stack) {
@@ -82,7 +89,6 @@ public final class FuelPoolRecipes {
 
     public static List<DisplayRecipe> displayRecipes() {
         List<DisplayRecipe> display = new ArrayList<>();
-        recipes().forEach((input, output) -> display.add(new DisplayRecipe(new ItemStack(input), new ItemStack(output))));
         for (String name : LEGACY_DEPLETED_WASTE_ITEMS) {
             RegistryObject<Item> item = ModItems.legacyItem(name);
             if (item != null) {
@@ -91,6 +97,7 @@ public final class FuelPoolRecipes {
                         DepletedFuelItem.stack(item.get(), DepletedFuelItem.COLD_DAMAGE)));
             }
         }
+        recipes().forEach((input, output) -> display.add(new DisplayRecipe(new ItemStack(input), new ItemStack(output))));
         return List.copyOf(display);
     }
 
@@ -99,12 +106,15 @@ public final class FuelPoolRecipes {
             return displayRecipes();
         }
         List<DisplayRecipe> display = new ArrayList<>();
-        for (FuelPoolRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.FUEL_POOL.type().get())) {
+        for (FuelPoolRecipe recipe : level.getRecipeManager()
+                .getAllRecipesFor(ModRecipes.FUEL_POOL.type().get())
+                .stream()
+                .sorted(RECIPE_ORDER)
+                .toList()) {
             for (ItemStack input : recipe.input().displayStacks()) {
                 display.add(new DisplayRecipe(input, recipe.cool()));
             }
         }
-        display.addAll(displayRecipes());
         return List.copyOf(display);
     }
 
@@ -112,7 +122,11 @@ public final class FuelPoolRecipes {
         if (level == null || stack.isEmpty()) {
             return null;
         }
-        for (FuelPoolRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModRecipes.FUEL_POOL.type().get())) {
+        for (FuelPoolRecipe recipe : level.getRecipeManager()
+                .getAllRecipesFor(ModRecipes.FUEL_POOL.type().get())
+                .stream()
+                .sorted(RECIPE_ORDER)
+                .toList()) {
             if (recipe.matches(stack)) {
                 return recipe;
             }

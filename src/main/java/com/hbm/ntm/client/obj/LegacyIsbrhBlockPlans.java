@@ -2413,8 +2413,23 @@ public final class LegacyIsbrhBlockPlans {
                 ? (outlet ? "iconSideUpperOutlet" : "iconSideUpper")
                 : (outlet ? "iconSideOutlet" : "iconSide");
         faces.add(foundryBoundFace(outward, outerIcon, bounds, colorRole, false));
-        faces.add(foundryBoundFace(outward.getOpposite(), con.posY() ? "iconBottom" : "iconInner",
-                bounds, colorRole, false));
+        String innerIcon = con.posY() ? "iconBottom" : "iconInner";
+        faces.add(foundryBoundFace(outward.getOpposite(), innerIcon, bounds, colorRole, false));
+        if (outward.getAxis() == Direction.Axis.X) {
+            if (con.posZ()) {
+                faces.add(foundryBoundFace(Direction.SOUTH, innerIcon, bounds, "z", false));
+            }
+            if (con.negZ()) {
+                faces.add(foundryBoundFace(Direction.NORTH, innerIcon, bounds, "z", false));
+            }
+        } else {
+            if (con.posX()) {
+                faces.add(foundryBoundFace(Direction.EAST, innerIcon, bounds, "x", false));
+            }
+            if (con.negX()) {
+                faces.add(foundryBoundFace(Direction.WEST, innerIcon, bounds, "x", false));
+            }
+        }
         faces.add(foundryBoundFace(Direction.UP, "iconTop", bounds, "top", false));
     }
 

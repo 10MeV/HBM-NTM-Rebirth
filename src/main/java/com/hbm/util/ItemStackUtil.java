@@ -14,6 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 
@@ -462,6 +463,14 @@ public final class ItemStackUtil {
 
     public static void spillItems(Level level, BlockPos pos, Container items) {
         HbmItemStackUtil.spillItems(level, pos, items);
+    }
+
+    public static void spillItems(Level level, int x, int y, int z, Block block, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, x, y, z, block, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, Block block, RandomSource random) {
+        HbmItemStackUtil.spillItems(level, pos, block, random);
     }
 
     public static void spillStack(Level level, BlockPos pos, ItemStack stack, RandomSource random) {

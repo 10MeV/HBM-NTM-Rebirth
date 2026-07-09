@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "F": {
+      "tag": "forge:plates/iron"
+    },
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    }
+  },
+  "pattern": [
+    " D ",
+    "DID",
+    " F "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:attachment_mask_mono"
+  },
+  "show_notification": true
+}

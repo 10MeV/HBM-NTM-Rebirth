@@ -9,14 +9,24 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class CustomNukeRenderer implements BlockEntityRenderer<CustomNukeBlockEntity> {
     public CustomNukeRenderer(BlockEntityRendererProvider.Context context) {
     }
 
     @Override
+    public boolean shouldRender(CustomNukeBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(CustomNukeBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
         BlockState state = blockEntity.getBlockState();
         Direction facing = state.hasProperty(NuclearDeviceBlock.FACING)
                 ? state.getValue(NuclearDeviceBlock.FACING)
@@ -26,7 +36,9 @@ public class CustomNukeRenderer implements BlockEntityRenderer<CustomNukeBlockEn
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(NuclearDeviceBlock.legacyRenderYaw(NuclearDeviceBlock.Kind.BOY, facing)));
         NuclearDeviceRenderer.applyCustomNukeLegacyWorldTranslation(poseStack);
-        NuclearDeviceRenderer.renderCustomNuke(poseStack, buffer, packedLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            NuclearDeviceRenderer.renderCustomNuke(poseStack, buffer, packedLight, packedOverlay);
+        }
         poseStack.popPose();
     }
 

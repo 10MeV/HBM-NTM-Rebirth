@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:difurnace",
+  "internal_name": "difurnace.canisterNapalm",
+  "source_order": 6,
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:canister_full"
+      },
+      "count": 1,
+      "partial_nbt": "{hbm_fluid:\"GASOLINE\",hbm_fluid_amount:1000,hbm_fluid_pressure:0}",
+      "legacy_item": "canister_full"
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:slime_ball"
+      },
+      "count": 1,
+      "legacy_ore": "slimeball"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:canister_napalm"
+  }
+}

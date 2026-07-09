@@ -1,0 +1,33 @@
+{
+  "export_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports",
+  "exported_recipe_count": 23,
+  "handlers": [
+    {
+      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmIrradiation.json",
+      "exported_recipe_count": 19,
+      "failures": [],
+      "legacy_class": "OutgasserRecipes",
+      "legacy_file": "hbmIrradiation.json",
+      "modern_recipe_type": "outgasser",
+      "skipped_recipe_count": 0,
+      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/outgasser",
+      "status": "exported"
+    },
+    {
+      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmExposureChamber.json",
+      "exported_recipe_count": 4,
+      "failures": [],
+      "legacy_class": "ExposureChamberRecipes",
+      "legacy_file": "hbmExposureChamber.json",
+      "modern_recipe_type": "exposure_chamber",
+      "skipped_recipe_count": 0,
+      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/exposure_chamber",
+      "status": "exported"
+    }
+  ],
+  "note": "Old reactor irradiation JSON exports are datapack/debug tooling only; main-resource datapack recipes remain the runtime source of truth.",
+  "skipped_recipe_count": 0,
+  "source_root": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes",
+  "status": "exported",
+  "written_file_count": 2
+}

@@ -5,10 +5,11 @@
                },
     "byproduct":  {
                       "fluid":  "hbm_ntm_rebirth:oil_coker",
-                      "amount":  1500
+                      "amount":  3100
                   },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:smear",
-                  "amount":  15000
-              }
+                  "amount":  31000
+              },
+    "source_order":  3
 }

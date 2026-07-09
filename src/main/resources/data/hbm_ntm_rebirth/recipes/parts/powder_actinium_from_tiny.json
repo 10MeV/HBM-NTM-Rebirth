@@ -1,0 +1,17 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "misc",
+    "pattern":  [
+                    "###",
+                    "###",
+                    "###"
+                ],
+    "key":  {
+                "#":  {
+                          "item":  "hbm_ntm_rebirth:powder_actinium_tiny"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:powder_actinium"
+               }
+}

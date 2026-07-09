@@ -1,8 +1,34 @@
 {
   "variants": {
-    "facing=north": { "model": "hbm_ntm_rebirth:block/reactors/zirnox" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/reactors/zirnox", "y": 90 },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/reactors/zirnox", "y": 180 },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/reactors/zirnox", "y": 270 }
+    "facing=east,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/reactors/zirnox"
+    },
+    "facing=east,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/reactor_zirnox"
+    },
+    "facing=north,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/reactors/zirnox",
+      "y": 90
+    },
+    "facing=north,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/reactor_zirnox",
+      "y": 90
+    },
+    "facing=south,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/reactors/zirnox",
+      "y": 270
+    },
+    "facing=south,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/reactor_zirnox",
+      "y": 270
+    },
+    "facing=west,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/reactors/zirnox",
+      "y": 180
+    },
+    "facing=west,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/reactor_zirnox",
+      "y": 180
+    }
   }
 }

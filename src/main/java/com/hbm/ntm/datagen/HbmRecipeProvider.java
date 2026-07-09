@@ -3,19 +3,29 @@ package com.hbm.ntm.datagen;
 import com.hbm.inventory.material.MaterialShapes;
 import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
+import com.hbm.inventory.material.NTMMaterial;
+import com.hbm.inventory.material.NTMMaterial.SmeltingBehavior;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.GasCentBlockEntity.PseudoFluidType;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.compat.CompatRecipeRegistry;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIconItem;
-import com.hbm.ntm.item.GuideBookItem;
+import com.hbm.ntm.item.FoundryMoldItem;
+import com.hbm.ntm.item.FoundryScrapsItem;
 import com.hbm.ntm.item.ItemPressStamp;
+import com.hbm.ntm.item.LegacyTemFlakesItem;
+import com.hbm.ntm.item.MarshmallowItem;
+import com.hbm.ntm.item.PlasticScrapItem;
 import com.hbm.ntm.recipe.HbmItemOutput;
 import com.hbm.ntm.recipe.HbmIngredient;
+import com.hbm.ntm.recipe.AnvilSmithingRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeExtraData;
 import com.hbm.ntm.registry.ModBlocks;
@@ -26,7 +36,9 @@ import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.FinishedRecipe;
@@ -52,10 +64,17 @@ import net.minecraftforge.common.crafting.StrictNBTIngredient;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public final class HbmRecipeProvider extends RecipeProvider {
     private static final List<String> LEGACY_DEPLETED_WASTE_ITEMS = List.of(
@@ -110,10 +129,30 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_crystal_xen", has(item("crystal_xen")))
                 .save(consumer, id("control/upgrade_screm"));
 
-        SimpleCookingRecipeBuilder.smelting(Ingredient.of(item("glyphid_meat")), RecipeCategory.FOOD,
-                        item("glyphid_meat_grilled"), 1.0F, 200)
-                .unlockedBy("has_glyphid_meat", has(item("glyphid_meat")))
-                .save(consumer, id("smelting/glyphid_meat"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.UPGRADE_MUFFLER.get(), 16)
+                .pattern("III")
+                .pattern("IWI")
+                .pattern("III")
+                .define('I', forgeTag("ingots/any_rubber"))
+                .define('W', ItemTags.WOOL)
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("parts/upgrade_muffler"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.HOLOTAPE_DAMAGED.get())
+                .requires(ModItems.HOLOTAPE_IMAGE_RESTORED.get())
+                .requires(ModItems.UPGRADE_MUFFLER.get())
+                .requires(item("crt_display"))
+                .requires(item("gem_alexandrite"))
+                .unlockedBy("has_holotape_image_restored", has(ModItems.HOLOTAPE_IMAGE_RESTORED.get()))
+                .save(consumer, id("holotape/holotape_damaged"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.HOLOTAPE_IMAGE_RESTORED.get())
+                .requires(ModItems.HOLOTAPE_IMAGE_DIGAMMA.get())
+                .requires(forgeTag("tools/screwdrivers"))
+                .requires(item("ducttape"))
+                .requires(ModItems.ARMOR_POLISH.get())
+                .unlockedBy("has_holotape_image_digamma", has(ModItems.HOLOTAPE_IMAGE_DIGAMMA.get()))
+                .save(consumer, id("holotape/holotape_image_restored"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, legacyBatteryPack(0))
                 .pattern("IRI")
@@ -233,10 +272,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .requires(ModItems.HEV_BATTERY.get())
                 .unlockedBy("has_hev_battery", has(ModItems.HEV_BATTERY.get()))
                 .save(consumer, id("energy/hev_battery_block"));
+        lemegetonRecipes(consumer);
+        anvilSmithingRecipes(consumer);
+        anvilSmithingSupportRecipes(consumer);
+        hotSmeltingRecipes(consumer);
         energyNetworkRecipes(consumer);
         redstoneOverRadioRecipes(consumer);
         rbmkRecipes(consumer);
         legacySandMixRecipes(consumer);
+        legacySmeltingRecipes(consumer);
         legacyToolRecipes(consumer);
         legacyPartRecipes(consumer);
         missileSystemRecipes(consumer);
@@ -272,50 +316,1300 @@ public final class HbmRecipeProvider extends RecipeProvider {
         breedingReactorRecipes(consumer);
         fuelPoolRecipes(consumer);
         outgasserRecipes(consumer);
+        shredderRecipes(consumer);
+        exposureChamberRecipes(consumer);
+        radGenRecipes(consumer);
+        oilProcessingRecipes(consumer);
+        radiolysisRecipes(consumer);
+        compressorRecipes(consumer);
+        combinationOvenRecipes(consumer);
+        centrifugeRecipes(consumer);
+        crystallizerRecipes(consumer);
+        gasCentRecipes(consumer);
+        blastFurnaceRecipes(consumer);
+        diFurnaceRecipes(consumer);
+        solderingStationRecipes(consumer);
+        cyclotronRecipes(consumer);
+        silexRecipes(consumer);
+        particleAcceleratorRecipes(consumer);
         fusionReactorRecipes(consumer);
         fusionFluidBreederRecipes(consumer);
         reactorPlasmaForgeRecipes(consumer);
         purexRecipes(consumer);
+        precassRecipes(consumer);
         liquefactionRecipes(consumer);
+        rotaryFurnaceRecipes(consumer);
+        crucibleRecipes(consumer);
+        crucibleSmeltingRecipes(consumer);
+        pedestalRecipes(consumer);
+        electrolyzerFluidRecipes(consumer);
         electrolyzerMetalRecipes(consumer);
         pyroOvenRecipes(consumer);
         mixerRecipes(consumer);
         pressRecipes(consumer);
+        arcWelderRecipes(consumer);
         arcFurnaceRecipes(consumer);
         compatRecipeListenerRecipes(consumer);
     }
 
+    private static void radGenRecipes(Consumer<FinishedRecipe> consumer) {
+        Path recipeDir = projectRoot().resolve("src").resolve("main").resolve("resources")
+                .resolve("data").resolve(HbmNtm.MOD_ID).resolve("recipes").resolve("radgen");
+        if (!Files.isDirectory(recipeDir)) {
+            throw new IllegalStateException("Missing materialized RadGen recipe directory: " + recipeDir);
+        }
+        try (Stream<Path> paths = Files.list(recipeDir)) {
+            paths.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".json"))
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                    .forEach(path -> materializedRadGenRecipe(consumer, recipeDir, path));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read materialized RadGen recipes from " + recipeDir,
+                    exception);
+        }
+    }
+
+    private static void materializedRadGenRecipe(Consumer<FinishedRecipe> consumer, Path recipeDir, Path path) {
+        try {
+            JsonElement element = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8));
+            if (!element.isJsonObject()) {
+                throw new IllegalStateException("Materialized RadGen recipe is not a JSON object: " + path);
+            }
+            JsonObject json = element.getAsJsonObject();
+            String expectedType = HbmNtm.MOD_ID + ":radgen";
+            if (!json.has("type") || !expectedType.equals(json.get("type").getAsString())) {
+                throw new IllegalStateException("Materialized RadGen recipe has wrong type: " + path);
+            }
+            if (!json.has("source_order")) {
+                throw new IllegalStateException("Materialized RadGen recipe has no source_order: " + path);
+            }
+            String idPath = recipeDir.relativize(path).toString().replace('\\', '/').replaceFirst("\\.json$", "");
+            consumer.accept(finishedCompatRecipe(id("radgen/" + idPath), json));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read materialized RadGen recipe " + path, exception);
+        }
+    }
+
+    private static void shredderRecipes(Consumer<FinishedRecipe> consumer) {
+        Path recipeDir = projectRoot().resolve("src").resolve("main").resolve("resources")
+                .resolve("data").resolve(HbmNtm.MOD_ID).resolve("recipes").resolve("shredder");
+        if (!Files.isDirectory(recipeDir)) {
+            throw new IllegalStateException("Missing materialized Shredder recipe directory: " + recipeDir);
+        }
+        try (Stream<Path> paths = Files.list(recipeDir)) {
+            paths.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".json"))
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                    .forEach(path -> materializedShredderRecipe(consumer, recipeDir, path));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read materialized Shredder recipes from " + recipeDir,
+                    exception);
+        }
+    }
+
+    private static void materializedShredderRecipe(Consumer<FinishedRecipe> consumer, Path recipeDir, Path path) {
+        try {
+            JsonElement element = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8));
+            if (!element.isJsonObject()) {
+                throw new IllegalStateException("Materialized Shredder recipe is not a JSON object: " + path);
+            }
+            JsonObject json = element.getAsJsonObject();
+            String expectedType = HbmNtm.MOD_ID + ":shredder";
+            if (!json.has("type") || !expectedType.equals(json.get("type").getAsString())) {
+                throw new IllegalStateException("Materialized Shredder recipe has wrong type: " + path);
+            }
+            if (!json.has("source_order")) {
+                throw new IllegalStateException("Materialized Shredder recipe has no source_order: " + path);
+            }
+            String idPath = recipeDir.relativize(path).toString().replace('\\', '/').replaceFirst("\\.json$", "");
+            consumer.accept(finishedCompatRecipe(id("shredder/" + idPath), json));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read materialized Shredder recipe " + path, exception);
+        }
+    }
+
+    private static void silexRecipes(Consumer<FinishedRecipe> consumer) {
+        Path recipeDir = projectRoot().resolve("src").resolve("main").resolve("resources")
+                .resolve("data").resolve(HbmNtm.MOD_ID).resolve("recipes").resolve("silex");
+        if (!Files.isDirectory(recipeDir)) {
+            throw new IllegalStateException("Missing materialized SILEX recipe directory: " + recipeDir);
+        }
+        try (Stream<Path> paths = Files.list(recipeDir)) {
+            paths.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".json"))
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                    .forEach(path -> materializedSilexRecipe(consumer, recipeDir, path));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read materialized SILEX recipes from " + recipeDir,
+                    exception);
+        }
+    }
+
+    private static void materializedSilexRecipe(Consumer<FinishedRecipe> consumer, Path recipeDir, Path path) {
+        try {
+            JsonElement element = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8));
+            if (!element.isJsonObject()) {
+                throw new IllegalStateException("Materialized SILEX recipe is not a JSON object: " + path);
+            }
+            JsonObject json = element.getAsJsonObject();
+            String expectedType = HbmNtm.MOD_ID + ":silex";
+            if (!json.has("type") || !expectedType.equals(json.get("type").getAsString())) {
+                throw new IllegalStateException("Materialized SILEX recipe has wrong type: " + path);
+            }
+            if (!json.has("source_order")) {
+                throw new IllegalStateException("Materialized SILEX recipe has no source_order: " + path);
+            }
+            String idPath = recipeDir.relativize(path).toString().replace('\\', '/').replaceFirst("\\.json$", "");
+            consumer.accept(finishedCompatRecipe(id("silex/" + idPath), json));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read materialized SILEX recipe " + path, exception);
+        }
+    }
+
+    private static void pedestalRecipes(Consumer<FinishedRecipe> consumer) {
+        Path recipeDir = projectRoot().resolve("src").resolve("main").resolve("resources")
+                .resolve("data").resolve(HbmNtm.MOD_ID).resolve("recipes").resolve("pedestal");
+        if (!Files.isDirectory(recipeDir)) {
+            throw new IllegalStateException("Missing materialized Pedestal recipe directory: " + recipeDir);
+        }
+        try (Stream<Path> paths = Files.list(recipeDir)) {
+            paths.filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".json"))
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                    .forEach(path -> materializedPedestalRecipe(consumer, recipeDir, path));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read materialized Pedestal recipes from " + recipeDir,
+                    exception);
+        }
+    }
+
+    private static void materializedPedestalRecipe(Consumer<FinishedRecipe> consumer, Path recipeDir, Path path) {
+        try {
+            JsonElement element = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8));
+            if (!element.isJsonObject()) {
+                throw new IllegalStateException("Materialized Pedestal recipe is not a JSON object: " + path);
+            }
+            JsonObject json = element.getAsJsonObject();
+            String expectedType = HbmNtm.MOD_ID + ":pedestal";
+            if (!json.has("type") || !expectedType.equals(json.get("type").getAsString())) {
+                throw new IllegalStateException("Materialized Pedestal recipe has wrong type: " + path);
+            }
+            if (!json.has("source_order")) {
+                throw new IllegalStateException("Materialized Pedestal recipe has no source_order: " + path);
+            }
+            String idPath = recipeDir.relativize(path).toString().replace('\\', '/').replaceFirst("\\.json$", "");
+            consumer.accept(finishedCompatRecipe(id("pedestal/" + idPath), json));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to read materialized Pedestal recipe " + path, exception);
+        }
+    }
+
+    private static void radiolysisRecipes(Consumer<FinishedRecipe> consumer) {
+        radiolysisRecipe(consumer, "water", HbmFluids.WATER, HbmFluids.PEROXIDE, 80,
+                HbmFluids.HYDROGEN, 20, 0);
+    }
+
+    private static void oilProcessingRecipes(Consumer<FinishedRecipe> consumer) {
+        refineryRecipes(consumer);
+        vacuumDistillRecipes(consumer);
+        fractionTowerRecipes(consumer);
+        catalyticCrackerRecipes(consumer);
+        catalyticReformerRecipes(consumer);
+        hydrotreaterRecipes(consumer);
+        solidifierRecipes(consumer);
+        cokerRecipes(consumer);
+    }
+
+    private static void refineryRecipes(Consumer<FinishedRecipe> consumer) {
+        int sourceOrder = 0;
+        for (var entry : LegacyOilFluidRecipes.refineryRecipes()) {
+            FluidType input = entry.getKey();
+            LegacyOilFluidRecipes.RefineryRecipe recipe = entry.getValue();
+            JsonObject json = oilProcessingBase(input, 100, sourceOrder++);
+            HbmFluidStack[] outputs = recipe.outputs();
+            for (int i = 0; i < outputs.length; i++) {
+                json.add("output" + i, fluidStackJson(outputs[i]));
+            }
+            ItemStack solid = requireOilItemOutput(recipe.solidStack(), "refinery/" + input.toPath());
+            json.add("solid", itemStackJson(solid));
+            consumer.accept(finishedRecipe(id("refinery/" + input.toPath()), json,
+                    ModRecipes.REFINERY.serializer().get()));
+        }
+    }
+
+    private static void vacuumDistillRecipes(Consumer<FinishedRecipe> consumer) {
+        int sourceOrder = 0;
+        for (var entry : LegacyOilFluidRecipes.vacuumRecipes()) {
+            FluidType input = entry.getKey();
+            LegacyOilFluidRecipes.VacuumRecipe recipe = entry.getValue();
+            JsonObject json = oilProcessingBase(input, 100, sourceOrder++);
+            HbmFluidStack[] outputs = recipe.outputs();
+            for (int i = 0; i < outputs.length; i++) {
+                json.add("output" + i, fluidStackJson(outputs[i]));
+            }
+            consumer.accept(finishedRecipe(id("vacuum_distill/" + input.toPath()), json,
+                    ModRecipes.VACUUM_DISTILL.serializer().get()));
+        }
+    }
+
+    private static void fractionTowerRecipes(Consumer<FinishedRecipe> consumer) {
+        int sourceOrder = 0;
+        for (var entry : LegacyOilFluidRecipes.fractioningRecipes()) {
+            FluidType input = entry.getKey();
+            LegacyOilFluidRecipes.PairRecipe recipe = entry.getValue();
+            JsonObject json = oilProcessingBase(input, 100, sourceOrder++);
+            json.add("output1", fluidStackJson(recipe.left()));
+            json.add("output2", fluidStackJson(recipe.right()));
+            consumer.accept(finishedRecipe(id("fraction_tower/" + input.toPath()), json,
+                    ModRecipes.FRACTION_TOWER.serializer().get()));
+        }
+    }
+
+    private static void catalyticCrackerRecipes(Consumer<FinishedRecipe> consumer) {
+        int sourceOrder = 0;
+        for (var entry : LegacyOilFluidRecipes.crackingRecipes()) {
+            FluidType input = entry.getKey();
+            LegacyOilFluidRecipes.PairRecipe recipe = entry.getValue();
+            JsonObject json = oilProcessingBase(input, 100, sourceOrder++);
+            json.add("output1", fluidStackJson(recipe.left()));
+            json.add("output2", fluidStackJson(recipe.right()));
+            consumer.accept(finishedRecipe(id("catalytic_cracker/" + input.toPath()), json,
+                    ModRecipes.CATALYTIC_CRACKER.serializer().get()));
+        }
+    }
+
+    private static void catalyticReformerRecipes(Consumer<FinishedRecipe> consumer) {
+        int sourceOrder = 0;
+        for (var entry : LegacyOilFluidRecipes.reformingRecipes()) {
+            FluidType input = entry.getKey();
+            LegacyOilFluidRecipes.TripleRecipe recipe = entry.getValue();
+            JsonObject json = oilProcessingBase(input, 100, sourceOrder++);
+            json.add("output1", fluidStackJson(recipe.first()));
+            json.add("output2", fluidStackJson(recipe.second()));
+            json.add("output3", fluidStackJson(recipe.third()));
+            consumer.accept(finishedRecipe(id("catalytic_reformer/" + input.toPath()), json,
+                    ModRecipes.CATALYTIC_REFORMER.serializer().get()));
+        }
+    }
+
+    private static void hydrotreaterRecipes(Consumer<FinishedRecipe> consumer) {
+        int sourceOrder = 0;
+        for (var entry : LegacyOilFluidRecipes.hydrotreatingRecipes()) {
+            FluidType input = entry.getKey();
+            LegacyOilFluidRecipes.TripleRecipe recipe = entry.getValue();
+            JsonObject json = oilProcessingBase(input, 100, sourceOrder++);
+            json.add("hydrogen", fluidStackJson(recipe.first()));
+            json.add("output1", fluidStackJson(recipe.second()));
+            json.add("output2", fluidStackJson(recipe.third()));
+            consumer.accept(finishedRecipe(id("hydrotreater/" + input.toPath()), json,
+                    ModRecipes.HYDROTREATER.serializer().get()));
+        }
+    }
+
+    private static void solidifierRecipes(Consumer<FinishedRecipe> consumer) {
+        int sourceOrder = 0;
+        for (var entry : LegacyOilFluidRecipes.solidificationRecipes()) {
+            FluidType input = entry.getKey();
+            LegacyOilFluidRecipes.SolidificationRecipe recipe = entry.getValue();
+            JsonObject json = oilProcessingBase(input, recipe.inputAmount(), sourceOrder++);
+            ItemStack output = requireOilItemOutput(recipe.outputStack(), "solidifier/" + input.toPath());
+            json.add("output", itemStackJson(output));
+            consumer.accept(finishedRecipe(id("solidifier/" + input.toPath()), json,
+                    ModRecipes.SOLIDIFIER.serializer().get()));
+        }
+    }
+
+    private static void cokerRecipes(Consumer<FinishedRecipe> consumer) {
+        int sourceOrder = 0;
+        for (var entry : LegacyOilFluidRecipes.cokingRecipes()) {
+            FluidType input = entry.getKey();
+            LegacyOilFluidRecipes.CokerRecipe recipe = entry.getValue();
+            JsonObject json = oilProcessingBase(input, recipe.inputAmount(), sourceOrder++);
+            ItemStack output = recipe.outputStack();
+            if (!output.isEmpty()) {
+                json.add("output", itemStackJson(output));
+            }
+            if (recipe.byproduct() != null && !recipe.byproduct().isEmpty()) {
+                json.add("byproduct", fluidStackJson(recipe.byproduct()));
+            }
+            if (output.isEmpty() && (recipe.byproduct() == null || recipe.byproduct().isEmpty())) {
+                throw new IllegalStateException("Oil processing coker/" + input.toPath() + " has no output");
+            }
+            consumer.accept(finishedRecipe(id("coker/" + input.toPath()), json,
+                    ModRecipes.COKER.serializer().get()));
+        }
+    }
+
+    private static JsonObject oilProcessingBase(FluidType input, int amount, int sourceOrder) {
+        JsonObject json = new JsonObject();
+        json.add("input", fluidStackJson(input, amount));
+        json.addProperty("source_order", sourceOrder);
+        return json;
+    }
+
+    private static void radiolysisRecipe(Consumer<FinishedRecipe> consumer, String name, FluidType input,
+            FluidType output1, int output1Amount, FluidType output2, int output2Amount, int sourceOrder) {
+        JsonObject json = new JsonObject();
+        json.add("input", fluidStackJson(input, 100));
+        json.add("output1", fluidStackJson(output1, output1Amount));
+        json.add("output2", fluidStackJson(output2, output2Amount));
+        json.addProperty("source_order", sourceOrder);
+        consumer.accept(finishedRecipe(id("radiolysis/" + name), json,
+                ModRecipes.RADIOLYSIS.serializer().get()));
+    }
+
+    private static void arcWelderRecipes(Consumer<FinishedRecipe> consumer) {
+        arcWelderRecipe(consumer, "motor", "arc.motor", 100, 400, "motor", 2, 0,
+                builder -> builder.inputLegacyOre("plateSteel", 2)
+                        .inputLegacyOre("wireDenseMingrade", 2));
+        arcWelderRecipe(consumer, "lde_aluminium", "arc.lde.aluminium", 200, 5_000, "part_generic_lde", 1, 1,
+                builder -> builder.inputLegacyOre("plateAluminum", 4)
+                        .inputLegacyOre("ingotFiberglass", 4)
+                        .inputLegacyOre("ingotAnyHardplastic", 1));
+        arcWelderRecipe(consumer, "lde_titanium", "arc.lde.titanium", 200, 10_000, "part_generic_lde", 1, 2,
+                builder -> builder.inputLegacyOre("plateTitanium", 2)
+                        .inputLegacyOre("ingotFiberglass", 4)
+                        .inputLegacyOre("ingotAnyHardplastic", 1));
+        arcWelderRecipe(consumer, "neutron_reflector", "arc.neutronreflector", 400, 50_000,
+                "neutron_reflector", 2, 3,
+                builder -> builder.inputLegacyOre("ingotTungstenCarbide", 2)
+                        .inputLegacyOre("plateDuraSteel", 1));
+
+        arcWelderRecipe(consumer, "dense_wire_copper", "arc.wire.copper", 100, 10_000, "wire_dense_copper", 1, 4,
+                builder -> builder.inputLegacyOre("wireFineCopper", 8));
+        arcWelderRecipe(consumer, "dense_wire_mingrade", "arc.wire.mingrade", 100, 10_000,
+                "wire_dense_mingrade", 1, 5,
+                builder -> builder.inputLegacyOre("wireFineMingrade", 8));
+        arcWelderRecipe(consumer, "dense_wire_gold", "arc.wire.gold", 100, 10_000, "wire_dense_gold", 1, 6,
+                builder -> builder.inputLegacyOre("wireFineGold", 8));
+
+        arcWelderRecipe(consumer, "welded_plate_iron", "arc.plate.iron", 100, 100, "plate_welded_iron", 1, 7,
+                builder -> builder.inputLegacyOre("plateTripleIron", 2));
+        arcWelderRecipe(consumer, "welded_plate_steel", "arc.plate.steel", 100, 500, "plate_welded_steel", 1, 8,
+                builder -> builder.inputLegacyOre("plateTripleSteel", 2));
+        arcWelderRecipe(consumer, "welded_plate_copper", "arc.plate.copper", 200, 1_000, "plate_welded_copper", 1, 9,
+                builder -> builder.inputLegacyOre("plateTripleCopper", 2));
+        arcWelderRecipe(consumer, "welded_plate_titanium", "arc.plate.titanium", 600, 50_000,
+                "plate_welded_titanium", 1, 10,
+                builder -> builder.inputLegacyOre("plateTripleTitanium", 2));
+        arcWelderRecipe(consumer, "welded_plate_zirconium", "arc.plate.zirconium", 600, 10_000,
+                "plate_welded_zirconium", 1, 11,
+                builder -> builder.inputLegacyOre("plateTripleZirconium", 2));
+        arcWelderRecipe(consumer, "welded_plate_aluminium", "arc.plate.aluminium", 300, 10_000,
+                "plate_welded_aluminium", 1, 12,
+                builder -> builder.inputLegacyOre("plateTripleAluminum", 2));
+        arcWelderRecipe(consumer, "welded_plate_tcalloy", "arc.plate.tcalloy", 1_200, 1_000_000,
+                "plate_welded_tcalloy", 1, 13,
+                builder -> builder.inputLegacyOre("plateTripleTcAlloy", 2)
+                        .inputFluid(HbmFluids.OXYGEN, 1_000));
+        arcWelderRecipe(consumer, "welded_plate_cdalloy", "arc.plate.cdalloy", 1_200, 1_000_000,
+                "plate_welded_cdalloy", 1, 14,
+                builder -> builder.inputLegacyOre("plateTripleCdAlloy", 2)
+                        .inputFluid(HbmFluids.OXYGEN, 1_000));
+        arcWelderRecipe(consumer, "welded_plate_tungsten", "arc.plate.tungsten", 1_200, 250_000,
+                "plate_welded_tungsten", 1, 15,
+                builder -> builder.inputLegacyOre("plateTripleTungsten", 2)
+                        .inputFluid(HbmFluids.OXYGEN, 1_000));
+        arcWelderRecipe(consumer, "welded_plate_combine_steel", "arc.plate.cmb", 1_200, 10_000_000,
+                "plate_welded_combine_steel", 1, 16,
+                builder -> builder.inputLegacyOre("plateTripleCMBSteel", 2)
+                        .inputFluid(HbmFluids.REFORMGAS, 1_000));
+        arcWelderRecipe(consumer, "welded_plate_osmiridium", "arc.plate.osmiridium", 6_000, 50_000_000,
+                "plate_welded_osmiridium", 1, 17,
+                builder -> builder.inputLegacyOre("plateTripleOsmiridium", 2)
+                        .inputFluid(HbmFluids.REFORMGAS, 16_000));
+
+        arcWelderRecipe(consumer, "thruster_small", "arc.thruster.small", 60, 1_000, "thruster_small", 1, 18,
+                builder -> builder.inputLegacyOre("plateSteel", 4)
+                        .inputLegacyOre("wireFineAluminum", 4)
+                        .inputLegacyOre("plateCopper", 4));
+        arcWelderRecipe(consumer, "thruster_medium", "arc.thruster.medium", 100, 2_000, "thruster_medium", 1, 19,
+                builder -> builder.inputLegacyOre("plateSteel", 8)
+                        .inputItem(item("motor"), 1)
+                        .inputLegacyOre("ingotGraphite", 8));
+        arcWelderRecipe(consumer, "thruster_large", "arc.thruster.large", 200, 5_000, "thruster_large", 1, 20,
+                builder -> builder.inputLegacyOre("ingotDuraSteel", 10)
+                        .inputItem(item("motor"), 1)
+                        .inputLegacyOre("ingotTungstenCarbide", 12));
+
+        arcWelderRecipe(consumer, "fuel_tank_small", "arc.fueltank.small", 60, 1_000, "fuel_tank_small", 1, 21,
+                builder -> builder.inputLegacyOre("plateAluminum", 6)
+                        .inputLegacyOre("plateCopper", 4)
+                        .inputItem(block("steel_scaffold"), 4));
+        arcWelderRecipe(consumer, "fuel_tank_medium", "arc.fueltank.medium", 100, 2_000, "fuel_tank_medium", 1, 22,
+                builder -> builder.inputLegacyOre("plateTripleAluminum", 4)
+                        .inputLegacyOre("plateTitanium", 8)
+                        .inputItem(block("steel_scaffold"), 12));
+        arcWelderRecipe(consumer, "fuel_tank_large", "arc.fueltank.large", 200, 5_000, "fuel_tank_large", 1, 23,
+                builder -> builder.inputLegacyOre("plateSextupleAluminum", 8)
+                        .inputLegacyOre("plateSaturnite", 12)
+                        .inputItem(block("steel_scaffold"), 16));
+
+        arcWelderRecipe(consumer, "missile_anti_ballistic", "arc.missile.abm", 100, 5_000,
+                "missile_anti_ballistic", 1, 24,
+                builder -> builder.inputLegacyOre("ingotAnyHighexplosive", 3)
+                        .inputItem(item("missile_assembly"), 1)
+                        .inputItem(item("thruster_small"), 4));
+        arcWelderRecipe(consumer, "missile_generic", "arc.missile.generic", 100, 5_000, "missile_generic", 1, 25,
+                builder -> builder.inputItem(item("warhead_generic_small"), 1)
+                        .inputItem(item("fuel_tank_small"), 1)
+                        .inputItem(item("thruster_small"), 1));
+        arcWelderRecipe(consumer, "missile_incendiary", "arc.missile.incendiary", 100, 5_000,
+                "missile_incendiary", 1, 26,
+                builder -> builder.inputItem(item("warhead_incendiary_small"), 1)
+                        .inputItem(item("fuel_tank_small"), 1)
+                        .inputItem(item("thruster_small"), 1));
+        arcWelderRecipe(consumer, "missile_cluster", "arc.missile.cluster", 100, 5_000, "missile_cluster", 1, 27,
+                builder -> builder.inputItem(item("warhead_cluster_small"), 1)
+                        .inputItem(item("fuel_tank_small"), 1)
+                        .inputItem(item("thruster_small"), 1));
+        arcWelderRecipe(consumer, "missile_buster", "arc.missile.buster", 100, 5_000, "missile_buster", 1, 28,
+                builder -> builder.inputItem(item("warhead_buster_small"), 1)
+                        .inputItem(item("fuel_tank_small"), 1)
+                        .inputItem(item("thruster_small"), 1));
+        arcWelderRecipe(consumer, "missile_decoy", "arc.missile.decoy", 60, 2_500, "missile_decoy", 1, 29,
+                builder -> builder.inputLegacyOre("ingotSteel", 1)
+                        .inputItem(item("fuel_tank_small"), 1)
+                        .inputItem(item("thruster_small"), 1));
+
+        arcWelderRecipe(consumer, "missile_strong", "arc.missile.strong", 200, 10_000, "missile_strong", 1, 30,
+                builder -> builder.inputItem(item("warhead_generic_medium"), 1)
+                        .inputItem(item("fuel_tank_medium"), 1)
+                        .inputItem(item("thruster_medium"), 1));
+        arcWelderRecipe(consumer, "missile_incendiary_strong", "arc.missile.incendiarystrong", 200, 10_000,
+                "missile_incendiary_strong", 1, 31,
+                builder -> builder.inputItem(item("warhead_incendiary_medium"), 1)
+                        .inputItem(item("fuel_tank_medium"), 1)
+                        .inputItem(item("thruster_medium"), 1));
+        arcWelderRecipe(consumer, "missile_cluster_strong", "arc.missile.clusterstrong", 200, 10_000,
+                "missile_cluster_strong", 1, 32,
+                builder -> builder.inputItem(item("warhead_cluster_medium"), 1)
+                        .inputItem(item("fuel_tank_medium"), 1)
+                        .inputItem(item("thruster_medium"), 1));
+        arcWelderRecipe(consumer, "missile_buster_strong", "arc.missile.busterstrong", 200, 10_000,
+                "missile_buster_strong", 1, 33,
+                builder -> builder.inputItem(item("warhead_buster_medium"), 1)
+                        .inputItem(item("fuel_tank_medium"), 1)
+                        .inputItem(item("thruster_medium"), 1));
+        arcWelderRecipe(consumer, "missile_emp_strong", "arc.missile.empstrong", 200, 10_000,
+                "missile_emp_strong", 1, 34,
+                builder -> builder.inputItem(block("emp_bomb"), 3)
+                        .inputItem(item("fuel_tank_medium"), 1)
+                        .inputItem(item("thruster_medium"), 1));
+        arcWelderRecipe(consumer, "missile_burst", "arc.missile.burst", 300, 25_000, "missile_burst", 1, 35,
+                builder -> builder.inputItem(item("warhead_generic_large"), 1)
+                        .inputItem(item("fuel_tank_medium"), 2)
+                        .inputItem(item("thruster_medium"), 4));
+        arcWelderRecipe(consumer, "missile_inferno", "arc.missile.inferno", 300, 25_000, "missile_inferno", 1, 36,
+                builder -> builder.inputItem(item("warhead_incendiary_large"), 1)
+                        .inputItem(item("fuel_tank_medium"), 2)
+                        .inputItem(item("thruster_medium"), 4));
+        arcWelderRecipe(consumer, "missile_rain", "arc.missile.rain", 300, 25_000, "missile_rain", 1, 37,
+                builder -> builder.inputItem(item("warhead_cluster_large"), 1)
+                        .inputItem(item("fuel_tank_medium"), 2)
+                        .inputItem(item("thruster_medium"), 4));
+        arcWelderRecipe(consumer, "missile_drill", "arc.missile.drill", 300, 25_000, "missile_drill", 1, 38,
+                builder -> builder.inputItem(item("warhead_buster_large"), 1)
+                        .inputItem(item("fuel_tank_medium"), 2)
+                        .inputItem(item("thruster_medium"), 4));
+
+        arcWelderRecipe(consumer, "missile_nuclear", "arc.missile.nuclear", 600, 50_000, "missile_nuclear", 1, 39,
+                builder -> builder.inputItem(item("warhead_nuclear"), 1)
+                        .inputItem(item("fuel_tank_large"), 1)
+                        .inputItem(item("thruster_large"), 3));
+        arcWelderRecipe(consumer, "missile_nuclear_cluster", "arc.missile.nuclearcluster", 600, 50_000,
+                "missile_nuclear_cluster", 1, 40,
+                builder -> builder.inputItem(item("warhead_mirv"), 1)
+                        .inputItem(item("fuel_tank_large"), 1)
+                        .inputItem(item("thruster_large"), 3));
+        arcWelderRecipe(consumer, "missile_volcano", "arc.missile.volcano", 600, 50_000, "missile_volcano", 1, 41,
+                builder -> builder.inputItem(item("warhead_volcano"), 1)
+                        .inputItem(item("fuel_tank_large"), 1)
+                        .inputItem(item("thruster_large"), 3));
+
+        arcWelderRecipe(consumer, "satellite_mapper", "arc.satellitemapper", 600, 10_000, "sat_mapper", 1, 42,
+                builder -> builder.inputItem(item("sat_base"), 1)
+                        .inputItem(item("sat_head_mapper"), 1));
+        arcWelderRecipe(consumer, "satellite_scanner", "arc.satellitescanner", 600, 10_000, "sat_scanner", 1, 43,
+                builder -> builder.inputItem(item("sat_base"), 1)
+                        .inputItem(item("sat_head_scanner"), 1));
+        arcWelderRecipe(consumer, "satellite_radar", "arc.satelliteradar", 600, 10_000, "sat_radar", 1, 44,
+                builder -> builder.inputItem(item("sat_base"), 1)
+                        .inputItem(item("sat_head_radar"), 1));
+        arcWelderRecipe(consumer, "satellite_laser", "arc.satellitelaser", 600, 50_000, "sat_laser", 1, 45,
+                builder -> builder.inputItem(item("sat_base"), 1)
+                        .inputItem(item("sat_head_laser"), 1));
+        arcWelderRecipe(consumer, "satellite_resonator", "arc.satelliteresonator", 600, 50_000,
+                "sat_resonator", 1, 46,
+                builder -> builder.inputItem(item("sat_base"), 1)
+                        .inputItem(item("sat_head_resonator"), 1));
+    }
+
+    private static void arcWelderRecipe(Consumer<FinishedRecipe> consumer, String path, String internalName,
+            int duration, long power, String outputItem, int outputCount, int sourceOrder,
+            Consumer<GenericMachineRecipeBuilder> configure) {
+        GenericMachineRecipeBuilder builder = GenericMachineRecipeBuilder.arcWelder(internalName, duration, power)
+                .outputItem(new ItemStack(item(outputItem), outputCount))
+                .sourceOrder(sourceOrder);
+        configure.accept(builder);
+        builder.save(consumer, id("arc_welder/" + path));
+    }
+
+    private static void centrifugeRecipes(Consumer<FinishedRecipe> consumer) {
+        centrifuge(consumer, "chunk_ore_rare", HbmIngredient.legacyMeta(LegacyMetaItemMappings.CHUNK_ORE, 0, 1), 0,
+                out("powder_cobalt_tiny", 2), out("powder_boron_tiny", 2), out("powder_niobium_tiny", 2),
+                out("nugget_zirconium", 3));
+        centrifuge(consumer, "coal_ore", HbmIngredient.legacyOre("oreCoal", 1), 1,
+                out("powder_coal", 2), out("powder_coal", 2), out("powder_coal", 2),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "lignite_ore", HbmIngredient.legacyOre("oreLignite", 1), 2,
+                out("powder_lignite", 2), out("powder_lignite", 2), out("powder_lignite", 2),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "iron_ore", HbmIngredient.legacyOre("oreIron", 1), 3,
+                out("powder_iron", 1), out("powder_iron", 1), out("powder_iron", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "gold_ore", HbmIngredient.legacyOre("oreGold", 1), 4,
+                out("powder_gold", 1), out("powder_gold", 1), out("powder_gold", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "diamond_ore", HbmIngredient.legacyOre("oreDiamond", 1), 5,
+                out("powder_diamond", 1), out("powder_diamond", 1), out("powder_diamond", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "emerald_ore", HbmIngredient.legacyOre("oreEmerald", 1), 6,
+                out("powder_emerald", 1), out("powder_emerald", 1), out("powder_emerald", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "titanium_ore", HbmIngredient.legacyOre("oreTitanium", 1), 7,
+                out("powder_titanium", 1), out("powder_titanium", 1), out("powder_iron", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "quartz_ore", HbmIngredient.legacyOre("oreNetherQuartz", 1), 8,
+                out("powder_quartz", 1), out("powder_quartz", 1), out("powder_lithium_tiny", 1),
+                new ItemStack(Blocks.NETHERRACK));
+        centrifuge(consumer, "tungsten_ore", HbmIngredient.legacyOre("oreTungsten", 1), 9,
+                out("powder_tungsten", 1), out("powder_tungsten", 1), out("powder_iron", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "copper_ore", HbmIngredient.legacyOre("oreCopper", 1), 10,
+                out("powder_copper", 1), out("powder_copper", 1), out("powder_gold", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "aluminium_ore", HbmIngredient.legacyOre("oreAluminum", 1), 11,
+                out("chunk_ore_cryolite", 2), out("powder_titanium", 1), out("powder_iron", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "lead_ore", HbmIngredient.legacyOre("oreLead", 1), 12,
+                out("powder_lead", 1), out("powder_lead", 1), out("powder_gold", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "schrabidium_ore", HbmIngredient.legacyOre("oreSchrabidium", 1), 13,
+                out("powder_schrabidium", 1), out("powder_schrabidium", 1), out("nugget_solinium", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "rare_earth_ore", HbmIngredient.legacyOre("oreRareEarth", 1), 14,
+                out("powder_desh_mix", 1), out("nugget_zirconium", 1), out("nugget_zirconium", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "plutonium_ore", HbmIngredient.legacyOre("orePlutonium", 1), 15,
+                out("powder_plutonium", 1), out("powder_plutonium", 1), out("nugget_polonium", 3),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "uranium_ore", HbmIngredient.legacyOre("oreUranium", 1), 16,
+                out("powder_uranium", 1), out("powder_uranium", 1), out("nugget_ra226", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "thorium_ore", HbmIngredient.legacyOre("oreThorium", 1), 17,
+                out("powder_thorium", 1), out("powder_thorium", 1), out("powder_uranium", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "beryllium_ore", HbmIngredient.legacyOre("oreBeryllium", 1), 18,
+                out("powder_beryllium", 1), out("powder_beryllium", 1), out("powder_emerald", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "fluorite_ore", HbmIngredient.legacyOre("oreFluorite", 1), 19,
+                out("fluorite", 3), out("fluorite", 3), out("gem_sodalite", 1), new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "redstone_ore", HbmIngredient.legacyOre("oreRedstone", 1), 20,
+                new ItemStack(Items.REDSTONE, 3), new ItemStack(Items.REDSTONE, 3), out("ingot_mercury", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "tikite_ore", HbmIngredient.of(item("ore_tikite"), 1), 21,
+                out("powder_plutonium", 1), out("powder_cobalt", 2), out("powder_niobium", 2),
+                new ItemStack(Blocks.END_STONE));
+        centrifuge(consumer, "lapis_ore", HbmIngredient.legacyOre("oreLapis", 1), 22,
+                out("powder_lapis", 6), out("powder_cobalt_tiny", 1), out("gem_sodalite", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "block_euphemium_cluster", HbmIngredient.of(item("block_euphemium_cluster"), 1), 23,
+                out("nugget_euphemium", 7), out("powder_schrabidium", 4), out("ingot_starmetal", 2),
+                out("nugget_solinium", 2));
+        centrifuge(consumer, "nether_fire_ore", HbmIngredient.of(item("ore_nether_fire"), 1), 24,
+                new ItemStack(Items.BLAZE_POWDER, 2), out("powder_fire", 2), out("ingot_phosphorus", 1),
+                new ItemStack(Blocks.NETHERRACK));
+        centrifuge(consumer, "cobalt_ore", HbmIngredient.legacyOre("oreCobalt", 1), 25,
+                out("powder_cobalt", 2), out("powder_iron", 1), out("powder_copper", 1),
+                new ItemStack(Blocks.GRAVEL));
+        centrifuge(consumer, "powder_tektite", HbmIngredient.of(item("powder_tektite"), 1), 26,
+                out("powder_meteorite_tiny", 1), out("powder_paleogenite_tiny", 1),
+                out("powder_meteorite_tiny", 1), out("dust", 6));
+        centrifuge(consumer, "block_slag", HbmIngredient.of(item("block_slag"), 1), 27,
+                new ItemStack(Blocks.GRAVEL), out("powder_fire", 1), out("powder_calcium", 1), out("dust", 1));
+        centrifuge(consumer, "powder_ash_coal", HbmIngredient.of(item("powder_ash_coal"), 1), 28,
+                out("powder_coal_tiny", 2), out("powder_boron_tiny", 1), out("dust_tiny", 6));
+
+        centrifuge(consumer, "blaze_rod", HbmIngredient.of(Items.BLAZE_ROD, 1), 29,
+                new ItemStack(Items.BLAZE_POWDER), new ItemStack(Items.BLAZE_POWDER), out("powder_fire", 1),
+                out("powder_fire", 1));
+        centrifuge(consumer, "crystal_coal", legacyHbmItem("crystal_coal"), 30,
+                out("powder_coal", 3), out("powder_coal", 3), out("powder_coal", 3),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_iron", legacyHbmItem("crystal_iron"), 31,
+                out("powder_iron", 2), out("powder_iron", 2), out("powder_titanium", 1),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_gold", legacyHbmItem("crystal_gold"), 32,
+                out("powder_gold", 2), out("powder_gold", 2), out("ingot_mercury", 1),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_redstone", legacyHbmItem("crystal_redstone"), 33,
+                new ItemStack(Items.REDSTONE, 3), new ItemStack(Items.REDSTONE, 3),
+                new ItemStack(Items.REDSTONE, 3), out("ingot_mercury", 3));
+        centrifuge(consumer, "crystal_lapis", legacyHbmItem("crystal_lapis"), 34,
+                out("powder_lapis", 4), out("powder_lapis", 4), out("powder_cobalt", 1),
+                out("gem_sodalite", 2));
+        centrifuge(consumer, "crystal_diamond", legacyHbmItem("crystal_diamond"), 35,
+                out("powder_diamond", 1), out("powder_diamond", 1), out("powder_diamond", 1),
+                out("powder_diamond", 1));
+        centrifuge(consumer, "crystal_uranium", legacyHbmItem("crystal_uranium"), 36,
+                out("powder_uranium", 2), out("powder_uranium", 2), out("nugget_ra226", 2),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_thorium", legacyHbmItem("crystal_thorium"), 37,
+                out("powder_thorium", 2), out("powder_thorium", 2), out("powder_uranium", 1),
+                out("nugget_ra226", 1));
+        centrifuge(consumer, "crystal_plutonium", legacyHbmItem("crystal_plutonium"), 38,
+                out("powder_plutonium", 2), out("powder_plutonium", 2), out("powder_polonium", 1),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_titanium", legacyHbmItem("crystal_titanium"), 39,
+                out("powder_titanium", 2), out("powder_titanium", 2), out("powder_iron", 1),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_sulfur", legacyHbmItem("crystal_sulfur"), 40,
+                out("sulfur", 4), out("sulfur", 4), out("powder_iron", 1), out("ingot_mercury", 1));
+        centrifuge(consumer, "crystal_niter", legacyHbmItem("crystal_niter"), 41,
+                out("niter", 3), out("niter", 3), out("niter", 3), out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_copper", legacyHbmItem("crystal_copper"), 42,
+                out("powder_copper", 2), out("powder_copper", 2), out("sulfur", 1),
+                out("powder_cobalt_tiny", 1));
+        centrifuge(consumer, "crystal_tungsten", legacyHbmItem("crystal_tungsten"), 43,
+                out("powder_tungsten", 2), out("powder_tungsten", 2), out("powder_iron", 1),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_aluminium", legacyHbmItem("crystal_aluminium"), 44,
+                out("chunk_ore_cryolite", 3), out("powder_titanium", 1), out("powder_iron", 1),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_fluorite", legacyHbmItem("crystal_fluorite"), 45,
+                out("fluorite", 4), out("fluorite", 4), out("gem_sodalite", 2),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_beryllium", legacyHbmItem("crystal_beryllium"), 46,
+                out("powder_beryllium", 2), out("powder_beryllium", 2), out("powder_quartz", 1),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_lead", legacyHbmItem("crystal_lead"), 47,
+                out("powder_lead", 2), out("powder_lead", 2), out("powder_gold", 1),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_schraranium", legacyHbmItem("crystal_schraranium"), 48,
+                out("nugget_schrabidium", 2), out("nugget_schrabidium", 2), out("nugget_uranium", 2),
+                out("nugget_neptunium", 2));
+        centrifuge(consumer, "crystal_schrabidium", legacyHbmItem("crystal_schrabidium"), 49,
+                out("powder_schrabidium", 2), out("powder_schrabidium", 2), out("powder_plutonium", 1),
+                out("powder_lithium_tiny", 1));
+        centrifuge(consumer, "crystal_rare", legacyHbmItem("crystal_rare"), 50,
+                out("powder_desh_mix", 1), out("powder_desh_mix", 1), out("nugget_zirconium", 2),
+                out("nugget_zirconium", 2));
+        centrifuge(consumer, "crystal_phosphorus", legacyHbmItem("crystal_phosphorus"), 51,
+                out("powder_fire", 3), out("powder_fire", 3), out("ingot_phosphorus", 2),
+                new ItemStack(Items.BLAZE_POWDER, 2));
+        centrifuge(consumer, "crystal_trixite", legacyHbmItem("crystal_trixite"), 52,
+                out("powder_plutonium", 2), out("powder_cobalt", 3), out("powder_niobium", 2),
+                out("powder_nitan_mix", 1));
+        centrifuge(consumer, "crystal_lithium", legacyHbmItem("crystal_lithium"), 53,
+                out("powder_lithium", 2), out("powder_lithium", 2), out("powder_quartz", 1),
+                out("fluorite", 1));
+        centrifuge(consumer, "crystal_starmetal", legacyHbmItem("crystal_starmetal"), 54,
+                out("powder_dura_steel", 3), out("powder_cobalt", 3), out("powder_astatine", 2),
+                out("ingot_mercury", 5));
+        centrifuge(consumer, "crystal_cobalt", legacyHbmItem("crystal_cobalt"), 55,
+                out("powder_cobalt", 2), out("powder_iron", 3), out("powder_copper", 3),
+                out("powder_lithium_tiny", 1));
+    }
+
+    private static void centrifuge(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
+            int sourceOrder, ItemStack... outputs) {
+        JsonObject json = CompatRecipeRegistry.createCentrifuge(input, outputs);
+        json.addProperty("source_order", sourceOrder);
+        consumer.accept(finishedRecipe(id("centrifuge/" + name), json, ModRecipes.CENTRIFUGE.serializer().get()));
+    }
+
+    private static void gasCentRecipes(Consumer<FinishedRecipe> consumer) {
+        gasCent(consumer, "uf6_full_chain", HbmFluids.UF6, 1_200, true, 4, PseudoFluidType.NUF6,
+                PseudoFluidType.NONE, 0,
+                out("nugget_u238", 11), out("nugget_u235", 1), out("fluorite", 4));
+        gasCent(consumer, "uf6_fuel_chain", HbmFluids.UF6, 1_200, false, 2, PseudoFluidType.LEUF6,
+                PseudoFluidType.NONE, 1,
+                out("nugget_u238", 6), out("nugget_uranium_fuel", 6), out("fluorite", 4));
+        gasCent(consumer, "puf6", HbmFluids.PUF6, 900, false, 1, PseudoFluidType.PF6,
+                PseudoFluidType.NONE, 2,
+                out("nugget_pu238", 3), out("nugget_pu_mix", 6), out("fluorite", 3));
+        gasCent(consumer, "watz_mud", HbmFluids.WATZ, 1_000, false, 2, PseudoFluidType.MUD,
+                PseudoFluidType.NONE, 3,
+                out("powder_iron", 1), out("powder_lead", 1), out("nuclear_waste_tiny", 1), out("dust", 2));
+    }
+
+    private static void gasCent(Consumer<FinishedRecipe> consumer, String name, FluidType input, int amount,
+            boolean highSpeed, int centrifuges, PseudoFluidType inputType, PseudoFluidType outputType,
+            int sourceOrder, ItemStack... outputs) {
+        JsonObject json = new JsonObject();
+        json.add("input", fluidStackJson(input, amount));
+        JsonArray outputArray = new JsonArray();
+        for (ItemStack output : outputs) {
+            outputArray.add(itemStackJson(output));
+        }
+        json.add("outputs", outputArray);
+        json.addProperty("high_speed", highSpeed);
+        json.addProperty("centrifuges", centrifuges);
+        json.addProperty("input_type", inputType.legacyName());
+        json.addProperty("output_type", outputType.legacyName());
+        json.addProperty("source_order", sourceOrder);
+        consumer.accept(finishedRecipe(id("gas_cent/" + name), json, ModRecipes.GAS_CENT.serializer().get()));
+    }
+
+    private static void crystallizerRecipes(Consumer<FinishedRecipe> consumer) {
+        int baseTime = 600;
+        int utilityTime = 100;
+        int mixingTime = 20;
+
+        crystallizer(consumer, "coal_ore", HbmIngredient.legacyOre("oreCoal", 1),
+                item("crystal_coal"), baseTime, 0.05F, 0);
+        crystallizer(consumer, "iron_ore", HbmIngredient.legacyOre("oreIron", 1),
+                item("crystal_iron"), baseTime, 0.05F, 1);
+        crystallizer(consumer, "gold_ore", HbmIngredient.legacyOre("oreGold", 1),
+                item("crystal_gold"), baseTime, 0.05F, 2);
+        crystallizer(consumer, "redstone_ore", HbmIngredient.legacyOre("oreRedstone", 1),
+                item("crystal_redstone"), baseTime, 0.05F, 3);
+        crystallizer(consumer, "lapis_ore", HbmIngredient.legacyOre("oreLapis", 1),
+                item("crystal_lapis"), baseTime, 0.05F, 4);
+        crystallizer(consumer, "diamond_ore", HbmIngredient.legacyOre("oreDiamond", 1),
+                item("crystal_diamond"), baseTime, 0.05F, 5);
+        crystallizer(consumer, "uranium_ore", HbmIngredient.legacyOre("oreUranium", 1),
+                item("crystal_uranium"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 6);
+        crystallizer(consumer, "thorium_ore", HbmIngredient.legacyOre("oreThorium", 1),
+                item("crystal_thorium"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 7);
+        crystallizer(consumer, "plutonium_ore", HbmIngredient.legacyOre("orePlutonium", 1),
+                item("crystal_plutonium"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 8);
+        crystallizer(consumer, "titanium_ore", HbmIngredient.legacyOre("oreTitanium", 1),
+                item("crystal_titanium"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 9);
+        crystallizer(consumer, "sulfur_ore", HbmIngredient.legacyOre("oreSulfur", 1),
+                item("crystal_sulfur"), baseTime, 0.05F, 10);
+        crystallizer(consumer, "niter_ore", HbmIngredient.legacyOre("oreSaltpeter",
+                Ingredient.of(forgeTag("ores/niter")), 1),
+                item("crystal_niter"), baseTime, 0.05F, 11);
+        crystallizer(consumer, "copper_ore", HbmIngredient.legacyOre("oreCopper", 1),
+                item("crystal_copper"), baseTime, 0.05F, 12);
+        crystallizer(consumer, "tungsten_ore", HbmIngredient.legacyOre("oreTungsten", 1),
+                item("crystal_tungsten"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 13);
+        crystallizer(consumer, "aluminium_ore", HbmIngredient.legacyOre("oreAluminum", 1),
+                item("crystal_aluminium"), baseTime, 0.05F, 14);
+        crystallizer(consumer, "fluorite_ore", HbmIngredient.legacyOre("oreFluorite", 1),
+                item("crystal_fluorite"), baseTime, 0.05F, 15);
+        crystallizer(consumer, "beryllium_ore", HbmIngredient.legacyOre("oreBeryllium", 1),
+                item("crystal_beryllium"), baseTime, 0.05F, 16);
+        crystallizer(consumer, "lead_ore", HbmIngredient.legacyOre("oreLead", 1),
+                item("crystal_lead"), baseTime, 0.05F, 17);
+        crystallizer(consumer, "schrabidium_ore", HbmIngredient.legacyOre("oreSchrabidium", 1),
+                item("crystal_schrabidium"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 18);
+        crystallizer(consumer, "lithium_ore", HbmIngredient.legacyOre("oreLithium", 1),
+                item("crystal_lithium"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 19);
+        crystallizer(consumer, "cobalt_ore", HbmIngredient.legacyOre("oreCobalt", 1),
+                item("crystal_cobalt"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 20);
+
+        crystallizer(consumer, "powder_calcium_cement", HbmIngredient.of(item("powder_calcium"), 1),
+                new ItemStack(item("powder_cement"), 8), utilityTime, HbmFluids.REDMUD, 75, 0.1F, 21);
+        crystallizer(consumer, "malachite_copper_scraps", HbmIngredient.legacyOre("ingotMalachite", 1),
+                FoundryScrapsItem.create(new MaterialStack(Mats.MAT_COPPER, MaterialShapes.INGOT.q(1))), 300,
+                HbmFluids.SULFURIC_ACID, 250, 0.1F, 22);
+        crystallizer(consumer, "rare_earth_ore", HbmIngredient.legacyOre("oreRareEarth", 1),
+                item("crystal_rare"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 23);
+        crystallizer(consumer, "cinnabar_ore", HbmIngredient.legacyOre("oreCinnabar", 1),
+                item("crystal_cinnebar"), baseTime, 0.05F, 24);
+        crystallizer(consumer, "nether_fire_ore", HbmIngredient.of(item("ore_nether_fire"), 1),
+                item("crystal_phosphorus"), baseTime, 0.05F, 25);
+        crystallizer(consumer, "tikite_ore", HbmIngredient.of(item("ore_tikite"), 1),
+                item("crystal_trixite"), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.05F, 26);
+        crystallizer(consumer, "gravel_diamond", HbmIngredient.of(item("gravel_diamond"), 1),
+                item("crystal_diamond"), baseTime, 0.05F, 27);
+        crystallizer(consumer, "schraranium_ingot", HbmIngredient.legacyOre("ingotSchraranium", 1),
+                item("crystal_schraranium"), baseTime, 0.05F, 28);
+
+        crystallizer(consumer, "fiberglass_sand", HbmIngredient.legacyOre("sand", 1),
+                item("ingot_fiberglass"), utilityTime, 0.15F, 29);
+        crystallizer(consumer, "ingot_silicon_quartz", HbmIngredient.legacyOre("ingotSilicon", 1),
+                new ItemStack(Items.QUARTZ, 2), utilityTime, HbmFluids.OXYGEN, 250, 0.1F, 30);
+        crystallizer(consumer, "redstone_block", HbmIngredient.legacyOre("blockRedstone", 1),
+                item("ingot_mercury"), baseTime, 0.25F, 31);
+        crystallizer(consumer, "cinnabar_crystal", HbmIngredient.legacyOre("crystalCinnabar", 1),
+                new ItemStack(item("ingot_mercury"), 3), baseTime, 0.25F, 32);
+        crystallizer(consumer, "borax_dust", HbmIngredient.legacyOre("dustBorax", 1),
+                new ItemStack(item("powder_boron_tiny"), 3), baseTime, HbmFluids.SULFURIC_ACID, 500, 0.25F, 33);
+        crystallizer(consumer, "coal_storage_block", HbmIngredient.legacyOre("blockCoal", 1),
+                item("block_graphite"), baseTime, 0.0F, 34);
+
+        crystallizer(consumer, "cobblestone", HbmIngredient.of(Blocks.COBBLESTONE, 1),
+                item("reinforced_stone"), utilityTime, 0.0F, 35);
+        crystallizer(consumer, "gravel_obsidian", HbmIngredient.of(item("gravel_obsidian"), 1),
+                item("brick_obsidian"), utilityTime, 0.0F, 36);
+        crystallizer(consumer, "rotten_flesh", HbmIngredient.of(Items.ROTTEN_FLESH, 1),
+                Items.LEATHER, utilityTime, 0.25F, 37);
+        crystallizer(consumer, "coal_infernal", HbmIngredient.of(item("coal_infernal"), 1),
+                item("solid_fuel"), utilityTime, 0.0F, 38);
+        crystallizer(consumer, "stone_gneiss", HbmIngredient.of(item("stone_gneiss"), 1),
+                item("powder_lithium"), utilityTime, 0.25F, 39);
+        crystallizer(consumer, "bone_meal_slime", HbmIngredient.of(Items.BONE_MEAL, 1),
+                new ItemStack(Items.SLIME_BALL, 4), mixingTime, HbmFluids.SULFURIC_ACID, 250, 0.0F, 40);
+        crystallizer(consumer, "bone_slime", HbmIngredient.of(Items.BONE, 1),
+                new ItemStack(Items.SLIME_BALL, 16), mixingTime, HbmFluids.SULFURIC_ACID, 1_000, 0.0F, 41);
+        crystallizer(consumer, "mustardwillow_cadmium", HbmIngredient.of(item("plant_item_mustardwillow"), 10),
+                item("powder_cadmium"), utilityTime, HbmFluids.RADIOSOLVENT, 250, 0.0F, 42);
+        crystallizer(consumer, "scrap_oil_arsenic", HbmIngredient.of(item("scrap_oil"), 16),
+                item("nugget_arsenic"), utilityTime, HbmFluids.RADIOSOLVENT, 100, 0.3F, 43);
+        crystallizer(consumer, "powder_ash_fullerene_cft", HbmIngredient.of(item("powder_ash_fullerene"), 4),
+                item("ingot_cft"), baseTime, HbmFluids.XYLENE, 1_000, 0.1F, 44);
+
+        crystallizer(consumer, "powder_diamond", HbmIngredient.legacyOre("dustDiamond", 1),
+                Items.DIAMOND, utilityTime, 0.0F, 45);
+        crystallizer(consumer, "powder_emerald", HbmIngredient.legacyOre("dustEmerald", 1),
+                Items.EMERALD, utilityTime, 0.0F, 46);
+        crystallizer(consumer, "powder_lapis", HbmIngredient.legacyOre("dustLapis", 1),
+                Items.LAPIS_LAZULI, utilityTime, 0.0F, 47);
+        crystallizer(consumer, "powder_semtex_mix", HbmIngredient.of(item("powder_semtex_mix"), 1),
+                item("ingot_semtex"), baseTime, 0.0F, 48);
+        crystallizer(consumer, "powder_desh_ready", HbmIngredient.of(item("powder_desh_ready"), 1),
+                item("ingot_desh"), baseTime, 0.0F, 49);
+        crystallizer(consumer, "powder_meteorite", HbmIngredient.of(item("powder_meteorite"), 1),
+                item("fragment_meteorite"), utilityTime, 0.0F, 50);
+        crystallizer(consumer, "cadmium_dust_rubber", HbmIngredient.legacyOre("dustCadmium", 1),
+                new ItemStack(item("ingot_rubber"), 16), utilityTime, HbmFluids.FISHOIL, 4_000, 0.0F, 51);
+        crystallizer(consumer, "rubber_ingot_sourgas", HbmIngredient.legacyOre("ingotLatex", 1),
+                item("ingot_rubber"), mixingTime, HbmFluids.SOURGAS, 25, 0.15F, 52);
+        crystallizer(consumer, "powder_sawdust_cordite", HbmIngredient.of(item("powder_sawdust"), 1),
+                item("cordite"), mixingTime, HbmFluids.NITROGLYCERIN, 250, 0.25F, 53);
+        crystallizer(consumer, "rebar_concrete", HbmIngredient.of(item("rebar"), 1),
+                item("concrete_rebar"), 10, HbmFluids.CONCRETE, 1_000, 0.0F, 54);
+        crystallizer(consumer, "meteorite_sword_etched", HbmIngredient.of(item("meteorite_sword_treated"), 1),
+                item("meteorite_sword_etched"), baseTime, 0.0F, 55);
+        crystallizer(consumer, "powder_impure_osmiridium", HbmIngredient.of(item("powder_impure_osmiridium"), 1),
+                item("crystal_osmiridium"), baseTime, HbmFluids.SCHRABIDIC, 1_000, 0.0F, 56);
+
+        PlasticScrapItem.ScrapType[] scrapTypes = PlasticScrapItem.ScrapType.values();
+        for (int meta = 0; meta < scrapTypes.length; meta++) {
+            PlasticScrapItem.ScrapType type = scrapTypes[meta];
+            String suffix = type.name().toLowerCase(Locale.ROOT);
+            crystallizer(consumer, "scrap_plastic_" + suffix,
+                    HbmIngredient.partialNbt(PlasticScrapItem.createStack(item("scrap_plastic").asItem(), type)),
+                    ModItems.CIRCUIT_STAR_PIECE_ITEMS.get(meta).get(), baseTime, 0.0F, 57 + meta);
+        }
+
+        FluidType[] dyeFluids = {HbmFluids.WOODOIL, HbmFluids.FISHOIL, HbmFluids.LIGHTOIL};
+        String[] dyeFluidNames = {"woodoil", "fishoil", "lightoil"};
+        String[] dyeNames = {"black", "white", "red", "yellow", "green", "blue"};
+        String[] dyeOres = {"dustCoal", "dustTitanium", "dustIron", "dustTungsten", "dustCopper", "dustCobalt"};
+        int[] dyeMetas = {0, 15, 1, 11, 2, 4};
+        int dyeOrder = 378;
+        for (int fluidIndex = 0; fluidIndex < dyeFluids.length; fluidIndex++) {
+            for (int dyeIndex = 0; dyeIndex < dyeNames.length; dyeIndex++) {
+                crystallizer(consumer, "chemical_dye_" + dyeNames[dyeIndex] + "_" + dyeFluidNames[fluidIndex],
+                        HbmIngredient.legacyOre(dyeOres[dyeIndex], 1),
+                        new ItemStack(ModItems.CHEMICAL_DYE_ITEMS.get(dyeMetas[dyeIndex]).get(), 4),
+                        mixingTime, dyeFluids[fluidIndex], 100, 0.15F, dyeOrder++);
+            }
+        }
+
+        crystallizer(consumer, "oil_tar_crude_wax", HbmIngredient.of(item("oil_tar_crude"), 1),
+                item("oil_tar_wax"), 20, HbmFluids.CHLORINE, 250, 0.0F, 396);
+        crystallizer(consumer, "oil_tar_crack_wax", HbmIngredient.of(item("oil_tar_crack"), 1),
+                item("oil_tar_wax"), 20, HbmFluids.CHLORINE, 100, 0.0F, 397);
+        crystallizer(consumer, "oil_tar_paraffin_wax", HbmIngredient.of(item("oil_tar_paraffin"), 1),
+                item("oil_tar_wax"), 20, HbmFluids.CHLORINE, 100, 0.0F, 398);
+        crystallizer(consumer, "oil_tar_wax_pellet_charged", HbmIngredient.of(item("oil_tar_wax"), 1),
+                item("pellet_charged"), 200, HbmFluids.IONGEL, 500, 0.0F, 399);
+        crystallizer(consumer, "oil_tar_paraffin_pill_red", HbmIngredient.of(item("oil_tar_paraffin"), 1),
+                item("pill_red"), 200, HbmFluids.ESTRADIOL, 250, 0.0F, 400);
+        crystallizer(consumer, "sand_clay", HbmIngredient.legacyOre("sand", 1),
+                Blocks.CLAY, 20, HbmFluids.COLLOID, 1_000, 0.0F, 401);
+        crystallizer(consumer, "sand_quartz_dynamite", HbmIngredient.of(item("sand_quartz"), 1),
+                new ItemStack(item("ball_dynamite"), 16), 20, HbmFluids.NITROGLYCERIN, 1_000, 0.0F, 402);
+        crystallizer(consumer, "quartz_dust_dynamite", HbmIngredient.legacyOre("dustNetherQuartz", 1),
+                new ItemStack(item("ball_dynamite"), 4), 20, HbmFluids.NITROGLYCERIN, 250, 0.0F, 403);
+
+        crystallizer(consumer, "moon_turf", HbmIngredient.of(item("moon_turf"), 16),
+                item("chunk_ore_moonstone"), 1200, 0.0F, 407);
+    }
+
+    private static void crystallizer(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
+            ItemLike output, int duration, float productivity, int sourceOrder) {
+        crystallizer(consumer, name, input, new ItemStack(output), duration, HbmFluids.PEROXIDE, 500,
+                productivity, sourceOrder);
+    }
+
+    private static void crystallizer(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
+            ItemStack output, int duration, float productivity, int sourceOrder) {
+        crystallizer(consumer, name, input, output, duration, HbmFluids.PEROXIDE, 500, productivity, sourceOrder);
+    }
+
+    private static void crystallizer(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
+            ItemLike output, int duration, FluidType fluid, int fluidAmount, float productivity, int sourceOrder) {
+        crystallizer(consumer, name, input, new ItemStack(output), duration, fluid, fluidAmount, productivity,
+                sourceOrder);
+    }
+
+    private static void crystallizer(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
+            ItemStack output, int duration, FluidType fluid, int fluidAmount, float productivity, int sourceOrder) {
+        JsonObject json = new JsonObject();
+        json.add("input", input.toJson());
+        json.add("output", itemStackJson(output));
+        json.addProperty("duration", duration);
+        json.add("fluid", crystallizerFluidJson(fluid, fluidAmount));
+        if (productivity > 0.0F) {
+            json.addProperty("productivity", productivity);
+        }
+        json.addProperty("source_order", sourceOrder);
+        consumer.accept(finishedRecipe(id("crystallizer/" + name), json, ModRecipes.CRYSTALLIZER.serializer().get()));
+    }
+
+    private static JsonObject crystallizerFluidJson(FluidType fluid, int amount) {
+        JsonObject object = new JsonObject();
+        object.addProperty("fluid", fluid.getName());
+        object.addProperty("amount", amount);
+        return object;
+    }
+
     private static void arcFurnaceRecipes(Consumer<FinishedRecipe> consumer) {
         GenericMachineRecipeBuilder.arcFurnace("arc.sand", 400, 1_000)
-                .inputTag(forgeTag("sand"), 1)
+                .inputLegacyOre("sand", Ingredient.of(forgeTag("sand")), 1)
                 .outputItem(item("nugget_silicon"))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.NUGGET.q(1)))
                 .sourceOrder(0)
                 .save(consumer, id("arc_furnace/sand"));
         GenericMachineRecipeBuilder.arcFurnace("arc.flint", 400, 1_000)
                 .inputItem(Items.FLINT, 1)
                 .outputItem(new ItemStack(item("nugget_silicon"), 4))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.INGOT.q(1, 2)))
                 .sourceOrder(1)
                 .save(consumer, id("arc_furnace/flint"));
         GenericMachineRecipeBuilder.arcFurnace("arc.quartz", 400, 1_000)
-                .inputTag(forgeTag("gems/quartz"), 1)
+                .inputLegacyOre("gemQuartz", Ingredient.of(forgeTag("gems/quartz")), 1)
                 .outputItem(new ItemStack(item("nugget_silicon"), 3))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.NUGGET.q(3)))
                 .sourceOrder(2)
                 .save(consumer, id("arc_furnace/quartz"));
         GenericMachineRecipeBuilder.arcFurnace("arc.quartzdust", 400, 1_000)
-                .inputTag(forgeTag("dusts/quartz"), 1)
+                .inputLegacyOre("dustQuartz", Ingredient.of(forgeTag("dusts/quartz")), 1)
                 .outputItem(new ItemStack(item("nugget_silicon"), 3))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.NUGGET.q(3)))
                 .sourceOrder(3)
                 .save(consumer, id("arc_furnace/quartz_dust"));
         GenericMachineRecipeBuilder.arcFurnace("arc.quartzblock", 400, 1_000)
-                .inputItem(Blocks.QUARTZ_BLOCK, 1)
+                .inputLegacyOre("blockQuartz", Ingredient.of(Blocks.QUARTZ_BLOCK), 1)
                 .outputItem(new ItemStack(item("nugget_silicon"), 12))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.NUGGET.q(12)))
                 .sourceOrder(4)
                 .save(consumer, id("arc_furnace/quartz_block"));
+        GenericMachineRecipeBuilder.arcFurnace("arc.fiberglass", 400, 1_000)
+                .inputLegacyOre("ingotFiberglass", 1)
+                .outputItem(new ItemStack(item("nugget_silicon"), 4))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.INGOT.q(1, 2)))
+                .sourceOrder(5)
+                .save(consumer, id("arc_furnace/fiberglass"));
+        GenericMachineRecipeBuilder.arcFurnace("arc.fiberglassblock", 400, 1_000)
+                .inputLegacyOre("blockFiberglass", 1)
+                .outputItem(new ItemStack(item("nugget_silicon"), 40))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.INGOT.q(9, 2)))
+                .sourceOrder(6)
+                .save(consumer, id("arc_furnace/fiberglass_block"));
+        GenericMachineRecipeBuilder.arcFurnace("arc.asbestos", 400, 1_000)
+                .inputLegacyOre("ingotAsbestos", 1)
+                .outputItem(new ItemStack(item("nugget_silicon"), 4))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.INGOT.q(1, 2)))
+                .sourceOrder(7)
+                .save(consumer, id("arc_furnace/asbestos"));
+        GenericMachineRecipeBuilder.arcFurnace("arc.asbestosdust", 400, 1_000)
+                .inputLegacyOre("dustAsbestos", 1)
+                .outputItem(new ItemStack(item("nugget_silicon"), 4))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.INGOT.q(1, 2)))
+                .sourceOrder(8)
+                .save(consumer, id("arc_furnace/asbestos_dust"));
+        GenericMachineRecipeBuilder.arcFurnace("arc.asbestosblock", 400, 1_000)
+                .inputLegacyOre("blockAsbestos", 1)
+                .outputItem(new ItemStack(item("nugget_silicon"), 40))
+                .arcMaterialOutput(mat(Mats.MAT_SILICON, MaterialShapes.INGOT.q(9, 2)))
+                .sourceOrder(9)
+                .save(consumer, id("arc_furnace/asbestos_block"));
         GenericMachineRecipeBuilder.arcFurnace("arc.sandquartz", 400, 1_000)
                 .inputItem(ModBlocks.SAND_QUARTZ.get(), 1)
                 .outputItem(ModBlocks.GLASS_QUARTZ.get())
-                .sourceOrder(5)
+                .sourceOrder(10)
                 .save(consumer, id("arc_furnace/sand_quartz"));
+        GenericMachineRecipeBuilder.arcFurnace("arc.borax", 400, 1_000)
+                .inputLegacyOre("dustBorax", 1)
+                .outputItem(new ItemStack(item("powder_boron_tiny"), 3))
+                .arcMaterialOutput(mat(Mats.MAT_BORON, MaterialShapes.NUGGET.q(3)))
+                .sourceOrder(11)
+                .save(consumer, id("arc_furnace/borax"));
+
+        int nextSourceOrder = arcFurnaceMaterialAutogenRecipes(consumer, 1000);
+        nextSourceOrder = arcFurnaceCustomSmeltableRecipes(consumer, nextSourceOrder);
+        arcFurnaceFurnaceSmeltableRecipes(consumer, nextSourceOrder);
+    }
+
+    private static int arcFurnaceMaterialAutogenRecipes(Consumer<FinishedRecipe> consumer, int sourceOrder) {
+        for (NTMMaterial material : Mats.orderedList) {
+            int in = material.convIn;
+            int out = material.convOut;
+            NTMMaterial convert = material.smeltsInto;
+            if (convert.smeltable != SmeltingBehavior.SMELTABLE) {
+                continue;
+            }
+            for (MaterialShapes shape : MaterialShapes.allShapes) {
+                if (shape.noAutogen || shape == MaterialShapes.FRAGMENT
+                        || shape.prefixes == null || shape.prefixes.length == 0) {
+                    continue;
+                }
+                String legacyOreName = shape.name() + legacyArcMaterialName(material);
+                if (isExplicitArcFurnaceLiquidInput(legacyOreName)) {
+                    continue;
+                }
+                int amount = shape.q(1) * out / in;
+                if (amount <= 0) {
+                    continue;
+                }
+                TagKey<Item> inputTag = LegacyOreDictionaryMappings.itemTag(legacyOreName);
+                GenericMachineRecipeBuilder.arcFurnace("arc.autogen." + legacyOreName, 400, 1_000)
+                        .inputLegacyOre(legacyOreName, 1)
+                        .arcMaterialOutput(mat(convert, amount))
+                        .conditionNotTagEmpty(inputTag)
+                        .sourceOrder(sourceOrder++)
+                        .save(consumer, id("arc_furnace/material/" + arcAutogenRecipePath(legacyOreName)));
+            }
+        }
+        return sourceOrder;
+    }
+
+    private static String legacyArcMaterialName(NTMMaterial material) {
+        if (material == Mats.MAT_ALUMINIUM) {
+            return "Aluminum";
+        }
+        if (material == Mats.MAT_TANTALIUM) {
+            return "Tantalum";
+        }
+        if (material == Mats.MAT_TECHNETIUM) {
+            return "Technetium99";
+        }
+        if (material == Mats.MAT_DESH) {
+            return "WorkersAlloy";
+        }
+        if (material == Mats.MAT_MUD) {
+            return "WatzMud";
+        }
+        if (material == Mats.MAT_GUNMETAL) {
+            return "GunMetal";
+        }
+        return material.names[0];
+    }
+
+    private static boolean isExplicitArcFurnaceLiquidInput(String legacyOreName) {
+        return switch (legacyOreName) {
+            case "gemQuartz", "dustQuartz", "blockQuartz",
+                    "ingotFiberglass", "blockFiberglass",
+                    "ingotAsbestos", "dustAsbestos", "blockAsbestos",
+                    "dustBorax" -> true;
+            default -> false;
+        };
+    }
+
+    private static String arcAutogenRecipePath(String legacyOreName) {
+        return LegacyOreDictionaryMappings.itemTagPath(legacyOreName)
+                .replace('/', '_')
+                .toLowerCase(Locale.ROOT);
+    }
+
+    private static int arcFurnaceCustomSmeltableRecipes(Consumer<FinishedRecipe> consumer, int sourceOrder) {
+        int block = MaterialShapes.BLOCK.q(1);
+        int ingot = MaterialShapes.INGOT.q(1);
+        int nugget = MaterialShapes.NUGGET.q(1);
+        int dust = MaterialShapes.DUST.q(1);
+        int gem = MaterialShapes.GEM.q(1);
+        int quart = MaterialShapes.QUART.q(1);
+
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "stone", sourceOrder, HbmIngredient.legacyOre("stone", 1),
+                mat(Mats.MAT_STONE, block));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "cobblestone", sourceOrder,
+                HbmIngredient.legacyOre("cobblestone", 1), mat(Mats.MAT_STONE, block));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "obsidian", sourceOrder, HbmIngredient.of(Blocks.OBSIDIAN, 1),
+                mat(Mats.MAT_OBSIDIAN, block));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "rail", sourceOrder, HbmIngredient.of(Items.RAIL, 1),
+                mat(Mats.MAT_IRON, MaterialShapes.INGOT.q(6, 16)));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "powered_rail", sourceOrder,
+                HbmIngredient.of(Items.POWERED_RAIL, 1),
+                mat(Mats.MAT_GOLD, MaterialShapes.INGOT.q(6, 6)),
+                mat(Mats.MAT_REDSTONE, MaterialShapes.DUST.q(1, 6)));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "detector_rail", sourceOrder,
+                HbmIngredient.of(Items.DETECTOR_RAIL, 1),
+                mat(Mats.MAT_IRON, MaterialShapes.INGOT.q(6, 6)),
+                mat(Mats.MAT_REDSTONE, MaterialShapes.DUST.q(1, 6)));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "minecart", sourceOrder, HbmIngredient.of(Items.MINECART, 1),
+                mat(Mats.MAT_IRON, ingot * 5));
+
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "blade_titanium", sourceOrder,
+                HbmIngredient.of(item("blade_titanium"), 1), mat(Mats.MAT_TITANIUM, ingot * 3));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "blade_tungsten", sourceOrder,
+                HbmIngredient.of(item("blade_tungsten"), 1), mat(Mats.MAT_TUNGSTEN, ingot * 3));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "blades_steel", sourceOrder,
+                HbmIngredient.of(item("blades_steel"), 1), mat(Mats.MAT_STEEL, ingot * 4));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "blades_titanium", sourceOrder,
+                HbmIngredient.of(item("blades_titanium"), 1), mat(Mats.MAT_TITANIUM, ingot * 4));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "stamp_stone_flat", sourceOrder,
+                HbmIngredient.of(item("stamp_stone_flat"), 1), mat(Mats.MAT_STONE, ingot * 3));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "stamp_iron_flat", sourceOrder,
+                HbmIngredient.of(item("stamp_iron_flat"), 1), mat(Mats.MAT_IRON, ingot * 3));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "stamp_steel_flat", sourceOrder,
+                HbmIngredient.of(item("stamp_steel_flat"), 1), mat(Mats.MAT_STEEL, ingot * 3));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "stamp_titanium_flat", sourceOrder,
+                HbmIngredient.of(item("stamp_titanium_flat"), 1), mat(Mats.MAT_TITANIUM, ingot * 3));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "stamp_obsidian_flat", sourceOrder,
+                HbmIngredient.of(item("stamp_obsidian_flat"), 1), mat(Mats.MAT_OBSIDIAN, ingot * 3));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "pipes_steel", sourceOrder,
+                HbmIngredient.of(item("pipes_steel"), 1), mat(Mats.MAT_STEEL, block * 3));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "casing_small", sourceOrder,
+                HbmIngredient.of(item("casing_small"), 1), mat(Mats.MAT_GUNMETAL, MaterialShapes.PLATE.q(1, 4)));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "casing_small_steel", sourceOrder,
+                HbmIngredient.of(item("casing_small_steel"), 1),
+                mat(Mats.MAT_WEAPONSTEEL, MaterialShapes.PLATE.q(1, 4)));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "casing_large", sourceOrder,
+                HbmIngredient.of(item("casing_large"), 1), mat(Mats.MAT_GUNMETAL, MaterialShapes.PLATE.q(1, 2)));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "casing_large_steel", sourceOrder,
+                HbmIngredient.of(item("casing_large_steel"), 1),
+                mat(Mats.MAT_WEAPONSTEEL, MaterialShapes.PLATE.q(1, 2)));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "chunk_ore_cryolite", sourceOrder,
+                HbmIngredient.of(item("chunk_ore_cryolite"), 1),
+                mat(Mats.MAT_ALUMINIUM, ingot), mat(Mats.MAT_SODIUM, ingot));
+
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_iron", sourceOrder,
+                HbmIngredient.legacyOre("oreIron", 1),
+                mat(Mats.MAT_IRON, ingot * 2), mat(Mats.MAT_TITANIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_titanium", sourceOrder,
+                HbmIngredient.legacyOre("oreTitanium", 1),
+                mat(Mats.MAT_TITANIUM, ingot * 2), mat(Mats.MAT_IRON, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_tungsten", sourceOrder,
+                HbmIngredient.legacyOre("oreTungsten", 1),
+                mat(Mats.MAT_TUNGSTEN, ingot * 2), mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_aluminium", sourceOrder,
+                HbmIngredient.legacyOre("oreAluminium", 1),
+                mat(Mats.MAT_ALUMINIUM, ingot * 2), mat(Mats.MAT_SODIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_coal", sourceOrder,
+                HbmIngredient.legacyOre("oreCoal", 1), mat(Mats.MAT_CARBON, gem * 3), mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_gold", sourceOrder,
+                HbmIngredient.legacyOre("oreGold", 1),
+                mat(Mats.MAT_GOLD, ingot * 2), mat(Mats.MAT_LEAD, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_uranium", sourceOrder,
+                HbmIngredient.legacyOre("oreUranium", 1),
+                mat(Mats.MAT_URANIUM, ingot * 2), mat(Mats.MAT_LEAD, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_thorium232", sourceOrder,
+                HbmIngredient.legacyOre("oreThorium232", 1),
+                mat(Mats.MAT_THORIUM, ingot * 2), mat(Mats.MAT_URANIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_th232", sourceOrder,
+                HbmIngredient.legacyOre("oreTh232", 1),
+                mat(Mats.MAT_THORIUM, ingot * 2), mat(Mats.MAT_URANIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_thorium", sourceOrder,
+                HbmIngredient.legacyOre("oreThorium", 1),
+                mat(Mats.MAT_THORIUM, ingot * 2), mat(Mats.MAT_URANIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_copper", sourceOrder,
+                HbmIngredient.legacyOre("oreCopper", 1),
+                mat(Mats.MAT_COPPER, ingot * 2), mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_lead", sourceOrder,
+                HbmIngredient.legacyOre("oreLead", 1),
+                mat(Mats.MAT_LEAD, ingot * 2), mat(Mats.MAT_GOLD, nugget),
+                mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_beryllium", sourceOrder,
+                HbmIngredient.legacyOre("oreBeryllium", 1),
+                mat(Mats.MAT_BERYLLIUM, ingot * 2), mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_cobalt", sourceOrder,
+                HbmIngredient.legacyOre("oreCobalt", 1), mat(Mats.MAT_COBALT, ingot), mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_redstone", sourceOrder,
+                HbmIngredient.legacyOre("oreRedstone", 1),
+                mat(Mats.MAT_REDSTONE, ingot * 4), mat(Mats.MAT_STONE, quart));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_hematite", sourceOrder,
+                HbmIngredient.legacyOre("oreHematite", 1), mat(Mats.MAT_HEMATITE, ingot));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "ore_malachite", sourceOrder,
+                HbmIngredient.legacyOre("oreMalachite", 1), mat(Mats.MAT_MALACHITE, ingot * 6));
+
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "stone_resource_limestone", sourceOrder,
+                HbmIngredient.of(block("stone_resource_limestone"), 1), mat(Mats.MAT_FLUX, dust * 10));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "powder_flux", sourceOrder,
+                HbmIngredient.of(item("powder_flux"), 1), mat(Mats.MAT_FLUX, dust));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "charcoal", sourceOrder,
+                HbmIngredient.of(Items.CHARCOAL, 1), mat(Mats.MAT_CARBON, nugget * 3));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "powder_ash_wood", sourceOrder,
+                HbmIngredient.of(item("powder_ash_wood"), 1), mat(Mats.MAT_CARBON, nugget));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "powder_ash_coal", sourceOrder,
+                HbmIngredient.of(item("powder_ash_coal"), 1), mat(Mats.MAT_CARBON, nugget * 2));
+        sourceOrder = arcFurnaceCustomSmeltable(consumer, "powder_ash_misc", sourceOrder,
+                HbmIngredient.of(item("powder_ash_misc"), 1), mat(Mats.MAT_CARBON, nugget));
+        return sourceOrder;
+    }
+
+    private static int arcFurnaceCustomSmeltable(Consumer<FinishedRecipe> consumer, String name, int sourceOrder,
+            HbmIngredient input, MaterialStack... output) {
+        List<MaterialStack> smeltableOutputs = new ArrayList<>();
+        for (MaterialStack stack : output) {
+            if (stack != null && stack.material != null && stack.material.smeltable == SmeltingBehavior.SMELTABLE) {
+                smeltableOutputs.add(stack);
+            }
+        }
+        if (smeltableOutputs.isEmpty()) {
+            return sourceOrder;
+        }
+        GenericMachineRecipeBuilder builder = GenericMachineRecipeBuilder.arcFurnace("arc.custom." + name, 400, 1_000)
+                .inputIngredient(input)
+                .sourceOrder(sourceOrder);
+        for (MaterialStack stack : smeltableOutputs) {
+            builder.arcMaterialOutput(stack);
+        }
+        builder.save(consumer, id("arc_furnace/custom_smeltable/" + name));
+        return sourceOrder + 1;
+    }
+
+    private static void arcFurnaceFurnaceSmeltableRecipes(Consumer<FinishedRecipe> consumer, int sourceOrder) {
+        arcFurnaceFurnaceSmeltable(consumer, "iron_ore", Blocks.IRON_ORE,
+                new ItemStack(Items.IRON_INGOT), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "gold_ore", Blocks.GOLD_ORE,
+                new ItemStack(Items.GOLD_INGOT), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "diamond_ore", Blocks.DIAMOND_ORE,
+                new ItemStack(Items.DIAMOND), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "emerald_ore", Blocks.EMERALD_ORE,
+                new ItemStack(Items.EMERALD), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "redstone_ore", Blocks.REDSTONE_ORE,
+                new ItemStack(Items.REDSTONE), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "lapis_ore", Blocks.LAPIS_ORE,
+                new ItemStack(Items.LAPIS_LAZULI), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "nether_quartz_ore", Blocks.NETHER_QUARTZ_ORE,
+                new ItemStack(Items.QUARTZ), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "clay_ball", Items.CLAY_BALL,
+                new ItemStack(Items.BRICK), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "netherrack", Blocks.NETHERRACK,
+                new ItemStack(Items.NETHER_BRICK), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "powder_iron", item("powder_iron"),
+                new ItemStack(Items.IRON_INGOT), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "powder_gold", item("powder_gold"),
+                new ItemStack(Items.GOLD_INGOT), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "ore_gneiss_iron", block("ore_gneiss_iron"),
+                new ItemStack(Items.IRON_INGOT), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "ore_gneiss_gold", block("ore_gneiss_gold"),
+                new ItemStack(Items.GOLD_INGOT), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "crystal_iron", item("crystal_iron"),
+                new ItemStack(Items.IRON_INGOT, 2), sourceOrder++);
+        arcFurnaceFurnaceSmeltable(consumer, "crystal_gold", item("crystal_gold"),
+                new ItemStack(Items.GOLD_INGOT, 2), sourceOrder);
+    }
+
+    private static void arcFurnaceFurnaceSmeltable(Consumer<FinishedRecipe> consumer, String name,
+            ItemLike input, ItemStack output, int sourceOrder) {
+        GenericMachineRecipeBuilder.arcFurnace("arc.furnace." + name, 400, 1_000)
+                .inputItem(input, 1)
+                .outputItem(output)
+                .sourceOrder(sourceOrder)
+                .save(consumer, id("arc_furnace/furnace_smeltable/" + name));
     }
 
     private static void compatRecipeListenerRecipes(Consumer<FinishedRecipe> consumer) {
@@ -328,102 +1622,626 @@ public final class HbmRecipeProvider extends RecipeProvider {
         fusionRecipe(consumer, "dd", 750_000, 1_000_000, breederCapacity / 200.0D, 1.0F, 0.2F, 0.2F)
                 .inputFluid(HbmFluids.DEUTERIUM, 20)
                 .outputFluid(HbmFluids.HELIUM4, 1_000)
+                .icon(fluidContainerStack(ModItems.GAS_FULL.get(), 1, HbmFluids.DEUTERIUM, 0, 0))
+                .sourceOrder(0)
                 .save(consumer, id("fusion_reactor/dd"));
-        fusionRecipe(consumer, "do", 250_000, 1_250_000, breederCapacity / 200.0D, 0.0F, 0.0F, 0.0F)
+        fusionRecipe(consumer, "do", 250_000, 1_250_000, breederCapacity / 200.0D, 1.0F, 0.2F, 0.6F)
                 .inputFluid(HbmFluids.DEUTERIUM, 10)
                 .inputFluid(HbmFluids.OXYGEN, 10)
                 .outputItem(item("pellet_charged"))
+                .icon(fluidContainerStack(ModItems.GAS_FULL.get(), 1, HbmFluids.OXYGEN, 0, 0))
+                .sourceOrder(1)
                 .save(consumer, id("fusion_reactor/do"));
-        fusionRecipe(consumer, "dt", 750_000, 3_750_000, breederCapacity / 100.0D, 0.0F, 0.0F, 0.0F)
+        fusionRecipe(consumer, "dt", 750_000, 3_750_000, breederCapacity / 100.0D, 1.0F, 0.2F, 0.6F)
                 .inputFluid(HbmFluids.DEUTERIUM, 10)
                 .inputFluid(HbmFluids.TRITIUM, 10)
                 .outputFluid(HbmFluids.HELIUM4, 1_000)
+                .icon(fluidContainerStack(ModItems.GAS_FULL.get(), 1, HbmFluids.HELIUM4, 0, 0))
+                .sourceOrder(2)
                 .save(consumer, id("fusion_reactor/dt"));
         fusionRecipe(consumer, "tcl", 2_500_000, 6_250_000, breederCapacity / 20.0D, 0.8F, 0.6F, 0.4F)
                 .inputFluid(HbmFluids.TRITIUM, 10)
                 .inputFluid(HbmFluids.CHLORINE, 10)
                 .outputItem(item("powder_chlorophyte"))
+                .icon(item("powder_chlorophyte"))
+                .sourceOrder(3)
                 .save(consumer, id("fusion_reactor/tcl"));
         fusionRecipe(consumer, "h3", 500_000, 3_750_000, 0.0D, 0.2F, 0.2F, 1.0F)
                 .inputFluid(HbmFluids.HELIUM3, 20)
                 .outputFluid(HbmFluids.HELIUM4, 1_000)
+                .icon(fluidContainerStack(ModItems.GAS_FULL.get(), 1, HbmFluids.HELIUM3, 0, 0))
+                .sourceOrder(4)
                 .save(consumer, id("fusion_reactor/h3"));
         fusionRecipe(consumer, "th4", 875_000, 4_000_000, breederCapacity / 20.0D, 0.2F, 0.2F, 1.0F)
                 .inputFluid(HbmFluids.TRITIUM, 10)
                 .inputFluid(HbmFluids.HELIUM4, 10)
                 .outputItem(item("pellet_charged"))
+                .icon(fluidContainerStack(ModItems.GAS_FULL.get(), 1, HbmFluids.TRITIUM, 0, 0))
+                .sourceOrder(5)
                 .save(consumer, id("fusion_reactor/th4"));
         fusionRecipe(consumer, "cl", 3_750_000, 10_000_000, breederCapacity / 10.0D, 1.0F, 0.6F, 0.2F)
                 .inputFluid(HbmFluids.CHLORINE, 20)
                 .outputItem(item("powder_chlorophyte"))
+                .icon(item("powder_chlorophyte"))
+                .sourceOrder(6)
                 .save(consumer, id("fusion_reactor/cl"));
         fusionRecipe(consumer, "dhc", 10_000_000, 25_000_000, breederCapacity / 5.0D, 0.2F, 0.8F, 0.8F)
                 .inputFluid(HbmFluids.DHC, 20)
                 .outputItem(item("powder_chlorophyte"))
+                .icon(fluidIconStack(HbmFluids.DHC, 0, 0))
+                .sourceOrder(7)
                 .save(consumer, id("fusion_reactor/dhc"));
         fusionRecipe(consumer, "bf", 1_000_000, 12_500_000, breederCapacity / 5.0D, 0.2F, 1.0F, 0.2F)
                 .inputFluid(HbmFluids.BALEFIRE, 15)
                 .inputFluid(HbmFluids.AMAT, 5)
                 .outputItem(item("powder_balefire"))
+                .icon(fluidIconStack(HbmFluids.BALEFIRE, 0, 0))
+                .sourceOrder(8)
                 .save(consumer, id("fusion_reactor/bf"));
         fusionRecipe(consumer, "stellar", 10_000_000, 50_000_000, breederCapacity, 1.0F, 0.4F, 0.1F)
                 .inputFluid(HbmFluids.STELLAR_FLUX, 10)
                 .outputItem(item("powder_gold"))
+                .icon(fluidIconStack(HbmFluids.STELLAR_FLUX, 0, 0))
+                .sourceOrder(9)
                 .save(consumer, id("fusion_reactor/stellar"));
     }
 
+    private static void cyclotronRecipes(Consumer<FinishedRecipe> consumer) {
+        cyclotron(consumer, "lithium_to_beryllium", "part_lithium", HbmIngredient.legacyOre("dustLithium", 1),
+                "powder_beryllium", 50, 0);
+        cyclotron(consumer, "lithium_to_boron", "part_lithium", HbmIngredient.legacyOre("dustBeryllium", 1),
+                "powder_boron", 50, 1);
+        cyclotron(consumer, "lithium_to_coal", "part_lithium", HbmIngredient.legacyOre("dustBoron", 1),
+                "powder_coal", 50, 2);
+        cyclotron(consumer, "lithium_to_red_phosphorus", "part_lithium",
+                HbmIngredient.legacyOre("dustNetherQuartz", 1), "powder_fire", 50, 3);
+        cyclotron(consumer, "lithium_to_sulfur", "part_lithium", HbmIngredient.legacyOre("dustPhosphorus", 1),
+                "sulfur", 50, 4);
+        cyclotron(consumer, "lithium_to_cobalt", "part_lithium", HbmIngredient.legacyOre("dustIron", 1),
+                "powder_cobalt", 50, 5);
+        cyclotron(consumer, "lithium_to_zirconium", "part_lithium", HbmIngredient.of(item("powder_strontium"), 1),
+                "powder_zirconium", 50, 6);
+        cyclotron(consumer, "lithium_to_mercury", "part_lithium", HbmIngredient.legacyOre("dustGold", 1),
+                "ingot_mercury", 50, 7);
+        cyclotron(consumer, "lithium_to_astatine", "part_lithium", HbmIngredient.legacyOre("dustPolonium", 1),
+                "powder_astatine", 50, 8);
+        cyclotron(consumer, "lithium_to_cerium", "part_lithium", HbmIngredient.legacyOre("dustLanthanium", 1),
+                "powder_cerium", 50, 9);
+        cyclotron(consumer, "lithium_to_thorium", "part_lithium", HbmIngredient.legacyOre("dustActinium", 1),
+                "powder_thorium", 50, 10);
+        cyclotron(consumer, "lithium_to_neptunium", "part_lithium", HbmIngredient.legacyOre("dustUranium", 1),
+                "powder_neptunium", 50, 11);
+        cyclotron(consumer, "lithium_to_plutonium", "part_lithium", HbmIngredient.legacyOre("dustNp237", 1),
+                "powder_plutonium", 50, 12);
+
+        cyclotron(consumer, "beryllium_to_boron", "part_beryllium", HbmIngredient.legacyOre("dustLithium", 1),
+                "powder_boron", 25, 13);
+        cyclotron(consumer, "beryllium_to_sulfur", "part_beryllium",
+                HbmIngredient.legacyOre("dustNetherQuartz", 1), "sulfur", 25, 14);
+        cyclotron(consumer, "beryllium_to_iron", "part_beryllium", HbmIngredient.legacyOre("dustTitanium", 1),
+                "powder_iron", 25, 15);
+        cyclotron(consumer, "beryllium_to_copper", "part_beryllium", HbmIngredient.legacyOre("dustCobalt", 1),
+                "powder_copper", 25, 16);
+        cyclotron(consumer, "beryllium_to_niobium", "part_beryllium",
+                HbmIngredient.of(item("powder_strontium"), 1), "powder_niobium", 25, 17);
+        cyclotron(consumer, "beryllium_to_neodymium", "part_beryllium",
+                HbmIngredient.of(item("powder_cerium"), 1), "powder_neodymium", 25, 18);
+        cyclotron(consumer, "beryllium_to_uranium", "part_beryllium", HbmIngredient.legacyOre("dustThorium", 1),
+                "powder_uranium", 25, 19);
+
+        cyclotron(consumer, "carbon_to_aluminium", "part_carbon", HbmIngredient.legacyOre("dustBoron", 1),
+                "powder_aluminium", 10, 20);
+        cyclotron(consumer, "carbon_to_titanium", "part_carbon", HbmIngredient.legacyOre("dustSulfur", 1),
+                "powder_titanium", 10, 21);
+        cyclotron(consumer, "carbon_to_cobalt", "part_carbon", HbmIngredient.legacyOre("dustTitanium", 1),
+                "powder_cobalt", 10, 22);
+        cyclotron(consumer, "carbon_to_lanthanium", "part_carbon", HbmIngredient.of(item("powder_caesium"), 1),
+                "powder_lanthanium", 10, 23);
+        cyclotron(consumer, "carbon_to_gold", "part_carbon", HbmIngredient.of(item("powder_neodymium"), 1),
+                "powder_gold", 10, 24);
+        cyclotron(consumer, "carbon_to_polonium", "part_carbon", HbmIngredient.of(item("ingot_mercury"), 1),
+                "powder_polonium", 10, 25);
+        cyclotron(consumer, "carbon_to_ra226", "part_carbon", HbmIngredient.legacyOre("dustLead", 1),
+                "powder_ra226", 10, 26);
+        cyclotron(consumer, "carbon_to_actinium", "part_carbon", HbmIngredient.of(item("powder_astatine"), 1),
+                "powder_actinium", 10, 27);
+
+        cyclotron(consumer, "copper_to_quartz", "part_copper", HbmIngredient.legacyOre("dustBeryllium", 1),
+                "powder_quartz", 15, 28);
+        cyclotron(consumer, "copper_to_bromine", "part_copper", HbmIngredient.legacyOre("dustCoal", 1),
+                "powder_bromine", 15, 29);
+        cyclotron(consumer, "copper_to_strontium", "part_copper", HbmIngredient.legacyOre("dustTitanium", 1),
+                "powder_strontium", 15, 30);
+        cyclotron(consumer, "copper_to_niobium", "part_copper", HbmIngredient.legacyOre("dustIron", 1),
+                "powder_niobium", 15, 31);
+        cyclotron(consumer, "copper_to_iodine", "part_copper", HbmIngredient.of(item("powder_bromine"), 1),
+                "powder_iodine", 15, 32);
+        cyclotron(consumer, "copper_to_neodymium", "part_copper", HbmIngredient.of(item("powder_strontium"), 1),
+                "powder_neodymium", 15, 33);
+        cyclotron(consumer, "copper_to_caesium", "part_copper", HbmIngredient.of(item("powder_niobium"), 1),
+                "powder_caesium", 15, 34);
+        cyclotron(consumer, "copper_to_polonium", "part_copper", HbmIngredient.of(item("powder_iodine"), 1),
+                "powder_polonium", 15, 35);
+        cyclotron(consumer, "copper_to_actinium", "part_copper", HbmIngredient.of(item("powder_caesium"), 1),
+                "powder_actinium", 15, 36);
+        cyclotron(consumer, "copper_to_uranium", "part_copper", HbmIngredient.legacyOre("dustGold", 1),
+                "powder_uranium", 15, 37);
+
+        cyclotron(consumer, "plutonium_to_tennessine_from_phosphorus", "part_plutonium",
+                HbmIngredient.legacyOre("dustPhosphorus", 1), "powder_tennessine", 100, 38);
+        cyclotron(consumer, "plutonium_to_tennessine", "part_plutonium",
+                HbmIngredient.legacyOre("dustPlutonium", 1), "powder_tennessine", 100, 39);
+        cyclotron(consumer, "plutonium_to_australium", "part_plutonium",
+                HbmIngredient.of(item("powder_tennessine"), 1), "powder_australium", 100, 40);
+        cyclotron(consumer, "plutonium_to_schrabidium_nugget", "part_plutonium",
+                HbmIngredient.of(item("pellet_charged"), 1), "nugget_schrabidium", 1000, 41);
+    }
+
+    private static void cyclotron(Consumer<FinishedRecipe> consumer, String name, String particle,
+            HbmIngredient input, String output, int antimatter, int sourceOrder) {
+        JsonObject json = new JsonObject();
+        json.add("particle", HbmIngredient.of(item(particle), 1).toJson());
+        json.add("input", input.toJson());
+        json.add("output", HbmItemOutput.of(new ItemStack(item(output))).toJson());
+        json.addProperty("antimatter", antimatter);
+        json.addProperty("source_order", sourceOrder);
+        consumer.accept(finishedRecipe(id("cyclotron/" + name), json, ModRecipes.CYCLOTRON.serializer().get()));
+    }
+
+    private static void particleAcceleratorRecipes(Consumer<FinishedRecipe> consumer) {
+        particleAccelerator(consumer, "amat_from_hydrogen_copper", HbmIngredient.of(item("particle_hydrogen"), 1),
+                HbmIngredient.of(item("particle_copper"), 1), 300, out("particle_amat", 1), ItemStack.EMPTY, 0);
+        particleAccelerator(consumer, "aschrab_from_amat", HbmIngredient.of(item("particle_amat"), 1),
+                HbmIngredient.of(item("particle_amat"), 1), 400, out("particle_aschrab", 1), ItemStack.EMPTY, 1);
+        particleAccelerator(consumer, "dark_from_aschrab", HbmIngredient.of(item("particle_aschrab"), 1),
+                HbmIngredient.of(item("particle_aschrab"), 1), 10_000, out("particle_dark", 1), ItemStack.EMPTY, 2);
+        particleAccelerator(consumer, "muon_from_hydrogen_amat", HbmIngredient.of(item("particle_hydrogen"), 1),
+                HbmIngredient.of(item("particle_amat"), 1), 2_500, out("particle_muon", 1), ItemStack.EMPTY, 3);
+        particleAccelerator(consumer, "higgs_from_hydrogen_lead", HbmIngredient.of(item("particle_hydrogen"), 1),
+                HbmIngredient.of(item("particle_lead"), 1), 6_500, out("particle_higgs", 1), ItemStack.EMPTY, 4);
+        particleAccelerator(consumer, "tachyon_from_muon_higgs", HbmIngredient.of(item("particle_muon"), 1),
+                HbmIngredient.of(item("particle_higgs"), 1), 5_000, out("particle_tachyon", 1), ItemStack.EMPTY, 5);
+        particleAccelerator(consumer, "strange_from_muon_dark", HbmIngredient.of(item("particle_muon"), 1),
+                HbmIngredient.of(item("particle_dark"), 1), 12_500, out("particle_strange", 1), ItemStack.EMPTY, 6);
+        particleAccelerator(consumer, "sparkticle_from_strange_magic", HbmIngredient.of(item("particle_strange"), 1),
+                HbmIngredient.of(item("powder_magic"), 1), 12_500, out("particle_sparkticle", 1), out("dust", 1), 7);
+        particleAccelerator(consumer, "digamma_from_sparkticle_higgs",
+                HbmIngredient.of(item("particle_sparkticle"), 1), HbmIngredient.of(item("particle_higgs"), 1),
+                70_000, out("particle_digamma", 1), ItemStack.EMPTY, 8);
+        particleAccelerator(consumer, "degenerate_matter", HbmIngredient.of(item("item_expensive_gold_dust"), 1),
+                HbmIngredient.legacyOre("ingotSchrabidium", 1), 10_000,
+                out("item_expensive_degenerate_matter", 1), ItemStack.EMPTY, 9);
+        particleAccelerator(consumer, "chicken_nugget", HbmIngredient.of(Items.CHICKEN, 1),
+                HbmIngredient.of(Items.CHICKEN, 1), 100, out("nugget", 1), out("nugget", 1), 10);
+    }
+
+    private static void particleAccelerator(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input1,
+            HbmIngredient input2, int momentum, ItemStack output1, ItemStack output2, int sourceOrder) {
+        JsonObject json = CompatRecipeRegistry.createParticleAccelerator(input1, input2, momentum, output1,
+                output2, sourceOrder);
+        consumer.accept(finishedCompatRecipe(id("particle_accelerator/" + name), json));
+    }
+
+    private static void exposureChamberRecipes(Consumer<FinishedRecipe> consumer) {
+        exposureChamber(consumer, "higgs_uranium", "particle_higgs", HbmIngredient.legacyOre("ingotUranium", 1),
+                "ingot_schraranium", 0);
+        exposureChamber(consumer, "higgs_u238", "particle_higgs", HbmIngredient.legacyOre("ingotU238", 1),
+                "ingot_schrabidium", 1);
+        exposureChamber(consumer, "dark_plutonium", "particle_dark", HbmIngredient.legacyOre("ingotPlutonium", 1),
+                "ingot_euphemium", 2);
+        exposureChamber(consumer, "sparkticle_schrabidium", "particle_sparkticle",
+                HbmIngredient.legacyOre("ingotSchrabidium", 1), "ingot_dineutronium", 3);
+    }
+
+    private static void exposureChamber(Consumer<FinishedRecipe> consumer, String name, String particle,
+            HbmIngredient ingredient, String output, int sourceOrder) {
+        JsonObject json = new JsonObject();
+        json.add("particle", HbmIngredient.of(item(particle), 1).toJson());
+        json.add("ingredient", ingredient.toJson());
+        json.add("output", HbmItemOutput.of(new ItemStack(item(output))).toJson());
+        json.addProperty("source_order", sourceOrder);
+        consumer.accept(finishedRecipe(id("exposure_chamber/" + name), json,
+                ModRecipes.EXPOSURE_CHAMBER.serializer().get()));
+    }
+
+    private static void combinationOvenRecipes(Consumer<FinishedRecipe> consumer) {
+        combinationOven(consumer, "coal_gem", HbmIngredient.legacyOre("gemCoal", 1),
+                new ItemStack(item("coke_coal")), HbmFluids.COALCREOSOTE, 100);
+        combinationOven(consumer, "coal_dust", HbmIngredient.legacyOre("dustCoal", 1),
+                new ItemStack(item("coke_coal")), HbmFluids.COALCREOSOTE, 100);
+        combinationOven(consumer, "coal_briquette", HbmIngredient.of(item("briquette_coal"), 1),
+                new ItemStack(item("coke_coal")), HbmFluids.COALCREOSOTE, 150);
+
+        combinationOven(consumer, "lignite_gem", HbmIngredient.legacyOre("gemLignite", 1),
+                new ItemStack(item("coke_lignite")), HbmFluids.COALCREOSOTE, 50);
+        combinationOven(consumer, "lignite_dust", HbmIngredient.legacyOre("dustLignite", 1),
+                new ItemStack(item("coke_lignite")), HbmFluids.COALCREOSOTE, 50);
+        combinationOven(consumer, "lignite_briquette", HbmIngredient.of(item("briquette_lignite"), 1),
+                new ItemStack(item("coke_lignite")), HbmFluids.COALCREOSOTE, 100);
+
+        combinationOven(consumer, "chlorocalcite_dust", HbmIngredient.legacyOre("dustChlorocalcite", 1),
+                new ItemStack(item("powder_calcium")), HbmFluids.CHLORINE, 250);
+        combinationOven(consumer, "molysite_dust", HbmIngredient.legacyOre("dustMolysite", 1),
+                new ItemStack(Items.IRON_INGOT), HbmFluids.CHLORINE, 250);
+        combinationOven(consumer, "cinnabar_crystal", HbmIngredient.legacyOre("crystalCinnabar", 1),
+                new ItemStack(item("sulfur")), HbmFluids.MERCURY, 100);
+        combinationOven(consumer, "glowstone_dust", HbmIngredient.of(Items.GLOWSTONE_DUST, 1),
+                new ItemStack(item("sulfur")), HbmFluids.CHLORINE, 100);
+        combinationOven(consumer, "sodalite_gem", HbmIngredient.legacyOre("gemSodalite", 1),
+                new ItemStack(item("powder_sodium")), HbmFluids.CHLORINE, 100);
+        combinationOven(consumer, "cryolite_chunk", HbmIngredient.of(item("chunk_ore_cryolite"), 1),
+                new ItemStack(item("powder_aluminium")), HbmFluids.LYE, 150);
+        combinationOven(consumer, "sodium_dust", HbmIngredient.legacyOre("dustSodium", 1),
+                ItemStack.EMPTY, HbmFluids.SODIUM, 100);
+        combinationOven(consumer, "limestone_dust", HbmIngredient.legacyOre("dustLimestone",
+                Ingredient.of(item("powder_limestone")), 1),
+                new ItemStack(item("powder_calcium")), HbmFluids.CARBONDIOXIDE, 50);
+
+        combinationOven(consumer, "logs", HbmIngredient.legacyOre("logWood", 1),
+                new ItemStack(Items.CHARCOAL), HbmFluids.WOODOIL, 250);
+        combinationOven(consumer, "saplings", HbmIngredient.legacyOre("treeSapling", 1),
+                new ItemStack(item("powder_ash_wood")), HbmFluids.WOODOIL, 50);
+        combinationOven(consumer, "wood_briquette", HbmIngredient.of(item("briquette_wood"), 1),
+                new ItemStack(Items.CHARCOAL), HbmFluids.WOODOIL, 500);
+
+        combinationOven(consumer, "oil_tar_crude", HbmIngredient.of(item("oil_tar_crude"), 1),
+                new ItemStack(item("coke_petroleum")), null, 0);
+        combinationOven(consumer, "oil_tar_crack", HbmIngredient.of(item("oil_tar_crack"), 1),
+                new ItemStack(item("coke_petroleum")), null, 0);
+        combinationOven(consumer, "oil_tar_coal", HbmIngredient.of(item("oil_tar_coal"), 1),
+                new ItemStack(item("coke_coal")), null, 0);
+        combinationOven(consumer, "oil_tar_wood", HbmIngredient.of(item("oil_tar_wood"), 1),
+                new ItemStack(item("coke_coal")), null, 0);
+
+        combinationOven(consumer, "sugar_cane", HbmIngredient.of(Items.SUGAR_CANE, 1),
+                new ItemStack(Items.SUGAR, 2), HbmFluids.ETHANOL, 50);
+        combinationOven(consumer, "clay", HbmIngredient.of(Blocks.CLAY, 1),
+                new ItemStack(Blocks.BRICKS), null, 0);
+    }
+
+    private static void combinationOven(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
+            ItemStack outputItem, @Nullable FluidType outputFluid, int outputFluidAmount) {
+        JsonObject json = new JsonObject();
+        json.add("input", input.toJson());
+        if (!outputItem.isEmpty()) {
+            json.add("output_item", HbmItemOutput.of(outputItem).toJson());
+        }
+        if (outputFluid != null && outputFluidAmount > 0) {
+            json.add("output_fluid", combinationFluid(outputFluid, outputFluidAmount));
+        }
+        if (!json.has("output_item") && !json.has("output_fluid")) {
+            throw new IllegalStateException("HBM combination oven recipe has no output: " + name);
+        }
+        consumer.accept(finishedRecipe(id("combination_oven/" + name), json,
+                ModRecipes.COMBINATION_OVEN.serializer().get()));
+    }
+
+    private static JsonObject combinationFluid(FluidType fluid, int amount) {
+        JsonObject object = new JsonObject();
+        object.addProperty("fluid", fluid.getName());
+        object.addProperty("amount", amount);
+        return object;
+    }
+
+    private static void compressorRecipes(Consumer<FinishedRecipe> consumer) {
+        compressor(consumer, "petroleum_0_to_petroleum_1",
+                HbmFluids.PETROLEUM, 2_000, 0, HbmFluids.PETROLEUM, 2_000, 1, 20);
+        compressor(consumer, "petroleum_1_to_lpg",
+                HbmFluids.PETROLEUM, 2_000, 1, HbmFluids.LPG, 1_000, 0, 20);
+        compressor(consumer, "blood_3_to_heavyoil",
+                HbmFluids.BLOOD, 1_000, 3, HbmFluids.HEAVYOIL, 250, 0, 200);
+        compressor(consumer, "perfluoromethyl_0_to_perfluoromethyl_1",
+                HbmFluids.PERFLUOROMETHYL, 1_000, 0, HbmFluids.PERFLUOROMETHYL, 1_000, 1, 50);
+        compressor(consumer, "perfluoromethyl_1_to_cold",
+                HbmFluids.PERFLUOROMETHYL, 1_000, 1, HbmFluids.PERFLUOROMETHYL_COLD, 1_000, 0, 50);
+    }
+
+    private static void compressor(Consumer<FinishedRecipe> consumer, String name,
+            FluidType inputType, int inputAmount, int inputPressure,
+            FluidType outputType, int outputAmount, int outputPressure, int duration) {
+        JsonObject json = new JsonObject();
+        json.add("input", legacyFluidStack(inputType, inputAmount, inputPressure));
+        json.add("output", legacyFluidStack(outputType, outputAmount, outputPressure));
+        json.addProperty("duration", duration);
+        consumer.accept(finishedRecipe(id("compressor/" + name), json,
+                ModRecipes.COMPRESSOR.serializer().get()));
+    }
+
+    private static JsonObject legacyFluidStack(FluidType fluid, int amount, int pressure) {
+        JsonObject object = new JsonObject();
+        object.addProperty("fluid", new ResourceLocation("hbm", fluid.toPath()).toString());
+        object.addProperty("amount", amount);
+        object.addProperty("pressure", pressure);
+        return object;
+    }
+
+    private static void diFurnaceRecipes(Consumer<FinishedRecipe> consumer) {
+        diFurnace(consumer, "steel_from_ingot", "difurnace.steelFromIngot", 0,
+                diFurnaceDictFrame("Iron"),
+                diFurnaceDictFrame("Coal"),
+                diFurnaceOutput("ingot_steel", 1));
+        diFurnace(consumer, "steel_from_coke", "difurnace.steelFromCoke", 1,
+                diFurnaceDictFrame("Iron"),
+                diFurnaceDictFrame("AnyCoke"),
+                diFurnaceOutput("ingot_steel", 1));
+        diFurnace(consumer, "steel_from_ore_coal", "difurnace.steelFromOreCoal", 2,
+                diFurnaceInput(HbmIngredient.legacyOre("oreIron", 1)),
+                diFurnaceDictFrame("Coal"),
+                diFurnaceOutput("ingot_steel", 2));
+        diFurnace(consumer, "steel_from_ore_coke", "difurnace.steelFromOreCoke", 3,
+                diFurnaceInput(HbmIngredient.legacyOre("oreIron", 1)),
+                diFurnaceDictFrame("AnyCoke"),
+                diFurnaceOutput("ingot_steel", 3));
+        diFurnace(consumer, "steel_from_ore_flux", "difurnace.steelFromOreFlux", 4,
+                diFurnaceInput(HbmIngredient.legacyOre("oreIron", 1)),
+                diFurnaceInput(legacyHbmItem("powder_flux")),
+                diFurnaceOutput("ingot_steel", 3));
+
+        diFurnace(consumer, "red_copper", "difurnace.redCopper", 5,
+                diFurnaceDictFrame("Copper"),
+                diFurnaceDictFrame("Redstone"),
+                diFurnaceOutput("ingot_red_copper", 2));
+        diFurnace(consumer, "canister_napalm", "difurnace.canisterNapalm", 6,
+                diFurnaceGasolineCanisterInput(),
+                diFurnaceInput(HbmIngredient.legacyOre("slimeball", Ingredient.of(Items.SLIME_BALL), 1)),
+                diFurnaceOutput("canister_napalm", 1));
+        diFurnace(consumer, "magnetized_tungsten", "difurnace.magnetizedTungsten", 7,
+                diFurnaceDictFrame("Tungsten"),
+                diFurnaceInput(HbmIngredient.legacyOre("nuggetSchrabidium", 1)),
+                diFurnaceOutput("ingot_magnetized_tungsten", 1));
+        diFurnace(consumer, "tcalloy", "difurnace.tcalloy", 8,
+                diFurnaceDictFrame("Steel"),
+                diFurnaceInput(HbmIngredient.legacyOre("nuggetTechnetium99", 1)),
+                diFurnaceOutput("ingot_tcalloy", 1));
+        diFurnace(consumer, "paa", "difurnace.paa", 9,
+                diFurnaceInput(HbmIngredient.legacyOre("plateGold", 1)),
+                diFurnaceInput(legacyHbmItem("plate_mixed")),
+                diFurnaceOutput("plate_paa", 2));
+        diFurnace(consumer, "starmetal", "difurnace.starmetal", 10,
+                diFurnaceDictFrame("Saturnite"),
+                diFurnaceInput(legacyHbmItem("ingot_meteorite")),
+                diFurnaceOutput("ingot_starmetal", 2));
+        diFurnace(consumer, "meteorite", "difurnace.meteorite", 11,
+                diFurnaceDictFrame("Cobalt"),
+                diFurnaceInput(legacyHbmItem("powder_meteorite")),
+                diFurnaceOutput("ingot_meteorite", 1));
+        diFurnace(consumer, "meteorite_sword_alloyed", "difurnace.meteoriteSwordAlloyed", 12,
+                diFurnaceInput(legacyHbmItem("meteorite_sword_hardened")),
+                diFurnaceDictFrame("Cobalt"),
+                diFurnaceOutput("meteorite_sword_alloyed", 1), true);
+    }
+
+    private static void diFurnace(Consumer<FinishedRecipe> consumer, String name, String internalName,
+            int sourceOrder, JsonObject firstInput, JsonObject secondInput, HbmItemOutput output) {
+        diFurnace(consumer, name, internalName, sourceOrder, firstInput, secondInput, output, false);
+    }
+
+    private static void diFurnace(Consumer<FinishedRecipe> consumer, String name, String internalName,
+            int sourceOrder, JsonObject firstInput, JsonObject secondInput, HbmItemOutput output,
+            boolean legacyHidden) {
+        JsonObject json = new JsonObject();
+        json.addProperty("internal_name", internalName);
+        json.addProperty("source_order", sourceOrder);
+        JsonArray inputs = new JsonArray();
+        inputs.add(firstInput);
+        inputs.add(secondInput);
+        json.add("inputs", inputs);
+        json.add("output", output.toJson());
+        if (legacyHidden) {
+            json.addProperty("legacy_hidden", true);
+        }
+        consumer.accept(finishedRecipe(id("difurnace/" + name), json, ModRecipes.DIFURNACE.serializer().get()));
+    }
+
+    private static JsonObject diFurnaceInput(HbmIngredient input) {
+        return input.toJson();
+    }
+
+    private static JsonObject diFurnaceDictFrame(String materialName) {
+        JsonArray alternatives = new JsonArray();
+        addLegacyOreAlternative(alternatives, "ingot" + materialName);
+        addLegacyOreAlternative(alternatives, "plate" + materialName);
+        addLegacyOreAlternative(alternatives, "gem" + materialName);
+        addLegacyOreAlternative(alternatives, "dust" + materialName);
+        JsonObject input = HbmIngredient.of(Ingredient.fromJson(alternatives), 1).toJson();
+        input.addProperty("legacy_dictframe", materialName);
+        return input;
+    }
+
+    private static void addLegacyOreAlternative(JsonArray alternatives, String legacyOreName) {
+        JsonObject tag = new JsonObject();
+        tag.addProperty("tag", LegacyOreDictionaryMappings.itemTagId(legacyOreName).toString());
+        alternatives.add(tag);
+    }
+
+    private static JsonObject diFurnaceGasolineCanisterInput() {
+        JsonObject input = HbmIngredient.partialNbt(
+                fluidContainerStack(ModItems.CANISTER_FULL.get(), 1, HbmFluids.GASOLINE, 1_000, 0)).toJson();
+        input.addProperty("legacy_item", "canister_full");
+        return input;
+    }
+
+    private static HbmItemOutput diFurnaceOutput(String itemName, int count) {
+        return HbmItemOutput.of(new ItemStack(item(itemName), count));
+    }
+
+    private static void blastFurnaceRecipes(Consumer<FinishedRecipe> consumer) {
+        blastFurnace(consumer, "steel_from_ingot", "blast.steelFromIngot", 0, 800,
+                List.of(blastInput(HbmIngredient.legacyOre("ingotIron", 2)),
+                        blastInput(HbmIngredient.legacyOre("sand", 1))),
+                List.of(blastOutput("ingot_steel", 2), slagOutput(MaterialShapes.INGOT.q(1))));
+        blastFurnace(consumer, "steel_from_dust", "blast.steelFromDust", 1, 800,
+                List.of(blastInput(HbmIngredient.legacyOre("dustIron", 2)),
+                        blastInput(HbmIngredient.legacyOre("sand", 1))),
+                List.of(blastOutput("ingot_steel", 2), slagOutput(MaterialShapes.INGOT.q(1))));
+        blastFurnace(consumer, "steel_from_ore", "blast.steelFromOre", 2, 800,
+                List.of(blastInput(HbmIngredient.legacyOre("oreIron", 1)),
+                        blastInput(HbmIngredient.legacyOre("sand", 1))),
+                List.of(blastOutput("ingot_steel", 2), slagOutput(MaterialShapes.INGOT.q(2))));
+        blastFurnace(consumer, "steel_with_flux", "blast.steelWithFlux", 3, 1_200,
+                List.of(blastInput(HbmIngredient.legacyOre("oreIron", 1)),
+                        blastInput(HbmIngredient.of(item("powder_flux"), 1))),
+                List.of(blastOutput("ingot_steel", 3), slagOutput(MaterialShapes.INGOT.q(2))));
+
+        blastFurnace(consumer, "red_copper", "blast.mingrade", 4, 400,
+                List.of(blastInput(HbmIngredient.legacyOre("ingotCopper", 1)),
+                        blastLegacyOreItemInput(Items.REDSTONE, 1, "dustRedstone")),
+                List.of(blastOutput("ingot_red_copper", 2)));
+        blastFurnace(consumer, "red_copper_dust", "blast.mingradeDust", 5, 400,
+                List.of(blastInput(HbmIngredient.legacyOre("dustCopper", 1)),
+                        blastLegacyOreItemInput(Items.REDSTONE, 1, "dustRedstone")),
+                List.of(blastOutput("ingot_red_copper", 2)));
+        blastFurnace(consumer, "red_copper_ingot_redstone_ingot", "blast.mingradeIngot", 6, 400,
+                List.of(blastInput(HbmIngredient.legacyOre("ingotCopper", 1)),
+                        blastInput(HbmIngredient.legacyOre("ingotRedstone", 1))),
+                List.of(blastOutput("ingot_red_copper", 2)));
+        blastFurnace(consumer, "red_copper_dust_redstone_ingot", "blast.mingradeCursed", 7, 400,
+                List.of(blastInput(HbmIngredient.legacyOre("dustCopper", 1)),
+                        blastInput(HbmIngredient.legacyOre("ingotRedstone", 1))),
+                List.of(blastOutput("ingot_red_copper", 2)));
+        blastFurnace(consumer, "red_copper_ore", "blast.mingradeOre", 8, 1_200,
+                List.of(blastLegacyOreIngredientInput(Ingredient.of(Blocks.COPPER_ORE, Blocks.DEEPSLATE_COPPER_ORE),
+                                1, "oreCopper"),
+                        blastLegacyOreItemInput(Items.REDSTONE, 6, "dustRedstone")),
+                List.of(blastOutput("ingot_red_copper", 6), slagOutput(MaterialShapes.INGOT.q(1))));
+
+        blastFurnace(consumer, "meteorite_sword", "blast.meteorSword", 9, 1_200,
+                List.of(blastInput(HbmIngredient.legacyOre("ingotCobalt", 1)),
+                        blastLegacyItemInput(item("meteorite_sword_hardened"), 1, "meteorite_sword_hardened")),
+                List.of(blastOutput("meteorite_sword_alloyed", 1)));
+        blastFurnace(consumer, "starmetal", "blast.starmetal", 10, 600,
+                List.of(blastInput(HbmIngredient.legacyOre("ingotSaturnite", 1)),
+                        blastLegacyItemInput(item("powder_meteorite"), 1, "powder_meteorite")),
+                List.of(blastOutput("ingot_starmetal", 1)));
+        blastFurnace(consumer, "paa", "blast.paa", 11, 600,
+                List.of(blastInput(HbmIngredient.legacyOre("ingotGold", 1)),
+                        blastLegacyItemInput(item("plate_mixed"), 1, "plate_mixed")),
+                List.of(blastOutput("plate_paa", 1)));
+
+        blastFurnace(consumer, "firebrick", "blast.firebrick", 12, 800,
+                List.of(blastInput(HbmIngredient.legacyOre("dustAluminum", 1)),
+                        blastLegacyItemInput(Items.CLAY_BALL, 7, "minecraft:clay_ball")),
+                List.of(blastOutput("ingot_firebrick", 8)));
+        blastFurnace(consumer, "firebrick_limestone", "blast.firebrickLimestone", 13, 800,
+                List.of(blastInput(HbmIngredient.legacyOre("oreLimestone", 1)),
+                        blastLegacyItemInput(Items.CLAY_BALL, 6, "minecraft:clay_ball")),
+                List.of(blastOutput("ingot_firebrick", 8)));
+    }
+
+    private static void blastFurnace(Consumer<FinishedRecipe> consumer, String name, String legacyName,
+            int sourceOrder, int duration,
+            List<JsonObject> inputs, List<HbmItemOutput> outputs) {
+        JsonObject json = new JsonObject();
+        json.addProperty("name", legacyName);
+        json.addProperty("duration", duration);
+        json.addProperty("source_order", sourceOrder);
+        JsonArray inputArray = new JsonArray();
+        inputs.forEach(inputArray::add);
+        json.add("inputs", inputArray);
+        JsonArray outputArray = new JsonArray();
+        outputs.forEach(output -> outputArray.add(output.toJson()));
+        json.add("outputs", outputArray);
+        consumer.accept(finishedRecipe(id("blast_furnace/" + name), json,
+                ModRecipes.BLAST_FURNACE.serializer().get()));
+    }
+
+    private static JsonObject blastInput(HbmIngredient input) {
+        return input.toJson();
+    }
+
+    private static JsonObject blastLegacyItemInput(ItemLike item, int count, String legacyItem) {
+        JsonObject input = HbmIngredient.of(item, count).toJson();
+        input.addProperty("legacy_item", legacyItem);
+        return input;
+    }
+
+    private static JsonObject blastLegacyOreItemInput(ItemLike item, int count, String legacyOre) {
+        JsonObject input = HbmIngredient.of(item, count).toJson();
+        input.addProperty("legacy_ore", legacyOre);
+        return input;
+    }
+
+    private static JsonObject blastLegacyOreIngredientInput(Ingredient ingredient, int count, String legacyOre) {
+        JsonObject input = new JsonObject();
+        input.add("ingredient", ingredient.toJson());
+        input.addProperty("count", count);
+        input.addProperty("legacy_ore", legacyOre);
+        return input;
+    }
+
+    private static HbmItemOutput blastOutput(String itemName, int count) {
+        return HbmItemOutput.of(new ItemStack(item(itemName), count));
+    }
+
+    private static HbmItemOutput slagOutput(int amount) {
+        ItemStack stack = new ItemStack(item("scraps"));
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("mat", Mats.MAT_SLAG.id);
+        tag.putInt("amount", amount);
+        stack.setTag(tag);
+        return HbmItemOutput.of(stack);
+    }
+
     private static void breedingReactorRecipes(Consumer<FinishedRecipe> consumer) {
-        breedingRod(consumer, "lithium", "tritium", 200);
-        breedingRod(consumer, "co", "co60", 100);
-        breedingRod(consumer, "ra226", "ac227", 300);
-        breedingRod(consumer, "th232", "thf", 500);
-        breedingRod(consumer, "u235", "np237", 300);
-        breedingRod(consumer, "np237", "pu238", 200);
-        breedingRod(consumer, "pu238", "pu239", 1_000);
-        breedingRod(consumer, "u238", "rgp", 300);
-        breedingRod(consumer, "uranium", "rgp", 200);
-        breedingRod(consumer, "rgp", "waste", 200);
-        breedingRecipe(consumer, "meteorite_sword_etched", "meteorite_sword_bred", 1_000);
+        int sourceOrder = 0;
+        sourceOrder = breedingRod(consumer, "lithium", "tritium", 200, sourceOrder);
+        sourceOrder = breedingRod(consumer, "co", "co60", 100, sourceOrder);
+        sourceOrder = breedingRod(consumer, "ra226", "ac227", 300, sourceOrder);
+        sourceOrder = breedingRod(consumer, "th232", "thf", 500, sourceOrder);
+        sourceOrder = breedingRod(consumer, "u235", "np237", 300, sourceOrder);
+        sourceOrder = breedingRod(consumer, "np237", "pu238", 200, sourceOrder);
+        sourceOrder = breedingRod(consumer, "pu238", "pu239", 1_000, sourceOrder);
+        sourceOrder = breedingRod(consumer, "u238", "rgp", 300, sourceOrder);
+        sourceOrder = breedingRod(consumer, "uranium", "rgp", 200, sourceOrder);
+        sourceOrder = breedingRod(consumer, "rgp", "waste", 200, sourceOrder);
+        breedingRecipe(consumer, "meteorite_sword_etched", "meteorite_sword_bred", 1_000, sourceOrder);
     }
 
-    private static void breedingRod(Consumer<FinishedRecipe> consumer, String input, String output, int flux) {
-        breedingRecipe(consumer, "rod_" + input, "rod_" + output, flux);
-        breedingRecipe(consumer, "rod_dual_" + input, "rod_dual_" + output, flux * 2);
-        breedingRecipe(consumer, "rod_quad_" + input, "rod_quad_" + output, flux * 3);
+    private static int breedingRod(Consumer<FinishedRecipe> consumer, String input, String output, int flux,
+            int sourceOrder) {
+        breedingRecipe(consumer, "rod_" + input, "rod_" + output, flux, sourceOrder++);
+        breedingRecipe(consumer, "rod_dual_" + input, "rod_dual_" + output, flux * 2, sourceOrder++);
+        breedingRecipe(consumer, "rod_quad_" + input, "rod_quad_" + output, flux * 3, sourceOrder++);
+        return sourceOrder;
     }
 
-    private static void breedingRecipe(Consumer<FinishedRecipe> consumer, String input, String output, int flux) {
+    private static void breedingRecipe(Consumer<FinishedRecipe> consumer, String input, String output, int flux,
+            int sourceOrder) {
         JsonObject json = new JsonObject();
         json.add("input", HbmIngredient.of(item(input), 1).toJson());
         json.add("output", HbmItemOutput.of(new ItemStack(item(output))).toJson());
         json.addProperty("flux", flux);
+        json.addProperty("source_order", sourceOrder);
         consumer.accept(finishedRecipe(id("breeding_reactor/" + input), json,
                 ModRecipes.BREEDING_REACTOR.serializer().get()));
     }
 
     private static void fuelPoolRecipes(Consumer<FinishedRecipe> consumer) {
-        int pwrCount = Math.min(ModItems.PWR_FUEL_HOT_ITEMS.size(), ModItems.PWR_FUEL_DEPLETED_ITEMS.size());
-        for (int i = 0; i < pwrCount; i++) {
-            ItemStack input = new ItemStack(ModItems.PWR_FUEL_HOT_ITEMS.get(i).get());
-            ItemStack output = new ItemStack(ModItems.PWR_FUEL_DEPLETED_ITEMS.get(i).get());
-            fuelPoolRecipe(consumer, HbmRegistryUtil.itemKey(input.getItem()).getPath(), input, output);
-        }
-
+        int sourceOrder = 0;
         for (String name : LEGACY_DEPLETED_WASTE_ITEMS) {
             RegistryObject<Item> item = ModItems.legacyItem(name);
             if (item != null) {
                 fuelPoolRecipe(consumer, name,
                         DepletedFuelItem.stack(item.get(), DepletedFuelItem.HOT_DAMAGE),
-                        DepletedFuelItem.stack(item.get(), DepletedFuelItem.COLD_DAMAGE));
+                        DepletedFuelItem.stack(item.get(), DepletedFuelItem.COLD_DAMAGE),
+                        sourceOrder++);
             }
+        }
+
+        int pwrCount = Math.min(ModItems.PWR_FUEL_HOT_ITEMS.size(), ModItems.PWR_FUEL_DEPLETED_ITEMS.size());
+        for (int i = 0; i < pwrCount; i++) {
+            ItemStack input = new ItemStack(ModItems.PWR_FUEL_HOT_ITEMS.get(i).get());
+            ItemStack output = new ItemStack(ModItems.PWR_FUEL_DEPLETED_ITEMS.get(i).get());
+            fuelPoolRecipe(consumer, HbmRegistryUtil.itemKey(input.getItem()).getPath(), input, output, sourceOrder++);
         }
     }
 
     private static void fuelPoolRecipe(Consumer<FinishedRecipe> consumer, String name, ItemStack input,
-            ItemStack output) {
+            ItemStack output, int sourceOrder) {
         JsonObject json = new JsonObject();
         json.add("input", HbmIngredient.exact(input).toJson());
         json.add("output", HbmItemOutput.of(output).toJson());
+        json.addProperty("source_order", sourceOrder);
         consumer.accept(finishedRecipe(id("fuel_pool/" + name), json, ModRecipes.FUEL_POOL.serializer().get()));
     }
 
@@ -434,19 +2252,21 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void fusionFluidBreederRecipes(Consumer<FinishedRecipe> consumer) {
-        fusionFluidBreeder(consumer, "gas_to_syngas", HbmFluids.GAS, 1_000, HbmFluids.SYNGAS, 1_000);
-        fusionFluidBreeder(consumer, "lightoil_to_reformgas", HbmFluids.LIGHTOIL, 1_000, HbmFluids.REFORMGAS, 1_000);
+        fusionFluidBreeder(consumer, "gas_to_syngas", HbmFluids.GAS, 1_000, HbmFluids.SYNGAS, 1_000, 0);
+        fusionFluidBreeder(consumer, "lightoil_to_reformgas", HbmFluids.LIGHTOIL, 1_000, HbmFluids.REFORMGAS, 1_000,
+                1);
         fusionFluidBreeder(consumer, "lightoil_crack_to_reformgas", HbmFluids.LIGHTOIL_CRACK, 1_000,
-                HbmFluids.REFORMGAS, 1_000);
+                HbmFluids.REFORMGAS, 1_000, 2);
     }
 
     private static void fusionFluidBreeder(Consumer<FinishedRecipe> consumer, String name, FluidType input,
-            int inputAmount, FluidType output, int outputAmount) {
+            int inputAmount, FluidType output, int outputAmount, int sourceOrder) {
         consumer.accept(new FinishedRecipe() {
             @Override
             public void serializeRecipeData(JsonObject json) {
                 json.add("input", fluidStackJson(input, inputAmount));
                 json.add("output", fluidStackJson(output, outputAmount));
+                json.addProperty("source_order", sourceOrder);
             }
 
             @Override
@@ -474,6 +2294,64 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void reactorPlasmaForgeRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.plasmaForge("plsm.plateeuphemium", 600, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("ingotEuphemium", 4)
+                .inputLegacyOre("dustAstatine", 3)
+                .inputLegacyOre("dustBismuth", 1)
+                .inputLegacyOre("gemVolcanic", 1)
+                .inputLegacyOre("ingotOsmiridium", 1)
+                .outputItem(new ItemStack(item("plate_euphemium"), 4))
+                .sourceOrder(104)
+                .save(consumer, id("plasma_forge/plate_euphemium"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.platednt", 600, 10_000_000)
+                .plasmaForgeExtra(1_000_000)
+                .inputLegacyOre("ingotDineutronium", 4)
+                .inputItem(item("powder_spark_mix"), 2)
+                .inputLegacyOre("ingotWorkersAlloy", 1)
+                .outputItem(new ItemStack(item("plate_dineutronium"), 4))
+                .sourceOrder(105)
+                .save(consumer, id("plasma_forge/plate_dineutronium"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.hde", 600, 25_000_000)
+                .plasmaForgeExtra(10_000_000)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 2)
+                .inputLegacyOre("plateWeldedCMBSteel", 1)
+                .inputItem(item("ingot_cft"), 1)
+                .inputFluid(HbmFluids.STELLAR_FLUX, 4_000)
+                .outputLegacyMeta(LegacyMetaItemMappings.PART_GENERIC, 4)
+                .sourceOrder(106)
+                .save(consumer, id("plasma_forge/heavy_duty_element"));
+
+        plasmaForgeWeldedPlate(consumer, "welded_plate_iron", "plsm.weldiron",
+                "plateCastIron", "plate_welded_iron", 50, 100L, 107, null);
+        plasmaForgeWeldedPlate(consumer, "welded_plate_steel", "plsm.weldsteel",
+                "plateCastSteel", "plate_welded_steel", 50, 500L, 108, null);
+        plasmaForgeWeldedPlate(consumer, "welded_plate_copper", "plsm.weldcopper",
+                "plateCastCopper", "plate_welded_copper", 50, 1_000L, 109, null);
+        plasmaForgeWeldedPlate(consumer, "welded_plate_titanium", "plsm.weldtitanium",
+                "plateCastTitanium", "plate_welded_titanium", 300, 50_000L, 110, null);
+        plasmaForgeWeldedPlate(consumer, "welded_plate_zirconium", "plsm.weldzirconium",
+                "plateCastZirconium", "plate_welded_zirconium", 300, 10_000L, 111, null);
+        plasmaForgeWeldedPlate(consumer, "welded_plate_aluminium", "plsm.weldaluminium",
+                "plateCastAluminum", "plate_welded_aluminium", 150, 10_000L, 112, null);
+        plasmaForgeWeldedPlate(consumer, "welded_plate_tcalloy", "plsm.weldtcalloy",
+                "plateCastTcAlloy", "plate_welded_tcalloy", 600, 1_000_000L, 113,
+                builder -> builder.inputFluid(HbmFluids.OXYGEN, 1_000));
+        plasmaForgeWeldedPlate(consumer, "welded_plate_cdalloy", "plsm.weldcdalloy",
+                "plateCastCdAlloy", "plate_welded_cdalloy", 600, 1_000_000L, 114,
+                builder -> builder.inputFluid(HbmFluids.OXYGEN, 1_000));
+        plasmaForgeWeldedPlate(consumer, "welded_plate_tungsten", "plsm.weldtungsten",
+                "plateCastTungsten", "plate_welded_tungsten", 600, 250_000L, 115,
+                builder -> builder.inputFluid(HbmFluids.OXYGEN, 1_000));
+        plasmaForgeWeldedPlate(consumer, "welded_plate_combine_steel", "plsm.weldcmb",
+                "plateCastCMBSteel", "plate_welded_combine_steel", 600, 10_000_000L, 116,
+                builder -> builder.inputFluid(HbmFluids.REFORMGAS, 1_000));
+        plasmaForgeWeldedPlate(consumer, "welded_plate_osmiridium", "plsm.weldosmiridium",
+                "plateCastOsmiridium", "plate_welded_osmiridium", 3_000, 50_000_000L, 117,
+                builder -> builder.inputFluid(HbmFluids.REFORMGAS, 16_000));
+
         GenericMachineRecipeBuilder.plasmaForge("plsm.fusionvessel", 1_200, 2_000_000)
                 .plasmaForgeExtra(3_000_000)
                 .inputLegacyMeta(LegacyMetaItemMappings.FUSION_COMPONENT, 0, 64)
@@ -566,7 +2444,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         GenericMachineRecipeBuilder.plasmaForge("plsm.icfvessel", 800, 10_000_000)
                 .plasmaForgeExtra(1_000_000)
-                .inputTag(forgeTag("ingots/cft"), 1)
+                .inputItem(item("ingot_cft"), 1)
                 .inputLegacyOre("plateCastCMBSteel", 1)
                 .inputLegacyOre("plateWeldedTungsten", 2)
                 .outputItem(ModBlocks.ICF_COMPONENT_VESSEL.get())
@@ -602,6 +2480,23 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(ModBlocks.MACHINE_ICF_PRESS.get())
                 .sourceOrder(134)
                 .save(consumer, id("plasma_forge/icf_press"));
+
+        GenericMachineRecipeBuilder.plasmaForge("plsm.schrabhammer", 6_000, 10_000_000)
+                .plasmaForgeExtra(25_000_000)
+                .inputLegacyOre("blockSchrabidium", 35)
+                .inputItem(item("billet_yharonite"), 64)
+                .inputItem(item("billet_yharonite"), 64)
+                .inputItem(item("fragment_meteorite"), 64)
+                .inputItem(item("fragment_meteorite"), 64)
+                .inputItem(item("fragment_meteorite"), 64)
+                .inputItem(item("fragment_meteorite"), 64)
+                .inputItem(item("fragment_meteorite"), 64)
+                .inputItem(item("fragment_meteorite"), 64)
+                .inputItem(item("fragment_meteorite"), 64)
+                .inputItem(item("fragment_meteorite"), 64)
+                .outputItem(item("schrabidium_hammer"))
+                .sourceOrder(135)
+                .save(consumer, id("plasma_forge/schrabidium_hammer"));
 
         GenericMachineRecipeBuilder.plasmaForge("plsm.dfccore", 12_000, 100_000_000)
                 .plasmaForgeExtra(50_000_000)
@@ -656,6 +2551,21 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("plasma_forge/dfc_stabilizer"));
     }
 
+    private static void plasmaForgeWeldedPlate(Consumer<FinishedRecipe> consumer, String idPath, String internalName,
+            String inputLegacyOre, String outputItem, int duration, long power, int sourceOrder,
+            @Nullable Consumer<GenericMachineRecipeBuilder> extraInputs) {
+        GenericMachineRecipeBuilder builder = GenericMachineRecipeBuilder.plasmaForge(internalName, duration, power)
+                .plasmaForgeExtra(500_000)
+                .inputLegacyOre(inputLegacyOre, 2)
+                .outputItem(item(outputItem))
+                .autoSwitchGroup("autoswitch.weldPlates")
+                .sourceOrder(sourceOrder);
+        if (extraInputs != null) {
+            extraInputs.accept(builder);
+        }
+        builder.save(consumer, id("plasma_forge/" + idPath));
+    }
+
     private static void purexRecipes(Consumer<FinishedRecipe> consumer) {
         GenericMachineRecipeBuilder.purex("purex.uzh", 600, 1_000)
                 .inputItem(item("billet_uranium_fuel"), 1)
@@ -663,85 +2573,85 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputFluid(HbmFluids.NITRIC_ACID, 1_000)
                 .inputFluid(HbmFluids.HYDROGEN, 4_000)
                 .outputItem(new ItemStack(item("billet_uzh"), 4))
-                .sourceOrder(43)
+                .sourceOrder(0)
                 .save(consumer, id("purex/uzh"));
 
-        pilePurex(consumer, "pilepu", "pile_rod_plutonium", 51,
+        pilePurex(consumer, "pilepu", "pile_rod_plutonium", 1,
                 out("billet_pu_mix", 2), out("billet_uranium", 1), out("plate_iron", 2));
-        pilePurex(consumer, "pilepu239", "pile_rod_pu239", 59,
+        pilePurex(consumer, "pilepu239", "pile_rod_pu239", 2,
                 out("billet_pu239", 1), out("billet_pu_mix", 1), out("billet_uranium", 1),
                 out("plate_iron", 2));
 
-        zirnoxPurex(consumer, "zirnoxnu", "waste_natural_uranium", 70,
+        zirnoxPurex(consumer, "zirnoxnu", "waste_natural_uranium", 3,
                 out("nugget_u238", 1), out("nugget_pu_mix", 2), out("nugget_pu239", 1),
                 out("nuclear_waste_tiny", 2));
-        zirnoxPurex(consumer, "zirnoxmeu", "waste_uranium", 79,
+        zirnoxPurex(consumer, "zirnoxmeu", "waste_uranium", 4,
                 out("nugget_pu_mix", 1), out("nugget_plutonium", 2), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 2));
-        zirnoxPurex(consumer, "zirnoxthmeu", "waste_thorium", 88,
+        zirnoxPurex(consumer, "zirnoxthmeu", "waste_thorium", 5,
                 out("nugget_u238", 1), out("nugget_th232", 1), out("nugget_u233", 2),
                 out("nuclear_waste_tiny", 2));
-        zirnoxPurex(consumer, "zirnoxmox", "waste_mox", 97,
+        zirnoxPurex(consumer, "zirnoxmox", "waste_mox", 6,
                 out("nugget_pu_mix", 1), out("nugget_technetium", 1), out("nugget_u238", 1),
                 out("nuclear_waste_tiny", 3));
-        zirnoxPurex(consumer, "zirnoxmep", "waste_plutonium", 106,
+        zirnoxPurex(consumer, "zirnoxmep", "waste_plutonium", 7,
                 out("nugget_pu_mix", 2), out("nugget_technetium", 1), out("nuclear_waste_tiny", 3));
-        zirnoxPurex(consumer, "zirnoxheu233", "waste_u233", 114,
+        zirnoxPurex(consumer, "zirnoxheu233", "waste_u233", 8,
                 out("nugget_u235", 1), out("nugget_neptunium", 1), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 3));
-        zirnoxPurex(consumer, "zirnoxheu235", "waste_u235", 123,
+        zirnoxPurex(consumer, "zirnoxheu235", "waste_u235", 9,
                 out("nugget_pu238", 1), out("nugget_neptunium", 1), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 3));
-        zirnoxPurex(consumer, "zirnoxles", "waste_schrabidium", 132,
+        zirnoxPurex(consumer, "zirnoxles", "waste_schrabidium", 10,
                 out("nugget_beryllium", 2), out("nugget_pu239", 1), out("nuclear_waste_tiny", 1),
                 out("nuclear_waste_tiny", 2));
-        zirnoxPurex(consumer, "zirnoxzfbmox", "waste_zfb_mox", 141,
+        zirnoxPurex(consumer, "zirnoxzfbmox", "waste_zfb_mox", 11,
                 out("nugget_zirconium", 3), out("nugget_technetium", 1), out("nugget_pu_mix", 1),
                 out("nuclear_waste_tiny", 1));
 
-        platePurex(consumer, "platemox", "waste_plate_mox", 152,
+        platePurex(consumer, "platemox", "waste_plate_mox", 12,
                 out("powder_sr90_tiny", 1), out("nugget_pu_mix", 3), out("powder_cs137_tiny", 1),
                 out("nuclear_waste_tiny", 4));
-        platePurex(consumer, "platepu238be", "waste_plate_pu238be", 161,
+        platePurex(consumer, "platepu238be", "waste_plate_pu238be", 13,
                 out("nugget_beryllium", 1), out("nugget_pu238", 1), out("powder_coal_tiny", 2),
                 out("nugget_lead", 2));
-        platePurex(consumer, "platepu239", "waste_plate_pu239", 170,
+        platePurex(consumer, "platepu239", "waste_plate_pu239", 14,
                 out("nugget_pu240", 2), out("nugget_technetium", 1), out("powder_cs137_tiny", 1),
                 out("nuclear_waste_tiny", 5));
-        platePurex(consumer, "platera226be", "waste_plate_ra226be", 179,
+        platePurex(consumer, "platera226be", "waste_plate_ra226be", 15,
                 out("nugget_beryllium", 2), out("nugget_polonium", 2), out("powder_coal_tiny", 1),
                 out("nugget_lead", 1));
-        platePurex(consumer, "platesa326", "waste_plate_sa326", 188,
+        platePurex(consumer, "platesa326", "waste_plate_sa326", 16,
                 out("nugget_solinium", 1), out("powder_neodymium_tiny", 1), out("nugget_tantalium", 1),
                 out("nuclear_waste_tiny", 6));
-        platePurex(consumer, "plateu233", "waste_plate_u233", 197,
+        platePurex(consumer, "plateu233", "waste_plate_u233", 17,
                 out("nugget_u235", 1), out("powder_i131_tiny", 1), out("powder_sr90_tiny", 1),
                 out("nuclear_waste_tiny", 6));
-        platePurex(consumer, "plateu235", "waste_plate_u235", 206,
+        platePurex(consumer, "plateu235", "waste_plate_u235", 18,
                 out("nugget_neptunium", 1), out("nugget_pu238", 1), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 6));
 
         thoriumSaltPurex(consumer);
 
-        watzPurex(consumer, "watzschrab", 0, 363,
+        watzPurex(consumer, "watzschrab", 0, 35,
                 out("nugget_solinium", 15), out("nugget_euphemium", 3), out("nuclear_waste", 2));
-        watzPurex(consumer, "watzhes", 1, 372,
+        watzPurex(consumer, "watzhes", 1, 36,
                 out("nugget_solinium", 17), out("nugget_euphemium", 1), out("nuclear_waste", 2));
-        watzPurex(consumer, "watzmes", 2, 381,
+        watzPurex(consumer, "watzmes", 2, 37,
                 out("nugget_solinium", 12), out("nugget_tantalium", 6), out("nuclear_waste", 2));
-        watzPurex(consumer, "watzles", 3, 390,
+        watzPurex(consumer, "watzles", 3, 38,
                 out("nugget_solinium", 9), out("nugget_tantalium", 9), out("nuclear_waste", 2));
-        watzPurex(consumer, "watzhen", 4, 399,
+        watzPurex(consumer, "watzhen", 4, 39,
                 out("nugget_pu239", 12), out("nugget_technetium", 6), out("nuclear_waste", 2));
-        watzPurex(consumer, "watzmeu", 5, 408,
+        watzPurex(consumer, "watzmeu", 5, 40,
                 out("nugget_pu239", 12), out("nugget_bismuth", 6), out("nuclear_waste", 2));
-        watzPurex(consumer, "watzmep", 6, 417,
+        watzPurex(consumer, "watzmep", 6, 41,
                 out("nugget_pu241", 12), out("nugget_bismuth", 6), out("nuclear_waste", 2));
-        watzPurex(consumer, "watzlead", 7, 426,
+        watzPurex(consumer, "watzlead", 7, 42,
                 out("nugget_lead", 6), out("nugget_bismuth", 12), out("nuclear_waste", 2));
-        watzPurex(consumer, "watzboron", 8, 435,
+        watzPurex(consumer, "watzboron", 8, 43,
                 out("powder_coal_tiny", 12), out("nugget_co60", 6), out("nuclear_waste", 2));
-        watzPurex(consumer, "watzdu", 9, 444,
+        watzPurex(consumer, "watzdu", 9, 44,
                 out("nugget_polonium", 12), out("nugget_pu238", 6), out("nuclear_waste", 2));
         watzConditionalNaquadriaPurex(consumer);
 
@@ -752,16 +2662,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(ModItems.IRON_POWDER.get())
                 .outputFluid(HbmFluids.HELIUM4, 1_250)
                 .nameWrapper("purex.recycle")
-                .sourceOrder(479)
+                .sourceOrder(47)
                 .save(consumer, id("purex/icf_pellet_recycle"));
 
-        vitrificationPurex(consumer, "vitliquid", HbmFluids.WASTEFLUID, 1, 488);
-        vitrificationPurex(consumer, "vitgaseous", HbmFluids.WASTEGAS, 1, 493);
+        vitrificationPurex(consumer, "vitliquid", HbmFluids.WASTEFLUID, 1, 48);
+        vitrificationPurex(consumer, "vitgaseous", HbmFluids.WASTEGAS, 1, 49);
         GenericMachineRecipeBuilder.purex("purex.vitsolid", 300, 1_000)
                 .inputItem(ModBlocks.SAND_LEAD.get(), 1)
                 .inputItem(item("nuclear_waste"), 4)
                 .outputItem(new ItemStack(item("nuclear_waste_vitrified"), 4))
-                .sourceOrder(498)
+                .sourceOrder(50)
                 .save(consumer, id("purex/vitsolid"));
 
         GenericMachineRecipeBuilder.purex("purex.schraranium", 200, 1_000)
@@ -772,58 +2682,58 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(new ItemStack(item("nugget_uranium"), 3))
                 .outputItem(new ItemStack(item("nugget_neptunium"), 2))
                 .nameWrapper("purex.schrab")
-                .sourceOrder(503)
+                .sourceOrder(51)
                 .save(consumer, id("purex/schraranium"));
 
-        pwrPurex(consumer, "pwrmeu", 0, 217,
+        pwrPurex(consumer, "pwrmeu", 0, 19,
                 out("nugget_u238", 3), out("nugget_plutonium", 4), out("nugget_technetium", 2),
                 out("nuclear_waste_tiny", 3));
-        pwrPurex(consumer, "pwrheu233", 1, 226,
+        pwrPurex(consumer, "pwrheu233", 1, 20,
                 out("nugget_u235", 3), out("nugget_pu238", 3), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 5));
-        pwrPurex(consumer, "pwrheu235", 2, 235,
+        pwrPurex(consumer, "pwrheu235", 2, 21,
                 out("nugget_neptunium", 3), out("nugget_pu238", 3), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 5));
-        pwrPurex(consumer, "pwrmen", 3, 244,
+        pwrPurex(consumer, "pwrmen", 3, 22,
                 out("nugget_u238", 3), out("nugget_pu239", 4), out("nugget_technetium", 2),
                 out("nuclear_waste_tiny", 3));
-        pwrPurex(consumer, "pwrhen237", 4, 253,
+        pwrPurex(consumer, "pwrhen237", 4, 23,
                 out("nugget_pu238", 2), out("nugget_pu239", 4), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 5));
-        pwrPurex(consumer, "pwrmox", 5, 262,
+        pwrPurex(consumer, "pwrmox", 5, 24,
                 out("nugget_u238", 3), out("nugget_pu240", 4), out("nugget_technetium", 2),
                 out("nuclear_waste_tiny", 3));
-        pwrPurex(consumer, "pwrmep", 6, 271,
+        pwrPurex(consumer, "pwrmep", 6, 25,
                 out("nugget_lead", 2), out("nugget_pu_mix", 4), out("nugget_technetium", 2),
                 out("nuclear_waste_tiny", 3));
-        pwrPurex(consumer, "pwrhep239", 7, 280,
+        pwrPurex(consumer, "pwrhep239", 7, 26,
                 out("nugget_pu_mix", 2), out("nugget_pu240", 4), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 5));
-        pwrPurex(consumer, "pwrhep241", 8, 289,
+        pwrPurex(consumer, "pwrhep241", 8, 27,
                 out("nugget_lead", 3), out("nugget_zirconium", 2), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 6));
-        pwrPurex(consumer, "pwrmea", 9, 298,
+        pwrPurex(consumer, "pwrmea", 9, 28,
                 out("nugget_lead", 3), out("nugget_zirconium", 2), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 6));
-        pwrPurex(consumer, "pwrhea242", 10, 307,
+        pwrPurex(consumer, "pwrhea242", 10, 29,
                 out("nugget_lead", 3), out("nugget_zirconium", 2), out("nugget_technetium", 1),
                 out("nuclear_waste_tiny", 6));
-        pwrPurex(consumer, "pwrhes326", 11, 316,
+        pwrPurex(consumer, "pwrhes326", 11, 30,
                 out("nugget_solinium", 3), out("nugget_lead", 2), out("nugget_euphemium", 1),
                 out("nuclear_waste_tiny", 6));
-        pwrPurex(consumer, "pwrhes327", 12, 325,
+        pwrPurex(consumer, "pwrhes327", 12, 31,
                 out("nugget_australium", 4), out("nugget_lead", 1), out("nugget_euphemium", 1),
                 out("nuclear_waste_tiny", 6));
-        pwrPurex(consumer, "pwrbfbam", 13, 334,
+        pwrPurex(consumer, "pwrbfbam", 13, 32,
                 out("nugget_am_mix", 9), out("nugget_pu_mix", 2), out("nugget_bismuth", 6),
                 out("nuclear_waste_tiny", 1));
-        pwrPurex(consumer, "pwrbfpu241", 14, 343,
+        pwrPurex(consumer, "pwrbfpu241", 14, 33,
                 out("nugget_pu241", 9), out("nugget_pu_mix", 2), out("nugget_bismuth", 6),
                 out("nuclear_waste_tiny", 1));
 
-        pwrSchrabPurex(consumer, "schrabpwr", 6, 441);
-        pwrSchrabPurex(consumer, "schrabmen", 3, 447);
-        purexSchrab(consumer, "schrabzirnox", item("waste_plutonium"), 512);
+        purexSchrab(consumer, "schrabzirnox", item("waste_plutonium"), 52);
+        pwrSchrabPurex(consumer, "schrabpwr", 6, 53);
+        pwrSchrabPurex(consumer, "schrabmen", 3, 54);
     }
 
     private static void vitrificationPurex(Consumer<FinishedRecipe> consumer, String name, FluidType wasteFluid,
@@ -882,7 +2792,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputFluid(HbmFluids.THORIUM_SALT, 16_000)
                 .outputChance(item("nugget_u233"), 0.5F)
                 .outputChance(item("nuclear_waste_tiny"), 0.25F)
-                .sourceOrder(353)
+                .sourceOrder(34)
                 .save(consumer, id("purex/thoriumsalt"));
     }
 
@@ -915,7 +2825,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputFluid(HbmFluids.WATZ, 1_000)
                 .nameWrapper("purex.recycle")
                 .autoSwitchGroup("autoswitch.watz")
-                .sourceOrder(459)
+                .sourceOrder(45)
                 .save(consumer, id("purex/watznaqadah"));
 
         GenericMachineRecipeBuilder.purex("purex.watznaqadria", 60, 10_000)
@@ -929,7 +2839,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputFluid(HbmFluids.WATZ, 1_000)
                 .nameWrapper("purex.recycle")
                 .autoSwitchGroup("autoswitch.watz")
-                .sourceOrder(468)
+                .sourceOrder(46)
                 .save(consumer, id("purex/watznaqadria"));
     }
 
@@ -978,6 +2888,39 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
     private static ItemStack out(String legacyName, int count) {
         return new ItemStack(item(legacyName), count);
+    }
+
+    private static void electrolyzerFluidRecipes(Consumer<FinishedRecipe> consumer) {
+        electrolyzerFluid(consumer, "water", HbmFluids.WATER, 2_000,
+                HbmFluids.HYDROGEN, 200, HbmFluids.OXYGEN, 200, 10);
+        electrolyzerFluid(consumer, "heavywater", HbmFluids.HEAVYWATER, 2_000,
+                HbmFluids.DEUTERIUM, 200, HbmFluids.OXYGEN, 200, 10);
+        electrolyzerFluid(consumer, "vitriol", HbmFluids.VITRIOL, 1_000,
+                HbmFluids.SULFURIC_ACID, 500, HbmFluids.CHLORINE, 500, 20,
+                out("powder_iron", 1), out("ingot_mercury", 1));
+        electrolyzerFluid(consumer, "slop", HbmFluids.SLOP, 1_000,
+                HbmFluids.MERCURY, 250, HbmFluids.NONE, 0, 20,
+                out("niter", 2), out("powder_limestone", 2), out("sulfur", 1));
+        electrolyzerFluid(consumer, "redmud", HbmFluids.REDMUD, 450,
+                HbmFluids.MERCURY, 150, HbmFluids.LYE, 50, 20,
+                out("powder_titanium", 3), out("powder_iron", 3), out("powder_aluminium", 2));
+        electrolyzerFluid(consumer, "alumina", HbmFluids.ALUMINA, 200,
+                HbmFluids.CARBONDIOXIDE, 100, HbmFluids.NONE, 0, 40,
+                out("powder_aluminium", 7), out("fluorite", 2));
+        electrolyzerFluid(consumer, "potassium_chloride", HbmFluids.POTASSIUM_CHLORIDE, 250,
+                HbmFluids.CHLORINE, 125, HbmFluids.NONE, 0, 20,
+                out("dust", 1));
+        electrolyzerFluid(consumer, "calcium_chloride", HbmFluids.CALCIUM_CHLORIDE, 250,
+                HbmFluids.CHLORINE, 125, HbmFluids.CALCIUM_SOLUTION, 125, 20);
+    }
+
+    private static void electrolyzerFluid(Consumer<FinishedRecipe> consumer, String name, FluidType input,
+            int inputAmount, FluidType output1, int output1Amount, FluidType output2, int output2Amount,
+            int duration, ItemStack... byproducts) {
+        JsonObject json = CompatRecipeRegistry.createElectrolyzerFluid(
+                new HbmFluidStack(input, inputAmount), new HbmFluidStack(output1, output1Amount),
+                new HbmFluidStack(output2, output2Amount), byproducts, duration);
+        consumer.accept(finishedCompatRecipe(id("electrolyzer_fluid/" + name), json));
     }
 
     private static void electrolyzerMetalRecipes(Consumer<FinishedRecipe> consumer) {
@@ -1062,8 +3005,260 @@ public final class HbmRecipeProvider extends RecipeProvider {
         consumer.accept(finishedCompatRecipe(id("electrolyzer_metal/" + name), json));
     }
 
+    private static void rotaryFurnaceRecipes(Consumer<FinishedRecipe> consumer) {
+        rotaryFurnace(consumer, "steel_from_coal", 0,
+                mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(1)), 100, 100, null,
+                HbmIngredient.legacyOre("ingotIron", 1),
+                HbmIngredient.legacyOre("gemCoal", Ingredient.of(Items.COAL), 1));
+        rotaryFurnace(consumer, "steel_from_coke", 1,
+                mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(1)), 100, 100, null,
+                HbmIngredient.legacyOre("ingotIron", 1),
+                HbmIngredient.legacyOre("gemAnyCoke", 1));
+        rotaryFurnace(consumer, "steel_fragments_from_coal", 2,
+                mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(2)), 200, 25, null,
+                HbmIngredient.legacyOre("bedrockorefragmentIron", 9),
+                HbmIngredient.legacyOre("gemCoal", Ingredient.of(Items.COAL), 1));
+        rotaryFurnace(consumer, "steel_fragments_from_coke", 3,
+                mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(3)), 200, 25, null,
+                HbmIngredient.legacyOre("bedrockorefragmentIron", 9),
+                HbmIngredient.legacyOre("gemAnyCoke", 1));
+        rotaryFurnace(consumer, "steel_fragments_from_coke_flux", 4,
+                mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(4)), 400, 25, null,
+                HbmIngredient.legacyOre("bedrockorefragmentIron", 9),
+                HbmIngredient.legacyOre("gemAnyCoke", 1),
+                HbmIngredient.of(item("powder_flux"), 1));
+        rotaryFurnace(consumer, "desh_from_lightoil", 5,
+                mat(Mats.MAT_DESH, MaterialShapes.INGOT.q(1)), 100, 200,
+                new HbmFluidStack(HbmFluids.LIGHTOIL, 100),
+                HbmIngredient.of(item("powder_desh_ready"), 1));
+        rotaryFurnace(consumer, "gunmetal", 6,
+                mat(Mats.MAT_GUNMETAL, MaterialShapes.INGOT.q(4)), 200, 100, null,
+                HbmIngredient.legacyOre("ingotCopper", Ingredient.of(Items.COPPER_INGOT), 3),
+                HbmIngredient.legacyOre("ingotAluminum", 1));
+        rotaryFurnace(consumer, "weaponsteel_flux", 7,
+                mat(Mats.MAT_WEAPONSTEEL, MaterialShapes.INGOT.q(1)), 200, 400,
+                new HbmFluidStack(HbmFluids.GAS_COKER, 100),
+                HbmIngredient.legacyOre("ingotSteel", 1),
+                HbmIngredient.of(item("powder_flux"), 2));
+        rotaryFurnace(consumer, "saturnite", 8,
+                mat(Mats.MAT_SATURN, MaterialShapes.INGOT.q(2)), 200, 400,
+                new HbmFluidStack(HbmFluids.REFORMGAS, 250),
+                HbmIngredient.legacyOre("dustDuraSteel", 4),
+                HbmIngredient.legacyOre("dustCopper", 1));
+        rotaryFurnace(consumer, "saturnite_borax", 9,
+                mat(Mats.MAT_SATURN, MaterialShapes.INGOT.q(4)), 200, 300,
+                new HbmFluidStack(HbmFluids.REFORMGAS, 250),
+                HbmIngredient.legacyOre("dustDuraSteel", 4),
+                HbmIngredient.legacyOre("dustCopper", 1),
+                HbmIngredient.legacyOre("dustBorax", 1));
+        rotaryFurnace(consumer, "aluminium_from_sodium_aluminate", 10,
+                mat(Mats.MAT_ALUMINIUM, MaterialShapes.INGOT.q(2)), 100, 400,
+                new HbmFluidStack(HbmFluids.SODIUM_ALUMINATE, 150));
+        rotaryFurnace(consumer, "aluminium_flux", 11,
+                mat(Mats.MAT_ALUMINIUM, MaterialShapes.INGOT.q(3)), 40, 200,
+                new HbmFluidStack(HbmFluids.SODIUM_ALUMINATE, 150),
+                HbmIngredient.of(item("powder_flux"), 2));
+    }
+
+    private static void rotaryFurnace(Consumer<FinishedRecipe> consumer, String name, int sourceOrder,
+            MaterialStack output, int duration, int steam, @Nullable HbmFluidStack fluid,
+            HbmIngredient... inputs) {
+        JsonObject json = CompatRecipeRegistry.createRotaryFurnace(output, duration, steam, fluid, inputs,
+                sourceOrder);
+        consumer.accept(finishedCompatRecipe(id("rotary_furnace/" + name), json));
+    }
+
+    private static void crucibleRecipes(Consumer<FinishedRecipe> consumer) {
+        int n = MaterialShapes.NUGGET.q(1);
+        int i = MaterialShapes.INGOT.q(1);
+        crucible(consumer, "steel", 0, "crucible.steel", "Steel Production", item("ingot_steel"), 20,
+                mats(mat(Mats.MAT_IRON, n * 2), mat(Mats.MAT_CARBON, n * 3), mat(Mats.MAT_FLUX, n)),
+                mats(mat(Mats.MAT_STEEL, n * 2)));
+        crucible(consumer, "hematite", 1, "crucible.hematite", "Iron Production from Hematite",
+                block("stone_resource_hematite"), 6,
+                mats(mat(Mats.MAT_HEMATITE, i * 2), mat(Mats.MAT_FLUX, n * 2)),
+                mats(mat(Mats.MAT_IRON, i), mat(Mats.MAT_SLAG, n * 3)));
+        crucible(consumer, "malachite", 2, "crucible.malachite", "Copper Production from Malachite",
+                block("stone_resource_malachite"), 6,
+                mats(mat(Mats.MAT_MALACHITE, i * 2), mat(Mats.MAT_FLUX, n * 2)),
+                mats(mat(Mats.MAT_COPPER, i), mat(Mats.MAT_SLAG, n * 3)));
+        crucible(consumer, "redcopper", 3, "crucible.redcopper", "Red Copper Production",
+                item("ingot_red_copper"), 2,
+                mats(mat(Mats.MAT_COPPER, n), mat(Mats.MAT_REDSTONE, n)),
+                mats(mat(Mats.MAT_MINGRADE, n * 2)));
+        crucible(consumer, "hss", 4, "crucible.hss", "High-Speed Steel Production",
+                item("ingot_dura_steel"), 9,
+                mats(mat(Mats.MAT_STEEL, n * 5), mat(Mats.MAT_TUNGSTEN, n * 3), mat(Mats.MAT_COBALT, n)),
+                mats(mat(Mats.MAT_DURA, n * 9)));
+        crucible(consumer, "ferro", 5, "crucible.ferro", "Ferrouranium Production",
+                item("ingot_ferrouranium"), 3,
+                mats(mat(Mats.MAT_STEEL, n * 2), mat(Mats.MAT_U238, n)),
+                mats(mat(Mats.MAT_FERRO, n * 3)));
+        crucible(consumer, "tcalloy", 6, "crucible.tcalloy", "Technetium Steel Production",
+                item("ingot_tcalloy"), 9,
+                mats(mat(Mats.MAT_STEEL, n * 8), mat(Mats.MAT_TECHNETIUM, n)),
+                mats(mat(Mats.MAT_TCALLOY, i)));
+        crucible(consumer, "cdalloy", 7, "crucible.cdalloy", "Cadmium Steel Production",
+                item("ingot_cdalloy"), 9,
+                mats(mat(Mats.MAT_STEEL, n * 8), mat(Mats.MAT_CADMIUM, n)),
+                mats(mat(Mats.MAT_CDALLOY, i)));
+        crucible(consumer, "bbronze", 8, "crucible.bbronze", "Bismuth Bronze Production",
+                item("ingot_bismuth_bronze"), 9,
+                mats(mat(Mats.MAT_COPPER, n * 8), mat(Mats.MAT_BISMUTH, n), mat(Mats.MAT_FLUX, n * 3)),
+                mats(mat(Mats.MAT_BBRONZE, i), mat(Mats.MAT_SLAG, n * 3)));
+        crucible(consumer, "abronze", 9, "crucible.abronze", "Arsenic Bronze Production",
+                item("ingot_arsenic_bronze"), 9,
+                mats(mat(Mats.MAT_COPPER, n * 8), mat(Mats.MAT_ARSENIC, n), mat(Mats.MAT_FLUX, n * 3)),
+                mats(mat(Mats.MAT_ABRONZE, i), mat(Mats.MAT_SLAG, n * 3)));
+        crucible(consumer, "cmb", 10, "crucible.cmb", "CMB Steel Production",
+                item("ingot_combine_steel"), 3,
+                mats(mat(Mats.MAT_MAGTUNG, n * 6), mat(Mats.MAT_MUD, n * 3)),
+                mats(mat(Mats.MAT_CMB, i)));
+        crucible(consumer, "magtung", 11, "crucible.magtung", "Magnetized Tungsten Production",
+                item("ingot_magnetized_tungsten"), 3,
+                mats(mat(Mats.MAT_TUNGSTEN, i), mat(Mats.MAT_SCHRABIDIUM, n)),
+                mats(mat(Mats.MAT_MAGTUNG, i)));
+        crucible(consumer, "bscco", 12, "crucible.bscco", "BSCCO Production",
+                item("ingot_bscco"), 3,
+                mats(mat(Mats.MAT_BISMUTH, n * 2), mat(Mats.MAT_STRONTIUM, n * 2),
+                        mat(Mats.MAT_CALCIUM, n * 2), mat(Mats.MAT_COPPER, n * 3)),
+                mats(mat(Mats.MAT_BSCCO, i)));
+    }
+
+    private static void crucibleSmeltingRecipes(Consumer<FinishedRecipe> consumer) {
+        int block = MaterialShapes.BLOCK.q(1);
+        int ingot = MaterialShapes.INGOT.q(1);
+        int nugget = MaterialShapes.NUGGET.q(1);
+        int dust = MaterialShapes.DUST.q(1);
+        int gem = MaterialShapes.GEM.q(1);
+        int quart = MaterialShapes.QUART.q(1);
+
+        crucibleSmelting(consumer, "stone", 0, HbmIngredient.legacyOre("stone", 1),
+                mat(Mats.MAT_STONE, block));
+        crucibleSmelting(consumer, "cobblestone", 1, HbmIngredient.legacyOre("cobblestone", 1),
+                mat(Mats.MAT_STONE, block));
+        crucibleSmelting(consumer, "obsidian", 2, HbmIngredient.of(Blocks.OBSIDIAN, 1),
+                mat(Mats.MAT_OBSIDIAN, block));
+        crucibleSmelting(consumer, "rail", 3, HbmIngredient.of(Items.RAIL, 1),
+                mat(Mats.MAT_IRON, MaterialShapes.INGOT.q(6, 16)));
+        crucibleSmelting(consumer, "powered_rail", 4, HbmIngredient.of(Items.POWERED_RAIL, 1),
+                mat(Mats.MAT_GOLD, MaterialShapes.INGOT.q(6, 6)),
+                mat(Mats.MAT_REDSTONE, MaterialShapes.DUST.q(1, 6)));
+        crucibleSmelting(consumer, "detector_rail", 5, HbmIngredient.of(Items.DETECTOR_RAIL, 1),
+                mat(Mats.MAT_IRON, MaterialShapes.INGOT.q(6, 6)),
+                mat(Mats.MAT_REDSTONE, MaterialShapes.DUST.q(1, 6)));
+        crucibleSmelting(consumer, "minecart", 6, HbmIngredient.of(Items.MINECART, 1),
+                mat(Mats.MAT_IRON, ingot * 5));
+
+        crucibleSmelting(consumer, "blade_titanium", 7, HbmIngredient.of(item("blade_titanium"), 1),
+                mat(Mats.MAT_TITANIUM, ingot * 3));
+        crucibleSmelting(consumer, "blade_tungsten", 8, HbmIngredient.of(item("blade_tungsten"), 1),
+                mat(Mats.MAT_TUNGSTEN, ingot * 3));
+        crucibleSmelting(consumer, "blades_steel", 9, HbmIngredient.of(item("blades_steel"), 1),
+                mat(Mats.MAT_STEEL, ingot * 4));
+        crucibleSmelting(consumer, "blades_titanium", 10, HbmIngredient.of(item("blades_titanium"), 1),
+                mat(Mats.MAT_TITANIUM, ingot * 4));
+        crucibleSmelting(consumer, "stamp_stone_flat", 11, HbmIngredient.of(item("stamp_stone_flat"), 1),
+                mat(Mats.MAT_STONE, ingot * 3));
+        crucibleSmelting(consumer, "stamp_iron_flat", 12, HbmIngredient.of(item("stamp_iron_flat"), 1),
+                mat(Mats.MAT_IRON, ingot * 3));
+        crucibleSmelting(consumer, "stamp_steel_flat", 13, HbmIngredient.of(item("stamp_steel_flat"), 1),
+                mat(Mats.MAT_STEEL, ingot * 3));
+        crucibleSmelting(consumer, "stamp_titanium_flat", 14, HbmIngredient.of(item("stamp_titanium_flat"), 1),
+                mat(Mats.MAT_TITANIUM, ingot * 3));
+        crucibleSmelting(consumer, "stamp_obsidian_flat", 15, HbmIngredient.of(item("stamp_obsidian_flat"), 1),
+                mat(Mats.MAT_OBSIDIAN, ingot * 3));
+        crucibleSmelting(consumer, "pipes_steel", 16, HbmIngredient.of(item("pipes_steel"), 1),
+                mat(Mats.MAT_STEEL, block * 3));
+        crucibleSmelting(consumer, "casing_small", 17, HbmIngredient.of(item("casing_small"), 1),
+                mat(Mats.MAT_GUNMETAL, MaterialShapes.PLATE.q(1, 4)));
+        crucibleSmelting(consumer, "casing_small_steel", 18, HbmIngredient.of(item("casing_small_steel"), 1),
+                mat(Mats.MAT_WEAPONSTEEL, MaterialShapes.PLATE.q(1, 4)));
+        crucibleSmelting(consumer, "casing_large", 19, HbmIngredient.of(item("casing_large"), 1),
+                mat(Mats.MAT_GUNMETAL, MaterialShapes.PLATE.q(1, 2)));
+        crucibleSmelting(consumer, "casing_large_steel", 20, HbmIngredient.of(item("casing_large_steel"), 1),
+                mat(Mats.MAT_WEAPONSTEEL, MaterialShapes.PLATE.q(1, 2)));
+        crucibleSmelting(consumer, "chunk_ore_cryolite", 22, HbmIngredient.of(item("chunk_ore_cryolite"), 1),
+                mat(Mats.MAT_ALUMINIUM, ingot), mat(Mats.MAT_SODIUM, ingot));
+
+        crucibleSmelting(consumer, "ore_iron", 23, HbmIngredient.legacyOre("oreIron", 1),
+                mat(Mats.MAT_IRON, ingot * 2), mat(Mats.MAT_TITANIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_titanium", 24, HbmIngredient.legacyOre("oreTitanium", 1),
+                mat(Mats.MAT_TITANIUM, ingot * 2), mat(Mats.MAT_IRON, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_tungsten", 25, HbmIngredient.legacyOre("oreTungsten", 1),
+                mat(Mats.MAT_TUNGSTEN, ingot * 2), mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_aluminium", 26, HbmIngredient.legacyOre("oreAluminium", 1),
+                mat(Mats.MAT_ALUMINIUM, ingot * 2), mat(Mats.MAT_SODIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_coal", 27, HbmIngredient.legacyOre("oreCoal", 1),
+                mat(Mats.MAT_CARBON, gem * 3), mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_gold", 28, HbmIngredient.legacyOre("oreGold", 1),
+                mat(Mats.MAT_GOLD, ingot * 2), mat(Mats.MAT_LEAD, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_uranium", 29, HbmIngredient.legacyOre("oreUranium", 1),
+                mat(Mats.MAT_URANIUM, ingot * 2), mat(Mats.MAT_LEAD, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_thorium232", 30, HbmIngredient.legacyOre("oreThorium232", 1),
+                mat(Mats.MAT_THORIUM, ingot * 2), mat(Mats.MAT_URANIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_th232", 31, HbmIngredient.legacyOre("oreTh232", 1),
+                mat(Mats.MAT_THORIUM, ingot * 2), mat(Mats.MAT_URANIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_thorium", 32, HbmIngredient.legacyOre("oreThorium", 1),
+                mat(Mats.MAT_THORIUM, ingot * 2), mat(Mats.MAT_URANIUM, nugget * 3),
+                mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_copper", 33, HbmIngredient.legacyOre("oreCopper", 1),
+                mat(Mats.MAT_COPPER, ingot * 2), mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_lead", 34, HbmIngredient.legacyOre("oreLead", 1),
+                mat(Mats.MAT_LEAD, ingot * 2), mat(Mats.MAT_GOLD, nugget),
+                mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_beryllium", 35, HbmIngredient.legacyOre("oreBeryllium", 1),
+                mat(Mats.MAT_BERYLLIUM, ingot * 2), mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_cobalt", 36, HbmIngredient.legacyOre("oreCobalt", 1),
+                mat(Mats.MAT_COBALT, ingot), mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_redstone", 37, HbmIngredient.legacyOre("oreRedstone", 1),
+                mat(Mats.MAT_REDSTONE, ingot * 4), mat(Mats.MAT_STONE, quart));
+        crucibleSmelting(consumer, "ore_hematite", 38, HbmIngredient.legacyOre("oreHematite", 1),
+                mat(Mats.MAT_HEMATITE, ingot));
+        crucibleSmelting(consumer, "ore_malachite", 39, HbmIngredient.legacyOre("oreMalachite", 1),
+                mat(Mats.MAT_MALACHITE, ingot * 6));
+
+        crucibleSmelting(consumer, "stone_resource_limestone", 40,
+                HbmIngredient.of(block("stone_resource_limestone"), 1), mat(Mats.MAT_FLUX, dust * 10));
+        crucibleSmelting(consumer, "powder_flux", 41, HbmIngredient.of(item("powder_flux"), 1),
+                mat(Mats.MAT_FLUX, dust));
+        crucibleSmelting(consumer, "charcoal", 42, HbmIngredient.of(Items.CHARCOAL, 1),
+                mat(Mats.MAT_CARBON, nugget * 3));
+        crucibleSmelting(consumer, "powder_ash_wood", 43, HbmIngredient.of(item("powder_ash_wood"), 1),
+                mat(Mats.MAT_CARBON, nugget));
+        crucibleSmelting(consumer, "powder_ash_coal", 44, HbmIngredient.of(item("powder_ash_coal"), 1),
+                mat(Mats.MAT_CARBON, nugget * 2));
+        crucibleSmelting(consumer, "powder_ash_misc", 45, HbmIngredient.of(item("powder_ash_misc"), 1),
+                mat(Mats.MAT_CARBON, nugget));
+    }
+
+    private static void crucibleSmelting(Consumer<FinishedRecipe> consumer, String name, int sourceOrder,
+            HbmIngredient input, MaterialStack... output) {
+        JsonObject json = CompatRecipeRegistry.createCrucibleSmelting(input, output, sourceOrder);
+        consumer.accept(finishedCompatRecipe(id("crucible_smelting/" + name), json));
+    }
+
+    private static void crucible(Consumer<FinishedRecipe> consumer, String name, int sourceOrder,
+            String internalName, String fallbackName, ItemLike icon, int frequency, MaterialStack[] input,
+            MaterialStack[] output) {
+        JsonObject json = CompatRecipeRegistry.createCrucible(internalName, fallbackName, new ItemStack(icon),
+                frequency, input, output, sourceOrder);
+        consumer.accept(finishedCompatRecipe(id("crucible/" + name), json));
+    }
+
     private static MaterialStack mat(com.hbm.inventory.material.NTMMaterial material, int amount) {
         return new MaterialStack(material, amount);
+    }
+
+    private static MaterialStack[] mats(MaterialStack... stacks) {
+        return stacks;
     }
 
     private static FinishedRecipe finishedCompatRecipe(ResourceLocation recipeId, JsonObject recipeJson) {
@@ -1152,6 +3347,402 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .requires(isotopeBillet, 2)
                 .unlockedBy("has_empty_self_charging_battery", has(ModItems.BATTERY_SC_EMPTY.get()))
                 .save(consumer, id("energy/" + recipeName));
+    }
+
+    private static void lemegetonRecipes(Consumer<FinishedRecipe> consumer) {
+        lemegetonRecipe(consumer, "iron_to_steel", HbmIngredient.legacyOre("ingotIron", 1),
+                item("ingot_steel"), 0);
+        lemegetonRecipe(consumer, "steel_to_dura_steel", HbmIngredient.legacyOre("ingotSteel", 1),
+                item("ingot_dura_steel"), 1);
+        lemegetonRecipe(consumer, "dura_steel_to_tcalloy", HbmIngredient.legacyOre("ingotDuraSteel", 1),
+                item("ingot_tcalloy"), 2);
+        lemegetonRecipe(consumer, "tcalloy_to_combine_steel", HbmIngredient.legacyOre("ingotTcAlloy", 1),
+                item("ingot_combine_steel"), 3);
+        lemegetonRecipe(consumer, "combine_steel_to_dineutronium", HbmIngredient.legacyOre("ingotCMBSteel", 1),
+                item("ingot_dineutronium"), 4);
+        lemegetonRecipe(consumer, "titanium_to_saturnite", HbmIngredient.legacyOre("ingotTitanium", 1),
+                item("ingot_saturnite"), 5);
+        lemegetonRecipe(consumer, "saturnite_to_starmetal", HbmIngredient.legacyOre("ingotSaturnite", 1),
+                item("ingot_starmetal"), 6);
+        lemegetonRecipe(consumer, "copper_to_red_copper", HbmIngredient.of(Items.COPPER_INGOT, 1),
+                item("ingot_red_copper"), 7);
+        lemegetonRecipe(consumer, "mingrade_to_desh", HbmIngredient.legacyOre("ingotMingrade", 1),
+                item("ingot_desh"), 8);
+        lemegetonRecipe(consumer, "desh_to_bscco", HbmIngredient.legacyOre("ingotWorkersAlloy", 1),
+                item("ingot_bscco"), 9);
+        lemegetonRecipe(consumer, "lead_to_gold", HbmIngredient.legacyOre("ingotLead", 1),
+                Items.GOLD_INGOT, 10);
+        lemegetonRecipe(consumer, "gold_to_bismuth", HbmIngredient.legacyOre("ingotGold", 1),
+                item("ingot_bismuth"), 11);
+        lemegetonRecipe(consumer, "bismuth_to_osmiridium", HbmIngredient.legacyOre("ingotBismuth", 1),
+                item("ingot_osmiridium"), 12);
+        lemegetonRecipe(consumer, "thorium232_to_uranium", HbmIngredient.legacyOre("ingotThorium232", 1),
+                item("ingot_uranium"), 13);
+        lemegetonRecipe(consumer, "uranium_to_u238", HbmIngredient.legacyOre("ingotUranium", 1),
+                item("ingot_u238"), 14);
+        lemegetonRecipe(consumer, "u238_to_u235", HbmIngredient.legacyOre("ingotUranium238", 1),
+                item("ingot_u235"), 15);
+        lemegetonRecipe(consumer, "u235_to_plutonium", HbmIngredient.legacyOre("ingotUranium235", 1),
+                item("ingot_plutonium"), 16);
+        lemegetonRecipe(consumer, "plutonium_to_pu238", HbmIngredient.legacyOre("ingotPlutonium", 1),
+                item("ingot_pu238"), 17);
+        lemegetonRecipe(consumer, "pu238_to_pu239", HbmIngredient.legacyOre("ingotPlutonium238", 1),
+                item("ingot_pu239"), 18);
+        lemegetonRecipe(consumer, "pu239_to_pu240", HbmIngredient.legacyOre("ingotPlutonium239", 1),
+                item("ingot_pu240"), 19);
+        lemegetonRecipe(consumer, "pu240_to_pu241", HbmIngredient.legacyOre("ingotPlutonium240", 1),
+                item("ingot_pu241"), 20);
+        lemegetonRecipe(consumer, "pu241_to_am241", HbmIngredient.legacyOre("ingotPlutonium241", 1),
+                item("ingot_am241"), 21);
+        lemegetonRecipe(consumer, "am241_to_am242", HbmIngredient.legacyOre("ingotAmericium241", 1),
+                item("ingot_am242"), 22);
+        lemegetonRecipe(consumer, "ra226_to_polonium", HbmIngredient.legacyOre("ingotRadium226", 1),
+                item("ingot_polonium"), 23);
+        lemegetonRecipe(consumer, "po210_to_technetium", HbmIngredient.legacyOre("ingotPolonium210", 1),
+                item("ingot_technetium"), 24);
+        lemegetonRecipe(consumer, "polymer_to_pc", HbmIngredient.legacyOre("ingotPolymer", 1),
+                item("ingot_pc"), 25);
+        lemegetonRecipe(consumer, "bakelite_to_pvc", HbmIngredient.legacyOre("ingotBakelite", 1),
+                item("ingot_pvc"), 26);
+        lemegetonRecipe(consumer, "latex_to_rubber", HbmIngredient.legacyOre("ingotLatex", 1),
+                item("ingot_rubber"), 27);
+        lemegetonRecipe(consumer, "coal_to_graphite", HbmIngredient.legacyOre("gemCoal", 1),
+                item("ingot_graphite"), 28);
+        lemegetonRecipe(consumer, "graphite_to_diamond", HbmIngredient.legacyOre("ingotGraphite", 1),
+                Items.DIAMOND, 29);
+        lemegetonRecipe(consumer, "diamond_to_cft", HbmIngredient.legacyOre("gemDiamond", 1),
+                item("ingot_cft"), 30);
+        lemegetonRecipe(consumer, "fluorite_to_sodalite", HbmIngredient.legacyOre("dustFluorite", 1),
+                item("gem_sodalite"), 31);
+        lemegetonRecipe(consumer, "sodalite_to_volcanic", HbmIngredient.legacyOre("gemSodalite", 1),
+                item("gem_volcanic"), 32);
+        lemegetonRecipe(consumer, "volcanic_to_rad", HbmIngredient.legacyOre("gemVolcanic", 1),
+                item("gem_rad"), 33);
+        lemegetonRecipe(consumer, "rad_to_alexandrite", HbmIngredient.of(item("gem_rad"), 1),
+                item("gem_alexandrite"), 34);
+        lemegetonRecipe(consumer, "sand_to_fiberglass", HbmIngredient.legacyOre("sand", 1),
+                item("ingot_fiberglass"), 35);
+        lemegetonRecipe(consumer, "fiberglass_to_asbestos", HbmIngredient.legacyOre("ingotFiberglass", 1),
+                item("ingot_asbestos"), 36);
+    }
+
+    private static void lemegetonRecipe(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
+            ItemLike output, int sourceOrder) {
+        lemegetonRecipe(consumer, name, input, new ItemStack(output), sourceOrder);
+    }
+
+    private static void lemegetonRecipe(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
+            ItemStack output, int sourceOrder) {
+        ResourceLocation recipeId = id("lemegeton/" + name);
+        consumer.accept(new FinishedRecipe() {
+            @Override
+            public void serializeRecipeData(JsonObject json) {
+                json.add("input", input.toJson());
+                json.add("output", HbmItemOutput.of(output).toJson());
+                json.addProperty("source_order", sourceOrder);
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return recipeId;
+            }
+
+            @Override
+            public RecipeSerializer<?> getType() {
+                return ModRecipes.LEMEGETON.serializer().get();
+            }
+
+            @Nullable
+            @Override
+            public JsonObject serializeAdvancement() {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public ResourceLocation getAdvancementId() {
+                return null;
+            }
+        });
+    }
+
+    private static void anvilSmithingRecipes(Consumer<FinishedRecipe> consumer) {
+        anvilUpgradeRecipes(consumer, "iron", ModBlocks.ANVIL_IRON.get(), 0);
+        anvilUpgradeRecipes(consumer, "lead", ModBlocks.ANVIL_LEAD.get(), 9);
+        legacyAnvilSmithingRecipes(consumer);
+    }
+
+    private static void legacyAnvilSmithingRecipes(Consumer<FinishedRecipe> consumer) {
+        for (int forged = 0; forged < 9; forged++) {
+            anvilSmithingRecipe(consumer,
+                    id("anvil_smithing/ingot_steel_dusted_" + forged + "_to_" + (forged + 1)),
+                    18 + forged,
+                    HbmIngredient.legacyMeta(LegacyMetaItemMappings.INGOT_STEEL_DUSTED, forged, 1),
+                    HbmIngredient.legacyMeta(LegacyMetaItemMappings.INGOT_STEEL_DUSTED, forged, 1),
+                    new ItemStack(ModItems.INGOT_STEEL_DUSTED_ITEMS.get(forged + 1).get()), 3,
+                    AnvilSmithingRecipe.Kind.HOT, null, false);
+        }
+        anvilSmithingRecipe(consumer, id("anvil_smithing/ingot_steel_dusted_9_to_chainsteel"), 27,
+                HbmIngredient.legacyMeta(LegacyMetaItemMappings.INGOT_STEEL_DUSTED, 9, 1),
+                HbmIngredient.legacyMeta(LegacyMetaItemMappings.INGOT_STEEL_DUSTED, 9, 1),
+                new ItemStack(ModItems.INGOT_CHAINSTEEL.get()), 3, AnvilSmithingRecipe.Kind.HOT, null, false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/ingot_meteorite_to_forged"), 28,
+                HbmIngredient.of(ModItems.INGOT_METEORITE.get(), 1),
+                HbmIngredient.of(ModItems.INGOT_METEORITE.get(), 1),
+                new ItemStack(ModItems.INGOT_METEORITE_FORGED.get()), 3, AnvilSmithingRecipe.Kind.HOT, null, false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/ingot_meteorite_forged_to_blade"), 29,
+                HbmIngredient.of(ModItems.INGOT_METEORITE_FORGED.get(), 1),
+                HbmIngredient.of(ModItems.INGOT_METEORITE_FORGED.get(), 1),
+                new ItemStack(ModItems.BLADE_METEORITE.get()), 3, AnvilSmithingRecipe.Kind.HOT, null, false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/meteorite_sword_seared_to_reforged"), 30,
+                HbmIngredient.of(ModItems.METEORITE_SWORD_SEARED.get(), 1),
+                HbmIngredient.of(ModItems.INGOT_METEORITE_FORGED.get(), 1),
+                new ItemStack(ModItems.METEORITE_SWORD_REFORGED.get()), 3, AnvilSmithingRecipe.Kind.HOT, null,
+                false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/cobalt_sword_to_decorated"), 31,
+                HbmIngredient.of(ModItems.COBALT_SWORD.get(), 1),
+                HbmIngredient.of(ModItems.INGOT_METEORITE.get(), 1),
+                new ItemStack(ModItems.COBALT_DECORATED_SWORD.get()), 3, AnvilSmithingRecipe.Kind.HOT, null, false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/cobalt_pickaxe_to_decorated"), 32,
+                HbmIngredient.of(ModItems.COBALT_PICKAXE.get(), 1),
+                HbmIngredient.of(ModItems.INGOT_METEORITE.get(), 1),
+                new ItemStack(ModItems.COBALT_DECORATED_PICKAXE.get()), 3, AnvilSmithingRecipe.Kind.HOT, null,
+                false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/cobalt_axe_to_decorated"), 33,
+                HbmIngredient.of(ModItems.COBALT_AXE.get(), 1),
+                HbmIngredient.of(ModItems.INGOT_METEORITE.get(), 1),
+                new ItemStack(ModItems.COBALT_DECORATED_AXE.get()), 3, AnvilSmithingRecipe.Kind.HOT, null, false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/cobalt_shovel_to_decorated"), 34,
+                HbmIngredient.of(ModItems.COBALT_SHOVEL.get(), 1),
+                HbmIngredient.of(ModItems.INGOT_METEORITE.get(), 1),
+                new ItemStack(ModItems.COBALT_DECORATED_SHOVEL.get()), 3, AnvilSmithingRecipe.Kind.HOT, null,
+                false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/cobalt_hoe_to_decorated"), 35,
+                HbmIngredient.of(ModItems.COBALT_HOE.get(), 1),
+                HbmIngredient.of(ModItems.INGOT_METEORITE.get(), 1),
+                new ItemStack(ModItems.COBALT_DECORATED_HOE.get()), 3, AnvilSmithingRecipe.Kind.HOT, null, false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/wings_limp_to_murk"), 36,
+                HbmIngredient.of(ModItems.WINGS_LIMP.get(), 1),
+                HbmIngredient.of(ModItems.PARTICLE_TACHYON.get(), 1),
+                new ItemStack(ModItems.WINGS_MURK.get()), 1_916_169, AnvilSmithingRecipe.Kind.STANDARD, null,
+                false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/flask_infusion_shield"), 37,
+                HbmIngredient.of(item("gem_alexandrite"), 1),
+                HbmIngredient.of(ModItems.BOTTLE_NUKA.get(), 1),
+                new ItemStack(ModItems.FLASK_INFUSION.get()), 4, AnvilSmithingRecipe.Kind.STANDARD, null, false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/ingot_gunmetal"), 38,
+                HbmIngredient.of(forgeTag("ingots/copper"), 1),
+                HbmIngredient.of(forgeTag("ingots/aluminium"), 1),
+                new ItemStack(item("ingot_gunmetal")), 1, AnvilSmithingRecipe.Kind.STANDARD, null, false);
+
+        anvilMoldPrefixRecipe(consumer, "mold_nugget", 39, HbmIngredient.of(Items.GOLD_NUGGET, 1), "nugget", 0);
+        anvilMoldPrefixRecipe(consumer, "mold_billet", 40, HbmIngredient.of(item("billet_u238"), 1), "billet", 1);
+        anvilMoldPrefixRecipe(consumer, "mold_ingot", 41, HbmIngredient.of(Items.IRON_INGOT, 1), "ingot", 2);
+        anvilMoldPrefixRecipe(consumer, "mold_plate", 42, HbmIngredient.of(ModItems.IRON_PLATE.get(), 1), "plate", 3);
+        anvilMoldPrefixRecipe(consumer, "mold_plate_cast_single", 43,
+                HbmIngredient.of(item("plate_cast_iron"), 1), "plateTriple", 19);
+        anvilMoldPrefixRecipe(consumer, "mold_plate_cast_triple", 44,
+                HbmIngredient.of(item("plate_cast_iron"), 3), "plateTriple", 13);
+        anvilMoldPrefixRecipe(consumer, "mold_wire_fine", 45, HbmIngredient.of(item("wire_fine_copper"), 1),
+                "wireFine", 4);
+        anvilMoldExactRecipe(consumer, "mold_blade", 46, 5, 1, item("blade_titanium"), item("blade_tungsten"));
+        anvilMoldExactRecipe(consumer, "mold_blades", 47, 6, 1, ModItems.SHREDDER_BLADES_STEEL.get(),
+                ModItems.SHREDDER_BLADES_TITANIUM.get());
+        anvilMoldExactRecipe(consumer, "mold_stamp", 48, 7, 1, ModItems.STONE_FLAT_STAMP.get(),
+                ModItems.IRON_FLAT_STAMP.get(), ModItems.STEEL_FLAT_STAMP.get(),
+                ModItems.TITANIUM_FLAT_STAMP.get(), ModItems.OBSIDIAN_FLAT_STAMP.get());
+        anvilMoldPrefixRecipe(consumer, "mold_shell", 49, HbmIngredient.of(item("shell_steel"), 1), "shell", 8);
+        anvilMoldPrefixRecipe(consumer, "mold_pipe", 50, HbmIngredient.of(item("pipes_steel"), 1), "pipe", 9);
+        anvilMoldPrefixRecipe(consumer, "mold_ingots", 51, HbmIngredient.of(Items.IRON_INGOT, 9), "ingot", 10);
+        anvilMoldPrefixRecipe(consumer, "mold_plates", 52, HbmIngredient.of(ModItems.IRON_PLATE.get(), 9), "plate", 11);
+        anvilMoldPrefixRecipe(consumer, "mold_block", 53, HbmIngredient.of(Items.IRON_BLOCK, 1), "block", 12);
+        anvilMoldPrefixRecipe(consumer, "mold_wire_dense", 54, HbmIngredient.of(item("wire_dense_mingrade"), 1),
+                "wireDense", 20);
+        anvilMoldPrefixRecipe(consumer, "mold_wires_dense", 55, HbmIngredient.of(item("wire_dense_mingrade"), 9),
+                "wireDense", 21);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/food_cyanide"), 56,
+                HbmIngredient.of(Items.APPLE, 1),
+                HbmIngredient.of(Ingredient.of(ModItems.PLAN_C.get(), ModItems.PILL_RED.get()), 1),
+                new ItemStack(Items.APPLE), 1, AnvilSmithingRecipe.Kind.CYANIDE, null, false);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/rename"), 57,
+                HbmIngredient.of(Items.STONE, 1), HbmIngredient.of(Items.NAME_TAG, 1),
+                new ItemStack(Items.STONE), 1, AnvilSmithingRecipe.Kind.RENAME, null, false);
+    }
+
+    private static void anvilMoldPrefixRecipe(Consumer<FinishedRecipe> consumer, String name, int sourceOrder,
+            HbmIngredient demo, String prefix, int moldId) {
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + name), sourceOrder, demo,
+                HbmIngredient.of(ModItems.MOLD_BASE.get(), 1), FoundryMoldItem.stackForId(moldId), 1,
+                AnvilSmithingRecipe.Kind.MOLD_PREFIX, prefix, false);
+    }
+
+    private static void anvilMoldExactRecipe(Consumer<FinishedRecipe> consumer, String name, int sourceOrder,
+            int moldId, int count, ItemLike... matches) {
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + name), sourceOrder,
+                HbmIngredient.of(Ingredient.of(matches), count), HbmIngredient.of(ModItems.MOLD_BASE.get(), 1),
+                FoundryMoldItem.stackForId(moldId), 1, AnvilSmithingRecipe.Kind.MOLD_EXACT, null, false);
+    }
+
+    private static void anvilUpgradeRecipes(Consumer<FinishedRecipe> consumer, String baseName, ItemLike baseAnvil,
+            int sourceOrderOffset) {
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + baseName + "_to_steel"), sourceOrderOffset,
+                HbmIngredient.of(baseAnvil, 1), HbmIngredient.of(forgeTag("ingots/steel"), 10),
+                new ItemStack(ModBlocks.ANVIL_STEEL.get()));
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + baseName + "_to_desh"), sourceOrderOffset + 1,
+                HbmIngredient.of(baseAnvil, 1), HbmIngredient.of(forgeTag("ingots/desh"), 10),
+                new ItemStack(ModBlocks.ANVIL_DESH.get()));
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + baseName + "_to_saturnite"), sourceOrderOffset + 2,
+                HbmIngredient.of(baseAnvil, 1), HbmIngredient.of(forgeTag("ingots/saturnite"), 10),
+                new ItemStack(ModBlocks.ANVIL_SATURNITE.get()));
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + baseName + "_to_ferrouranium"), sourceOrderOffset + 3,
+                HbmIngredient.of(item("ingot_ferrouranium"), 10), new ItemStack(ModBlocks.ANVIL_FERROURANIUM.get()),
+                baseAnvil);
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + baseName + "_to_bismuth_bronze"), sourceOrderOffset + 4,
+                HbmIngredient.of(baseAnvil, 1), HbmIngredient.of(forgeTag("ingots/bismuth_bronze"), 10),
+                new ItemStack(ModBlocks.ANVIL_BISMUTH_BRONZE.get()));
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + baseName + "_to_arsenic_bronze"), sourceOrderOffset + 5,
+                HbmIngredient.of(baseAnvil, 1), HbmIngredient.of(forgeTag("ingots/arsenic_bronze"), 10),
+                new ItemStack(ModBlocks.ANVIL_ARSENIC_BRONZE.get()));
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + baseName + "_to_schrabidate"), sourceOrderOffset + 6,
+                HbmIngredient.of(baseAnvil, 1), HbmIngredient.of(forgeTag("ingots/schrabidate"), 10),
+                new ItemStack(ModBlocks.ANVIL_SCHRABIDATE.get()));
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + baseName + "_to_dineutronium"), sourceOrderOffset + 7,
+                HbmIngredient.of(baseAnvil, 1), HbmIngredient.of(forgeTag("ingots/dineutronium"), 10),
+                new ItemStack(ModBlocks.ANVIL_DNT.get()));
+        anvilSmithingRecipe(consumer, id("anvil_smithing/" + baseName + "_to_osmiridium"), sourceOrderOffset + 8,
+                HbmIngredient.of(baseAnvil, 1), HbmIngredient.of(forgeTag("ingots/osmiridium"), 10),
+                new ItemStack(ModBlocks.ANVIL_OSMIRIDIUM.get()));
+    }
+
+    private static void anvilSmithingRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
+            int sourceOrder, HbmIngredient left, HbmIngredient right, ItemStack output) {
+        anvilSmithingRecipe(consumer, recipeId, sourceOrder, left, right, output, false);
+    }
+
+    private static void anvilSmithingRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
+            int sourceOrder, HbmIngredient ferrouranium, ItemStack output, ItemLike baseAnvil) {
+        anvilSmithingRecipe(consumer, recipeId, sourceOrder, HbmIngredient.of(baseAnvil, 1), ferrouranium, output,
+                false);
+    }
+
+    private static void anvilSmithingRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
+            int sourceOrder, HbmIngredient left, HbmIngredient right, ItemStack output, boolean shapeless) {
+        anvilSmithingRecipe(consumer, recipeId, sourceOrder, left, right, output, 1,
+                AnvilSmithingRecipe.Kind.STANDARD, null, shapeless);
+    }
+
+    private static void anvilSmithingRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
+            int sourceOrder, HbmIngredient left, HbmIngredient right, ItemStack output, int tier,
+            AnvilSmithingRecipe.Kind kind, @Nullable String moldPrefix, boolean shapeless) {
+        consumer.accept(new FinishedRecipe() {
+            @Override
+            public void serializeRecipeData(JsonObject json) {
+                json.add("left", left.toJson());
+                json.add("right", right.toJson());
+                json.add("output", HbmItemOutput.of(output).toJson());
+                json.addProperty("tier", tier);
+                if (shapeless) {
+                    json.addProperty("shapeless", true);
+                }
+                json.addProperty("source_order", sourceOrder);
+                if (kind != AnvilSmithingRecipe.Kind.STANDARD) {
+                    json.addProperty("kind", kind.jsonName());
+                }
+                if (moldPrefix != null && !moldPrefix.isBlank()) {
+                    json.addProperty("mold_prefix", moldPrefix);
+                }
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return recipeId;
+            }
+
+            @Override
+            public RecipeSerializer<?> getType() {
+                return ModRecipes.ANVIL_SMITHING.serializer().get();
+            }
+
+            @Nullable
+            @Override
+            public JsonObject serializeAdvancement() {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public ResourceLocation getAdvancementId() {
+                return null;
+            }
+        });
+    }
+
+    private static void anvilSmithingSupportRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.INGOT_STEEL_DUSTED.get())
+                .requires(forgeTag("ingots/steel"))
+                .requires(forgeTag("dusts/coal"))
+                .unlockedBy("has_steel_ingot", has(forgeTag("ingots/steel")))
+                .save(consumer, id("parts/ingot_steel_dusted"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MOLD_BASE.get())
+                .pattern(" B ")
+                .pattern("BIB")
+                .pattern(" B ")
+                .define('B', item("ingot_firebrick"))
+                .define('I', forgeTag("ingots/iron"))
+                .unlockedBy("has_firebrick_ingot", has(item("ingot_firebrick")))
+                .save(consumer, id("parts/mold_base"));
+    }
+
+    private static void hotSmeltingRecipes(Consumer<FinishedRecipe> consumer) {
+        hotSmeltingRecipe(consumer, "hot_ingot_chainsteel", ModItems.INGOT_CHAINSTEEL.get(),
+                new ItemStack(ModItems.INGOT_CHAINSTEEL.get()), 0.0F);
+        hotSmeltingRecipe(consumer, "hot_ingot_meteorite", ModItems.INGOT_METEORITE.get(),
+                new ItemStack(ModItems.INGOT_METEORITE.get()), 0.0F);
+        hotSmeltingRecipe(consumer, "hot_ingot_meteorite_forged", ModItems.INGOT_METEORITE_FORGED.get(),
+                new ItemStack(ModItems.INGOT_METEORITE_FORGED.get()), 0.0F);
+        hotSmeltingRecipe(consumer, "hot_blade_meteorite", ModItems.BLADE_METEORITE.get(),
+                new ItemStack(ModItems.BLADE_METEORITE.get()), 0.0F);
+        for (RegistryObject<Item> dusted : ModItems.INGOT_STEEL_DUSTED_ITEMS) {
+            String name = HbmRegistryUtil.itemKey(dusted.get()).getPath();
+            hotSmeltingRecipe(consumer, "hot_" + name, dusted.get(), new ItemStack(dusted.get()), 1.0F);
+        }
+    }
+
+    private static void hotSmeltingRecipe(Consumer<FinishedRecipe> consumer, String name, ItemLike input,
+            ItemStack output, float experience) {
+        ResourceLocation recipeId = id("smelting/" + name);
+        consumer.accept(new FinishedRecipe() {
+            @Override
+            public void serializeRecipeData(JsonObject json) {
+                json.addProperty("category", "misc");
+                json.addProperty("cookingtime", 200);
+                json.addProperty("experience", experience);
+                json.add("ingredient", Ingredient.of(input).toJson());
+                json.add("result", HbmItemOutput.of(output).toJson());
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return recipeId;
+            }
+
+            @Override
+            public RecipeSerializer<?> getType() {
+                return ModRecipes.HOT_SMELTING.get();
+            }
+
+            @Nullable
+            @Override
+            public JsonObject serializeAdvancement() {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public ResourceLocation getAdvancementId() {
+                return null;
+            }
+        });
     }
 
     private static void energyNetworkRecipes(Consumer<FinishedRecipe> consumer) {
@@ -1744,6 +4335,120 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("smelting/glass_quartz_from_sand_quartz"));
     }
 
+    private static void legacySmeltingRecipes(Consumer<FinishedRecipe> consumer) {
+        legacySmeltingRecipe(consumer, "glyphid_meat", item("glyphid_meat"), item("glyphid_meat_grilled"), 1.0F,
+                RecipeCategory.FOOD);
+
+        legacySmeltingRecipe(consumer, "ore_thorium_to_ingot_th232", block("ore_thorium"), item("ingot_th232"), 3.0F);
+        legacySmeltingRecipe(consumer, "ore_uranium_to_ingot_uranium", block("ore_uranium"), item("ingot_uranium"), 6.0F);
+        legacySmeltingRecipe(consumer, "ore_uranium_scorched_to_ingot_uranium", block("ore_uranium_scorched"), item("ingot_uranium"), 6.0F);
+        legacySmeltingRecipe(consumer, "ore_nether_uranium_to_ingot_uranium", block("ore_nether_uranium"), item("ingot_uranium"), 12.0F);
+        legacySmeltingRecipe(consumer, "ore_nether_uranium_scorched_to_ingot_uranium", block("ore_nether_uranium_scorched"), item("ingot_uranium"), 12.0F);
+        legacySmeltingRecipe(consumer, "ore_nether_plutonium_to_ingot_plutonium", block("ore_nether_plutonium"), item("ingot_plutonium"), 24.0F);
+        legacySmeltingRecipe(consumer, "ore_titanium_to_ingot_titanium", block("ore_titanium"), item("ingot_titanium"), 3.0F);
+        legacySmeltingRecipe(consumer, "ore_tungsten_to_ingot_tungsten", block("ore_tungsten"), item("ingot_tungsten"), 6.0F);
+        legacySmeltingRecipe(consumer, "ore_nether_tungsten_to_ingot_tungsten", block("ore_nether_tungsten"), item("ingot_tungsten"), 12.0F);
+        legacySmeltingRecipe(consumer, "ore_aluminium_to_chunk_ore_cryolite", block("ore_aluminium"), item("chunk_ore_cryolite"), 2.5F);
+        legacySmeltingRecipe(consumer, "ore_lead_to_ingot_lead", block("ore_lead"), item("ingot_lead"), 3.0F);
+        legacySmeltingRecipe(consumer, "ore_beryllium_to_ingot_beryllium", block("ore_beryllium"), item("ingot_beryllium"), 2.0F);
+        legacySmeltingRecipe(consumer, "ore_schrabidium_to_ingot_schrabidium", block("ore_schrabidium"), item("ingot_schrabidium"), 128.0F);
+        legacySmeltingRecipe(consumer, "ore_nether_schrabidium_to_ingot_schrabidium", block("ore_nether_schrabidium"), item("ingot_schrabidium"), 256.0F);
+        legacySmeltingRecipe(consumer, "ore_cobalt_to_ingot_cobalt", block("ore_cobalt"), item("ingot_cobalt"), 2.0F);
+        legacySmeltingRecipe(consumer, "ore_nether_cobalt_to_ingot_cobalt", block("ore_nether_cobalt"), item("ingot_cobalt"), 2.0F);
+        legacySmeltingRecipe(consumer, "ore_gneiss_iron_to_iron_ingot", block("ore_gneiss_iron"), Items.IRON_INGOT, 5.0F);
+        legacySmeltingRecipe(consumer, "ore_gneiss_gold_to_gold_ingot", block("ore_gneiss_gold"), Items.GOLD_INGOT, 5.0F);
+        legacySmeltingRecipe(consumer, "ore_gneiss_uranium_to_ingot_uranium", block("ore_gneiss_uranium"), item("ingot_uranium"), 12.0F);
+        legacySmeltingRecipe(consumer, "ore_gneiss_uranium_scorched_to_ingot_uranium", block("ore_gneiss_uranium_scorched"), item("ingot_uranium"), 12.0F);
+        legacySmeltingRecipe(consumer, "ore_gneiss_lithium_to_lithium", block("ore_gneiss_lithium"), item("lithium"), 10.0F);
+        legacySmeltingRecipe(consumer, "ore_gneiss_schrabidium_to_ingot_schrabidium", block("ore_gneiss_schrabidium"), item("ingot_schrabidium"), 256.0F);
+        legacySmeltingRecipe(consumer, "ore_australium_to_nugget_australium", block("ore_australium"), item("nugget_australium"), 2.5F);
+
+        legacySmeltingRecipe(consumer, "powder_australium_to_ingot_australium", item("powder_australium"), item("ingot_australium"), 5.0F);
+        legacySmeltingRecipe(consumer, "briquette_coal_to_coke_coal", item("briquette_coal"), item("coke_coal"), 1.0F);
+        legacySmeltingRecipe(consumer, "briquette_lignite_to_coke_lignite", item("briquette_lignite"), item("coke_lignite"), 1.0F);
+        legacySmeltingRecipe(consumer, "briquette_wood_to_charcoal", item("briquette_wood"), Items.CHARCOAL, 1.0F);
+        legacySmeltingRecipe(consumer, "powder_lead_to_ingot_lead", item("powder_lead"), item("ingot_lead"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_neptunium_to_ingot_neptunium", item("powder_neptunium"), item("ingot_neptunium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_polonium_to_ingot_polonium", item("powder_polonium"), item("ingot_polonium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_schrabidium_to_ingot_schrabidium", item("powder_schrabidium"), item("ingot_schrabidium"), 5.0F);
+        legacySmeltingRecipe(consumer, "powder_schrabidate_to_ingot_schrabidate", item("powder_schrabidate"), item("ingot_schrabidate"), 5.0F);
+        legacySmeltingRecipe(consumer, "powder_euphemium_to_ingot_euphemium", item("powder_euphemium"), item("ingot_euphemium"), 10.0F);
+        legacySmeltingRecipe(consumer, "powder_aluminium_to_ingot_aluminium", item("powder_aluminium"), item("ingot_aluminium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_beryllium_to_ingot_beryllium", item("powder_beryllium"), item("ingot_beryllium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_copper_to_copper_ingot", item("powder_copper"), Items.COPPER_INGOT, 1.0F);
+        legacySmeltingRecipe(consumer, "powder_gold_to_gold_ingot", item("powder_gold"), Items.GOLD_INGOT, 1.0F);
+        legacySmeltingRecipe(consumer, "powder_iron_to_iron_ingot", item("powder_iron"), Items.IRON_INGOT, 1.0F);
+        legacySmeltingRecipe(consumer, "powder_titanium_to_ingot_titanium", item("powder_titanium"), item("ingot_titanium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_cobalt_to_ingot_cobalt", item("powder_cobalt"), item("ingot_cobalt"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_tungsten_to_ingot_tungsten", item("powder_tungsten"), item("ingot_tungsten"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_uranium_to_ingot_uranium", item("powder_uranium"), item("ingot_uranium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_thorium_to_ingot_th232", item("powder_thorium"), item("ingot_th232"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_plutonium_to_ingot_plutonium", item("powder_plutonium"), item("ingot_plutonium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_combine_steel_to_ingot_combine_steel", item("powder_combine_steel"), item("ingot_combine_steel"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_magnetized_tungsten_to_ingot_magnetized_tungsten", item("powder_magnetized_tungsten"), item("ingot_magnetized_tungsten"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_red_copper_to_ingot_red_copper", item("powder_red_copper"), item("ingot_red_copper"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_steel_to_ingot_steel", item("powder_steel"), item("ingot_steel"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_lithium_to_lithium", item("powder_lithium"), item("lithium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_dura_steel_to_ingot_dura_steel", item("powder_dura_steel"), item("ingot_dura_steel"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_polymer_to_ingot_polymer", item("powder_polymer"), item("ingot_polymer"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_bakelite_to_ingot_bakelite", item("powder_bakelite"), item("ingot_bakelite"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_lanthanium_to_ingot_lanthanium", item("powder_lanthanium"), item("ingot_lanthanium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_actinium_to_ingot_actinium", item("powder_actinium"), item("ingot_actinium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_boron_to_ingot_boron", item("powder_boron"), item("ingot_boron"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_desh_to_ingot_desh", item("powder_desh"), item("ingot_desh"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_dineutronium_to_ingot_dineutronium", item("powder_dineutronium"), item("ingot_dineutronium"), 5.0F);
+        legacySmeltingRecipe(consumer, "powder_asbestos_to_ingot_asbestos", item("powder_asbestos"), item("ingot_asbestos"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_zirconium_to_ingot_zirconium", item("powder_zirconium"), item("ingot_zirconium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_tcalloy_to_ingot_tcalloy", item("powder_tcalloy"), item("ingot_tcalloy"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_au198_to_ingot_au198", item("powder_au198"), item("ingot_au198"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_sr90_to_ingot_sr90", item("powder_sr90"), item("ingot_sr90"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_ra226_to_ingot_ra226", item("powder_ra226"), item("ingot_ra226"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_tantalium_to_ingot_tantalium", item("powder_tantalium"), item("ingot_tantalium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_niobium_to_ingot_niobium", item("powder_niobium"), item("ingot_niobium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_bismuth_to_ingot_bismuth", item("powder_bismuth"), item("ingot_bismuth"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_calcium_to_ingot_calcium", item("powder_calcium"), item("ingot_calcium"), 1.0F);
+        legacySmeltingRecipe(consumer, "powder_cadmium_to_ingot_cadmium", item("powder_cadmium"), item("ingot_cadmium"), 1.0F);
+        legacySmeltingRecipe(consumer, "ball_resin_to_ingot_biorubber", item("ball_resin"), item("ingot_biorubber"), 0.1F);
+
+        legacySmeltingRecipe(consumer, "arc_electrode_burnt_graphite_to_ingot_graphite", item("arc_electrode_burnt_graphite"), item("ingot_graphite"), 3.0F);
+        legacySmeltingRecipe(consumer, "arc_electrode_burnt_lanthanium_to_ingot_lanthanium", item("arc_electrode_burnt_lanthanium"), item("ingot_lanthanium"), 3.0F);
+        legacySmeltingRecipe(consumer, "arc_electrode_burnt_desh_to_ingot_desh", item("arc_electrode_burnt_desh"), item("ingot_desh"), 3.0F);
+        legacySmeltingRecipe(consumer, "arc_electrode_burnt_saturnite_to_ingot_saturnite", item("arc_electrode_burnt_saturnite"), item("ingot_saturnite"), 3.0F);
+        legacySmeltingRecipe(consumer, "rag_damp_to_rag", item("rag_damp"), item("rag"), 0.1F);
+        legacySmeltingRecipe(consumer, "rag_piss_to_rag", item("rag_piss"), item("rag"), 0.1F);
+        legacySmeltingRecipe(consumer, "ball_fireclay_to_ingot_firebrick", item("ball_fireclay"), item("ingot_firebrick"), 0.1F);
+        legacySmeltingRecipe(consumer, "gravel_to_cobblestone", Blocks.GRAVEL, Blocks.COBBLESTONE, 0.0F,
+                RecipeCategory.BUILDING_BLOCKS);
+        legacySmeltingRecipe(consumer, "gravel_obsidian_to_obsidian", block("gravel_obsidian"), Blocks.OBSIDIAN, 0.0F,
+                RecipeCategory.BUILDING_BLOCKS);
+        legacySmeltingRecipe(consumer, "gravel_diamond_to_diamond", block("gravel_diamond"), Items.DIAMOND, 3.0F);
+        legacySmeltingRecipe(consumer, "waste_trinitite_to_glass_trinitite", block("waste_trinitite"), block("glass_trinitite"), 0.25F,
+                RecipeCategory.BUILDING_BLOCKS);
+        legacySmeltingRecipe(consumer, "waste_trinitite_red_to_glass_trinitite", block("waste_trinitite_red"), block("glass_trinitite"), 0.25F,
+                RecipeCategory.BUILDING_BLOCKS);
+        legacySmeltingRecipe(consumer, "ash_digamma_to_glass_ash", block("ash_digamma"), block("glass_ash"), 10.0F,
+                RecipeCategory.BUILDING_BLOCKS);
+        legacySmeltingRecipe(consumer, "basalt_to_basalt_smooth", block("basalt"), block("basalt_smooth"), 0.1F,
+                RecipeCategory.BUILDING_BLOCKS);
+        legacySmeltingRecipe(consumer, "ingot_schraranium_to_nugget_schrabidium", item("ingot_schraranium"), item("nugget_schrabidium"), 2.0F);
+        legacySmeltingRecipe(consumer, "lodestone_to_crystal_iron", item("lodestone"), item("crystal_iron"), 5.0F);
+        legacySmeltingRecipe(consumer, "crystal_rare_to_powder_desh_mix", item("crystal_rare"), item("powder_desh_mix"), 2.0F);
+        legacySmeltingRecipe(consumer, "crystal_osmiridium_to_ingot_osmiridium", item("crystal_osmiridium"), item("ingot_osmiridium"), 2.0F);
+        legacySmeltingRecipe(consumer, "scrap_plastic_to_ingot_polymer", item("scrap_plastic"), item("ingot_polymer"), 0.1F);
+    }
+
+    private static void legacySmeltingRecipe(Consumer<FinishedRecipe> consumer, String name, ItemLike input,
+            ItemLike output, float experience) {
+        legacySmeltingRecipe(consumer, name, input, output, experience, RecipeCategory.MISC);
+    }
+
+    private static void legacySmeltingRecipe(Consumer<FinishedRecipe> consumer, String name, ItemLike input,
+            ItemLike output, float experience, RecipeCategory category) {
+        SimpleCookingRecipeBuilder.smelting(Ingredient.of(input), category, output, experience, 200)
+                .unlockedBy("has_" + name, has(input))
+                .save(consumer, id("smelting/" + name));
+    }
+
     private static void sandMixRecipe(Consumer<FinishedRecipe> consumer, ItemLike result, String name,
             TagKey<Item> dust, int count) {
         ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, result, count)
@@ -1764,75 +4469,364 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void outgasserRecipes(Consumer<FinishedRecipe> consumer) {
-        OutgasserRecipeBuilder.outgasser(HbmIngredient.of(Items.BROWN_MUSHROOM, 1))
-                .outputItem(ModBlocks.MUSH.get())
-                .save(consumer, id("outgasser/glowing_mushroom_from_brown_mushroom"));
-        OutgasserRecipeBuilder.outgasser(HbmIngredient.of(Items.RED_MUSHROOM, 1))
-                .outputItem(ModBlocks.MUSH.get())
-                .save(consumer, id("outgasser/glowing_mushroom_from_red_mushroom"));
-        OutgasserRecipeBuilder.outgasser(HbmIngredient.of(Items.MUSHROOM_STEW, 1))
-                .outputItem(ModItems.GLOWING_STEW.get())
-                .save(consumer, id("outgasser/glowing_stew_from_mushroom_stew"));
-
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("blockLithium", 1))
                 .outputFluid(HbmFluids.TRITIUM, 10_000)
-                .save(consumer, id("outgasser/tritium_from_lithium_block"));
+                .save(consumer, id("outgasser/tritium_from_lithium_block"), 0);
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("ingotLithium", 1))
                 .outputFluid(HbmFluids.TRITIUM, 1_000)
-                .save(consumer, id("outgasser/tritium_from_lithium_ingot"));
+                .save(consumer, id("outgasser/tritium_from_lithium_ingot"), 1);
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("dustLithium", 1))
                 .outputFluid(HbmFluids.TRITIUM, 1_000)
-                .save(consumer, id("outgasser/tritium_from_lithium_dust"));
+                .save(consumer, id("outgasser/tritium_from_lithium_dust"), 2);
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("dustTinyLithium", 1))
                 .outputFluid(HbmFluids.TRITIUM, 100)
-                .save(consumer, id("outgasser/tritium_from_lithium_tiny_dust"));
+                .save(consumer, id("outgasser/tritium_from_lithium_tiny_dust"), 3);
 
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("ingotGold", 1))
                 .outputItem(item("ingot_au198"))
-                .save(consumer, id("outgasser/au198_ingot_from_gold_ingot"));
+                .save(consumer, id("outgasser/au198_ingot_from_gold_ingot"), 4);
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("nuggetGold", 1))
                 .outputItem(item("nugget_au198"))
-                .save(consumer, id("outgasser/au198_nugget_from_gold_nugget"));
+                .save(consumer, id("outgasser/au198_nugget_from_gold_nugget"), 5);
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("dustGold", 1))
                 .outputItem(item("powder_au198"))
-                .save(consumer, id("outgasser/au198_powder_from_gold_dust"));
+                .save(consumer, id("outgasser/au198_powder_from_gold_dust"), 6);
 
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("ingotTh232", 1))
                 .outputItem(item("ingot_thorium_fuel"))
-                .save(consumer, id("outgasser/thorium_fuel_ingot_from_th232_ingot"));
+                .save(consumer, id("outgasser/thorium_fuel_ingot_from_th232_ingot"), 7);
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("nuggetTh232", 1))
                 .outputItem(item("nugget_thorium_fuel"))
-                .save(consumer, id("outgasser/thorium_fuel_nugget_from_th232_nugget"));
+                .save(consumer, id("outgasser/thorium_fuel_nugget_from_th232_nugget"), 8);
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("billetTh232", 1))
                 .outputItem(item("billet_thorium_fuel"))
-                .save(consumer, id("outgasser/thorium_fuel_billet_from_th232_billet"));
+                .save(consumer, id("outgasser/thorium_fuel_billet_from_th232_billet"), 9);
+
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.of(Items.BROWN_MUSHROOM, 1))
+                .outputItem(ModBlocks.MUSH.get())
+                .save(consumer, id("outgasser/glowing_mushroom_from_brown_mushroom"), 10);
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.of(Items.RED_MUSHROOM, 1))
+                .outputItem(ModBlocks.MUSH.get())
+                .save(consumer, id("outgasser/glowing_mushroom_from_red_mushroom"), 11);
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.of(Items.MUSHROOM_STEW, 1))
+                .outputItem(ModItems.GLOWING_STEW.get())
+                .save(consumer, id("outgasser/glowing_stew_from_mushroom_stew"), 12);
 
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("gemCoal", 1))
                 .outputItem(item("oil_tar_coal"))
                 .outputFluid(HbmFluids.SYNGAS, 50)
-                .save(consumer, id("outgasser/coal_tar_from_coal"));
+                .save(consumer, id("outgasser/coal_tar_from_coal"), 13);
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("dustCoal", 1))
                 .outputItem(item("oil_tar_coal"))
                 .outputFluid(HbmFluids.SYNGAS, 50)
-                .save(consumer, id("outgasser/coal_tar_from_coal_dust"));
+                .save(consumer, id("outgasser/coal_tar_from_coal_dust"), 14);
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("blockCoal", 1))
                 .outputItem(new ItemStack(item("oil_tar_coal"), 9))
                 .outputFluid(HbmFluids.SYNGAS, 500)
-                .save(consumer, id("outgasser/coal_tar_from_coal_block"));
+                .save(consumer, id("outgasser/coal_tar_from_coal_block"), 15);
 
         OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("ingotPvc", 1))
                 .outputItem(item("ingot_c4"))
                 .outputFluid(HbmFluids.COLLOID, 250)
-                .save(consumer, id("outgasser/c4_from_pvc"));
-        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyOre("coaltar", 1))
+                .save(consumer, id("outgasser/c4_from_pvc"), 16);
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyMeta(LegacyMetaItemMappings.OIL_TAR, 2, 1))
                 .outputFluid(HbmFluids.COALOIL, 100)
-                .save(consumer, id("outgasser/coaloil_from_coal_tar"));
-        OutgasserRecipeBuilder.outgasser(HbmIngredient.of(item("oil_tar_wax"), 1))
+                .save(consumer, id("outgasser/coaloil_from_coal_tar"), 17);
+        OutgasserRecipeBuilder.outgasser(HbmIngredient.legacyMeta(LegacyMetaItemMappings.OIL_TAR, 4, 1))
                 .outputFluid(HbmFluids.RADIOSOLVENT, 100)
-                .save(consumer, id("outgasser/radiosolvent_from_wax_tar"));
+                .save(consumer, id("outgasser/radiosolvent_from_wax_tar"), 18);
+    }
+
+    private static void solderingStationRecipes(Consumer<FinishedRecipe> consumer) {
+        SolderingStationRecipeBuilder.soldering(item("circuit_analog"), 100, 100)
+                .toppingItem("circuit_vacuum_tube", 3)
+                .toppingItem("circuit_capacitor", 2)
+                .pcbItem("circuit_pcb", 4)
+                .solderLegacyOre("wireFineLead", 4)
+                .save(consumer, id("soldering_station/circuit_analog"), 0);
+        SolderingStationRecipeBuilder.soldering(item("circuit_basic"), 200, 250)
+                .toppingItem("circuit_chip", 4)
+                .pcbItem("circuit_pcb", 4)
+                .solderLegacyOre("wireFineLead", 4)
+                .save(consumer, id("soldering_station/circuit_basic"), 1);
+        SolderingStationRecipeBuilder.soldering(item("circuit_advanced"), 300, 1_000)
+                .fluid(HbmFluids.SULFURIC_ACID, 1_000)
+                .toppingItem("circuit_chip", 16)
+                .toppingItem("circuit_capacitor", 4)
+                .pcbItem("circuit_pcb", 8)
+                .pcbLegacyOre("ingotRubber", 2)
+                .solderLegacyOre("wireFineLead", 8)
+                .save(consumer, id("soldering_station/circuit_advanced"), 2);
+        SolderingStationRecipeBuilder.soldering(item("circuit_capacitor_board"), 200, 300)
+                .fluid(HbmFluids.PEROXIDE, 250)
+                .toppingItem("circuit_capacitor_tantalium", 3)
+                .pcbItem("circuit_pcb", 1)
+                .solderLegacyOre("wireFineLead", 3)
+                .save(consumer, id("soldering_station/circuit_capacitor_board"), 3);
+        SolderingStationRecipeBuilder.soldering(item("circuit_bismoid"), 400, 10_000)
+                .fluid(HbmFluids.SOLVENT, 1_000)
+                .toppingItem("circuit_chip_bismoid", 4)
+                .toppingItem("circuit_chip", 16)
+                .toppingItem("circuit_capacitor", 24)
+                .pcbItem("circuit_pcb", 12)
+                .pcbLegacyOre("ingotAnyHardPlastic", 2)
+                .solderLegacyOre("wireFineLead", 12)
+                .save(consumer, id("soldering_station/circuit_bismoid"), 4);
+        SolderingStationRecipeBuilder.soldering(item("circuit_quantum"), 400, 100_000)
+                .fluid(HbmFluids.HELIUM4, 1_000)
+                .toppingItem("circuit_chip_quantum", 4)
+                .toppingItem("circuit_chip_bismoid", 16)
+                .toppingItem("circuit_atomic_clock", 4)
+                .pcbItem("circuit_pcb", 16)
+                .pcbLegacyOre("ingotAnyHardPlastic", 4)
+                .solderLegacyOre("wireFineLead", 16)
+                .save(consumer, id("soldering_station/circuit_quantum"), 5);
+
+        SolderingStationRecipeBuilder.soldering(item("circuit_controller"), 400, 15_000)
+                .fluid(HbmFluids.PERFLUOROMETHYL, 1_000)
+                .toppingItem("circuit_chip", 32)
+                .toppingItem("circuit_capacitor", 32)
+                .toppingItem("circuit_capacitor_tantalium", 16)
+                .pcbItem("circuit_controller_chassis", 1)
+                .pcbItem("upgrade_speed_1", 1)
+                .solderLegacyOre("wireFineLead", 16)
+                .save(consumer, id("soldering_station/circuit_controller"), 6);
+        SolderingStationRecipeBuilder.soldering(item("circuit_controller_advanced"), 600, 25_000)
+                .fluid(HbmFluids.PERFLUOROMETHYL, 4_000)
+                .toppingItem("circuit_chip_bismoid", 16)
+                .toppingItem("circuit_capacitor_tantalium", 48)
+                .toppingItem("circuit_atomic_clock", 1)
+                .pcbItem("circuit_controller_chassis", 1)
+                .pcbItem("upgrade_speed_3", 1)
+                .solderLegacyOre("wireFineLead", 24)
+                .save(consumer, id("soldering_station/circuit_controller_advanced"), 7);
+        SolderingStationRecipeBuilder.soldering(item("circuit_controller_quantum"), 600, 250_000)
+                .fluid(HbmFluids.PERFLUOROMETHYL_COLD, 6_000)
+                .toppingItem("circuit_chip_quantum", 16)
+                .toppingItem("circuit_chip_bismoid", 48)
+                .toppingItem("circuit_atomic_clock", 8)
+                .pcbItem("circuit_controller_advanced", 2)
+                .pcbItem("upgrade_overdrive_1", 1)
+                .solderLegacyOre("wireFineLead", 32)
+                .save(consumer, id("soldering_station/circuit_controller_quantum"), 8);
+
+        SolderingStationRecipeBuilder.soldering(item("upgrade_speed_1"), 200, 1_000)
+                .toppingItem("circuit_vacuum_tube", 4)
+                .toppingItem("circuit_capacitor", 1)
+                .pcbItem("upgrade_template", 1)
+                .pcbLegacyOre("dustMingrade", 4)
+                .save(consumer, id("soldering_station/upgrade_speed_1"), 99);
+        SolderingStationRecipeBuilder.soldering(item("upgrade_effect_1"), 200, 1_000)
+                .toppingItem("circuit_vacuum_tube", 4)
+                .toppingItem("circuit_capacitor", 1)
+                .pcbItem("upgrade_template", 1)
+                .pcbLegacyOre("dustEmerald", 4)
+                .save(consumer, id("soldering_station/upgrade_effect_1"), 100);
+        SolderingStationRecipeBuilder.soldering(item("upgrade_power_1"), 200, 1_000)
+                .toppingItem("circuit_vacuum_tube", 4)
+                .toppingItem("circuit_capacitor", 1)
+                .pcbItem("upgrade_template", 1)
+                .pcbLegacyOre("dustGold", 4)
+                .save(consumer, id("soldering_station/upgrade_power_1"), 101);
+        SolderingStationRecipeBuilder.soldering(item("upgrade_afterburn_1"), 200, 1_000)
+                .toppingItem("circuit_vacuum_tube", 4)
+                .toppingItem("circuit_capacitor", 1)
+                .pcbItem("upgrade_template", 1)
+                .pcbLegacyOre("dustTungsten", 4)
+                .save(consumer, id("soldering_station/upgrade_afterburn_1"), 102);
+        SolderingStationRecipeBuilder.soldering(item("upgrade_fortune_1"), 200, 1_000)
+                .toppingItem("circuit_vacuum_tube", 4)
+                .toppingItem("circuit_capacitor", 1)
+                .pcbItem("upgrade_template", 1)
+                .pcbLegacyOre("dustNiobium", 4)
+                .save(consumer, id("soldering_station/upgrade_fortune_1"), 103);
+        SolderingStationRecipeBuilder.soldering(item("upgrade_radius"), 200, 1_000)
+                .toppingItem("circuit_chip", 4)
+                .toppingItem("circuit_capacitor", 4)
+                .pcbItem("upgrade_template", 1)
+                .pcbItemWithLegacyOre(Items.GLOWSTONE_DUST, 4, "dustGlowstone")
+                .save(consumer, id("soldering_station/upgrade_radius"), 104);
+        SolderingStationRecipeBuilder.soldering(item("upgrade_health"), 200, 1_000)
+                .toppingItem("circuit_chip", 4)
+                .toppingItem("circuit_capacitor", 4)
+                .pcbItem("upgrade_template", 1)
+                .pcbLegacyOre("dustLithium", 4)
+                .save(consumer, id("soldering_station/upgrade_health"), 105);
+
+        addFirstSolderingUpgrade(consumer, "upgrade_speed_1", "upgrade_speed_2", 107);
+        addSecondSolderingUpgrade(consumer, "upgrade_speed_2", "upgrade_speed_3", 108);
+        addFirstSolderingUpgrade(consumer, "upgrade_effect_1", "upgrade_effect_2", 109);
+        addSecondSolderingUpgrade(consumer, "upgrade_effect_2", "upgrade_effect_3", 110);
+        addFirstSolderingUpgrade(consumer, "upgrade_power_1", "upgrade_power_2", 111);
+        addSecondSolderingUpgrade(consumer, "upgrade_power_2", "upgrade_power_3", 112);
+        addFirstSolderingUpgrade(consumer, "upgrade_fortune_1", "upgrade_fortune_2", 113);
+        addSecondSolderingUpgrade(consumer, "upgrade_fortune_2", "upgrade_fortune_3", 114);
+        addFirstSolderingUpgrade(consumer, "upgrade_afterburn_1", "upgrade_afterburn_2", 115);
+        addSecondSolderingUpgrade(consumer, "upgrade_afterburn_2", "upgrade_afterburn_3", 116);
+    }
+
+    private static void addFirstSolderingUpgrade(Consumer<FinishedRecipe> consumer, String lower, String higher,
+            int sourceOrder) {
+        SolderingStationRecipeBuilder.soldering(item(higher), 300, 10_000)
+                .toppingItem("circuit_chip", 8)
+                .toppingItem("circuit_capacitor", 4)
+                .pcbItem(lower, 1)
+                .pcbLegacyOre("ingotAnyPlastic", 4)
+                .save(consumer, id("soldering_station/" + higher), sourceOrder);
+    }
+
+    private static void addSecondSolderingUpgrade(Consumer<FinishedRecipe> consumer, String lower, String higher,
+            int sourceOrder) {
+        SolderingStationRecipeBuilder.soldering(item(higher), 400, 25_000)
+                .fluid(HbmFluids.SOLVENT, 500)
+                .toppingItem("circuit_chip", 16)
+                .toppingItem("circuit_capacitor", 16)
+                .pcbItem(lower, 1)
+                .pcbLegacyOre("ingotRubber", 4)
+                .save(consumer, id("soldering_station/" + higher), sourceOrder);
     }
 
     private static void legacyToolRecipes(Consumer<FinishedRecipe> consumer) {
+        standardToolSet(consumer, "steel", forgeTag("ingots/steel"),
+                ModItems.STEEL_SWORD.get(), ModItems.STEEL_PICKAXE.get(), ModItems.STEEL_AXE.get(),
+                ModItems.STEEL_SHOVEL.get(), ModItems.STEEL_HOE.get());
+        standardToolSet(consumer, "titanium", forgeTag("ingots/titanium"),
+                ModItems.TITANIUM_SWORD.get(), ModItems.TITANIUM_PICKAXE.get(), ModItems.TITANIUM_AXE.get(),
+                ModItems.TITANIUM_SHOVEL.get(), ModItems.TITANIUM_HOE.get());
+        standardToolSet(consumer, "cobalt", forgeTag("ingots/cobalt"),
+                ModItems.COBALT_SWORD.get(), ModItems.COBALT_PICKAXE.get(), ModItems.COBALT_AXE.get(),
+                ModItems.COBALT_SHOVEL.get(), ModItems.COBALT_HOE.get());
+        standardToolSet(consumer, "cmb", forgeTag("ingots/combine_steel"),
+                ModItems.CMB_SWORD.get(), ModItems.CMB_PICKAXE.get(), ModItems.CMB_AXE.get(),
+                ModItems.CMB_SHOVEL.get(), ModItems.CMB_HOE.get());
+        standardToolSet(consumer, "desh", forgeTag("ingots/desh"),
+                ModItems.DESH_SWORD.get(), ModItems.DESH_PICKAXE.get(), ModItems.DESH_AXE.get(),
+                ModItems.DESH_SHOVEL.get(), ModItems.DESH_HOE.get());
+
+        legacyElectricToolRecipes(consumer);
+        legacyNonLbsmAdvancedToolRecipes(consumer);
+        legacyChainsawRecipe(consumer);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.CROWBAR.get())
+                .pattern("II")
+                .pattern(" I")
+                .pattern(" I")
+                .define('I', forgeTag("ingots/steel"))
+                .unlockedBy("has_steel_ingot", has(forgeTag("ingots/steel")))
+                .save(consumer, id("tools/crowbar"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.MATCHSTICK.get(), 16)
+                .pattern("I")
+                .pattern("S")
+                .define('I', forgeTag("dusts/sulfur"))
+                .define('S', forgeTag("rods/wooden"))
+                .unlockedBy("has_sulfur_dust", has(forgeTag("dusts/sulfur")))
+                .save(consumer, id("tools/matchstick_sulfur"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.MATCHSTICK.get(), 24)
+                .pattern("I")
+                .pattern("S")
+                .define('I', forgeTag("dusts/red_phosphorus"))
+                .define('S', forgeTag("rods/wooden"))
+                .unlockedBy("has_red_phosphorus_dust", has(forgeTag("dusts/red_phosphorus")))
+                .save(consumer, id("tools/matchstick_red_phosphorus"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.WOOD_GAVEL.get())
+                .pattern("SWS")
+                .pattern(" R ")
+                .pattern(" R ")
+                .define('S', ItemTags.WOODEN_SLABS)
+                .define('W', ItemTags.LOGS)
+                .define('R', Items.STICK)
+                .unlockedBy("has_wooden_slab", has(ItemTags.WOODEN_SLABS))
+                .save(consumer, id("tools/wood_gavel"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.LEAD_GAVEL.get())
+                .pattern("PIP")
+                .pattern("IGI")
+                .pattern("PIP")
+                .define('P', item("pellet_buckshot"))
+                .define('I', forgeTag("ingots/lead"))
+                .define('G', ModItems.WOOD_GAVEL.get())
+                .unlockedBy("has_wood_gavel", has(ModItems.WOOD_GAVEL.get()))
+                .save(consumer, id("tools/lead_gavel"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.PIPE_LEAD.get())
+                .pattern("II")
+                .pattern(" I")
+                .pattern(" I")
+                .define('I', forgeTag("pipes/lead"))
+                .unlockedBy("has_lead_pipe", has(forgeTag("pipes/lead")))
+                .save(consumer, id("tools/pipe_lead"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.ULLAPOOL_CABER.get())
+                .pattern("ITI")
+                .pattern(" S ")
+                .pattern(" S ")
+                .define('I', forgeTag("plates/iron"))
+                .define('T', Items.TNT)
+                .define('S', Items.STICK)
+                .unlockedBy("has_tnt", has(Items.TNT))
+                .save(consumer, id("tools/ullapool_caber"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, ModItems.CENTRI_STICK.get())
+                .requires(item("centrifuge_element"))
+                .requires(item("energy_core"))
+                .requires(Items.STICK)
+                .unlockedBy("has_centrifuge_element", has(item("centrifuge_element")))
+                .save(consumer, id("tools/centri_stick"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.SMASHING_HAMMER.get())
+                .pattern("STS")
+                .pattern("SPS")
+                .pattern(" P ")
+                .define('S', forgeTag("storage_blocks/steel"))
+                .define('T', forgeTag("storage_blocks/tungsten"))
+                .define('P', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_steel_block", has(forgeTag("storage_blocks/steel")))
+                .save(consumer, id("tools/smashing_hammer"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.METEORITE_SWORD.get())
+                .pattern("  B")
+                .pattern("GB ")
+                .pattern("SG ")
+                .define('B', ModItems.BLADE_METEORITE.get())
+                .define('G', forgeTag("plates/gold"))
+                .define('S', Items.STICK)
+                .unlockedBy("has_meteorite_blade", has(ModItems.BLADE_METEORITE.get()))
+                .save(consumer, id("tools/meteorite_sword"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.DWARVEN_PICKAXE.get())
+                .pattern("CIC")
+                .pattern(" S ")
+                .pattern(" S ")
+                .define('C', forgeTag("ingots/copper"))
+                .define('I', forgeTag("ingots/iron"))
+                .define('S', Items.STICK)
+                .unlockedBy("has_copper_ingot", has(forgeTag("ingots/copper")))
+                .save(consumer, id("tools/dwarven_pickaxe"));
+
+        meteorUpgradeToolRecipe(consumer, "bismuth_pickaxe", ModItems.BISMUTH_PICKAXE.get(),
+                item("ingot_bismuth"), ModItems.STARMETAL_PICKAXE.get());
+        meteorUpgradeToolRecipe(consumer, "volcanic_pickaxe", ModItems.VOLCANIC_PICKAXE.get(),
+                item("gem_volcanic"), ModItems.STARMETAL_PICKAXE.get());
+        chlorophyteToolRecipe(consumer, "chlorophyte_pickaxe_from_bismuth_pickaxe",
+                ModItems.CHLOROPHYTE_PICKAXE.get(), ModItems.BISMUTH_PICKAXE.get());
+        chlorophyteToolRecipe(consumer, "chlorophyte_pickaxe_from_volcanic_pickaxe",
+                ModItems.CHLOROPHYTE_PICKAXE.get(), ModItems.VOLCANIC_PICKAXE.get());
+        meseToolRecipe(consumer, "mese_pickaxe", ModItems.MESE_PICKAXE.get(),
+                ModItems.CHLOROPHYTE_PICKAXE.get());
+
+        meteorUpgradeToolRecipe(consumer, "bismuth_axe", ModItems.BISMUTH_AXE.get(),
+                item("ingot_bismuth"), ModItems.STARMETAL_AXE.get());
+        meteorUpgradeToolRecipe(consumer, "volcanic_axe", ModItems.VOLCANIC_AXE.get(),
+                item("gem_volcanic"), ModItems.STARMETAL_AXE.get());
+        chlorophyteToolRecipe(consumer, "chlorophyte_axe_from_bismuth_axe",
+                ModItems.CHLOROPHYTE_AXE.get(), ModItems.BISMUTH_AXE.get());
+        chlorophyteToolRecipe(consumer, "chlorophyte_axe_from_volcanic_axe",
+                ModItems.CHLOROPHYTE_AXE.get(), ModItems.VOLCANIC_AXE.get());
+        meseToolRecipe(consumer, "mese_axe", ModItems.MESE_AXE.get(), ModItems.CHLOROPHYTE_AXE.get());
+
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.RANGEFINDER.get())
                 .pattern("GRC")
                 .pattern("  S")
@@ -1866,6 +4860,55 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_advanced_circuit", has(forgeTag("circuits/advanced")))
                 .save(consumer, id("tools/survey_scanner"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.GEIGER_COUNTER.get())
+                .pattern("GPP")
+                .pattern("WCS")
+                .pattern("WBB")
+                .define('G', forgeTag("ingots/gold"))
+                .define('P', forgeTag("ingots/any_rubber"))
+                .define('W', forgeTag("wires/gold"))
+                .define('C', forgeTag("circuits/basic"))
+                .define('S', forgeTag("plates/steel"))
+                .define('B', forgeTag("ingots/beryllium"))
+                .unlockedBy("has_basic_circuit", has(forgeTag("circuits/basic")))
+                .save(consumer, id("tools/geiger_counter"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.DOSIMETER.get())
+                .pattern("WGW")
+                .pattern("WCW")
+                .pattern("WBW")
+                .define('W', vanillaTag("planks"))
+                .define('G', forgeTag("glass_panes"))
+                .define('C', forgeTag("circuits/vacuum_tube"))
+                .define('B', forgeTag("ingots/beryllium"))
+                .unlockedBy("has_vacuum_tube", has(forgeTag("circuits/vacuum_tube")))
+                .save(consumer, id("tools/dosimeter"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModBlocks.GEIGER.get())
+                .requires(ModItems.GEIGER_COUNTER.get())
+                .unlockedBy("has_geiger_counter", has(ModItems.GEIGER_COUNTER.get()))
+                .save(consumer, id("blocks/geiger"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, ModItems.GEIGER_COUNTER.get())
+                .requires(ModBlocks.GEIGER.get())
+                .unlockedBy("has_geiger", has(ModBlocks.GEIGER.get()))
+                .save(consumer, id("tools/geiger_counter_from_block"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, ModItems.DIGAMMA_DIAGNOSTIC.get())
+                .requires(ModItems.GEIGER_COUNTER.get())
+                .requires(item("billet_polonium"))
+                .requires(forgeTag("ingots/asbestos"))
+                .unlockedBy("has_geiger_counter", has(ModItems.GEIGER_COUNTER.get()))
+                .save(consumer, id("tools/digamma_diagnostic"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.BOTTLE_OPENER.get())
+                .pattern("S")
+                .pattern("P")
+                .define('S', forgeTag("plates/steel"))
+                .define('P', vanillaTag("planks"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("tools/bottle_opener"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.OIL_DETECTOR.get())
                 .pattern("W I")
                 .pattern("WCI")
@@ -1886,6 +4929,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('X', Items.COMPASS)
                 .unlockedBy("has_cinnabar", has(forgeTag("crystals/cinnabar")))
                 .save(consumer, id("tools/coltan_tool"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, item("reacher"))
+                .pattern("BIB")
+                .pattern("P P")
+                .pattern("B B")
+                .define('B', forgeTag("bolts/tungsten"))
+                .define('I', forgeTag("ingots/tungsten"))
+                .define('P', forgeTag("ingots/any_rubber"))
+                .unlockedBy("has_tungsten_ingot", has(forgeTag("ingots/tungsten")))
+                .save(consumer, id("tools/reacher"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.ORE_DENSITY_SCANNER.get())
                 .pattern("VVV")
@@ -1933,6 +4986,26 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_rangefinder", has(ModItems.RANGEFINDER.get()))
                 .save(consumer, id("tools/designator_arty_range"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.LINKER.get())
+                .pattern("I I")
+                .pattern("ICI")
+                .pattern("GGG")
+                .define('I', forgeTag("plates/iron"))
+                .define('C', forgeTag("circuits/advanced"))
+                .define('G', forgeTag("plates/gold"))
+                .unlockedBy("has_advanced_circuit", has(forgeTag("circuits/advanced")))
+                .save(consumer, id("tools/linker"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.TURRET_CHIP.get())
+                .pattern("WWW")
+                .pattern("CPC")
+                .pattern("WWW")
+                .define('W', forgeTag("wires/gold"))
+                .define('C', forgeTag("circuits/advanced"))
+                .define('P', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_advanced_circuit", has(forgeTag("circuits/advanced")))
+                .save(consumer, id("tools/turret_chip"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.POLLUTION_DETECTOR.get())
                 .pattern("SFS")
                 .pattern("SCS")
@@ -1961,6 +5034,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_steel_ingot", has(ModItems.STEEL_INGOT.get()))
                 .save(consumer, id("tools/screwdriver"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.SCREWDRIVER_DESH.get())
+                .pattern("  I")
+                .pattern(" I ")
+                .pattern("S  ")
+                .define('S', forgeTag("ingots/any_plastic"))
+                .define('I', forgeTag("ingots/desh"))
+                .unlockedBy("has_desh_ingot", has(forgeTag("ingots/desh")))
+                .save(consumer, id("tools/screwdriver_desh"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.HAND_DRILL.get())
                 .pattern(" D")
                 .pattern("S ")
@@ -1970,6 +5052,45 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_dura_steel", has(item("ingot_dura_steel")))
                 .save(consumer, id("tools/hand_drill"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.HAND_DRILL_DESH.get())
+                .pattern(" D")
+                .pattern("S ")
+                .pattern(" S")
+                .define('D', forgeTag("ingots/desh"))
+                .define('S', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_desh_ingot", has(forgeTag("ingots/desh")))
+                .save(consumer, id("tools/hand_drill_desh"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.BLOWTORCH.get())
+                .pattern("CC ")
+                .pattern(" I ")
+                .pattern("CCC")
+                .define('C', forgeTag("plates/copper"))
+                .define('I', forgeTag("ingots/iron"))
+                .unlockedBy("has_copper_plate", has(forgeTag("plates/copper")))
+                .save(consumer, id("tools/blowtorch"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.ACETYLENE_TORCH.get())
+                .pattern("SS ")
+                .pattern(" PS")
+                .pattern(" T ")
+                .define('S', forgeTag("plates/steel"))
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('T', item("tank_steel"))
+                .unlockedBy("has_tank_steel", has(item("tank_steel")))
+                .save(consumer, id("tools/acetylene_torch"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.BOLTGUN.get())
+                .pattern("DPS")
+                .pattern(" RD")
+                .pattern(" D ")
+                .define('D', forgeTag("ingots/dura_steel"))
+                .define('P', item("part_generic_piston_pneumatic"))
+                .define('S', forgeTag("shells/steel"))
+                .define('R', forgeTag("ingots/rubber"))
+                .unlockedBy("has_pneumatic_piston", has(item("part_generic_piston_pneumatic")))
+                .save(consumer, id("tools/boltgun"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.MIRROR_TOOL.get())
                 .pattern(" A ")
                 .pattern(" IA")
@@ -1978,6 +5099,306 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('I', forgeTag("ingots/iron"))
                 .unlockedBy("has_aluminium_ingot", has(forgeTag("ingots/aluminium")))
                 .save(consumer, id("tools/mirror_tool"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.POWER_NET_TOOL.get())
+                .pattern("WRW")
+                .pattern(" I ")
+                .pattern(" B ")
+                .define('W', forgeTag("wires/mingrade"))
+                .define('R', Items.REDSTONE)
+                .define('I', forgeTag("ingots/iron"))
+                .define('B', ModItems.BATTERY_LEAD.get())
+                .unlockedBy("has_mingrade_wire", has(forgeTag("wires/mingrade")))
+                .save(consumer, id("tools/power_net_tool"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.SETTINGS_TOOL.get())
+                .pattern(" P ")
+                .pattern("PCP")
+                .pattern("III")
+                .define('P', forgeTag("plates/iron"))
+                .define('C', forgeTag("circuits/analog"))
+                .define('I', item("plate_polymer"))
+                .unlockedBy("has_analog_circuit", has(forgeTag("circuits/analog")))
+                .save(consumer, id("tools/settings_tool"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.ANALYSIS_TOOL.get())
+                .pattern("  G")
+                .pattern(" S ")
+                .pattern("S  ")
+                .define('G', forgeTag("glass_panes"))
+                .define('S', forgeTag("ingots/steel"))
+                .unlockedBy("has_steel_ingot", has(forgeTag("ingots/steel")))
+                .save(consumer, id("tools/analysis_tool"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.TOOLBOX.get())
+                .pattern("CCC")
+                .pattern("CIC")
+                .define('C', forgeTag("plates/copper"))
+                .define('I', Items.IRON_INGOT)
+                .unlockedBy("has_copper_plate", has(forgeTag("plates/copper")))
+                .save(consumer, id("tools/toolbox"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.CHEMISTRY_SET.get())
+                .pattern("GIG")
+                .pattern("GCG")
+                .define('G', forgeTag("glass"))
+                .define('I', forgeTag("ingots/iron"))
+                .define('C', forgeTag("ingots/copper"))
+                .unlockedBy("has_glass", has(forgeTag("glass")))
+                .save(consumer, id("tools/chemistry_set"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.CHEMISTRY_SET_BORON.get())
+                .pattern("GIG")
+                .pattern("GCG")
+                .define('G', ModBlocks.GLASS_BORON.get())
+                .define('I', forgeTag("ingots/steel"))
+                .define('C', forgeTag("ingots/cobalt"))
+                .unlockedBy("has_boron_glass", has(ModBlocks.GLASS_BORON.get()))
+                .save(consumer, id("tools/chemistry_set_boron"));
+    }
+
+    private static void legacyChainsawRecipe(Consumer<FinishedRecipe> consumer) {
+        JsonObject recipe = new JsonObject();
+        recipe.addProperty("type", id("shaped_nbt").toString());
+        recipe.addProperty("category", "tools");
+
+        JsonArray pattern = new JsonArray();
+        pattern.add("CCH");
+        pattern.add("BBP");
+        pattern.add("CCE");
+        recipe.add("pattern", pattern);
+
+        JsonObject key = new JsonObject();
+        key.add("H", ingredientTag(forgeTag("shells/steel")));
+        key.add("B", ingredientItem(ModItems.SHREDDER_BLADES_STEEL.get()));
+        key.add("P", ingredientItem(ModItems.PISTON_SELENIUM.get()));
+        key.add("C", ingredientItem(ModBlocks.CHAIN.get()));
+        key.add("E", ingredientItem(ModItems.CANISTER_EMPTY.get()));
+        recipe.add("key", key);
+
+        JsonObject result = new JsonObject();
+        result.addProperty("item", HbmRegistryUtil.itemKey(ModItems.CHAINSAW.get()).toString());
+        result.addProperty("count", 1);
+        result.addProperty("nbt", "{fuel:0}");
+        recipe.add("result", result);
+        recipe.addProperty("show_notification", true);
+
+        consumer.accept(finishedCompatRecipe(id("tools/chainsaw"), recipe));
+    }
+
+    private static void legacyElectricToolRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.ELEC_SWORD.get())
+                .pattern("RPR")
+                .pattern("RPR")
+                .pattern(" B ")
+                .define('R', forgeTag("bolts/dura_steel"))
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('B', ModItems.BATTERY_LEAD.get())
+                .unlockedBy("has_lead_battery", has(ModItems.BATTERY_LEAD.get()))
+                .save(consumer, id("tools/elec_sword"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.ELEC_PICKAXE.get())
+                .pattern("RDM")
+                .pattern(" PB")
+                .pattern(" P ")
+                .define('R', forgeTag("bolts/dura_steel"))
+                .define('D', forgeTag("ingots/dura_steel"))
+                .define('M', ModItems.MOTOR.get())
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('B', ModItems.BATTERY_LEAD.get())
+                .unlockedBy("has_motor", has(ModItems.MOTOR.get()))
+                .save(consumer, id("tools/elec_pickaxe"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.ELEC_AXE.get())
+                .pattern(" DP")
+                .pattern("RRM")
+                .pattern(" PB")
+                .define('D', forgeTag("ingots/dura_steel"))
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('R', forgeTag("bolts/dura_steel"))
+                .define('M', ModItems.MOTOR.get())
+                .define('B', ModItems.BATTERY_LEAD.get())
+                .unlockedBy("has_motor", has(ModItems.MOTOR.get()))
+                .save(consumer, id("tools/elec_axe"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.ELEC_SHOVEL.get())
+                .pattern("  P")
+                .pattern("RRM")
+                .pattern("  B")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('R', forgeTag("bolts/dura_steel"))
+                .define('M', ModItems.MOTOR.get())
+                .define('B', ModItems.BATTERY_LEAD.get())
+                .unlockedBy("has_motor", has(ModItems.MOTOR.get()))
+                .save(consumer, id("tools/elec_shovel"));
+    }
+
+    private static void legacyNonLbsmAdvancedToolRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.STARMETAL_SWORD.get())
+                .pattern(" I ")
+                .pattern(" B ")
+                .pattern("ISI")
+                .define('I', forgeTag("ingots/starmetal"))
+                .define('S', item("ring_starmetal"))
+                .define('B', ModItems.COBALT_DECORATED_SWORD.get())
+                .unlockedBy("has_starmetal_ring", has(item("ring_starmetal")))
+                .save(consumer, id("tools/starmetal_sword"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.STARMETAL_PICKAXE.get())
+                .pattern("ISI")
+                .pattern(" B ")
+                .pattern(" I ")
+                .define('I', forgeTag("ingots/starmetal"))
+                .define('S', item("ring_starmetal"))
+                .define('B', ModItems.COBALT_DECORATED_PICKAXE.get())
+                .unlockedBy("has_starmetal_ring", has(item("ring_starmetal")))
+                .save(consumer, id("tools/starmetal_pickaxe"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.STARMETAL_AXE.get())
+                .pattern("IS")
+                .pattern("IB")
+                .pattern(" I")
+                .define('I', forgeTag("ingots/starmetal"))
+                .define('S', item("ring_starmetal"))
+                .define('B', ModItems.COBALT_DECORATED_AXE.get())
+                .unlockedBy("has_starmetal_ring", has(item("ring_starmetal")))
+                .save(consumer, id("tools/starmetal_axe"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.STARMETAL_SHOVEL.get())
+                .pattern("I")
+                .pattern("B")
+                .pattern("I")
+                .define('I', forgeTag("ingots/starmetal"))
+                .define('B', ModItems.COBALT_DECORATED_SHOVEL.get())
+                .unlockedBy("has_starmetal_ingot", has(forgeTag("ingots/starmetal")))
+                .save(consumer, id("tools/starmetal_shovel"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.STARMETAL_HOE.get())
+                .pattern("IS")
+                .pattern(" B")
+                .pattern(" I")
+                .define('I', forgeTag("ingots/starmetal"))
+                .define('S', item("ring_starmetal"))
+                .define('B', ModItems.COBALT_DECORATED_HOE.get())
+                .unlockedBy("has_starmetal_ring", has(item("ring_starmetal")))
+                .save(consumer, id("tools/starmetal_hoe"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SCHRABIDIUM_SWORD.get())
+                .pattern("I")
+                .pattern("W")
+                .pattern("S")
+                .define('I', forgeTag("storage_blocks/schrabidium"))
+                .define('W', ModItems.DESH_SWORD.get())
+                .define('S', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_schrabidium_block", has(forgeTag("storage_blocks/schrabidium")))
+                .save(consumer, id("tools/schrabidium_sword"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.SCHRABIDIUM_PICKAXE.get())
+                .pattern("BSB")
+                .pattern(" W ")
+                .pattern(" P ")
+                .define('B', ModItems.SHREDDER_BLADES_DESH.get())
+                .define('S', forgeTag("storage_blocks/schrabidium"))
+                .define('W', ModItems.DESH_PICKAXE.get())
+                .define('P', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_schrabidium_block", has(forgeTag("storage_blocks/schrabidium")))
+                .save(consumer, id("tools/schrabidium_pickaxe"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.SCHRABIDIUM_AXE.get())
+                .pattern("BS")
+                .pattern("BW")
+                .pattern(" P")
+                .define('B', ModItems.SHREDDER_BLADES_DESH.get())
+                .define('S', forgeTag("storage_blocks/schrabidium"))
+                .define('W', ModItems.DESH_AXE.get())
+                .define('P', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_schrabidium_block", has(forgeTag("storage_blocks/schrabidium")))
+                .save(consumer, id("tools/schrabidium_axe"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.SCHRABIDIUM_SHOVEL.get())
+                .pattern("B")
+                .pattern("W")
+                .pattern("P")
+                .define('B', forgeTag("storage_blocks/schrabidium"))
+                .define('W', ModItems.DESH_SHOVEL.get())
+                .define('P', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_schrabidium_block", has(forgeTag("storage_blocks/schrabidium")))
+                .save(consumer, id("tools/schrabidium_shovel"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.SCHRABIDIUM_HOE.get())
+                .pattern("IW")
+                .pattern(" S")
+                .pattern(" S")
+                .define('I', forgeTag("ingots/schrabidium"))
+                .define('W', ModItems.DESH_HOE.get())
+                .define('S', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_schrabidium_ingot", has(forgeTag("ingots/schrabidium")))
+                .save(consumer, id("tools/schrabidium_hoe"));
+    }
+
+    private static void standardToolSet(Consumer<FinishedRecipe> consumer, String prefix, TagKey<Item> ingot,
+            ItemLike sword, ItemLike pickaxe, ItemLike axe, ItemLike shovel, ItemLike hoe) {
+        standardToolRecipe(consumer, prefix + "_sword", sword, ingot, "X", "X", "#");
+        standardToolRecipe(consumer, prefix + "_pickaxe", pickaxe, ingot, "XXX", " # ", " # ");
+        standardToolRecipe(consumer, prefix + "_axe", axe, ingot, "XX", "X#", " #");
+        standardToolRecipe(consumer, prefix + "_shovel", shovel, ingot, "X", "#", "#");
+        standardToolRecipe(consumer, prefix + "_hoe", hoe, ingot, "XX", " #", " #");
+    }
+
+    private static void standardToolRecipe(Consumer<FinishedRecipe> consumer, String name, ItemLike output,
+            TagKey<Item> ingot, String... pattern) {
+        ShapedRecipeBuilder builder = ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, output);
+        for (String row : pattern) {
+            builder.pattern(row);
+        }
+        builder.define('X', ingot)
+                .define('#', Items.STICK)
+                .unlockedBy("has_" + name.substring(0, name.indexOf('_')) + "_ingot", has(ingot))
+                .save(consumer, id("tools/" + name));
+    }
+
+    private static void meteorUpgradeToolRecipe(Consumer<FinishedRecipe> consumer, String name, ItemLike output,
+            ItemLike material, ItemLike baseTool) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, output)
+                .pattern(" BM")
+                .pattern("BPB")
+                .pattern("TB ")
+                .define('B', material)
+                .define('M', ModItems.INGOT_METEORITE.get())
+                .define('P', baseTool)
+                .define('T', forgeTag("bolts/tungsten"))
+                .unlockedBy("has_meteorite_ingot", has(ModItems.INGOT_METEORITE.get()))
+                .save(consumer, id("tools/" + name));
+    }
+
+    private static void chlorophyteToolRecipe(Consumer<FinishedRecipe> consumer, String name, ItemLike output,
+            ItemLike baseTool) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, output)
+                .pattern(" SD")
+                .pattern("APS")
+                .pattern("FA ")
+                .define('S', ModItems.SHREDDER_BLADES_STEEL.get())
+                .define('D', item("powder_chlorophyte"))
+                .define('A', forgeTag("ingots/fiberglass"))
+                .define('P', baseTool)
+                .define('F', forgeTag("bolts/dura_steel"))
+                .unlockedBy("has_chlorophyte_powder", has(item("powder_chlorophyte")))
+                .save(consumer, id("tools/" + name));
+    }
+
+    private static void meseToolRecipe(Consumer<FinishedRecipe> consumer, String name, ItemLike output,
+            ItemLike baseTool) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, output)
+                .pattern(" SD")
+                .pattern("APS")
+                .pattern("FA ")
+                .define('S', ModItems.SHREDDER_BLADES_DESH.get())
+                .define('D', item("powder_dineutronium"))
+                .define('A', item("plate_paa"))
+                .define('P', baseTool)
+                .define('F', item("shimmer_handle"))
+                .unlockedBy("has_shimmer_handle", has(item("shimmer_handle")))
+                .save(consumer, id("tools/" + name));
     }
 
     private static void legacyHazmatRecipes(Consumer<FinishedRecipe> consumer) {
@@ -2892,12 +6313,517 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
                 .save(consumer, id("consumables/canteen_vodka"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.CAN_EMPTY.get())
+                .pattern("P")
+                .pattern("P")
+                .define('P', forgeTag("plates/aluminium"))
+                .unlockedBy("has_aluminium_plate", has(forgeTag("plates/aluminium")))
+                .save(consumer, id("consumables/can_empty"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.PILL_IODINE.get(), 8)
                 .pattern("IF")
                 .define('I', forgeTag("dusts/iodine"))
                 .define('F', forgeTag("dusts/fluorite"))
                 .unlockedBy("has_iodine_dust", has(forgeTag("dusts/iodine")))
                 .save(consumer, id("consumables/pill_iodine"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.CONTAINMENT_BOX.get())
+                .pattern("LUL")
+                .pattern("UCU")
+                .pattern("LUL")
+                .define('L', forgeTag("plates/lead"))
+                .define('U', forgeTag("ingots/ferrouranium"))
+                .define('C', ModBlocks.CRATE_STEEL.get())
+                .unlockedBy("has_steel_crate", has(ModBlocks.CRATE_STEEL.get()))
+                .save(consumer, id("consumables/containment_box"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.IV_EMPTY.get(), 4)
+                .pattern("S")
+                .pattern("I")
+                .pattern("S")
+                .define('S', forgeTag("ingots/any_rubber"))
+                .define('I', forgeTag("plates/iron"))
+                .unlockedBy("has_rubber_ingot", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("consumables/iv_empty"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.IV_XP_EMPTY.get())
+                .requires(ModItems.IV_EMPTY.get())
+                .requires(item("powder_magic"))
+                .unlockedBy("has_iv_empty", has(ModItems.IV_EMPTY.get()))
+                .save(consumer, id("consumables/iv_xp_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_EMPTY.get(), 6)
+                .pattern("P")
+                .pattern("C")
+                .pattern("B")
+                .define('P', forgeTag("plates/iron"))
+                .define('C', item("cell_empty"))
+                .define('B', Items.IRON_BARS)
+                .unlockedBy("has_empty_cell", has(item("cell_empty")))
+                .save(consumer, id("consumables/syringe_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_ANTIDOTE.get(), 6)
+                .pattern("SSS")
+                .pattern("PMP")
+                .pattern("SSS")
+                .define('S', ModItems.SYRINGE_EMPTY.get())
+                .define('P', Items.PUMPKIN_SEEDS)
+                .define('M', Items.MILK_BUCKET)
+                .unlockedBy("has_empty_syringe", has(ModItems.SYRINGE_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_antidote_milk_full"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_ANTIDOTE.get(), 6)
+                .pattern("SPS")
+                .pattern("SMS")
+                .pattern("SPS")
+                .define('S', ModItems.SYRINGE_EMPTY.get())
+                .define('P', Items.PUMPKIN_SEEDS)
+                .define('M', Items.MILK_BUCKET)
+                .unlockedBy("has_empty_syringe", has(ModItems.SYRINGE_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_antidote_milk_cross"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_ANTIDOTE.get(), 6)
+                .pattern("SSS")
+                .pattern("PMP")
+                .pattern("SSS")
+                .define('S', ModItems.SYRINGE_EMPTY.get())
+                .define('P', Items.PUMPKIN_SEEDS)
+                .define('M', Items.SUGAR_CANE)
+                .unlockedBy("has_empty_syringe", has(ModItems.SYRINGE_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_antidote_reeds_full"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_ANTIDOTE.get(), 6)
+                .pattern("SPS")
+                .pattern("SMS")
+                .pattern("SPS")
+                .define('S', ModItems.SYRINGE_EMPTY.get())
+                .define('P', Items.PUMPKIN_SEEDS)
+                .define('M', Items.SUGAR_CANE)
+                .unlockedBy("has_empty_syringe", has(ModItems.SYRINGE_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_antidote_reeds_cross"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_POISON.get())
+                .pattern("SLS")
+                .pattern("LCL")
+                .pattern("SLS")
+                .define('S', Items.SPIDER_EYE)
+                .define('L', forgeTag("dusts/lead"))
+                .define('C', ModItems.SYRINGE_EMPTY.get())
+                .unlockedBy("has_empty_syringe", has(ModItems.SYRINGE_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_poison_lead"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_POISON.get())
+                .pattern("SLS")
+                .pattern("LCL")
+                .pattern("SLS")
+                .define('S', Items.SPIDER_EYE)
+                .define('L', item("powder_poison"))
+                .define('C', ModItems.SYRINGE_EMPTY.get())
+                .unlockedBy("has_empty_syringe", has(ModItems.SYRINGE_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_poison_powder"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_AWESOME.get())
+                .pattern("SPS")
+                .pattern("NCN")
+                .pattern("SPS")
+                .define('S', forgeTag("dusts/sulfur"))
+                .define('P', forgeTag("nuggets/pu239"))
+                .define('N', forgeTag("nuggets/pu238"))
+                .define('C', ModItems.SYRINGE_EMPTY.get())
+                .unlockedBy("has_empty_syringe", has(ModItems.SYRINGE_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_awesome_pu239_vertical"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_AWESOME.get())
+                .pattern("SNS")
+                .pattern("PCP")
+                .pattern("SNS")
+                .define('S', forgeTag("dusts/sulfur"))
+                .define('P', forgeTag("nuggets/pu239"))
+                .define('N', forgeTag("nuggets/pu238"))
+                .define('C', ModItems.SYRINGE_EMPTY.get())
+                .unlockedBy("has_empty_syringe", has(ModItems.SYRINGE_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_awesome_pu238_vertical"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.BOTTLE_EMPTY.get(), 6)
+                .pattern(" G ")
+                .pattern("G G")
+                .pattern("GGG")
+                .define('G', forgeTag("glass_panes"))
+                .unlockedBy("has_glass_pane", has(forgeTag("glass_panes")))
+                .save(consumer, id("consumables/bottle_empty"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BOTTLE_NUKA.get())
+                .requires(ModItems.BOTTLE_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(forgeTag("dusts/coal"))
+                .unlockedBy("has_empty_bottle", has(ModItems.BOTTLE_EMPTY.get()))
+                .save(consumer, id("consumables/bottle_nuka"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BOTTLE_CHERRY.get())
+                .requires(ModItems.BOTTLE_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(forgeTag("dusts/redstone"))
+                .unlockedBy("has_empty_bottle", has(ModItems.BOTTLE_EMPTY.get()))
+                .save(consumer, id("consumables/bottle_cherry"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BOTTLE_QUANTUM.get())
+                .requires(ModItems.BOTTLE_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(item("trinitite"))
+                .unlockedBy("has_empty_bottle", has(ModItems.BOTTLE_EMPTY.get()))
+                .save(consumer, id("consumables/bottle_quantum"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BOTTLE_SPARKLE.get())
+                .requires(ModItems.BOTTLE_NUKA.get())
+                .requires(Items.CARROT)
+                .requires(forgeTag("nuggets/gold"))
+                .unlockedBy("has_nuka_bottle", has(ModItems.BOTTLE_NUKA.get()))
+                .save(consumer, id("consumables/bottle_sparkle"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BOTTLE_RAD.get())
+                .requires(ModItems.BOTTLE_QUANTUM.get())
+                .requires(Items.CARROT)
+                .requires(forgeTag("nuggets/gold"))
+                .unlockedBy("has_quantum_bottle", has(ModItems.BOTTLE_QUANTUM.get()))
+                .save(consumer, id("consumables/bottle_rad"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.BOTTLE2_EMPTY.get(), 6)
+                .pattern(" G ")
+                .pattern("G G")
+                .pattern("G G")
+                .define('G', forgeTag("glass_panes"))
+                .unlockedBy("has_glass_pane", has(forgeTag("glass_panes")))
+                .save(consumer, id("consumables/bottle2_empty"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BOTTLE2_KORL.get())
+                .requires(ModItems.BOTTLE2_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(forgeTag("dusts/copper"))
+                .unlockedBy("has_empty_bottle2", has(ModItems.BOTTLE2_EMPTY.get()))
+                .save(consumer, id("consumables/bottle2_korl"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BOTTLE2_FRITZ.get())
+                .requires(ModItems.BOTTLE2_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(forgeTag("dusts/tungsten"))
+                .unlockedBy("has_empty_bottle2", has(ModItems.BOTTLE2_EMPTY.get()))
+                .save(consumer, id("consumables/bottle2_fritz"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CAN_SMART.get())
+                .requires(ModItems.CAN_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(forgeTag("dusts/niter"))
+                .unlockedBy("has_empty_can", has(ModItems.CAN_EMPTY.get()))
+                .save(consumer, id("consumables/can_smart"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CAN_CREATURE.get())
+                .requires(ModItems.CAN_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(HbmFluidContainerIngredient.of(HbmFluids.DIESEL, 1_000))
+                .unlockedBy("has_empty_can", has(ModItems.CAN_EMPTY.get()))
+                .save(consumer, id("consumables/can_creature"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CAN_REDBOMB.get())
+                .requires(ModItems.CAN_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(item("pellet_cluster"))
+                .unlockedBy("has_empty_can", has(ModItems.CAN_EMPTY.get()))
+                .save(consumer, id("consumables/can_redbomb"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CAN_MRSUGAR.get())
+                .requires(ModItems.CAN_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(forgeTag("dusts/fluorite"))
+                .unlockedBy("has_empty_can", has(ModItems.CAN_EMPTY.get()))
+                .save(consumer, id("consumables/can_mrsugar"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CAN_OVERCHARGE.get())
+                .requires(ModItems.CAN_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(forgeTag("dusts/sulfur"))
+                .unlockedBy("has_empty_can", has(ModItems.CAN_EMPTY.get()))
+                .save(consumer, id("consumables/can_overcharge"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CAN_LUNA.get())
+                .requires(ModItems.CAN_EMPTY.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .requires(item("powder_meteorite_tiny"))
+                .unlockedBy("has_empty_can", has(ModItems.CAN_EMPTY.get()))
+                .save(consumer, id("consumables/can_luna"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CANNED_RECURSION.get())
+                .requires(ModItems.CANNED_RECURSION.get())
+                .unlockedBy("has_canned_recursion", has(ModItems.CANNED_RECURSION.get()))
+                .save(consumer, id("consumables/canned_recursion"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CHOCOLATE_MILK.get())
+                .requires(forgeTag("glass_panes"))
+                .requires(forgeTag("dyes/brown"))
+                .requires(Items.MILK_BUCKET)
+                .requires(HbmFluidContainerIngredient.of(HbmFluids.NITROGLYCERIN, 1_000))
+                .unlockedBy("has_milk_bucket", has(Items.MILK_BUCKET))
+                .save(consumer, id("consumables/chocolate_milk"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.COFFEE.get())
+                .requires(forgeTag("dusts/coal"))
+                .requires(Items.MILK_BUCKET)
+                .requires(Items.POTION)
+                .requires(Items.SUGAR)
+                .unlockedBy("has_coal_dust", has(forgeTag("dusts/coal")))
+                .save(consumer, id("consumables/coffee"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.COFFEE_RADIUM.get())
+                .requires(ModItems.COFFEE.get())
+                .requires(forgeTag("nuggets/radium226"))
+                .unlockedBy("has_coffee", has(ModItems.COFFEE.get()))
+                .save(consumer, id("consumables/coffee_radium"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_METAL_EMPTY.get(), 6)
+                .pattern("P")
+                .pattern("C")
+                .pattern("B")
+                .define('P', forgeTag("plates/iron"))
+                .define('C', item("rod_empty"))
+                .define('B', Items.IRON_BARS)
+                .unlockedBy("has_empty_rod", has(item("rod_empty")))
+                .save(consumer, id("consumables/syringe_metal_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_METAL_STIMPAK.get())
+                .pattern(" N ")
+                .pattern("NSN")
+                .pattern(" N ")
+                .define('N', Items.NETHER_WART)
+                .define('S', ModItems.SYRINGE_METAL_EMPTY.get())
+                .unlockedBy("has_metal_syringe", has(ModItems.SYRINGE_METAL_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_metal_stimpak_nether_wart"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.SYRINGE_METAL_STIMPAK.get())
+                .requires(item("nitra_small"), 3)
+                .requires(ModItems.SYRINGE_METAL_EMPTY.get())
+                .unlockedBy("has_metal_syringe", has(ModItems.SYRINGE_METAL_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_metal_stimpak_nitra"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_METAL_MEDX.get())
+                .pattern(" N ")
+                .pattern("NSN")
+                .pattern(" N ")
+                .define('N', Items.QUARTZ)
+                .define('S', ModItems.SYRINGE_METAL_EMPTY.get())
+                .unlockedBy("has_metal_syringe", has(ModItems.SYRINGE_METAL_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_metal_medx"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_METAL_PSYCHO.get())
+                .pattern(" N ")
+                .pattern("NSN")
+                .pattern(" N ")
+                .define('N', Items.GLOWSTONE_DUST)
+                .define('S', ModItems.SYRINGE_METAL_EMPTY.get())
+                .unlockedBy("has_metal_syringe", has(ModItems.SYRINGE_METAL_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_metal_psycho"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_METAL_SUPER.get())
+                .pattern(" N ")
+                .pattern("PSP")
+                .pattern("L L")
+                .define('N', ModItems.BOTTLE_NUKA.get())
+                .define('P', forgeTag("plates/steel"))
+                .define('S', ModItems.SYRINGE_METAL_STIMPAK.get())
+                .define('L', Items.LEATHER)
+                .unlockedBy("has_stimpak", has(ModItems.SYRINGE_METAL_STIMPAK.get()))
+                .save(consumer, id("consumables/syringe_metal_super_nuka_leather"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_METAL_SUPER.get())
+                .pattern(" N ")
+                .pattern("PSP")
+                .pattern("L L")
+                .define('N', ModItems.BOTTLE_NUKA.get())
+                .define('P', forgeTag("plates/steel"))
+                .define('S', ModItems.SYRINGE_METAL_STIMPAK.get())
+                .define('L', forgeTag("ingots/any_rubber"))
+                .unlockedBy("has_stimpak", has(ModItems.SYRINGE_METAL_STIMPAK.get()))
+                .save(consumer, id("consumables/syringe_metal_super_nuka_rubber"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_METAL_SUPER.get())
+                .pattern(" N ")
+                .pattern("PSP")
+                .pattern("L L")
+                .define('N', ModItems.BOTTLE_CHERRY.get())
+                .define('P', forgeTag("plates/steel"))
+                .define('S', ModItems.SYRINGE_METAL_STIMPAK.get())
+                .define('L', Items.LEATHER)
+                .unlockedBy("has_stimpak", has(ModItems.SYRINGE_METAL_STIMPAK.get()))
+                .save(consumer, id("consumables/syringe_metal_super_cherry_leather"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SYRINGE_METAL_SUPER.get())
+                .pattern(" N ")
+                .pattern("PSP")
+                .pattern("L L")
+                .define('N', ModItems.BOTTLE_CHERRY.get())
+                .define('P', forgeTag("plates/steel"))
+                .define('S', ModItems.SYRINGE_METAL_STIMPAK.get())
+                .define('L', forgeTag("ingots/any_rubber"))
+                .unlockedBy("has_stimpak", has(ModItems.SYRINGE_METAL_STIMPAK.get()))
+                .save(consumer, id("consumables/syringe_metal_super_cherry_rubber"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.SYRINGE_TAINT.get())
+                .requires(ModItems.BOTTLE2_EMPTY.get())
+                .requires(ModItems.SYRINGE_METAL_EMPTY.get())
+                .requires(item("ducttape"))
+                .requires(item("powder_magic"))
+                .requires(forgeTag("nuggets/schrabidium"))
+                .requires(Items.POTION)
+                .unlockedBy("has_metal_syringe", has(ModItems.SYRINGE_METAL_EMPTY.get()))
+                .save(consumer, id("consumables/syringe_taint"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MED_BAG.get())
+                .pattern("LLL")
+                .pattern("SIS")
+                .pattern("LLL")
+                .define('L', Items.LEATHER)
+                .define('S', ModItems.SYRINGE_METAL_STIMPAK.get())
+                .define('I', ModItems.SYRINGE_ANTIDOTE.get())
+                .unlockedBy("has_stimpak", has(ModItems.SYRINGE_METAL_STIMPAK.get()))
+                .save(consumer, id("consumables/med_bag_leather_antidote"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MED_BAG.get())
+                .pattern("LLL")
+                .pattern("SIS")
+                .pattern("LLL")
+                .define('L', Items.LEATHER)
+                .define('S', ModItems.SYRINGE_METAL_STIMPAK.get())
+                .define('I', ModItems.PILL_IODINE.get())
+                .unlockedBy("has_stimpak", has(ModItems.SYRINGE_METAL_STIMPAK.get()))
+                .save(consumer, id("consumables/med_bag_leather_iodine"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MED_BAG.get())
+                .pattern("LL")
+                .pattern("SI")
+                .pattern("LL")
+                .define('L', Items.LEATHER)
+                .define('S', ModItems.SYRINGE_METAL_SUPER.get())
+                .define('I', ModItems.RADAWAY.get())
+                .unlockedBy("has_super_stimpak", has(ModItems.SYRINGE_METAL_SUPER.get()))
+                .save(consumer, id("consumables/med_bag_leather_radaway"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MED_BAG.get())
+                .pattern("LLL")
+                .pattern("SIS")
+                .pattern("LLL")
+                .define('L', forgeTag("ingots/any_rubber"))
+                .define('S', ModItems.SYRINGE_METAL_STIMPAK.get())
+                .define('I', ModItems.SYRINGE_ANTIDOTE.get())
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("consumables/med_bag_rubber_antidote"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MED_BAG.get())
+                .pattern("LLL")
+                .pattern("SIS")
+                .pattern("LLL")
+                .define('L', forgeTag("ingots/any_rubber"))
+                .define('S', ModItems.SYRINGE_METAL_STIMPAK.get())
+                .define('I', ModItems.PILL_IODINE.get())
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("consumables/med_bag_rubber_iodine"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.MED_BAG.get())
+                .pattern("LL")
+                .pattern("SI")
+                .pattern("LL")
+                .define('L', forgeTag("ingots/any_rubber"))
+                .define('S', ModItems.SYRINGE_METAL_SUPER.get())
+                .define('I', ModItems.RADAWAY.get())
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("consumables/med_bag_rubber_radaway"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.STEALTH_BOY.get())
+                .pattern(" B")
+                .pattern("LI")
+                .pattern("LC")
+                .define('B', Blocks.STONE_BUTTON)
+                .define('L', Items.LEATHER)
+                .define('I', forgeTag("ingots/steel"))
+                .define('C', item("circuit_basic"))
+                .unlockedBy("has_basic_circuit", has(item("circuit_basic")))
+                .save(consumer, id("consumables/stealth_boy"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("catalyst_clay"))
+                .requires(forgeTag("dusts/iron"))
+                .requires(Items.CLAY_BALL)
+                .unlockedBy("has_iron_dust", has(forgeTag("dusts/iron")))
+                .save(consumer, id("parts/catalyst_clay"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.GAS_MASK_FILTER.get())
+                .pattern("I")
+                .pattern("F")
+                .define('I', forgeTag("plates/iron"))
+                .define('F', item("filter_coal"))
+                .unlockedBy("has_filter_coal", has(item("filter_coal")))
+                .save(consumer, id("consumables/gas_mask_filter"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.GAS_MASK_FILTER_MONO.get())
+                .pattern("ZZZ")
+                .pattern("ZCZ")
+                .pattern("ZZZ")
+                .define('Z', forgeTag("nuggets/zirconium"))
+                .define('C', item("catalyst_clay"))
+                .unlockedBy("has_zirconium_nugget", has(forgeTag("nuggets/zirconium")))
+                .save(consumer, id("consumables/gas_mask_filter_mono"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.GAS_MASK_FILTER_COMBO.get())
+                .pattern("ZCZ")
+                .pattern("CFC")
+                .pattern("ZCZ")
+                .define('Z', forgeTag("ingots/zirconium"))
+                .define('C', item("catalyst_clay"))
+                .define('F', ModItems.GAS_MASK_FILTER.get())
+                .unlockedBy("has_gas_mask_filter", has(ModItems.GAS_MASK_FILTER.get()))
+                .save(consumer, id("consumables/gas_mask_filter_combo"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.GAS_MASK_FILTER_RAG.get())
+                .pattern("I")
+                .pattern("F")
+                .define('I', Items.IRON_INGOT)
+                .define('F', item("rag_damp"))
+                .unlockedBy("has_damp_rag", has(item("rag_damp")))
+                .save(consumer, id("consumables/gas_mask_filter_rag"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.GAS_MASK_FILTER_PISS.get())
+                .pattern("I")
+                .pattern("F")
+                .define('I', Items.IRON_INGOT)
+                .define('F', item("rag_piss"))
+                .unlockedBy("has_piss_rag", has(item("rag_piss")))
+                .save(consumer, id("consumables/gas_mask_filter_piss"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.RADAWAY.get())
+                .requires(ModItems.IV_BLOOD.get())
+                .requires(forgeTag("dusts/coal"))
+                .requires(Items.PUMPKIN_SEEDS)
+                .unlockedBy("has_iv_blood", has(ModItems.IV_BLOOD.get()))
+                .save(consumer, id("consumables/radaway"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.RADAWAY_STRONG.get())
+                .requires(ModItems.RADAWAY.get())
+                .requires(ModBlocks.MUSH.get())
+                .unlockedBy("has_radaway", has(ModItems.RADAWAY.get()))
+                .save(consumer, id("consumables/radaway_strong"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.RADAWAY_FLUSH.get())
+                .requires(ModItems.RADAWAY_STRONG.get())
+                .requires(forgeTag("dusts/iodine"))
+                .unlockedBy("has_strong_radaway", has(ModItems.RADAWAY_STRONG.get()))
+                .save(consumer, id("consumables/radaway_flush"));
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.RADX.get())
                 .requires(Ingredient.of(forgeTag("dusts/coal")), 2)
@@ -2926,11 +6852,65 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_vodka_canteen", has(ModItems.CANTEEN_VODKA.get()))
                 .save(consumer, id("consumables/five_htp"));
 
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.SIOX.get(), 8)
+                .requires(forgeTag("dusts/coal"))
+                .requires(forgeTag("dusts/asbestos"))
+                .requires(forgeTag("nuggets/bismuth"))
+                .unlockedBy("has_asbestos_dust", has(forgeTag("dusts/asbestos")))
+                .save(consumer, id("consumables/siox"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.XANAX.get())
+                .requires(forgeTag("dusts/coal"))
+                .requires(forgeTag("dusts/niter"))
+                .requires(forgeTag("dusts/bromine"))
+                .unlockedBy("has_bromine_dust", has(forgeTag("dusts/bromine")))
+                .save(consumer, id("consumables/xanax"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CIGARETTE.get(), 16)
+                .requires(forgeTag("ingots/asbestos"))
+                .requires(forgeTag("any/tar"))
+                .requires(forgeTag("nuggets/polonium210"))
+                .requires(item("plant_item_tobacco"))
+                .unlockedBy("has_tobacco", has(item("plant_item_tobacco")))
+                .save(consumer, id("consumables/cigarette"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.CRACKPIPE.get())
+                .requires(ModItems.CATALYTIC_CONVERTER.get())
+                .unlockedBy("has_catalytic_converter", has(ModItems.CATALYTIC_CONVERTER.get()))
+                .save(consumer, id("consumables/crackpipe"));
+
+        legacyTemFlakesRecipe(consumer, "tem_flakes_discount", 0,
+                ingredientTag(forgeTag("nuggets/gold")),
+                ingredientItem(Items.PAPER));
+        legacyTemFlakesRecipe(consumer, "tem_flakes", 1,
+                ingredientTag(forgeTag("nuggets/gold")),
+                ingredientTag(forgeTag("nuggets/gold")),
+                ingredientTag(forgeTag("nuggets/gold")),
+                ingredientItem(Items.PAPER));
+        legacyTemFlakesRecipe(consumer, "tem_flakes_expensive", 2,
+                ingredientTag(forgeTag("ingots/gold")),
+                ingredientTag(forgeTag("ingots/gold")),
+                ingredientTag(forgeTag("nuggets/gold")),
+                ingredientTag(forgeTag("nuggets/gold")),
+                ingredientItem(Items.PAPER));
+
         ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.GLOWING_STEW.get())
                 .requires(Items.BOWL)
                 .requires(ModBlocks.MUSH.get(), 2)
                 .unlockedBy("has_glowing_mushroom", has(ModBlocks.MUSH.get()))
                 .save(consumer, id("consumables/glowing_stew"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.BALEFIRE_SCRAMBLED.get())
+                .requires(Items.BOWL)
+                .requires(item("egg_balefire"))
+                .unlockedBy("has_balefire_egg", has(item("egg_balefire")))
+                .save(consumer, id("consumables/balefire_scrambled"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.BALEFIRE_AND_HAM.get())
+                .requires(ModItems.BALEFIRE_SCRAMBLED.get())
+                .requires(Items.COOKED_BEEF)
+                .unlockedBy("has_balefire_scrambled", has(ModItems.BALEFIRE_SCRAMBLED.get()))
+                .save(consumer, id("consumables/balefire_and_ham"));
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.MARSHMALLOW.get())
                 .requires(Items.STICK)
@@ -2939,8 +6919,159 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_sugar", has(Items.SUGAR))
                 .save(consumer, id("consumables/marshmallow"));
 
-        guideBookRecipe(consumer, id("consumables/book_guide_rbmk"), Items.POTATO, GuideBookItem.BookType.RBMK);
-        guideBookRecipe(consumer, id("consumables/book_guide_starter"), Items.IRON_INGOT, GuideBookItem.BookType.STARTER);
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.MED_IPECAC.get())
+                .requires(Items.GLASS_BOTTLE)
+                .requires(Items.NETHER_WART)
+                .unlockedBy("has_nether_wart", has(Items.NETHER_WART))
+                .save(consumer, id("consumables/med_ipecac"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.MED_PTSD.get())
+                .requires(ModItems.MED_IPECAC.get())
+                .unlockedBy("has_ipecac", has(ModItems.MED_IPECAC.get()))
+                .save(consumer, id("consumables/med_ptsd"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.PANCAKE.get())
+                .requires(forgeTag("dusts/redstone"))
+                .requires(forgeTag("dusts/diamond"))
+                .requires(Items.WHEAT)
+                .requires(forgeTag("bolts/steel"))
+                .requires(forgeTag("wires/copper"))
+                .requires(forgeTag("plates/steel"))
+                .unlockedBy("has_diamond_dust", has(forgeTag("dusts/diamond")))
+                .save(consumer, id("consumables/pancake_diamond"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.PANCAKE.get())
+                .requires(forgeTag("dusts/redstone"))
+                .requires(forgeTag("dusts/emerald"))
+                .requires(Items.WHEAT)
+                .requires(forgeTag("bolts/steel"))
+                .requires(forgeTag("wires/copper"))
+                .requires(forgeTag("plates/steel"))
+                .unlockedBy("has_emerald_dust", has(forgeTag("dusts/emerald")))
+                .save(consumer, id("consumables/pancake_emerald"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.BOMB_WAFFLE.get())
+                .pattern("WEW")
+                .pattern("MPM")
+                .pattern("WEW")
+                .define('W', Items.WHEAT)
+                .define('E', Items.EGG)
+                .define('M', Items.MILK_BUCKET)
+                .define('P', item("man_core"))
+                .unlockedBy("has_man_core", has(item("man_core")))
+                .save(consumer, id("consumables/bomb_waffle"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.SCHNITZEL_VEGAN.get(), 3)
+                .pattern("RWR")
+                .pattern("WPW")
+                .pattern("RWR")
+                .define('R', Items.SUGAR_CANE)
+                .define('W', item("nuclear_waste"))
+                .define('P', Items.PUMPKIN_SEEDS)
+                .unlockedBy("has_nuclear_waste", has(item("nuclear_waste")))
+                .save(consumer, id("consumables/schnitzel_vegan"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.COTTON_CANDY.get(), 2)
+                .pattern(" S ")
+                .pattern("SPS")
+                .pattern(" H ")
+                .define('S', Items.SUGAR)
+                .define('P', forgeTag("nuggets/pu239"))
+                .define('H', Items.STICK)
+                .unlockedBy("has_pu239_nugget", has(forgeTag("nuggets/pu239")))
+                .save(consumer, id("consumables/cotton_candy"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.APPLE_SCHRABIDIUM.get())
+                .pattern("SSS")
+                .pattern("SAS")
+                .pattern("SSS")
+                .define('S', forgeTag("nuggets/schrabidium"))
+                .define('A', Items.APPLE)
+                .unlockedBy("has_schrabidium_nugget", has(forgeTag("nuggets/schrabidium")))
+                .save(consumer, id("consumables/apple_schrabidium"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.APPLE_SCHRABIDIUM_INGOT.get())
+                .pattern("SSS")
+                .pattern("SAS")
+                .pattern("SSS")
+                .define('S', forgeTag("ingots/schrabidium"))
+                .define('A', Items.APPLE)
+                .unlockedBy("has_schrabidium_ingot", has(forgeTag("ingots/schrabidium")))
+                .save(consumer, id("consumables/apple_schrabidium_ingot"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.APPLE_SCHRABIDIUM_BLOCK.get())
+                .pattern("SSS")
+                .pattern("SAS")
+                .pattern("SSS")
+                .define('S', forgeTag("storage_blocks/schrabidium"))
+                .define('A', Items.APPLE)
+                .unlockedBy("has_schrabidium_block", has(forgeTag("storage_blocks/schrabidium")))
+                .save(consumer, id("consumables/apple_schrabidium_block"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.APPLE_LEAD.get())
+                .pattern("SSS")
+                .pattern("SAS")
+                .pattern("SSS")
+                .define('S', forgeTag("nuggets/lead"))
+                .define('A', Items.APPLE)
+                .unlockedBy("has_lead_nugget", has(forgeTag("nuggets/lead")))
+                .save(consumer, id("consumables/apple_lead"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.APPLE_LEAD_INGOT.get())
+                .pattern("SSS")
+                .pattern("SAS")
+                .pattern("SSS")
+                .define('S', forgeTag("ingots/lead"))
+                .define('A', Items.APPLE)
+                .unlockedBy("has_lead_ingot", has(forgeTag("ingots/lead")))
+                .save(consumer, id("consumables/apple_lead_ingot"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.APPLE_LEAD_BLOCK.get())
+                .pattern("SSS")
+                .pattern("SAS")
+                .pattern("SSS")
+                .define('S', forgeTag("storage_blocks/lead"))
+                .define('A', Items.APPLE)
+                .unlockedBy("has_lead_block", has(forgeTag("storage_blocks/lead")))
+                .save(consumer, id("consumables/apple_lead_block"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.APPLE_EUPHEMIUM.get())
+                .pattern("EEE")
+                .pattern("EAE")
+                .pattern("EEE")
+                .define('E', forgeTag("nuggets/euphemium"))
+                .define('A', Items.APPLE)
+                .unlockedBy("has_euphemium_nugget", has(forgeTag("nuggets/euphemium")))
+                .save(consumer, id("consumables/apple_euphemium"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.INGOT_SMORE.get())
+                .requires(Items.WHEAT)
+                .requires(StrictNBTIngredient.of(MarshmallowItem.roastedStack(ModItems.MARSHMALLOW.get())))
+                .requires(Items.COCOA_BEANS)
+                .unlockedBy("has_roasted_marshmallow", has(ModItems.MARSHMALLOW.get()))
+                .save(consumer, id("consumables/ingot_smore"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.QUESADILLA.get(), 3)
+                .requires(ModItems.CHEESE.get(), 2)
+                .requires(Items.BREAD)
+                .unlockedBy("has_cheese", has(ModItems.CHEESE.get()))
+                .save(consumer, id("consumables/quesadilla"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.MUCHO_MANGO.get())
+                .requires(Items.POTION)
+                .requires(Items.SUGAR, 2)
+                .requires(forgeTag("dyes/orange"))
+                .unlockedBy("has_orange_dye", has(forgeTag("dyes/orange")))
+                .save(consumer, id("consumables/mucho_mango"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.PEAS.get())
+                .pattern(" S ")
+                .pattern("SNS")
+                .pattern(" S ")
+                .define('S', Items.WHEAT_SEEDS)
+                .define('N', forgeTag("nuggets/gold"))
+                .unlockedBy("has_gold_nugget", has(forgeTag("nuggets/gold")))
+                .save(consumer, id("consumables/peas"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.BOTTLE_MERCURY.get())
                 .pattern("MMM")
@@ -2982,6 +7113,39 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_lead_ingot", has(item("ingot_lead")))
                 .save(consumer, id("parts/nugget_lead_from_ingot"));
 
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("billet_balefire_gold"))
+                .requires(item("billet_au198"))
+                .requires(ModItems.CELL_ANTIMATTER.get())
+                .requires(item("pellet_charged"))
+                .unlockedBy("has_au198_billet", has(item("billet_au198")))
+                .save(consumer, id("parts/billet_balefire_gold"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("billet_flashlead"), 2)
+                .requires(item("billet_balefire_gold"))
+                .requires(item("billet_pb209"))
+                .requires(ModItems.CELL_ANTIMATTER.get())
+                .unlockedBy("has_balefire_gold_billet", has(item("billet_balefire_gold")))
+                .save(consumer, id("parts/billet_flashlead"));
+
+        rtgPelletRecipe(consumer, "pellet_rtg", "billet_pu238", "billet_pu238", "billet_pu238");
+        rtgPelletRecipe(consumer, "pellet_rtg_radium", "billet_ra226", "billet_ra226", "billet_ra226");
+        rtgPelletRecipe(consumer, "pellet_rtg_weak", "billet_u238", "billet_u238", "billet_pu238");
+        rtgPelletRecipe(consumer, "pellet_rtg_strontium", "billet_sr90", "billet_sr90", "billet_sr90");
+        rtgPelletRecipe(consumer, "pellet_rtg_cobalt", "billet_co60", "billet_co60", "billet_co60");
+        rtgPelletRecipe(consumer, "pellet_rtg_actinium", "billet_actinium", "billet_actinium",
+                "billet_actinium");
+        rtgPelletRecipe(consumer, "pellet_rtg_polonium", "billet_polonium", "billet_polonium",
+                "billet_polonium");
+        rtgPelletRecipe(consumer, "pellet_rtg_lead", "billet_pb209", "billet_pb209", "billet_pb209");
+        rtgPelletRecipe(consumer, "pellet_rtg_gold", "billet_au198", "billet_au198", "billet_au198");
+        rtgPelletRecipe(consumer, "pellet_rtg_americium", "billet_am241", "billet_am241", "billet_am241");
+
+        rtgDepletedPelletRecycling(consumer, "bismuth", "billet_bismuth", 3);
+        rtgDepletedPelletRecycling(consumer, "lead", "ingot_lead", 2);
+        rtgDepletedPelletRecycling(consumer, "mercury", "ingot_mercury", 2);
+        rtgDepletedPelletRecycling(consumer, "neptunium", "billet_neptunium", 3);
+        rtgDepletedPelletRecycling(consumer, "zirconium", "billet_zirconium", 3);
+
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("ingot_gh336"))
                 .pattern("GGG")
                 .pattern("GGG")
@@ -3018,6 +7182,38 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_gh336_billet", has(item("billet_gh336")))
                 .save(consumer, id("parts/ingot_gh336_from_billets"));
 
+        storageBlockPair(consumer, "block_fluorite", "fluorite");
+        storageBlockPair(consumer, "block_niter", "niter");
+        storageBlockPair(consumer, "block_steel", "ingot_steel");
+        storageBlockPair(consumer, "block_sulfur", "sulfur");
+        storageBlockPair(consumer, "block_titanium", "ingot_titanium");
+        storageBlockPair(consumer, "block_tungsten", "ingot_tungsten");
+        storageBlockPair(consumer, "block_uranium", "ingot_uranium");
+        storageBlockPair(consumer, "block_thorium", "ingot_th232");
+        storageBlockPair(consumer, "block_lead", "ingot_lead");
+        storageBlockPair(consumer, "block_red_copper", "ingot_red_copper");
+        storageBlockPair(consumer, "block_trinitite", "trinitite");
+        storageBlockPair(consumer, "block_waste", "nuclear_waste");
+        storageBlockPair(consumer, "block_beryllium", "ingot_beryllium");
+        storageBlockPair(consumer, "block_schrabidium", "ingot_schrabidium");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("block_schrabidium_cluster"))
+                .pattern("#S#")
+                .pattern("SXS")
+                .pattern("#S#")
+                .define('#', item("ingot_schrabidium"))
+                .define('S', item("ingot_starmetal"))
+                .define('X', item("ingot_schrabidate"))
+                .unlockedBy("has_schrabidate_ingot", has(item("ingot_schrabidate")))
+                .save(consumer, id("parts/block_schrabidium_cluster"));
+
+        storageBlockPair(consumer, "block_magnetized_tungsten", "ingot_magnetized_tungsten");
+        storageBlockPair(consumer, "block_combine_steel", "ingot_combine_steel");
+        storageBlockPair(consumer, "block_australium", "ingot_australium");
+        storageBlockPair(consumer, "block_desh", "ingot_desh");
+        storageBlockPair(consumer, "block_dura_steel", "ingot_dura_steel");
+        storageBlockPair(consumer, "block_yellowcake", "powder_yellowcake");
+
         ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("block_starmetal"))
                 .pattern("SSS")
                 .pattern("SSS")
@@ -3030,6 +7226,287 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .requires(block("block_starmetal"))
                 .unlockedBy("has_starmetal_block", has(block("block_starmetal")))
                 .save(consumer, id("parts/ingot_starmetal_from_block"));
+
+        storageBlockPair(consumer, "block_u233", "ingot_u233");
+        storageBlockPair(consumer, "block_u235", "ingot_u235");
+        storageBlockPair(consumer, "block_u238", "ingot_u238");
+        storageBlockPair(consumer, "block_uranium_fuel", "ingot_uranium_fuel");
+        storageBlockPair(consumer, "block_neptunium", "ingot_neptunium");
+        storageBlockPair(consumer, "block_polonium", "ingot_polonium");
+        storageBlockPair(consumer, "block_plutonium", "ingot_plutonium");
+        storageBlockPair(consumer, "block_pu238", "ingot_pu238");
+        storageBlockPair(consumer, "block_pu239", "ingot_pu239");
+        storageBlockPair(consumer, "block_pu240", "ingot_pu240");
+        storageBlockPair(consumer, "block_mox_fuel", "ingot_mox_fuel");
+        storageBlockPair(consumer, "block_plutonium_fuel", "ingot_plutonium_fuel");
+        storageBlockPair(consumer, "block_thorium_fuel", "ingot_thorium_fuel");
+        storageBlockPair(consumer, "block_solinium", "ingot_solinium");
+        storageBlockPair(consumer, "block_schrabidium_fuel", "ingot_schrabidium_fuel");
+        storageBlockPair(consumer, "block_lithium", "lithium");
+        storageBlockPair(consumer, "block_white_phosphorus", "ingot_phosphorus");
+        storageBlockPair(consumer, "block_red_phosphorus", "powder_fire");
+        storageBlockPair(consumer, "block_insulator", "plate_polymer");
+        storageBlockPair(consumer, "block_asbestos", "ingot_asbestos");
+        storageBlockPair(consumer, "block_fiberglass", "ingot_fiberglass");
+        storageBlockPair(consumer, "block_cobalt", "ingot_cobalt");
+
+        nuggetIngotPair(consumer, "ingot_plutonium", "nugget_plutonium");
+        nuggetIngotPair(consumer, "ingot_pu238", "nugget_pu238");
+        nuggetIngotPair(consumer, "ingot_pu239", "nugget_pu239");
+        nuggetIngotPair(consumer, "ingot_pu240", "nugget_pu240");
+        nuggetIngotPair(consumer, "ingot_th232", "nugget_th232");
+        nuggetIngotPair(consumer, "ingot_uranium", "nugget_uranium");
+        nuggetIngotPair(consumer, "ingot_u233", "nugget_u233");
+        nuggetIngotPair(consumer, "ingot_u235", "nugget_u235");
+        nuggetIngotPair(consumer, "ingot_u238", "nugget_u238");
+        nuggetIngotPair(consumer, "ingot_neptunium", "nugget_neptunium");
+        nuggetIngotPair(consumer, "ingot_polonium", "nugget_polonium");
+        nuggetIngotPair(consumer, "ingot_beryllium", "nugget_beryllium");
+        nuggetIngotPair(consumer, "ingot_schrabidium", "nugget_schrabidium");
+        nuggetIngotPair(consumer, "ingot_uranium_fuel", "nugget_uranium_fuel");
+        nuggetIngotPair(consumer, "ingot_thorium_fuel", "nugget_thorium_fuel");
+        nuggetIngotPair(consumer, "ingot_plutonium_fuel", "nugget_plutonium_fuel");
+        nuggetIngotPair(consumer, "ingot_mox_fuel", "nugget_mox_fuel");
+        nuggetIngotPair(consumer, "ingot_schrabidium_fuel", "nugget_schrabidium_fuel");
+        nuggetIngotPair(consumer, "ingot_hes", "nugget_hes");
+        nuggetIngotPair(consumer, "ingot_les", "nugget_les");
+        nuggetIngotPair(consumer, "ingot_australium", "nugget_australium");
+        nuggetIngotPair(consumer, "ingot_osmiridium", "nugget_osmiridium");
+        itemCompactPair(consumer, "powder_steel", "powder_steel_tiny", "powder_steel_from_tiny",
+                "powder_steel_tiny_from_powder");
+        itemCompactPair(consumer, "powder_lithium", "powder_lithium_tiny", "powder_lithium_from_tiny",
+                "powder_lithium_tiny_from_powder");
+        itemCompactPair(consumer, "powder_cobalt", "powder_cobalt_tiny", "powder_cobalt_from_tiny",
+                "powder_cobalt_tiny_from_powder");
+        itemCompactPair(consumer, "powder_neodymium", "powder_neodymium_tiny", "powder_neodymium_from_tiny",
+                "powder_neodymium_tiny_from_powder");
+        itemCompactPair(consumer, "powder_niobium", "powder_niobium_tiny", "powder_niobium_from_tiny",
+                "powder_niobium_tiny_from_powder");
+        itemCompactPair(consumer, "powder_cerium", "powder_cerium_tiny", "powder_cerium_from_tiny",
+                "powder_cerium_tiny_from_powder");
+        itemCompactPair(consumer, "powder_lanthanium", "powder_lanthanium_tiny", "powder_lanthanium_from_tiny",
+                "powder_lanthanium_tiny_from_powder");
+        itemCompactPair(consumer, "powder_actinium", "powder_actinium_tiny", "powder_actinium_from_tiny",
+                "powder_actinium_tiny_from_powder");
+        itemCompactPair(consumer, "powder_meteorite", "powder_meteorite_tiny", "powder_meteorite_from_tiny",
+                "powder_meteorite_tiny_from_powder");
+        nuggetIngotPair(consumer, "ingot_solinium", "nugget_solinium");
+        itemCompactPair(consumer, "nuclear_waste", "nuclear_waste_tiny", "nuclear_waste_from_tiny",
+                "nuclear_waste_tiny_from_waste");
+        itemCompactPair(consumer, "egg_balefire", "egg_balefire_shard", "egg_balefire_from_shards",
+                "egg_balefire_shard_from_egg");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("egg_balefire_shard"))
+                .pattern("##")
+                .pattern("##")
+                .define('#', item("powder_balefire"))
+                .unlockedBy("has_balefire_powder", has(item("powder_balefire")))
+                .save(consumer, id("parts/egg_balefire_shard_from_powder_balefire"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("egg_balefire_shard"))
+                .pattern("###")
+                .pattern("###")
+                .pattern("###")
+                .define('#', item("cell_balefire"))
+                .unlockedBy("has_balefire_cell", has(item("cell_balefire")))
+                .save(consumer, id("parts/egg_balefire_shard_from_cell_balefire"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_schrabidium_fuel"))
+                .requires(Ingredient.of(legacyOreTag("nuggetSchrabidium")), 3)
+                .requires(Ingredient.of(legacyOreTag("nuggetNeptunium237")), 3)
+                .requires(item("nugget_beryllium"), 3)
+                .unlockedBy("has_schrabidium_nugget", has(legacyOreTag("nuggetSchrabidium")))
+                .save(consumer, id("parts/ingot_schrabidium_fuel_from_fuel_mix"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_hes"))
+                .requires(Ingredient.of(legacyOreTag("nuggetSchrabidium")), 5)
+                .requires(Ingredient.of(legacyOreTag("nuggetNeptunium237")), 2)
+                .requires(item("nugget_beryllium"), 2)
+                .unlockedBy("has_schrabidium_nugget", has(legacyOreTag("nuggetSchrabidium")))
+                .save(consumer, id("parts/ingot_hes_from_fuel_mix"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_les"))
+                .requires(Ingredient.of(legacyOreTag("nuggetSchrabidium")))
+                .requires(Ingredient.of(legacyOreTag("nuggetNeptunium237")), 4)
+                .requires(item("nugget_beryllium"), 4)
+                .unlockedBy("has_neptunium_nugget", has(legacyOreTag("nuggetNeptunium237")))
+                .save(consumer, id("parts/ingot_les_from_fuel_mix"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_pu_mix"))
+                .requires(Ingredient.of(legacyOreTag("tinyPu239")), 6)
+                .requires(Ingredient.of(legacyOreTag("tinyPu240")), 3)
+                .unlockedBy("has_pu239_nugget", has(legacyOreTag("tinyPu239")))
+                .save(consumer, id("parts/ingot_pu_mix_from_tiny"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_am_mix"))
+                .requires(Ingredient.of(legacyOreTag("nuggetAmericium241")), 3)
+                .requires(Ingredient.of(legacyOreTag("nuggetAmericium242")), 6)
+                .unlockedBy("has_am241_nugget", has(legacyOreTag("nuggetAmericium241")))
+                .save(consumer, id("parts/ingot_am_mix_from_nuggets"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ingot_am_mix"))
+                .requires(Ingredient.of(legacyOreTag("tinyAm241")), 3)
+                .requires(Ingredient.of(legacyOreTag("tinyAm242")), 6)
+                .unlockedBy("has_am241_tiny", has(legacyOreTag("tinyAm241")))
+                .save(consumer, id("parts/ingot_am_mix_from_tiny"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ball_fireclay"), 4)
+                .requires(Items.CLAY_BALL, 3)
+                .requires(Ingredient.of(legacyOreTag("dustAluminum")))
+                .unlockedBy("has_aluminium_dust", has(legacyOreTag("dustAluminum")))
+                .save(consumer, id("parts/ball_fireclay_from_aluminium_dust"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ball_fireclay"), 4)
+                .requires(Items.CLAY_BALL, 3)
+                .requires(Ingredient.of(legacyOreTag("oreAluminum")))
+                .unlockedBy("has_aluminium_ore", has(legacyOreTag("oreAluminum")))
+                .save(consumer, id("parts/ball_fireclay_from_aluminium_ore"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("ball_fireclay"), 4)
+                .requires(Items.CLAY_BALL, 2)
+                .requires(block("stone_resource_limestone"))
+                .requires(Ingredient.of(legacyOreTag("sand")))
+                .unlockedBy("has_limestone", has(block("stone_resource_limestone")))
+                .save(consumer, id("parts/ball_fireclay_from_limestone_sand"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("nitra"))
+                .pattern("##")
+                .pattern("##")
+                .define('#', item("nitra_small"))
+                .unlockedBy("has_small_nitra", has(item("nitra_small")))
+                .save(consumer, id("parts/nitra_from_small"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("nitra_small"), 4)
+                .requires(item("nitra"))
+                .unlockedBy("has_nitra", has(item("nitra")))
+                .save(consumer, id("parts/nitra_small_from_nitra"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("ammo_container_alt"))
+                .pattern("##")
+                .pattern("##")
+                .define('#', item("nitra"))
+                .unlockedBy("has_nitra", has(item("nitra")))
+                .save(consumer, id("weapon/ammo_container_alt"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("glass_polarized"), 4)
+                .pattern("##")
+                .pattern("##")
+                .define('#', item("part_generic_glass_polarized"))
+                .unlockedBy("has_polarized_lens", has(item("part_generic_glass_polarized")))
+                .save(consumer, id("blocks/glass_polarized"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("block_scrap"))
+                .pattern("##")
+                .pattern("##")
+                .define('#', item("scrap"))
+                .unlockedBy("has_scrap", has(item("scrap")))
+                .save(consumer, id("parts/block_scrap_from_scrap"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("block_scrap"))
+                .pattern("###")
+                .pattern("###")
+                .pattern("###")
+                .define('#', item("dust"))
+                .unlockedBy("has_dust", has(item("dust")))
+                .save(consumer, id("parts/block_scrap_from_dust"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("block_meteor_cobble"))
+                .pattern("##")
+                .pattern("##")
+                .define('#', item("fragment_meteorite"))
+                .unlockedBy("has_meteorite_fragment", has(item("fragment_meteorite")))
+                .save(consumer, id("parts/block_meteor_cobble_from_fragments"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("block_meteor_broken"))
+                .pattern("###")
+                .pattern("###")
+                .pattern("###")
+                .define('#', item("fragment_meteorite"))
+                .unlockedBy("has_meteorite_fragment", has(item("fragment_meteorite")))
+                .save(consumer, id("parts/block_meteor_broken_from_fragments"));
+
+        itemCompactPair(consumer, "powder_paleogenite", "powder_paleogenite_tiny",
+                "powder_paleogenite_from_tiny", "powder_paleogenite_tiny_from_powder");
+
+        byproductCompact(consumer, "ore_byproduct_b_iron", "powder_iron", 1);
+        byproductCompact(consumer, "ore_byproduct_b_copper", "powder_copper", 1);
+        byproductCompact(consumer, "ore_byproduct_b_lithium", "powder_lithium", 1);
+        byproductCompact(consumer, "ore_byproduct_b_silicon", "nugget_silicon", 3);
+        byproductCompact(consumer, "ore_byproduct_b_lead", "powder_lead", 1);
+        byproductCompact(consumer, "ore_byproduct_b_titanium", "powder_titanium", 1);
+        byproductCompact(consumer, "ore_byproduct_b_aluminium", "powder_aluminium", 1);
+        byproductCompact(consumer, "ore_byproduct_b_sulfur", "sulfur", 1);
+        byproductCompact(consumer, "ore_byproduct_b_calcium", "powder_calcium", 1);
+        byproductCompact(consumer, "ore_byproduct_b_bismuth", "powder_bismuth", 1);
+        byproductCompact(consumer, "ore_byproduct_b_radium", "powder_ra226", 1);
+        byproductCompact(consumer, "ore_byproduct_b_technetium", "billet_technetium", 1);
+        byproductCompact(consumer, "ore_byproduct_b_polonium", "billet_polonium", 1);
+        byproductCompact(consumer, "ore_byproduct_b_uranium", "powder_uranium", 1);
+    }
+
+    private static void storageBlockPair(Consumer<FinishedRecipe> consumer, String blockName, String itemName) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block(blockName))
+                .pattern("###")
+                .pattern("###")
+                .pattern("###")
+                .define('#', item(itemName))
+                .unlockedBy("has_" + itemName, has(item(itemName)))
+                .save(consumer, id("parts/" + blockName));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item(itemName), 9)
+                .requires(block(blockName))
+                .unlockedBy("has_" + blockName, has(block(blockName)))
+                .save(consumer, id("parts/" + itemName + "_from_" + blockName));
+    }
+
+    private static void nuggetIngotPair(Consumer<FinishedRecipe> consumer, String ingotName, String nuggetName) {
+        itemCompactPair(consumer, ingotName, nuggetName, ingotName + "_from_nuggets", nuggetName + "_from_ingot");
+    }
+
+    private static void itemCompactPair(Consumer<FinishedRecipe> consumer, String oneName, String nineName,
+            String compactRecipeName, String unpackRecipeName) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item(oneName))
+                .pattern("###")
+                .pattern("###")
+                .pattern("###")
+                .define('#', item(nineName))
+                .unlockedBy("has_" + nineName, has(item(nineName)))
+                .save(consumer, id("parts/" + compactRecipeName));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item(nineName), 9)
+                .requires(item(oneName))
+                .unlockedBy("has_" + oneName, has(item(oneName)))
+                .save(consumer, id("parts/" + unpackRecipeName));
+    }
+
+    private static void byproductCompact(Consumer<FinishedRecipe> consumer, String byproductName, String outputName,
+            int outputCount) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item(outputName), outputCount)
+                .pattern("###")
+                .pattern("###")
+                .pattern("###")
+                .define('#', item(byproductName))
+                .unlockedBy("has_" + byproductName, has(item(byproductName)))
+                .save(consumer, id("parts/" + outputName + "_from_" + byproductName));
+    }
+
+    private static void rtgPelletRecipe(Consumer<FinishedRecipe> consumer, String output, String... billets) {
+        ShapelessRecipeBuilder builder = ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item(output));
+        for (String billet : billets) {
+            builder.requires(item(billet));
+        }
+        builder.requires(forgeTag("plates/iron"))
+                .unlockedBy("has_" + billets[0], has(item(billets[0])))
+                .save(consumer, id("parts/" + output));
+    }
+
+    private static void rtgDepletedPelletRecycling(Consumer<FinishedRecipe> consumer, String material, String output,
+            int count) {
+        ItemLike depletedPellet = item("pellet_rtg_depleted_" + material);
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item(output), count)
+                .requires(depletedPellet)
+                .unlockedBy("has_depleted_rtg_pellet_" + material, has(depletedPellet))
+                .save(consumer, id("parts/rtg_depleted_" + material + "_recycling"));
     }
 
     private static void legacyArmorModuleRecipes(Consumer<FinishedRecipe> consumer) {
@@ -3042,10 +7519,10 @@ public final class HbmRecipeProvider extends RecipeProvider {
         ItemLike fineCopperWire = legacyMetaItem(LegacyMetaItemMappings.WIRE_FINE, 2_900);
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, ModItems.CLADDING_PAINT.get())
-                .requires(item("nugget_lead"), 4)
+                .requires(Ingredient.of(forgeTag("nuggets/lead")), 4)
                 .requires(Items.CLAY_BALL)
                 .requires(Items.GLASS_BOTTLE)
-                .unlockedBy("has_lead_nugget", has(item("nugget_lead")))
+                .unlockedBy("has_lead_nugget", has(forgeTag("nuggets/lead")))
                 .save(consumer, id("armor_modules/cladding_paint"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.CLADDING_RUBBER.get())
@@ -3208,6 +7685,17 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('I', ModItems.INSERT_DU.get())
                 .unlockedBy("has_billet_yharonite", has(item("billet_yharonite")))
                 .save(consumer, id("armor_modules/insert_yharonite"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AUSTRALIUM_III.get())
+                .pattern("WSW")
+                .pattern("PAP")
+                .pattern("SPS")
+                .define('W', forgeTag("dense_wires/gold"))
+                .define('S', forgeTag("welded_plates/steel"))
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('A', forgeTag("ingots/australium"))
+                .unlockedBy("has_australium_ingot", has(forgeTag("ingots/australium")))
+                .save(consumer, id("armor_modules/australium_iii"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SERVO_SET.get())
                 .pattern("MBM")
@@ -3388,6 +7876,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_bathwater", has(ModItems.BATHWATER.get()))
                 .save(consumer, id("armor_modules/bathwater_mk2"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BACK_TESLA.get())
+                .pattern("DGD")
+                .pattern("GTG")
+                .pattern("DGD")
+                .define('D', ductTape)
+                .define('G', forgeTag("wires/gold"))
+                .define('T', ModBlocks.TESLA.get())
+                .unlockedBy("has_tesla", has(ModBlocks.TESLA.get()))
+                .save(consumer, id("armor_modules/back_tesla"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.MEDAL_LIQUIDATOR.get())
                 .pattern("GBG")
                 .pattern("BFB")
@@ -3397,6 +7895,25 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('F', item("debris_fuel"))
                 .unlockedBy("has_debris_fuel", has(item("debris_fuel")))
                 .save(consumer, id("armor_modules/medal_liquidator"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.INK.get())
+                .pattern("FPF")
+                .pattern("PIP")
+                .pattern("FPF")
+                .define('F', Ingredient.of(
+                        Items.POPPY,
+                        Items.BLUE_ORCHID,
+                        Items.ALLIUM,
+                        Items.AZURE_BLUET,
+                        Items.RED_TULIP,
+                        Items.ORANGE_TULIP,
+                        Items.WHITE_TULIP,
+                        Items.PINK_TULIP,
+                        Items.OXEYE_DAISY))
+                .define('P', ModItems.ARMOR_POLISH.get())
+                .define('I', forgeTag("dyes/black"))
+                .unlockedBy("has_armor_polish", has(ModItems.ARMOR_POLISH.get()))
+                .save(consumer, id("armor_modules/ink"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.BLACK_DIAMOND.get())
                 .pattern("NIN")
@@ -3413,9 +7930,18 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .pattern("MDM")
                 .pattern(" M ")
                 .define('M', item("fragment_meteorite"))
-                .define('D', Items.DIAMOND)
+                .define('D', forgeTag("gems/diamond"))
                 .unlockedBy("has_meteorite_fragment", has(item("fragment_meteorite")))
                 .save(consumer, id("armor_modules/protection_charm"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.METEOR_CHARM.get())
+                .pattern(" M ")
+                .pattern("MDM")
+                .pattern(" M ")
+                .define('M', item("fragment_meteorite"))
+                .define('D', forgeTag("gems/volcanic"))
+                .unlockedBy("has_volcanic_gem", has(forgeTag("gems/volcanic")))
+                .save(consumer, id("armor_modules/meteor_charm"));
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, ModItems.INJECTOR_5HTP.get())
                 .requires(ModItems.FIVE_HTP.get())
@@ -3490,6 +8016,38 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void legacyPartRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("shimmer_handle"))
+                .pattern("GP")
+                .pattern("GP")
+                .pattern("GP")
+                .define('G', forgeTag("plates/gold"))
+                .define('P', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_gold_plate", has(forgeTag("plates/gold")))
+                .save(consumer, id("parts/shimmer_handle"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.AMS_LENS.get())
+                .pattern("PDP")
+                .pattern("GDG")
+                .pattern("PDP")
+                .define('P', item("plate_dineutronium"))
+                .define('D', Blocks.DIAMOND_BLOCK)
+                .define('G', ModBlocks.REINFORCED_GLASS.get())
+                .unlockedBy("has_reinforced_glass", has(ModBlocks.REINFORCED_GLASS.get()))
+                .save(consumer, id("parts/ams_lens"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("bolt_spike"), 2)
+                .pattern("BB")
+                .pattern("B ")
+                .pattern("B ")
+                .define('B', forgeTag("bolts/steel"))
+                .unlockedBy("has_steel_bolt", has(forgeTag("bolts/steel")))
+                .save(consumer, id("parts/bolt_spike"));
+
+        JsonObject scrapsSplit = new JsonObject();
+        scrapsSplit.addProperty("type", id("scraps_split").toString());
+        scrapsSplit.addProperty("category", "misc");
+        consumer.accept(finishedCompatRecipe(id("parts/scraps_split"), scrapsSplit));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("sphere_steel"))
                 .pattern("PIP")
                 .pattern("I I")
@@ -3662,6 +8220,55 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
                 .save(consumer, id("blocks/crate_steel"));
 
+        containerUpgradeRecipe(consumer, id("blocks/crate_desh"), block("crate_desh"), null,
+                new String[] {" D ", "DSD", " D "},
+                new Object[][] {
+                        {'D', forgeTag("plates/desh")},
+                        {'S', block("crate_steel")}
+                });
+
+        containerUpgradeRecipe(consumer, id("blocks/crate_tungsten"), block("crate_tungsten"), null,
+                new String[] {"BPB", "PCP", "BPB"},
+                new Object[][] {
+                        {'B', forgeTag("storage_blocks/tungsten")},
+                        {'P', forgeTag("cast_plates/copper")},
+                        {'C', block("crate_steel")}
+                });
+
+        containerUpgradeRecipe(consumer, id("blocks/safe"), block("safe"), null,
+                new String[] {"LAL", "ACA", "LAL"},
+                new Object[][] {
+                        {'L', forgeTag("plates/lead")},
+                        {'A', forgeTag("plates/titanium")},
+                        {'C', block("crate_steel")}
+                });
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.MASS_STORAGE.get())
+                .pattern(" L ")
+                .pattern("ICI")
+                .pattern(" I ")
+                .define('L', forgeTag("circuits/vacuum_tube"))
+                .define('I', forgeTag("ingots/titanium"))
+                .define('C', block("crate_steel"))
+                .unlockedBy("has_steel_crate", has(block("crate_steel")))
+                .save(consumer, id("blocks/mass_storage"));
+
+        containerUpgradeRecipe(consumer, id("blocks/mass_storage_desh"), block("mass_storage"),
+                "{hbmLegacyVariant:1}", new String[] {" C ", "PMP", " P "},
+                new Object[][] {
+                        {'C', forgeTag("circuits/chip")},
+                        {'P', forgeTag("ingots/desh")},
+                        {'M', block("mass_storage")}
+                });
+
+        containerUpgradeRecipe(consumer, id("blocks/mass_storage_tungsten"), block("mass_storage"),
+                "{hbmLegacyVariant:2}", new String[] {" C ", "PMP", " P "},
+                new Object[][] {
+                        {'C', forgeTag("circuits/advanced")},
+                        {'P', forgeTag("ingots/any_resistant_alloy")},
+                        {'M', block("mass_storage")}
+                });
+
         shapedLegacyVariantRecipe(consumer, id("blocks/filing_cabinet_steel"), ModBlocks.FILING_CABINET.get(),
                 1, 1, new String[] {" P ", "PIP", " P "},
                 new Object[][] {
@@ -3669,6 +8276,22 @@ public final class HbmRecipeProvider extends RecipeProvider {
                         {'I', item("plate_polymer")}
                 },
                 item("plate_polymer"), "has_plate_polymer");
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.REINFORCED_GLASS.get(), 4)
+                .pattern("FBF")
+                .pattern("BFB")
+                .pattern("FBF")
+                .define('F', Blocks.IRON_BARS)
+                .define('B', Blocks.GLASS)
+                .unlockedBy("has_iron_bars", has(Blocks.IRON_BARS))
+                .save(consumer, id("blocks/reinforced_glass"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.REINFORCED_GLASS_PANE.get(), 16)
+                .pattern("GGG")
+                .pattern("GGG")
+                .define('G', ModBlocks.REINFORCED_GLASS.get())
+                .unlockedBy("has_reinforced_glass", has(ModBlocks.REINFORCED_GLASS.get()))
+                .save(consumer, id("blocks/reinforced_glass_pane"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.REINFORCED_LAMINATE_PANE.get(), 16)
                 .pattern("LLL")
@@ -4245,32 +8868,32 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("chemical_plant/batterylead"));
 
         GenericMachineRecipeBuilder.chemical("chem.batterylithium", 100, 1_000)
-                .inputTag(forgeTag("dusts/lithium"), 12)
-                .inputTag(forgeTag("dusts/cobalt"), 8)
-                .inputTag(forgeTag("ingots/any_plastic"), 4)
+                .inputLegacyOre("dustLithium", 12)
+                .inputLegacyOre("dustCobalt", 8)
+                .inputLegacyOre("ingotAnyPlastic", 4)
                 .inputFluid(HbmFluids.OXYGEN, 2_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2)
                 .sourceOrder(29)
                 .save(consumer, id("chemical_plant/batterylithium"));
 
         GenericMachineRecipeBuilder.chemical("chem.batterysodium", 100, 10_000)
-                .inputTag(forgeTag("dusts/sodium"), 24)
-                .inputTag(forgeTag("dusts/iron"), 24)
-                .inputTag(forgeTag("ingots/any_hardplastic"), 12)
+                .inputLegacyOre("dustSodium", 24)
+                .inputLegacyOre("dustIron", 24)
+                .inputLegacyOre("ingotAnyHardPlastic", 12)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 3)
                 .sourceOrder(30)
                 .save(consumer, id("chemical_plant/batterysodium"));
 
         GenericMachineRecipeBuilder.chemical("chem.batteryschrabidium", 100, 25_000)
-                .inputTag(forgeTag("dusts/schrabidium"), 24)
-                .inputTag(forgeTag("cast_plates/any_bismoid_bronze"), 8)
+                .inputLegacyOre("dustSchrabidium", 24)
+                .inputLegacyOre("plateCastAnyBismoidBronze", 8)
                 .inputFluid(HbmFluids.HELIUM4, 8_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 4)
                 .sourceOrder(31)
                 .save(consumer, id("chemical_plant/batteryschrabidium"));
 
         GenericMachineRecipeBuilder.chemical("chem.batteryquantum", 100, 100_000)
-                .inputTag(forgeTag("dense_wires/bscco"), 24)
+                .inputLegacyOre("wireDenseBSCCO", 24)
                 .inputItem(item("pellet_charged"), 32)
                 .inputItem(item("ingot_cft"), 16)
                 .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 8_000)
@@ -4281,13 +8904,170 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void assemblyCapacitorRecipes(Consumer<FinishedRecipe> consumer) {
-        assemblyPlateRecipe(consumer, "ass.plateiron", "iron", "ingots/iron", "plate_iron", 0);
-        assemblyPlateRecipe(consumer, "ass.plategold", "gold", "ingots/gold", "plate_gold", 1);
-        assemblyPlateRecipe(consumer, "ass.platetitanium", "titanium", "ingots/titanium", "plate_titanium", 2);
-        assemblyPlateRecipe(consumer, "ass.platealu", "aluminium", "ingots/aluminium", "plate_aluminium", 3);
-        assemblyPlateRecipe(consumer, "ass.platesteel", "steel", "ingots/steel", "plate_steel", 4);
-        assemblyPlateRecipe(consumer, "ass.platelead", "lead", "ingots/lead", "plate_lead", 5);
-        assemblyPlateRecipe(consumer, "ass.platecopper", "copper", "ingots/copper", "plate_copper", 6);
+        assemblyPlateRecipe(consumer, "ass.plateiron", "iron", "ingotIron", "plate_iron", 0);
+        assemblyPlateRecipe(consumer, "ass.plategold", "gold", "ingotGold", "plate_gold", 1);
+        assemblyPlateRecipe(consumer, "ass.platetitanium", "titanium", "ingotTitanium", "plate_titanium", 2);
+        assemblyPlateRecipe(consumer, "ass.platealu", "aluminium", "ingotAluminum", "plate_aluminium", 3);
+        assemblyPlateRecipe(consumer, "ass.platesteel", "steel", "ingotSteel", "plate_steel", 4);
+        assemblyPlateRecipe(consumer, "ass.platelead", "lead", "ingotLead", "plate_lead", 5);
+        assemblyPlateRecipe(consumer, "ass.platecopper", "copper", "ingotCopper", "plate_copper", 6);
+
+        GenericMachineRecipeBuilder.assembly("ass.sealframe", 100, 100)
+                .inputLegacyOre("ingotDuraSteel", 1)
+                .inputLegacyOre("plateCastSteel", 1)
+                .inputLegacyOre("wireDenseMingrade", 1)
+                .outputItem(ModBlocks.SEAL_FRAME.get())
+                .sourceOrder(52)
+                .save(consumer, id("assembly_machine/seal_frame"));
+
+        GenericMachineRecipeBuilder.assembly("ass.sealcontroller", 100, 100)
+                .inputLegacyOre("ingotDuraSteel", 1)
+                .inputLegacyOre("plateCastSteel", 1)
+                .inputLegacyOre("ingotAnyPlastic", 4)
+                .inputLegacyOre("wireDenseMingrade", 4)
+                .outputItem(ModBlocks.SEAL_CONTROLLER.get())
+                .sourceOrder(53)
+                .save(consumer, id("assembly_machine/seal_controller"));
+
+        GenericMachineRecipeBuilder.assembly("ass.vaultdoor", 600, 100)
+                .inputLegacyOre("ingotSteel", 32)
+                .inputLegacyOre("ingotDuraSteel", 32)
+                .inputLegacyOre("plateCastLead", 8)
+                .inputLegacyOre("ingotAnyRubber", 12)
+                .inputLegacyOre("boltDuraSteel", 32)
+                .inputItem(item("motor"), 3)
+                .outputItem(ModBlocks.VAULT_DOOR.get())
+                .sourceOrder(56)
+                .save(consumer, id("assembly_machine/vault_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.blastdoor", 200, 100)
+                .inputLegacyOre("ingotSteel", 12)
+                .inputLegacyOre("plateLead", 6)
+                .inputLegacyOre("ingotAnyRubber", 2)
+                .inputLegacyOre("boltDuraSteel", 8)
+                .inputItem(item("motor"), 1)
+                .outputItem(ModBlocks.BLAST_DOOR.get())
+                .sourceOrder(57)
+                .save(consumer, id("assembly_machine/blast_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.firedoor", 300, 100)
+                .inputLegacyOre("plateSteel", 16)
+                .inputLegacyOre("boltDuraSteel", 8)
+                .inputItem(item("motor"), 2)
+                .outputItem(ModBlocks.FIRE_DOOR.get())
+                .sourceOrder(58)
+                .save(consumer, id("assembly_machine/fire_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.seal", 1_200, 100)
+                .inputItem(block("cmb_brick_reinforced"), 16)
+                .inputLegacyOre("plateSteel", 64)
+                .inputLegacyOre("ingotAnyRubber", 36)
+                .inputItem(block("block_steel"), 32)
+                .inputItem(item("motor_desh"), 16)
+                .inputLegacyOre("dyeYellow", 4)
+                .outputItem(ModBlocks.TRANSITION_SEAL.get())
+                .sourceOrder(59)
+                .save(consumer, id("assembly_machine/transition_seal"));
+
+        GenericMachineRecipeBuilder.assembly("ass.slidingdoor", 200, 100)
+                .inputLegacyOre("plateSteel", 16)
+                .inputLegacyOre("ingotTungsten", 8)
+                .inputItem(block("reinforced_glass"), 4)
+                .inputLegacyOre("ingotAnyRubber", 4)
+                .inputLegacyOre("boltDuraSteel", 16)
+                .inputItem(item("motor"), 2)
+                .outputItem(ModBlocks.SLIDING_BLAST_DOOR.get())
+                .sourceOrder(60)
+                .save(consumer, id("assembly_machine/sliding_blast_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.vehicledoor", 400, 100)
+                .inputLegacyOre("plateCastSteel", 16)
+                .inputItem(item("plate_polymer"), 4)
+                .inputItem(item("motor"), 4)
+                .inputLegacyOre("boltDuraSteel", 16)
+                .inputLegacyOre("dyeGreen", 4)
+                .outputItem(ModBlocks.LARGE_VEHICLE_DOOR.get())
+                .sourceOrder(61)
+                .save(consumer, id("assembly_machine/large_vehicle_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.waterdoor", 200, 100)
+                .inputLegacyOre("plateSteel", 16)
+                .inputLegacyOre("boltDuraSteel", 4)
+                .inputLegacyOre("dyeRed", 1)
+                .outputItem(ModBlocks.WATER_DOOR.get())
+                .sourceOrder(62)
+                .save(consumer, id("assembly_machine/water_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.qedoor", 400, 100)
+                .inputLegacyOre("plateCastSteel", 6)
+                .inputItem(item("plate_polymer"), 8)
+                .inputItem(item("motor"), 2)
+                .inputLegacyOre("boltDuraSteel", 32)
+                .inputLegacyOre("dyeBlack", 4)
+                .outputItem(ModBlocks.QE_CONTAINMENT.get())
+                .sourceOrder(63)
+                .save(consumer, id("assembly_machine/qe_containment"));
+
+        GenericMachineRecipeBuilder.assembly("ass.queslidingdoor", 200, 100)
+                .inputLegacyOre("plateSteel", 4)
+                .inputItem(item("plate_polymer"), 4)
+                .inputItem(item("motor"), 2)
+                .inputLegacyOre("boltDuraSteel", 4)
+                .inputLegacyOre("dyeWhite", 4)
+                .inputItem(Items.GLASS, 4)
+                .outputItem(ModBlocks.QE_SLIDING_DOOR.get())
+                .sourceOrder(64)
+                .save(consumer, id("assembly_machine/qe_sliding_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.roundairlock", 400, 100)
+                .inputLegacyOre("plateCastSteel", 12)
+                .inputItem(item("plate_polymer"), 16)
+                .inputItem(item("motor"), 4)
+                .inputLegacyOre("boltDuraSteel", 16)
+                .inputLegacyOre("dyeGreen", 4)
+                .outputItem(ModBlocks.ROUND_AIRLOCK_DOOR.get())
+                .sourceOrder(65)
+                .save(consumer, id("assembly_machine/round_airlock_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.secureaccess", 400, 100)
+                .inputLegacyOre("plateCastSteel", 12)
+                .inputItem(item("plate_polymer"), 8)
+                .inputItem(item("motor"), 4)
+                .inputLegacyOre("boltDuraSteel", 32)
+                .inputLegacyOre("dyeRed", 8)
+                .outputItem(ModBlocks.SECURE_ACCESS_DOOR.get())
+                .sourceOrder(66)
+                .save(consumer, id("assembly_machine/secure_access_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.slidingseal", 200, 100)
+                .inputLegacyOre("plateSteel", 12)
+                .inputItem(item("plate_polymer"), 4)
+                .inputItem(item("motor"), 2)
+                .inputLegacyOre("boltDuraSteel", 4)
+                .inputLegacyOre("dyeWhite", 2)
+                .outputItem(ModBlocks.SLIDING_SEAL_DOOR.get())
+                .sourceOrder(67)
+                .save(consumer, id("assembly_machine/sliding_seal_door"));
+
+        GenericMachineRecipeBuilder.assembly("ass.silohatch", 200, 100)
+                .inputLegacyOre("plateWeldedSteel", 4)
+                .inputItem(item("plate_polymer"), 4)
+                .inputItem(item("motor"), 2)
+                .inputLegacyOre("boltSteel", 16)
+                .inputLegacyOre("dyeGreen", 4)
+                .outputItem(ModBlocks.SILO_HATCH.get())
+                .sourceOrder(68)
+                .save(consumer, id("assembly_machine/silo_hatch"));
+
+        GenericMachineRecipeBuilder.assembly("ass.silohatchlarge", 300, 100)
+                .inputLegacyOre("plateWeldedSteel", 6)
+                .inputItem(item("plate_polymer"), 8)
+                .inputItem(item("motor"), 2)
+                .inputLegacyOre("boltSteel", 16)
+                .inputLegacyOre("dyeGreen", 8)
+                .outputItem(ModBlocks.SILO_HATCH_LARGE.get())
+                .sourceOrder(69)
+                .save(consumer, id("assembly_machine/silo_hatch_large"));
 
         GenericMachineRecipeBuilder.assembly("ass.capnuka", 10, 100)
                 .inputItem(ModItems.CAP_NUKA.get(), 64)
@@ -4332,51 +9112,51 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/cap_korl"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorgold", 100, 100)
-                .inputItem(ModItems.STEEL_PLATE.get(), 8)
-                .inputTag(forgeTag("dense_wires/gold"), 16)
+                .inputLegacyOre("plateSteel", 8)
+                .inputLegacyOre("wireDenseGold", 16)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 7)
                 .sourceOrder(139)
                 .save(consumer, id("assembly_machine/capacitorgold"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorniobium", 100, 1_000)
-                .inputTag(forgeTag("ingots/any_plastic"), 12)
-                .inputTag(forgeTag("dense_wires/niobium"), 24)
+                .inputLegacyOre("ingotAnyPlastic", 12)
+                .inputLegacyOre("wireDenseNiobium", 24)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 8)
                 .sourceOrder(140)
                 .save(consumer, id("assembly_machine/capacitorniobium"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitortantalum", 100, 10_000)
-                .inputTag(forgeTag("ingots/any_hardplastic"), 16)
-                .inputTag(forgeTag("ingots/tantalum"), 24)
+                .inputLegacyOre("ingotAnyHardPlastic", 16)
+                .inputLegacyOre("ingotTantalum", 24)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 9)
                 .sourceOrder(141)
                 .save(consumer, id("assembly_machine/capacitortantalum"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorbismuth", 100, 25_000)
-                .inputTag(forgeTag("ingots/any_hardplastic"), 24)
-                .inputTag(forgeTag("ingots/bismuth"), 24)
-                .inputTag(forgeTag("circuits/chip_quantum"), 1)
+                .inputLegacyOre("ingotAnyHardPlastic", 24)
+                .inputLegacyOre("ingotBismuth", 24)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 16, 1)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 10)
                 .sourceOrder(142)
                 .save(consumer, id("assembly_machine/capacitorbismuth"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorspark", 100, 100_000)
-                .inputTag(forgeTag("cast_plates/combine_steel"), 12)
+                .inputLegacyOre("plateCastCMBSteel", 12)
                 .inputItem(item("powder_spark_mix"), 32)
                 .inputItem(item("pellet_charged"), 32)
-                .inputTag(forgeTag("circuits/chip_quantum"), 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 16, 16)
                 .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 8_000)
                 .outputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 11)
                 .outputFluid(HbmFluids.PERFLUOROMETHYL, 8_000)
                 .sourceOrder(143)
                 .save(consumer, id("assembly_machine/capacitorspark"));
 
-        assemblyPlateRecipe(consumer, "ass.plateschrab", "schrabidium", "ingots/schrabidium", "plate_schrabidium", 7);
-        assemblyPlateRecipe(consumer, "ass.platecmb", "combine_steel", "ingots/combine_steel", "plate_combine_steel", 8);
-        assemblyPlateRecipe(consumer, "ass.plateweaponsteel", "weaponsteel", "ingots/weapon_steel", "plate_weaponsteel", 10);
-        assemblyPlateRecipe(consumer, "ass.platesaturnite", "saturnite", "ingots/saturnite", "plate_saturnite", 11);
-        assemblyPlateRecipe(consumer, "ass.platedura", "dura_steel", "ingots/dura_steel", "plate_dura_steel", 12);
-        assemblyPlateRecipe(consumer, "ass.plategunmetal", "gunmetal", "ingots/gun_metal", "plate_gunmetal", 9);
+        assemblyPlateRecipe(consumer, "ass.plateschrab", "schrabidium", "ingotSchrabidium", "plate_schrabidium", 7);
+        assemblyPlateRecipe(consumer, "ass.platecmb", "combine_steel", "ingotCMBSteel", "plate_combine_steel", 8);
+        assemblyPlateRecipe(consumer, "ass.plateweaponsteel", "weaponsteel", "ingotWeaponSteel", "plate_weaponsteel", 10);
+        assemblyPlateRecipe(consumer, "ass.platesaturnite", "saturnite", "ingotSaturnite", "plate_saturnite", 11);
+        assemblyPlateRecipe(consumer, "ass.platedura", "dura_steel", "ingotDuraSteel", "plate_dura_steel", 12);
+        assemblyPlateRecipe(consumer, "ass.plategunmetal", "gunmetal", "ingotGunMetal", "plate_gunmetal", 9);
 
         GenericMachineRecipeBuilder.assembly("ass.dalekanium", 200, 100)
                 .inputItem(block("block_meteor"), 1)
@@ -4515,7 +9295,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         GenericMachineRecipeBuilder.assembly("ass.chip", 50, 250)
                 .inputItem(item("plate_polymer"), 1)
-                .inputTag(forgeTag("circuits/silicon"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 4, 1)
                 .inputLegacyOre("wireFineGold", 1)
                 .outputItem(item("circuit_chip"))
                 .sourceOrder(29)
@@ -4523,7 +9303,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         GenericMachineRecipeBuilder.assembly("ass.chipBismoid", 100, 1_500)
                 .inputItem(item("plate_polymer"), 2)
-                .inputTag(forgeTag("circuits/silicon"), 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 4, 2)
                 .inputLegacyOre("nuggetAnyBismoid", 1)
                 .inputLegacyOre("wireFineGold", 2)
                 .outputItem(item("circuit_chip_bismoid"))
@@ -4531,8 +9311,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/chip_bismoid"));
 
         GenericMachineRecipeBuilder.assembly("ass.chipQuantum", 200, 15_000)
-                .inputTag(forgeTag("ingots/any_hardplastic"), 2)
-                .inputTag(forgeTag("dense_wires/bscco"), 1)
+                .inputLegacyOre("ingotAnyHardPlastic", 2)
+                .inputLegacyOre("wireDenseBSCCO", 1)
                 .inputItem(item("pellet_charged"), 1)
                 .inputLegacyOre("wireFineGold", 8)
                 .outputItem(item("circuit_chip_quantum"))
@@ -4540,16 +9320,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/chip_quantum"));
 
         GenericMachineRecipeBuilder.assembly("ass.atomicClock", 300, 1_000)
-                .inputTag(forgeTag("ingots/any_plastic"), 2)
-                .inputTag(forgeTag("circuits/chip"), 3)
+                .inputLegacyOre("ingotAnyPlastic", 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 5, 3)
                 .inputLegacyOre("dustStrontium", 1)
                 .outputItem(item("circuit_atomic_clock"))
                 .sourceOrder(32)
                 .save(consumer, id("assembly_machine/atomic_clock"));
 
         GenericMachineRecipeBuilder.assembly("ass.analogAlt", 200, 250)
-                .inputTag(forgeTag("circuits/pcb"), 4)
-                .inputTag(forgeTag("ingots/any_plastic"), 4)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 3, 4)
+                .inputLegacyOre("ingotAnyPlastic", 4)
                 .inputLegacyOre("wireFineTungsten", 8)
                 .inputLegacyOre("ingotNiobium", 1)
                 .outputItem(item("circuit_analog"))
@@ -4569,8 +9349,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/factorio_chip"));
 
         GenericMachineRecipeBuilder.assembly("ass.atomicClockAlt", 300, 20_000)
-                .inputTag(forgeTag("ingots/any_plastic"), 4)
-                .inputTag(forgeTag("circuits/chip"), 3)
+                .inputLegacyOre("ingotAnyPlastic", 4)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 5, 3)
                 .inputLegacyOre("dustCs137", 1)
                 .outputItem(new ItemStack(item("circuit_atomic_clock"), 4))
                 .pool(LegacyBlueprintPools.PREFIX_ALT + ".circuit")
@@ -4714,9 +9494,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void assemblyPlateRecipe(Consumer<FinishedRecipe> consumer, String internalName, String recipeName,
-            String inputTag, String outputItem, int sourceOrder) {
+            String legacyOreName, String outputItem, int sourceOrder) {
         GenericMachineRecipeBuilder.assembly(internalName, 60, 100)
-                .inputTag(forgeTag(inputTag), 1)
+                .inputLegacyOre(legacyOreName, 1)
                 .outputItem(item(outputItem))
                 .pool(LegacyBlueprintPools.PREFIX_ALT + "plates")
                 .autoSwitchGroup("autoswitch.plates")
@@ -4724,31 +9504,51 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/plate_" + recipeName));
     }
 
-    private static void guideBookRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
-            ItemLike extraIngredient, GuideBookItem.BookType bookType) {
+    private static JsonObject ingredientItem(ItemLike item) {
+        JsonObject object = new JsonObject();
+        object.addProperty("item", HbmRegistryUtil.itemKey(item.asItem()).toString());
+        return object;
+    }
+
+    private static JsonObject ingredientTag(TagKey<Item> tag) {
+        JsonObject object = new JsonObject();
+        object.addProperty("tag", tag.location().toString());
+        return object;
+    }
+
+    private static JsonObject ingredientNbtItem(ItemLike item, String nbt) {
+        JsonObject object = ingredientItem(item);
+        object.addProperty("type", "forge:nbt");
+        object.addProperty("nbt", nbt);
+        return object;
+    }
+
+    private static void legacyTemFlakesRecipe(Consumer<FinishedRecipe> consumer, String name, int legacyDamage,
+            JsonObject... ingredients) {
         consumer.accept(new FinishedRecipe() {
             @Override
             public void serializeRecipeData(JsonObject json) {
-                json.addProperty("category", "misc");
-                JsonArray ingredients = new JsonArray();
-                ingredients.add(ingredientItem(Items.BOOK));
-                ingredients.add(ingredientItem(extraIngredient));
-                json.add("ingredients", ingredients);
+                json.addProperty("category", "food");
+                JsonArray ingredientArray = new JsonArray();
+                for (JsonObject ingredient : ingredients) {
+                    ingredientArray.add(ingredient.deepCopy());
+                }
+                json.add("ingredients", ingredientArray);
 
                 JsonObject result = new JsonObject();
-                result.addProperty("item", HbmRegistryUtil.itemKey(ModItems.BOOK_GUIDE.get()).toString());
-                result.addProperty("nbt", "{BookType:" + bookType.legacyMeta() + "}");
+                result.addProperty("item", HbmRegistryUtil.itemKey(ModItems.TEM_FLAKES.get()).toString());
+                result.addProperty("nbt", "{" + LegacyTemFlakesItem.TAG_LEGACY_DAMAGE + ":" + legacyDamage + "}");
                 json.add("result", result);
             }
 
             @Override
             public ResourceLocation getId() {
-                return recipeId;
+                return id("consumables/" + name);
             }
 
             @Override
             public RecipeSerializer<?> getType() {
-                return RecipeSerializer.SHAPELESS_RECIPE;
+                return ModRecipes.LEGACY_NBT_SHAPELESS.get();
             }
 
             @Nullable
@@ -4763,19 +9563,6 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 return null;
             }
         });
-    }
-
-    private static JsonObject ingredientItem(ItemLike item) {
-        JsonObject object = new JsonObject();
-        object.addProperty("item", HbmRegistryUtil.itemKey(item.asItem()).toString());
-        return object;
-    }
-
-    private static JsonObject ingredientNbtItem(ItemLike item, String nbt) {
-        JsonObject object = ingredientItem(item);
-        object.addProperty("type", "forge:nbt");
-        object.addProperty("nbt", nbt);
-        return object;
     }
 
     private static void legacyFullBatteryShapelessRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
@@ -4825,7 +9612,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("reactor_core"), 1)
                 .inputLegacyOre("ingotSteel", 12)
                 .inputLegacyOre("plateLead", 16)
-                .inputItem(ModBlocks.REINFORCED_LAMINATE.get(), 4)
+                .inputItem(block("reinforced_glass"), 4)
                 .inputLegacyOre("ingotAsbestos", 4)
                 .inputLegacyOre("ingotAnyResistantAlloy", 4)
                 .inputItem(item("crt_display"), 1)
@@ -5262,7 +10049,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("wireFineMingrade", 16)
                 .inputLegacyOre("ingotAnyPlastic", 4)
                 .outputItem(ModBlocks.MACHINE_RTG_GREY.get())
-                .sourceOrder(93)
+                .sourceOrder(86)
                 .save(consumer, id("assembly_machine/rtg"));
 
         GenericMachineRecipeBuilder.assembly("ass.forcefield", 600, 100)
@@ -5276,7 +10063,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 4)
                 .inputItem(block("machine_transformer"), 1)
                 .outputItem(ModBlocks.MACHINE_FORCEFIELD.get())
-                .sourceOrder(93)
+                .sourceOrder(122)
                 .save(consumer, id("assembly_machine/forcefield"));
 
         GenericMachineRecipeBuilder.assembly("ass.coker", 200, 100)
@@ -5341,7 +10128,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         GenericMachineRecipeBuilder.assembly("ass.liquefactor", 200, 100)
                 .inputLegacyOre("shellSteel", 4)
                 .inputLegacyOre("plateCopper", 12)
-                .inputTag(forgeTag("any/tar"), 4)
+                .inputLegacyOre("anyTar", 4)
                 .inputItem(legacyMetaItem(LegacyMetaItemMappings.CIRCUIT, 1), 12)
                 .inputItem(ModItems.TUNGSTEN_COIL.get(), 8)
                 .outputItem(ModBlocks.MACHINE_LIQUEFACTOR.get())
@@ -5387,6 +10174,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(ModBlocks.MACHINE_SILEX.get())
                 .sourceOrder(105)
                 .save(consumer, id("assembly_machine/silex"));
+
+        GenericMachineRecipeBuilder.assembly("ass.excavator", 200, 100)
+                .inputItem(Blocks.STONE_BRICKS, 8)
+                .inputLegacyOre("ingotSteel", 8)
+                .inputLegacyOre("ingotIron", 8)
+                .inputItem(ModItems.MOTOR.get(), 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 7, 1)
+                .outputItem(ModBlocks.MACHINE_EXCAVATOR.get())
+                .sourceOrder(106)
+                .save(consumer, id("assembly_machine/excavator"));
 
         GenericMachineRecipeBuilder.assembly("ass.drillsteel", 100, 100)
                 .inputLegacyOre("ingotSteel", 12)
@@ -5482,7 +10279,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/rbmk_blank"));
 
         GenericMachineRecipeBuilder.assembly("ass.rbmkautoloader", 100, 100)
-                .inputTag(forgeTag("welded_plates/steel"), 4)
+                .inputLegacyOre("plateWeldedSteel", 4)
                 .inputLegacyOre("plateCastLead", 4)
                 .inputLegacyOre("ingotBoron", 4)
                 .inputItem(ModItems.MOTOR.get(), 3)
@@ -5534,8 +10331,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("assembly_machine/diesel_generator"));
 
         GenericMachineRecipeBuilder.assembly("ass.launchpadsilo", 200, 100)
-                .inputTag(forgeTag("welded_plates/steel"), 8)
-                .inputTag(forgeTag("storage_blocks/any_concrete"), 8)
+                .inputLegacyOre("plateWeldedSteel", 8)
+                .inputLegacyOre("anyConcrete", 8)
                 .inputLegacyOre("ingotAnyHardPlastic", 16)
                 .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 4)
                 .outputItem(ModBlocks.LAUNCH_PAD.get())
@@ -5859,6 +10656,30 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_steel_scaffold", has(block("steel_scaffold")))
                 .save(consumer, id("satellite/struct_scaffold"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STRUCT_LAUNCHER_CORE.get())
+                .pattern("SCS")
+                .pattern("SIS")
+                .pattern("BEB")
+                .define('S', block("steel_scaffold"))
+                .define('C', item("circuit_basic"))
+                .define('I', Items.IRON_BARS)
+                .define('B', ModBlocks.STRUCT_LAUNCHER.get())
+                .define('E', ModItems.BATTERY_LEAD.get())
+                .unlockedBy("has_struct_launcher", has(ModBlocks.STRUCT_LAUNCHER.get()))
+                .save(consumer, id("satellite/struct_launcher_core"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STRUCT_LAUNCHER_CORE_LARGE.get())
+                .pattern("SIS")
+                .pattern("ICI")
+                .pattern("BEB")
+                .define('S', item("circuit_advanced"))
+                .define('I', Items.IRON_BARS)
+                .define('C', item("circuit_advanced"))
+                .define('B', ModBlocks.STRUCT_LAUNCHER.get())
+                .define('E', ModItems.BATTERY_LEAD.get())
+                .unlockedBy("has_struct_launcher", has(ModBlocks.STRUCT_LAUNCHER.get()))
+                .save(consumer, id("satellite/struct_launcher_core_large"));
+
         GenericMachineRecipeBuilder.assembly("ass.soyuzcore", 1_200, 100)
                 .inputLegacyOre("plateSextupleSteel", 16)
                 .inputItem(item("upgrade_speed_3"), 1)
@@ -5867,6 +10688,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
                 .outputItem(ModBlocks.STRUCT_SOYUZ_CORE.get())
                 .pool(LegacyBlueprintPools.PREFIX_DISCOVER + "soyuz")
+                .sourceOrder(320)
                 .save(consumer, id("assembly_machine/soyuz_core"));
 
         GenericMachineRecipeBuilder.assembly("ass.soyuz", 6_000, 100)
@@ -5879,6 +10701,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyMeta(LegacyMetaItemMappings.PART_GENERIC, 3, 32)
                 .outputItem(ModItems.MISSILE_SOYUZ.get())
                 .pool(LegacyBlueprintPools.PREFIX_DISCOVER + "soyuz")
+                .sourceOrder(321)
                 .save(consumer, id("assembly_machine/soyuz"));
 
         GenericMachineRecipeBuilder.assembly("ass.lander", 2_400, 100)
@@ -5890,6 +10713,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyMeta(LegacyMetaItemMappings.PART_GENERIC, 3, 12)
                 .outputItem(ModItems.MISSILE_SOYUZ_LANDER.get())
                 .pool(LegacyBlueprintPools.PREFIX_DISCOVER + "soyuz")
+                .sourceOrder(322)
                 .save(consumer, id("assembly_machine/soyuz_lander"));
 
         GenericMachineRecipeBuilder.assembly("ass.satellitebase", 600, 100)
@@ -5903,6 +10727,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 12)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
                 .outputItem(item("sat_base"))
+                .sourceOrder(323)
                 .save(consumer, id("assembly_machine/satellite_base"));
 
         GenericMachineRecipeBuilder.assembly("ass.satellitemapper", 600, 100)
@@ -5911,6 +10736,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 4)
                 .inputItem(block("glass_quartz"), 8)
                 .outputItem(item("sat_head_mapper"))
+                .sourceOrder(324)
                 .save(consumer, id("assembly_machine/satellite_mapper"));
 
         GenericMachineRecipeBuilder.assembly("ass.satellitescanner", 600, 100)
@@ -5920,6 +10746,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("magnetron"), 8)
                 .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 8)
                 .outputItem(item("sat_head_scanner"))
+                .sourceOrder(325)
                 .save(consumer, id("assembly_machine/satellite_scanner"));
 
         GenericMachineRecipeBuilder.assembly("ass.satelliteradar", 600, 100)
@@ -5929,6 +10756,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(ModItems.GOLD_COIL.get(), 16)
                 .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 4)
                 .outputItem(item("sat_head_radar"))
+                .sourceOrder(326)
                 .save(consumer, id("assembly_machine/satellite_radar"));
 
         GenericMachineRecipeBuilder.assembly("ass.satellitelaser", 600, 100)
@@ -5940,6 +10768,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("crystal_diamond"), 8)
                 .inputItem(block("glass_quartz"), 8)
                 .outputItem(item("sat_head_laser"))
+                .sourceOrder(327)
                 .save(consumer, id("assembly_machine/satellite_laser"));
 
         GenericMachineRecipeBuilder.assembly("ass.satelliteresonator", 600, 100)
@@ -5949,6 +10778,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("crystal_xen"), 1)
                 .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 16)
                 .outputItem(item("sat_head_resonator"))
+                .sourceOrder(328)
                 .save(consumer, id("assembly_machine/satellite_resonator"));
 
         GenericMachineRecipeBuilder.assembly("ass.satelliterelay", 600, 100)
@@ -5962,6 +10792,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("magnetron"), 3)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
                 .outputItem(ModItems.SAT_FOEQ.get())
+                .sourceOrder(329)
                 .save(consumer, id("assembly_machine/satellite_relay"));
 
         GenericMachineRecipeBuilder.assembly("ass.satelliteasteroidminer", 600, 100)
@@ -5975,6 +10806,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("centrifuge_element"), 4)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
                 .outputItem(ModItems.SAT_MINER.get())
+                .sourceOrder(330)
                 .save(consumer, id("assembly_machine/satellite_asteroid_miner"));
 
         GenericMachineRecipeBuilder.assembly("ass.satellitelunarminer", 600, 100)
@@ -5988,37 +10820,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("photo_panel"), 12)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 2, 1)
                 .outputItem(ModItems.SAT_LUNAR_MINER.get())
+                .sourceOrder(331)
                 .save(consumer, id("assembly_machine/satellite_lunar_miner"));
 
-        GenericMachineRecipeBuilder.arcWelder("arc.satellitemapper", 600, 10_000)
-                .inputItem(item("sat_base"), 1)
-                .inputItem(item("sat_head_mapper"), 1)
-                .outputItem(ModItems.SAT_MAPPER.get())
-                .save(consumer, id("arc_welder/satellite_mapper"));
-
-        GenericMachineRecipeBuilder.arcWelder("arc.satellitescanner", 600, 10_000)
-                .inputItem(item("sat_base"), 1)
-                .inputItem(item("sat_head_scanner"), 1)
-                .outputItem(ModItems.SAT_SCANNER.get())
-                .save(consumer, id("arc_welder/satellite_scanner"));
-
-        GenericMachineRecipeBuilder.arcWelder("arc.satelliteradar", 600, 10_000)
-                .inputItem(item("sat_base"), 1)
-                .inputItem(item("sat_head_radar"), 1)
-                .outputItem(ModItems.SAT_RADAR.get())
-                .save(consumer, id("arc_welder/satellite_radar"));
-
-        GenericMachineRecipeBuilder.arcWelder("arc.satellitelaser", 600, 50_000)
-                .inputItem(item("sat_base"), 1)
-                .inputItem(item("sat_head_laser"), 1)
-                .outputItem(ModItems.SAT_LASER.get())
-                .save(consumer, id("arc_welder/satellite_laser"));
-
-        GenericMachineRecipeBuilder.arcWelder("arc.satelliteresonator", 600, 50_000)
-                .inputItem(item("sat_base"), 1)
-                .inputItem(item("sat_head_resonator"), 1)
-                .outputItem(ModItems.SAT_RESONATOR.get())
-                .save(consumer, id("arc_welder/satellite_resonator"));
     }
 
     private static void fluidContainerRecipes(Consumer<FinishedRecipe> consumer) {
@@ -6087,12 +10891,6 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('G', block("glass_boron"))
                 .unlockedBy("has_hardplastic", has(forgeTag("ingots/any_hardplastic")))
                 .save(consumer, id("control/disperser_canister_empty"));
-
-        ShapelessRecipeBuilder.shapeless(RecipeCategory.REDSTONE, ModItems.CANISTER_NAPALM.get())
-                .requires(StrictNBTIngredient.of(fluidContainerStack(ModItems.CANISTER_FULL.get(), 1, HbmFluids.GASOLINE, 1_000, 0)))
-                .requires(Items.SLIME_BALL)
-                .unlockedBy("has_canister_full", has(ModItems.CANISTER_FULL.get()))
-                .save(consumer, id("blast_furnace/canister_napalm"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.INF_WATER.get())
                 .pattern("AAA")
@@ -6288,6 +11086,71 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 unlockItem, unlockName);
     }
 
+    private static void containerUpgradeRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
+            ItemLike result, @Nullable String resultNbt, String[] pattern, Object[][] keys) {
+        consumer.accept(new FinishedRecipe() {
+            @Override
+            public void serializeRecipeData(JsonObject json) {
+                json.addProperty("category", "building");
+                JsonArray patternArray = new JsonArray();
+                for (String line : pattern) {
+                    patternArray.add(line);
+                }
+                json.add("pattern", patternArray);
+
+                JsonObject keyObject = new JsonObject();
+                for (Object[] entry : keys) {
+                    keyObject.add(String.valueOf((Character) entry[0]), shapedIngredient(entry[1]));
+                }
+                json.add("key", keyObject);
+
+                JsonObject resultObject = new JsonObject();
+                resultObject.addProperty("item", HbmRegistryUtil.itemKey(result.asItem()).toString());
+                if (resultNbt != null && !resultNbt.isBlank()) {
+                    resultObject.addProperty("nbt", resultNbt);
+                }
+                json.add("result", resultObject);
+                json.addProperty("show_notification", true);
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return recipeId;
+            }
+
+            @Override
+            public RecipeSerializer<?> getType() {
+                return ModRecipes.CONTAINER_UPGRADE_CRAFTING.get();
+            }
+
+            @Nullable
+            @Override
+            public JsonObject serializeAdvancement() {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public ResourceLocation getAdvancementId() {
+                return null;
+            }
+        });
+    }
+
+    private static JsonObject shapedIngredient(Object value) {
+        if (value instanceof JsonObject object) {
+            return object.deepCopy();
+        }
+        if (value instanceof TagKey<?> tagKey && tagKey.isFor(Registries.ITEM)) {
+            JsonObject ingredient = new JsonObject();
+            ingredient.addProperty("tag", tagKey.location().toString());
+            return ingredient;
+        }
+        JsonObject ingredient = new JsonObject();
+        ingredient.addProperty("item", HbmRegistryUtil.itemKey(((ItemLike) value).asItem()).toString());
+        return ingredient;
+    }
+
     private static void shapedLegacyVariantRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
             ItemLike result, int count, int legacyVariant, String[] pattern, Object[][] keys, ItemLike unlockItem,
             String unlockName) {
@@ -6364,185 +11227,255 @@ public final class HbmRecipeProvider extends RecipeProvider {
         });
     }
 
+    private static void precassRecipes(Consumer<FinishedRecipe> consumer) {
+        int min = 1_200;
+        GenericMachineRecipeBuilder.precass("precass.blueprints", 5 * min, 20_000L)
+                .inputItem(Items.PAPER, 16)
+                .inputLegacyOre("dyeBlue", 16)
+                .inputItem(Items.PUFFERFISH, 4)
+                .outputOneOf(
+                        GenericMachineRecipeBuilder.WeightedOutput.of(ModItems.BLUEPRINT_FOLDER.get(), 10),
+                        GenericMachineRecipeBuilder.WeightedOutput.of(new ItemStack(Items.PAPER, 16), 90))
+                .sourceOrder(0)
+                .save(consumer, id("precass/blueprints"));
+        GenericMachineRecipeBuilder.precass("precass.beigeprints", 5 * min, 50_000L)
+                .inputItem(Items.PAPER, 24)
+                .inputLegacyOre("gemCinnabar", 24)
+                .inputItem(Items.PUFFERFISH, 8)
+                .outputOneOf(
+                        GenericMachineRecipeBuilder.WeightedOutput.of(ModItems.BLUEPRINT_FOLDER_DISCOVER.get(), 5),
+                        GenericMachineRecipeBuilder.WeightedOutput.of(new ItemStack(Items.PAPER, 24), 95))
+                .sourceOrder(1)
+                .save(consumer, id("precass/beigeprints"));
+    }
+
     private static void liquefactionRecipes(Consumer<FinishedRecipe> consumer) {
-        LiquefactionRecipeBuilder.liquefaction(ModItems.BIOMASS.get(), HbmFluids.BIOGAS, 125)
-                .save(consumer, id("liquefaction/biomass"));
-        LiquefactionRecipeBuilder.liquefaction(ModItems.GLYPHID_GLAND_EMPTY.get(), HbmFluids.BIOGAS, 2_000)
-                .save(consumer, id("liquefaction/glyphid_gland_empty"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("gems/coal"), HbmFluids.COALOIL, 100)
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("gemCoal", HbmItemTagsProvider.forgeItemTag("gems/coal"), HbmFluids.COALOIL, 100)
+                .sourceOrder(0)
                 .save(consumer, id("liquefaction/coal_gem"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("dusts/coal"), HbmFluids.COALOIL, 100)
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("dustCoal", HbmItemTagsProvider.forgeItemTag("dusts/coal"), HbmFluids.COALOIL, 100)
+                .sourceOrder(1)
                 .save(consumer, id("liquefaction/coal_dust"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("gems/lignite"), HbmFluids.COALOIL, 50)
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("gemLignite", HbmItemTagsProvider.forgeItemTag("gems/lignite"), HbmFluids.COALOIL, 50)
+                .sourceOrder(2)
                 .save(consumer, id("liquefaction/lignite_gem"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("dusts/lignite"), HbmFluids.COALOIL, 50)
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("dustLignite", HbmItemTagsProvider.forgeItemTag("dusts/lignite"), HbmFluids.COALOIL, 50)
+                .sourceOrder(3)
                 .save(consumer, id("liquefaction/lignite_dust"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("dusts/sodium"), HbmFluids.SODIUM, 100)
-                .save(consumer, id("liquefaction/sodium_dust"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("ingots/lead"), HbmFluids.LEAD, 100)
-                .save(consumer, id("liquefaction/lead_ingot"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("dusts/lead"), HbmFluids.LEAD, 100)
-                .save(consumer, id("liquefaction/lead_dust"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("storage_blocks/lead"), HbmFluids.LEAD, 900)
-                .save(consumer, id("liquefaction/lead_block"));
-        LiquefactionRecipeBuilder.liquefaction(ItemTags.LOGS, HbmFluids.MUG, 100)
-                .save(consumer, id("liquefaction/logs"));
-        LiquefactionRecipeBuilder.liquefaction(block("ore_oil_sand"), HbmFluids.BITUMEN, 100)
-                .save(consumer, id("liquefaction/ore_oil_sand"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("tar/oil"), HbmFluids.BITUMEN, 75)
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("oiltar", HbmItemTagsProvider.forgeItemTag("tar/oil"), HbmFluids.BITUMEN, 75)
+                .sourceOrder(4)
                 .save(consumer, id("liquefaction/oil_tar_crude"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("tar/crack"), HbmFluids.BITUMEN, 100)
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("cracktar", HbmItemTagsProvider.forgeItemTag("tar/crack"), HbmFluids.BITUMEN, 100)
+                .sourceOrder(5)
                 .save(consumer, id("liquefaction/oil_tar_crack"));
-        LiquefactionRecipeBuilder.liquefaction(HbmItemTagsProvider.forgeItemTag("tar/coal"), HbmFluids.BITUMEN, 50)
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("coaltar", HbmItemTagsProvider.forgeItemTag("tar/coal"), HbmFluids.BITUMEN, 50)
+                .sourceOrder(6)
                 .save(consumer, id("liquefaction/oil_tar_coal"));
-        LiquefactionRecipeBuilder.liquefaction(Items.SNOWBALL, HbmFluids.WATER, 125)
-                .save(consumer, id("liquefaction/snowball"));
-        LiquefactionRecipeBuilder.liquefaction(Blocks.SNOW_BLOCK, HbmFluids.WATER, 500)
-                .save(consumer, id("liquefaction/snow_block"));
-        LiquefactionRecipeBuilder.liquefaction(Blocks.ICE, HbmFluids.WATER, 1_000)
-                .save(consumer, id("liquefaction/ice"));
-        LiquefactionRecipeBuilder.liquefaction(Blocks.PACKED_ICE, HbmFluids.WATER, 1_000)
-                .save(consumer, id("liquefaction/packed_ice"));
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("logWood", ItemTags.LOGS, HbmFluids.MUG, 100)
+                .sourceOrder(7)
+                .save(consumer, id("liquefaction/logs"));
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("dustSodium", HbmItemTagsProvider.forgeItemTag("dusts/sodium"), HbmFluids.SODIUM, 100)
+                .sourceOrder(8)
+                .save(consumer, id("liquefaction/sodium_dust"));
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("ingotLead", HbmItemTagsProvider.forgeItemTag("ingots/lead"), HbmFluids.LEAD, 100)
+                .sourceOrder(9)
+                .save(consumer, id("liquefaction/lead_ingot"));
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("dustLead", HbmItemTagsProvider.forgeItemTag("dusts/lead"), HbmFluids.LEAD, 100)
+                .sourceOrder(10)
+                .save(consumer, id("liquefaction/lead_dust"));
+        LiquefactionRecipeBuilder.liquefactionLegacyOre("blockLead", HbmItemTagsProvider.forgeItemTag("storage_blocks/lead"), HbmFluids.LEAD, 900)
+                .sourceOrder(11)
+                .save(consumer, id("liquefaction/lead_block"));
         LiquefactionRecipeBuilder.liquefaction(Blocks.NETHERRACK, HbmFluids.LAVA, 250)
+                .sourceOrder(12)
                 .save(consumer, id("liquefaction/netherrack"));
         LiquefactionRecipeBuilder.liquefaction(Blocks.COBBLESTONE, HbmFluids.LAVA, 250)
+                .sourceOrder(13)
                 .save(consumer, id("liquefaction/cobblestone"));
         LiquefactionRecipeBuilder.liquefaction(Blocks.STONE, HbmFluids.LAVA, 250)
+                .sourceOrder(14)
                 .save(consumer, id("liquefaction/stone"));
         LiquefactionRecipeBuilder.liquefaction(Blocks.OBSIDIAN, HbmFluids.LAVA, 500)
+                .sourceOrder(15)
                 .save(consumer, id("liquefaction/obsidian"));
+        LiquefactionRecipeBuilder.liquefaction(Items.SNOWBALL, HbmFluids.WATER, 125)
+                .sourceOrder(16)
+                .save(consumer, id("liquefaction/snowball"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.SNOW_BLOCK, HbmFluids.WATER, 500)
+                .sourceOrder(17)
+                .save(consumer, id("liquefaction/snow_block"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.ICE, HbmFluids.WATER, 1_000)
+                .sourceOrder(18)
+                .save(consumer, id("liquefaction/ice"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.PACKED_ICE, HbmFluids.WATER, 1_000)
+                .sourceOrder(19)
+                .save(consumer, id("liquefaction/packed_ice"));
         LiquefactionRecipeBuilder.liquefaction(Items.ENDER_PEARL, HbmFluids.ENDERJUICE, 100)
+                .sourceOrder(20)
                 .save(consumer, id("liquefaction/ender_pearl"));
+        LiquefactionRecipeBuilder.liquefaction(block("ore_oil_sand"), HbmFluids.BITUMEN, 100)
+                .sourceOrder(21)
+                .save(consumer, id("liquefaction/ore_oil_sand"));
         LiquefactionRecipeBuilder.liquefaction(Items.SUGAR, HbmFluids.ETHANOL, 100)
+                .sourceOrder(22)
                 .save(consumer, id("liquefaction/sugar"));
         LiquefactionRecipeBuilder.liquefaction(ModBlocks.PLANT_FLOWER_WEED.get(), HbmFluids.ETHANOL, 150)
+                .sourceOrder(23)
                 .save(consumer, id("liquefaction/plant_flower_weed"));
         LiquefactionRecipeBuilder.liquefaction(ModBlocks.PLANT_FLOWER_CD0.get(), HbmFluids.ETHANOL, 50)
+                .sourceOrder(24)
                 .save(consumer, id("liquefaction/plant_flower_cd0"));
+        LiquefactionRecipeBuilder.liquefaction(ModItems.BIOMASS.get(), HbmFluids.BIOGAS, 125)
+                .sourceOrder(25)
+                .save(consumer, id("liquefaction/biomass"));
+        LiquefactionRecipeBuilder.liquefaction(ModItems.GLYPHID_GLAND_EMPTY.get(), HbmFluids.BIOGAS, 2_000)
+                .sourceOrder(26)
+                .save(consumer, id("liquefaction/glyphid_gland_empty"));
+        LiquefactionRecipeBuilder.liquefactionLegacyWildcard(new ResourceLocation("minecraft", "fish"), HbmFluids.FISHOIL, 100)
+                .sourceOrder(27)
+                .save(consumer, id("liquefaction/fish"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.SUNFLOWER, HbmFluids.SUNFLOWEROIL, 100)
+                .sourceOrder(28)
+                .save(consumer, id("liquefaction/sunflower"));
         LiquefactionRecipeBuilder.liquefaction(Items.WHEAT_SEEDS, HbmFluids.SEEDSLURRY, 50)
+                .sourceOrder(29)
                 .save(consumer, id("liquefaction/wheat_seeds"));
-        LiquefactionRecipeBuilder.liquefaction(Blocks.VINE, HbmFluids.SEEDSLURRY, 100)
-                .save(consumer, id("liquefaction/vine"));
-        LiquefactionRecipeBuilder.liquefaction(Items.KELP, HbmFluids.SEEDSLURRY, 100)
-                .save(consumer, id("liquefaction/kelp"));
         LiquefactionRecipeBuilder.liquefaction(Blocks.GRASS, HbmFluids.SEEDSLURRY, 100)
+                .sourceOrder(30)
                 .save(consumer, id("liquefaction/grass"));
         LiquefactionRecipeBuilder.liquefaction(Blocks.FERN, HbmFluids.SEEDSLURRY, 100)
+                .sourceOrder(31)
                 .save(consumer, id("liquefaction/fern"));
-        LiquefactionRecipeBuilder.liquefaction(Items.COD, HbmFluids.FISHOIL, 100)
-                .save(consumer, id("liquefaction/cod"));
-        LiquefactionRecipeBuilder.liquefaction(Items.SALMON, HbmFluids.FISHOIL, 100)
-                .save(consumer, id("liquefaction/salmon"));
-        LiquefactionRecipeBuilder.liquefaction(Items.TROPICAL_FISH, HbmFluids.FISHOIL, 100)
-                .save(consumer, id("liquefaction/tropical_fish"));
-        LiquefactionRecipeBuilder.liquefaction(Items.PUFFERFISH, HbmFluids.FISHOIL, 100)
-                .save(consumer, id("liquefaction/pufferfish"));
-        LiquefactionRecipeBuilder.liquefaction(Blocks.SUNFLOWER, HbmFluids.SUNFLOWEROIL, 100)
-                .save(consumer, id("liquefaction/sunflower"));
+        LiquefactionRecipeBuilder.liquefaction(Blocks.VINE, HbmFluids.SEEDSLURRY, 100)
+                .sourceOrder(32)
+                .save(consumer, id("liquefaction/vine"));
     }
 
     private static void pyroOvenRecipes(Consumer<FinishedRecipe> consumer) {
-        pyroSolidFuel(consumer, HbmFluids.SMEAR);
-        pyroSolidFuel(consumer, HbmFluids.HEATINGOIL);
-        pyroSolidFuel(consumer, HbmFluids.HEATINGOIL_VACUUM);
-        pyroSolidFuel(consumer, HbmFluids.RECLAIMED);
-        pyroSolidFuel(consumer, HbmFluids.PETROIL);
-        pyroSolidFuel(consumer, HbmFluids.NAPHTHA);
-        pyroSolidFuel(consumer, HbmFluids.NAPHTHA_CRACK);
-        pyroSolidFuel(consumer, HbmFluids.DIESEL);
-        pyroSolidFuel(consumer, HbmFluids.DIESEL_REFORM);
-        pyroSolidFuel(consumer, HbmFluids.DIESEL_CRACK);
-        pyroSolidFuel(consumer, HbmFluids.DIESEL_CRACK_REFORM);
-        pyroSolidFuel(consumer, HbmFluids.LIGHTOIL);
-        pyroSolidFuel(consumer, HbmFluids.LIGHTOIL_CRACK);
-        pyroSolidFuel(consumer, HbmFluids.LIGHTOIL_VACUUM);
-        pyroSolidFuel(consumer, HbmFluids.KEROSENE);
-        pyroSolidFuel(consumer, HbmFluids.KEROSENE_REFORM);
-        pyroSolidFuel(consumer, HbmFluids.SOURGAS);
-        pyroSolidFuel(consumer, HbmFluids.REFORMGAS);
-        pyroSolidFuel(consumer, HbmFluids.SYNGAS);
-        pyroSolidFuel(consumer, HbmFluids.PETROLEUM);
-        pyroSolidFuel(consumer, HbmFluids.LPG);
-        pyroSolidFuel(consumer, HbmFluids.BIOFUEL);
-        pyroSolidFuel(consumer, HbmFluids.AROMATICS);
-        pyroSolidFuel(consumer, HbmFluids.UNSATURATEDS);
-        pyroSolidFuel(consumer, HbmFluids.REFORMATE);
-        pyroSolidFuel(consumer, HbmFluids.XYLENE);
-        pyroSolidFuel(consumer, HbmFluids.BALEFIRE, 24_000_000L, item("solid_fuel_bf"));
+        int sourceOrder = 0;
+        pyroSolidFuel(consumer, HbmFluids.SMEAR, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.HEATINGOIL, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.HEATINGOIL_VACUUM, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.RECLAIMED, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.PETROIL, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.NAPHTHA, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.NAPHTHA_CRACK, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.DIESEL, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.DIESEL_REFORM, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.DIESEL_CRACK, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.DIESEL_CRACK_REFORM, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.LIGHTOIL, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.LIGHTOIL_CRACK, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.LIGHTOIL_VACUUM, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.KEROSENE, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.KEROSENE_REFORM, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.SOURGAS, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.REFORMGAS, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.SYNGAS, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.PETROLEUM, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.LPG, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.BIOFUEL, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.AROMATICS, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.UNSATURATEDS, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.REFORMATE, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.XYLENE, sourceOrder++);
+        pyroSolidFuel(consumer, HbmFluids.BALEFIRE, 24_000_000L, item("solid_fuel_bf"), sourceOrder++);
 
         PyroOvenRecipeBuilder.pyro(100)
                 .inputFluid(HbmFluids.STEAM, 250)
-                .inputTag(forgeTag("gems/any_coke"), 1)
+                .inputLegacyOre("gemAnyCoke", forgeTag("gems/any_coke"), 1)
                 .outputFluid(HbmFluids.SYNGAS, 1_000)
+                .sourceOrder(30)
                 .save(consumer, id("pyro_oven/syngas_from_coke"));
         PyroOvenRecipeBuilder.pyro(100)
                 .inputItem(ModItems.BIOMASS.get(), 4)
                 .outputFluid(HbmFluids.SYNGAS, 1_000)
                 .outputItem(new ItemStack(Items.CHARCOAL))
+                .sourceOrder(31)
                 .save(consumer, id("pyro_oven/syngas_from_biomass"));
         PyroOvenRecipeBuilder.pyro(40)
-                .inputTag(forgeTag("any/tar"), 4)
+                .inputLegacyOre("anyTar", forgeTag("any/tar"), 4)
                 .outputFluid(HbmFluids.CARBONDIOXIDE, 1_000)
                 .outputItem(item("powder_ash_soot"))
+                .sourceOrder(32)
                 .save(consumer, id("pyro_oven/soot_from_tar"));
         PyroOvenRecipeBuilder.pyro(100)
                 .inputFluid(HbmFluids.STEAM, 500)
-                .inputTag(forgeTag("gems/coal"), 1)
+                .inputLegacyOre("gemCoal", forgeTag("gems/coal"), 1)
                 .outputFluid(HbmFluids.SYNGAS, 1_000)
+                .sourceOrder(28)
                 .save(consumer, id("pyro_oven/syngas_from_coal"));
         PyroOvenRecipeBuilder.pyro(100)
                 .inputFluid(HbmFluids.STEAM, 500)
-                .inputTag(forgeTag("dusts/coal"), 1)
+                .inputLegacyOre("dustCoal", forgeTag("dusts/coal"), 1)
                 .outputFluid(HbmFluids.SYNGAS, 1_000)
+                .sourceOrder(29)
                 .save(consumer, id("pyro_oven/syngas_from_coal_dust"));
         PyroOvenRecipeBuilder.pyro(100)
                 .inputFluid(HbmFluids.HYDROGEN, 500)
-                .inputTag(forgeTag("gems/coal"), 1)
+                .inputLegacyOre("gemCoal", forgeTag("gems/coal"), 1)
                 .outputFluid(HbmFluids.HEAVYOIL, 1_000)
+                .sourceOrder(33)
                 .save(consumer, id("pyro_oven/heavyoil_from_coal"));
         PyroOvenRecipeBuilder.pyro(100)
                 .inputFluid(HbmFluids.HYDROGEN, 500)
-                .inputTag(forgeTag("dusts/coal"), 1)
+                .inputLegacyOre("dustCoal", forgeTag("dusts/coal"), 1)
                 .outputFluid(HbmFluids.HEAVYOIL, 1_000)
+                .sourceOrder(34)
                 .save(consumer, id("pyro_oven/heavyoil_from_coal_dust"));
         PyroOvenRecipeBuilder.pyro(50)
                 .inputFluid(HbmFluids.HEAVYOIL, 500)
-                .inputTag(forgeTag("gems/coal"), 1)
+                .inputLegacyOre("gemCoal", forgeTag("gems/coal"), 1)
                 .outputFluid(HbmFluids.COALGAS, 1_000)
+                .sourceOrder(35)
                 .save(consumer, id("pyro_oven/coalgas_from_coal"));
         PyroOvenRecipeBuilder.pyro(50)
                 .inputFluid(HbmFluids.HEAVYOIL, 500)
-                .inputTag(forgeTag("dusts/coal"), 1)
+                .inputLegacyOre("dustCoal", forgeTag("dusts/coal"), 1)
                 .outputFluid(HbmFluids.COALGAS, 1_000)
+                .sourceOrder(36)
                 .save(consumer, id("pyro_oven/coalgas_from_coal_dust"));
         PyroOvenRecipeBuilder.pyro(50)
                 .inputFluid(HbmFluids.HEAVYOIL, 500)
-                .inputTag(forgeTag("gems/any_coke"), 1)
+                .inputLegacyOre("gemAnyCoke", forgeTag("gems/any_coke"), 1)
                 .outputFluid(HbmFluids.COALGAS, 1_000)
+                .sourceOrder(37)
                 .save(consumer, id("pyro_oven/coalgas_from_coke"));
         PyroOvenRecipeBuilder.pyro(60)
                 .inputFluid(HbmFluids.GAS_COKER, 4_000)
                 .outputFluid(HbmFluids.REFORMGAS, 100)
+                .sourceOrder(38)
                 .save(consumer, id("pyro_oven/reformgas_from_coker_gas"));
         PyroOvenRecipeBuilder.pyro(60)
                 .inputFluid(HbmFluids.GAS, 12_000)
                 .outputFluid(HbmFluids.HYDROGEN, 8_000)
                 .outputItem(item("ingot_graphite"))
+                .sourceOrder(39)
                 .save(consumer, id("pyro_oven/hydrogen_from_natural_gas"));
         PyroOvenRecipeBuilder.pyro(300)
                 .inputFluid(HbmFluids.SYNGAS, 2_000)
-                .inputTag(forgeTag("dusts/tungsten"), 1)
+                .inputLegacyOre("dustTungsten", forgeTag("dusts/tungsten"), 1)
                 .outputFluid(HbmFluids.SPENTSTEAM, 1_000)
                 .outputItem(item("ingot_tungsten_carbide"))
+                .sourceOrder(27)
                 .save(consumer, id("pyro_oven/tungsten_carbide_from_syngas"));
     }
 
     private static void pyroSolidFuel(Consumer<FinishedRecipe> consumer, FluidType fluid) {
-        pyroSolidFuel(consumer, fluid, 1_440_000L, item("solid_fuel"));
+        pyroSolidFuel(consumer, fluid, 1_440_000L, item("solid_fuel"), Integer.MAX_VALUE);
+    }
+
+    private static void pyroSolidFuel(Consumer<FinishedRecipe> consumer, FluidType fluid, int sourceOrder) {
+        pyroSolidFuel(consumer, fluid, 1_440_000L, item("solid_fuel"), sourceOrder);
     }
 
     private static void pyroSolidFuel(Consumer<FinishedRecipe> consumer, FluidType fluid, long tuPerFuel,
             ItemLike fuel) {
+        pyroSolidFuel(consumer, fluid, tuPerFuel, fuel, Integer.MAX_VALUE);
+    }
+
+    private static void pyroSolidFuel(Consumer<FinishedRecipe> consumer, FluidType fluid, long tuPerFuel,
+            ItemLike fuel, int sourceOrder) {
         int amount = pyroAutoAmount(fluid, tuPerFuel);
         if (amount <= 0) {
             return;
@@ -6550,6 +11483,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         PyroOvenRecipeBuilder.pyro(60)
                 .inputFluid(fluid, amount)
                 .outputItem(fuel)
+                .sourceOrder(sourceOrder)
                 .save(consumer, id("pyro_oven/solid_fuel_from_" + fluid.toPath()));
     }
 
@@ -6625,7 +11559,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .solidItem(Items.EGG, 1)
                 .save(consumer, id("mixer/egg"));
         MixerRecipeBuilder.mixer(HbmFluids.FISHOIL, 100, 50)
-                .solidTag(forgeTag("raw_fishes"), 1)
+                .solidLegacyWildcard(new ResourceLocation("minecraft", "fish"), 1)
                 .save(consumer, id("mixer/fishoil_raw_fish"));
         MixerRecipeBuilder.mixer(HbmFluids.SUNFLOWEROIL, 100, 50)
                 .solidItem(Blocks.SUNFLOWER, 1)
@@ -6791,99 +11725,203 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .solidLegacyOre("dustFluorite", 1)
                 .save(consumer, id("mixer/perfluoromethyl"));
         MixerRecipeBuilder.mixer(HbmFluids.BITUMEN, 50, 20)
-                .solidItem(item("oil_tar_crude"), 1)
+                .solidLegacyOre("anyTar", Ingredient.of(forgeTag("any/tar")), 1)
                 .sourceOrder(0)
-                .save(consumer, id("mixer/bitumen_crude_tar"));
-        MixerRecipeBuilder.mixer(HbmFluids.BITUMEN, 50, 20)
-                .solidItem(item("oil_tar_crack"), 1)
-                .sourceOrder(1)
-                .save(consumer, id("mixer/bitumen_crack_tar"));
-        MixerRecipeBuilder.mixer(HbmFluids.BITUMEN, 50, 20)
-                .solidItem(item("oil_tar_coal"), 1)
-                .sourceOrder(2)
-                .save(consumer, id("mixer/bitumen_coal_tar"));
-        MixerRecipeBuilder.mixer(HbmFluids.BITUMEN, 50, 20)
-                .solidItem(item("oil_tar_wood"), 1)
-                .sourceOrder(3)
-                .save(consumer, id("mixer/bitumen_wood_tar"));
+                .save(consumer, id("mixer/bitumen_tar"));
     }
 
     private static void pressRecipes(Consumer<FinishedRecipe> consumer) {
         flatPressRecipes(consumer);
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotIron", 1),
+                        new ItemStack(item("plate_iron")))
+                .sourceOrder(11)
+                .save(consumer, id("press/iron_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotGold", 1),
+                        new ItemStack(item("plate_gold")))
+                .sourceOrder(12)
+                .save(consumer, id("press/gold_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotTitanium", 1),
+                        new ItemStack(item("plate_titanium")))
+                .sourceOrder(13)
+                .save(consumer, id("press/titanium_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotAluminum", 1),
+                        new ItemStack(item("plate_aluminium")))
+                .sourceOrder(14)
+                .save(consumer, id("press/aluminium_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotSteel", 1),
+                        new ItemStack(item("plate_steel")))
+                .sourceOrder(15)
+                .save(consumer, id("press/steel_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotLead", 1),
+                        new ItemStack(item("plate_lead")))
+                .sourceOrder(16)
+                .save(consumer, id("press/lead_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE,
+                        HbmIngredient.legacyOre("ingotCopper", Ingredient.of(Items.COPPER_INGOT), 1),
+                        new ItemStack(item("plate_copper")))
+                .sourceOrder(17)
+                .save(consumer, id("press/copper_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotSchrabidium", 1),
+                        new ItemStack(item("plate_schrabidium")))
+                .sourceOrder(18)
+                .save(consumer, id("press/schrabidium_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotCMBSteel", 1),
+                        new ItemStack(item("plate_combine_steel")))
+                .sourceOrder(19)
+                .save(consumer, id("press/combine_steel_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotGunMetal", 1),
+                        new ItemStack(item("plate_gunmetal")))
+                .sourceOrder(20)
+                .save(consumer, id("press/gunmetal_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotWeaponSteel", 1),
+                        new ItemStack(item("plate_weaponsteel")))
+                .sourceOrder(21)
+                .save(consumer, id("press/weaponsteel_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotSaturnite", 1),
+                        new ItemStack(item("plate_saturnite")))
+                .sourceOrder(22)
+                .save(consumer, id("press/saturnite_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, HbmIngredient.legacyOre("ingotDuraSteel", 1),
+                        new ItemStack(item("plate_dura_steel")))
+                .sourceOrder(23)
+                .save(consumer, id("press/dura_steel_plate"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.C9, HbmIngredient.legacyOre("plateGunMetal", 1),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 0).get(), 4))
+                .sourceOrder(24)
+                .save(consumer, id("press/casing_small_gunmetal"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.C50, HbmIngredient.legacyOre("plateGunMetal", 1),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 1).get(), 2))
+                .sourceOrder(25)
+                .save(consumer, id("press/casing_large_gunmetal"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.C9, HbmIngredient.legacyOre("plateWeaponSteel", 1),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 2).get(), 4))
+                .sourceOrder(26)
+                .save(consumer, id("press/casing_small_weaponsteel"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.C50, HbmIngredient.legacyOre("plateWeaponSteel", 1),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 3).get(), 2))
+                .sourceOrder(27)
+                .save(consumer, id("press/casing_large_weaponsteel"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotCarbon", 1),
+                        new ItemStack(item("wire_fine_carbon"), 8))
+                .sourceOrder(28)
+                .save(consumer, id("press/carbon_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotGold", 1),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.WIRE_FINE, 7_900).get(), 8))
+                .sourceOrder(29)
+                .save(consumer, id("press/wire_gold"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotSchrabidium", 1),
+                        new ItemStack(item("wire_fine_schrabidium"), 8))
+                .sourceOrder(30)
+                .save(consumer, id("press/schrabidium_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE,
+                        HbmIngredient.legacyOre("ingotCopper", Ingredient.of(Items.COPPER_INGOT), 1),
+                        new ItemStack(item("wire_fine_copper"), 8))
+                .sourceOrder(31)
+                .save(consumer, id("press/copper_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotTungsten", 1),
+                        new ItemStack(item("wire_fine_tungsten"), 8))
+                .sourceOrder(32)
+                .save(consumer, id("press/tungsten_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotAluminum", 1),
+                        new ItemStack(item("wire_fine_aluminium"), 8))
+                .sourceOrder(33)
+                .save(consumer, id("press/aluminium_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotLead", 1),
+                        new ItemStack(item("wire_fine_lead"), 8))
+                .sourceOrder(34)
+                .save(consumer, id("press/lead_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotZirconium", 1),
+                        new ItemStack(item("wire_fine_zirconium"), 8))
+                .sourceOrder(35)
+                .save(consumer, id("press/zirconium_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotSteel", 1),
+                        new ItemStack(item("wire_fine_steel"), 8))
+                .sourceOrder(36)
+                .save(consumer, id("press/steel_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotMingrade", 1),
+                        new ItemStack(item("wire_fine_mingrade"), 8))
+                .sourceOrder(37)
+                .save(consumer, id("press/mingrade_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, HbmIngredient.legacyOre("ingotMagnetizedTungsten", 1),
+                        new ItemStack(item("wire_fine_magnetized_tungsten"), 8))
+                .sourceOrder(38)
+                .save(consumer, id("press/magnetized_tungsten_wire"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.CIRCUIT, HbmIngredient.legacyOre("billetSilicon", 1),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CIRCUIT, 4).get()))
+                .sourceOrder(39)
+                .save(consumer, id("press/circuit_silicon"));
 
         for (int i = 0; i < 8; i++) {
             ItemPressStamp.StampType stamp = ItemPressStamp.StampType.byName("printing" + (i + 1));
-            PressRecipeBuilder.press(stamp, Ingredient.of(Items.PAPER),
+            PressRecipeBuilder.press(stamp, legacyItem("minecraft", "paper", Items.PAPER),
                             new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.PAGE_OF, i).get()))
+                    .sourceOrder(40 + i)
                     .save(consumer, id("press/page_of_page" + (i + 1)));
         }
-
-        PressRecipeBuilder.press(ItemPressStamp.StampType.C9, Ingredient.of(forgeTag("plates/gun_metal")),
-                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 0).get(), 4))
-                .save(consumer, id("press/casing_small_gunmetal"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.C50, Ingredient.of(forgeTag("plates/gun_metal")),
-                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 1).get(), 2))
-                .save(consumer, id("press/casing_large_gunmetal"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/weapon_steel")),
-                        new ItemStack(item("plate_weaponsteel")))
-                .save(consumer, id("press/weaponsteel_plate"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/schrabidium")),
-                        new ItemStack(item("plate_schrabidium")))
-                .save(consumer, id("press/schrabidium_plate"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/combine_steel")),
-                        new ItemStack(item("plate_combine_steel")))
-                .save(consumer, id("press/combine_steel_plate"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/saturnite")),
-                        new ItemStack(item("plate_saturnite")))
-                .save(consumer, id("press/saturnite_plate"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.PLATE, Ingredient.of(forgeTag("ingots/dura_steel")),
-                        new ItemStack(item("plate_dura_steel")))
-                .save(consumer, id("press/dura_steel_plate"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.C9, Ingredient.of(forgeTag("plates/weapon_steel")),
-                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 2).get(), 4))
-                .save(consumer, id("press/casing_small_weaponsteel"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.C50, Ingredient.of(forgeTag("plates/weapon_steel")),
-                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.CASING, 3).get(), 2))
-                .save(consumer, id("press/casing_large_weaponsteel"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.WIRE, Ingredient.of(Items.GOLD_INGOT),
-                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.WIRE_FINE, 7_900).get(), 8))
-                .save(consumer, id("press/wire_gold"));
     }
 
     private static void flatPressRecipes(Consumer<FinishedRecipe> consumer) {
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/quartz")),
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, HbmIngredient.legacyOre("dustNetherQuartz", 1),
                         new ItemStack(Items.QUARTZ))
+                .sourceOrder(0)
                 .save(consumer, id("press/flat_quartz"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/lapis")),
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, HbmIngredient.legacyOre("dustLapis", 1),
                         new ItemStack(Items.LAPIS_LAZULI))
+                .sourceOrder(1)
                 .save(consumer, id("press/flat_lapis"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/diamond")),
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, HbmIngredient.legacyOre("dustDiamond", 1),
                         new ItemStack(Items.DIAMOND))
+                .sourceOrder(2)
                 .save(consumer, id("press/flat_diamond"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/emerald")),
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, HbmIngredient.legacyOre("dustEmerald", 1),
                         new ItemStack(Items.EMERALD))
+                .sourceOrder(3)
                 .save(consumer, id("press/flat_emerald"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(item("biomass")),
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, legacyHbmItem("biomass", item("biomass")),
                         new ItemStack(item("biomass_compressed")))
+                .sourceOrder(4)
                 .save(consumer, id("press/flat_biomass"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("gems/coke")),
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, HbmIngredient.legacyOre("gemAnyCoke", 1),
                         new ItemStack(item("ingot_graphite")))
+                .sourceOrder(5)
                 .save(consumer, id("press/flat_graphite"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/coal")),
-                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BRIQUETTE, 0).get()))
-                .save(consumer, id("press/flat_briquette_coal"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(forgeTag("dusts/lignite")),
-                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BRIQUETTE, 1).get()))
-                .save(consumer, id("press/flat_briquette_lignite"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(item("powder_sawdust")),
-                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BRIQUETTE, 2).get()))
-                .save(consumer, id("press/flat_briquette_wood"));
-        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, Ingredient.of(new ItemStack(Blocks.JUNGLE_LOG)),
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT,
+                        legacyHbmItem("meteorite_sword_reforged", item("meteorite_sword_reforged")),
+                        new ItemStack(item("meteorite_sword_hardened")))
+                .sourceOrder(6)
+                .save(consumer, id("press/flat_meteorite_sword_hardened"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT,
+                        legacyItem("minecraft", "log", 3, Blocks.JUNGLE_LOG),
                         new ItemStack(item("ball_resin")))
+                .sourceOrder(7)
                 .save(consumer, id("press/flat_resin"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, HbmIngredient.legacyOre("dustCoal", 1),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BRIQUETTE, 0).get()))
+                .sourceOrder(8)
+                .save(consumer, id("press/flat_briquette_coal"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT, HbmIngredient.legacyOre("dustLignite", 1),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BRIQUETTE, 1).get()))
+                .sourceOrder(9)
+                .save(consumer, id("press/flat_briquette_lignite"));
+        PressRecipeBuilder.press(ItemPressStamp.StampType.FLAT,
+                        legacyHbmItem("powder_sawdust", item("powder_sawdust")),
+                        new ItemStack(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.BRIQUETTE, 2).get()))
+                .sourceOrder(10)
+                .save(consumer, id("press/flat_briquette_wood"));
     }
 
     private static void legacyMissingMachineAcquisitionRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.DECON.get())
+                .pattern("BGB")
+                .pattern("SAS")
+                .pattern("BSB")
+                .define('B', forgeTag("ingots/beryllium"))
+                .define('G', Blocks.IRON_BARS)
+                .define('S', forgeTag("ingots/steel"))
+                .define('A', StrictNBTIngredient.of(legacyVariantStack(ModBlocks.RAD_ABSORBER.get(), 1, 0)))
+                .unlockedBy("has_rad_absorber", has(ModBlocks.RAD_ABSORBER.get()))
+                .save(consumer, id("blocks/decon"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.TELEANCHOR.get())
                 .pattern("ODO")
                 .pattern("EAE")
@@ -6925,6 +11963,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('T', forgeTag("ingots/tungsten"))
                 .unlockedBy("has_lava_bucket", has(Items.LAVA_BUCKET))
                 .save(consumer, id("machines/press_preheater"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.MACHINE_CONVEYOR_PRESS.get())
+                .pattern("CPC")
+                .pattern("CBC")
+                .pattern("CCC")
+                .define('C', forgeTag("plates/copper"))
+                .define('P', ModBlocks.MACHINE_EPRESS.get())
+                .define('B', ModItems.CONVEYOR_WAND.get())
+                .unlockedBy("has_electric_press", has(ModBlocks.MACHINE_EPRESS.get()))
+                .save(consumer, id("machines/conveyor_press"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.MACHINE_WOOD_BURNER.get())
                 .pattern("PPP")
@@ -7162,7 +12210,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateCopper", 16)
                 .inputItem(item("motor_desh"), 3)
                 .inputLegacyOre("ntmpipeSteel", 24)
-                .inputFluidContainer(HbmFluids.LUBRICANT, 1_000, 4)
+                .inputFluidContainerLegacyOre(HbmFluids.LUBRICANT, 1_000, 4)
                 .outputItem(ModBlocks.MACHINE_CONDENSER_POWERED.get())
                 .sourceOrder(138)
                 .save(consumer, id("assembly_machine/powered_condenser"));
@@ -7175,6 +12223,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(ModBlocks.MACHINE_ORBUS.get())
                 .sourceOrder(146)
                 .save(consumer, id("assembly_machine/orbus"));
+
+        GenericMachineRecipeBuilder.assembly("ass.minenaval", 300, 100)
+                .inputItem(item("sphere_steel"), 1)
+                .inputLegacyOre("pipeSteel", 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
+                .inputLegacyOre("ingotAnyPlasticExplosive", 24)
+                .outputItem(ModBlocks.MINE_NAVAL.get())
+                .sourceOrder(196)
+                .save(consumer, id("assembly_machine/mine_naval"));
 
         GenericMachineRecipeBuilder.assembly("ass.gadget", 300, 100)
                 .inputItem(item("sphere_steel"), 1)
@@ -7280,6 +12337,33 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(ModBlocks.NUKE_CUSTOM.get())
                 .sourceOrder(207)
                 .save(consumer, id("assembly_machine/nuke_custom"));
+
+        GenericMachineRecipeBuilder.assembly("ass.levibomb", 200, 100)
+                .inputLegacyOre("plateTitanium", 12)
+                .inputLegacyOre("nuggetSchrabidium", 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 4)
+                .inputLegacyOre("wireDenseGold", 8)
+                .outputItem(ModBlocks.FLOAT_BOMB.get())
+                .sourceOrder(208)
+                .save(consumer, id("assembly_machine/float_bomb"));
+
+        GenericMachineRecipeBuilder.assembly("ass.endobomb", 200, 100)
+                .inputLegacyOre("plateTitanium", 12)
+                .inputItem(item("powder_ice"), 32)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
+                .inputItem(item("coil_gold"), 4)
+                .outputItem(ModBlocks.THERM_ENDO.get())
+                .sourceOrder(209)
+                .save(consumer, id("assembly_machine/therm_endo"));
+
+        GenericMachineRecipeBuilder.assembly("ass.exobomb", 200, 100)
+                .inputLegacyOre("plateTitanium", 12)
+                .inputLegacyOre("dustRedPhosphorus", 32)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
+                .inputItem(item("coil_gold"), 4)
+                .outputItem(ModBlocks.THERM_EXO.get())
+                .sourceOrder(210)
+                .save(consumer, id("assembly_machine/therm_exo"));
     }
 
     private static ItemLike item(String legacyName) {
@@ -7725,6 +12809,19 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("weapon/weapon_mod_special_" + suffix));
     }
 
+    private static void shapedExplosiveStick(Consumer<FinishedRecipe> consumer, String result, ItemLike fuse,
+                                             ItemLike explosive, String unlockName, ItemLike unlockItem) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item(result), 4)
+                .pattern(" S ")
+                .pattern("PDP")
+                .pattern("PDP")
+                .define('S', fuse)
+                .define('P', Items.PAPER)
+                .define('D', explosive)
+                .unlockedBy(unlockName, has(unlockItem))
+                .save(consumer, id("weapon/" + result));
+    }
+
     private static void weaponModEngineRecipe(Consumer<FinishedRecipe> consumer, String suffix, String frameTag,
             Object pistonIngredient, Object centerIngredient) {
         ShapedRecipeBuilder builder = ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT,
@@ -7839,25 +12936,33 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_sphere_steel", has(item("sphere_steel")))
                 .save(consumer, id("weapon/ammo_arty_cargo"));
 
+        JsonObject cargoShellCrafting = new JsonObject();
+        cargoShellCrafting.addProperty("type", id("cargo_shell_crafting").toString());
+        cargoShellCrafting.addProperty("category", "equipment");
+        consumer.accept(finishedCompatRecipe(id("weapon/cargo_shell_crafting"), cargoShellCrafting));
+
         GenericMachineRecipeBuilder.assembly("chem.shellchlorine", 100, 1_000)
                 .inputItem(item("ammo_arty"), 1)
-                .inputTag(forgeTag("ingots/any_plastic"), 1)
+                .inputLegacyOre("ingotAnyPlastic", 1)
                 .inputFluid(HbmFluids.CHLORINE, 4_000)
                 .outputItem(item("ammo_arty_chlorine"))
+                .sourceOrder(317)
                 .save(consumer, id("assembly_machine/shell_chlorine"));
 
         GenericMachineRecipeBuilder.assembly("ass.shellphosgene", 100, 1_000)
                 .inputItem(item("ammo_arty"), 1)
-                .inputTag(forgeTag("ingots/any_plastic"), 1)
+                .inputLegacyOre("ingotAnyPlastic", 1)
                 .inputFluid(HbmFluids.PHOSGENE, 4_000)
                 .outputItem(item("ammo_arty_phosgene"))
+                .sourceOrder(318)
                 .save(consumer, id("assembly_machine/shell_phosgene"));
 
         GenericMachineRecipeBuilder.assembly("ass.shellmustard", 100, 1_000)
                 .inputItem(item("ammo_arty"), 1)
-                .inputTag(forgeTag("ingots/any_plastic"), 1)
+                .inputLegacyOre("ingotAnyPlastic", 1)
                 .inputFluid(HbmFluids.MUSTARDGAS, 4_000)
                 .outputItem(item("ammo_arty_mustard_gas"))
+                .sourceOrder(319)
                 .save(consumer, id("assembly_machine/shell_mustard"));
 
         GenericMachineRecipeBuilder.assembly("ass.himarssmall", 100, 100)
@@ -7865,8 +12970,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotAnyPlastic", 12)
                 .inputItem(item("rocket_fuel"), 48)
                 .inputLegacyOre("ingotAnyHighExplosive", 48)
-                .inputTag(forgeTag("circuits/basic"), 6)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 6)
                 .outputItem(item("ammo_himars_standard"))
+                .sourceOrder(241)
                 .save(consumer, id("assembly_machine/himarssmall"));
 
         GenericMachineRecipeBuilder.assembly("ass.himarssmallhe", 100, 100)
@@ -7875,8 +12981,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("rocket_fuel"), 48)
                 .inputLegacyOre("ingotAnyPlasticExplosive", 18)
                 .inputLegacyOre("ingotAnyHighExplosive", 48)
-                .inputTag(forgeTag("circuits/basic"), 6)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 6)
                 .outputItem(item("ammo_himars_standard_he"))
+                .sourceOrder(242)
                 .save(consumer, id("assembly_machine/himarssmallhe"));
 
         GenericMachineRecipeBuilder.assembly("ass.himarssmallwp", 100, 100)
@@ -7885,8 +12992,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("rocket_fuel"), 48)
                 .inputItem(item("ingot_phosphorus"), 18)
                 .inputLegacyOre("ingotAnyHighExplosive", 48)
-                .inputTag(forgeTag("circuits/basic"), 6)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 6)
                 .outputItem(item("ammo_himars_standard_wp"))
+                .sourceOrder(243)
                 .save(consumer, id("assembly_machine/himarssmallwp"));
 
         GenericMachineRecipeBuilder.assembly("ass.himarssmalltb", 100, 100)
@@ -7894,10 +13002,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotAnyPlastic", 24)
                 .inputItem(item("rocket_fuel"), 48)
                 .inputItem(item("ball_tatb"), 32)
-                .inputFluidContainer(HbmFluids.KEROSENE_REFORM, 1_000, 12)
-                .inputFluidContainer(HbmFluids.PEROXIDE, 1_000, 12)
-                .inputTag(forgeTag("circuits/basic"), 6)
+                .inputFluidContainerLegacyOre(HbmFluids.KEROSENE_REFORM, 1_000, 12)
+                .inputFluidContainerLegacyOre(HbmFluids.PEROXIDE, 1_000, 12)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 6)
                 .outputItem(item("ammo_himars_standard_tb"))
+                .sourceOrder(244)
                 .save(consumer, id("assembly_machine/himarssmalltb"));
 
         GenericMachineRecipeBuilder.assembly("ass.himarssmallnuke", 100, 100)
@@ -7907,38 +13016,42 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("ball_tatb"), 6)
                 .inputItem(item("nugget_pu239"), 12)
                 .inputItem(item("neutron_reflector"), 12)
-                .inputTag(forgeTag("circuits/basic"), 6)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 6)
                 .outputItem(item("ammo_himars_standard_mini_nuke"))
+                .sourceOrder(245)
                 .save(consumer, id("assembly_machine/himarssmallnuke"));
 
         GenericMachineRecipeBuilder.assembly("ass.himarssmalllava", 100, 100)
                 .inputLegacyOre("plateSteel", 24)
-                .inputTag(forgeTag("ingots/any_hardplastic"), 12)
+                .inputLegacyOre("ingotAnyHardPlastic", 12)
                 .inputItem(item("rocket_fuel"), 32)
                 .inputItem(item("ball_tatb"), 4)
-                .inputTag(forgeTag("gems/volcanic"), 1)
-                .inputTag(forgeTag("circuits/basic"), 6)
+                .inputLegacyOre("gemVolcanic", 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 6)
                 .outputItem(item("ammo_himars_standard_lava"))
+                .sourceOrder(246)
                 .save(consumer, id("assembly_machine/himarssmalllava"));
 
         GenericMachineRecipeBuilder.assembly("ass.himarslarge", 200, 100)
                 .inputLegacyOre("plateSteel", 24)
-                .inputTag(forgeTag("ingots/any_hardplastic"), 12)
+                .inputLegacyOre("ingotAnyHardPlastic", 12)
                 .inputItem(item("rocket_fuel"), 36)
                 .inputItem(item("ball_tatb"), 16)
-                .inputTag(forgeTag("circuits/advanced"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
                 .outputItem(item("ammo_himars_single"))
+                .sourceOrder(247)
                 .save(consumer, id("assembly_machine/himarslarge"));
 
         GenericMachineRecipeBuilder.assembly("ass.himarslargetb", 200, 100)
                 .inputLegacyOre("plateSteel", 24)
-                .inputTag(forgeTag("ingots/any_hardplastic"), 12)
+                .inputLegacyOre("ingotAnyHardPlastic", 12)
                 .inputItem(item("rocket_fuel"), 36)
                 .inputItem(item("ball_tatb"), 24)
-                .inputFluidContainer(HbmFluids.KEROSENE_REFORM, 1_000, 16)
-                .inputFluidContainer(HbmFluids.PEROXIDE, 1_000, 16)
-                .inputTag(forgeTag("circuits/advanced"), 1)
+                .inputFluidContainerLegacyOre(HbmFluids.KEROSENE_REFORM, 1_000, 16)
+                .inputFluidContainerLegacyOre(HbmFluids.PEROXIDE, 1_000, 16)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
                 .outputItem(item("ammo_himars_single_tb"))
+                .sourceOrder(248)
                 .save(consumer, id("assembly_machine/himarslargetb"));
     }
 
@@ -8235,7 +13348,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("seg_10"), 1)
                 .inputLegacyOre("plateSteel", 6)
                 .inputLegacyOre("ingotAnyHighExplosive", 3)
-                .inputTag(forgeTag("circuits/basic"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 1)
                 .outputItem(item("mp_warhead_10_he"))
                 .sourceOrder(303)
                 .save(consumer, id("assembly_machine/mpw10he"));
@@ -8245,7 +13358,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateSteel", 6)
                 .inputLegacyOre("ingotAnyHighExplosive", 2)
                 .inputLegacyOre("dustRedPhosphorus", 6)
-                .inputTag(forgeTag("circuits/basic"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 1)
                 .outputItem(item("mp_warhead_10_incendiary"))
                 .sourceOrder(304)
                 .save(consumer, id("assembly_machine/mpw10inc"));
@@ -8254,7 +13367,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("seg_10"), 1)
                 .inputLegacyOre("plateWeaponSteel", 6)
                 .inputLegacyOre("ingotAnyHighExplosive", 6)
-                .inputTag(forgeTag("circuits/basic"), 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 2)
                 .outputItem(item("mp_warhead_10_buster"))
                 .sourceOrder(305)
                 .save(consumer, id("assembly_machine/mpw10bus"));
@@ -8265,7 +13378,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("billetPu239", 2)
                 .inputItem(item("neutron_reflector"), 4)
                 .inputLegacyOre("ingotAnyHighExplosive", 4)
-                .inputTag(forgeTag("circuits/controller"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 1)
                 .outputItem(item("mp_warhead_10_nuclear"))
                 .sourceOrder(306)
                 .save(consumer, id("assembly_machine/mpw10nukesmall"));
@@ -8276,7 +13389,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("billetPu239", 6)
                 .inputItem(item("neutron_reflector"), 8)
                 .inputLegacyOre("ingotAnyHighExplosive", 12)
-                .inputTag(forgeTag("circuits/controller"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 1)
                 .outputItem(item("mp_warhead_10_nuclear_large"))
                 .sourceOrder(307)
                 .save(consumer, id("assembly_machine/mpw10nukelarge"));
@@ -8286,7 +13399,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateSteel", 12)
                 .inputItem(block("det_cord"), 2)
                 .inputItem(item("powder_magic"), 12)
-                .inputFluidContainer(HbmFluids.WATZ, 1_000, 1)
+                .inputFluidContainerLegacyOre(HbmFluids.WATZ, 1_000, 1)
                 .outputItem(item("mp_warhead_10_taint"))
                 .sourceOrder(308)
                 .save(consumer, id("assembly_machine/mpw10taint"));
@@ -8304,7 +13417,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("seg_15"), 1)
                 .inputLegacyOre("plateSteel", 12)
                 .inputLegacyOre("ingotAnyHighExplosive", 12)
-                .inputTag(forgeTag("circuits/basic"), 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 3)
                 .outputItem(item("mp_warhead_15_he"))
                 .sourceOrder(310)
                 .save(consumer, id("assembly_machine/mpw15he"));
@@ -8314,7 +13427,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("plateSteel", 12)
                 .inputLegacyOre("ingotAnyHighExplosive", 8)
                 .inputLegacyOre("dustRedPhosphorus", 16)
-                .inputTag(forgeTag("circuits/basic"), 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 3)
                 .outputItem(item("mp_warhead_15_incendiary"))
                 .sourceOrder(311)
                 .save(consumer, id("assembly_machine/mpw15inc"));
@@ -8325,7 +13438,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("billetPu239", 12)
                 .inputItem(item("neutron_reflector"), 12)
                 .inputItem(item("ball_tatb"), 24)
-                .inputTag(forgeTag("circuits/controller"), 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 3)
                 .outputItem(item("mp_warhead_15_nuclear"))
                 .sourceOrder(312)
                 .save(consumer, id("assembly_machine/mpw15nuke"));
@@ -8334,7 +13447,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("seg_15"), 1)
                 .inputLegacyOre("plateWeaponSteel", 32)
                 .inputItem(item("ball_tatb"), 32)
-                .inputTag(forgeTag("circuits/advanced"), 8)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 8)
                 .outputItem(item("mp_warhead_15_n2"))
                 .sourceOrder(313)
                 .save(consumer, id("assembly_machine/mpw15n2"));
@@ -8346,7 +13459,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("powder_magic"), 8)
                 .inputItem(item("egg_balefire_shard"), 4)
                 .inputLegacyOre("ingotAnyHighExplosive", 16)
-                .inputTag(forgeTag("circuits/controller"), 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 13, 2)
                 .outputItem(item("mp_warhead_15_balefire"))
                 .sourceOrder(314)
                 .save(consumer, id("assembly_machine/mpw15bf"));
@@ -8357,37 +13470,40 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 1, 1)
                 .inputLegacyOre("ingotSteel", 16)
                 .inputItem(ModItems.MOTOR.get(), 3)
-                .inputTag(forgeTag("circuits/advanced"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
                 .inputLegacyOre("ntmpipeSteel", 3)
                 .inputLegacyOre("gunMechanismGunMetal", 3)
                 .inputItem(block("crate_iron"), 1)
                 .inputItem(item("crt_display"), 1)
                 .outputItem(block("turret_chekhov"))
+                .sourceOrder(231)
                 .save(consumer, id("assembly_machine/turret_chekhov"));
 
         GenericMachineRecipeBuilder.assembly("ass.turretfriendly", 200, 100)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 1, 1)
                 .inputLegacyOre("ingotSteel", 16)
                 .inputItem(ModItems.MOTOR.get(), 3)
-                .inputTag(forgeTag("circuits/basic"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 1)
                 .inputLegacyOre("ntmpipeSteel", 3)
                 .inputLegacyOre("gunMechanismGunMetal", 1)
                 .inputItem(block("crate_iron"), 1)
                 .inputItem(item("crt_display"), 1)
                 .outputItem(block("turret_friendly"))
+                .sourceOrder(232)
                 .save(consumer, id("assembly_machine/turret_friendly"));
 
         GenericMachineRecipeBuilder.assembly("ass.turretjeremy", 200, 100)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 1, 1)
                 .inputLegacyOre("ingotSteel", 16)
                 .inputItem(ModItems.MOTOR.get(), 2)
-                .inputTag(forgeTag("circuits/advanced"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
                 .inputItem(item("motor_desh"), 1)
                 .inputLegacyOre("shellSteel", 3)
                 .inputLegacyOre("gunMechanismWeaponSteel", 3)
                 .inputItem(block("crate_steel"), 1)
                 .inputItem(item("crt_display"), 1)
                 .outputItem(block("turret_jeremy"))
+                .sourceOrder(233)
                 .save(consumer, id("assembly_machine/turret_jeremy"));
 
         GenericMachineRecipeBuilder.assembly("ass.turrettauon", 200, 100)
@@ -8395,25 +13511,27 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotSteel", 16)
                 .inputLegacyOre("ingotAnyPlastic", 4)
                 .inputItem(ModItems.MOTOR.get(), 2)
-                .inputTag(forgeTag("circuits/advanced"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
                 .inputItem(item("motor_desh"), 1)
                 .inputLegacyOre("ingotCopper", 32)
                 .inputLegacyOre("gunMechanismSaturnite", 3)
                 .inputItem(item("crt_display"), 1)
                 .outputItem(block("turret_tauon"))
+                .sourceOrder(234)
                 .save(consumer, id("assembly_machine/turret_tauon"));
 
         GenericMachineRecipeBuilder.assembly("ass.turretrichard", 200, 100)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 1, 1)
                 .inputLegacyOre("ingotSteel", 16)
                 .inputItem(ModItems.MOTOR.get(), 2)
-                .inputTag(forgeTag("circuits/advanced"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
                 .inputLegacyOre("ingotAnyPlastic", 2)
                 .inputLegacyOre("shellSteel", 8)
                 .inputLegacyOre("gunMechanismWeaponSteel", 3)
                 .inputItem(block("crate_steel"), 1)
                 .inputItem(item("crt_display"), 1)
                 .outputItem(block("turret_richard"))
+                .sourceOrder(235)
                 .save(consumer, id("assembly_machine/turret_richard"));
 
         GenericMachineRecipeBuilder.assembly("ass.turrethoward", 200, 100)
@@ -8421,36 +13539,39 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotSteel", 24)
                 .inputItem(ModItems.MOTOR.get(), 2)
                 .inputItem(item("motor_desh"), 2)
-                .inputTag(forgeTag("circuits/advanced"), 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 3)
                 .inputLegacyOre("ntmpipeSteel", 10)
                 .inputLegacyOre("gunMechanismWeaponSteel", 3)
                 .inputItem(block("crate_steel"), 1)
                 .inputItem(item("crt_display"), 1)
                 .outputItem(block("turret_howard"))
+                .sourceOrder(236)
                 .save(consumer, id("assembly_machine/turret_howard"));
 
         GenericMachineRecipeBuilder.assembly("ass.maxwell", 200, 100)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 8, 1)
                 .inputLegacyOre("ingotSteel", 24)
                 .inputItem(ModItems.MOTOR.get(), 2)
-                .inputTag(forgeTag("circuits/advanced"), 2)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 2)
                 .inputLegacyOre("ntmpipeSteel", 4)
                 .inputLegacyOre("gunMechanismSaturnite", 3)
                 .inputItem(item("magnetron"), 16)
                 .inputLegacyOre("ingotAnyResistantAlloy", 8)
                 .inputItem(item("crt_display"), 1)
                 .outputItem(block("turret_maxwell"))
+                .sourceOrder(237)
                 .save(consumer, id("assembly_machine/turret_maxwell"));
 
         GenericMachineRecipeBuilder.assembly("ass.fritz", 200, 100)
                 .inputLegacyMeta(LegacyMetaItemMappings.BATTERY_PACK, 1, 1)
                 .inputLegacyOre("ingotSteel", 16)
                 .inputItem(ModItems.MOTOR.get(), 3)
-                .inputTag(forgeTag("circuits/advanced"), 1)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 1)
                 .inputLegacyOre("ntmpipeSteel", 8)
                 .inputLegacyOre("gunMechanismGunMetal", 3)
                 .inputItem(block("barrel_steel"), 1)
                 .outputItem(block("turret_fritz"))
+                .sourceOrder(238)
                 .save(consumer, id("assembly_machine/turret_fritz"));
 
         GenericMachineRecipeBuilder.assembly("ass.arty", 1_200, 100)
@@ -8458,12 +13579,13 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotSteel", 64)
                 .inputLegacyOre("ingotSteel", 64)
                 .inputItem(item("motor_desh"), 5)
-                .inputTag(forgeTag("circuits/advanced"), 3)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 3)
                 .inputLegacyOre("ntmpipeSteel", 12)
                 .inputLegacyOre("gunMechanismWeaponSteel", 16)
                 .inputItem(block("machine_radar"), 1)
                 .inputItem(item("crt_display"), 1)
                 .outputItem(block("turret_arty"))
+                .sourceOrder(239)
                 .save(consumer, id("assembly_machine/turret_arty"));
 
         GenericMachineRecipeBuilder.assembly("ass.himars", 1_200, 100)
@@ -8472,11 +13594,12 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputLegacyOre("ingotSteel", 64)
                 .inputLegacyOre("ingotAnyPlastic", 64)
                 .inputItem(item("motor_desh"), 5)
-                .inputTag(forgeTag("circuits/advanced"), 8)
+                .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 8)
                 .inputLegacyOre("gunMechanismSaturnite", 8)
                 .inputItem(block("machine_radar"), 1)
                 .inputItem(item("crt_display"), 1)
                 .outputItem(block("turret_himars"))
+                .sourceOrder(240)
                 .save(consumer, id("assembly_machine/turret_himars"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, block("turret_sentry"))
@@ -8614,6 +13737,266 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .sourceOrder(316)
                 .save(consumer, id("assembly_machine/50bmgbypass"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("stick_dynamite"), 4)
+                .pattern(" S ")
+                .pattern("PDP")
+                .pattern("PDP")
+                .define('S', item("safety_fuse"))
+                .define('P', Items.PAPER)
+                .define('D', item("ball_dynamite"))
+                .unlockedBy("has_dynamite", has(item("ball_dynamite")))
+                .save(consumer, id("weapon/stick_dynamite"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, item("stick_dynamite_fishing"))
+                .requires(item("stick_dynamite"), 3)
+                .requires(Items.PAPER)
+                .requires(forgeTag("any/tar"))
+                .unlockedBy("has_stick_dynamite", has(item("stick_dynamite")))
+                .save(consumer, id("weapon/stick_dynamite_fishing"));
+
+        shapedExplosiveStick(consumer, "stick_tnt", block("det_cord"), item("ball_tnt"), "has_tnt", item("ball_tnt"));
+        shapedExplosiveStick(consumer, "stick_semtex", block("det_cord"), item("ingot_semtex"),
+                "has_semtex", item("ingot_semtex"));
+        shapedExplosiveStick(consumer, "stick_c4", block("det_cord"), item("ingot_c4"), "has_c4", item("ingot_c4"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_shell_frag"), 4)
+                .pattern("B")
+                .pattern("P")
+                .pattern("S")
+                .define('B', forgeTag("bolts/steel"))
+                .define('P', forgeTag("plates/aluminium"))
+                .define('S', forgeTag("shells/steel"))
+                .unlockedBy("has_steel_shell", has(forgeTag("shells/steel")))
+                .save(consumer, id("weapon/grenade_shell_frag"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_shell_stick"), 4)
+                .pattern("S")
+                .pattern("B")
+                .pattern("W")
+                .define('S', forgeTag("shells/steel"))
+                .define('B', forgeTag("bolts/steel"))
+                .define('W', vanillaTag("planks"))
+                .unlockedBy("has_steel_shell", has(forgeTag("shells/steel")))
+                .save(consumer, id("weapon/grenade_shell_stick"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_shell_tech"), 4)
+                .pattern("C")
+                .pattern("M")
+                .pattern("S")
+                .define('C', legacyCircuit(8))
+                .define('M', forgeTag("gun_mechanisms/weapon_steel"))
+                .define('S', forgeTag("shells/weapon_steel"))
+                .unlockedBy("has_weaponsteel_mechanism", has(forgeTag("gun_mechanisms/weapon_steel")))
+                .save(consumer, id("weapon/grenade_shell_tech"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_shell_nuke"), 2)
+                .pattern(" S ")
+                .pattern("CMC")
+                .pattern(" S ")
+                .define('S', forgeTag("shells/weapon_steel"))
+                .define('C', legacyCircuit(9))
+                .define('M', forgeTag("gun_mechanisms/weapon_steel"))
+                .unlockedBy("has_weaponsteel_mechanism", has(forgeTag("gun_mechanisms/weapon_steel")))
+                .save(consumer, id("weapon/grenade_shell_nuke"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_fuze_s3"), 4)
+                .pattern("S")
+                .pattern("F")
+                .define('S', forgeTag("bolts/steel"))
+                .define('F', item("safety_fuse"))
+                .unlockedBy("has_safety_fuse", has(item("safety_fuse")))
+                .save(consumer, id("weapon/grenade_fuze_s3"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_fuze_s7"), 4)
+                .pattern("S")
+                .pattern("F")
+                .pattern("F")
+                .define('S', forgeTag("bolts/steel"))
+                .define('F', item("safety_fuse"))
+                .unlockedBy("has_safety_fuse", has(item("safety_fuse")))
+                .save(consumer, id("weapon/grenade_fuze_s7"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_fuze_s15"), 4)
+                .pattern(" S ")
+                .pattern(" F ")
+                .pattern("FFF")
+                .define('S', forgeTag("bolts/steel"))
+                .define('F', item("safety_fuse"))
+                .unlockedBy("has_safety_fuse", has(item("safety_fuse")))
+                .save(consumer, id("weapon/grenade_fuze_s15"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_fuze_impact"), 4)
+                .pattern("C")
+                .pattern("S")
+                .pattern("F")
+                .define('C', forgeTag("dusts/any_smokeless"))
+                .define('S', forgeTag("bolts/steel"))
+                .define('F', item("safety_fuse"))
+                .unlockedBy("has_safety_fuse", has(item("safety_fuse")))
+                .save(consumer, id("weapon/grenade_fuze_impact"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_fuze_airburst"), 4)
+                .pattern("C")
+                .pattern("S")
+                .pattern("F")
+                .define('C', legacyCircuit(0))
+                .define('S', forgeTag("bolts/steel"))
+                .define('F', item("safety_fuse"))
+                .unlockedBy("has_safety_fuse", has(item("safety_fuse")))
+                .save(consumer, id("weapon/grenade_fuze_airburst"));
+
+        JsonObject grenadeCrafting = new JsonObject();
+        grenadeCrafting.addProperty("type", id("grenade_crafting").toString());
+        grenadeCrafting.addProperty("category", "equipment");
+        consumer.accept(finishedCompatRecipe(id("weapon/grenade_crafting"), grenadeCrafting));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_powder"), 4)
+                .pattern("F")
+                .pattern("I")
+                .pattern("F")
+                .define('F', Items.GUNPOWDER)
+                .define('I', item("plate_polymer"))
+                .unlockedBy("has_gunpowder", has(Items.GUNPOWDER))
+                .save(consumer, id("weapon/grenade_filling_powder"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_he"), 4)
+                .pattern("F")
+                .pattern("I")
+                .pattern("F")
+                .define('F', item("ball_dynamite"))
+                .define('I', item("plate_polymer"))
+                .unlockedBy("has_ball_dynamite", has(item("ball_dynamite")))
+                .save(consumer, id("weapon/grenade_filling_he"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_demo"), 4)
+                .pattern("F")
+                .pattern("I")
+                .pattern("F")
+                .define('F', forgeTag("ingots/any_high_explosive"))
+                .define('I', item("plate_polymer"))
+                .unlockedBy("has_any_high_explosive", has(forgeTag("ingots/any_high_explosive")))
+                .save(consumer, id("weapon/grenade_filling_demo"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_inc"), 4)
+                .pattern("F")
+                .pattern("I")
+                .pattern("F")
+                .define('F', forgeTag("dusts/red_phosphorus"))
+                .define('I', item("plate_polymer"))
+                .unlockedBy("has_red_phosphorus", has(forgeTag("dusts/red_phosphorus")))
+                .save(consumer, id("weapon/grenade_filling_inc"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_wp"), 4)
+                .pattern("F")
+                .pattern("I")
+                .pattern("F")
+                .define('F', forgeTag("ingots/white_phosphorus"))
+                .define('I', item("plate_polymer"))
+                .unlockedBy("has_white_phosphorus", has(forgeTag("ingots/white_phosphorus")))
+                .save(consumer, id("weapon/grenade_filling_wp"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_cluster"), 4)
+                .pattern("F")
+                .pattern("I")
+                .pattern("F")
+                .define('F', item("pellet_cluster"))
+                .define('I', item("plate_polymer"))
+                .unlockedBy("has_cluster_pellet", has(item("pellet_cluster")))
+                .save(consumer, id("weapon/grenade_filling_cluster"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_cluster_heavy"))
+                .pattern("F")
+                .pattern("I")
+                .pattern("F")
+                .define('F', item("pellet_cluster"))
+                .define('I', forgeTag("plates/weapon_steel"))
+                .unlockedBy("has_cluster_pellet", has(item("pellet_cluster")))
+                .save(consumer, id("weapon/grenade_filling_cluster_heavy"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_emp"), 4)
+                .pattern(" C ")
+                .pattern("KWK")
+                .define('C', legacyCircuit(8))
+                .define('K', item("coil_gold"))
+                .define('W', forgeTag("plates/weapon_steel"))
+                .unlockedBy("has_gold_coil", has(item("coil_gold")))
+                .save(consumer, id("weapon/grenade_filling_emp"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_plasma"), 4)
+                .pattern(" C ")
+                .pattern("KWK")
+                .define('C', legacyCircuit(10))
+                .define('K', item("cell_tritium"))
+                .define('W', forgeTag("plates/weapon_steel"))
+                .unlockedBy("has_tritium_cell", has(item("cell_tritium")))
+                .save(consumer, id("weapon/grenade_filling_plasma"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_laser"), 4)
+                .pattern(" C ")
+                .pattern("KWK")
+                .define('C', legacyCircuit(18))
+                .define('K', item("crystal_redstone"))
+                .define('W', forgeTag("plates/weapon_steel"))
+                .unlockedBy("has_redstone_crystal", has(item("crystal_redstone")))
+                .save(consumer, id("weapon/grenade_filling_laser"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_nuclear"))
+                .pattern(" T ")
+                .pattern("CPC")
+                .pattern(" T ")
+                .define('T', item("ball_tatb"))
+                .define('C', forgeTag("plates/weapon_steel"))
+                .define('P', forgeTag("nuggets/pu239"))
+                .unlockedBy("has_pu239_nugget", has(forgeTag("nuggets/pu239")))
+                .save(consumer, id("weapon/grenade_filling_nuclear"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_nuclear_demo"))
+                .pattern("TPT")
+                .pattern("CPC")
+                .pattern("TPT")
+                .define('T', item("ball_tatb"))
+                .define('C', item("neutron_reflector"))
+                .define('P', forgeTag("nuggets/pu239"))
+                .unlockedBy("has_pu239_nugget", has(forgeTag("nuggets/pu239")))
+                .save(consumer, id("weapon/grenade_filling_nuclear_demo"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_filling_schrab"))
+                .pattern("BCB")
+                .pattern("TST")
+                .pattern("BCB")
+                .define('B', forgeTag("cast_plates/combine_steel"))
+                .define('C', legacyCircuit(13))
+                .define('T', item("ball_tatb"))
+                .define('S', item("cell_sas3"))
+                .unlockedBy("has_sas3_cell", has(item("cell_sas3")))
+                .save(consumer, id("weapon/grenade_filling_schrab"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_extra_glue"))
+                .pattern(" P ")
+                .pattern("PSP")
+                .pattern(" P ")
+                .define('P', Items.PAPER)
+                .define('S', Items.SLIME_BALL)
+                .unlockedBy("has_slime_ball", has(Items.SLIME_BALL))
+                .save(consumer, id("weapon/grenade_extra_glue"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_extra_proxy_fuze"))
+                .pattern("C")
+                .pattern("F")
+                .define('C', legacyCircuit(5))
+                .define('F', item("safety_fuse"))
+                .unlockedBy("has_safety_fuse", has(item("safety_fuse")))
+                .save(consumer, id("weapon/grenade_extra_proxy_fuze"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("grenade_extra_frag_sleeve"))
+                .pattern("BBB")
+                .pattern(" T ")
+                .pattern("BBB")
+                .define('B', forgeTag("bolts/steel"))
+                .define('T', item("ducttape"))
+                .unlockedBy("has_steel_bolt", has(forgeTag("bolts/steel")))
+                .save(consumer, id("weapon/grenade_extra_frag_sleeve"));
+
         GenericMachineRecipeBuilder.assembly("ass.nitra", 200, 500)
                 .inputItem(item("nitra"), 1)
                 .outputOneOf(
@@ -8623,7 +14006,10 @@ public final class HbmRecipeProvider extends RecipeProvider {
                         GenericMachineRecipeBuilder.WeightedOutput.of(item("casing_large"), 10),
                         GenericMachineRecipeBuilder.WeightedOutput.of(Items.GUNPOWDER, 30),
                         GenericMachineRecipeBuilder.WeightedOutput.of(item("cordite"), 20),
-                        GenericMachineRecipeBuilder.WeightedOutput.of(item("ballistite"), 20))
+                        GenericMachineRecipeBuilder.WeightedOutput.of(item("ballistite"), 20),
+                        GenericMachineRecipeBuilder.WeightedOutput.of(item("grenade_shell_frag"), 5),
+                        GenericMachineRecipeBuilder.WeightedOutput.of(item("grenade_shell_stick"), 5),
+                        GenericMachineRecipeBuilder.WeightedOutput.of(item("grenade_fuze_s3"), 10))
                 .icon(item("nitra"))
                 .customLocalization()
                 .sourceOrder(332)
@@ -8631,6 +14017,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void legacyBombPartRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, block("emp_bomb"))
+                .pattern("LML")
+                .pattern("LCL")
+                .pattern("LML")
+                .define('L', forgeTag("plates/lead"))
+                .define('M', item("magnetron"))
+                .define('C', item("circuit_advanced"))
+                .unlockedBy("has_magnetron", has(item("magnetron")))
+                .save(consumer, id("weapon/emp_bomb"));
+
         GenericMachineRecipeBuilder.assembly("ass.explosivelenses1", 400, 100)
                 .inputLegacyOre("plateAluminum", 8)
                 .inputItem(block("det_cord"), 8)
@@ -8944,7 +14340,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(item("missile_generic"), 1)
                 .inputItem(item("missile_strong"), 1)
                 .inputLegacyOre("dyeOrange", 5)
-                .inputFluidContainer(HbmFluids.GASOLINE_LEADED, 1_000, 24)
+                .inputFluidContainerLegacyOre(HbmFluids.GASOLINE_LEADED, 1_000, 24)
                 .inputLegacyOre("ingotFiberglass", 12)
                 .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 8, 3)
                 .inputLegacyOre("ingotAnyPlasticExplosive", 8)
@@ -8959,6 +14355,29 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return new ResourceLocation(HbmNtm.MOD_ID, path);
     }
 
+    private static HbmIngredient legacyHbmItem(String legacyPath) {
+        return legacyHbmItem(legacyPath, item(legacyPath));
+    }
+
+    private static HbmIngredient legacyHbmItem(String legacyPath, ItemLike item) {
+        return legacyItem("hbm", legacyPath, item);
+    }
+
+    private static HbmIngredient legacyItem(String namespace, String path, ItemLike item) {
+        return legacyItem(namespace, path, 0, item);
+    }
+
+    private static HbmIngredient legacyItem(String namespace, String path, int legacyMeta, ItemLike item) {
+        return HbmIngredient.legacyItem(new ResourceLocation(namespace, path), legacyMeta, new ItemStack(item));
+    }
+
+    private static Path projectRoot() {
+        Path current = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
+        return "run-data".equals(current.getFileName().toString()) && current.getParent() != null
+                ? current.getParent()
+                : current;
+    }
+
     private static JsonObject fluidStackJson(FluidType fluid, int amount) {
         JsonObject object = new JsonObject();
         object.addProperty("fluid", id(fluid.toPath()).toString());
@@ -8966,12 +14385,139 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return object;
     }
 
+    private static JsonObject fluidStackJson(HbmFluidStack stack) {
+        JsonObject object = fluidStackJson(stack.type(), stack.amount());
+        if (stack.pressure() != 0) {
+            object.addProperty("pressure", stack.pressure());
+        }
+        return object;
+    }
+
+    private static JsonObject itemStackJson(ItemStack stack) {
+        JsonObject object = new JsonObject();
+        object.addProperty("item", HbmRegistryUtil.itemKey(stack.getItem()).toString());
+        if (stack.getCount() > 1) {
+            object.addProperty("count", stack.getCount());
+        }
+        if (stack.hasTag() && !stack.getTag().isEmpty()) {
+            object.addProperty("nbt", stack.getTag().toString());
+        }
+        return object;
+    }
+
+    private static ItemStack requireOilItemOutput(ItemStack stack, String recipeName) {
+        if (stack == null || stack.isEmpty()) {
+            throw new IllegalStateException("Oil processing default recipe " + recipeName + " has no item output");
+        }
+        return stack;
+    }
+
     private static TagKey<Item> forgeTag(String path) {
         return HbmItemTagsProvider.forgeItemTag(path);
     }
 
+    private static TagKey<Item> legacyOreTag(String legacyOreName) {
+        return HbmItemTagsProvider.legacyOreItemTag(legacyOreName);
+    }
+
     private static TagKey<Item> vanillaTag(String path) {
         return TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", path));
+    }
+
+    private static final class SolderingStationRecipeBuilder {
+        private final ItemStack output;
+        private final int duration;
+        private final long consumption;
+        private final JsonArray toppings = new JsonArray();
+        private final JsonArray pcb = new JsonArray();
+        private final JsonArray solder = new JsonArray();
+        @Nullable
+        private JsonObject fluid;
+
+        private SolderingStationRecipeBuilder(ItemStack output, int duration, long consumption) {
+            this.output = output.copy();
+            this.duration = duration;
+            this.consumption = consumption;
+        }
+
+        private static SolderingStationRecipeBuilder soldering(ItemLike output, int duration, long consumption) {
+            return new SolderingStationRecipeBuilder(new ItemStack(output), duration, consumption);
+        }
+
+        private SolderingStationRecipeBuilder toppingItem(String itemName, int count) {
+            toppings.add(HbmIngredient.of(item(itemName), count).toJson());
+            return this;
+        }
+
+        private SolderingStationRecipeBuilder pcbItem(String itemName, int count) {
+            pcb.add(HbmIngredient.of(item(itemName), count).toJson());
+            return this;
+        }
+
+        private SolderingStationRecipeBuilder pcbItemWithLegacyOre(ItemLike item, int count, String legacyOre) {
+            JsonObject input = HbmIngredient.of(item, count).toJson();
+            input.addProperty("legacy_ore", legacyOre);
+            pcb.add(input);
+            return this;
+        }
+
+        private SolderingStationRecipeBuilder pcbLegacyOre(String legacyOre, int count) {
+            pcb.add(HbmIngredient.legacyOre(legacyOre, count).toJson());
+            return this;
+        }
+
+        private SolderingStationRecipeBuilder solderLegacyOre(String legacyOre, int count) {
+            solder.add(HbmIngredient.legacyOre(legacyOre, count).toJson());
+            return this;
+        }
+
+        private SolderingStationRecipeBuilder fluid(FluidType type, int amount) {
+            JsonObject object = new JsonObject();
+            object.addProperty("fluid", type.getName());
+            object.addProperty("amount", amount);
+            fluid = object;
+            return this;
+        }
+
+        private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId, int sourceOrder) {
+            consumer.accept(new FinishedRecipe() {
+                @Override
+                public void serializeRecipeData(JsonObject json) {
+                    json.add("toppings", toppings);
+                    json.add("pcb", pcb);
+                    json.add("solder", solder);
+                    if (fluid != null) {
+                        json.add("fluid", fluid);
+                    }
+                    json.add("output", HbmItemOutput.of(output).toJson());
+                    json.addProperty("duration", duration);
+                    json.addProperty("consumption", consumption);
+                    json.addProperty("source_order", sourceOrder);
+                }
+
+                @Override
+                public ResourceLocation getId() {
+                    return recipeId;
+                }
+
+                @Override
+                public RecipeSerializer<?> getType() {
+                    return HbmRegistryUtil.recipeSerializer(id("soldering_station")).orElseThrow();
+                }
+
+                @Nullable
+                @Override
+                public JsonObject serializeAdvancement() {
+                    return null;
+                }
+
+                @Nullable
+                @Override
+                public ResourceLocation getAdvancementId() {
+                    return null;
+                }
+            });
+        }
     }
 
     private static final class OutgasserRecipeBuilder {
@@ -9007,12 +14553,19 @@ public final class HbmRecipeProvider extends RecipeProvider {
         }
 
         private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
+            save(consumer, recipeId, -1);
+        }
+
+        private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId, int sourceOrder) {
             if ((outputItem == null || outputItem.isEmpty()) && outputFluid == null) {
                 throw new IllegalStateException("HBM outgasser recipe has no output: " + recipeId);
             }
             consumer.accept(new FinishedRecipe() {
                 @Override
                 public void serializeRecipeData(JsonObject json) {
+                    if (sourceOrder >= 0) {
+                        json.addProperty("source_order", sourceOrder);
+                    }
                     json.add("input", input.toJson());
                     if (outputItem != null && !outputItem.isEmpty()) {
                         json.add("solid_output", itemStackJson(outputItem));
@@ -9147,8 +14700,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
             return inputIngredient(HbmIngredient.legacyOre(legacyOreName, count));
         }
 
+        private GenericMachineRecipeBuilder inputLegacyOre(String legacyOreName, Ingredient ingredient, int count) {
+            return inputIngredient(HbmIngredient.legacyOre(legacyOreName, ingredient, count));
+        }
+
         private GenericMachineRecipeBuilder inputFluidContainer(FluidType fluid, int amount, int count) {
             return inputIngredient(HbmIngredient.fluidContainer(fluid, amount, count));
+        }
+
+        private GenericMachineRecipeBuilder inputFluidContainerLegacyOre(FluidType fluid, int amount, int count) {
+            return inputIngredient(HbmIngredient.fluidContainer(fluid, amount, count, fluid.getDict(amount)));
         }
 
         private GenericMachineRecipeBuilder inputLegacyMeta(ResourceLocation legacyId, int legacyMeta, int count) {
@@ -9230,6 +14791,13 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         private GenericMachineRecipeBuilder outputFluid(FluidType fluid, int amount, int pressure) {
             outputFluids.add(fluidStack(fluid, amount, pressure));
+            return this;
+        }
+
+        private GenericMachineRecipeBuilder arcMaterialOutput(MaterialStack stack) {
+            List<MaterialStack> outputs = new ArrayList<>(extraData.arcMaterialOutputs());
+            outputs.add(stack);
+            this.extraData = extraData.withArcMaterialOutputs(outputs);
             return this;
         }
 
@@ -9361,8 +14929,12 @@ public final class HbmRecipeProvider extends RecipeProvider {
             if (inputItems.isEmpty() && inputFluids.isEmpty()) {
                 throw new IllegalStateException("HBM machine recipe has no inputs: " + recipeId);
             }
-            if (outputItems.isEmpty() && outputFluids.isEmpty()) {
+            if (outputItems.isEmpty() && outputFluids.isEmpty() && extraData.arcMaterialOutputs().isEmpty()) {
                 throw new IllegalStateException("HBM machine recipe has no outputs: " + recipeId);
+            }
+            if (!extraData.arcMaterialOutputs().isEmpty() && machine != GenericMachineRecipe.Machine.ARC_FURNACE) {
+                throw new IllegalStateException("HBM machine recipe has arc material outputs outside arc furnace: "
+                        + recipeId);
             }
             try {
                 machine.validateRecipeLimits(recipeId, inputItems.size(), inputFluids.size(), outputItems.size(), outputFluids.size());
@@ -9432,17 +15004,27 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
     private static final class PressRecipeBuilder {
         private final ItemPressStamp.StampType stamp;
-        private final Ingredient ingredient;
+        private final HbmIngredient input;
         private final ItemStack result;
+        private int sourceOrder = Integer.MAX_VALUE;
 
-        private PressRecipeBuilder(ItemPressStamp.StampType stamp, Ingredient ingredient, ItemStack result) {
+        private PressRecipeBuilder(ItemPressStamp.StampType stamp, HbmIngredient input, ItemStack result) {
             this.stamp = stamp;
-            this.ingredient = ingredient;
+            this.input = input;
             this.result = result.copy();
         }
 
         private static PressRecipeBuilder press(ItemPressStamp.StampType stamp, Ingredient ingredient, ItemStack result) {
-            return new PressRecipeBuilder(stamp, ingredient, result);
+            return press(stamp, HbmIngredient.of(ingredient, 1), result);
+        }
+
+        private static PressRecipeBuilder press(ItemPressStamp.StampType stamp, HbmIngredient input, ItemStack result) {
+            return new PressRecipeBuilder(stamp, input, result);
+        }
+
+        private PressRecipeBuilder sourceOrder(int sourceOrder) {
+            this.sourceOrder = sourceOrder;
+            return this;
         }
 
         private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
@@ -9453,8 +15035,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 @Override
                 public void serializeRecipeData(JsonObject json) {
                     json.addProperty("stamp", stamp.getSerializedName());
-                    json.add("ingredient", ingredient.toJson());
+                    json.add("input", input.toJson());
                     json.add("result", itemStackJson(result));
+                    if (sourceOrder != Integer.MAX_VALUE) {
+                        json.addProperty("source_order", sourceOrder);
+                    }
                 }
 
                 @Override
@@ -9500,6 +15085,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         private JsonObject inputFluid;
         private JsonObject outputItem;
         private JsonObject outputFluid;
+        private int sourceOrder = Integer.MAX_VALUE;
 
         private PyroOvenRecipeBuilder(int duration) {
             this.duration = Math.max(1, duration);
@@ -9514,6 +15100,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
             object.add("ingredient", Ingredient.of(tag).toJson());
             object.addProperty("count", Math.max(1, count));
             inputItem = object;
+            return this;
+        }
+
+        private PyroOvenRecipeBuilder inputLegacyOre(String legacyOreName, TagKey<Item> tag, int count) {
+            return inputLegacyOre(legacyOreName, Ingredient.of(tag), count);
+        }
+
+        private PyroOvenRecipeBuilder inputLegacyOre(String legacyOreName, Ingredient ingredient, int count) {
+            inputItem = HbmIngredient.legacyOre(legacyOreName, ingredient, count).toJson();
             return this;
         }
 
@@ -9544,6 +15139,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
             return this;
         }
 
+        private PyroOvenRecipeBuilder sourceOrder(int sourceOrder) {
+            this.sourceOrder = sourceOrder;
+            return this;
+        }
+
         private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
             if (inputItem == null && inputFluid == null) {
                 throw new IllegalStateException("HBM pyro oven recipe has no inputs: " + recipeId);
@@ -9567,6 +15167,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
                         json.add("output_item", outputItem);
                     }
                     json.addProperty("duration", duration);
+                    if (sourceOrder != Integer.MAX_VALUE) {
+                        json.addProperty("source_order", sourceOrder);
+                    }
                 }
 
                 @Override
@@ -9655,6 +15258,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
             return this;
         }
 
+        private MixerRecipeBuilder solidLegacyOre(String legacyOreName, Ingredient ingredient, int count) {
+            solidInput = HbmIngredient.legacyOre(legacyOreName, ingredient, count).toJson();
+            return this;
+        }
+
+        private MixerRecipeBuilder solidLegacyWildcard(ResourceLocation legacyId, int count) {
+            solidInput = HbmIngredient.legacyWildcard(legacyId, count).toJson();
+            return this;
+        }
+
         private MixerRecipeBuilder sourceOrder(int sourceOrder) {
             this.sourceOrder = sourceOrder;
             return this;
@@ -9717,11 +15330,23 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
     private static final class LiquefactionRecipeBuilder {
         private final Ingredient input;
+        @Nullable
+        private final HbmIngredient hbmInput;
         private final FluidType output;
         private final int amount;
+        private int sourceOrder = Integer.MAX_VALUE;
 
         private LiquefactionRecipeBuilder(Ingredient input, FluidType output, int amount) {
+            this(input, null, output, amount);
+        }
+
+        private LiquefactionRecipeBuilder(HbmIngredient input, FluidType output, int amount) {
+            this(input.ingredient(), input, output, amount);
+        }
+
+        private LiquefactionRecipeBuilder(Ingredient input, @Nullable HbmIngredient hbmInput, FluidType output, int amount) {
             this.input = input;
+            this.hbmInput = hbmInput;
             this.output = output;
             this.amount = amount;
         }
@@ -9734,16 +15359,36 @@ public final class HbmRecipeProvider extends RecipeProvider {
             return new LiquefactionRecipeBuilder(Ingredient.of(input), output, amount);
         }
 
+        private static LiquefactionRecipeBuilder liquefactionLegacyOre(String legacyOreName, TagKey<Item> input, FluidType output, int amount) {
+            return new LiquefactionRecipeBuilder(HbmIngredient.legacyOre(legacyOreName, Ingredient.of(input), 1), output, amount);
+        }
+
+        private static LiquefactionRecipeBuilder liquefactionLegacyWildcard(ResourceLocation legacyId, FluidType output, int amount) {
+            return new LiquefactionRecipeBuilder(HbmIngredient.legacyWildcard(legacyId, 1), output, amount);
+        }
+
+        private LiquefactionRecipeBuilder sourceOrder(int sourceOrder) {
+            this.sourceOrder = sourceOrder;
+            return this;
+        }
+
         private void save(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId) {
             consumer.accept(new FinishedRecipe() {
                 @Override
                 public void serializeRecipeData(JsonObject json) {
-                    json.add("ingredient", input.toJson());
+                    if (hbmInput != null) {
+                        json.add("input", hbmInput.toJson());
+                    } else {
+                        json.add("ingredient", input.toJson());
+                    }
                     JsonObject fluid = new JsonObject();
                     fluid.addProperty("fluid", output.getName());
                     fluid.addProperty("amount", amount);
                     fluid.addProperty("pressure", 0);
                     json.add("output", fluid);
+                    if (sourceOrder != Integer.MAX_VALUE) {
+                        json.addProperty("source_order", sourceOrder);
+                    }
                 }
 
                 @Override

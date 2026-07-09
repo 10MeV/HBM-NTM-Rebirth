@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "IWI",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "W": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "result": {
+    "count": 16,
+    "item": "hbm_ntm_rebirth:upgrade_muffler"
+  },
+  "show_notification": true
+}

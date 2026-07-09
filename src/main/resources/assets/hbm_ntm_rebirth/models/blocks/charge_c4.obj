@@ -1,6 +1,8 @@
 # Blender v2.79 (sub 0) OBJ File: 'charge_c4.blend'
 # www.blender.org
+mtllib hbm_default.mtl
 o Plane
+usemtl default
 v -0.250000 -0.312500 -0.250000
 v 0.250000 -0.312500 0.250000
 v -0.250000 -0.312500 0.250000

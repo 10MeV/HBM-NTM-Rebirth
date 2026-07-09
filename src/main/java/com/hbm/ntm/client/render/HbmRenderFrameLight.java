@@ -31,6 +31,23 @@ public final class HbmRenderFrameLight {
     private static Uniform sampler0Uniform;
     private static Uniform sampler1Uniform;
     private static Uniform sampler2Uniform;
+    private static ShaderInstance uploadedSamplerUniformShader;
+    private static int uploadedSamplerUniformProgram = -1;
+    private static long uploadedSamplerUniformPipelineGeneration = -1L;
+    private static int cachedSamplerTextureFrame = -1;
+    private static ResourceLocation cachedSamplerBaseTexture;
+    private static int cachedSamplerBase = -1;
+    private static int cachedSamplerOverlay = -1;
+    private static int cachedSamplerLightmap = -1;
+    private static Integer cachedSamplerBaseObject;
+    private static Integer cachedSamplerOverlayObject;
+    private static Integer cachedSamplerLightmapObject;
+    private static ShaderInstance preparedSamplerShader;
+    private static int preparedSamplerProgram = -1;
+    private static long preparedSamplerPipelineGeneration = -1L;
+    private static int preparedSamplerBase = -1;
+    private static int preparedSamplerOverlay = -1;
+    private static int preparedSamplerLightmap = -1;
 
     private HbmRenderFrameLight() {
     }
@@ -61,6 +78,18 @@ public final class HbmRenderFrameLight {
         sampler0Uniform = null;
         sampler1Uniform = null;
         sampler2Uniform = null;
+        uploadedSamplerUniformShader = null;
+        uploadedSamplerUniformProgram = -1;
+        uploadedSamplerUniformPipelineGeneration = -1L;
+        cachedSamplerTextureFrame = -1;
+        cachedSamplerBaseTexture = null;
+        cachedSamplerBase = -1;
+        cachedSamplerOverlay = -1;
+        cachedSamplerLightmap = -1;
+        cachedSamplerBaseObject = null;
+        cachedSamplerOverlayObject = null;
+        cachedSamplerLightmapObject = null;
+        clearPreparedSamplerMapCache();
     }
 
     public static void ensureLightTextureUpdated() {
@@ -85,23 +114,28 @@ public final class HbmRenderFrameLight {
         RenderSystem.assertOnRenderThread();
         ensureLightTextureUpdated();
         Minecraft minecraft = Minecraft.getInstance();
-        setupBlockLitSamplerTextures(minecraft, baseTexture);
-        int base = resolveTextureGlId(minecraft, baseTexture);
-        int overlay = resolveSamplerGlId(1);
-        int lightmap = resolveSamplerGlId(2);
+        ensureSamplerTextureIds(minecraft, baseTexture);
+        int base = cachedSamplerBase;
+        int overlay = cachedSamplerOverlay;
+        int lightmap = cachedSamplerLightmap;
+        if (base > 0 && overlay > 0 && lightmap > 0
+                && samplerMapAlreadyPrepared(shader, base, overlay, lightmap)) {
+            return;
+        }
         if (base > 0) {
-            shader.setSampler("Sampler0", Integer.valueOf(base));
+            shader.setSampler("Sampler0", cachedSamplerBaseObject(base));
         }
         if (overlay > 0) {
-            shader.setSampler("Sampler1", Integer.valueOf(overlay));
+            shader.setSampler("Sampler1", cachedSamplerOverlayObject(overlay));
         }
         if (lightmap > 0) {
-            shader.setSampler("Sampler2", Integer.valueOf(lightmap));
+            shader.setSampler("Sampler2", cachedSamplerLightmapObject(lightmap));
         }
-        if (base > 0) {
-            bindSamplerTexture(0, base);
+        if (base > 0 && overlay > 0 && lightmap > 0) {
+            rememberPreparedSamplerMap(shader, base, overlay, lightmap);
+        } else {
+            clearPreparedSamplerMapCache();
         }
-        RenderSystem.activeTexture(GL13.GL_TEXTURE0);
     }
 
     public static void bindBlockLitSamplerTextures(ShaderInstance shader) {
@@ -114,10 +148,10 @@ public final class HbmRenderFrameLight {
         }
         RenderSystem.assertOnRenderThread();
         Minecraft minecraft = Minecraft.getInstance();
-        setupBlockLitSamplerTextures(minecraft, baseTexture);
-        int base = resolveTextureGlId(minecraft, baseTexture);
-        int overlay = resolveSamplerGlId(1);
-        int lightmap = resolveSamplerGlId(2);
+        ensureSamplerTextureIds(minecraft, baseTexture);
+        int base = cachedSamplerBase;
+        int overlay = cachedSamplerOverlay;
+        int lightmap = cachedSamplerLightmap;
         if (base <= 0 || overlay <= 0 || lightmap <= 0) {
             recordInvalidSamplerBinding(base, overlay, lightmap);
             return;
@@ -126,13 +160,8 @@ public final class HbmRenderFrameLight {
         bindSamplerTexture(1, overlay);
         bindSamplerTexture(2, lightmap);
         RenderSystem.activeTexture(GL13.GL_TEXTURE0);
-        shader.setSampler("Sampler0", Integer.valueOf(base));
-        shader.setSampler("Sampler1", Integer.valueOf(overlay));
-        shader.setSampler("Sampler2", Integer.valueOf(lightmap));
         updateSamplerUniformCache(shader);
-        setSamplerUniform(sampler0Uniform, 0);
-        setSamplerUniform(sampler1Uniform, 1);
-        setSamplerUniform(sampler2Uniform, 2);
+        uploadSamplerUniformsIfNeeded(shader);
     }
 
     private static void recordInvalidSamplerBinding(int base, int overlay, int lightmap) {
@@ -165,6 +194,40 @@ public final class HbmRenderFrameLight {
         minecraft.getTextureManager().bindForSetup(texture);
     }
 
+    private static void ensureSamplerTextureIds(Minecraft minecraft, ResourceLocation baseTexture) {
+        ResourceLocation texture = baseTexture != null ? baseTexture : TextureAtlas.LOCATION_BLOCKS;
+        boolean cachedThisFrame = cachedSamplerTextureFrame == frameSerial;
+        int base = cachedThisFrame && texture.equals(cachedSamplerBaseTexture)
+                ? cachedSamplerBase
+                : resolveTextureManagerGlId(minecraft, texture);
+        int overlay = cachedThisFrame ? cachedSamplerOverlay : -1;
+        int lightmap = cachedThisFrame ? cachedSamplerLightmap : -1;
+        if (base <= 0 || overlay <= 0 || lightmap <= 0) {
+            setupBlockLitSamplerTextures(minecraft, texture);
+            base = resolveTextureGlId(minecraft, texture);
+            overlay = resolveSamplerGlId(1);
+            lightmap = resolveSamplerGlId(2);
+            rememberSamplerTextureIds(texture, base, overlay, lightmap);
+        } else {
+            cachedSamplerBaseTexture = texture;
+            cachedSamplerBase = base;
+        }
+    }
+
+    private static void rememberSamplerTextureIds(ResourceLocation baseTexture, int base, int overlay, int lightmap) {
+        ResourceLocation texture = baseTexture != null ? baseTexture : TextureAtlas.LOCATION_BLOCKS;
+        cachedSamplerTextureFrame = frameSerial;
+        cachedSamplerBaseTexture = texture;
+        cachedSamplerBase = base;
+        cachedSamplerOverlay = overlay;
+        cachedSamplerLightmap = lightmap;
+    }
+
+    private static int resolveTextureManagerGlId(Minecraft minecraft, ResourceLocation textureLocation) {
+        AbstractTexture abstractTexture = minecraft.getTextureManager().getTexture(textureLocation);
+        return abstractTexture != null && abstractTexture.getId() > 0 ? abstractTexture.getId() : -1;
+    }
+
     private static int resolveTextureGlId(Minecraft minecraft, ResourceLocation textureLocation) {
         ResourceLocation texture = textureLocation != null ? textureLocation : TextureAtlas.LOCATION_BLOCKS;
         AbstractTexture abstractTexture = minecraft.getTextureManager().getTexture(texture);
@@ -189,8 +252,7 @@ public final class HbmRenderFrameLight {
         if (textureId <= 0) {
             return;
         }
-        RenderSystem.activeTexture(GL13.GL_TEXTURE0 + unit);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureId);
+        RenderSystem.setShaderTexture(unit, textureId);
     }
 
     private static void updateSamplerUniformCache(ShaderInstance shader) {
@@ -215,4 +277,71 @@ public final class HbmRenderFrameLight {
             uniform.upload();
         }
     }
+
+    private static Integer cachedSamplerBaseObject(int textureId) {
+        if (cachedSamplerBaseObject == null || cachedSamplerBaseObject.intValue() != textureId) {
+            cachedSamplerBaseObject = Integer.valueOf(textureId);
+        }
+        return cachedSamplerBaseObject;
+    }
+
+    private static Integer cachedSamplerOverlayObject(int textureId) {
+        if (cachedSamplerOverlayObject == null || cachedSamplerOverlayObject.intValue() != textureId) {
+            cachedSamplerOverlayObject = Integer.valueOf(textureId);
+        }
+        return cachedSamplerOverlayObject;
+    }
+
+    private static Integer cachedSamplerLightmapObject(int textureId) {
+        if (cachedSamplerLightmapObject == null || cachedSamplerLightmapObject.intValue() != textureId) {
+            cachedSamplerLightmapObject = Integer.valueOf(textureId);
+        }
+        return cachedSamplerLightmapObject;
+    }
+
+    private static boolean samplerMapAlreadyPrepared(ShaderInstance shader, int base, int overlay, int lightmap) {
+        int program = shader.getId();
+        long generation = HbmShaderCompatibilityDetector.pipelineGeneration();
+        return preparedSamplerShader == shader
+                && preparedSamplerProgram == program
+                && preparedSamplerPipelineGeneration == generation
+                && preparedSamplerBase == base
+                && preparedSamplerOverlay == overlay
+                && preparedSamplerLightmap == lightmap;
+    }
+
+    private static void rememberPreparedSamplerMap(ShaderInstance shader, int base, int overlay, int lightmap) {
+        preparedSamplerShader = shader;
+        preparedSamplerProgram = shader.getId();
+        preparedSamplerPipelineGeneration = HbmShaderCompatibilityDetector.pipelineGeneration();
+        preparedSamplerBase = base;
+        preparedSamplerOverlay = overlay;
+        preparedSamplerLightmap = lightmap;
+    }
+
+    private static void clearPreparedSamplerMapCache() {
+        preparedSamplerShader = null;
+        preparedSamplerProgram = -1;
+        preparedSamplerPipelineGeneration = -1L;
+        preparedSamplerBase = -1;
+        preparedSamplerOverlay = -1;
+        preparedSamplerLightmap = -1;
+    }
+
+    private static void uploadSamplerUniformsIfNeeded(ShaderInstance shader) {
+        int program = shader.getId();
+        long generation = HbmShaderCompatibilityDetector.pipelineGeneration();
+        if (uploadedSamplerUniformShader == shader
+                && uploadedSamplerUniformProgram == program
+                && uploadedSamplerUniformPipelineGeneration == generation) {
+            return;
+        }
+        setSamplerUniform(sampler0Uniform, 0);
+        setSamplerUniform(sampler1Uniform, 1);
+        setSamplerUniform(sampler2Uniform, 2);
+        uploadedSamplerUniformShader = shader;
+        uploadedSamplerUniformProgram = program;
+        uploadedSamplerUniformPipelineGeneration = generation;
+    }
+
 }

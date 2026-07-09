@@ -19,6 +19,7 @@ public final class LegacyRbmkDisplayRenderer {
     public static final double DOT_X_OFFSET = 0.01D;
     public static final double DOT_WIDTH = 0.03125D;
     public static final double DOT_EDGE = 0.022097D;
+    private static final CompoundTag EMPTY_COLUMN_DATA = new CompoundTag();
 
     public static void renderDisplay(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay, RBMKConsolePlanner.ColumnSnapshot[] columns) {
@@ -30,12 +31,15 @@ public final class LegacyRbmkDisplayRenderer {
         poseStack.scale(1.0F, (float) DISPLAY_SCALE, (float) DISPLAY_SCALE);
         poseStack.translate(0.0D, -0.5D, 0.0D);
 
+        LegacyUntexturedQuadRenderer.DirectQuadBatch batch =
+                LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.CUTOUT_NO_CULL);
         for (int i = 0; i < columns.length; i++) {
             RBMKConsolePlanner.ColumnSnapshot column = columns[i];
             if (column == null) {
                 continue;
             }
-            renderColumn(poseStack, buffer, i, column);
+            renderColumn(batch, i, column);
         }
         poseStack.popPose();
     }
@@ -45,20 +49,30 @@ public final class LegacyRbmkDisplayRenderer {
         if (column == null) {
             return;
         }
+        LegacyUntexturedQuadRenderer.DirectQuadBatch batch =
+                LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        renderColumn(batch, index, column);
+    }
+
+    public static void renderColumn(LegacyUntexturedQuadRenderer.DirectQuadBatch batch, int index,
+            RBMKConsolePlanner.ColumnSnapshot column) {
+        if (column == null) {
+            return;
+        }
         double x = columnX();
         double y = columnY(index);
         double z = columnZ(index);
-        CompoundTag data = column.data() == null ? new CompoundTag() : column.data();
+        CompoundTag data = column.data() == null ? EMPTY_COLUMN_DATA : column.data();
         int baseColor = baseColor(index, data);
-        LegacyUntexturedQuadRenderer.xPlaneCenteredRect(poseStack, buffer,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, x, y, z, COLUMN_WIDTH, COLUMN_WIDTH, baseColor, 255);
+        LegacyUntexturedQuadRenderer.xPlaneCenteredRect(batch, x, y, z, COLUMN_WIDTH, COLUMN_WIDTH, baseColor, 255);
 
         RBMKConsolePlanner.ColumnType type = column.type() == null ? RBMKConsolePlanner.ColumnType.BLANK : column.type();
         switch (type) {
-            case FUEL, FUEL_SIM -> renderFuelDot(poseStack, buffer, x + DOT_X_OFFSET, y, z,
+            case FUEL, FUEL_SIM -> renderFuelDot(batch, x + DOT_X_OFFSET, y, z,
                     data.getDouble("enrichment"));
-            case CONTROL -> renderControlDot(poseStack, buffer, x + DOT_X_OFFSET, y, z, data.getDouble("level"));
-            case CONTROL_AUTO -> renderControlAutoDot(poseStack, buffer, x + DOT_X_OFFSET, y, z,
+            case CONTROL -> renderControlDot(batch, x + DOT_X_OFFSET, y, z, data.getDouble("level"));
+            case CONTROL_AUTO -> renderControlAutoDot(batch, x + DOT_X_OFFSET, y, z,
                     data.getDouble("level"));
             default -> {
             }
@@ -93,24 +107,55 @@ public final class LegacyRbmkDisplayRenderer {
 
     public static void renderFuelDot(PoseStack poseStack, MultiBufferSource buffer,
             double x, double y, double z, double enrichment) {
-        renderDot(poseStack, buffer, x, y, z,
+        LegacyUntexturedQuadRenderer.DirectQuadBatch batch =
+                LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        renderFuelDot(batch, x, y, z, enrichment);
+    }
+
+    public static void renderFuelDot(LegacyUntexturedQuadRenderer.DirectQuadBatch batch,
+            double x, double y, double z, double enrichment) {
+        renderDot(batch, x, y, z,
                 LegacyRenderColor.color(0.0F, 0.25F + (float) (enrichment * 0.75D), 0.0F));
     }
 
     public static void renderControlDot(PoseStack poseStack, MultiBufferSource buffer,
             double x, double y, double z, double level) {
-        renderDot(poseStack, buffer, x, y, z, LegacyRenderColor.color((float) level, (float) level, 0.0F));
+        LegacyUntexturedQuadRenderer.DirectQuadBatch batch =
+                LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        renderControlDot(batch, x, y, z, level);
+    }
+
+    public static void renderControlDot(LegacyUntexturedQuadRenderer.DirectQuadBatch batch,
+            double x, double y, double z, double level) {
+        renderDot(batch, x, y, z, LegacyRenderColor.color((float) level, (float) level, 0.0F));
     }
 
     public static void renderControlAutoDot(PoseStack poseStack, MultiBufferSource buffer,
             double x, double y, double z, double level) {
-        renderDot(poseStack, buffer, x, y, z, LegacyRenderColor.color((float) level, 0.0F, (float) level));
+        LegacyUntexturedQuadRenderer.DirectQuadBatch batch =
+                LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        renderControlAutoDot(batch, x, y, z, level);
+    }
+
+    public static void renderControlAutoDot(LegacyUntexturedQuadRenderer.DirectQuadBatch batch,
+            double x, double y, double z, double level) {
+        renderDot(batch, x, y, z, LegacyRenderColor.color((float) level, 0.0F, (float) level));
     }
 
     public static void renderDot(PoseStack poseStack, MultiBufferSource buffer,
             double x, double y, double z, int color) {
-        LegacyUntexturedQuadRenderer.xPlaneDot(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
-                x, y, z, DOT_WIDTH, DOT_EDGE, color, 255);
+        LegacyUntexturedQuadRenderer.DirectQuadBatch batch =
+                LegacyUntexturedQuadRenderer.directQuadBatch(poseStack, buffer,
+                        LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        renderDot(batch, x, y, z, color);
+    }
+
+    public static void renderDot(LegacyUntexturedQuadRenderer.DirectQuadBatch batch,
+            double x, double y, double z, int color) {
+        LegacyUntexturedQuadRenderer.xPlaneDot(batch, x, y, z, DOT_WIDTH, DOT_EDGE, color, 255);
     }
 
     public static double columnX() {

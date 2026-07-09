@@ -1,0 +1,11 @@
+{
+  "imported_recipe_count": 0,
+  "legacy_class": "AnnihilatorRecipes",
+  "legacy_file": "hbmAnnihilator.json",
+  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes",
+  "modern_recipe_type": "annihilator",
+  "note": "1.7.10 default milestones are 528-only and are not materialized here.",
+  "skipped_recipe_count": 0,
+  "source_recipe_count": 0,
+  "status": "missing_template"
+}

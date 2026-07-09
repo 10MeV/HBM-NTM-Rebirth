@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": {
+    "ingredient": {
+      "tag": "forge:dusts/chlorocalcite"
+    },
+    "legacy_ore": "dustChlorocalcite"
+  },
+  "output_item": {
+    "item": "hbm_ntm_rebirth:powder_calcium"
+  },
+  "output_fluid": {
+    "fluid": "CHLORINE",
+    "amount": 250
+  }
+}

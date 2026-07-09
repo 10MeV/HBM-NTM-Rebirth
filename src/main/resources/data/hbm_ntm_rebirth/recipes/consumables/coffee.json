@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "tag": "forge:dusts/coal" },
+    { "item": "minecraft:milk_bucket" },
+    { "item": "minecraft:potion" },
+    { "item": "minecraft:sugar" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:coffee"
+  }
+}

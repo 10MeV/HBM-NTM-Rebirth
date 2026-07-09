@@ -1,19 +1,19 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_arc_furnace",
-      "y": 90
+      "model": "hbm_ntm_rebirth:block/machines/arc_furnace"
     },
     "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machine_arc_furnace"
+      "model": "hbm_ntm_rebirth:block/machines/arc_furnace",
+      "y": 90
     },
     "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machine_arc_furnace",
-      "y": 180
+      "model": "hbm_ntm_rebirth:block/machines/arc_furnace",
+      "y": 270
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machine_arc_furnace",
-      "y": 270
+      "model": "hbm_ntm_rebirth:block/machines/arc_furnace",
+      "y": 180
     }
   }
 }

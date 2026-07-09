@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.blocks.gas.BlockGasBase;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -21,7 +22,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 @SuppressWarnings("deprecation")
-public class LegacyGasRadonBlock extends LegacyGasBlock {
+public class LegacyGasRadonBlock extends BlockGasBase {
     private final Kind kind;
 
     public LegacyGasRadonBlock(Properties properties, Kind kind) {

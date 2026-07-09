@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:storage_blocks/lead"
+  "source_order": 11,
+  "input": {
+    "ingredient": {
+      "tag": "forge:storage_blocks/lead"
+    },
+    "count": 1,
+    "legacy_ore": "blockLead"
   },
   "output": {
     "amount": 900,

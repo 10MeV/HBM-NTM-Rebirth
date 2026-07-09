@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEntity> {
     public LaunchPadRenderer(BlockEntityRendererProvider.Context context) {
@@ -22,9 +23,16 @@ public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEnti
     }
 
     @Override
+    public boolean shouldRender(LaunchPadBlockEntity launchPad, Vec3 cameraPos) {
+        return hasMissile(launchPad)
+                && BlockEntityRenderer.super.shouldRender(launchPad, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(launchPad, getViewDistance());
+    }
+
+    @Override
     public void render(LaunchPadBlockEntity launchPad, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ItemStack missile = launchPad.getItems().getStackInSlot(LaunchPadBlockEntity.SLOT_MISSILE);
+        ItemStack missile = missileStack(launchPad);
         if (missile.isEmpty()) {
             return;
         }
@@ -47,6 +55,14 @@ public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEnti
             poseStack.popPose();
         }
         poseStack.popPose();
+    }
+
+    private static boolean hasMissile(LaunchPadBlockEntity launchPad) {
+        return !missileStack(launchPad).isEmpty();
+    }
+
+    private static ItemStack missileStack(LaunchPadBlockEntity launchPad) {
+        return launchPad.getItems().getStackInSlot(LaunchPadBlockEntity.SLOT_MISSILE);
     }
 
     private static AABB launchPadLightingBounds(BlockPos pos, boolean missileLoaded) {

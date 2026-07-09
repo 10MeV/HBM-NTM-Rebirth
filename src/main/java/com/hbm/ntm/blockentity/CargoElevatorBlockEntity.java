@@ -67,10 +67,20 @@ public class CargoElevatorBlockEntity extends BlockEntity implements HbmLegacyLo
             elevator.extension -= SPEED;
         }
         elevator.extension = clamp(elevator.extension, 0.0D, elevator.height);
-        elevator.renderPlatform = true;
+
+        boolean changed = false;
+        if (!elevator.renderPlatform) {
+            elevator.renderPlatform = true;
+            elevator.syncPlatformBlockState();
+            changed = true;
+        }
 
         if (elevator.extension != elevator.prevExtension) {
             elevator.moveEntities(level, false);
+            changed = true;
+        }
+
+        if (changed) {
             elevator.syncChanged();
         } else if (level.getGameTime() % 20L == 0L) {
             elevator.syncChanged();
@@ -131,6 +141,19 @@ public class CargoElevatorBlockEntity extends BlockEntity implements HbmLegacyLo
         }
     }
 
+    private void syncPlatformBlockState() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        BlockState state = getBlockState();
+        if (state.getBlock() instanceof CargoElevatorBlock
+                && state.hasProperty(CargoElevatorBlock.PLATFORM)
+                && state.getValue(CargoElevatorBlock.PLATFORM) != renderPlatform) {
+            level.setBlock(worldPosition, state.setValue(CargoElevatorBlock.PLATFORM, renderPlatform),
+                    Block.UPDATE_CLIENTS);
+        }
+    }
+
     private void moveEntities(Level level, boolean clientSide) {
         double liftUpper = worldPosition.getY() + 1.0D + Math.max(extension, prevExtension);
         double liftLower = worldPosition.getY() + 1.0D + Math.min(extension, prevExtension);
@@ -184,6 +207,12 @@ public class CargoElevatorBlockEntity extends BlockEntity implements HbmLegacyLo
             extension = loadedExtension;
             syncExtension = loadedExtension;
         }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        syncPlatformBlockState();
     }
 
     @Override

@@ -5,7 +5,7 @@ import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.bullet.SednaGunConfig;
 import com.hbm.ntm.bullet.SednaMagazineConfig;
 import com.hbm.ntm.bullet.SednaReceiverConfig;
-import com.hbm.ntm.entity.projectile.ChemicalProjectileEntity;
+import com.hbm.entity.projectile.EntityChemical;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFillableItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluids;
@@ -15,7 +15,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,24 +96,10 @@ public class ChemthrowerItem extends SednaGunItem implements IFillableItem {
         if (type == HbmFluids.NONE || getFill(stack) < CONSUMPTION) {
             return;
         }
-        ChemicalProjectileEntity chemical = new ChemicalProjectileEntity(level);
-        chemical.setOwner(player);
-        chemical.setFluid(type);
         SednaReceiverConfig receiver = gun.receiver();
-        SednaReceiverConfig.Offset offset = isAiming(stack)
-                ? receiver.projectileOffsetScoped()
-                : receiver.projectileOffset();
-        Vec3 localOffset = new Vec3(offset.side(), offset.up(), offset.forward())
-                .xRot(-player.getXRot() * ((float) Math.PI / 180.0F))
-                .yRot(-player.getYRot() * ((float) Math.PI / 180.0F));
-        Vec3 position = new Vec3(player.getX(), player.getY() + player.getEyeHeight(), player.getZ()).add(localOffset);
-        Vec3 direction = player.getLookAngle();
-        chemical.setPos(position.x, position.y, position.z);
-        chemical.setDeltaMovement(direction.scale(1.5D));
-        chemical.setYRot(player.getYRot());
-        chemical.setXRot(player.getXRot());
-        chemical.yRotO = player.getYRot();
-        chemical.xRotO = player.getXRot();
+        SednaReceiverConfig.Offset offset = receiver.projectileOffset();
+        EntityChemical chemical = new EntityChemical(level, player, offset.side(), offset.up(), offset.forward());
+        chemical.setFluid(type);
         level.addFreshEntity(chemical);
 
         if (!player.getAbilities().instabuild) {

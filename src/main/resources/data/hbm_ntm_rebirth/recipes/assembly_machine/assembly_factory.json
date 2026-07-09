@@ -1,0 +1,64 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/dura_steel"
+      },
+      "legacy_ore": "ingotDuraSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/any_resistant_alloy"
+      },
+      "legacy_ore": "ingotAnyResistantAlloy"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/boron"
+      },
+      "legacy_ore": "ingotBoron"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:shells/steel"
+      },
+      "legacy_ore": "shellSteel"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      }
+    }
+  ],
+  "internal_name": "ass.assemfac",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_assembly_factory"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 124
+}

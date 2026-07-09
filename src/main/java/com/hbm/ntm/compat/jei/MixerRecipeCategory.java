@@ -1,30 +1,34 @@
 package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.recipe.MixerRecipe;
+import java.util.ArrayList;
+import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
-import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
-import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class MixerRecipeCategory implements IRecipeCategory<MixerRecipe> {
-    private static final int WIDTH = 168;
-    private static final int HEIGHT = 72;
-
     private final RecipeType<MixerRecipe> type;
     private final IDrawable icon;
-    private final IDrawableStatic arrow;
+    private final IDrawableStatic background;
+    private final IDrawableStatic slotBackground;
+    private final IDrawableStatic machineBackground;
+    private final ItemStack catalyst;
 
     MixerRecipeCategory(RecipeType<MixerRecipe> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
-        this.arrow = guiHelper.getRecipeArrow();
+        this.background = LegacyNeiUniversalLayout.background(guiHelper);
+        this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
+        this.machineBackground = LegacyNeiUniversalLayout.machineBackground(guiHelper);
+        this.catalyst = new ItemStack(catalyst);
     }
 
     @Override
@@ -39,12 +43,12 @@ public final class MixerRecipeCategory implements IRecipeCategory<MixerRecipe> {
 
     @Override
     public int getWidth() {
-        return WIDTH;
+        return LegacyNeiUniversalLayout.WIDTH;
     }
 
     @Override
     public int getHeight() {
-        return HEIGHT;
+        return LegacyNeiUniversalLayout.HEIGHT;
     }
 
     @Override
@@ -53,26 +57,20 @@ public final class MixerRecipeCategory implements IRecipeCategory<MixerRecipe> {
     }
 
     @Override
+    public IDrawable getBackground() {
+        return background;
+    }
+
+    @Override
     public void setRecipe(IRecipeLayoutBuilder builder, MixerRecipe recipe, IFocusGroup focuses) {
-        recipe.input1().ifPresent(input -> JeiFluidSlots.addFluidSlot(builder, input, true, 4, 8));
-        recipe.input2().ifPresent(input -> JeiFluidSlots.addFluidSlot(builder, input, true, 28, 8));
-        recipe.solidInput().ifPresent(input -> builder.addInputSlot(16, 36)
-                .addItemStacks(input.displayStacks())
-                .setStandardSlotBackground());
-        JeiFluidSlots.addFluidSlot(builder, recipe.output(), false, 130, 22);
-    }
+        List<List<ItemStack>> inputs = new ArrayList<>();
+        recipe.input1().ifPresent(input -> inputs.add(List.of(LegacyNeiUniversalLayout.fluidIcon(input))));
+        recipe.input2().ifPresent(input -> inputs.add(List.of(LegacyNeiUniversalLayout.fluidIcon(input))));
+        recipe.solidInput().ifPresent(input -> inputs.add(input.displayStacks()));
 
-    @Override
-    public void draw(MixerRecipe recipe, IRecipeSlotsView recipeSlotsView,
-            net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        arrow.draw(guiGraphics, 82, 24);
-    }
-
-    @Override
-    public void getTooltip(ITooltipBuilder tooltip, MixerRecipe recipe, IRecipeSlotsView recipeSlotsView,
-            double mouseX, double mouseY) {
-        if (mouseY >= 54) {
-            tooltip.add(Component.literal("Duration: " + recipe.duration() + " ticks"));
-        }
+        LegacyNeiUniversalLayout.addInputSlots(builder, slotBackground, inputs);
+        LegacyNeiUniversalLayout.addOutputSlots(builder, slotBackground,
+                List.of(List.of(LegacyNeiUniversalLayout.fluidIcon(recipe.output()))));
+        LegacyNeiUniversalLayout.addMachineCatalyst(builder, machineBackground, catalyst);
     }
 }

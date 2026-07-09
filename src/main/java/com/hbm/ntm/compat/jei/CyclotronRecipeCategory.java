@@ -1,9 +1,12 @@
 package com.hbm.ntm.compat.jei;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.recipe.CyclotronRecipeRuntime;
+import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
-import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
+import mezz.jei.api.gui.drawable.IDrawableAnimated;
+import mezz.jei.api.gui.drawable.IDrawableAnimated.StartDirection;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
@@ -11,22 +14,29 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class CyclotronRecipeCategory
         implements IRecipeCategory<CyclotronRecipeRuntime.DisplayRecipe> {
-    private static final int WIDTH = 168;
-    private static final int HEIGHT = 72;
+    private static final int WIDTH = 166;
+    private static final int HEIGHT = 65;
+    private static final ResourceLocation LEGACY_NEI_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/nei/gui_nei_cyclotron.png");
 
     private final RecipeType<CyclotronRecipeRuntime.DisplayRecipe> type;
     private final IDrawable icon;
-    private final IDrawableStatic arrow;
+    private final IDrawableStatic background;
+    private final IDrawableAnimated progress;
 
     CyclotronRecipeCategory(RecipeType<CyclotronRecipeRuntime.DisplayRecipe> type,
             ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
-        this.arrow = guiHelper.getRecipeArrow();
+        this.background = guiHelper.createDrawable(LEGACY_NEI_TEXTURE, 5, 11, WIDTH, HEIGHT);
+        this.progress = guiHelper.createAnimatedDrawable(
+                guiHelper.createDrawable(LEGACY_NEI_TEXTURE, 100, 119, 24, 16), 48, StartDirection.LEFT, false);
     }
 
     @Override
@@ -36,7 +46,7 @@ public final class CyclotronRecipeCategory
 
     @Override
     public Component getTitle() {
-        return Component.translatableWithFallback("block.hbm_ntm_rebirth.machine_cyclotron", "Cyclotron");
+        return Component.literal("Cyclotron");
     }
 
     @Override
@@ -55,30 +65,36 @@ public final class CyclotronRecipeCategory
     }
 
     @Override
+    public IDrawable getBackground() {
+        return background;
+    }
+
+    @Override
     public void setRecipe(IRecipeLayoutBuilder builder, CyclotronRecipeRuntime.DisplayRecipe recipe,
             IFocusGroup focuses) {
-        builder.addInputSlot(20, 26)
-                .addItemStacks(recipe.particleInputs())
-                .setStandardSlotBackground();
-        builder.addInputSlot(54, 26)
-                .addItemStacks(recipe.targetInputs())
-                .setStandardSlotBackground();
-        builder.addOutputSlot(128, 26)
-                .addItemStack(recipe.output())
-                .setOutputSlotBackground();
+        builder.addInputSlot(21, 24)
+                .addItemStacks(singles(recipe.particleInputs()));
+        builder.addInputSlot(75, 24)
+                .addItemStacks(singles(recipe.targetInputs()));
+        builder.addOutputSlot(129, 24)
+                .addItemStack(recipe.output());
     }
 
     @Override
     public void draw(CyclotronRecipeRuntime.DisplayRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        arrow.draw(guiGraphics, 82, 28);
+        progress.draw(guiGraphics, 44, 24);
     }
 
-    @Override
-    public void getTooltip(ITooltipBuilder tooltip, CyclotronRecipeRuntime.DisplayRecipe recipe,
-            IRecipeSlotsView recipeSlotsView, double mouseX, double mouseY) {
-        if (mouseY >= 54 && recipe.antimatterMb() > 0) {
-            tooltip.add(Component.literal("Antimatter: " + recipe.antimatterMb() + " mB"));
-        }
+    private static List<ItemStack> singles(List<ItemStack> stacks) {
+        return stacks.stream()
+                .map(CyclotronRecipeCategory::single)
+                .toList();
+    }
+
+    private static ItemStack single(ItemStack stack) {
+        ItemStack copy = stack.copy();
+        copy.setCount(1);
+        return copy;
     }
 }

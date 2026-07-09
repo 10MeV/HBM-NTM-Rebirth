@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:lead",
                   "amount":  100
-              }
+              },
+    "source_order":  9
 }

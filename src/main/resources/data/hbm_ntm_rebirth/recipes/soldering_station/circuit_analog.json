@@ -1,0 +1,40 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_vacuum_tube"
+      },
+      "count": 3
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "count": 2
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_pcb"
+      },
+      "count": 4
+    }
+  ],
+  "solder": [
+    {
+      "ingredient": {
+        "tag": "forge:wires/lead"
+      },
+      "count": 4,
+      "legacy_ore": "wireFineLead"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:circuit_analog"
+  },
+  "duration": 100,
+  "consumption": 100,
+  "source_order": 0
+}

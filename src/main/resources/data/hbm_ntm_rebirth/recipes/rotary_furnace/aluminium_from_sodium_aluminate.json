@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:rotary_furnace",
+  "output": {
+    "material": "Aluminium",
+    "amount": 288
+  },
+  "duration": 100,
+  "steam": 400,
+  "fluid": {
+    "fluid": "SODIUM_ALUMINATE",
+    "amount": 150
+  },
+  "source_order": 10
+}

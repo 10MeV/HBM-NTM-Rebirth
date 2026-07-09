@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "minecraft:saplings" } },
-  "output": { "item": "minecraft:stick" }
+  "output": { "item": "minecraft:stick" },
+  "source_order": 69
 }

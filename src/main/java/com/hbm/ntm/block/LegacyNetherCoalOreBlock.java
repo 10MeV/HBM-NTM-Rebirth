@@ -1,5 +1,6 @@
 package com.hbm.ntm.block;
 
+import com.hbm.blocks.generic.BlockOutgas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -11,10 +12,16 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Supplier;
 
-public class LegacyNetherCoalOreBlock extends LegacyOutgasBlock {
+@SuppressWarnings("deprecation")
+public class LegacyNetherCoalOreBlock extends BlockOutgas {
     public LegacyNetherCoalOreBlock(String legacyName, Properties properties, Supplier<? extends Block> gas,
             boolean onBreak, boolean onNeighbour) {
-        super(legacyName, properties, gas, onBreak, onNeighbour);
+        this(legacyName, properties, gas, false, 5, onBreak, onNeighbour);
+    }
+
+    public LegacyNetherCoalOreBlock(String legacyName, Properties properties, Supplier<? extends Block> gas,
+            boolean randomTick, int rate, boolean onBreak, boolean onNeighbour) {
+        super(legacyName, properties, gas, randomTick, rate, onBreak, onNeighbour);
     }
 
     @Override

@@ -1,6 +1,9 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.entity.mob.EntityTeslaCrab;
 import com.hbm.ntm.registry.ModEffects;
+import com.hbm.ntm.registry.ModEntityTypes;
+import java.util.ArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -9,6 +12,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -96,7 +100,28 @@ public class LegacyTaintBlock extends Block {
         entity.makeStuckInBlock(state, new Vec3(0.6D, 1.0D, 0.6D));
         if (!level.isClientSide && entity instanceof LivingEntity living && level.random.nextInt(50) == 0) {
             int amplifier = 15 - state.getValue(LEVEL);
-            living.addEffect(new MobEffectInstance(ModEffects.TAINT.get(), 15 * 20, amplifier));
+            MobEffectInstance effect = new MobEffectInstance(ModEffects.TAINT.get(), 15 * 20, amplifier);
+            effect.setCurativeItems(new ArrayList<>());
+            living.addEffect(effect);
+        }
+        if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
+            if (entity.getClass().equals(Creeper.class)) {
+                var tainted = ModEntityTypes.TAINTED_CREEPER.get().create(serverLevel);
+                if (tainted != null) {
+                    tainted.moveTo(entity.getX(), entity.getY(), entity.getZ(), entity.getYRot(), entity.getXRot());
+                    entity.discard();
+                    serverLevel.addFreshEntity(tainted);
+                }
+                return;
+            }
+            if (entity instanceof EntityTeslaCrab) {
+                var tainted = ModEntityTypes.TAINT_CRAB.get().create(serverLevel);
+                if (tainted != null) {
+                    tainted.moveTo(entity.getX(), entity.getY(), entity.getZ(), entity.getYRot(), entity.getXRot());
+                    entity.discard();
+                    serverLevel.addFreshEntity(tainted);
+                }
+            }
         }
     }
 

@@ -1,0 +1,38 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.custom.ore_beryllium",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "count":  1,
+                            "ingredient":  {
+                                               "tag":  "forge:ores/beryllium"
+                                           },
+                            "legacy_ore":  "oreBeryllium"
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "arc_material_outputs":  [
+                                 {
+                                     "amount":  144,
+                                     "material":  "Beryllium"
+                                 },
+                                 {
+                                     "amount":  162,
+                                     "material":  "Stone"
+                                 }
+                             ],
+    "pools":  [
+
+              ],
+    "source_order":  2296
+}

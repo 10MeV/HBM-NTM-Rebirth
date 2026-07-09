@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:deco_steel"
+      }
+    }
+  ],
+  "internal_name": "chem.rustysteel",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 8,
+      "item": "hbm_ntm_rebirth:deco_rusty_steel"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 44
+}

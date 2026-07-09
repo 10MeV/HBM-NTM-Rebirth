@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "tools",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:blades_steel"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:chain"
+    },
+    "E": {
+      "item": "hbm_ntm_rebirth:canister_empty"
+    },
+    "H": {
+      "tag": "forge:shells/steel"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:piston_selenium"
+    }
+  },
+  "pattern": [
+    "CCH",
+    "BBP",
+    "CCE"
+  ],
+  "result": {
+    "count": 1,
+    "item": "hbm_ntm_rebirth:chainsaw",
+    "nbt": "{fuel:0}"
+  },
+  "show_notification": true
+}

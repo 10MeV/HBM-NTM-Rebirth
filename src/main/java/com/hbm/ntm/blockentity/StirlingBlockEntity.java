@@ -7,7 +7,9 @@ import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.block.StirlingBlock;
 import com.hbm.ntm.energy.HbmEnergySideMode;
+import com.hbm.ntm.energy.HbmEnergyProvider;
 import com.hbm.ntm.energy.HbmEnergyStorage;
+import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.entity.projectile.CogEntity;
 import com.hbm.ntm.entity.projectile.MachinePartProjectileEntity;
@@ -30,7 +32,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPersistentBlockState {
+public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPersistentBlockState, HbmEnergyProvider {
     public static final double DIFFUSION = 0.1D;
     public static final double EFFICIENCY = 0.5D;
     public static final int MAX_HEAT_NORMAL = 300;
@@ -250,6 +252,13 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
                 EnergyPort.of(-2, 0, 0, Direction.WEST),
                 EnergyPort.of(0, 0, 2, Direction.SOUTH),
                 EnergyPort.of(0, 0, -2, Direction.NORTH));
+    }
+
+    @Override
+    protected int tryProvideEnergyToPorts() {
+        return level == null || level.isClientSide
+                ? 0
+                : HbmEnergyUtil.tryProvideToPorts(level, worldPosition, getEnergyPorts(), this);
     }
 
     @Override

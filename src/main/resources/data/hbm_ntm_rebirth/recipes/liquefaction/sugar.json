@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
+  "source_order": 22,
   "ingredient": {
     "item": "minecraft:sugar"
   },

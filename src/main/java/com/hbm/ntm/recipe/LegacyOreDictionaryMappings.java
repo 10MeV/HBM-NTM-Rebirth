@@ -5,15 +5,22 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public final class LegacyOreDictionaryMappings {
     private static final String FORGE = "forge";
     private static final String MINECRAFT = "minecraft";
     private static final Map<String, TagId> EXACT = new LinkedHashMap<>();
     private static final Map<String, String> SHAPE_PREFIXES = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, List<String>> REVERSE_EXACT = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, List<String>> REVERSE_SHAPE_ALIASES = new LinkedHashMap<>();
+    private static final Map<String, List<String>> REVERSE_MATERIAL_ALIASES = new LinkedHashMap<>();
 
     static {
         registerExact("stickWood", FORGE, "rods/wooden");
@@ -30,6 +37,7 @@ public final class LegacyOreDictionaryMappings {
         registerExact("treeLeaves", MINECRAFT, "leaves");
         registerExact("treeSapling", MINECRAFT, "saplings");
         registerExact("sand", FORGE, "sand");
+        registerExact("stone", FORGE, "stone");
         registerExact("cobblestone", FORGE, "cobblestone");
 
         registerExact("dye", FORGE, "dyes");
@@ -64,6 +72,7 @@ public final class LegacyOreDictionaryMappings {
         registerExact("briquetteCoal", FORGE, "briquettes/coal");
         registerExact("briquetteLignite", FORGE, "briquettes/lignite");
         registerExact("briquetteWood", FORGE, "briquettes/wood");
+        registerExact("dustPhosphorus", FORGE, "dusts/red_phosphorus");
         registerExact("logWoodPink", FORGE, "logs/pink");
         registerExact("plankWoodPink", FORGE, "planks/pink");
         registerExact("slabWoodPink", FORGE, "wooden_slabs/pink");
@@ -80,6 +89,7 @@ public final class LegacyOreDictionaryMappings {
         registerExact("ntmhanddrill", FORGE, "tools/hand_drills");
         registerExact("ntmchemistryset", FORGE, "tools/chemistry_sets");
         registerExact("ntmtorch", FORGE, "tools/torches");
+        registerExact("pipeSteel", FORGE, "pipes/steel");
 
         registerShape("any", "any");
         registerShape("oreNether", "ores/nether");
@@ -103,6 +113,7 @@ public final class LegacyOreDictionaryMappings {
         registerShape("plate", "plates");
         registerShape("shell", "shells");
         registerShape("ntmpipe", "pipes");
+        registerShape("pipe", "pipes");
         registerShape("block", "storage_blocks");
         registerShape("barrelLight", "light_barrels");
         registerShape("barrelHeavy", "heavy_barrels");
@@ -112,6 +123,28 @@ public final class LegacyOreDictionaryMappings {
         registerShape("stock", "stocks");
         registerShape("grip", "grips");
         registerShape("circuit", "circuits");
+
+        registerReverseMaterialAliases("aluminium", "Aluminum");
+        registerReverseMaterialAliases("combine_steel", "CMBSteel");
+        registerReverseMaterialAliases("bscco", "BSCCO");
+        registerReverseMaterialAliases("pvc", "PVC");
+        registerReverseMaterialAliases("pet", "PET");
+        registerReverseMaterialAliases("cft", "CFT");
+        registerReverseMaterialAliases("gunmetal", "GunMetal");
+        registerReverseMaterialAliases("weaponsteel", "WeaponSteel");
+        registerReverseMaterialAliases("plutonium_rg", "PlutoniumRG");
+        registerReverseMaterialAliases("americium_rg", "AmericiumRG");
+        registerReverseMaterialAliases("any_hardplastic", "AnyHardPlastic");
+
+        registerReverseShapeAliases("dust", "NetherQuartz", "Quartz");
+        registerReverseShapeAliases("dust", "RedPhosphorus");
+        registerReverseShapeAliases("ntmpipe", "Steel");
+        registerReverseShapeAliases("shell", "Aluminum", "Aluminium");
+        registerReverseShapeAliases("wireFine", "Aluminum", "Aluminium");
+        registerReverseShapeAliases("plateSextuple", "Aluminum", "Aluminium");
+        registerReverseShapeAliases("plateSextuple", "CMBSteel", "CombineSteel");
+        registerReverseShapeAliases("plateWelded", "CMBSteel", "CombineSteel");
+        registerReverseTagAliases(new ResourceLocation(FORGE, "ingots/biorubber"), "ingotLatex");
     }
 
     private LegacyOreDictionaryMappings() {
@@ -147,12 +180,96 @@ public final class LegacyOreDictionaryMappings {
         return itemTagId(legacyName).getPath();
     }
 
+    public static List<String> legacyNamesForTag(ResourceLocation tagId) {
+        if (tagId == null) {
+            return List.of();
+        }
+
+        Set<String> names = new LinkedHashSet<>();
+        List<String> exactNames = REVERSE_EXACT.get(tagId);
+        if (exactNames != null) {
+            names.addAll(exactNames);
+        }
+
+        List<String> shapeAliases = REVERSE_SHAPE_ALIASES.get(tagId);
+        if (shapeAliases != null) {
+            names.addAll(shapeAliases);
+            return List.copyOf(names);
+        }
+
+        if (exactNames != null || !FORGE.equals(tagId.getNamespace())) {
+            return List.copyOf(names);
+        }
+
+        String tagPath = tagId.getPath();
+        for (Map.Entry<String, String> entry : SHAPE_PREFIXES.entrySet()) {
+            String tagDirectory = entry.getValue();
+            String pathPrefix = tagDirectory + "/";
+            if (tagPath.startsWith(pathPrefix) && tagPath.length() > pathPrefix.length()) {
+                String materialPath = tagPath.substring(pathPrefix.length());
+                for (String legacyMaterial : reverseMaterialNames(materialPath)) {
+                    names.add(entry.getKey() + legacyMaterial);
+                }
+            }
+        }
+
+        return List.copyOf(names);
+    }
+
     private static void registerExact(String legacyName, String namespace, String path) {
-        EXACT.put(legacyName, new TagId(namespace, path));
+        TagId tag = new TagId(namespace, path);
+        EXACT.put(legacyName, tag);
+        addReverse(REVERSE_EXACT, tag.location(), legacyName);
     }
 
     private static void registerShape(String legacyPrefix, String tagDirectory) {
         SHAPE_PREFIXES.put(legacyPrefix, tagDirectory);
+    }
+
+    private static void registerReverseMaterialAliases(String modernMaterialPath, String... legacyMaterials) {
+        REVERSE_MATERIAL_ALIASES.put(modernMaterialPath, List.of(legacyMaterials));
+    }
+
+    private static void registerReverseShapeAliases(String legacyPrefix, String... legacyMaterials) {
+        for (String legacyMaterial : legacyMaterials) {
+            String legacyName = legacyPrefix + legacyMaterial;
+            addReverse(REVERSE_SHAPE_ALIASES, itemTagId(legacyName), legacyName);
+        }
+    }
+
+    private static void registerReverseTagAliases(ResourceLocation tagId, String... legacyNames) {
+        for (String legacyName : legacyNames) {
+            addReverse(REVERSE_SHAPE_ALIASES, tagId, legacyName);
+        }
+    }
+
+    private static void addReverse(Map<ResourceLocation, List<String>> reverse, ResourceLocation tagId, String legacyName) {
+        List<String> names = reverse.computeIfAbsent(tagId, key -> new ArrayList<>());
+        if (!names.contains(legacyName)) {
+            names.add(legacyName);
+        }
+    }
+
+    private static List<String> reverseMaterialNames(String materialPath) {
+        List<String> aliases = REVERSE_MATERIAL_ALIASES.get(materialPath);
+        if (aliases != null) {
+            return aliases;
+        }
+        return List.of(legacyMaterialName(materialPath));
+    }
+
+    private static String legacyMaterialName(String materialPath) {
+        String[] parts = materialPath.split("[_/]+");
+        StringBuilder builder = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                builder.append(part.substring(0, 1).toUpperCase(Locale.ROOT));
+                if (part.length() > 1) {
+                    builder.append(part.substring(1));
+                }
+            }
+        }
+        return builder.toString();
     }
 
     private static String materialPath(String materialName) {

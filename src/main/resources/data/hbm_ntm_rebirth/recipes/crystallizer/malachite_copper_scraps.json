@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 300,
+  "fluid": { "fluid": "SULFURIC_ACID", "amount": 250 },
+  "input": { "ingredient": { "tag": "forge:ingots/malachite" }, "legacy_ore": "ingotMalachite" },
+  "output": { "item": "hbm_ntm_rebirth:scraps", "nbt": "{mat:2900,amount:72}" },
+  "productivity": 0.1,
+  "source_order": 22
+}

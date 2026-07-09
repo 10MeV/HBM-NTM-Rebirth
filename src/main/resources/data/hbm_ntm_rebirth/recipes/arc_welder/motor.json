@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.motor",
+  "duration": 100,
+  "power": 400,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 2, "legacy_ore": "plateSteel" },
+    { "ingredient": { "tag": "forge:dense_wires/mingrade" }, "count": 2, "legacy_ore": "wireDenseMingrade" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:motor", "count": 2 }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 0
+}

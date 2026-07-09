@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
+import com.hbm.ntm.client.obj.LegacyObjTransforms;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -35,6 +36,12 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
     }
 
     @Override
+    public boolean shouldRender(PyroOvenBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }
@@ -64,38 +71,41 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(pyroOven)) {
-            LegacyTileRenderPlans.PyroOvenPlan plan = LegacyTileRenderPlans.pyroOvenPlan(anim);
+            double sliderX = LegacyObjTransforms.softPeakSine(
+                    anim * LegacyTileRenderPlans.PYRO_OVEN_SLIDER_ANIM_SCALE)
+                    * LegacyTileRenderPlans.PYRO_OVEN_SLIDER_TRAVEL_SCALE
+                    + LegacyTileRenderPlans.PYRO_OVEN_SLIDER_BASE_X;
+            double fanAngle = anim * LegacyTileRenderPlans.PYRO_OVEN_FAN_ROTATION_SCALE % 360.0D;
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(pyroOven)) {
-                renderTranslatedPart(model, plan.slider(), definition.textureLocation(), poseStack, buffer, modelLight,
-                        packedOverlay);
-                renderRotatingPart(model, plan.fan(), definition.textureLocation(), poseStack, buffer, modelLight,
-                        packedOverlay);
+                renderTranslatedPart(model, "Slider", definition.textureLocation(), sliderX, 0.0D, 0.0D,
+                        poseStack, buffer, modelLight, packedOverlay);
+                renderRotatingYPart(model, "Fan", definition.textureLocation(),
+                        LegacyTileRenderPlans.PYRO_OVEN_FAN_PIVOT_X,
+                        LegacyTileRenderPlans.PYRO_OVEN_FAN_PIVOT_Z,
+                        fanAngle, poseStack, buffer, modelLight, packedOverlay);
             }
         }
 
         poseStack.popPose();
     }
 
-    private static void renderTranslatedPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.TranslatedModelPartPlan part, ResourceLocation texture,
+    private static void renderTranslatedPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            double translateX, double translateY, double translateZ,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!part.active()) {
-            return;
-        }
         poseStack.pushPose();
-        poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-        renderModelPart(model, part.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(translateX, translateY, translateZ);
+        renderModelPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderRotatingPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture,
+    private static void renderRotatingYPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            double pivotX, double pivotZ, double angleDegrees,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) part.angleDegrees()));
-        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        renderModelPart(model, part.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(pivotX, 0.0D, pivotZ);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) angleDegrees));
+        poseStack.translate(-pivotX, 0.0D, -pivotZ);
+        renderModelPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 

@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/rare_earth" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_rare"
+    },
+    "legacy_id": "hbm:crystal_rare",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_desh_mix" },
-    { "item": "hbm_ntm_rebirth:powder_desh_mix" },
-    { "item": "hbm_ntm_rebirth:nugget_zirconium", "count": 2 },
-    { "item": "hbm_ntm_rebirth:nugget_zirconium", "count": 2 }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_desh_mix"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_desh_mix"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:nugget_zirconium"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:nugget_zirconium"
+    }
+  ],
+  "source_order": 50
 }

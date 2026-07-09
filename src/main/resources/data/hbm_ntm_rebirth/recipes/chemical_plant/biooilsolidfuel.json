@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "custom_localization": true,
+  "duration": 40,
+  "input_fluids": [
+    {
+      "amount": 100,
+      "fluid": "hbm_ntm_rebirth:heatingoil"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:biomass_compressed"
+      }
+    }
+  ],
+  "internal_name": "chem.biooilsolidfuel",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:solid_fuel"
+    }
+  ],
+  "pools": [
+    "alt..biosolidfuel"
+  ],
+  "power": 100,
+  "source_order": 46
+}

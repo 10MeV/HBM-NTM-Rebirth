@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:container_upgrade_crafting",
+  "category": "building",
+  "key": {
+    "B": {
+      "tag": "forge:storage_blocks/tungsten"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:crate_steel"
+    },
+    "P": {
+      "tag": "forge:cast_plates/copper"
+    }
+  },
+  "pattern": [
+    "BPB",
+    "PCP",
+    "BPB"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:crate_tungsten"
+  },
+  "show_notification": true
+}

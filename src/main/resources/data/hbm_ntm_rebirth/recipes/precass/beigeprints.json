@@ -1,0 +1,47 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "internal_name": "precass.beigeprints",
+  "duration": 6000,
+  "power": 50000,
+  "input_items": [
+    {
+      "ingredient": {
+        "item": "minecraft:paper"
+      },
+      "count": 24
+    },
+    {
+      "ingredient": {
+        "tag": "forge:gems/cinnabar"
+      },
+      "count": 24,
+      "legacy_ore": "gemCinnabar"
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:pufferfish"
+      },
+      "count": 8
+    }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    {
+      "type": "one_of",
+      "entries": [
+        {
+          "item": "hbm_ntm_rebirth:blueprint_folder_discover",
+          "weight": 5
+        },
+        {
+          "item": "minecraft:paper",
+          "count": 24,
+          "weight": 95
+        }
+      ]
+    }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 1
+}

@@ -97,7 +97,9 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SNACKS), pool(
                 entry(ModItems.DEFINITELYFOOD, 1, 1, 10),
                 entry(ModItems.TWINKIE, 1, 1, 10),
-                entry(ModItems.CHOCOLATE, 1, 1, 10)));
+                entry(ModItems.CHOCOLATE, 1, 1, 10),
+                entry(ModItems.CANNED_BEEF, 1, 1, 5),
+                entry(ModItems.CANNED_TUBE, 1, 1, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VAULT_RUSTY), pool(
                 entry(Items.GOLD_INGOT, 3, 14, 1),
@@ -170,6 +172,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.CAP_NUKA, 1, 15, 7),
                 entry(ModItems.COIN_TOKEN, 1, 1, 2),
                 entry(legacyItem("dust"), 2, 4, 9),
+                entry(ModItems.BOTTLE_OPENER, 1, 1, 2),
                 entry(ModItems.GAS_MASK_FILTER, 1, 1, 3)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_ANTENNA), pool(
@@ -187,6 +190,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.BOTTLE_CHERRY, 1, 1, 2),
                 entry(ModItems.CAP_NUKA, 1, 15, 7),
                 entry(legacyItem("dust"), 2, 4, 9),
+                entry(ModItems.BOTTLE_OPENER, 1, 1, 2),
                 entry(ModItems.GAS_MASK_FILTER, 1, 1, 2)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_EXPENSIVE), pool(
@@ -201,6 +205,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G26_FLARE_SUPPLY, 1, 1, 5),
                 meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G26_FLARE_WEAPON, 1, 1, 3),
                 meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LITHIUM, 1, 1, 1),
+                entry(ModItems.SYRINGE_AWESOME, 1, 1, 1),
                 entry(ModBlocks.RED_BARREL, 1, 1, 6),
                 fluidCanister(HbmFluids.DIESEL, 1, 2, 2),
                 fluidCanister(HbmFluids.BIOFUEL, 1, 2, 3),
@@ -287,6 +292,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(legacyItem("powder_diamond"), 2, 2, 7),
                 entry(Items.REDSTONE, 5, 5, 15),
                 entry(legacyItem("powder_nitan_mix"), 2, 2, 5),
+                entry(ModItems.POWDER_POWER, 2, 2, 5),
                 entry(ModItems.COPPER_POWDER, 5, 5, 15),
                 entry(ModItems.LEAD_POWDER, 3, 3, 10),
                 entry(legacyItem("fluorite"), 4, 4, 15),
@@ -358,7 +364,12 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.PAPER, 1, 12, 10),
                 entry(Items.BOOK, 1, 3, 4),
                 entry(ModItems.TWINKIE, 1, 2, 6),
+                entry(ModItems.COFFEE, 1, 1, 4),
                 entry(ModItems.CAN_EMPTY, 1, 1, 2),
+                entry(ModItems.RING_PULL, 1, 1, 4),
+                entry(ModItems.CAN_CREATURE, 1, 2, 2),
+                entry(ModItems.CAN_SMART, 1, 3, 2),
+                entry(ModItems.CAN_MRSUGAR, 1, 2, 2),
                 entry(ModItems.CAP_NUKA, 1, 16, 2),
                 entry(ModItems.COIN_TOKEN, 1, 1, 2)));
 
@@ -367,6 +378,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(Items.BOOK, 1, 3, 90),
                 entry(Items.MAP, 1, 1, 50),
                 entry(Items.WRITABLE_BOOK, 1, 1, 30),
+                entry(ModItems.CIGARETTE, 1, 16, 20),
                 entry(ModItems.INK, 1, 1, 1),
                 entry(legacyItem("dust"), 1, 1, 40),
                 entry(legacyItem("dust_tiny"), 1, 3, 75),
@@ -410,6 +422,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.GOGGLES, 1, 1, 2),
                 entry(ModItems.GAS_MASK_FILTER, 1, 1, 4),
                 entry(ModItems.DEFINITELYFOOD, 2, 7, 5),
+                entry(ModItems.CIGARETTE, 1, 8, 5),
                 entry(ModItems.GUN_KIT_1, 1, 1, 3),
                 entry(ModItems.RAG, 1, 3, 5),
                 entry(Items.EXPERIENCE_BOTTLE, 1, 3, 1),
@@ -482,6 +495,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MED_PILLS), pool(
                 entry(ModItems.RADAWAY, 1, 1, 10),
                 entry(ModItems.RADX, 1, 1, 10),
+                entry(ModItems.IV_BLOOD, 1, 1, 15),
                 entry(ModItems.SIOX, 1, 1, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MAKESHIFT_GUN), pool(
@@ -515,9 +529,11 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(legacyItem("ingot_asbestos"), 1, 1, 15),
                 entry(ModItems.CAN_EMPTY, 1, 1, 15),
                 entry(ModItems.SYRINGE_METAL_EMPTY, 1, 1, 15),
+                entry(ModItems.SYRINGE_EMPTY, 1, 1, 15),
                 entry(legacyItem("dust"), 1, 3, 40),
                 entry(legacyItem("dust_tiny"), 1, 7, 40),
-                entry(ModItems.MOTOR, 1, 1, 5)));
+                entry(ModItems.MOTOR, 1, 1, 5),
+                entry(ModItems.CANNED_MYSTERY, 0, 1, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MECHANICAL), pool(
                 entry(ModItems.DEFUSER, 1, 1, 30),
@@ -538,7 +554,8 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.TAURUN_HELMET, 1, 1, 20),
                 entry(ModItems.TAURUN_PLATE, 1, 1, 20),
                 entry(ModItems.TAURUN_LEGS, 1, 1, 20),
-                entry(ModItems.TAURUN_BOOTS, 1, 1, 20)));
+                entry(ModItems.TAURUN_BOOTS, 1, 1, 20),
+                entry(ModItems.CANNED_BEEF, 2, 5, 40)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SUPPLIES), pool(
                 entry(ModItems.DEFINITELYFOOD, 3, 10, 25),
@@ -546,6 +563,7 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(ModItems.PILL_IODINE, 1, 2, 2),
                 fluidCanister(HbmFluids.DIESEL, 1, 4, 5),
                 entry(ModItems.GEIGER_COUNTER, 1, 1, 2),
+                entry(ModItems.MED_BAG, 1, 1, 3),
                 entry(ModItems.RADAWAY, 1, 5, 10)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_WEAPONS), pool(

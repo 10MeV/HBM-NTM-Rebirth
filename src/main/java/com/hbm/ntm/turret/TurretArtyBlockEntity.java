@@ -118,9 +118,14 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
         return null;
     }
 
-    private int getFirstArtyShellIndexLoaded() {
-        LegacyArtilleryAmmoCatalog.ArtyShell shell = getFirstArtyShellLoaded();
-        return shell == null ? -1 : LegacyArtilleryAmmoCatalog.artyShells().indexOf(shell);
+    private ItemStack getFirstArtyShellStackLoaded() {
+        for (int slot = SLOT_AMMO_START; slot <= SLOT_AMMO_END; slot++) {
+            ItemStack stack = getItems().getStackInSlot(slot);
+            if (LegacyArtilleryAmmoCatalog.findArtyShell(stack) != null) {
+                return stack;
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     private boolean consumeArtyShell(int shellIndex) {
@@ -139,22 +144,12 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
         return false;
     }
 
-    private ItemStack cargoForFirstShell(int shellIndex) {
-        if (shellIndex < 0 || shellIndex >= LegacyArtilleryAmmoCatalog.artyShells().size()) {
+    private ItemStack cargoForShellStack(ItemStack stack, LegacyArtilleryAmmoCatalog.ArtyShell shell) {
+        if (stack.isEmpty() || shell != LegacyArtilleryAmmoCatalog.AMMO_ARTY_CARGO
+                || !stack.hasTag() || !stack.getTag().contains("cargo")) {
             return ItemStack.EMPTY;
         }
-        LegacyArtilleryAmmoCatalog.ArtyShell shell = LegacyArtilleryAmmoCatalog.artyShells().get(shellIndex);
-        if (shell != LegacyArtilleryAmmoCatalog.AMMO_ARTY_CARGO) {
-            return ItemStack.EMPTY;
-        }
-        for (int slot = SLOT_AMMO_START; slot <= SLOT_AMMO_END; slot++) {
-            ItemStack stack = getItems().getStackInSlot(slot);
-            if (LegacyArtilleryAmmoCatalog.findArtyShell(stack) == shell
-                    && stack.hasTag() && stack.getTag().contains("cargo")) {
-                return ItemStack.of(stack.getTag().getCompound("cargo"));
-            }
-        }
-        return ItemStack.EMPTY;
+        return ItemStack.of(stack.getTag().getCompound("cargo"));
     }
 
     @Override
@@ -179,6 +174,9 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
 
     @Override
     protected boolean canKeepCurrentTarget(Entity entity) {
+        if (mode == MODE_MANUAL) {
+            return true;
+        }
         return canAcquireTarget(entity);
     }
 
@@ -229,30 +227,30 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
         }
 
         Vec3 target = getTargetPos();
-        int shellIndex = getFirstArtyShellIndexLoaded();
+        ItemStack shellStack = getFirstArtyShellStackLoaded();
+        LegacyArtilleryAmmoCatalog.ArtyShell shell = LegacyArtilleryAmmoCatalog.findArtyShell(shellStack);
+        int shellIndex = shell == null ? -1 : LegacyArtilleryAmmoCatalog.artyShells().indexOf(shell);
         if (target != null && shellIndex >= 0) {
-            ItemStack cargo = cargoForFirstShell(shellIndex);
-            if (spawnShell(shellIndex, target, cargo)) {
-                scheduleArtyCasing(LegacyArtilleryAmmoCatalog.artyShells().get(shellIndex).legacyName());
-                if (consumeArtyShell(shellIndex)) {
-                    playTurretSound("hbm:turret.jeremy_fire", 25.0F, 1.0F);
-                    spawnMuzzleLargeExplode(0.0F, 5);
-                    triggerBarrelRetract();
-                    setChanged();
-                }
-            }
+            ItemStack cargo = cargoForShellStack(shellStack, shell);
+            spawnShell(shellIndex, target, cargo);
+            scheduleArtyCasing(shell.legacyName());
+            consumeArtyShell(shellIndex);
+            playTurretSound("hbm:turret.jeremy_fire", 25.0F, 1.0F);
+            spawnMuzzleLargeExplode(0.0F, 5);
+            triggerBarrelRetract();
+            setChanged();
         }
 
         if (mode == MODE_MANUAL && !targetQueue.isEmpty()) {
             targetQueue.removeFirst();
-            clearTarget();
-            syncRuntimeToTracking();
+            clearTargetPosition();
+            setChanged();
         }
     }
 
-    private boolean spawnShell(int shellIndex, Vec3 target, ItemStack cargo) {
+    private void spawnShell(int shellIndex, Vec3 target, ItemStack cargo) {
         if (level == null || level.isClientSide || target == null) {
-            return false;
+            return;
         }
         ArtilleryShellEntity shell = new ArtilleryShellEntity(level);
         Vec3 muzzle = getMuzzlePos();
@@ -266,7 +264,7 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
         if (mode != MODE_CANNON) {
             shell.setWhistle(true);
         }
-        return level.addFreshEntity(shell);
+        level.addFreshEntity(shell);
     }
 
     @Override
@@ -297,7 +295,6 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
 
     protected void triggerBarrelRetract() {
         startBarrelRetract();
-        syncRuntimeToTracking();
     }
 
     private void startBarrelRetract() {
@@ -366,7 +363,7 @@ public class TurretArtyBlockEntity extends TurretBlockEntityBase implements Arti
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
         if ("cycle_artillery_mode".equals(tag.getString("Action"))) {
             mode = (mode + 1) % 3;
-            clearTarget();
+            clearTargetPosition();
             targetQueue.clear();
             syncRuntimeToTracking();
             return;

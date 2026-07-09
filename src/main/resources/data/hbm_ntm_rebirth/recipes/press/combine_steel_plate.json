@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/combine_steel"
+    },
+    "legacy_ore": "ingotCMBSteel"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:plate_combine_steel"
+  },
+  "source_order": 19,
+  "stamp": "plate"
+}

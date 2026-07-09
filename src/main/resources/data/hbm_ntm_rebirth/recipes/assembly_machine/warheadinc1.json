@@ -1,17 +1,30 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.warheadinc1",
   "duration": 100,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "item": "hbm_ntm_rebirth:warhead_generic_small" }, "count": 1 },
-    { "ingredient": { "tag": "forge:dusts/red_phosphorus" }, "count": 2, "legacy_ore": "dustRedPhosphorus" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:warhead_incendiary_small" }
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:warhead_generic_small"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:dusts/red_phosphorus"
+      },
+      "legacy_ore": "dustRedPhosphorus"
+    }
   ],
+  "internal_name": "ass.warheadinc1",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:warhead_incendiary_small"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 253
 }

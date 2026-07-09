@@ -27,7 +27,21 @@ final class LegacyBlockEntityRenderCulling {
     }
 
     static HbmRenderFrameCulling.MachineRendererSubmissionScope animatedModelFadeScope(BlockEntity blockEntity) {
-        float fade = blockEntity == null ? 1.0F : HbmRenderFrameCulling.animatedModelFade(blockEntity.getBlockPos());
-        return HbmRenderFrameCulling.pushMachineRendererSubmissionScope(blockEntity, fade);
+        return HbmRenderFrameCulling.pushAnimatedMachineRendererSubmissionScope(blockEntity);
+    }
+
+    static float currentStaticModelFade() {
+        return HbmRenderFrameCulling.currentStaticModelFade();
+    }
+
+    static int fadedStaticAlpha(int alpha) {
+        float fade = currentStaticModelFade();
+        if (fade < 0.0F) {
+            return 0;
+        }
+        if (fade >= 1.0F) {
+            return alpha;
+        }
+        return Math.max(0, Math.min(255, Math.round(alpha * fade)));
     }
 }

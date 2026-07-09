@@ -241,7 +241,7 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
             if (queued.isEmpty()) {
                 continue;
             }
-            GenericMachineRecipe recipe = findSolidRecipe(level, queued);
+            GenericMachineRecipe recipe = findRecipe(level, queued);
             if (recipe == null) {
                 continue;
             }
@@ -288,12 +288,21 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
                 continue;
             }
             if (liquidMode) {
-                MaterialStack liquid = liquidOutput(recipe);
-                if (liquid == null) {
+                List<MaterialStack> outputs = liquidOutputs(recipe);
+                if (outputs.isEmpty()) {
                     continue;
                 }
-                addLiquid(new MaterialStack(liquid.material, liquid.amount * input.getCount()));
-                items.setStackInSlot(slot, ItemStack.EMPTY);
+                int outputAmount = totalMaterialAmount(outputs);
+                while (!input.isEmpty()) {
+                    if (getLiquidAmount() + outputAmount > MAX_LIQUID) {
+                        break;
+                    }
+                    input.shrink(1);
+                    for (MaterialStack output : outputs) {
+                        addLiquid(output);
+                    }
+                }
+                items.setStackInSlot(slot, input);
             } else {
                 if (recipe.getItemOutputs().isEmpty()) {
                     continue;
@@ -315,25 +324,19 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Nullable
-    private GenericMachineRecipe findSolidRecipe(Level level, ItemStack stack) {
-        GenericMachineRecipe recipe = findRecipe(level, stack);
-        return recipe != null && !recipe.getItemOutputs().isEmpty() ? recipe : null;
-    }
-
-    @Nullable
     private GenericMachineRecipe findRecipe(Level level, ItemStack stack) {
         if (stack.isEmpty()) {
             return null;
         }
         for (GenericMachineRecipe recipe : GenericMachineRecipeRuntime.recipes(level,
                 GenericMachineRecipe.Machine.ARC_FURNACE)) {
-            if (recipe.getItemInputs().size() != 1 || recipe.getItemOutputs().isEmpty()) {
+            if (recipe.getItemInputs().size() != 1) {
                 continue;
             }
             HbmIngredient input = recipe.getItemInputs().get(0);
-            if (input.count() <= stack.getCount() && input.test(stack, true)) {
+            if (input.test(stack, true)) {
                 if (liquidMode) {
-                    return liquidOutput(recipe) == null ? null : recipe;
+                    return liquidOutputs(recipe).isEmpty() ? null : recipe;
                 }
                 return !recipe.getItemOutputs().isEmpty() ? recipe : null;
             }
@@ -341,16 +344,26 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
         return null;
     }
 
-    @Nullable
-    private static MaterialStack liquidOutput(GenericMachineRecipe recipe) {
-        return switch (recipe.getInternalName()) {
+    private static List<MaterialStack> liquidOutputs(GenericMachineRecipe recipe) {
+        List<MaterialStack> outputs = recipe.getExtraData().arcMaterialOutputs();
+        if (!outputs.isEmpty()) {
+            return outputs;
+        }
+        MaterialStack fallback = switch (recipe.getInternalName()) {
             case "arc.sand" -> new MaterialStack(Mats.MAT_SILICON, MaterialShapes.NUGGET.q(1));
-            case "arc.flint" -> new MaterialStack(Mats.MAT_SILICON, MaterialShapes.INGOT.q(1, 2));
+            case "arc.flint", "arc.fiberglass", "arc.asbestos" ->
+                    new MaterialStack(Mats.MAT_SILICON, MaterialShapes.INGOT.q(1, 2));
             case "arc.quartz", "arc.quartz_dust" ->
                     new MaterialStack(Mats.MAT_SILICON, MaterialShapes.NUGGET.q(3));
-            case "arc.quartz_block" -> new MaterialStack(Mats.MAT_SILICON, MaterialShapes.NUGGET.q(12));
+            case "arc.quartzblock", "arc.quartz_block" ->
+                    new MaterialStack(Mats.MAT_SILICON, MaterialShapes.NUGGET.q(12));
+            case "arc.fiberglassblock", "arc.asbestosblock" ->
+                    new MaterialStack(Mats.MAT_SILICON, MaterialShapes.INGOT.q(9, 2));
+            case "arc.asbestosdust" -> new MaterialStack(Mats.MAT_SILICON, MaterialShapes.INGOT.q(1, 2));
+            case "arc.borax" -> new MaterialStack(Mats.MAT_BORON, MaterialShapes.NUGGET.q(3));
             default -> null;
         };
+        return fallback == null ? List.of() : List.of(fallback);
     }
 
     private boolean hasIngredients(Level level) {
@@ -373,6 +386,16 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
             }
         }
         liquids.add(new MaterialStack(incoming.material, Math.min(MAX_LIQUID, incoming.amount)));
+    }
+
+    private static int totalMaterialAmount(List<MaterialStack> stacks) {
+        int amount = 0;
+        for (MaterialStack stack : stacks) {
+            if (stack != null && !stack.isEmpty()) {
+                amount += stack.amount;
+            }
+        }
+        return amount;
     }
 
     private void pourLiquids(Level level, BlockPos pos, BlockState state) {
@@ -427,6 +450,9 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     }
 
     private int maxInputSizeFor(GenericMachineRecipe recipe, ItemStack input) {
+        if (liquidMode) {
+            return getMaxInputSize();
+        }
         ItemStack output = recipe.getItemOutputs().isEmpty() ? ItemStack.EMPTY : recipe.getItemOutputs().get(0);
         if (output.isEmpty()) {
             return getMaxInputSize();
@@ -574,6 +600,13 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
             states.add(electrodeState(items.getStackInSlot(slot)));
         }
         return states;
+    }
+
+    public byte electrodeStateInSlot(int slot) {
+        if (slot < SLOT_ELECTRODE_0 || slot > SLOT_ELECTRODE_2) {
+            return 0;
+        }
+        return electrodeState(items.getStackInSlot(slot));
     }
 
     public byte electrodeState(ItemStack stack) {

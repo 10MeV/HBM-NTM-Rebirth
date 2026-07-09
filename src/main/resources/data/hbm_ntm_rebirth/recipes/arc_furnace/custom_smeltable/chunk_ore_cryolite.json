@@ -1,0 +1,37 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.custom.chunk_ore_cryolite",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "count":  1,
+                            "ingredient":  {
+                                               "item":  "hbm_ntm_rebirth:chunk_ore_cryolite"
+                                           }
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "arc_material_outputs":  [
+                                 {
+                                     "amount":  72,
+                                     "material":  "Aluminium"
+                                 },
+                                 {
+                                     "amount":  72,
+                                     "material":  "Sodium"
+                                 }
+                             ],
+    "pools":  [
+
+              ],
+    "source_order":  2283
+}

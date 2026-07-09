@@ -2,6 +2,7 @@ package com.hbm.ntm.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import com.hbm.util.fauxpointtwelve.ChunkCoordIntPair;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
@@ -23,6 +24,10 @@ public class SubChunkKey {
 
     public SubChunkKey(ChunkPos pos, int sectionY) {
         update(pos.x, pos.z, sectionY);
+    }
+
+    public SubChunkKey(ChunkCoordIntPair pos, int sectionY) {
+        update(pos.chunkXPos, pos.chunkZPos, sectionY);
     }
 
     public static SubChunkKey ofBlock(int blockX, int blockY, int blockZ) {
@@ -88,7 +93,11 @@ public class SubChunkKey {
         return chunkZ;
     }
 
-    public ChunkPos getPos() {
+    public ChunkCoordIntPair getPos() {
+        return new ChunkCoordIntPair(chunkX, chunkZ);
+    }
+
+    public ChunkPos modernPos() {
         return new ChunkPos(chunkX, chunkZ);
     }
 
@@ -143,12 +152,12 @@ public class SubChunkKey {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return hash;
     }
 
     @Override
-    public boolean equals(Object object) {
+    public final boolean equals(Object object) {
         if (this == object) {
             return true;
         }
@@ -164,8 +173,10 @@ public class SubChunkKey {
     }
 
     private static List<SubChunkKey> convert(List<com.hbm.ntm.world.SubChunkKey> keys) {
-        return keys.stream()
-                .map(key -> new SubChunkKey(key.getChunkXPos(), key.getChunkZPos(), key.getSectionY()))
-                .toList();
+        List<SubChunkKey> converted = new java.util.ArrayList<>(keys.size());
+        for (com.hbm.ntm.world.SubChunkKey key : keys) {
+            converted.add(new SubChunkKey(key.getChunkXPos(), key.getChunkZPos(), key.getSectionY()));
+        }
+        return converted;
     }
 }

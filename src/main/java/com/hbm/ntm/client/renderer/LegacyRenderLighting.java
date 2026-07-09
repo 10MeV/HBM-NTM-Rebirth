@@ -5,6 +5,7 @@ import com.hbm.ntm.client.render.HbmRenderFrameFlags;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.mojang.blaze3d.systems.RenderSystem;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
@@ -16,8 +17,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayDeque;
 
 public final class LegacyRenderLighting {
     private static final double INSIDE_EPSILON = 1.0E-4D;
@@ -29,13 +29,20 @@ public final class LegacyRenderLighting {
     private static final float MODEL_SAMPLE_SHELL = 0.55F;
     private static final long PROBE_CACHE_PRUNE_EVERY_FRAMES = 600L;
     private static final long PROBE_CACHE_STALE_AFTER_FRAMES = 600L;
+    private static final int MODEL_VIEW_CONTEXT_POOL_LIMIT = 32;
     private static final ThreadLocal<LightProbe> CURRENT_INSTANCE_LIGHT_PROBE = new ThreadLocal<>();
     private static final ThreadLocal<ModelViewSamplingAnchor> CURRENT_MODEL_VIEW_ANCHOR = new ThreadLocal<>();
     private static final ThreadLocal<ModelViewSamplingContext> MODEL_VIEW_SAMPLING_CONTEXT = new ThreadLocal<>();
     private static final ThreadLocal<ModelLightScratch> MODEL_LIGHT_SCRATCH =
             ThreadLocal.withInitial(ModelLightScratch::new);
-    private static final Map<Long, CachedLightProbe> ANCHORED_PROBE_CACHE = new HashMap<>();
-    private static final Map<Long, CachedSlicedLightProbe> SLICED_ANCHORED_PROBE_CACHE = new HashMap<>();
+    private static final ThreadLocal<ArrayDeque<ModelViewSamplingContext>> MODEL_VIEW_CONTEXT_POOL =
+            ThreadLocal.withInitial(ArrayDeque::new);
+    private static final LightProbe[] UNIFORM_LIGHT_PROBE_CACHE = new LightProbe[256];
+    private static final SlicedLightProbe[] UNIFORM_SLICED_LIGHT_PROBE_CACHE = new SlicedLightProbe[256];
+    private static final Long2ObjectOpenHashMap<CachedLightProbe> ANCHORED_PROBE_CACHE =
+            new Long2ObjectOpenHashMap<>();
+    private static final Long2ObjectOpenHashMap<CachedSlicedLightProbe> SLICED_ANCHORED_PROBE_CACHE =
+            new Long2ObjectOpenHashMap<>();
     private static long frameGeneration;
     private static long anchoredProbeQueries;
     private static long anchoredProbeHits;
@@ -116,7 +123,7 @@ public final class LegacyRenderLighting {
         LightProbe probe = sampleBoundsProbe(level, new AABB(pos), packedLight, true);
         int resolved = brightest(packedLight,
                 LegacyLightSampleCache.sample(level, pos),
-                LegacyLightSampleCache.sample(level, pos.above()),
+                LegacyLightSampleCache.sample(level, pos.getX(), pos.getY() + 1, pos.getZ()),
                 probe.c000(),
                 probe.c100(),
                 probe.c010(),
@@ -172,10 +179,10 @@ public final class LegacyRenderLighting {
 
         int resolved = brightest(packedLight,
                 LegacyLightSampleCache.sample(level, pos),
-                LegacyLightSampleCache.sample(level, pos.above()),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(centerX, bounds.minY, centerZ)),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(centerX, centerY, centerZ)),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(centerX, sampleTopY, centerZ)),
+                LegacyLightSampleCache.sample(level, pos.getX(), pos.getY() + 1, pos.getZ()),
+                LegacyLightSampleCache.sample(level, centerX, bounds.minY, centerZ),
+                LegacyLightSampleCache.sample(level, centerX, centerY, centerZ),
+                LegacyLightSampleCache.sample(level, centerX, sampleTopY, centerZ),
                 probe.c000(),
                 probe.c100(),
                 probe.c010(),
@@ -320,11 +327,29 @@ public final class LegacyRenderLighting {
     public static ModelViewSamplingScope pushModelViewSampling(BlockEntity blockEntity, Matrix4f baseModelView) {
         ModelViewSamplingContext previous = MODEL_VIEW_SAMPLING_CONTEXT.get();
         Level level = blockEntity.getLevel();
+        ModelViewSamplingContext current = null;
         if (level != null && baseModelView != null) {
-            MODEL_VIEW_SAMPLING_CONTEXT.set(new ModelViewSamplingContext(level, blockEntity.getBlockPos(),
-                    new Matrix4f(baseModelView).invert()));
+            current = acquireModelViewSamplingContext();
+            current.set(level, blockEntity.getBlockPos(), baseModelView);
+            MODEL_VIEW_SAMPLING_CONTEXT.set(current);
         }
-        return new ModelViewSamplingScope(previous);
+        return new ModelViewSamplingScope(previous, current);
+    }
+
+    private static ModelViewSamplingContext acquireModelViewSamplingContext() {
+        ModelViewSamplingContext context = MODEL_VIEW_CONTEXT_POOL.get().pollFirst();
+        return context == null ? new ModelViewSamplingContext() : context;
+    }
+
+    private static void releaseModelViewSamplingContext(ModelViewSamplingContext context) {
+        if (context == null) {
+            return;
+        }
+        ArrayDeque<ModelViewSamplingContext> pool = MODEL_VIEW_CONTEXT_POOL.get();
+        context.clear();
+        if (pool.size() < MODEL_VIEW_CONTEXT_POOL_LIMIT) {
+            pool.addFirst(context);
+        }
     }
 
     private static LightProbe sampleAnchoredModelViewLight(ModelViewSamplingContext context,
@@ -371,10 +396,11 @@ public final class LegacyRenderLighting {
             return LightProbe.uniform(packedLight);
         }
         long cacheKey = 0L;
+        CachedLightProbe cached = null;
         if (partIdentityHash != 0L) {
             recordAnchoredProbeQuery();
             cacheKey = anchoredProbeCacheKey(blockPos, partIdentityHash, packedLight, scratch.localPose);
-            CachedLightProbe cached = ANCHORED_PROBE_CACHE.get(cacheKey);
+            cached = ANCHORED_PROBE_CACHE.get(cacheKey);
             if (cached != null && cached.frame() == frameGeneration) {
                 recordAnchoredProbeHit();
                 return cached.probe();
@@ -418,7 +444,11 @@ public final class LegacyRenderLighting {
         int resolved = brightest(packedLight, c000, c100, c010, c110, c001, c101, c011, c111);
         LightProbe probe = new LightProbe(resolved, c000, c100, c010, c110, c001, c101, c011, c111, true);
         if (cacheKey != 0L) {
-            ANCHORED_PROBE_CACHE.put(cacheKey, new CachedLightProbe(probe, frameGeneration));
+            if (cached == null) {
+                cached = new CachedLightProbe();
+                ANCHORED_PROBE_CACHE.put(cacheKey, cached);
+            }
+            cached.update(probe, frameGeneration);
             recordAnchoredProbeMiss();
         }
         return probe;
@@ -431,11 +461,12 @@ public final class LegacyRenderLighting {
             return SlicedLightProbe.uniform(packedLight);
         }
         long cacheKey = 0L;
+        CachedSlicedLightProbe cached = null;
         if (partIdentityHash != 0L) {
             recordSlicedProbeQuery();
             cacheKey = anchoredProbeCacheKey(blockPos, partIdentityHash ^ 0x2F4C7A9E3779B97FL,
                     packedLight, scratch.localPose);
-            CachedSlicedLightProbe cached = SLICED_ANCHORED_PROBE_CACHE.get(cacheKey);
+            cached = SLICED_ANCHORED_PROBE_CACHE.get(cacheKey);
             if (cached != null && cached.frame() == frameGeneration) {
                 recordSlicedProbeHit();
                 return cached.probe();
@@ -452,7 +483,7 @@ public final class LegacyRenderLighting {
         float sampleMaxY = maxY - insetY;
         float sampleMaxZ = maxZ - insetZ;
 
-        int[] probes = new int[16];
+        int[] probes = scratch.slicedProbes;
         int index = 0;
         for (int slice = 0; slice < 4; slice++) {
             float y = lerp(slice / 3.0F, sampleMinY, sampleMaxY);
@@ -466,9 +497,13 @@ public final class LegacyRenderLighting {
             probes[index++] = sampleAnchoredModelShellXZ(level, blockPos, scratch,
                     sampleMaxX, y, sampleMaxZ, shellMax(sampleMaxX), shellY, shellMax(sampleMaxZ), packedLight);
         }
-        SlicedLightProbe probe = new SlicedLightProbe(brightest(packedLight, probes), probes);
+        SlicedLightProbe probe = SlicedLightProbe.trusted(brightest(packedLight, probes), probes);
         if (cacheKey != 0L) {
-            SLICED_ANCHORED_PROBE_CACHE.put(cacheKey, new CachedSlicedLightProbe(probe, frameGeneration));
+            if (cached == null) {
+                cached = new CachedSlicedLightProbe();
+                SLICED_ANCHORED_PROBE_CACHE.put(cacheKey, cached);
+            }
+            cached.update(probe, frameGeneration);
             recordSlicedProbeMiss();
         }
         return probe;
@@ -568,7 +603,7 @@ public final class LegacyRenderLighting {
         float sampleMaxY = maxY - insetY;
         float sampleMaxZ = maxZ - insetZ;
 
-        int[] probes = new int[16];
+        int[] probes = scratch.slicedProbes;
         int index = 0;
         for (int slice = 0; slice < 4; slice++) {
             float y = lerp(slice / 3.0F, sampleMinY, sampleMaxY);
@@ -582,7 +617,7 @@ public final class LegacyRenderLighting {
             probes[index++] = sampleModelShellXZ(level, camera, scratch, modelView,
                     sampleMaxX, y, sampleMaxZ, shellMax(sampleMaxX), shellY, shellMax(sampleMaxZ), packedLight);
         }
-        return new SlicedLightProbe(brightest(packedLight, probes), probes);
+        return SlicedLightProbe.trusted(brightest(packedLight, probes), probes);
     }
 
     private static long anchoredProbeCacheKey(BlockPos blockPos, long partIdentityHash, int packedLight,
@@ -721,8 +756,8 @@ public final class LegacyRenderLighting {
         Vector3f corner = scratch.corner.set(x, y, z);
         modelView.transformPosition(corner);
         scratch.inverseViewRotation.transformPosition(corner);
-        BlockPos pos = BlockPos.containing(camera.x + corner.x(), camera.y + corner.y(), camera.z + corner.z());
-        return LegacyLightSampleCache.sampleNonSolid(level, pos, packedLightFallback);
+        return LegacyLightSampleCache.sampleNonSolid(level,
+                camera.x + corner.x(), camera.y + corner.y(), camera.z + corner.z(), packedLightFallback);
     }
 
     private static int sampleAnchoredModelCorner(Level level, BlockPos anchor, ModelLightScratch scratch,
@@ -739,9 +774,9 @@ public final class LegacyRenderLighting {
             float x, float y, float z, int packedLightFallback) {
         Vector3f corner = scratch.corner.set(x, y, z);
         scratch.localPose.transformPosition(corner);
-        BlockPos pos = BlockPos.containing(anchor.getX() + corner.x(), anchor.getY() + corner.y(),
-                anchor.getZ() + corner.z());
-        return LegacyLightSampleCache.sampleNonSolid(level, pos, packedLightFallback);
+        return LegacyLightSampleCache.sampleNonSolid(level,
+                anchor.getX() + corner.x(), anchor.getY() + corner.y(), anchor.getZ() + corner.z(),
+                packedLightFallback);
     }
 
     private static int sampleModelShellXZ(Level level, Vec3 camera, ModelLightScratch scratch, Matrix4f modelView,
@@ -774,14 +809,14 @@ public final class LegacyRenderLighting {
         double maxZ = insideMax(bounds.maxZ);
         return new LightProbe(
                 packedLight,
-                LegacyLightSampleCache.sample(level, BlockPos.containing(bounds.minX, bounds.minY, bounds.minZ)),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(maxX, bounds.minY, bounds.minZ)),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(bounds.minX, maxY, bounds.minZ)),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(maxX, maxY, bounds.minZ)),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(bounds.minX, bounds.minY, maxZ)),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(maxX, bounds.minY, maxZ)),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(bounds.minX, maxY, maxZ)),
-                LegacyLightSampleCache.sample(level, BlockPos.containing(maxX, maxY, maxZ)),
+                LegacyLightSampleCache.sample(level, bounds.minX, bounds.minY, bounds.minZ),
+                LegacyLightSampleCache.sample(level, maxX, bounds.minY, bounds.minZ),
+                LegacyLightSampleCache.sample(level, bounds.minX, maxY, bounds.minZ),
+                LegacyLightSampleCache.sample(level, maxX, maxY, bounds.minZ),
+                LegacyLightSampleCache.sample(level, bounds.minX, bounds.minY, maxZ),
+                LegacyLightSampleCache.sample(level, maxX, bounds.minY, maxZ),
+                LegacyLightSampleCache.sample(level, bounds.minX, maxY, maxZ),
+                LegacyLightSampleCache.sample(level, maxX, maxY, maxZ),
                 interpolationSafe);
     }
 
@@ -835,6 +870,40 @@ public final class LegacyRenderLighting {
         return LightTexture.pack(block, sky);
     }
 
+    private static int uniformLightCacheIndex(int packedLight) {
+        int block = LightTexture.block(packedLight);
+        int sky = LightTexture.sky(packedLight);
+        return LightTexture.pack(block, sky) == packedLight ? block | sky << 4 : -1;
+    }
+
+    private static LightProbe cachedUniformLightProbe(int packedLight) {
+        int index = uniformLightCacheIndex(packedLight);
+        if (index < 0) {
+            return new LightProbe(packedLight, packedLight, packedLight, packedLight, packedLight,
+                    packedLight, packedLight, packedLight, packedLight, false);
+        }
+        LightProbe cached = UNIFORM_LIGHT_PROBE_CACHE[index];
+        if (cached == null) {
+            cached = new LightProbe(packedLight, packedLight, packedLight, packedLight, packedLight,
+                    packedLight, packedLight, packedLight, packedLight, false);
+            UNIFORM_LIGHT_PROBE_CACHE[index] = cached;
+        }
+        return cached;
+    }
+
+    private static SlicedLightProbe cachedUniformSlicedLightProbe(int packedLight) {
+        int index = uniformLightCacheIndex(packedLight);
+        if (index < 0) {
+            return SlicedLightProbe.uniformValues(packedLight);
+        }
+        SlicedLightProbe cached = UNIFORM_SLICED_LIGHT_PROBE_CACHE[index];
+        if (cached == null) {
+            cached = SlicedLightProbe.uniformValues(packedLight);
+            UNIFORM_SLICED_LIGHT_PROBE_CACHE[index] = cached;
+        }
+        return cached;
+    }
+
     private static float lerp(float delta, float min, float max) {
         return min + (max - min) * delta;
     }
@@ -846,18 +915,76 @@ public final class LegacyRenderLighting {
         private final Matrix4f inverseViewRotation = new Matrix4f();
         private final Matrix4f localPose = new Matrix4f();
         private final Vector3f corner = new Vector3f();
+        private final int[] slicedProbes = new int[16];
     }
 
-    private record ModelViewSamplingContext(Level level, BlockPos blockPos, Matrix4f inverseBaseModelView) {
+    private static final class ModelViewSamplingContext {
+        private Level level;
+        private BlockPos blockPos;
+        private final Matrix4f inverseBaseModelView = new Matrix4f();
+
+        private void set(Level level, BlockPos blockPos, Matrix4f baseModelView) {
+            this.level = level;
+            this.blockPos = blockPos;
+            this.inverseBaseModelView.set(baseModelView).invert();
+        }
+
+        private void clear() {
+            level = null;
+            blockPos = null;
+            inverseBaseModelView.identity();
+        }
+
+        private Level level() {
+            return level;
+        }
+
+        private BlockPos blockPos() {
+            return blockPos;
+        }
+
+        private Matrix4f inverseBaseModelView() {
+            return inverseBaseModelView;
+        }
     }
 
     private record ModelViewSamplingAnchor(Level level, BlockPos blockPos, int resolvedLight) {
     }
 
-    private record CachedLightProbe(LightProbe probe, long frame) {
+    private static final class CachedLightProbe {
+        private LightProbe probe;
+        private long frame;
+
+        private void update(LightProbe probe, long frame) {
+            this.probe = probe;
+            this.frame = frame;
+        }
+
+        private LightProbe probe() {
+            return probe;
+        }
+
+        private long frame() {
+            return frame;
+        }
     }
 
-    private record CachedSlicedLightProbe(SlicedLightProbe probe, long frame) {
+    private static final class CachedSlicedLightProbe {
+        private SlicedLightProbe probe;
+        private long frame;
+
+        private void update(SlicedLightProbe probe, long frame) {
+            this.probe = probe;
+            this.frame = frame;
+        }
+
+        private SlicedLightProbe probe() {
+            return probe;
+        }
+
+        private long frame() {
+            return frame;
+        }
     }
 
     public record ProbeCacheSnapshot(
@@ -892,10 +1019,12 @@ public final class LegacyRenderLighting {
 
     public static final class ModelViewSamplingScope implements AutoCloseable {
         private final ModelViewSamplingContext previous;
+        private final ModelViewSamplingContext current;
         private boolean closed;
 
-        private ModelViewSamplingScope(ModelViewSamplingContext previous) {
+        private ModelViewSamplingScope(ModelViewSamplingContext previous, ModelViewSamplingContext current) {
             this.previous = previous;
+            this.current = current;
         }
 
         @Override
@@ -909,61 +1038,173 @@ public final class LegacyRenderLighting {
             } else {
                 MODEL_VIEW_SAMPLING_CONTEXT.set(previous);
             }
+            releaseModelViewSamplingContext(current);
         }
     }
 
     public record LightProbe(int resolvedLight, int c000, int c100, int c010, int c110,
                              int c001, int c101, int c011, int c111, boolean interpolationSafe) {
         public static LightProbe uniform(int packedLight) {
-            return new LightProbe(packedLight, packedLight, packedLight, packedLight, packedLight,
-                    packedLight, packedLight, packedLight, packedLight, false);
+            return cachedUniformLightProbe(packedLight);
         }
 
         private LightProbe withResolvedLight(int packedLight) {
             return new LightProbe(packedLight, c000, c100, c010, c110, c001, c101, c011, c111,
                     interpolationSafe);
         }
+
+        private boolean isUniform() {
+            return resolvedLight == c000
+                    && c000 == c100
+                    && c000 == c010
+                    && c000 == c110
+                    && c000 == c001
+                    && c000 == c101
+                    && c000 == c011
+                    && c000 == c111;
+        }
     }
 
-    public record SlicedLightProbe(int resolvedLight, int[] probes) {
-        public SlicedLightProbe {
+    public static final class SlicedLightProbe {
+        private final int resolvedLight;
+        private final int p0;
+        private final int p1;
+        private final int p2;
+        private final int p3;
+        private final int p4;
+        private final int p5;
+        private final int p6;
+        private final int p7;
+        private final int p8;
+        private final int p9;
+        private final int p10;
+        private final int p11;
+        private final int p12;
+        private final int p13;
+        private final int p14;
+        private final int p15;
+
+        public SlicedLightProbe(int resolvedLight, int[] probes) {
+            this(resolvedLight, probes, false);
+        }
+
+        private SlicedLightProbe(int resolvedLight, int[] probes, boolean trusted) {
             if (probes.length != 16) {
                 throw new IllegalArgumentException("Sliced light probe requires exactly 16 packed light values");
             }
-            probes = probes.clone();
+            this.resolvedLight = resolvedLight;
+            this.p0 = probes[0];
+            this.p1 = probes[1];
+            this.p2 = probes[2];
+            this.p3 = probes[3];
+            this.p4 = probes[4];
+            this.p5 = probes[5];
+            this.p6 = probes[6];
+            this.p7 = probes[7];
+            this.p8 = probes[8];
+            this.p9 = probes[9];
+            this.p10 = probes[10];
+            this.p11 = probes[11];
+            this.p12 = probes[12];
+            this.p13 = probes[13];
+            this.p14 = probes[14];
+            this.p15 = probes[15];
+        }
+
+        private SlicedLightProbe(int resolvedLight, int p0, int p1, int p2, int p3,
+                int p4, int p5, int p6, int p7, int p8, int p9, int p10, int p11,
+                int p12, int p13, int p14, int p15) {
+            this.resolvedLight = resolvedLight;
+            this.p0 = p0;
+            this.p1 = p1;
+            this.p2 = p2;
+            this.p3 = p3;
+            this.p4 = p4;
+            this.p5 = p5;
+            this.p6 = p6;
+            this.p7 = p7;
+            this.p8 = p8;
+            this.p9 = p9;
+            this.p10 = p10;
+            this.p11 = p11;
+            this.p12 = p12;
+            this.p13 = p13;
+            this.p14 = p14;
+            this.p15 = p15;
+        }
+
+        private static SlicedLightProbe trusted(int resolvedLight, int[] probes) {
+            return new SlicedLightProbe(resolvedLight, probes, true);
+        }
+
+        private static SlicedLightProbe uniformValues(int packedLight) {
+            return new SlicedLightProbe(packedLight,
+                    packedLight, packedLight, packedLight, packedLight,
+                    packedLight, packedLight, packedLight, packedLight,
+                    packedLight, packedLight, packedLight, packedLight,
+                    packedLight, packedLight, packedLight, packedLight);
+        }
+
+        public int resolvedLight() {
+            return resolvedLight;
         }
 
         public static SlicedLightProbe uniform(int packedLight) {
-            int[] probes = new int[16];
-            for (int i = 0; i < probes.length; i++) {
-                probes[i] = packedLight;
-            }
-            return new SlicedLightProbe(packedLight, probes);
+            return cachedUniformSlicedLightProbe(packedLight);
         }
 
         public static SlicedLightProbe from(LightProbe probe) {
-            int[] probes = new int[16];
-            probes[0] = probe.c000();
-            probes[1] = probe.c100();
-            probes[2] = probe.c001();
-            probes[3] = probe.c101();
-            probes[4] = blend(probe.c000(), probe.c010(), 1.0F / 3.0F);
-            probes[5] = blend(probe.c100(), probe.c110(), 1.0F / 3.0F);
-            probes[6] = blend(probe.c001(), probe.c011(), 1.0F / 3.0F);
-            probes[7] = blend(probe.c101(), probe.c111(), 1.0F / 3.0F);
-            probes[8] = blend(probe.c000(), probe.c010(), 2.0F / 3.0F);
-            probes[9] = blend(probe.c100(), probe.c110(), 2.0F / 3.0F);
-            probes[10] = blend(probe.c001(), probe.c011(), 2.0F / 3.0F);
-            probes[11] = blend(probe.c101(), probe.c111(), 2.0F / 3.0F);
-            probes[12] = probe.c010();
-            probes[13] = probe.c110();
-            probes[14] = probe.c011();
-            probes[15] = probe.c111();
-            return new SlicedLightProbe(probe.resolvedLight(), probes);
+            if (probe.isUniform()) {
+                return uniform(probe.resolvedLight());
+            }
+            return new SlicedLightProbe(probe.resolvedLight(),
+                    probe.c000(),
+                    probe.c100(),
+                    probe.c001(),
+                    probe.c101(),
+                    blend(probe.c000(), probe.c010(), 1.0F / 3.0F),
+                    blend(probe.c100(), probe.c110(), 1.0F / 3.0F),
+                    blend(probe.c001(), probe.c011(), 1.0F / 3.0F),
+                    blend(probe.c101(), probe.c111(), 1.0F / 3.0F),
+                    blend(probe.c000(), probe.c010(), 2.0F / 3.0F),
+                    blend(probe.c100(), probe.c110(), 2.0F / 3.0F),
+                    blend(probe.c001(), probe.c011(), 2.0F / 3.0F),
+                    blend(probe.c101(), probe.c111(), 2.0F / 3.0F),
+                    probe.c010(),
+                    probe.c110(),
+                    probe.c011(),
+                    probe.c111());
         }
 
         public int probe(int index) {
-            return probes[index];
+            return switch (index) {
+                case 0 -> p0;
+                case 1 -> p1;
+                case 2 -> p2;
+                case 3 -> p3;
+                case 4 -> p4;
+                case 5 -> p5;
+                case 6 -> p6;
+                case 7 -> p7;
+                case 8 -> p8;
+                case 9 -> p9;
+                case 10 -> p10;
+                case 11 -> p11;
+                case 12 -> p12;
+                case 13 -> p13;
+                case 14 -> p14;
+                case 15 -> p15;
+                default -> throw new IndexOutOfBoundsException(index);
+            };
+        }
+
+        public int[] probes() {
+            return new int[] {
+                    p0, p1, p2, p3,
+                    p4, p5, p6, p7,
+                    p8, p9, p10, p11,
+                    p12, p13, p14, p15
+            };
         }
 
         private static int blend(int min, int max, float delta) {

@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,10 +17,15 @@ public class HbmLegacyWireConnections {
     public static final String TAG_CONNECTION_PREFIX = "con";
 
     private final List<BlockPos> connected = new ArrayList<>();
+    private final List<BlockPos> connectedView = Collections.unmodifiableList(connected);
     private int color;
 
     public List<BlockPos> connected() {
         return List.copyOf(connected);
+    }
+
+    public List<BlockPos> connectedView() {
+        return connectedView;
     }
 
     public int size() {

@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class ICFControllerRenderer implements BlockEntityRenderer<ICFControllerBlockEntity> {
     public ICFControllerRenderer(BlockEntityRendererProvider.Context context) {
@@ -19,6 +20,13 @@ public class ICFControllerRenderer implements BlockEntityRenderer<ICFControllerB
     @Override
     public boolean shouldRenderOffScreen(ICFControllerBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(ICFControllerBlockEntity blockEntity, Vec3 cameraPos) {
+        return blockEntity.getLaserLength() > 0
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -33,25 +41,27 @@ public class ICFControllerRenderer implements BlockEntityRenderer<ICFControllerB
         if (laserLength <= 0) {
             return;
         }
-        LegacyTileRenderPlans.IcfLaserBeamPlan plan = LegacyTileRenderPlans.icfLaserBeamPlan(laserLength);
-        if (!plan.active()) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        BlockState state = blockEntity.getBlockState();
-        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
-                ? state.getValue(HorizontalMachineBlock.FACING)
-                : Direction.NORTH;
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.5D, 0.5D);
-        LegacyBeamRenderer.BeamPlan beam = LegacyBeamRenderer.beamPlan(
-                facing.getStepX() * plan.laserLength(), 0.0D,
-                facing.getStepZ() * plan.laserLength(),
-                plan.beam().wave(), plan.beam().beamType(),
-                plan.beam().outerColor(), plan.beam().innerColor(),
-                plan.beam().start(), plan.beam().segments(), plan.beam().size(),
-                plan.beam().layers(), plan.beam().thickness());
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                queuedPose -> LegacyBeamRenderer.beam(queuedPose, buffer, beam));
-        poseStack.popPose();
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            BlockState state = blockEntity.getBlockState();
+            Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
+                    ? state.getValue(HorizontalMachineBlock.FACING)
+                    : Direction.NORTH;
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.5D, 0.5D);
+            double beamX = facing.getStepX() * (double) laserLength;
+            double beamZ = facing.getStepZ() * (double) laserLength;
+            LegacyMachineEffectPresenter.enqueueSolidBeam(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                    buffer, false, beamX, 0.0D, beamZ,
+                    LegacyBeamRenderer.WaveType.SPIRAL,
+                    LegacyTileRenderPlans.ICF_LASER_OUTER_COLOR,
+                    LegacyTileRenderPlans.ICF_LASER_INNER_COLOR,
+                    0, 1, 0.0F,
+                    LegacyTileRenderPlans.ICF_LASER_LAYERS,
+                    LegacyTileRenderPlans.ICF_LASER_THICKNESS);
+            poseStack.popPose();
+        }
     }
 }

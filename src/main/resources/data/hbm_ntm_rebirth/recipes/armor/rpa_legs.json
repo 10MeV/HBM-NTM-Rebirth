@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "K": {
+      "item": "hbm_ntm_rebirth:plate_kevlar"
+    },
+    "L": {
+      "item": "hbm_ntm_rebirth:parts_legendary_tier2"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor_desh"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_armor_ajr"
+    }
+  },
+  "pattern": [
+    "MPM",
+    "KLK",
+    "P P"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:rpa_legs"
+  },
+  "show_notification": true
+}

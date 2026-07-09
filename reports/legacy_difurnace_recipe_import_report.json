@@ -1,0 +1,11 @@
+{
+  "imported_recipe_count": 0,
+  "legacy_class": "BlastFurnaceRecipes",
+  "legacy_file": "hbmBlastFurnaceLegacy.json",
+  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes",
+  "modern_recipe_type": "difurnace",
+  "note": "Imports deprecated BlastFurnaceRecipes into hbm_ntm_rebirth:difurnace datapack recipes; old runtime map/config hot-loading is not restored.",
+  "skipped_recipe_count": 0,
+  "source_recipe_count": 0,
+  "status": "missing_template"
+}

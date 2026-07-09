@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": { "ingredient": { "item": "hbm_ntm_rebirth:crystal_schraranium" }, "count": 1 }
+  },
+  "fluid_produced": 900,
+  "fluid_consumed": 100,
+  "laser_strength": "uv",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:nugget_schrabidium", "weight": 5 },
+    { "item": "hbm_ntm_rebirth:nugget_uranium", "weight": 2 },
+    { "item": "hbm_ntm_rebirth:nugget_neptunium", "weight": 2 }
+  ],
+  "source_order": 11
+}

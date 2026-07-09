@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.client.ClientGeometryInvalidationBridge;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -13,7 +14,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implements PaintableDuctBlockEntity {
@@ -52,9 +55,17 @@ public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implemen
         paintedState = state;
         paintedMeta = legacyMeta & 15;
         setChanged();
+        refreshPaintModelData();
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public @NotNull ModelData getModelData() {
+        return paintedState == null
+                ? ModelData.EMPTY
+                : ModelData.builder().with(PaintableDuctBlockEntity.PAINTED_STATE_PROPERTY, paintedState).build();
     }
 
     @Override
@@ -106,6 +117,7 @@ public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implemen
     }
 
     protected void loadPaint(CompoundTag tag) {
+        BlockState previous = paintedState;
         BlockState state = null;
         if (tag.contains(TAG_PAINT_BLOCK_NAME)) {
             ResourceLocation key = ResourceLocation.tryParse(tag.getString(TAG_PAINT_BLOCK_NAME));
@@ -123,6 +135,9 @@ public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implemen
         }
         paintedState = state;
         paintedMeta = tag.getInt(TAG_PAINT_META) & 15;
+        if (previous != paintedState) {
+            refreshPaintModelData();
+        }
     }
 
     @Override
@@ -134,5 +149,12 @@ public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implemen
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    private void refreshPaintModelData() {
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+            ClientGeometryInvalidationBridge.schedule(worldPosition);
+        }
     }
 }

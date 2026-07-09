@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjBlockModels.RTTY.asVBO();
@@ -40,6 +41,12 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(RadioTorchBlockEntity torch, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(torch, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(torch, getViewDistance());
     }
 
     @Override
@@ -105,7 +112,7 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
     }
 
     private static TextureAtlasSprite sprite(String name) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + name);
     }
 
     private record Rotation(float yaw, float pitch) {

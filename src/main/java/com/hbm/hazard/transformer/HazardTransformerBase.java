@@ -11,11 +11,9 @@ import java.util.List;
  */
 @Deprecated(forRemoval = false)
 public abstract class HazardTransformerBase {
-    public void transformPre(ItemStack stack, List<HazardEntry> entries) {
-    }
+    public abstract void transformPre(ItemStack stack, List<HazardEntry> entries);
 
-    public void transformPost(ItemStack stack, List<HazardEntry> entries) {
-    }
+    public abstract void transformPost(ItemStack stack, List<HazardEntry> entries);
 
     public com.hbm.ntm.radiation.HazardTransformer toModern() {
         return new com.hbm.ntm.radiation.HazardTransformer() {

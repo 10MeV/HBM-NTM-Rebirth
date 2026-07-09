@@ -13,10 +13,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FoundrySlagBlockEntity extends BlockEntity {
     public static final int MAX_AMOUNT = MaterialShapes.BLOCK.q(16);
+    public static final ModelProperty<Integer> SLAG_AMOUNT_PROPERTY = new ModelProperty<>();
     private static final String TAG_MATERIAL = "mat";
     private static final String TAG_AMOUNT = "amount";
 
@@ -36,6 +40,10 @@ public class FoundrySlagBlockEntity extends BlockEntity {
     }
 
     public float getFillLevel() {
+        return fillLevelForAmount(amount);
+    }
+
+    public static float fillLevelForAmount(int amount) {
         return Math.max(0.0625F, Math.min(1.0F, amount / (float) MAX_AMOUNT));
     }
 
@@ -82,6 +90,8 @@ public class FoundrySlagBlockEntity extends BlockEntity {
 
     @Override
     public void load(CompoundTag tag) {
+        int previousAmount = amount;
+        NTMMaterial previousMaterial = material;
         super.load(tag);
         material = Mats.matById.get(tag.getInt(TAG_MATERIAL));
         amount = tag.getInt(TAG_AMOUNT);
@@ -89,6 +99,23 @@ public class FoundrySlagBlockEntity extends BlockEntity {
             material = null;
             amount = 0;
         }
+        if (level != null && level.isClientSide
+                && (previousAmount != amount || previousMaterial != material)) {
+            refreshModelData();
+        }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        refreshModelData();
+    }
+
+    @Override
+    public @NotNull ModelData getModelData() {
+        return ModelData.builder()
+                .with(SLAG_AMOUNT_PROPERTY, amount)
+                .build();
     }
 
     @Override
@@ -108,6 +135,14 @@ public class FoundrySlagBlockEntity extends BlockEntity {
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
         if (pkt.getTag() != null) {
             load(pkt.getTag());
+        }
+    }
+
+    private void refreshModelData() {
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_IMMEDIATE);
         }
     }
 }

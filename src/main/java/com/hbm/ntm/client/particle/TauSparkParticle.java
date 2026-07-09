@@ -18,11 +18,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @OnlyIn(Dist.CLIENT)
 public class TauSparkParticle extends Particle {
+    private static final int MAX_STEPS = 6;
+
     private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
         @Override
         public void begin(BufferBuilder builder, TextureManager textureManager) {
@@ -49,8 +48,10 @@ public class TauSparkParticle extends Particle {
         }
     };
 
-    private final List<Vec3> steps = new ArrayList<>();
-    private int threshold;
+    private final double[] stepDeltas = new double[MAX_STEPS * 3];
+    private final int threshold;
+    private int stepStart;
+    private int stepCount;
 
     public TauSparkParticle(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ, boolean small) {
         super(level, x, y, z);
@@ -61,7 +62,7 @@ public class TauSparkParticle extends Particle {
         this.lifetime = small ? 2 + this.random.nextInt(3) : 20 + this.random.nextInt(10);
         this.gravity = 0.5F;
         this.hasPhysics = true;
-        this.steps.add(new Vec3(this.xd, this.yd, this.zd));
+        this.pushStep(this.xd, this.yd, this.zd);
     }
 
     @Override
@@ -73,10 +74,7 @@ public class TauSparkParticle extends Particle {
             this.remove();
             return;
         }
-        this.steps.add(new Vec3(this.xd, this.yd, this.zd));
-        while (this.steps.size() > this.threshold) {
-            this.steps.remove(0);
-        }
+        this.pushStep(this.xd, this.yd, this.zd);
         this.yd -= 0.04D * this.gravity;
         double previousY = this.yd;
         this.move(this.xd, this.yd, this.zd);
@@ -88,7 +86,7 @@ public class TauSparkParticle extends Particle {
 
     @Override
     public void render(VertexConsumer consumer, Camera camera, float partialTick) {
-        if (this.steps.size() < 2) {
+        if (this.stepCount < 2) {
             return;
         }
         Vec3 cameraPos = camera.getPosition();
@@ -96,13 +94,33 @@ public class TauSparkParticle extends Particle {
         double currentY = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y();
         double currentZ = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
         LegacyLineRenderer.pointPositionColorIdentity(consumer, currentX, currentY, currentZ, 0xFFFFFF, 255);
-        for (int i = this.steps.size() - 1; i >= 1; i--) {
-            Vec3 step = this.steps.get(i);
-            currentX -= step.x;
-            currentY -= step.y;
-            currentZ -= step.z;
+        for (int offset = this.stepCount - 1; offset >= 1; offset--) {
+            int index = this.stepIndex(offset);
+            int base = index * 3;
+            currentX -= this.stepDeltas[base];
+            currentY -= this.stepDeltas[base + 1];
+            currentZ -= this.stepDeltas[base + 2];
             LegacyLineRenderer.pointPositionColorIdentity(consumer, currentX, currentY, currentZ, 0xFFFFFF, 255);
         }
+    }
+
+    private void pushStep(double x, double y, double z) {
+        int index;
+        if (this.stepCount < this.threshold) {
+            index = this.stepIndex(this.stepCount);
+            this.stepCount++;
+        } else {
+            index = this.stepStart;
+            this.stepStart = (this.stepStart + 1) % MAX_STEPS;
+        }
+        int base = index * 3;
+        this.stepDeltas[base] = x;
+        this.stepDeltas[base + 1] = y;
+        this.stepDeltas[base + 2] = z;
+    }
+
+    private int stepIndex(int offset) {
+        return (this.stepStart + offset) % MAX_STEPS;
     }
 
     @Override

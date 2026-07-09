@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.nuggetSlag",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:nuggets/slag" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:nuggets/slag" }, "count": 1, "legacy_ore": "nuggetSlag" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Slag", "amount": 8 }
+  ],
+  "pools": [],
+  "source_order": 2124
+}

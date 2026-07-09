@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:rotary_furnace",
+  "output": {
+    "material": "Steel",
+    "amount": 144
+  },
+  "duration": 100,
+  "steam": 100,
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:ingots/iron"
+      },
+      "count": 1,
+      "legacy_ore": "ingotIron"
+    },
+    {
+      "ingredient": {
+        "item": "minecraft:coal"
+      },
+      "count": 1,
+      "legacy_ore": "gemCoal"
+    }
+  ],
+  "source_order": 0
+}

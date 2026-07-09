@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:ingot_dineutronium"
+    }
+  },
+  "pattern": [
+    "EEE",
+    "EE "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:dnt_helmet"
+  },
+  "show_notification": true
+}

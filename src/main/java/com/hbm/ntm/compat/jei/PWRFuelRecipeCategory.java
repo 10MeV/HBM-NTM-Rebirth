@@ -1,31 +1,36 @@
 package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.recipe.PWRFuelRuntime;
-import java.util.Locale;
+import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
-import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
-import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class PWRFuelRecipeCategory implements IRecipeCategory<PWRFuelRuntime.DisplayFuel> {
-    private static final int WIDTH = 132;
-    private static final int HEIGHT = 58;
+    private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
+    private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
     private final RecipeType<PWRFuelRuntime.DisplayFuel> type;
     private final IDrawable icon;
-    private final IDrawableStatic arrow;
+    private final IDrawableStatic background;
+    private final IDrawableStatic slotBackground;
+    private final IDrawableStatic machineBackground;
+    private final ItemStack catalyst;
 
     PWRFuelRecipeCategory(RecipeType<PWRFuelRuntime.DisplayFuel> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
-        this.arrow = guiHelper.getRecipeArrow();
+        this.background = LegacyNeiUniversalLayout.background(guiHelper);
+        this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
+        this.machineBackground = LegacyNeiUniversalLayout.machineBackground(guiHelper);
+        this.catalyst = new ItemStack(catalyst);
     }
 
     @Override
@@ -54,33 +59,14 @@ public final class PWRFuelRecipeCategory implements IRecipeCategory<PWRFuelRunti
     }
 
     @Override
+    public IDrawable getBackground() {
+        return background;
+    }
+
+    @Override
     public void setRecipe(IRecipeLayoutBuilder builder, PWRFuelRuntime.DisplayFuel recipe, IFocusGroup focuses) {
-        builder.addInputSlot(10, 26)
-                .addItemStack(recipe.input())
-                .setStandardSlotBackground();
-        builder.addOutputSlot(104, 26)
-                .addItemStack(recipe.hot())
-                .setOutputSlotBackground();
-    }
-
-    @Override
-    public void draw(PWRFuelRuntime.DisplayFuel recipe, IRecipeSlotsView recipeSlotsView,
-            net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        arrow.draw(guiGraphics, 58, 26);
-    }
-
-    @Override
-    public void getTooltip(ITooltipBuilder tooltip, PWRFuelRuntime.DisplayFuel recipe,
-            IRecipeSlotsView recipeSlotsView, double mouseX, double mouseY) {
-        PWRFuelRuntime.Type type = recipe.type();
-        tooltip.add(Component.literal("Reactor output: hot PWR fuel"));
-        tooltip.add(Component.literal("Heat per flux: " + format(type.heatEmission()) + " TU"));
-        tooltip.add(Component.literal("Reaction function: " + type.curve().fuelLabel()));
-        tooltip.add(Component.literal("Fuel type: " + type.curve().dangerLabel()));
-        tooltip.add(Component.literal("Yield: " + String.format(Locale.US, "%,d", type.yield())));
-    }
-
-    private static String format(double value) {
-        return String.format(Locale.US, "%.1f", value);
+        LegacyNeiUniversalLayout.addInputSlots(builder, slotBackground, List.of(List.of(recipe.input())));
+        LegacyNeiUniversalLayout.addOutputSlots(builder, slotBackground, List.of(List.of(recipe.hot())));
+        LegacyNeiUniversalLayout.addMachineCatalyst(builder, machineBackground, catalyst);
     }
 }

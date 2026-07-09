@@ -58,7 +58,7 @@ public class AnvilMenu extends AbstractContainerMenu implements HbmTypedMenuActi
             @Override
             public void onTake(Player player, ItemStack stack) {
                 super.onTake(player, stack);
-                if (AnvilSmithingRecipeRuntime.consume(input, tier)) {
+                if (AnvilSmithingRecipeRuntime.consume(player.level(), input, tier)) {
                     updateSmithingOutput();
                 }
             }
@@ -144,7 +144,7 @@ public class AnvilMenu extends AbstractContainerMenu implements HbmTypedMenuActi
     }
 
     private void updateSmithingOutput() {
-        output.setItem(0, AnvilSmithingRecipeRuntime.result(input, tier));
+        output.setItem(0, AnvilSmithingRecipeRuntime.result(playerInventory.player.level(), input, tier));
     }
 
     private class SmithingInputSlot extends Slot {

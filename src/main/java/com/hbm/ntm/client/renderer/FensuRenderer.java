@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
     private static final ResourceLocation TEXTURE =
@@ -34,6 +35,12 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(FensuBlockEntity fensu, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(fensu, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(fensu, getViewDistance());
     }
 
     @Override

@@ -28,6 +28,7 @@ import java.util.Objects;
 public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     public static final int EXT_FLEIJA = 0;
     public static final int EXT_SOLINIUM = 1;
+    private static final double ANTI_TELEPORT_RADIUS_SQ = 300.0D * 300.0D;
     private static final Map<ATEntry, Long> ANTI_TELEPORT_ENTRIES = new HashMap<>();
 
     private int age;
@@ -95,6 +96,10 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
             return;
         }
         ANTI_TELEPORT_ENTRIES.put(new ATEntry(level.dimension(), x, y, z), level.getGameTime() + ticks);
+    }
+
+    public static boolean hasAntiTeleportOverlap(Level level, double x, double y, double z) {
+        return findAntiTeleportOverlap(level, x, y, z) != null;
     }
 
     public NukeExplosionMk3Entity makeSol() {
@@ -260,8 +265,18 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
     }
 
     private static boolean isFleijaInterrupted(Level level, double x, double y, double z) {
+        ATEntry entry = findAntiTeleportOverlap(level, x, y, z);
+        if (entry != null) {
+            playInterruptionEffect(level, x, y, z);
+            playInterruptionEffect(level, entry.x + 0.5D, entry.y + 0.5D, entry.z + 0.5D);
+            return true;
+        }
+        return false;
+    }
+
+    private static ATEntry findAntiTeleportOverlap(Level level, double x, double y, double z) {
         if (level == null || level.isClientSide()) {
-            return false;
+            return null;
         }
 
         long gameTime = level.getGameTime();
@@ -281,13 +296,11 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
             double dx = x - entry.x;
             double dy = y - entry.y;
             double dz = z - entry.z;
-            if (Math.sqrt(dx * dx + dy * dy + dz * dz) < 300.0D) {
-                playInterruptionEffect(level, x, y, z);
-                playInterruptionEffect(level, entry.x + 0.5D, entry.y + 0.5D, entry.z + 0.5D);
-                return true;
+            if (dx * dx + dy * dy + dz * dz < ANTI_TELEPORT_RADIUS_SQ) {
+                return entry;
             }
         }
-        return false;
+        return null;
     }
 
     private static void playInterruptionEffect(Level level, double x, double y, double z) {

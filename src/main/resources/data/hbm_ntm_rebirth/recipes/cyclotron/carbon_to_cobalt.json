@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:cyclotron",
+  "particle": { "ingredient": { "item": "hbm_ntm_rebirth:part_carbon" }, "count": 1 },
+  "input": { "ingredient": { "tag": "forge:dusts/titanium" }, "count": 1, "legacy_ore": "dustTitanium" },
+  "output": { "item": "hbm_ntm_rebirth:powder_cobalt" },
+  "antimatter": 10,
+  "source_order": 22
+}

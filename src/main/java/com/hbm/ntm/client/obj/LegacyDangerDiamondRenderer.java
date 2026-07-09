@@ -2,8 +2,11 @@ package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,9 +26,29 @@ public final class LegacyDangerDiamondRenderer {
 
     public static void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, int poison, int flammability, int reactivity, Symbol symbol) {
-        for (QuadSpec quad : renderPlan(poison, flammability, reactivity, symbol).visibleQuads()) {
-            quad(poseStack, buffer, packedLight, packedOverlay, renderMode, quad);
-        }
+        VertexConsumer consumer = LegacyTexturedQuadRenderer.vertexAlphaConsumer(TEXTURE, buffer, renderMode);
+        PoseStack.Pose pose = poseStack.last();
+        renderDirect(consumer, pose, packedLight, packedOverlay, poison, flammability, reactivity, symbol);
+    }
+
+    public static void renderDirect(VertexConsumer consumer, PoseStack.Pose pose, int packedLight, int packedOverlay,
+            int poison, int flammability, int reactivity, Symbol symbol) {
+        renderDirect(consumer, pose.pose(), pose.normal(), packedLight, packedOverlay,
+                poison, flammability, reactivity, symbol);
+    }
+
+    public static void renderDirect(VertexConsumer consumer, Matrix4f position, Matrix3f normal,
+            int packedLight, int packedOverlay, int poison, int flammability, int reactivity, Symbol symbol) {
+        quadDirect(consumer, position, normal, packedLight, packedOverlay,
+                144, 45, 5, 184, 0.0D, 0.0D, 0.0D, DIAMOND_SIZE, DIAMOND_SIZE);
+        numberDirect(consumer, position, normal, packedLight, packedOverlay,
+                poison, 0.0D, NUMBER_OFFSET);
+        numberDirect(consumer, position, normal, packedLight, packedOverlay,
+                flammability, NUMBER_OFFSET, 0.0D);
+        numberDirect(consumer, position, normal, packedLight, packedOverlay,
+                reactivity, 0.0D, -NUMBER_OFFSET);
+        symbolDirect(consumer, position, normal, packedLight, packedOverlay,
+                symbol, -NUMBER_OFFSET, 0.0D);
     }
 
     public static BlendPlan blendPlan() {
@@ -101,6 +124,38 @@ public final class LegacyDangerDiamondRenderer {
                 x, y - height, z + width, u1, v1,
                 x, y - height, z - width, u0, v1,
                 0xFFFFFF, 255);
+    }
+
+    private static void numberDirect(VertexConsumer consumer, Matrix4f position, Matrix3f normal,
+            int packedLight, int packedOverlay, int value, double yOffset, double zOffset) {
+        if (value < 0 || value >= 6) {
+            return;
+        }
+        int x = value == 0 ? 125 : 5 + (value - 1) * 24;
+        quadDirect(consumer, position, normal, packedLight, packedOverlay,
+                x + 20, 5, x, 33, LAYER_OFFSET_X, yOffset, zOffset, NUMBER_WIDTH, NUMBER_HEIGHT);
+    }
+
+    private static void symbolDirect(VertexConsumer consumer, Matrix4f position, Matrix3f normal,
+            int packedLight, int packedOverlay, Symbol symbol, double yOffset, double zOffset) {
+        if (symbol == null || symbol == Symbol.NONE) {
+            return;
+        }
+        quadDirect(consumer, position, normal, packedLight, packedOverlay,
+                symbol.x() + 59, symbol.y(), symbol.x(), symbol.y() + 59,
+                LAYER_OFFSET_X, yOffset, zOffset, SYMBOL_SIZE, SYMBOL_SIZE);
+    }
+
+    private static void quadDirect(VertexConsumer consumer, Matrix4f position, Matrix3f normal,
+            int packedLight, int packedOverlay, int u0, int v0, int u1, int v1,
+            double x, double y, double z, double width, double height) {
+        LegacyTexturedQuadRenderer.quadWithVertexAlpha(consumer, position, normal, packedLight, packedOverlay,
+                1.0F, 0.0F, 0.0F,
+                x, y + height, z - width, (double) u0 / TEXTURE_SIZE, (double) v0 / TEXTURE_SIZE, 255,
+                x, y + height, z + width, (double) u1 / TEXTURE_SIZE, (double) v0 / TEXTURE_SIZE, 255,
+                x, y - height, z + width, (double) u1 / TEXTURE_SIZE, (double) v1 / TEXTURE_SIZE, 255,
+                x, y - height, z - width, (double) u0 / TEXTURE_SIZE, (double) v1 / TEXTURE_SIZE, 255,
+                0xFFFFFF);
     }
 
     public enum Symbol {

@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "tag": "forge:tiny_dusts/coal" } },
+  "output": { "item": "hbm_ntm_rebirth:dust_tiny" },
+  "source_order": 1006
+}

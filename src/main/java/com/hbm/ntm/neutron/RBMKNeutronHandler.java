@@ -84,10 +84,10 @@ public final class RBMKNeutronHandler {
         RBMKNeutronNode node = makeNode(streamWorld, blockEntity);
         streamWorld.addNode(node);
 
-        Vec3 vector = rotateY(new Vec3(1.0D, 0.0D, 0.0D), Math.toRadians(level.random.nextInt(4) * 9.0D));
+        Vec3 vector = rotateY(new Vec3(1.0D, 0.0D, 0.0D), level.random.nextInt(4) * 9.0D * Mth.DEG_TO_RAD);
         for (int i = 0; i < 8; i++) {
             new RBMKNeutronStream(node, vector, fluxQuantity * 0.75D, fluxRatio);
-            vector = rotateY(vector, Math.toRadians(45.0D));
+            vector = rotateY(vector, 45.0D * Mth.DEG_TO_RAD);
         }
     }
 

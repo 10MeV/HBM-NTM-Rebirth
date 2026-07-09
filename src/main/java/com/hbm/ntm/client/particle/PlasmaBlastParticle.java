@@ -15,7 +15,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
 public class PlasmaBlastParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
@@ -24,6 +23,10 @@ public class PlasmaBlastParticle extends TextureSheetParticle implements HbmDefe
     private final float pitch;
     private final float yaw;
     private final float blastScale;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private PlasmaBlastParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites,
             float red, float green, float blue, float pitch, float yaw, float scale) {
@@ -38,6 +41,7 @@ public class PlasmaBlastParticle extends TextureSheetParticle implements HbmDefe
         this.lifetime = 20;
         this.hasPhysics = false;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     public static PlasmaBlastParticle create(ClientLevel level, double x, double y, double z,
@@ -54,6 +58,7 @@ public class PlasmaBlastParticle extends TextureSheetParticle implements HbmDefe
             this.remove();
         }
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -68,30 +73,28 @@ public class PlasmaBlastParticle extends TextureSheetParticle implements HbmDefe
         if (alpha <= 0.0F) {
             return;
         }
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetAdditiveNoDepthWrite());
+        VertexConsumer consumer = HbmDeferredParticleRenderer.particleSheetAdditiveNoDepthWriteConsumer(buffer);
         float scale = (1.0F - (float) Math.exp(renderAge * -0.125D)) * this.blastScale;
         Vec3 cameraPos = camera.getPosition();
         float x = (float) (Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x());
         float y = (float) (Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y());
         float z = (float) (Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z());
-        Quaternionf rotation = new Quaternionf()
-                .rotateY((float) Math.toRadians(this.yaw))
-                .rotateX((float) Math.toRadians(this.pitch));
-        Vector3f[] corners = new Vector3f[] {
-                new Vector3f(-scale, 0.0F, -scale),
-                new Vector3f(-scale, 0.0F, scale),
-                new Vector3f(scale, 0.0F, scale),
-                new Vector3f(scale, 0.0F, -scale)
-        };
-        for (Vector3f corner : corners) {
-            corner.rotate(rotation).add(x, y, z);
-        }
-        HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT,
-                corners[0], getU1(), getV1(),
-                corners[1], getU1(), getV0(),
-                corners[2], getU0(), getV0(),
-                corners[3], getU0(), getV1(),
+        Quaternionf rotation = HbmDeferredParticleRenderer.scratchRotation()
+                .rotateY(this.yaw * Mth.DEG_TO_RAD)
+                .rotateX(this.pitch * Mth.DEG_TO_RAD);
+        HbmDeferredParticleRenderer.emitLocalParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT, rotation, x, y, z,
+                -scale, 0.0F, -scale, this.cachedU1, this.cachedV1,
+                -scale, 0.0F, scale, this.cachedU1, this.cachedV0,
+                scale, 0.0F, scale, this.cachedU0, this.cachedV0,
+                scale, 0.0F, -scale, this.cachedU0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, alpha);
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     @Override

@@ -1,0 +1,36 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:nuclear_waste_long_depleted_tiny"
+      },
+      "count": 1,
+      "legacy_id": "hbm:nuclear_waste_long_depleted_tiny",
+      "legacy_meta": 2,
+      "partial_nbt": "{Damage:2}"
+    }
+  },
+  "fluid_produced": 100,
+  "fluid_consumed": 100,
+  "laser_strength": "ir",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_u238",
+      "weight": 16
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_lead",
+      "weight": 55
+    },
+    {
+      "item": "hbm_ntm_rebirth:dust_tiny",
+      "weight": 20
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_tiny",
+      "weight": 9
+    }
+  ],
+  "source_order": 311
+}

@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.stockCalcium",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:stocks/calcium" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:stocks/calcium" }, "count": 1, "legacy_ore": "stockCalcium" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Calcium", "amount": 288 }
+  ],
+  "pools": [],
+  "source_order": 1777
+}

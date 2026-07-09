@@ -4,5 +4,6 @@
   "fluid": { "fluid": "SULFURIC_ACID", "amount": 500 },
   "input": { "ingredient": { "tag": "forge:ores/lithium" }, "legacy_ore": "oreLithium" },
   "output": { "item": "hbm_ntm_rebirth:crystal_lithium" },
-  "productivity": 0.05
+  "productivity": 0.05,
+  "source_order": 19
 }

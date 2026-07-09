@@ -14,7 +14,6 @@ import com.hbm.ntm.world.saveddata.AnnihilatorSavedData;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.NonNullList;
@@ -36,21 +35,24 @@ import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 public class AnnihilatorRecipe implements Recipe<Container> {
-    public static final Comparator<Milestone> MILESTONE_ORDER =
-            Comparator.comparing(Milestone::amount);
-
     private final ResourceLocation id;
     private final AnnihilatorSavedData.PoolKey key;
     private final List<Milestone> milestones;
+    private final int sourceOrder;
 
     public AnnihilatorRecipe(ResourceLocation id, AnnihilatorSavedData.PoolKey key, List<Milestone> milestones) {
+        this(id, key, milestones, Integer.MAX_VALUE);
+    }
+
+    public AnnihilatorRecipe(ResourceLocation id, AnnihilatorSavedData.PoolKey key, List<Milestone> milestones,
+            int sourceOrder) {
         this.id = id;
         this.key = key;
         this.milestones = milestones == null ? List.of() : milestones.stream()
                 .filter(milestone -> milestone != null && milestone.amount().signum() > 0
                         && !milestone.payout().isEmpty())
-                .sorted(MILESTONE_ORDER)
                 .toList();
+        this.sourceOrder = sourceOrder;
         if (this.milestones.isEmpty()) {
             throw new IllegalArgumentException("Annihilator recipe needs at least one valid milestone: " + id);
         }
@@ -64,9 +66,17 @@ public class AnnihilatorRecipe implements Recipe<Container> {
         return milestones;
     }
 
+    public int sourceOrder() {
+        return sourceOrder;
+    }
+
     public ItemStack highestPayout(@Nullable BigInteger previous, BigInteger current) {
+        return highestPayoutMatch(previous, current).payout();
+    }
+
+    public PayoutMatch highestPayoutMatch(@Nullable BigInteger previous, BigInteger current) {
         if (current == null) {
-            return ItemStack.EMPTY;
+            return PayoutMatch.empty();
         }
         BigInteger highestYet = BigInteger.ZERO;
         ItemStack payout = ItemStack.EMPTY;
@@ -82,7 +92,7 @@ public class AnnihilatorRecipe implements Recipe<Container> {
                 payout = milestone.payout();
             }
         }
-        return payout;
+        return new PayoutMatch(highestYet, payout);
     }
 
     @Override
@@ -152,6 +162,22 @@ public class AnnihilatorRecipe implements Recipe<Container> {
         }
     }
 
+    public record PayoutMatch(BigInteger amount, ItemStack payout) {
+        public PayoutMatch {
+            amount = amount == null ? BigInteger.ZERO : amount;
+            payout = payout == null ? ItemStack.EMPTY : payout.copy();
+        }
+
+        public static PayoutMatch empty() {
+            return new PayoutMatch(BigInteger.ZERO, ItemStack.EMPTY);
+        }
+
+        @Override
+        public ItemStack payout() {
+            return payout.copy();
+        }
+    }
+
     public static class Serializer implements RecipeSerializer<AnnihilatorRecipe> {
         @Override
         public AnnihilatorRecipe fromJson(ResourceLocation id, JsonObject json) {
@@ -164,7 +190,8 @@ public class AnnihilatorRecipe implements Recipe<Container> {
                 ItemStack payout = readPayout(milestone.get("payout"));
                 milestones.add(new Milestone(amount, payout));
             }
-            return new AnnihilatorRecipe(id, key, milestones);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
+            return new AnnihilatorRecipe(id, key, milestones, sourceOrder);
         }
 
         @Nullable
@@ -172,13 +199,15 @@ public class AnnihilatorRecipe implements Recipe<Container> {
         public AnnihilatorRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buffer) {
             AnnihilatorSavedData.PoolKey key = readKey(buffer);
             List<Milestone> milestones = buffer.readList(Serializer::readMilestone);
-            return new AnnihilatorRecipe(id, key, milestones);
+            int sourceOrder = buffer.readVarInt();
+            return new AnnihilatorRecipe(id, key, milestones, sourceOrder);
         }
 
         @Override
         public void toNetwork(FriendlyByteBuf buffer, AnnihilatorRecipe recipe) {
             writeKey(buffer, recipe.key);
             buffer.writeCollection(recipe.milestones, Serializer::writeMilestone);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
 
         private static Milestone readMilestone(FriendlyByteBuf buffer) {

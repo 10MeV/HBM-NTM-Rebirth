@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "kind": "hot",
+  "left": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:ingot_steel_dusted_9"
+    },
+    "legacy_id": "hbm:ingot_steel_dusted",
+    "legacy_meta": 9
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_chainsteel"
+  },
+  "right": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:ingot_steel_dusted_9"
+    },
+    "legacy_id": "hbm:ingot_steel_dusted",
+    "legacy_meta": 9
+  },
+  "source_order": 27,
+  "tier": 3
+}

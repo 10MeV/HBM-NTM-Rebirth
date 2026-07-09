@@ -1,6 +1,6 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.entity.effect.MistEntity;
+import com.hbm.entity.effect.EntityMist;
 import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.ExplosionLarge;
 import com.hbm.ntm.explosion.ExplosionNukeGeneric;
@@ -200,7 +200,7 @@ public class BombMultiBlockEntity extends BlockEntity implements MenuProvider {
                 ExplosionNukeGeneric.wasteNoSchrab(level, pos.getX(), pos.getY(), pos.getZ(), poisonRadius);
             }
             if (gasCloud > 0) {
-                level.addFreshEntity(MistEntity.create(level, pos.getX() + 0.5D, pos.getY() + 0.5D,
+                level.addFreshEntity(EntityMist.create(level, pos.getX() + 0.5D, pos.getY() + 0.5D,
                         pos.getZ() + 0.5D, HbmFluids.CHLORINE, gasCloud * 15.0F / 50.0F,
                         gasCloud * 7.5F / 50.0F, 150));
             }

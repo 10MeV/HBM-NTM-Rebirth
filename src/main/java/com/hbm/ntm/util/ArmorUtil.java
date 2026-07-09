@@ -1,6 +1,8 @@
 package com.hbm.ntm.util;
 
 import com.hbm.ntm.util.ArmorRegistry.HazardClass;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -9,6 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -24,8 +27,8 @@ import java.util.Map;
  */
 @Deprecated(forRemoval = false)
 public final class ArmorUtil {
-    public static final List<Tuple.Pair<Item, HazardClass[]>> external = new ExternalProtectionList();
-    public static final HazardClass[] FULL_NO_LIGHT = new HazardClass[] {
+    public static List<Tuple.Pair<Item, HazardClass[]>> external = new ExternalProtectionList();
+    public static HazardClass[] FULL_NO_LIGHT = new HazardClass[] {
             HazardClass.PARTICLE_COARSE,
             HazardClass.PARTICLE_FINE,
             HazardClass.GAS_LUNG,
@@ -34,7 +37,7 @@ public final class ArmorUtil {
             HazardClass.GAS_MONOXIDE,
             HazardClass.SAND
     };
-    public static final HazardClass[] FULL_PACKAGE = new HazardClass[] {
+    public static HazardClass[] FULL_PACKAGE = new HazardClass[] {
             HazardClass.PARTICLE_COARSE,
             HazardClass.PARTICLE_FINE,
             HazardClass.GAS_LUNG,
@@ -58,23 +61,25 @@ public final class ArmorUtil {
     }
 
     public static void register() {
+        syncExternalToModern();
         com.hbm.ntm.radiation.ArmorUtil.register();
     }
 
     public static void registerDefaultProtections() {
+        syncExternalToModern();
         com.hbm.ntm.radiation.ArmorUtil.registerDefaultProtections();
     }
 
     public static void registerProtection(Item item, HazardClass... hazards) {
-        com.hbm.ntm.radiation.ArmorUtil.registerProtection(item, ArmorRegistry.modern(hazards));
+        ArmorRegistry.registerProtection(item, hazards);
     }
 
     public static boolean registerProtection(ResourceLocation itemId, HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.registerProtection(itemId, ArmorRegistry.modern(hazards));
+        return ArmorRegistry.registerProtection(itemId, hazards);
     }
 
     public static boolean registerProtection(String itemId, HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.registerProtection(itemId, ArmorRegistry.modern(hazards));
+        return ArmorRegistry.registerProtection(itemId, hazards);
     }
 
     public static void registerExternalProtection(Item item, HazardClass... hazards) {
@@ -90,15 +95,15 @@ public final class ArmorUtil {
     }
 
     public static ArrayList<HazardClass> removeProtection(Item item) {
-        return ArmorRegistry.legacy(com.hbm.ntm.radiation.ArmorUtil.removeProtection(item));
+        return ArmorRegistry.removeProtection(item);
     }
 
     public static boolean removeProtection(ResourceLocation itemId) {
-        return com.hbm.ntm.radiation.ArmorUtil.removeProtection(itemId);
+        return ArmorRegistry.removeProtection(itemId);
     }
 
     public static boolean removeProtection(String itemId) {
-        return com.hbm.ntm.radiation.ArmorUtil.removeProtection(itemId);
+        return ArmorRegistry.removeProtection(itemId);
     }
 
     public static ArrayList<HazardClass> removeExternalProtection(Item item) {
@@ -114,7 +119,7 @@ public final class ArmorUtil {
     }
 
     public static void clearProtections() {
-        com.hbm.ntm.radiation.ArmorUtil.clearProtections();
+        ArmorRegistry.clearProtections();
     }
 
     public static void clearExternalProtections() {
@@ -122,7 +127,7 @@ public final class ArmorUtil {
     }
 
     public static void replaceProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
-        com.hbm.ntm.radiation.ArmorUtil.replaceProtections(ArmorRegistry.modernProtectionMap(protections));
+        ArmorRegistry.replaceProtections(protections);
     }
 
     public static void replaceExternalProtections(Map<Item, ? extends Collection<HazardClass>> protections) {
@@ -130,20 +135,15 @@ public final class ArmorUtil {
     }
 
     public static ArrayList<HazardClass> getProtection(ItemStack stack) {
-        return ArmorRegistry.legacy(com.hbm.ntm.radiation.ArmorUtil.getProtection(stack));
+        return ArmorRegistry.getProtection(stack);
     }
 
     public static ArrayList<HazardClass> getProtectionFromItem(ItemStack stack, LivingEntity entity) {
-        return ArmorRegistry.legacy(com.hbm.ntm.radiation.ArmorUtil.getProtectionFromItem(stack, entity));
+        return ArmorRegistry.getProtectionFromItem(stack, entity);
     }
 
     public static Map<Item, EnumSet<HazardClass>> protectionSnapshot() {
-        Map<Item, EnumSet<HazardClass>> snapshot = new LinkedHashMap<>();
-        for (Map.Entry<Item, EnumSet<com.hbm.ntm.api.item.HazardClass>> entry :
-                com.hbm.ntm.radiation.ArmorUtil.protectionSnapshot().entrySet()) {
-            snapshot.put(entry.getKey(), legacySet(entry.getValue()));
-        }
-        return snapshot;
+        return ArmorRegistry.protectionSnapshot();
     }
 
     public static Map<Item, EnumSet<HazardClass>> externalProtectionDefaultsSnapshot() {
@@ -180,7 +180,10 @@ public final class ArmorUtil {
     }
 
     public static void resetFlightTime(Player player) {
-        // 1.7.10 reset NetHandlerPlayServer floatingTickCount by reflection; modern handling is deferred.
+        if (player instanceof ServerPlayer serverPlayer) {
+            ObfuscationReflectionHelper.setPrivateValue(ServerGamePacketListenerImpl.class,
+                    serverPlayer.connection, 0, "f_9737_");
+        }
     }
 
     public static boolean checkForHazmat(LivingEntity entity) {
@@ -216,35 +219,35 @@ public final class ArmorUtil {
     }
 
     public static boolean checkForMkuProtection(LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.checkForMkuProtection(entity);
+        return ArmorRegistry.checkForMkuProtection(entity);
     }
 
     public static boolean hasPollutionPoisonProtection(LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasPollutionPoisonProtection(entity);
+        return ArmorRegistry.hasPollutionPoisonProtection(entity);
     }
 
     public static boolean hasPollutionLeadProtection(LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasPollutionLeadProtection(entity);
+        return ArmorRegistry.hasPollutionLeadProtection(entity);
     }
 
     public static boolean hasSootLungProtection(LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasSootLungProtection(entity);
+        return ArmorRegistry.hasSootLungProtection(entity);
     }
 
     public static boolean hasBlindingProtection(LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasBlindingProtection(entity);
+        return ArmorRegistry.hasBlindingProtection(entity);
     }
 
     public static boolean hasAshVisionPartialProtection(LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAshVisionPartialProtection(entity);
+        return ArmorRegistry.hasAshVisionPartialProtection(entity);
     }
 
     public static boolean checkForAshGlasses(LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.checkForAshGlasses(entity);
+        return ArmorRegistry.checkForAshGlasses(entity);
     }
 
     public static int getAshExposureLimit(LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.getAshExposureLimit(entity);
+        return ArmorRegistry.getAshExposureLimit(entity);
     }
 
     public static boolean isFaradayArmor(ItemStack stack) {
@@ -347,75 +350,69 @@ public final class ArmorUtil {
     }
 
     public static boolean hasProtection(LivingEntity entity, HazardClass hazard) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasProtection(entity, hazard.modern());
+        return ArmorRegistry.hasProtection(entity, hazard);
     }
 
     public static boolean hasAnyProtection(LivingEntity entity, HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAnyProtection(entity, ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAnyProtection(entity, hazards);
     }
 
     public static boolean hasAllProtection(LivingEntity entity, HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAllProtection(entity, ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAllProtection(entity, hazards);
     }
 
     public static boolean hasProtection(LivingEntity entity, int slot, HazardClass hazard) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasProtection(entity, slot, hazard.modern());
+        return ArmorRegistry.hasProtection(entity, slot, hazard);
     }
 
     public static boolean hasProtection(LivingEntity entity, EquipmentSlot slot, HazardClass hazard) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasProtection(entity, slot, hazard.modern());
+        return ArmorRegistry.hasProtection(entity, slot, hazard);
     }
 
     public static boolean hasAnyProtection(LivingEntity entity, int slot, HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAnyProtection(entity, slot, ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAnyProtection(entity, slot, hazards);
     }
 
     public static boolean hasAnyProtection(LivingEntity entity, EquipmentSlot slot, HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAnyProtection(entity, slot, ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAnyProtection(entity, slot, hazards);
     }
 
     public static boolean hasAllProtection(LivingEntity entity, int slot, HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAllProtection(entity, slot, ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAllProtection(entity, slot, hazards);
     }
 
     public static boolean hasAllProtection(LivingEntity entity, EquipmentSlot slot, HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAllProtection(entity, slot, ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAllProtection(entity, slot, hazards);
     }
 
     public static boolean hasProtectionAndDamageFilter(LivingEntity entity, HazardClass hazard,
             int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasProtectionAndDamageFilter(entity, hazard.modern(),
-                filterDamage);
+        return ArmorRegistry.hasProtectionAndDamageFilter(entity, hazard, filterDamage);
     }
 
     public static boolean hasProtectionAndDamageFilter(LivingEntity entity, int slot, HazardClass hazard,
             int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasProtectionAndDamageFilter(entity, slot, hazard.modern(),
-                filterDamage);
+        return ArmorRegistry.hasProtectionAndDamageFilter(entity, slot, hazard, filterDamage);
     }
 
     public static boolean hasProtectionAndDamageFilter(LivingEntity entity, EquipmentSlot slot, HazardClass hazard,
             int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasProtectionAndDamageFilter(entity, slot, hazard.modern(),
-                filterDamage);
+        return ArmorRegistry.hasProtectionAndDamageFilter(entity, slot, hazard, filterDamage);
     }
 
     public static boolean hasAnyProtectionAndDamageFilter(LivingEntity entity, int filterDamage,
             HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAnyProtectionAndDamageFilter(entity, filterDamage,
-                ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAnyProtectionAndDamageFilter(entity, filterDamage, hazards);
     }
 
     public static boolean hasAnyProtectionAndDamageFilter(LivingEntity entity, int slot, int filterDamage,
             HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAnyProtectionAndDamageFilter(entity, slot, filterDamage,
-                ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAnyProtectionAndDamageFilter(entity, slot, filterDamage, hazards);
     }
 
     public static boolean hasAnyProtectionAndDamageFilter(LivingEntity entity, EquipmentSlot slot, int filterDamage,
             HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAnyProtectionAndDamageFilter(entity, slot, filterDamage,
-                ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAnyProtectionAndDamageFilter(entity, slot, filterDamage, hazards);
     }
 
     public static EquipmentSlot legacyEquipmentSlot(int legacyArmorSlot) {
@@ -428,56 +425,51 @@ public final class ArmorUtil {
 
     public static boolean hasAllProtectionAndDamageFilter(LivingEntity entity, int filterDamage,
             HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAllProtectionAndDamageFilter(entity, filterDamage,
-                ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAllProtectionAndDamageFilter(entity, filterDamage, hazards);
     }
 
     public static boolean hasAllProtectionAndDamageFilter(LivingEntity entity, int slot, int filterDamage,
             HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAllProtectionAndDamageFilter(entity, slot, filterDamage,
-                ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAllProtectionAndDamageFilter(entity, slot, filterDamage, hazards);
     }
 
     public static boolean hasAllProtectionAndDamageFilter(LivingEntity entity, EquipmentSlot slot, int filterDamage,
             HazardClass... hazards) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasAllProtectionAndDamageFilter(entity, slot, filterDamage,
-                ArmorRegistry.modern(hazards));
+        return ArmorRegistry.hasAllProtectionAndDamageFilter(entity, slot, filterDamage, hazards);
     }
 
     public static boolean hasFineParticleProtectionAndDamageFilter(LivingEntity entity, int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasFineParticleProtectionAndDamageFilter(entity, filterDamage);
+        return ArmorRegistry.hasFineParticleProtectionAndDamageFilter(entity, filterDamage);
     }
 
     public static boolean hasCoarseParticleProtectionAndDamageFilter(LivingEntity entity, int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasCoarseParticleProtectionAndDamageFilter(entity, filterDamage);
+        return ArmorRegistry.hasCoarseParticleProtectionAndDamageFilter(entity, filterDamage);
     }
 
     public static boolean hasMonoxideGasProtectionAndDamageFilter(LivingEntity entity, int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasMonoxideGasProtectionAndDamageFilter(entity, filterDamage);
+        return ArmorRegistry.hasMonoxideGasProtectionAndDamageFilter(entity, filterDamage);
     }
 
     public static boolean hasLungGasProtectionAndDamageFilter(LivingEntity entity, int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasLungGasProtectionAndDamageFilter(entity, filterDamage);
+        return ArmorRegistry.hasLungGasProtectionAndDamageFilter(entity, filterDamage);
     }
 
     public static boolean hasBacteriaProtectionAndDamageFilter(LivingEntity entity, int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasBacteriaProtectionAndDamageFilter(entity, filterDamage);
+        return ArmorRegistry.hasBacteriaProtectionAndDamageFilter(entity, filterDamage);
     }
 
     public static boolean hasBlisteringGasProtectionAndDamageFilter(LivingEntity entity, int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasBlisteringGasProtectionAndDamageFilter(entity, filterDamage);
+        return ArmorRegistry.hasBlisteringGasProtectionAndDamageFilter(entity, filterDamage);
     }
 
     public static boolean hasToxinProtection(LivingEntity entity, HazardClass hazard,
             boolean requiresFullBodyProtection, boolean apply) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasToxinProtection(entity,
-                hazard == null ? null : hazard.modern(), requiresFullBodyProtection, apply);
+        return ArmorRegistry.hasToxinProtection(entity, hazard, requiresFullBodyProtection, apply);
     }
 
     public static boolean hasToxinProtection(LivingEntity entity, HazardClass hazard,
             boolean requiresFullBodyProtection, int filterDamage) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasToxinProtection(entity,
-                hazard == null ? null : hazard.modern(), requiresFullBodyProtection, filterDamage);
+        return ArmorRegistry.hasToxinProtection(entity, hazard, requiresFullBodyProtection, filterDamage);
     }
 
     private static EnumSet<HazardClass> legacySet(
@@ -491,12 +483,27 @@ public final class ArmorUtil {
         return mapped;
     }
 
+    private static void syncExternalToModern() {
+        if (external instanceof ExternalProtectionList) {
+            return;
+        }
+        List<HbmTuple.Pair<Item, com.hbm.ntm.api.item.HazardClass[]>> converted = new ArrayList<>();
+        if (external != null) {
+            for (Tuple.Pair<Item, HazardClass[]> entry : external) {
+                if (entry != null && entry.getKey() != null && entry.getValue() != null) {
+                    converted.add(new LegacyProtectionPairAdapter(entry));
+                }
+            }
+        }
+        com.hbm.ntm.radiation.ArmorUtil.external = converted;
+    }
+
     private static final class ExternalProtectionList extends AbstractList<Tuple.Pair<Item, HazardClass[]>> {
         @Override
         public Tuple.Pair<Item, HazardClass[]> get(int index) {
             HbmTuple.Pair<Item, com.hbm.ntm.api.item.HazardClass[]> entry =
                     com.hbm.ntm.radiation.ArmorUtil.external.get(index);
-            return new Tuple.Pair<>(entry.getKey(), ArmorRegistry.legacy(entry.getValue()));
+            return legacyPair(entry);
         }
 
         @Override
@@ -510,7 +517,7 @@ public final class ArmorUtil {
                 return;
             }
             com.hbm.ntm.radiation.ArmorUtil.external.add(index,
-                    new HbmTuple.Pair<>(element.getKey(), ArmorRegistry.modern(element.getValue())));
+                    new LegacyProtectionPairAdapter(element));
         }
 
         @Override
@@ -520,7 +527,7 @@ public final class ArmorUtil {
                 return previous;
             }
             com.hbm.ntm.radiation.ArmorUtil.external.set(index,
-                    new HbmTuple.Pair<>(element.getKey(), ArmorRegistry.modern(element.getValue())));
+                    new LegacyProtectionPairAdapter(element));
             return previous;
         }
 
@@ -581,6 +588,38 @@ public final class ArmorUtil {
             return entry.getKey() == candidate.getKey()
                     && candidate.getValue() instanceof HazardClass[] hazards
                     && Arrays.equals(entry.getValue(), hazards);
+        }
+
+        private Tuple.Pair<Item, HazardClass[]> legacyPair(
+                HbmTuple.Pair<Item, com.hbm.ntm.api.item.HazardClass[]> entry) {
+            if (entry instanceof LegacyProtectionPairAdapter adapter) {
+                return adapter.legacyPair();
+            }
+            return new Tuple.Pair<>(entry.getKey(), ArmorRegistry.legacy(entry.getValue()));
+        }
+    }
+
+    private static final class LegacyProtectionPairAdapter
+            extends HbmTuple.Pair<Item, com.hbm.ntm.api.item.HazardClass[]> {
+        private final Tuple.Pair<Item, HazardClass[]> legacy;
+
+        private LegacyProtectionPairAdapter(Tuple.Pair<Item, HazardClass[]> legacy) {
+            super(legacy.getKey(), ArmorRegistry.modern(legacy.getValue()));
+            this.legacy = legacy;
+        }
+
+        @Override
+        public Item getKey() {
+            return legacy.getKey();
+        }
+
+        @Override
+        public com.hbm.ntm.api.item.HazardClass[] getValue() {
+            return ArmorRegistry.modern(legacy.getValue());
+        }
+
+        private Tuple.Pair<Item, HazardClass[]> legacyPair() {
+            return legacy;
         }
     }
 }

@@ -3,6 +3,7 @@
   "duration": 1200,
   "inputs": [
     {
+      "count": 1,
       "ingredient": [
         {
           "item": "minecraft:copper_ore"
@@ -11,25 +12,26 @@
           "item": "minecraft:deepslate_copper_ore"
         }
       ],
-      "count": 1,
       "legacy_ore": "oreCopper"
     },
     {
+      "count": 6,
       "ingredient": {
         "item": "minecraft:redstone"
       },
-      "count": 6,
       "legacy_ore": "dustRedstone"
     }
   ],
+  "name": "blast.mingradeOre",
   "outputs": [
     {
-      "item": "hbm_ntm_rebirth:ingot_red_copper",
-      "count": 6
+      "count": 6,
+      "item": "hbm_ntm_rebirth:ingot_red_copper"
     },
     {
       "item": "hbm_ntm_rebirth:scraps",
-      "nbt": "{mat:41,amount:72}"
+      "nbt": "{amount:72,mat:41}"
     }
-  ]
+  ],
+  "source_order": 8
 }

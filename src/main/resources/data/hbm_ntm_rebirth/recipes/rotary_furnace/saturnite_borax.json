@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:rotary_furnace",
+  "output": {
+    "material": "Saturnite",
+    "amount": 576
+  },
+  "duration": 200,
+  "steam": 300,
+  "fluid": {
+    "fluid": "REFORMGAS",
+    "amount": 250
+  },
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:dusts/dura_steel"
+      },
+      "count": 4,
+      "legacy_ore": "dustDuraSteel"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:dusts/copper"
+      },
+      "count": 1,
+      "legacy_ore": "dustCopper"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:dusts/borax"
+      },
+      "count": 1,
+      "legacy_ore": "dustBorax"
+    }
+  ],
+  "source_order": 9
+}

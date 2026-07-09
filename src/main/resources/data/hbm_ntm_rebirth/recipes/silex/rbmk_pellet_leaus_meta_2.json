@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_leaus"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_leaus",
+      "legacy_meta": 2
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_australium_lesser",
+      "weight": 50
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_lead",
+      "weight": 30
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_pb209",
+      "weight": 20
+    }
+  ],
+  "source_order": 149
+}

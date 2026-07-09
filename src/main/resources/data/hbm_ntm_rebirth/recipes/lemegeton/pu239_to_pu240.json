@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/plutonium239"
+    },
+    "count": 1,
+    "legacy_ore": "ingotPlutonium239"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_pu240"
+  },
+  "source_order": 19
+}

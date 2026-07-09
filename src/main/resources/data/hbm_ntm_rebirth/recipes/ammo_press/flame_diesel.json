@@ -23,6 +23,7 @@
         "amount": 1000
       },
       "count": 1,
+      "legacy_ore": "container1000diesel",
       "fluid_container": {
         "fluid": "hbm_ntm_rebirth:diesel",
         "amount": 1000

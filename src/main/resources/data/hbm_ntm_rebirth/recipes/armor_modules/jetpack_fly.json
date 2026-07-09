@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "hbm_ntm_rebirth:plate_aluminium"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:thruster_small"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:tank_steel"
+    }
+  },
+  "pattern": [
+    "ACA",
+    "TLT",
+    "D D"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:jetpack_fly"
+  },
+  "show_notification": true
+}

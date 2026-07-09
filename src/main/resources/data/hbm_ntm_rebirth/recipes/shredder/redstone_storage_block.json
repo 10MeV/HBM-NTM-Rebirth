@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:storage_blocks/redstone" } },
-  "output": { "item": "minecraft:redstone", "count": 4 }
+  "output": { "item": "minecraft:redstone", "count": 4 },
+  "source_order": 1005
 }

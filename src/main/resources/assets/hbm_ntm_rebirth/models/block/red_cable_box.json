@@ -1,7 +1,19 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "loader": "hbm_ntm_rebirth:red_cable_box_loader",
+  "straight": "hbm_ntm_rebirth:block/boxduct_cable_straight",
+  "end_0": "hbm_ntm_rebirth:block/boxduct_cable_end_0",
+  "end_1": "hbm_ntm_rebirth:block/boxduct_cable_end_1",
+  "end_2": "hbm_ntm_rebirth:block/boxduct_cable_end_2",
+  "end_3": "hbm_ntm_rebirth:block/boxduct_cable_end_3",
+  "end_4": "hbm_ntm_rebirth:block/boxduct_cable_end_4",
+  "curve_tl": "hbm_ntm_rebirth:block/boxduct_cable_curve_tl",
+  "curve_tr": "hbm_ntm_rebirth:block/boxduct_cable_curve_tr",
+  "curve_bl": "hbm_ntm_rebirth:block/boxduct_cable_curve_bl",
+  "curve_br": "hbm_ntm_rebirth:block/boxduct_cable_curve_br",
+  "junction": "hbm_ntm_rebirth:block/boxduct_cable_junction",
+  "particle": "hbm_ntm_rebirth:block/boxduct_cable_straight",
+  "render_type": "minecraft:cutout",
   "textures": {
-    "all": "hbm_ntm_rebirth:block/boxduct_cable_straight",
     "particle": "hbm_ntm_rebirth:block/boxduct_cable_straight"
   }
 }

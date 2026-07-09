@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.billetNeodymium",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:billets/neodymium" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:billets/neodymium" }, "count": 1, "legacy_ore": "billetNeodymium" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Neodymium", "amount": 48 }
+  ],
+  "pools": [],
+  "source_order": 1326
+}

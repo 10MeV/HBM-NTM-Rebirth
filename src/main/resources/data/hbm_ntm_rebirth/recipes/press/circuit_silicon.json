@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:billets/silicon"
+    },
+    "legacy_ore": "billetSilicon"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:circuit_silicon"
+  },
+  "source_order": 39,
+  "stamp": "circuit"
+}

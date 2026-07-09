@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ball_dynamite"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:safety_fuse"
+    }
+  },
+  "pattern": [
+    " S ",
+    "PDP",
+    "PDP"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:stick_dynamite"
+  },
+  "show_notification": true
+}

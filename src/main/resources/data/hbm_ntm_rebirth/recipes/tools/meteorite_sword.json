@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:blade_meteorite"
+    },
+    "G": {
+      "tag": "forge:plates/gold"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "  B",
+    "GB ",
+    "SG "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:meteorite_sword"
+  },
+  "show_notification": true
+}

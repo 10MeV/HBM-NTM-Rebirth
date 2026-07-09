@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/dura_steel"
+      },
+      "legacy_ore": "plateDuraSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/titanium"
+      },
+      "legacy_ore": "plateTitanium"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    }
+  ],
+  "internal_name": "ass.centrifugetower",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:centrifuge_element"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 36
+}

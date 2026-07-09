@@ -1,6 +1,6 @@
 package com.hbm.ntm.block;
 
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -64,7 +64,7 @@ public class RadiatingHazardBlock extends Block {
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.tick(state, level, pos, random);
         if (chunkRadiationPerTick > 0.0F) {
-            ChunkRadiationManager.incrementRadiation(level, pos, chunkRadiationPerTick);
+            ChunkRadiationManager.proxy.incrementRad(level, pos, chunkRadiationPerTick);
             level.scheduleTick(pos, this, tickRate());
         }
     }

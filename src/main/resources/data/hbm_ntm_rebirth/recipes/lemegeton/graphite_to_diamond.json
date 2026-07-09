@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/graphite"
+    },
+    "count": 1,
+    "legacy_ore": "ingotGraphite"
+  },
+  "output": {
+    "item": "minecraft:diamond"
+  },
+  "source_order": 29
+}

@@ -422,6 +422,22 @@
               "function": "minecraft:set_count"
             }
           ],
+          "name": "hbm_ntm_rebirth:bottle_opener",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
           "name": "hbm_ntm_rebirth:gas_mask_filter",
           "weight": 3
         }

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:wire_dense_mingrade"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:horseshoe_magnet"
+    },
+    "S": {
+      "tag": "forge:ingots/steel"
+    }
+  },
+  "pattern": [
+    "SMS",
+    " B ",
+    "SMS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:industrial_magnet"
+  },
+  "show_notification": true
+}

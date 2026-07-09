@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
+  "source_order": 24,
   "ingredient": {
     "item": "hbm_ntm_rebirth:plant_flower_cd0"
   },

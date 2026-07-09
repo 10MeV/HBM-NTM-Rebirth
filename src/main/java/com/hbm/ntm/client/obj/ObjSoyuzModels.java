@@ -73,6 +73,13 @@ public final class ObjSoyuzModels {
     public static final SoyuzRenderStatePlan MAIN_RENDER_STATE = new SoyuzRenderStatePlan(true, true, false, true);
     public static final SoyuzRenderStatePlan BOOSTER_RENDER_STATE = new SoyuzRenderStatePlan(true, true, false, true);
     public static final SoyuzRenderStatePlan MODULE_RENDER_STATE = new SoyuzRenderStatePlan(true, true, true, true);
+    private static final List<SoyuzPartPlan> SOYUZ_MAIN_PART_PLAN = buildMainPartPlan(SOYUZ_TEXTURES);
+    private static final List<SoyuzPartPlan> LUNA_MAIN_PART_PLAN = buildMainPartPlan(LUNA_TEXTURES);
+    private static final List<SoyuzPartPlan> AUTHENTIC_MAIN_PART_PLAN = buildMainPartPlan(AUTHENTIC_TEXTURES);
+    private static final List<SoyuzPartPlan> SOYUZ_BOOSTER_PART_PLAN = buildBoosterPartPlan(SOYUZ_TEXTURES);
+    private static final List<SoyuzPartPlan> LUNA_BOOSTER_PART_PLAN = buildBoosterPartPlan(LUNA_TEXTURES);
+    private static final List<SoyuzPartPlan> AUTHENTIC_BOOSTER_PART_PLAN = buildBoosterPartPlan(AUTHENTIC_TEXTURES);
+    private static final List<SoyuzPartPlan> MODULE_PART_PLAN = buildModulePartPlan();
 
     public static void renderSoyuz(SoyuzTextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
@@ -82,12 +89,23 @@ public final class ObjSoyuzModels {
 
     public static void renderMain(SoyuzTextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        renderSoyuzParts(mainPartPlan(textures), poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.engineBlock(), SOYUZ_ENGINE_BLOCK, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.bottomStage(), SOYUZ_BOTTOM_STAGE, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.topStage(), SOYUZ_TOP_STAGE, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.payload(), SOYUZ_PAYLOAD, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(MEMENTO, SOYUZ_MEMENTO, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.payloadBlocks(), SOYUZ_PAYLOAD_BLOCKS, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.les(), SOYUZ_LES, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.lesThrusters(), SOYUZ_LES_THRUSTERS, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.mainEngines(), SOYUZ_MAIN_ENGINES, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.sideEngines(), SOYUZ_SIDE_ENGINES, poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void renderBoosters(SoyuzTextureSet textures, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        renderSoyuzParts(boosterPartPlan(textures), poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.booster(), SOYUZ_BOOSTERS, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.mainEngines(), SOYUZ_BOOSTER_ENGINES, poseStack, buffer, packedLight, packedOverlay);
+        renderSoyuzPart(textures.boosterSide(), SOYUZ_BOOSTER_SIDES, poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static void renderLanderCapsule(boolean rusted, PoseStack poseStack, MultiBufferSource buffer,
@@ -101,10 +119,10 @@ public final class ObjSoyuzModels {
     }
 
     public static void renderModule(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        for (SoyuzPartPlan plan : modulePartPlan()) {
-            MODULE.renderOnlyInCallOrder(plan.texture(), poseStack, buffer, packedLight, packedOverlay,
-                    plan.selection());
-        }
+        renderModulePart(MODULE_DOME_TEXTURE, MODULE_DOME, poseStack, buffer, packedLight, packedOverlay);
+        renderModulePart(MODULE_LANDER_TEXTURE, MODULE_CAPSULE, poseStack, buffer, packedLight, packedOverlay);
+        renderModulePart(MODULE_PROPULSION_TEXTURE, MODULE_PROPULSION, poseStack, buffer, packedLight, packedOverlay);
+        renderModulePart(MODULE_SOLAR_TEXTURE, MODULE_SOLAR, poseStack, buffer, packedLight, packedOverlay);
     }
 
     public static SoyuzRenderPlan soyuzRenderPlan(int skin) {
@@ -127,6 +145,19 @@ public final class ObjSoyuzModels {
     }
 
     public static List<SoyuzPartPlan> mainPartPlan(SoyuzTextureSet textures) {
+        if (SOYUZ_TEXTURES.equals(textures)) {
+            return SOYUZ_MAIN_PART_PLAN;
+        }
+        if (LUNA_TEXTURES.equals(textures)) {
+            return LUNA_MAIN_PART_PLAN;
+        }
+        if (AUTHENTIC_TEXTURES.equals(textures)) {
+            return AUTHENTIC_MAIN_PART_PLAN;
+        }
+        return buildMainPartPlan(textures);
+    }
+
+    private static List<SoyuzPartPlan> buildMainPartPlan(SoyuzTextureSet textures) {
         return List.of(
                 part(textures.engineBlock(), SOYUZ_ENGINE_BLOCK, "EngineBlock"),
                 part(textures.bottomStage(), SOYUZ_BOTTOM_STAGE, "BottomStage"),
@@ -141,6 +172,19 @@ public final class ObjSoyuzModels {
     }
 
     public static List<SoyuzPartPlan> boosterPartPlan(SoyuzTextureSet textures) {
+        if (SOYUZ_TEXTURES.equals(textures)) {
+            return SOYUZ_BOOSTER_PART_PLAN;
+        }
+        if (LUNA_TEXTURES.equals(textures)) {
+            return LUNA_BOOSTER_PART_PLAN;
+        }
+        if (AUTHENTIC_TEXTURES.equals(textures)) {
+            return AUTHENTIC_BOOSTER_PART_PLAN;
+        }
+        return buildBoosterPartPlan(textures);
+    }
+
+    private static List<SoyuzPartPlan> buildBoosterPartPlan(SoyuzTextureSet textures) {
         return List.of(
                 part(textures.booster(), SOYUZ_BOOSTERS,
                         "Booster.000", "Booster.001", "Booster.002", "Booster.003"),
@@ -153,6 +197,10 @@ public final class ObjSoyuzModels {
     }
 
     public static List<SoyuzPartPlan> modulePartPlan() {
+        return MODULE_PART_PLAN;
+    }
+
+    private static List<SoyuzPartPlan> buildModulePartPlan() {
         return List.of(
                 part(MODULE_DOME_TEXTURE, MODULE_DOME, "Dome"),
                 part(MODULE_LANDER_TEXTURE, MODULE_CAPSULE, "Capsule"),
@@ -160,12 +208,14 @@ public final class ObjSoyuzModels {
                 part(MODULE_SOLAR_TEXTURE, MODULE_SOLAR, "Solar"));
     }
 
-    private static void renderSoyuzParts(List<SoyuzPartPlan> plans, PoseStack poseStack, MultiBufferSource buffer,
-            int packedLight, int packedOverlay) {
-        for (SoyuzPartPlan plan : plans) {
-            SOYUZ.renderOnlyInCallOrder(plan.texture(), poseStack, buffer, packedLight, packedOverlay,
-                    plan.selection());
-        }
+    private static void renderSoyuzPart(ResourceLocation texture, LegacyWavefrontModel.SelectionHandle selection,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        SOYUZ.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, selection);
+    }
+
+    private static void renderModulePart(ResourceLocation texture, LegacyWavefrontModel.SelectionHandle selection,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        MODULE.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, selection);
     }
 
     private static SoyuzPartPlan part(ResourceLocation texture, LegacyWavefrontModel.SelectionHandle selection,

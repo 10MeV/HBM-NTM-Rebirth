@@ -1,16 +1,24 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.buckshot",
   "duration": 50,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:nuggets/lead" }, "count": 6, "legacy_ore": "nuggetLead" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:pellet_buckshot" }
+  "input_items": [
+    {
+      "count": 6,
+      "ingredient": {
+        "tag": "forge:nuggets/lead"
+      },
+      "legacy_ore": "nuggetLead"
+    }
   ],
+  "internal_name": "ass.buckshot",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:pellet_buckshot"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 195
 }

@@ -1,6 +1,9 @@
 package com.hbm.ntm.satellite;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
+import com.hbm.util.fauxpointtwelve.NBTTagCompound;
+import com.hbm.util.fauxpointtwelve.WorldSavedData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -9,24 +12,28 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.AbstractCollection;
 import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class SatelliteSavedData extends SavedData {
+public class SatelliteSavedData extends WorldSavedData {
     public static final String DATA_NAME = "satellites";
     public static final String KEY = DATA_NAME;
     public static final String TAG_SAT_COUNT = "satCount";
@@ -46,30 +53,72 @@ public class SatelliteSavedData extends SavedData {
     private List<EntryLoadDiagnostics> legacyEntryLoadDiagnostics = List.of();
     private List<EntryLoadDiagnostics> modernEntryLoadDiagnostics = List.of();
 
+    private static <T> List<T> diagnosticList(Collection<? extends T> source) {
+        return source == null ? List.of() : java.util.Collections.unmodifiableList(new ArrayList<>(source));
+    }
+
+    private static <K, V> Map<K, V> diagnosticMap(Map<? extends K, ? extends V> source) {
+        return source == null ? Map.of() : java.util.Collections.unmodifiableMap(new LinkedHashMap<>(source));
+    }
+
+    private static <T> Set<T> diagnosticSet(Collection<? extends T> source) {
+        return source == null ? Set.of() : java.util.Collections.unmodifiableSet(new LinkedHashSet<>(source));
+    }
+
     public SatelliteSavedData() {
+        super(DATA_NAME);
         setDirty();
     }
 
     public SatelliteSavedData(String name) {
-        this();
+        super(name);
     }
 
     public static SatelliteSavedData load(CompoundTag tag) {
-        SatelliteSavedData data = new SatelliteSavedData();
-        data.satellites.clear();
-        boolean hasLegacyCountTag = tag.contains(TAG_SAT_COUNT, Tag.TAG_INT);
-        int count = tag.getInt(TAG_SAT_COUNT);
-        int legacyLoaded = 0;
+        SatelliteSavedData data = createLoadedData();
+        NBTTagCompound legacyTag = NBTTagCompound.copyOf(Objects.requireNonNull(tag, "tag"));
+        LoadInspection inspection = inspectLoad(legacyTag);
+        boolean hasLegacyRoot = legacyTag.hasKey(TAG_SAT_COUNT);
+        boolean usedModernEntriesFallback = false;
+        int modernEntriesLoaded = inspection.modernEntriesLoaded();
+        try {
+            if (!hasLegacyRoot && inspection.hasModernEntriesTag()) {
+                usedModernEntriesFallback = true;
+                modernEntriesLoaded = data.readModernEntries(NBTTagCompound.copyOf(tag)
+                        .getTagList(TAG_ENTRIES, Tag.TAG_COMPOUND), false);
+            } else {
+                data.readLegacyEntriesFromTag(legacyTag);
+            }
+        } catch (Exception exception) {
+            HbmNtm.LOGGER.warn(
+                    "Keeping partially loaded satellites SavedData after legacy root read failure, matching 1.7.10 MapStorage.",
+                    exception);
+        }
+        data.loadDiagnostics = inspection.toDiagnostics(usedModernEntriesFallback, modernEntriesLoaded);
+        data.legacyEntryLoadDiagnostics = inspection.legacyEntryDiagnostics();
+        data.modernEntryLoadDiagnostics = inspection.modernEntryDiagnostics();
+        data.setDirty(false);
+        return data;
+    }
+
+    private static LoadInspection inspectLoad(NBTTagCompound tag) {
+        List<EntryLoadDiagnostics> legacyEntryDiagnostics = new ArrayList<>();
         int legacyMissingIds = 0;
         int legacyMissingData = 0;
         int legacyMissingFrequencies = 0;
         int legacyUnknownIds = 0;
         int legacyDuplicateFrequencies = 0;
-        List<EntryLoadDiagnostics> legacyEntryDiagnostics = new ArrayList<>();
+        int legacyLoaded = 0;
+        HashMap<Integer, Boolean> loadedFrequencies = new HashMap<>();
+        int count = tag.getInteger(TAG_SAT_COUNT);
         for (int i = 0; i < count; i++) {
-            boolean hasLegacyId = tag.contains(TAG_SAT_ID + i, Tag.TAG_INT);
-            boolean hasData = tag.contains(TAG_SAT_DATA + i, Tag.TAG_COMPOUND);
-            boolean hasFrequency = tag.contains(TAG_SAT_FREQ + i, Tag.TAG_INT);
+            boolean hasLegacyId = tag.hasKey(TAG_SAT_ID + i, 99);
+            boolean hasData = tag.func_150299_b(TAG_SAT_DATA + i) == Tag.TAG_COMPOUND;
+            boolean hasFrequency = tag.hasKey(TAG_SAT_FREQ + i, 99);
+            int legacyId = tag.getInteger(TAG_SAT_ID + i);
+            int frequency = tag.getInteger(TAG_SAT_FREQ + i);
+            boolean loaded = isLegacySatelliteRegistered(legacyId);
+            boolean duplicateFrequency = loaded && loadedFrequencies.containsKey(frequency);
             if (!hasLegacyId) {
                 legacyMissingIds++;
             }
@@ -79,25 +128,20 @@ public class SatelliteSavedData extends SavedData {
             if (!hasFrequency) {
                 legacyMissingFrequencies++;
             }
-            Optional<SatelliteEntry> legacyEntry = readLegacyEntryTag(tag, i);
-            int legacyId = legacyEntry.map(SatelliteEntry::legacyId).orElse(tag.getInt(TAG_SAT_ID + i));
-            int frequency = legacyEntry.map(SatelliteEntry::frequency).orElse(tag.getInt(TAG_SAT_FREQ + i));
-            Satellite satellite = legacyEntry.flatMap(SatelliteEntry::satellite).orElse(null);
-            boolean duplicateFrequency = satellite != null && data.satellites.containsKey(frequency);
-            if (satellite != null) {
+            if (loaded) {
                 if (duplicateFrequency) {
                     legacyDuplicateFrequencies++;
                 }
-                data.satellites.put(frequency, satellite);
+                loadedFrequencies.put(frequency, Boolean.TRUE);
                 legacyLoaded++;
             } else {
                 legacyUnknownIds++;
             }
             legacyEntryDiagnostics.add(new EntryLoadDiagnostics("legacy", i, hasLegacyId, hasData, hasFrequency,
-                    legacyId, frequency, satellite != null, satellite == null, duplicateFrequency));
+                    legacyId, frequency, loaded, !loaded, duplicateFrequency));
         }
-        boolean usedModernEntriesFallback = false;
-        boolean hasModernEntriesTag = tag.contains(TAG_ENTRIES, Tag.TAG_LIST);
+
+        boolean hasModernEntriesTag = tag.func_150299_b(TAG_ENTRIES) == Tag.TAG_LIST;
         int modernEntriesRead = 0;
         int modernEntriesLoaded = 0;
         int modernMissingIds = 0;
@@ -106,15 +150,20 @@ public class SatelliteSavedData extends SavedData {
         int modernUnknownIds = 0;
         int modernDuplicateFrequencies = 0;
         List<EntryLoadDiagnostics> modernEntryDiagnostics = new ArrayList<>();
-        if (data.satellites.isEmpty() && hasModernEntriesTag) {
-            usedModernEntriesFallback = true;
-            ListTag entries = tag.getList(TAG_ENTRIES, Tag.TAG_COMPOUND);
+        if (hasModernEntriesTag) {
+            NBTTagCompound modernTag = tag.copy();
+            ListTag entries = modernTag.getTagList(TAG_ENTRIES, Tag.TAG_COMPOUND);
             modernEntriesRead = entries.size();
+            HashMap<Integer, Boolean> modernFrequencies = new HashMap<>();
             for (int i = 0; i < entries.size(); i++) {
                 CompoundTag entry = entries.getCompound(i);
                 boolean hasLegacyId = entry.contains(TAG_LEGACY_ID, Tag.TAG_INT);
                 boolean hasData = entry.contains(TAG_DATA, Tag.TAG_COMPOUND);
                 boolean hasFrequency = entry.contains(TAG_FREQUENCY, Tag.TAG_INT);
+                int legacyId = entry.getInt(TAG_LEGACY_ID);
+                int frequency = entry.getInt(TAG_FREQUENCY);
+                boolean loaded = isLegacySatelliteRegistered(legacyId) && hasLegacyId && hasData && hasFrequency;
+                boolean duplicateFrequency = loaded && modernFrequencies.containsKey(frequency);
                 if (!hasLegacyId) {
                     modernMissingIds++;
                 }
@@ -124,51 +173,60 @@ public class SatelliteSavedData extends SavedData {
                 if (!hasFrequency) {
                     modernMissingFrequencies++;
                 }
-                Optional<SatelliteEntry> modernEntry = readModernEntryTag(entry);
-                int legacyId = modernEntry.map(SatelliteEntry::legacyId).orElse(entry.getInt(TAG_LEGACY_ID));
-                int frequency = modernEntry.map(SatelliteEntry::frequency).orElse(entry.getInt(TAG_FREQUENCY));
-                Satellite satellite = modernEntry.flatMap(SatelliteEntry::satellite).orElse(null);
-                boolean duplicateFrequency = satellite != null && data.satellites.containsKey(frequency);
-                if (satellite != null) {
+                if (loaded) {
                     if (duplicateFrequency) {
                         modernDuplicateFrequencies++;
                     }
-                    data.satellites.put(frequency, satellite);
+                    modernFrequencies.put(frequency, Boolean.TRUE);
                     modernEntriesLoaded++;
                 } else {
                     modernUnknownIds++;
                 }
                 modernEntryDiagnostics.add(new EntryLoadDiagnostics("modern", i, hasLegacyId, hasData,
-                        hasFrequency, legacyId, frequency, satellite != null, satellite == null,
-                        duplicateFrequency));
+                        hasFrequency, legacyId, frequency, loaded, !loaded, duplicateFrequency));
             }
         }
-        data.loadDiagnostics = new LoadDiagnostics(hasLegacyCountTag, count, legacyLoaded, legacyMissingIds,
+
+        return new LoadInspection(tag.hasKey(TAG_SAT_COUNT), count, legacyLoaded, legacyMissingIds,
                 legacyMissingData, legacyMissingFrequencies, legacyUnknownIds, legacyDuplicateFrequencies,
-                hasModernEntriesTag, usedModernEntriesFallback, modernEntriesRead, modernEntriesLoaded,
-                modernMissingIds, modernMissingData, modernMissingFrequencies, modernUnknownIds,
-                modernDuplicateFrequencies);
-        data.legacyEntryLoadDiagnostics = List.copyOf(legacyEntryDiagnostics);
-        data.modernEntryLoadDiagnostics = List.copyOf(modernEntryDiagnostics);
-        data.setDirty(false);
-        return data;
+                hasModernEntriesTag, modernEntriesRead, modernEntriesLoaded, modernMissingIds, modernMissingData,
+                modernMissingFrequencies, modernUnknownIds, modernDuplicateFrequencies,
+                List.copyOf(legacyEntryDiagnostics), List.copyOf(modernEntryDiagnostics));
+    }
+
+    private static boolean isLegacySatelliteRegistered(int legacyId) {
+        try {
+            List<Class<? extends com.hbm.saveddata.satellites.Satellite>> registry =
+                    com.hbm.saveddata.satellites.Satellite.satellites;
+            return legacyId >= 0 && legacyId < registry.size() && registry.get(legacyId) != null;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private static SatelliteSavedData createData() {
+        return new com.hbm.saveddata.SatelliteSavedData();
+    }
+
+    private static SatelliteSavedData createLoadedData() {
+        return new com.hbm.saveddata.SatelliteSavedData(DATA_NAME);
     }
 
     public static SatelliteSavedData get(ServerLevel level) {
-        return WorldSavedDataHelper.get(level, DATA_NAME, SatelliteSavedData::load, SatelliteSavedData::new);
+        return WorldSavedDataHelper.get(level, DATA_NAME, SatelliteSavedData::load, SatelliteSavedData::createData);
     }
 
     public static Optional<SatelliteSavedData> get(Level level) {
-        return WorldSavedDataHelper.get(level, DATA_NAME, SatelliteSavedData::load, SatelliteSavedData::new);
+        return WorldSavedDataHelper.get(level, DATA_NAME, SatelliteSavedData::load, SatelliteSavedData::createData);
     }
 
     public static SatelliteSavedData get(MinecraftServer server) {
-        return WorldSavedDataHelper.get(server, DATA_NAME, SatelliteSavedData::load, SatelliteSavedData::new);
+        return WorldSavedDataHelper.get(server, DATA_NAME, SatelliteSavedData::load, SatelliteSavedData::createData);
     }
 
     public static Optional<SatelliteSavedData> get(MinecraftServer server, ResourceKey<Level> dimension) {
         return WorldSavedDataHelper.get(server, dimension, DATA_NAME, SatelliteSavedData::load,
-                SatelliteSavedData::new);
+                SatelliteSavedData::createData);
     }
 
     public static Optional<SatelliteSavedData> getExisting(ServerLevel level) {
@@ -221,31 +279,50 @@ public class SatelliteSavedData extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag) {
-        tag.putInt(TAG_SAT_COUNT, satellites.size());
+        return super.save(tag);
+    }
+
+    public void readFromNBT(NBTTagCompound tag) {
+        boolean wasDirty = isDirty();
+        NBTTagCompound legacyTag = Objects.requireNonNull(tag, "tag");
+        LoadInspection inspection = inspectLoad(legacyTag);
+        readLegacyEntriesFromTag(legacyTag);
+        loadDiagnostics = inspection.toDiagnostics(false, 0);
+        legacyEntryLoadDiagnostics = inspection.legacyEntryDiagnostics();
+        modernEntryLoadDiagnostics = inspection.modernEntryDiagnostics();
+        setDirty(wasDirty);
+    }
+
+    public void writeToNBT(NBTTagCompound tag) {
+        Objects.requireNonNull(tag, "tag").setInteger(TAG_SAT_COUNT, satellites.size());
         int index = 0;
         for (Map.Entry<Integer, Satellite> entry : satellites.entrySet()) {
             Satellite satellite = entry.getValue();
-            tag.putInt(TAG_SAT_ID + index, satellite.legacyId());
-            tag.put(TAG_SAT_DATA + index, satellite.saveData());
-            tag.putInt(TAG_SAT_FREQ + index, entry.getKey());
+            NBTTagCompound data = new NBTTagCompound();
+            satellite.writeToNBT(data);
+
+            tag.setInteger(TAG_SAT_ID + index, satellite.getID());
+            tag.setTag(TAG_SAT_DATA + index, data);
+            tag.setInteger(TAG_SAT_FREQ + index, entry.getKey());
             index++;
         }
-        tag.put(TAG_ENTRIES, entriesTag());
-        return tag;
     }
 
-    public void readFromNBT(CompoundTag tag) {
-        SatelliteSavedData loaded = load(tag == null ? new CompoundTag() : tag);
-        satellites.clear();
-        satellites.putAll(loaded.satellites);
-        loadDiagnostics = loaded.loadDiagnostics;
-        legacyEntryLoadDiagnostics = loaded.legacyEntryLoadDiagnostics;
-        modernEntryLoadDiagnostics = loaded.modernEntryLoadDiagnostics;
-        setDirty(false);
+    private int readLegacyEntriesFromTag(NBTTagCompound tag) {
+        int count = tag.getInteger(TAG_SAT_COUNT);
+        for (int i = 0; i < count; i++) {
+            LegacyLoadedEntry entry = readLegacyLoadedEntry(tag, i);
+            satellites.put(entry.frequency(), entry.satellite());
+        }
+        return count;
     }
 
-    public void writeToNBT(CompoundTag tag) {
-        save(tag);
+    private static LegacyLoadedEntry readLegacyLoadedEntry(NBTTagCompound tag, int index) {
+        int legacyId = tag.getInteger(TAG_SAT_ID + index);
+        Satellite satellite = Satellite.create(legacyId);
+        satellite.readFromNBT((NBTTagCompound) tag.getTag(TAG_SAT_DATA + index));
+        int frequency = tag.getInteger(TAG_SAT_FREQ + index);
+        return new LegacyLoadedEntry(frequency, legacyId, satellite);
     }
 
     public boolean isFreqTaken(int frequency) {
@@ -286,15 +363,15 @@ public class SatelliteSavedData extends SavedData {
 
     public Optional<Satellite> getSatelliteOptional(int frequency, LegacySatelliteType type) {
         Satellite satellite = getSatFromFreq(frequency);
-        if (satellite == null || type == null || satellite.type() != type) {
+        if (satellite == null || type == null || Satellite.getTypeFromSatellite(satellite).orElse(null) != type) {
             return Optional.empty();
         }
         return Optional.of(satellite);
     }
 
     public Optional<Satellite> getSatelliteOptional(int frequency, Class<? extends Satellite> satelliteClass) {
-        return Satellite.getTypeFromClass(satelliteClass)
-                .flatMap(type -> getSatelliteOptional(frequency, type));
+        Satellite satellite = getSatFromFreq(frequency);
+        return Satellite.matchesClass(satellite, satelliteClass) ? Optional.of(satellite) : Optional.empty();
     }
 
     public Satellite getCargoSatellite(int frequency) {
@@ -366,6 +443,13 @@ public class SatelliteSavedData extends SavedData {
         setDirty();
     }
 
+    void putSatelliteForOrbit(int frequency, Satellite satellite) {
+        if (satellite == null) {
+            return;
+        }
+        ((DirtyTrackingSatelliteMap) sats).putWithoutDirty(frequency, satellite);
+    }
+
     public boolean putSatelliteData(int frequency, int legacyId, CompoundTag data) {
         Satellite satellite = Satellite.load(legacyId, data == null ? new CompoundTag() : data);
         if (satellite == null) {
@@ -380,9 +464,8 @@ public class SatelliteSavedData extends SavedData {
     }
 
     public boolean putSatelliteData(int frequency, Class<? extends Satellite> satelliteClass, CompoundTag data) {
-        return Satellite.getTypeFromClass(satelliteClass)
-                .map(type -> putSatelliteData(frequency, type, data))
-                .orElse(false);
+        int legacyId = Satellite.getLegacyIdFromClass(satelliteClass);
+        return legacyId >= 0 && putSatelliteData(frequency, legacyId, data);
     }
 
     public boolean putSatelliteEntry(SatelliteEntry entry) {
@@ -411,9 +494,8 @@ public class SatelliteSavedData extends SavedData {
     }
 
     public boolean putSatellite(int frequency, Class<? extends Satellite> satelliteClass) {
-        return Satellite.getTypeFromClass(satelliteClass)
-                .map(type -> putSatellite(frequency, type))
-                .orElse(false);
+        int legacyId = Satellite.getLegacyIdFromClass(satelliteClass);
+        return legacyId >= 0 && putSatellite(frequency, legacyId);
     }
 
     public boolean descendSatellite(int frequency) {
@@ -421,7 +503,8 @@ public class SatelliteSavedData extends SavedData {
     }
 
     public boolean removeSatellite(int frequency) {
-        if (satellites.remove(frequency) != null) {
+        if (satellites.containsKey(frequency)) {
+            satellites.remove(frequency);
             setDirty();
             return true;
         }
@@ -434,7 +517,8 @@ public class SatelliteSavedData extends SavedData {
         }
         int removed = 0;
         for (Integer frequency : frequencies) {
-            if (frequency != null && satellites.remove(frequency) != null) {
+            if (frequency != null && satellites.containsKey(frequency)) {
+                satellites.remove(frequency);
                 removed++;
             }
         }
@@ -464,16 +548,22 @@ public class SatelliteSavedData extends SavedData {
             return List.of();
         }
         return satellites.entrySet().stream()
-                .filter(entry -> entry.getValue() != null && entry.getValue().type() == type)
+                .filter(entry -> entry.getValue() != null
+                        && Satellite.getTypeFromSatellite(entry.getValue()).orElse(null) == type)
                 .<Map.Entry<Integer, Satellite>>map(entry -> new AbstractMap.SimpleImmutableEntry<>(
                         entry.getKey(), entry.getValue()))
                 .toList();
     }
 
     public List<Map.Entry<Integer, Satellite>> entriesSnapshot(Class<? extends Satellite> satelliteClass) {
-        return Satellite.getTypeFromClass(satelliteClass)
-                .map(this::entriesSnapshot)
-                .orElse(List.of());
+        if (satelliteClass == null) {
+            return List.of();
+        }
+        return satellites.entrySet().stream()
+                .filter(entry -> Satellite.matchesClass(entry.getValue(), satelliteClass))
+                .<Map.Entry<Integer, Satellite>>map(entry -> new AbstractMap.SimpleImmutableEntry<>(
+                        entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     public List<Map.Entry<Integer, Satellite>> cargoEntriesSnapshot() {
@@ -485,29 +575,31 @@ public class SatelliteSavedData extends SavedData {
     }
 
     public Set<Integer> frequenciesSnapshot() {
-        return new TreeSet<>(satellites.keySet());
+        return sortedFrequencySet(satellites.keySet());
     }
 
     public Set<Integer> frequenciesSnapshot(LegacySatelliteType type) {
-        TreeSet<Integer> frequencies = new TreeSet<>();
+        List<Integer> frequencies = new ArrayList<>();
         for (Map.Entry<Integer, Satellite> entry : entriesSnapshot(type)) {
             frequencies.add(entry.getKey());
         }
-        return frequencies;
+        return sortedFrequencySet(frequencies);
     }
 
     public Set<Integer> frequenciesSnapshot(Class<? extends Satellite> satelliteClass) {
-        return Satellite.getTypeFromClass(satelliteClass)
-                .map(this::frequenciesSnapshot)
-                .orElse(Set.of());
+        List<Integer> frequencies = new ArrayList<>();
+        for (Map.Entry<Integer, Satellite> entry : entriesSnapshot(satelliteClass)) {
+            frequencies.add(entry.getKey());
+        }
+        return sortedFrequencySet(frequencies);
     }
 
     public Set<Integer> cargoFrequenciesSnapshot() {
-        TreeSet<Integer> frequencies = new TreeSet<>();
+        List<Integer> frequencies = new ArrayList<>();
         for (Map.Entry<Integer, Satellite> entry : cargoEntriesSnapshot()) {
             frequencies.add(entry.getKey());
         }
-        return frequencies;
+        return sortedFrequencySet(frequencies);
     }
 
     public List<Integer> frequenciesSnapshot(int limit) {
@@ -525,9 +617,10 @@ public class SatelliteSavedData extends SavedData {
     }
 
     public List<Integer> frequenciesSnapshot(Class<? extends Satellite> satelliteClass, int limit) {
-        return Satellite.getTypeFromClass(satelliteClass)
-                .map(type -> frequenciesSnapshot(type, limit))
-                .orElse(List.of());
+        if (limit <= 0) {
+            return List.of();
+        }
+        return frequenciesSnapshot(satelliteClass).stream().limit(limit).toList();
     }
 
     public List<Integer> cargoFrequenciesSnapshot(int limit) {
@@ -538,23 +631,31 @@ public class SatelliteSavedData extends SavedData {
     }
 
     public Map<Integer, Satellite> satellitesSnapshot() {
-        return Map.copyOf(satellites);
+        return java.util.Collections.unmodifiableMap(new HashMap<>(satellites));
     }
 
     public Map<Integer, Satellite> satellitesSnapshot(LegacySatelliteType type) {
-        return Map.copyOf(entriesSnapshot(type).stream()
-                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        HashMap<Integer, Satellite> result = new HashMap<>();
+        for (Map.Entry<Integer, Satellite> entry : entriesSnapshot(type)) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+        return java.util.Collections.unmodifiableMap(result);
     }
 
     public Map<Integer, Satellite> satellitesSnapshot(Class<? extends Satellite> satelliteClass) {
-        return Satellite.getTypeFromClass(satelliteClass)
-                .map(this::satellitesSnapshot)
-                .orElse(Map.of());
+        HashMap<Integer, Satellite> result = new HashMap<>();
+        for (Map.Entry<Integer, Satellite> entry : entriesSnapshot(satelliteClass)) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+        return java.util.Collections.unmodifiableMap(result);
     }
 
     public Map<Integer, Satellite> cargoSatellitesSnapshot() {
-        return Map.copyOf(cargoEntriesSnapshot().stream()
-                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        HashMap<Integer, Satellite> result = new HashMap<>();
+        for (Map.Entry<Integer, Satellite> entry : cargoEntriesSnapshot()) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+        return java.util.Collections.unmodifiableMap(result);
     }
 
     public LoadDiagnostics loadDiagnostics() {
@@ -584,10 +685,11 @@ public class SatelliteSavedData extends SavedData {
         EnumMap<LegacySatelliteType, Integer> counts = new EnumMap<>(LegacySatelliteType.class);
         for (Satellite satellite : satellites.values()) {
             if (satellite != null) {
-                counts.merge(satellite.type(), 1, Integer::sum);
+                Satellite.getTypeFromSatellite(satellite)
+                        .ifPresent(type -> counts.merge(type, 1, Integer::sum));
             }
         }
-        return Map.copyOf(counts);
+        return diagnosticMap(counts);
     }
 
     public int cargoSatelliteCount() {
@@ -598,10 +700,11 @@ public class SatelliteSavedData extends SavedData {
         EnumMap<LegacySatelliteType, Integer> counts = new EnumMap<>(LegacySatelliteType.class);
         for (Satellite satellite : satellites.values()) {
             if (Satellite.hasCargoPool(satellite)) {
-                counts.merge(satellite.type(), 1, Integer::sum);
+                Satellite.getTypeFromSatellite(satellite)
+                        .ifPresent(type -> counts.merge(type, 1, Integer::sum));
             }
         }
-        return Map.copyOf(counts);
+        return diagnosticMap(counts);
     }
 
     public Map<String, Integer> cargoPoolCounts() {
@@ -611,7 +714,7 @@ public class SatelliteSavedData extends SavedData {
                 satellite.cargoPool().ifPresent(pool -> counts.merge(pool, 1, Integer::sum));
             }
         }
-        return Map.copyOf(counts);
+        return diagnosticMap(counts);
     }
 
     public SatelliteStats statsSnapshot() {
@@ -631,7 +734,7 @@ public class SatelliteSavedData extends SavedData {
             return List.of();
         }
         return satellites.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
+                .sorted(frequencyEntryComparator())
                 .limit(limit)
                 .map(entry -> SatelliteSummary.of(entry.getKey(), entry.getValue()))
                 .toList();
@@ -642,17 +745,24 @@ public class SatelliteSavedData extends SavedData {
             return List.of();
         }
         return satellites.entrySet().stream()
-                .filter(entry -> entry.getValue() != null && entry.getValue().type() == type)
-                .sorted(Map.Entry.comparingByKey())
+                .filter(entry -> entry.getValue() != null
+                        && Satellite.getTypeFromSatellite(entry.getValue()).orElse(null) == type)
+                .sorted(frequencyEntryComparator())
                 .limit(limit)
                 .map(entry -> SatelliteSummary.of(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
     public List<SatelliteSummary> satelliteSummariesSnapshot(Class<? extends Satellite> satelliteClass, int limit) {
-        return Satellite.getTypeFromClass(satelliteClass)
-                .map(type -> satelliteSummariesSnapshot(type, limit))
-                .orElse(List.of());
+        if (satelliteClass == null || limit <= 0) {
+            return List.of();
+        }
+        return satellites.entrySet().stream()
+                .filter(entry -> Satellite.matchesClass(entry.getValue(), satelliteClass))
+                .sorted(frequencyEntryComparator())
+                .limit(limit)
+                .map(entry -> SatelliteSummary.of(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     public List<SatelliteSummary> cargoSatelliteSummariesSnapshot(int limit) {
@@ -661,7 +771,7 @@ public class SatelliteSavedData extends SavedData {
         }
         return satellites.entrySet().stream()
                 .filter(entry -> Satellite.hasCargoPool(entry.getValue()))
-                .sorted(Map.Entry.comparingByKey())
+                .sorted(frequencyEntryComparator())
                 .limit(limit)
                 .map(entry -> SatelliteSummary.of(entry.getKey(), entry.getValue()))
                 .toList();
@@ -696,14 +806,17 @@ public class SatelliteSavedData extends SavedData {
         if (tag == null) {
             return 0;
         }
-        return readEntries(readLegacyEntriesTag(tag), clearExisting);
+        if (clearExisting) {
+            clearSatellites();
+        }
+        return readLegacyEntriesFromTag(NBTTagCompound.copyOf(tag));
     }
 
     public static void writeLegacyEntry(CompoundTag tag, int index, int frequency, Satellite satellite) {
         if (tag == null || satellite == null) {
             return;
         }
-        tag.putInt(TAG_SAT_ID + index, satellite.legacyId());
+        tag.putInt(TAG_SAT_ID + index, satellite.getID());
         tag.put(TAG_SAT_DATA + index, satellite.saveData());
         tag.putInt(TAG_SAT_FREQ + index, frequency);
     }
@@ -712,23 +825,18 @@ public class SatelliteSavedData extends SavedData {
         if (tag == null) {
             return Optional.empty();
         }
-        if (!tag.contains(TAG_SAT_FREQ + index, Tag.TAG_INT)
-                || !tag.contains(TAG_SAT_ID + index, Tag.TAG_INT)
-                || !tag.contains(TAG_SAT_DATA + index, Tag.TAG_COMPOUND)) {
-            return Optional.empty();
-        }
-        return Optional.of(new SatelliteEntry(tag.getInt(TAG_SAT_FREQ + index), tag.getInt(TAG_SAT_ID + index),
-                tag.getCompound(TAG_SAT_DATA + index)));
+        return Optional.of(readLegacyLoadedEntry(NBTTagCompound.copyOf(tag), index).entry());
     }
 
     public static List<SatelliteEntry> readLegacyEntriesTag(CompoundTag tag) {
         if (tag == null) {
             return List.of();
         }
+        NBTTagCompound legacyTag = NBTTagCompound.copyOf(tag);
         List<SatelliteEntry> entries = new ArrayList<>();
-        int count = tag.getInt(TAG_SAT_COUNT);
+        int count = legacyTag.getInteger(TAG_SAT_COUNT);
         for (int i = 0; i < count; i++) {
-            readLegacyEntryTag(tag, i).ifPresent(entries::add);
+            entries.add(readLegacyLoadedEntry(legacyTag, i).entry());
         }
         return List.copyOf(entries);
     }
@@ -754,7 +862,7 @@ public class SatelliteSavedData extends SavedData {
             return;
         }
         writeLegacyEntries(tag, entriesSnapshot().stream()
-                .map(entry -> new SatelliteEntry(entry.getKey(), entry.getValue().legacyId(),
+                .map(entry -> new SatelliteEntry(entry.getKey(), entry.getValue().getID(),
                         entry.getValue().saveData()))
                 .toList());
     }
@@ -807,27 +915,28 @@ public class SatelliteSavedData extends SavedData {
 
     public SatelliteEntries satelliteEntriesSnapshot() {
         return new SatelliteEntries(entriesSnapshot().stream()
-                .map(entry -> new SatelliteEntry(entry.getKey(), entry.getValue().legacyId(),
+                .map(entry -> new SatelliteEntry(entry.getKey(), entry.getValue().getID(),
                         entry.getValue().saveData()))
                 .toList());
     }
 
     public SatelliteEntries satelliteEntriesSnapshot(LegacySatelliteType type) {
         return new SatelliteEntries(entriesSnapshot(type).stream()
-                .map(entry -> new SatelliteEntry(entry.getKey(), entry.getValue().legacyId(),
+                .map(entry -> new SatelliteEntry(entry.getKey(), entry.getValue().getID(),
                         entry.getValue().saveData()))
                 .toList());
     }
 
     public SatelliteEntries satelliteEntriesSnapshot(Class<? extends Satellite> satelliteClass) {
-        return Satellite.getTypeFromClass(satelliteClass)
-                .map(this::satelliteEntriesSnapshot)
-                .orElse(SatelliteEntries.EMPTY);
+        return new SatelliteEntries(entriesSnapshot(satelliteClass).stream()
+                .map(entry -> new SatelliteEntry(entry.getKey(), entry.getValue().getID(),
+                        entry.getValue().saveData()))
+                .toList());
     }
 
     public SatelliteEntries cargoSatelliteEntriesSnapshot() {
         return new SatelliteEntries(cargoEntriesSnapshot().stream()
-                .map(entry -> new SatelliteEntry(entry.getKey(), entry.getValue().legacyId(),
+                .map(entry -> new SatelliteEntry(entry.getKey(), entry.getValue().getID(),
                         entry.getValue().saveData()))
                 .toList());
     }
@@ -865,7 +974,7 @@ public class SatelliteSavedData extends SavedData {
             return;
         }
         tag.putInt(TAG_FREQUENCY, frequency);
-        tag.putInt(TAG_LEGACY_ID, satellite.legacyId());
+        tag.putInt(TAG_LEGACY_ID, satellite.getID());
         tag.putString(TAG_LEGACY_NAME, satellite.legacyName());
         tag.put(TAG_DATA, satellite.saveData());
     }
@@ -940,10 +1049,22 @@ public class SatelliteSavedData extends SavedData {
     }
 
     private final class DirtyTrackingSatelliteMap extends HashMap<Integer, Satellite> {
+        private boolean markIfChanged(boolean changed) {
+            if (changed) {
+                setDirty();
+            }
+            return changed;
+        }
+
+        private Satellite putWithoutDirty(Integer key, Satellite value) {
+            return super.put(key, value);
+        }
+
         @Override
         public Satellite put(Integer key, Satellite value) {
+            boolean hadKey = containsKey(key);
             Satellite previous = super.put(key, value);
-            if (previous != value) {
+            if (!hadKey || previous != value) {
                 setDirty();
             }
             return previous;
@@ -951,17 +1072,20 @@ public class SatelliteSavedData extends SavedData {
 
         @Override
         public Satellite putIfAbsent(Integer key, Satellite value) {
-            Satellite previous = super.putIfAbsent(key, value);
-            if (previous == null && value != null) {
+            boolean hadKey = containsKey(key);
+            Satellite previous = super.get(key);
+            Satellite result = super.putIfAbsent(key, value);
+            if (hadKey != containsKey(key) || previous != get(key)) {
                 setDirty();
             }
-            return previous;
+            return result;
         }
 
         @Override
         public Satellite remove(Object key) {
+            boolean hadKey = containsKey(key);
             Satellite previous = super.remove(key);
-            if (previous != null) {
+            if (hadKey) {
                 setDirty();
             }
             return previous;
@@ -978,8 +1102,9 @@ public class SatelliteSavedData extends SavedData {
 
         @Override
         public Satellite replace(Integer key, Satellite value) {
+            boolean hadKey = containsKey(key);
             Satellite previous = super.replace(key, value);
-            if (previous != null && previous != value) {
+            if (hadKey && previous != value) {
                 setDirty();
             }
             return previous;
@@ -1006,8 +1131,9 @@ public class SatelliteSavedData extends SavedData {
         public Satellite computeIfAbsent(Integer key,
                                          Function<? super Integer, ? extends Satellite> mappingFunction) {
             boolean hadKey = containsKey(key);
+            Satellite previous = super.get(key);
             Satellite result = super.computeIfAbsent(key, mappingFunction);
-            if (!hadKey && result != null) {
+            if (hadKey != containsKey(key) || previous != result) {
                 setDirty();
             }
             return result;
@@ -1065,6 +1191,191 @@ public class SatelliteSavedData extends SavedData {
                 setDirty();
             }
         }
+
+        @Override
+        public Set<Integer> keySet() {
+            Set<Integer> delegate = super.keySet();
+            return new AbstractSet<>() {
+                @Override
+                public Iterator<Integer> iterator() {
+                    Iterator<Integer> iterator = delegate.iterator();
+                    return new Iterator<>() {
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public Integer next() {
+                            return iterator.next();
+                        }
+
+                        @Override
+                        public void remove() {
+                            iterator.remove();
+                            setDirty();
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return delegate.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    return delegate.contains(object);
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    return markIfChanged(delegate.remove(object));
+                }
+
+                @Override
+                public boolean removeAll(Collection<?> collection) {
+                    return markIfChanged(delegate.removeAll(collection));
+                }
+
+                @Override
+                public boolean retainAll(Collection<?> collection) {
+                    return markIfChanged(delegate.retainAll(collection));
+                }
+
+                @Override
+                public void clear() {
+                    DirtyTrackingSatelliteMap.this.clear();
+                }
+            };
+        }
+
+        @Override
+        public Collection<Satellite> values() {
+            Collection<Satellite> delegate = super.values();
+            return new AbstractCollection<>() {
+                @Override
+                public Iterator<Satellite> iterator() {
+                    Iterator<Satellite> iterator = delegate.iterator();
+                    return new Iterator<>() {
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public Satellite next() {
+                            return iterator.next();
+                        }
+
+                        @Override
+                        public void remove() {
+                            iterator.remove();
+                            setDirty();
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return delegate.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    return delegate.contains(object);
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    return markIfChanged(delegate.remove(object));
+                }
+
+                @Override
+                public boolean removeAll(Collection<?> collection) {
+                    return markIfChanged(delegate.removeAll(collection));
+                }
+
+                @Override
+                public boolean retainAll(Collection<?> collection) {
+                    return markIfChanged(delegate.retainAll(collection));
+                }
+
+                @Override
+                public void clear() {
+                    DirtyTrackingSatelliteMap.this.clear();
+                }
+            };
+        }
+
+        @Override
+        public Set<Map.Entry<Integer, Satellite>> entrySet() {
+            Set<Map.Entry<Integer, Satellite>> delegate = super.entrySet();
+            return new AbstractSet<>() {
+                @Override
+                public Iterator<Map.Entry<Integer, Satellite>> iterator() {
+                    Iterator<Map.Entry<Integer, Satellite>> iterator = delegate.iterator();
+                    return new Iterator<>() {
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public Map.Entry<Integer, Satellite> next() {
+                            Map.Entry<Integer, Satellite> entry = iterator.next();
+                            return new AbstractMap.SimpleEntry<>(entry) {
+                                @Override
+                                public Satellite setValue(Satellite value) {
+                                    Satellite previous = entry.setValue(value);
+                                    if (previous != value) {
+                                        setDirty();
+                                    }
+                                    super.setValue(value);
+                                    return previous;
+                                }
+                            };
+                        }
+
+                        @Override
+                        public void remove() {
+                            iterator.remove();
+                            setDirty();
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return delegate.size();
+                }
+
+                @Override
+                public boolean contains(Object object) {
+                    return delegate.contains(object);
+                }
+
+                @Override
+                public boolean remove(Object object) {
+                    return markIfChanged(delegate.remove(object));
+                }
+
+                @Override
+                public boolean removeAll(Collection<?> collection) {
+                    return markIfChanged(delegate.removeAll(collection));
+                }
+
+                @Override
+                public boolean retainAll(Collection<?> collection) {
+                    return markIfChanged(delegate.retainAll(collection));
+                }
+
+                @Override
+                public void clear() {
+                    DirtyTrackingSatelliteMap.this.clear();
+                }
+            };
+        }
     }
 
     private ListTag entriesTag() {
@@ -1076,6 +1387,22 @@ public class SatelliteSavedData extends SavedData {
             entries.add(tag);
         }
         return entries;
+    }
+
+    private static Set<Integer> sortedFrequencySet(Collection<Integer> frequencies) {
+        List<Integer> sorted = new ArrayList<>(frequencies);
+        sorted.sort(Comparator.nullsFirst(Comparator.naturalOrder()));
+        return java.util.Collections.unmodifiableSet(new LinkedHashSet<>(sorted));
+    }
+
+    private static Comparator<Map.Entry<Integer, Satellite>> frequencyEntryComparator() {
+        return Map.Entry.comparingByKey(Comparator.nullsFirst(Comparator.naturalOrder()));
+    }
+
+    private record LegacyLoadedEntry(int frequency, int legacyId, Satellite satellite) {
+        private SatelliteEntry entry() {
+            return new SatelliteEntry(frequency, satellite.getID(), satellite.saveData());
+        }
     }
 
     public record SatelliteEntry(int frequency, int legacyId, CompoundTag data) {
@@ -1095,7 +1422,7 @@ public class SatelliteSavedData extends SavedData {
             if (satellite == null) {
                 return Optional.empty();
             }
-            return Optional.of(new SatelliteEntry(frequency, satellite.legacyId(), satellite.saveData()));
+            return Optional.of(new SatelliteEntry(frequency, satellite.getID(), satellite.saveData()));
         }
 
         public static Optional<SatelliteEntry> of(int frequency, LegacySatelliteType type, CompoundTag data) {
@@ -1107,8 +1434,8 @@ public class SatelliteSavedData extends SavedData {
 
         public static Optional<SatelliteEntry> of(int frequency, Class<? extends Satellite> satelliteClass,
                                                   CompoundTag data) {
-            return Satellite.getTypeFromClass(satelliteClass)
-                    .flatMap(type -> of(frequency, type, data));
+            int legacyId = Satellite.getLegacyIdFromClass(satelliteClass);
+            return legacyId >= 0 ? Optional.of(new SatelliteEntry(frequency, legacyId, data)) : Optional.empty();
         }
 
         public Optional<Satellite> satellite() {
@@ -1116,7 +1443,7 @@ public class SatelliteSavedData extends SavedData {
         }
 
         public Optional<LegacySatelliteType> type() {
-            return Optional.ofNullable(LegacySatelliteType.byLegacyId(legacyId));
+            return satelliteClass().flatMap(Satellite::getTypeFromClass);
         }
 
         public Optional<Class<? extends Satellite>> satelliteClass() {
@@ -1128,13 +1455,12 @@ public class SatelliteSavedData extends SavedData {
         }
 
         public boolean matches(Class<? extends Satellite> satelliteClass) {
-            return Satellite.getTypeFromClass(satelliteClass)
-                    .filter(this::matches)
-                    .isPresent();
+            int legacyId = Satellite.getLegacyIdFromClass(satelliteClass);
+            return legacyId >= 0 && this.legacyId == legacyId;
         }
 
         public Optional<String> cargoPool() {
-            return type().flatMap(Satellite::cargoPoolForType);
+            return satelliteClass().flatMap(Satellite::getCargoPoolFromClass);
         }
 
         public boolean hasCargoPool() {
@@ -1150,7 +1476,7 @@ public class SatelliteSavedData extends SavedData {
                     .map(satellite -> SatelliteSummary.of(frequency, satellite))
                     .orElseGet(() -> new SatelliteSummary(frequency, legacyId, legacyName(),
                             Satellite.SatelliteInterface.NONE, Set.of(), Set.of(),
-                            type().flatMap(Satellite::cargoPoolForType), 0L));
+                            satelliteClass().flatMap(Satellite::getCargoPoolFromClass), 0L));
         }
 
         public void writeLegacy(CompoundTag tag, int index) {
@@ -1213,9 +1539,12 @@ public class SatelliteSavedData extends SavedData {
         }
 
         public List<SatelliteEntry> entries(Class<? extends Satellite> satelliteClass) {
-            return Satellite.getTypeFromClass(satelliteClass)
-                    .map(this::entries)
-                    .orElse(List.of());
+            if (satelliteClass == null) {
+                return List.of();
+            }
+            return entries.stream()
+                    .filter(entry -> entry.matches(satelliteClass))
+                    .toList();
         }
 
         public SatelliteEntries filter(LegacySatelliteType type) {
@@ -1223,9 +1552,7 @@ public class SatelliteSavedData extends SavedData {
         }
 
         public SatelliteEntries filter(Class<? extends Satellite> satelliteClass) {
-            return Satellite.getTypeFromClass(satelliteClass)
-                    .map(this::filter)
-                    .orElse(EMPTY);
+            return new SatelliteEntries(entries(satelliteClass));
         }
 
         public List<SatelliteEntry> cargoEntries() {
@@ -1239,33 +1566,35 @@ public class SatelliteSavedData extends SavedData {
         }
 
         public Set<Integer> frequencies() {
-            TreeSet<Integer> frequencies = new TreeSet<>();
+            List<Integer> frequencies = new ArrayList<>();
             for (SatelliteEntry entry : entries) {
                 frequencies.add(entry.frequency());
             }
-            return frequencies;
+            return sortedFrequencySet(frequencies);
         }
 
         public Set<Integer> frequencies(LegacySatelliteType type) {
-            TreeSet<Integer> frequencies = new TreeSet<>();
+            List<Integer> frequencies = new ArrayList<>();
             for (SatelliteEntry entry : entries(type)) {
                 frequencies.add(entry.frequency());
             }
-            return frequencies;
+            return sortedFrequencySet(frequencies);
         }
 
         public Set<Integer> frequencies(Class<? extends Satellite> satelliteClass) {
-            return Satellite.getTypeFromClass(satelliteClass)
-                    .map(this::frequencies)
-                    .orElse(Set.of());
+            List<Integer> frequencies = new ArrayList<>();
+            for (SatelliteEntry entry : entries(satelliteClass)) {
+                frequencies.add(entry.frequency());
+            }
+            return sortedFrequencySet(frequencies);
         }
 
         public Set<Integer> cargoFrequencies() {
-            TreeSet<Integer> frequencies = new TreeSet<>();
+            List<Integer> frequencies = new ArrayList<>();
             for (SatelliteEntry entry : cargoEntries()) {
                 frequencies.add(entry.frequency());
             }
-            return frequencies;
+            return sortedFrequencySet(frequencies);
         }
 
         public List<Integer> frequencies(int limit) {
@@ -1283,9 +1612,10 @@ public class SatelliteSavedData extends SavedData {
         }
 
         public List<Integer> frequencies(Class<? extends Satellite> satelliteClass, int limit) {
-            return Satellite.getTypeFromClass(satelliteClass)
-                    .map(type -> frequencies(type, limit))
-                    .orElse(List.of());
+            if (limit <= 0) {
+                return List.of();
+            }
+            return frequencies(satelliteClass).stream().limit(limit).toList();
         }
 
         public List<Integer> cargoFrequencies(int limit) {
@@ -1300,7 +1630,7 @@ public class SatelliteSavedData extends SavedData {
             for (SatelliteEntry entry : entries) {
                 entry.type().ifPresent(type -> counts.merge(type, 1, Integer::sum));
             }
-            return Map.copyOf(counts);
+            return diagnosticMap(counts);
         }
 
         public int cargoSatelliteCount() {
@@ -1312,7 +1642,7 @@ public class SatelliteSavedData extends SavedData {
             for (SatelliteEntry entry : cargoEntries()) {
                 entry.type().ifPresent(type -> counts.merge(type, 1, Integer::sum));
             }
-            return Map.copyOf(counts);
+            return diagnosticMap(counts);
         }
 
         public Map<String, Integer> cargoPoolCounts() {
@@ -1320,7 +1650,7 @@ public class SatelliteSavedData extends SavedData {
             for (SatelliteEntry entry : entries) {
                 entry.cargoPool().ifPresent(pool -> counts.merge(pool, 1, Integer::sum));
             }
-            return Map.copyOf(counts);
+            return diagnosticMap(counts);
         }
 
         public List<SatelliteSummary> satelliteSummaries(int limit) {
@@ -1346,9 +1676,14 @@ public class SatelliteSavedData extends SavedData {
         }
 
         public List<SatelliteSummary> satelliteSummaries(Class<? extends Satellite> satelliteClass, int limit) {
-            return Satellite.getTypeFromClass(satelliteClass)
-                    .map(type -> satelliteSummaries(type, limit))
-                    .orElse(List.of());
+            if (limit <= 0) {
+                return List.of();
+            }
+            return entries(satelliteClass).stream()
+                    .sorted(java.util.Comparator.comparingInt(SatelliteEntry::frequency))
+                    .limit(limit)
+                    .map(SatelliteEntry::summary)
+                    .toList();
         }
 
         public List<SatelliteSummary> cargoSatelliteSummaries(int limit) {
@@ -1369,7 +1704,7 @@ public class SatelliteSavedData extends SavedData {
         }
 
         public SatelliteSavedData toData() {
-            SatelliteSavedData data = new SatelliteSavedData();
+            SatelliteSavedData data = createData();
             data.satellites.clear();
             data.readEntries(entries, false);
             data.setDirty(false);
@@ -1414,13 +1749,13 @@ public class SatelliteSavedData extends SavedData {
                                  int problemEntries,
                                  LoadDiagnostics loadDiagnostics) {
         public SatelliteStats {
-            typeCounts = typeCounts == null ? Map.of() : Map.copyOf(typeCounts);
-            cargoTypeCounts = cargoTypeCounts == null ? Map.of() : Map.copyOf(cargoTypeCounts);
-            cargoPoolCounts = cargoPoolCounts == null ? Map.of() : Map.copyOf(cargoPoolCounts);
-            frequencies = frequencies == null ? List.of() : List.copyOf(frequencies);
-            cargoFrequencies = cargoFrequencies == null ? List.of() : List.copyOf(cargoFrequencies);
-            satellites = satellites == null ? List.of() : List.copyOf(satellites);
-            cargoSatellites = cargoSatellites == null ? List.of() : List.copyOf(cargoSatellites);
+            typeCounts = diagnosticMap(typeCounts);
+            cargoTypeCounts = diagnosticMap(cargoTypeCounts);
+            cargoPoolCounts = diagnosticMap(cargoPoolCounts);
+            frequencies = diagnosticList(frequencies);
+            cargoFrequencies = diagnosticList(cargoFrequencies);
+            satellites = diagnosticList(satellites);
+            cargoSatellites = diagnosticList(cargoSatellites);
             loadDiagnostics = loadDiagnostics == null ? LoadDiagnostics.empty() : loadDiagnostics;
         }
 
@@ -1451,18 +1786,18 @@ public class SatelliteSavedData extends SavedData {
 
         private List<String> satelliteDetails() {
             return satellites.stream()
-                    .map(SatelliteSummary::detail)
+                    .map(summary -> summary == null ? "null" : summary.detail())
                     .toList();
         }
 
         private List<String> cargoSatelliteDetails() {
             return cargoSatellites.stream()
-                    .map(SatelliteSummary::detail)
+                    .map(summary -> summary == null ? "null" : summary.detail())
                     .toList();
         }
     }
 
-    public record SatelliteSummary(int frequency, int legacyId, String legacyName,
+    public record SatelliteSummary(Integer frequency, int legacyId, String legacyName,
                                    Satellite.SatelliteInterface satelliteInterface,
                                    Set<Satellite.InterfaceAction> interfaceActions,
                                    Set<Satellite.CoordAction> coordActions,
@@ -1470,19 +1805,23 @@ public class SatelliteSavedData extends SavedData {
         public SatelliteSummary {
             legacyName = legacyName == null ? "" : legacyName;
             satelliteInterface = satelliteInterface == null ? Satellite.SatelliteInterface.NONE : satelliteInterface;
-            interfaceActions = interfaceActions == null ? Set.of() : Set.copyOf(interfaceActions);
-            coordActions = coordActions == null ? Set.of() : Set.copyOf(coordActions);
+            interfaceActions = diagnosticSet(interfaceActions);
+            coordActions = diagnosticSet(coordActions);
             cargoPool = cargoPool == null ? Optional.empty() : cargoPool;
         }
 
-        private static SatelliteSummary of(int frequency, Satellite satellite) {
-            return new SatelliteSummary(frequency, satellite.legacyId(), satellite.legacyName(),
+        private static SatelliteSummary of(Integer frequency, Satellite satellite) {
+            if (satellite == null) {
+                return new SatelliteSummary(frequency, -1, "",
+                        Satellite.SatelliteInterface.NONE, Set.of(), Set.of(), Optional.empty(), 0L);
+            }
+            return new SatelliteSummary(frequency, satellite.getID(), satellite.legacyName(),
                     satellite.satelliteInterface(), satellite.interfaceActions(), satellite.coordActions(),
                     satellite.cargoPool(), satellite.lastOperationMillis());
         }
 
         public Optional<LegacySatelliteType> type() {
-            return Optional.ofNullable(LegacySatelliteType.byLegacyId(legacyId));
+            return satelliteClass().flatMap(Satellite::getTypeFromClass);
         }
 
         public Optional<Class<? extends Satellite>> satelliteClass() {
@@ -1577,6 +1916,23 @@ public class SatelliteSavedData extends SavedData {
                     + " problems=" + problemCount()
                     + " issues=" + issues()
                     + " clean=" + clean();
+        }
+    }
+
+    private record LoadInspection(boolean hasLegacyCountTag, int legacyEntriesRead, int legacyEntriesLoaded,
+                                  int legacyMissingIds, int legacyMissingData, int legacyMissingFrequencies,
+                                  int legacyUnknownIds, int legacyDuplicateFrequencies,
+                                  boolean hasModernEntriesTag, int modernEntriesRead, int modernEntriesLoaded,
+                                  int modernMissingIds, int modernMissingData, int modernMissingFrequencies,
+                                  int modernUnknownIds, int modernDuplicateFrequencies,
+                                  List<EntryLoadDiagnostics> legacyEntryDiagnostics,
+                                  List<EntryLoadDiagnostics> modernEntryDiagnostics) {
+        private LoadDiagnostics toDiagnostics(boolean usedModernEntriesFallback, int actualModernEntriesLoaded) {
+            return new LoadDiagnostics(hasLegacyCountTag, legacyEntriesRead, legacyEntriesLoaded, legacyMissingIds,
+                    legacyMissingData, legacyMissingFrequencies, legacyUnknownIds, legacyDuplicateFrequencies,
+                    hasModernEntriesTag, usedModernEntriesFallback, modernEntriesRead, actualModernEntriesLoaded,
+                    modernMissingIds, modernMissingData, modernMissingFrequencies, modernUnknownIds,
+                    modernDuplicateFrequencies);
         }
     }
 

@@ -107,6 +107,125 @@ public final class ObjTurretModels {
         model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
+    public static void renderChekhovBase(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(CHEKHOV, CHEKHOV_BASE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderChekhovCarriage(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(CHEKHOV, CHEKHOV_CARRIAGE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderChekhovBody(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(CHEKHOV, CHEKHOV_BODY, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderChekhovBarrels(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(CHEKHOV, CHEKHOV_BARRELS, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderChekhovConnectors(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(CHEKHOV, CHEKHOV_CONNECTORS, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderJeremyGun(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(JEREMY, JEREMY_GUN, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderTauonCannon(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(TAUON, TAUON_CANNON, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderTauonRotor(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(TAUON, TAUON_ROTOR, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderRichardLauncher(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(RICHARD, RICHARD_LAUNCHER, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderRichardMissileLoaded(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(RICHARD, RICHARD_MISSILE_LOADED, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHowardCarriage(boolean damaged, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(howardModel(damaged), damaged ? HOWARD_DAMAGED_CARRIAGE : HOWARD_CARRIAGE,
+                texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHowardBody(boolean damaged, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(howardModel(damaged), damaged ? HOWARD_DAMAGED_BODY : HOWARD_BODY,
+                texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHowardBarrelsTop(boolean damaged, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(howardModel(damaged), damaged ? HOWARD_DAMAGED_BARRELS_TOP : HOWARD_BARRELS_TOP,
+                texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHowardBarrelsBottom(boolean damaged, ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(howardModel(damaged), damaged ? HOWARD_DAMAGED_BARRELS_BOTTOM : HOWARD_BARRELS_BOTTOM,
+                texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderMaxwellMicrowave(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(MAXWELL, MAXWELL_MICROWAVE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderFritzGun(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(FRITZ, FRITZ_GUN, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderArtyBase(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(ARTY, ARTY_BASE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderArtyCarriage(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(ARTY, ARTY_CARRIAGE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderArtyCannon(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(ARTY, ARTY_CANNON, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderArtyBarrel(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(ARTY, ARTY_BARREL, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHimarsCarriage(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(HIMARS, HIMARS_CARRIAGE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHimarsLauncher(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(HIMARS, HIMARS_LAUNCHER, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderHimarsCrane(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(HIMARS, HIMARS_CRANE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
     public static void renderHimarsTubeStandard(ResourceLocation texture, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         renderPrepared(HIMARS, HIMARS_TUBE_STANDARD, texture, poseStack, buffer, packedLight, packedOverlay);
@@ -131,6 +250,36 @@ public final class ObjTurretModels {
     public static void renderHimarsCapSingle(ResourceLocation texture, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         renderPrepared(HIMARS, HIMARS_CAP_SINGLE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderSentryBase(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(SENTRY, SENTRY_BASE, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderSentryPivot(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(SENTRY, SENTRY_PIVOT, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderSentryBody(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(SENTRY, SENTRY_BODY, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderSentryDrum(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(SENTRY, SENTRY_DRUM, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderSentryBarrelL(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(SENTRY, SENTRY_BARREL_L, texture, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderSentryBarrelR(ResourceLocation texture, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPrepared(SENTRY, SENTRY_BARREL_R, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static boolean renderPreparedPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
@@ -263,6 +412,10 @@ public final class ObjTurretModels {
         }
         model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, selection);
         return true;
+    }
+
+    private static LegacyWavefrontModel howardModel(boolean damaged) {
+        return damaged ? HOWARD_DAMAGED : HOWARD;
     }
 
     private static boolean sameModel(LegacyWavefrontModel model, LegacyWavefrontModel expected) {

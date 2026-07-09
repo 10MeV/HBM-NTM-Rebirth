@@ -21,6 +21,8 @@ import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
 public class RiftParticle extends Particle {
+    private final Matrix4f renderMatrix = new Matrix4f();
+
     private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
         @Override
         public void begin(BufferBuilder builder, net.minecraft.client.renderer.texture.TextureManager textureManager) {
@@ -71,8 +73,8 @@ public class RiftParticle extends Particle {
         float scale = (this.age + partialTick) * 0.5F;
         float currentScale = scale;
         for (int i = 0; i < 5; i++) {
-            Matrix4f matrix = new Matrix4f().translation(x, y, z).scale(currentScale);
-            ObjEffectModels.SPHERE_UV.renderAllUntextured(consumer, matrix, 255, 255, 255, 255);
+            renderMatrix.translation(x, y, z).scale(currentScale);
+            ObjEffectModels.SPHERE_UV.renderAllUntextured(consumer, renderMatrix, 255, 255, 255, 255);
             currentScale *= i % 2 == 0 ? 1.02F : 1.05F;
         }
     }

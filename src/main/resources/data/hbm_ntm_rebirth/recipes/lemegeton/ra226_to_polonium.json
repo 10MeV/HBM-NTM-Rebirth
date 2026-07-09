@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/radium226"
+    },
+    "count": 1,
+    "legacy_ore": "ingotRadium226"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_polonium"
+  },
+  "source_order": 23
+}

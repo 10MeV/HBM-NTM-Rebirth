@@ -55,7 +55,7 @@ public final class BombConfig {
             limitExplosionLifespan = com.hbm.ntm.config.BombConfig.explosionLifespanLimitSeconds();
             chunkloading = com.hbm.ntm.config.BombConfig.chunkLoadingEnabled();
             explosionAlgorithm = com.hbm.ntm.config.BombConfig.explosionAlgorithm();
-        } catch (IllegalStateException ignored) {
+        } catch (IllegalStateException | NullPointerException ignored) {
             // Keep legacy defaults until Forge finishes loading the modern config.
         }
     }

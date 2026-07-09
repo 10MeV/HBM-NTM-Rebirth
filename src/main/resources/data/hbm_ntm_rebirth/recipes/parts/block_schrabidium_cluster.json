@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "#S#",
+    "SXS",
+    "#S#"
+  ],
+  "key": {
+    "#": {
+      "item": "hbm_ntm_rebirth:ingot_schrabidium"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:ingot_starmetal"
+    },
+    "X": {
+      "item": "hbm_ntm_rebirth:ingot_schrabidate"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:block_schrabidium_cluster"
+  }
+}

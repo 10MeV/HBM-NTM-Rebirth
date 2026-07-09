@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ingots/neptunium" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_neptunium" }
+  "output": { "item": "hbm_ntm_rebirth:powder_neptunium" },
+  "source_order": 1000
 }

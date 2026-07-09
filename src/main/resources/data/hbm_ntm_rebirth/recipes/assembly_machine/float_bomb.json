@@ -1,0 +1,46 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:plates/titanium"
+      },
+      "legacy_ore": "plateTitanium"
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:nuggets/schrabidium"
+      },
+      "legacy_ore": "nuggetSchrabidium"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 9
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:dense_wires/gold"
+      },
+      "legacy_ore": "wireDenseGold"
+    }
+  ],
+  "internal_name": "ass.levibomb",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:float_bomb"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 208
+}

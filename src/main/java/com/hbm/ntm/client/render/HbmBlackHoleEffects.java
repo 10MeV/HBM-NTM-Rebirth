@@ -11,10 +11,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
@@ -27,11 +25,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -46,18 +42,50 @@ public final class HbmBlackHoleEffects {
     private static final int GL_REPEAT = 10497;
     private static final int GL_LINEAR = 9729;
     private static final int GL_NEAREST = 9728;
+    private static final float DEG_TO_RAD = (float) (Math.PI / 180.0D);
     private static final RenderLevelStageEvent.Stage RENDER_STAGE = RenderLevelStageEvent.Stage.AFTER_LEVEL;
     private static final List<BlackHole> ACTIVE = new ArrayList<>();
     private static final Map<Integer, TrackedBlackHole> TRACKED = new ConcurrentHashMap<>();
+    private static final List<RenderJob> RENDER_JOBS = new ArrayList<>();
+    private static final Matrix4f WORLD_VIEW_MATRIX = new Matrix4f();
 
     private static ShaderInstance blackHoleShader;
     private static TextureTarget sceneCopy;
     private static DynamicTexture noiseTexture;
     private static DynamicTexture colorRampTexture;
+    private static int configuredSceneColorTextureId = -1;
+    private static int configuredSceneDepthTextureId = -1;
+    private static int configuredNoiseTextureId = -1;
+    private static int configuredColorRampTextureId = -1;
+    private static boolean sceneCopySamplingDirty = true;
+    private static Uniform entityPosUniform;
+    private static Uniform scaleUniform;
+    private static Uniform accretionDiskRadiusScaleUniform;
+    private static Uniform accretionDiskThicknessScaleUniform;
+    private static Uniform accretionDiskDensityUniform;
+    private static Uniform tiltAngleUniform;
+    private static Uniform intensityUniform;
+    private static Uniform renderQualityUniform;
+    private static Uniform ditherStrengthUniform;
+    private static Uniform lensBoundarySoftnessUniform;
+    private static Uniform diskNoiseStrengthUniform;
+    private static Uniform diskTextureStrengthUniform;
+    private static Uniform accretionDiskColorUniform;
+    private static Uniform accretionDiskInnerColorUniform;
+    private static Uniform accretionDiskOuterColorUniform;
+    private static Uniform screenSizeUniform;
+    private static Uniform projectionMatrixUniform;
+    private static Uniform modelViewMatrixUniform;
+    private static Uniform cameraPosUniform;
+    private static Uniform timeUniform;
+    private static Uniform noiseTextureSizeUniform;
 
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         event.registerShader(new ShaderInstance(event.getResourceProvider(), BLACK_HOLE,
-                DefaultVertexFormat.POSITION), shader -> blackHoleShader = shader);
+                DefaultVertexFormat.POSITION), shader -> {
+                    blackHoleShader = shader;
+                    cacheUniforms(shader);
+                });
     }
 
     public static void spawnBlackHole(double x, double y, double z, BlackHoleSpec spec) {
@@ -75,7 +103,12 @@ public final class HbmBlackHoleEffects {
         if (key == 0 || spec == null || spec.scale <= 0.0F || spec.intensity <= 0.0F) {
             return;
         }
-        TRACKED.put(key, new TrackedBlackHole(x, y, z, spec, Math.max(0, age), 2));
+        TrackedBlackHole blackHole = TRACKED.get(key);
+        if (blackHole == null) {
+            TRACKED.put(key, new TrackedBlackHole(x, y, z, spec, Math.max(0, age), 2));
+        } else {
+            blackHole.update(x, y, z, spec, Math.max(0, age), 2);
+        }
     }
 
     public static void removeTrackedBlackHole(int key) {
@@ -93,15 +126,14 @@ public final class HbmBlackHoleEffects {
             return;
         }
 
-        Iterator<BlackHole> iterator = ACTIVE.iterator();
-        while (iterator.hasNext()) {
-            BlackHole blackHole = iterator.next();
+        for (int i = ACTIVE.size() - 1; i >= 0; i--) {
+            BlackHole blackHole = ACTIVE.get(i);
             if (blackHole.age++ >= blackHole.lifetime) {
-                iterator.remove();
+                ACTIVE.remove(i);
             }
         }
 
-        Iterator<Map.Entry<Integer, TrackedBlackHole>> trackedIterator = TRACKED.entrySet().iterator();
+        java.util.Iterator<Map.Entry<Integer, TrackedBlackHole>> trackedIterator = TRACKED.entrySet().iterator();
         while (trackedIterator.hasNext()) {
             Map.Entry<Integer, TrackedBlackHole> entry = trackedIterator.next();
             TrackedBlackHole blackHole = entry.getValue();
@@ -135,26 +167,27 @@ public final class HbmBlackHoleEffects {
         RenderSystem.depthMask(false);
         RenderSystem.disableCull();
 
-        List<RenderJob> jobs = collectRenderJobs(cameraPos, partialTick);
-        jobs.sort((left, right) -> Float.compare(right.distanceToCamera, left.distanceToCamera));
-        for (RenderJob job : jobs) {
+        int jobCount = collectRenderJobs(cameraPos, partialTick);
+        sortRenderJobsFarToNear(jobCount);
+        for (int i = 0; i < jobCount; i++) {
+            RenderJob job = RENDER_JOBS.get(i);
             beginBlackHolePass(mainTarget, event, camera, cameraPos, time);
             BlackHoleSpec spec = job.spec;
-            setUniform("entityPos", (float) job.x, (float) job.y, (float) job.z);
-            setUniform("scale", spec.scale);
-            setUniform("accretionDiskRadiusScale", spec.accretionDiskRadiusScale);
-            setUniform("accretionDiskThicknessScale", spec.accretionDiskThicknessScale);
-            setUniform("accretionDiskDensity", spec.accretionDiskDensity);
-            setUniform("tiltAngle", spec.tiltAngle);
-            setUniform("intensity", Mth.clamp(spec.intensity * job.alpha, 0.0F, 8.0F));
-            setUniform("renderQuality", spec.renderQuality);
-            setUniform("ditherStrength", spec.ditherStrength);
-            setUniform("lensBoundarySoftness", spec.lensBoundarySoftness);
-            setUniform("diskNoiseStrength", spec.diskNoiseStrength);
-            setUniform("diskTextureStrength", spec.diskTextureStrength);
-            setUniform("accretionDiskColor", spec.diskColor);
-            setUniform("accretionDiskInnerColor", spec.diskInnerColor);
-            setUniform("accretionDiskOuterColor", spec.diskOuterColor);
+            setUniform(entityPosUniform, (float) job.x, (float) job.y, (float) job.z);
+            setUniform(scaleUniform, spec.scale);
+            setUniform(accretionDiskRadiusScaleUniform, spec.accretionDiskRadiusScale);
+            setUniform(accretionDiskThicknessScaleUniform, spec.accretionDiskThicknessScale);
+            setUniform(accretionDiskDensityUniform, spec.accretionDiskDensity);
+            setUniform(tiltAngleUniform, spec.tiltAngle);
+            setUniform(intensityUniform, Mth.clamp(spec.intensity * job.alpha, 0.0F, 8.0F));
+            setUniform(renderQualityUniform, spec.renderQuality);
+            setUniform(ditherStrengthUniform, spec.ditherStrength);
+            setUniform(lensBoundarySoftnessUniform, spec.lensBoundarySoftness);
+            setUniform(diskNoiseStrengthUniform, spec.diskNoiseStrength);
+            setUniform(diskTextureStrengthUniform, spec.diskTextureStrength);
+            setUniform(accretionDiskColorUniform, spec.diskColorR, spec.diskColorG, spec.diskColorB);
+            setUniform(accretionDiskInnerColorUniform, spec.diskInnerColorR, spec.diskInnerColorG, spec.diskInnerColorB);
+            setUniform(accretionDiskOuterColorUniform, spec.diskOuterColorR, spec.diskOuterColorG, spec.diskOuterColorB);
             drawFullscreenQuad();
         }
 
@@ -164,42 +197,62 @@ public final class HbmBlackHoleEffects {
         mainTarget.bindWrite(false);
     }
 
-    private static List<RenderJob> collectRenderJobs(Vec3 cameraPos, float partialTick) {
-        List<RenderJob> jobs = new ArrayList<>(ACTIVE.size() + TRACKED.size());
-        for (BlackHole blackHole : ACTIVE) {
+    private static int collectRenderJobs(Vec3 cameraPos, float partialTick) {
+        int count = 0;
+        for (int i = 0; i < ACTIVE.size(); i++) {
+            BlackHole blackHole = ACTIVE.get(i);
             float age = blackHole.age + partialTick;
             float alpha = blackHole.alpha(age);
             if (alpha > 0.0F) {
-                jobs.add(RenderJob.of(blackHole.x, blackHole.y, blackHole.z, blackHole.spec, alpha, cameraPos));
+                addRenderJob(count++, blackHole.x, blackHole.y, blackHole.z, blackHole.spec, alpha, cameraPos);
             }
         }
         for (TrackedBlackHole blackHole : TRACKED.values()) {
             float age = blackHole.age + partialTick;
             float alpha = blackHole.alpha(age);
             if (alpha > 0.0F) {
-                jobs.add(RenderJob.of(blackHole.x, blackHole.y, blackHole.z, blackHole.spec, alpha, cameraPos));
+                addRenderJob(count++, blackHole.x, blackHole.y, blackHole.z, blackHole.spec, alpha, cameraPos);
             }
         }
-        return jobs;
+        return count;
+    }
+
+    private static void addRenderJob(int index, double x, double y, double z, BlackHoleSpec spec, float alpha,
+            Vec3 cameraPos) {
+        while (RENDER_JOBS.size() <= index) {
+            RENDER_JOBS.add(new RenderJob());
+        }
+        RENDER_JOBS.get(index).set(x, y, z, spec, alpha, cameraPos);
+    }
+
+    private static void sortRenderJobsFarToNear(int count) {
+        for (int i = 1; i < count; i++) {
+            RenderJob job = RENDER_JOBS.get(i);
+            int j = i - 1;
+            while (j >= 0 && RENDER_JOBS.get(j).distanceToCameraSqr < job.distanceToCameraSqr) {
+                RENDER_JOBS.set(j + 1, RENDER_JOBS.get(j));
+                j--;
+            }
+            RENDER_JOBS.set(j + 1, job);
+        }
     }
 
     private static void beginBlackHolePass(RenderTarget mainTarget, RenderLevelStageEvent event, Camera camera,
             Vec3 cameraPos, float time) {
         copyMainTarget(mainTarget);
-        configureSceneCopySampling();
-        configureTiledBilinear(noiseTexture);
-        configureTiledBilinear(colorRampTexture);
+        ensureSceneCopySampling();
+        ensureEffectTextureSampling();
         RenderSystem.setShader(() -> blackHoleShader);
         blackHoleShader.setSampler("MainColorSampler", sceneCopy);
         blackHoleShader.setSampler("MainDepthSampler", Integer.valueOf(sceneCopy.getDepthTextureId()));
         blackHoleShader.setSampler("TextureSampler", noiseTexture);
         blackHoleShader.setSampler("ColorSampler", colorRampTexture);
-        setUniform("screenSize", (float) mainTarget.viewWidth, (float) mainTarget.viewHeight);
-        setUniform("projectionMatrix", event.getProjectionMatrix());
-        setUniform("modelViewMatrix", createWorldViewMatrix(camera));
-        setUniform("cameraPos", (float) cameraPos.x, (float) cameraPos.y, (float) cameraPos.z);
-        setUniform("time", time);
-        setUniform("noiseTextureSize", (float) NOISE_TEXTURE_SIZE);
+        setUniform(screenSizeUniform, (float) mainTarget.viewWidth, (float) mainTarget.viewHeight);
+        setUniform(projectionMatrixUniform, event.getProjectionMatrix());
+        setUniform(modelViewMatrixUniform, worldViewMatrix(camera));
+        setUniform(cameraPosUniform, (float) cameraPos.x, (float) cameraPos.y, (float) cameraPos.z);
+        setUniform(timeUniform, time);
+        setUniform(noiseTextureSizeUniform, (float) NOISE_TEXTURE_SIZE);
     }
 
     public static void clearAll() {
@@ -210,8 +263,10 @@ public final class HbmBlackHoleEffects {
     private static void ensureSceneCopy(RenderTarget mainTarget) {
         if (sceneCopy == null) {
             sceneCopy = new TextureTarget(mainTarget.width, mainTarget.height, true, Minecraft.ON_OSX);
+            sceneCopySamplingDirty = true;
         } else if (sceneCopy.width != mainTarget.width || sceneCopy.height != mainTarget.height) {
             sceneCopy.resize(mainTarget.width, mainTarget.height, Minecraft.ON_OSX);
+            sceneCopySamplingDirty = true;
         }
     }
 
@@ -238,12 +293,31 @@ public final class HbmBlackHoleEffects {
             noiseTexture = new DynamicTexture(noise);
             noiseTexture.upload();
             configureTiledBilinear(noiseTexture);
+            configuredNoiseTextureId = noiseTexture.getId();
         }
         if (colorRampTexture == null) {
             colorRampTexture = createColorRampTexture(1.0F, 1.0F, 1.0F,
                     1.7F, 0.5F, 0.1F,
                     0.5F, 0.6F, 1.0F);
+            configuredColorRampTextureId = colorRampTexture.getId();
         }
+    }
+
+    private static void ensureEffectTextureSampling() {
+        configuredNoiseTextureId = ensureTiledBilinear(noiseTexture, configuredNoiseTextureId);
+        configuredColorRampTextureId = ensureTiledBilinear(colorRampTexture, configuredColorRampTextureId);
+    }
+
+    private static int ensureTiledBilinear(DynamicTexture texture, int configuredTextureId) {
+        if (texture == null) {
+            return -1;
+        }
+        int textureId = texture.getId();
+        if (textureId > 0 && textureId != configuredTextureId) {
+            configureTiledBilinear(texture);
+            return textureId;
+        }
+        return configuredTextureId;
     }
 
     private static DynamicTexture createColorRampTexture(float cr, float cg, float cb,
@@ -273,9 +347,19 @@ public final class HbmBlackHoleEffects {
         RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
-    private static void configureSceneCopySampling() {
-        configureClampedTexture(sceneCopy.getColorTextureId(), GL_LINEAR);
-        configureClampedTexture(sceneCopy.getDepthTextureId(), GL_NEAREST);
+    private static void ensureSceneCopySampling() {
+        int colorTextureId = sceneCopy.getColorTextureId();
+        int depthTextureId = sceneCopy.getDepthTextureId();
+        if (!sceneCopySamplingDirty
+                && colorTextureId == configuredSceneColorTextureId
+                && depthTextureId == configuredSceneDepthTextureId) {
+            return;
+        }
+        configureClampedTexture(colorTextureId, GL_LINEAR);
+        configureClampedTexture(depthTextureId, GL_NEAREST);
+        configuredSceneColorTextureId = colorTextureId;
+        configuredSceneDepthTextureId = depthTextureId;
+        sceneCopySamplingDirty = false;
     }
 
     private static void configureClampedTexture(int textureId, int filter) {
@@ -289,11 +373,10 @@ public final class HbmBlackHoleEffects {
         RenderSystem.texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_WRAP_T, GlConst.GL_CLAMP_TO_EDGE);
     }
 
-    private static Matrix4f createWorldViewMatrix(Camera camera) {
-        PoseStack poseStack = new PoseStack();
-        poseStack.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
-        poseStack.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
-        return new Matrix4f(poseStack.last().pose());
+    private static Matrix4f worldViewMatrix(Camera camera) {
+        return WORLD_VIEW_MATRIX.identity()
+                .rotateX(camera.getXRot() * DEG_TO_RAD)
+                .rotateY((camera.getYRot() + 180.0F) * DEG_TO_RAD);
     }
 
     private static int toByte(float value) {
@@ -315,36 +398,52 @@ public final class HbmBlackHoleEffects {
         BufferUploader.drawWithShader(builder.end());
     }
 
-    private static void setUniform(String name, float value) {
-        Uniform uniform = blackHoleShader.getUniform(name);
+    private static void cacheUniforms(ShaderInstance shader) {
+        entityPosUniform = shader.getUniform("entityPos");
+        scaleUniform = shader.getUniform("scale");
+        accretionDiskRadiusScaleUniform = shader.getUniform("accretionDiskRadiusScale");
+        accretionDiskThicknessScaleUniform = shader.getUniform("accretionDiskThicknessScale");
+        accretionDiskDensityUniform = shader.getUniform("accretionDiskDensity");
+        tiltAngleUniform = shader.getUniform("tiltAngle");
+        intensityUniform = shader.getUniform("intensity");
+        renderQualityUniform = shader.getUniform("renderQuality");
+        ditherStrengthUniform = shader.getUniform("ditherStrength");
+        lensBoundarySoftnessUniform = shader.getUniform("lensBoundarySoftness");
+        diskNoiseStrengthUniform = shader.getUniform("diskNoiseStrength");
+        diskTextureStrengthUniform = shader.getUniform("diskTextureStrength");
+        accretionDiskColorUniform = shader.getUniform("accretionDiskColor");
+        accretionDiskInnerColorUniform = shader.getUniform("accretionDiskInnerColor");
+        accretionDiskOuterColorUniform = shader.getUniform("accretionDiskOuterColor");
+        screenSizeUniform = shader.getUniform("screenSize");
+        projectionMatrixUniform = shader.getUniform("projectionMatrix");
+        modelViewMatrixUniform = shader.getUniform("modelViewMatrix");
+        cameraPosUniform = shader.getUniform("cameraPos");
+        timeUniform = shader.getUniform("time");
+        noiseTextureSizeUniform = shader.getUniform("noiseTextureSize");
+    }
+
+    private static void setUniform(Uniform uniform, float value) {
         if (uniform != null) {
             uniform.set(value);
         }
     }
 
-    private static void setUniform(String name, float x, float y) {
-        Uniform uniform = blackHoleShader.getUniform(name);
+    private static void setUniform(Uniform uniform, float x, float y) {
         if (uniform != null) {
             uniform.set(x, y);
         }
     }
 
-    private static void setUniform(String name, float x, float y, float z) {
-        Uniform uniform = blackHoleShader.getUniform(name);
+    private static void setUniform(Uniform uniform, float x, float y, float z) {
         if (uniform != null) {
             uniform.set(x, y, z);
         }
     }
 
-    private static void setUniform(String name, Matrix4f matrix) {
-        Uniform uniform = blackHoleShader.getUniform(name);
+    private static void setUniform(Uniform uniform, Matrix4f matrix) {
         if (uniform != null) {
             uniform.set(matrix);
         }
-    }
-
-    private static void setUniform(String name, Vector3f value) {
-        setUniform(name, value.x(), value.y(), value.z());
     }
 
     public static final class BlackHoleSpec {
@@ -363,15 +462,23 @@ public final class HbmBlackHoleEffects {
         private final float lensBoundarySoftness;
         private final float diskNoiseStrength;
         private final float diskTextureStrength;
-        private final Vector3f diskColor;
-        private final Vector3f diskInnerColor;
-        private final Vector3f diskOuterColor;
+        private final float diskColorR;
+        private final float diskColorG;
+        private final float diskColorB;
+        private final float diskInnerColorR;
+        private final float diskInnerColorG;
+        private final float diskInnerColorB;
+        private final float diskOuterColorR;
+        private final float diskOuterColorG;
+        private final float diskOuterColorB;
 
         private BlackHoleSpec(float scale, float eventHorizonRadius, int lifetime, float fadeInTicks, float fadeOutStartTick,
                 float accretionDiskRadiusScale, float accretionDiskThicknessScale,
                 float accretionDiskDensity, float tiltAngle, float intensity, float renderQuality, float ditherStrength,
                 float lensBoundarySoftness, float diskNoiseStrength, float diskTextureStrength,
-                Vector3f diskColor, Vector3f diskInnerColor, Vector3f diskOuterColor) {
+                float diskColorR, float diskColorG, float diskColorB,
+                float diskInnerColorR, float diskInnerColorG, float diskInnerColorB,
+                float diskOuterColorR, float diskOuterColorG, float diskOuterColorB) {
             this.scale = Math.max(0.01F, scale);
             this.eventHorizonRadius = Mth.clamp(eventHorizonRadius, 0.01F, this.scale);
             this.lifetime = Math.max(1, lifetime);
@@ -387,9 +494,15 @@ public final class HbmBlackHoleEffects {
             this.lensBoundarySoftness = Mth.clamp(lensBoundarySoftness, 0.02F, 0.6F);
             this.diskNoiseStrength = Mth.clamp(diskNoiseStrength, 0.0F, 1.0F);
             this.diskTextureStrength = Mth.clamp(diskTextureStrength, 0.0F, 1.0F);
-            this.diskColor = new Vector3f(diskColor);
-            this.diskInnerColor = new Vector3f(diskInnerColor);
-            this.diskOuterColor = new Vector3f(diskOuterColor);
+            this.diskColorR = diskColorR;
+            this.diskColorG = diskColorG;
+            this.diskColorB = diskColorB;
+            this.diskInnerColorR = diskInnerColorR;
+            this.diskInnerColorG = diskInnerColorG;
+            this.diskInnerColorB = diskInnerColorB;
+            this.diskOuterColorR = diskOuterColorR;
+            this.diskOuterColorG = diskOuterColorG;
+            this.diskOuterColorB = diskOuterColorB;
         }
 
         public static BlackHoleSpec of(float eventHorizonRadius, int lifetime) {
@@ -400,9 +513,29 @@ public final class HbmBlackHoleEffects {
                     1.0F, 1.0F,
                     0.01F, 0.4363F, 1.0F, RenderPrecision.NATIVE.quality, RenderPrecision.NATIVE.ditherStrength,
                     0.6F, 1.0F, 0.35F,
-                    new Vector3f(1.0F, 1.0F, 1.0F),
-                    new Vector3f(1.7F, 0.5F, 0.1F),
-                    new Vector3f(0.5F, 0.6F, 1.0F));
+                    1.0F, 1.0F, 1.0F,
+                    1.7F, 0.5F, 0.1F,
+                    0.5F, 0.6F, 1.0F);
+        }
+
+        public static BlackHoleSpec ofConfigured(float eventHorizonRadius, int lifetime,
+                float fadeInTicks, float fadeOutStartTick,
+                float accretionDiskDensity, float tiltAngle, float intensity,
+                float renderQuality, float ditherStrength, float lensBoundarySoftness,
+                float diskNoiseStrength, float diskTextureStrength,
+                float diskColorR, float diskColorG, float diskColorB,
+                float diskInnerColorR, float diskInnerColorG, float diskInnerColorB,
+                float diskOuterColorR, float diskOuterColorG, float diskOuterColorB) {
+            float safeEventHorizonRadius = Math.max(0.01F, eventHorizonRadius);
+            return new BlackHoleSpec(safeEventHorizonRadius * LEGACY_EFFECT_RADIUS_MULTIPLIER,
+                    safeEventHorizonRadius, lifetime,
+                    fadeInTicks, fadeOutStartTick,
+                    1.0F, 1.0F,
+                    accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
+                    lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withFade(float fadeInTicks, float fadeOutStartTick) {
@@ -410,7 +543,9 @@ public final class HbmBlackHoleEffects {
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    diskColor, diskInnerColor, diskOuterColor);
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withEventHorizonRadius(float eventHorizonRadius) {
@@ -420,7 +555,9 @@ public final class HbmBlackHoleEffects {
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    diskColor, diskInnerColor, diskOuterColor);
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withAccretionDiskScale(float radiusScale, float thicknessScale) {
@@ -428,7 +565,9 @@ public final class HbmBlackHoleEffects {
                     radiusScale, thicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    diskColor, diskInnerColor, diskOuterColor);
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withAccretionDiskDensity(float accretionDiskDensity) {
@@ -436,7 +575,9 @@ public final class HbmBlackHoleEffects {
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    diskColor, diskInnerColor, diskOuterColor);
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withTiltAngle(float tiltAngle) {
@@ -444,7 +585,9 @@ public final class HbmBlackHoleEffects {
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    diskColor, diskInnerColor, diskOuterColor);
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withIntensity(float intensity) {
@@ -452,7 +595,9 @@ public final class HbmBlackHoleEffects {
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    diskColor, diskInnerColor, diskOuterColor);
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withRenderPrecision(RenderPrecision precision) {
@@ -465,7 +610,9 @@ public final class HbmBlackHoleEffects {
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    diskColor, diskInnerColor, diskOuterColor);
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withLensBoundarySoftness(float lensBoundarySoftness) {
@@ -473,7 +620,9 @@ public final class HbmBlackHoleEffects {
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    diskColor, diskInnerColor, diskOuterColor);
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withDiskDetail(float diskNoiseStrength, float diskTextureStrength) {
@@ -481,7 +630,9 @@ public final class HbmBlackHoleEffects {
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    diskColor, diskInnerColor, diskOuterColor);
+                    diskColorR, diskColorG, diskColorB,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withDiskColor(float r, float g, float b) {
@@ -489,7 +640,9 @@ public final class HbmBlackHoleEffects {
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
                     lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
-                    new Vector3f(r, g, b), diskInnerColor, diskOuterColor);
+                    r, g, b,
+                    diskInnerColorR, diskInnerColorG, diskInnerColorB,
+                    diskOuterColorR, diskOuterColorG, diskOuterColorB);
         }
 
         public BlackHoleSpec withDiskRamp(float innerR, float innerG, float innerB,
@@ -497,8 +650,10 @@ public final class HbmBlackHoleEffects {
             return new BlackHoleSpec(scale, eventHorizonRadius, lifetime, fadeInTicks, fadeOutStartTick,
                     accretionDiskRadiusScale, accretionDiskThicknessScale,
                     accretionDiskDensity, tiltAngle, intensity, renderQuality, ditherStrength,
-                    lensBoundarySoftness, diskNoiseStrength, diskTextureStrength, diskColor,
-                    new Vector3f(innerR, innerG, innerB), new Vector3f(outerR, outerG, outerB));
+                    lensBoundarySoftness, diskNoiseStrength, diskTextureStrength,
+                    diskColorR, diskColorG, diskColorB,
+                    innerR, innerG, innerB,
+                    outerR, outerG, outerB);
         }
 
         public int lifetime() {
@@ -551,14 +706,18 @@ public final class HbmBlackHoleEffects {
     }
 
     private static final class TrackedBlackHole {
-        private final double x;
-        private final double y;
-        private final double z;
-        private final BlackHoleSpec spec;
-        private final int age;
+        private double x;
+        private double y;
+        private double z;
+        private BlackHoleSpec spec;
+        private int age;
         private int ttl;
 
         private TrackedBlackHole(double x, double y, double z, BlackHoleSpec spec, int age, int ttl) {
+            update(x, y, z, spec, age, ttl);
+        }
+
+        private void update(double x, double y, double z, BlackHoleSpec spec, int age, int ttl) {
             this.x = x;
             this.y = y;
             this.z = z;
@@ -579,27 +738,23 @@ public final class HbmBlackHoleEffects {
     }
 
     private static final class RenderJob {
-        private final double x;
-        private final double y;
-        private final double z;
-        private final BlackHoleSpec spec;
-        private final float alpha;
-        private final float distanceToCamera;
+        private double x;
+        private double y;
+        private double z;
+        private BlackHoleSpec spec;
+        private float alpha;
+        private double distanceToCameraSqr;
 
-        private RenderJob(double x, double y, double z, BlackHoleSpec spec, float alpha, float distanceToCamera) {
+        private void set(double x, double y, double z, BlackHoleSpec spec, float alpha, Vec3 cameraPos) {
             this.x = x;
             this.y = y;
             this.z = z;
             this.spec = spec;
             this.alpha = alpha;
-            this.distanceToCamera = distanceToCamera;
-        }
-
-        private static RenderJob of(double x, double y, double z, BlackHoleSpec spec, float alpha, Vec3 cameraPos) {
             double dx = x - cameraPos.x;
             double dy = y - cameraPos.y;
             double dz = z - cameraPos.z;
-            return new RenderJob(x, y, z, spec, alpha, (float) Math.sqrt(dx * dx + dy * dy + dz * dz));
+            this.distanceToCameraSqr = dx * dx + dy * dy + dz * dz;
         }
     }
 

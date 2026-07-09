@@ -7,5 +7,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:salient",
                   "amount":  1280
-              }
+              },
+    "source_order":  4
 }

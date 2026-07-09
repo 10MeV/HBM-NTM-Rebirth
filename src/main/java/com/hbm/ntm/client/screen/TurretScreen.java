@@ -7,10 +7,13 @@ import com.hbm.ntm.turret.TurretArtyBlockEntity;
 import com.hbm.ntm.turret.TurretBlockEntityBase;
 import com.hbm.ntm.turret.TurretHimarsBlockEntity;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -105,30 +108,37 @@ public class TurretScreen extends AbstractContainerScreen<TurretMenu> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (isHovering(115, 26, 18, 18, mouseX, mouseY)) {
+            playButtonPress();
             send(TurretBlockEntityBase.controlTag("toggle_power"));
             return true;
         }
         if (menu.hasArtilleryMode() && isHovering(151, 16, 18, 18, mouseX, mouseY)) {
+            playButtonPress();
             send(TurretBlockEntityBase.controlTag("cycle_artillery_mode"));
             return true;
         }
         if (isHovering(8, 30, 10, 10, mouseX, mouseY)) {
+            playButtonPress();
             send(TurretBlockEntityBase.targetControlTag("players"));
             return true;
         }
         if (isHovering(22, 30, 10, 10, mouseX, mouseY)) {
+            playButtonPress();
             send(TurretBlockEntityBase.targetControlTag("friendly"));
             return true;
         }
         if (isHovering(36, 30, 10, 10, mouseX, mouseY)) {
+            playButtonPress();
             send(TurretBlockEntityBase.targetControlTag("hostile"));
             return true;
         }
         if (isHovering(50, 30, 10, 10, mouseX, mouseY)) {
+            playButtonPress();
             send(TurretBlockEntityBase.targetControlTag("machine"));
             return true;
         }
         if (isHovering(7, 80, 18, 18, mouseX, mouseY)) {
+            playButtonPress();
             int count = menu.getBlockEntity().getWhitelist().size();
             if (count > 0) {
                 whitelistIndex = (whitelistIndex + count - 1) % count;
@@ -136,6 +146,7 @@ public class TurretScreen extends AbstractContainerScreen<TurretMenu> {
             return true;
         }
         if (isHovering(43, 80, 18, 18, mouseX, mouseY)) {
+            playButtonPress();
             int count = menu.getBlockEntity().getWhitelist().size();
             if (count > 0) {
                 whitelistIndex = (whitelistIndex + 1) % count;
@@ -143,14 +154,16 @@ public class TurretScreen extends AbstractContainerScreen<TurretMenu> {
             return true;
         }
         if (isHovering(7, 98, 18, 18, mouseX, mouseY)) {
+            playButtonPress();
             String text = nameField.getValue();
-            if (!text.isBlank()) {
+            if (!text.isEmpty()) {
                 send(TurretBlockEntityBase.addWhitelistTag(text));
                 nameField.setValue("");
             }
             return true;
         }
         if (isHovering(43, 98, 18, 18, mouseX, mouseY)) {
+            playButtonPress();
             send(TurretBlockEntityBase.removeWhitelistTag(whitelistIndex));
             return true;
         }
@@ -170,6 +183,10 @@ public class TurretScreen extends AbstractContainerScreen<TurretMenu> {
 
     private void send(net.minecraft.nbt.CompoundTag tag) {
         ModMessages.sendToServer(new TileControlPacket(menu.getBlockEntity().getBlockPos(), tag));
+    }
+
+    private static void playButtonPress() {
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
     private void drawHoverButtons(GuiGraphics graphics, int mouseX, int mouseY) {

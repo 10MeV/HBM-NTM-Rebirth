@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:cobalt_decorated_shovel"
+    },
+    "I": {
+      "tag": "forge:ingots/starmetal"
+    }
+  },
+  "pattern": [
+    "I",
+    "B",
+    "I"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:starmetal_shovel"
+  },
+  "show_notification": true
+}

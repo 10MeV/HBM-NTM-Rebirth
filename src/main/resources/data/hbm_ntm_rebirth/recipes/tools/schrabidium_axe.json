@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:blades_desh"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "S": {
+      "tag": "forge:storage_blocks/schrabidium"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:desh_axe"
+    }
+  },
+  "pattern": [
+    "BS",
+    "BW",
+    " P"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:schrabidium_axe"
+  },
+  "show_notification": true
+}

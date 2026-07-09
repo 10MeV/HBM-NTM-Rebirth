@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/lead" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_lead"
+    },
+    "legacy_id": "hbm:crystal_lead",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_lead", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_lead", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_gold" },
-    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_lead"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_lead"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_gold"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_lithium_tiny"
+    }
+  ],
+  "source_order": 47
 }

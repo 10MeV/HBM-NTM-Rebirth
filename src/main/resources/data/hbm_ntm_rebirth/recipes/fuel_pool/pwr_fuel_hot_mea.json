@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:fuel_pool",
+  "source_order": 25,
   "input": {
     "count": 1,
     "ingredient": {

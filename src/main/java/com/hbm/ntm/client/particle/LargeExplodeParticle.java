@@ -22,15 +22,18 @@ public class LargeExplodeParticle extends TextureSheetParticle {
     private static final int SECONDARY_SPRITES = 8;
     private static final int LAST_SPRITE_INDEX = PRIMARY_SPRITES + SECONDARY_SPRITES - 1;
     private static final int HUGE_SEED_LIFETIME = 8;
-    private static final float LEGACY_MUZZLE_PRIMARY_SCALE = 0.5F;
     private static SpriteSet sharedSprites;
 
     private final SpriteSet sprites;
     private final boolean primary;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private LargeExplodeParticle(ClientLevel level, double x, double y, double z,
             double xSpeed, double ySpeed, double zSpeed, float scale, float red, float green, float blue,
-            boolean primary, SpriteSet sprites) {
+            boolean primary, int lifetime, SpriteSet sprites) {
         super(level, x, y, z);
         this.sprites = sprites;
         this.primary = primary;
@@ -42,13 +45,15 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         this.bCol = blue;
         if (primary) {
             this.hasPhysics = false;
-            this.lifetime = 6 + this.random.nextInt(4);
-            this.quadSize = LEGACY_MUZZLE_PRIMARY_SCALE * scale;
+            this.lifetime = lifetime;
+            this.quadSize = legacyLargeExplodeHalfExtent(scale);
             this.setPrimarySprite(0.0F);
         } else {
             this.hasPhysics = false;
-            this.lifetime = 6 + this.random.nextInt(4);
-            this.quadSize = 0.75F * scale;
+            this.lifetime = lifetime;
+            this.quadSize = 0.1F * scale;
+            this.gravity = -0.1F;
+            this.friction = 0.9F;
             this.setSecondarySprite();
         }
     }
@@ -59,7 +64,7 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         }
         float color = 1.0F - level.random.nextFloat() * 0.2F;
         return new LargeExplodeParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, size,
-                color, 0.9F * color, 0.5F * color, true, sharedSprites);
+                color, 0.9F * color, 0.5F * color, true, primaryLifetime(level), sharedSprites);
     }
 
     public static LargeExplodeParticle largeVanilla(ClientLevel level, double x, double y, double z, float size) {
@@ -67,7 +72,7 @@ public class LargeExplodeParticle extends TextureSheetParticle {
             return null;
         }
         return new LargeExplodeParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, size,
-                1.0F, 1.0F, 1.0F, true, sharedSprites);
+                1.0F, 1.0F, 1.0F, true, primaryLifetime(level), sharedSprites);
     }
 
     public static LargeExplodeParticle explode(ClientLevel level, double x, double y, double z,
@@ -76,8 +81,11 @@ public class LargeExplodeParticle extends TextureSheetParticle {
             return null;
         }
         float color = level.random.nextFloat() * 0.3F + 0.7F;
-        return new LargeExplodeParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, 1.0F,
-                color, color, color, false, sharedSprites);
+        float legacyScale = level.random.nextFloat() * level.random.nextFloat() * 6.0F + 1.0F;
+        return new LargeExplodeParticle(level, x, y, z,
+                legacyExplodeMotion(level, xSpeed), legacyExplodeMotion(level, ySpeed), legacyExplodeMotion(level, zSpeed),
+                legacyScale,
+                color, color, color, false, secondaryLifetime(level), sharedSprites);
     }
 
     public static LargeExplodeParticle secondary(ClientLevel level, double x, double y, double z, float scale) {
@@ -86,8 +94,10 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         }
         float color = 1.0F - level.random.nextFloat() * 0.5F;
         float gray = 0.5F * color;
-        return new LargeExplodeParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, scale,
-                gray, gray, gray, false, sharedSprites);
+        float legacyScale = (level.random.nextFloat() * level.random.nextFloat() * 6.0F + 1.0F) * scale;
+        return new LargeExplodeParticle(level, x, y, z,
+                legacyExplodeMotion(level, 0.0D), legacyExplodeMotion(level, 0.0D), legacyExplodeMotion(level, 0.0D),
+                legacyScale, gray, gray, gray, false, secondaryLifetime(level), sharedSprites);
     }
 
     public static Particle hugeExplosionSeed(ClientLevel level, double x, double y, double z) {
@@ -142,7 +152,7 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
     }
 
@@ -150,11 +160,36 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         int frame = Math.min(PRIMARY_SPRITES - 1,
                 (int) (((float) this.age + partialTick) * 15.0F / (float) this.lifetime));
         this.setSprite(this.sprites.get(frame, LAST_SPRITE_INDEX));
+        this.cacheSpriteUv();
     }
 
     private void setSecondarySprite() {
         int oldTextureIndex = Math.max(0, 7 - this.age * SECONDARY_SPRITES / this.lifetime);
         this.setSprite(this.sprites.get(SECONDARY_SPRITE_OFFSET + (7 - oldTextureIndex), LAST_SPRITE_INDEX));
+        this.cacheSpriteUv();
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
+    }
+
+    private static int primaryLifetime(ClientLevel level) {
+        return 6 + level.random.nextInt(4);
+    }
+
+    private static int secondaryLifetime(ClientLevel level) {
+        return (int) (16.0D / (level.random.nextDouble() * 0.8D + 0.2D)) + 2;
+    }
+
+    private static double legacyExplodeMotion(ClientLevel level, double base) {
+        return base + (level.random.nextDouble() * 2.0D - 1.0D) * 0.05D;
+    }
+
+    private static float legacyLargeExplodeHalfExtent(float size) {
+        return 2.0F - size;
     }
 
     private static class HugeExplosionSeed extends NoRenderParticle {
@@ -196,7 +231,7 @@ public class LargeExplodeParticle extends TextureSheetParticle {
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                 double xSpeed, double ySpeed, double zSpeed) {
             return new LargeExplodeParticle(level, x, y, z, 0.0D, 0.0D, 0.0D, (float) xSpeed,
-                    1.0F, 1.0F, 1.0F, true, this.sprites);
+                    1.0F, 1.0F, 1.0F, true, primaryLifetime(level), this.sprites);
         }
     }
 }

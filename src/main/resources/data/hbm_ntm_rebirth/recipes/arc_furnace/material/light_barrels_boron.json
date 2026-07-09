@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.barrelLightBoron",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:light_barrels/boron" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:light_barrels/boron" }, "count": 1, "legacy_ore": "barrelLightBoron" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Boron", "amount": 216 }
+  ],
+  "pools": [],
+  "source_order": 1430
+}

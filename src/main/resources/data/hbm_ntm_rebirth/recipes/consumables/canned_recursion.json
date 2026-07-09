@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:canned_recursion"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:canned_recursion"
+  }
+}

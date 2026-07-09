@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SIS",
+    "ICI",
+    "BEB"
+  ],
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    },
+    "I": {
+      "item": "minecraft:iron_bars"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:struct_launcher"
+    },
+    "E": {
+      "item": "hbm_ntm_rebirth:battery_lead"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:struct_launcher_core_large"
+  }
+}

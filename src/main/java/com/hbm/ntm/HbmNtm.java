@@ -7,6 +7,13 @@ import com.hbm.ntm.compat.CompatRecipeRegistry;
 import com.hbm.ntm.damage.DamageResistanceConfig;
 import com.hbm.ntm.datagen.HbmDataGenerators;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoading;
+import com.hbm.ntm.entity.mob.EntityCyberCrab;
+import com.hbm.ntm.entity.mob.EntityCreeperNuclear;
+import com.hbm.ntm.entity.mob.EntityCreeperTainted;
+import com.hbm.ntm.entity.mob.EntityDuck;
+import com.hbm.ntm.entity.mob.EntityRADBeast;
+import com.hbm.ntm.entity.mob.EntityTaintCrab;
+import com.hbm.ntm.entity.mob.EntityTeslaCrab;
 import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerConfig;
@@ -36,6 +43,7 @@ import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -68,6 +76,7 @@ public class HbmNtm {
         HbmFluidContainerIngredient.register();
 
         modBus.addListener(this::commonSetup);
+        modBus.addListener(this::registerEntityAttributes);
         modBus.addListener(HbmDataGenerators::gatherData);
         modBus.addListener(EnergyMk2GameTests::register);
 
@@ -112,5 +121,15 @@ public class HbmNtm {
         if (HbmCommonConfig.startupLoggingEnabled()) {
             LOGGER.info("HBM NTM migration scaffold loaded. Source semantics: 1.7.10 first, 1.20.1 reference second.");
         }
+    }
+
+    private void registerEntityAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntityTypes.NUCLEAR_CREEPER.get(), EntityCreeperNuclear.createAttributes().build());
+        event.put(ModEntityTypes.TAINTED_CREEPER.get(), EntityCreeperTainted.createAttributes().build());
+        event.put(ModEntityTypes.CYBER_CRAB.get(), EntityCyberCrab.createAttributes().build());
+        event.put(ModEntityTypes.TESLA_CRAB.get(), EntityTeslaCrab.createAttributes().build());
+        event.put(ModEntityTypes.TAINT_CRAB.get(), EntityTaintCrab.createAttributes().build());
+        event.put(ModEntityTypes.DUCK.get(), EntityDuck.createAttributes().build());
+        event.put(ModEntityTypes.RAD_BEAST.get(), EntityRADBeast.createAttributes().build());
     }
 }

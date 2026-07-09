@@ -8,14 +8,18 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.fluid.FluidSymbol;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.CorrosiveFluidTrait;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Locale;
@@ -77,13 +81,29 @@ public final class LegacyFluidTankRenderHelper {
         double height = (double) tank.getFill() * LegacyTileRenderPlans.BIG_ASS_TANK_FLUID_HEIGHT
                 / (double) tank.getMaxFill();
         LegacyUvAnimation.Range u = LegacyUvAnimation.bigAssTankFluidU(animation);
-        LegacyTileRenderPlans.BigAssTankFluidPlan plan = LegacyTileRenderPlans.bigAssTankFluidPlan(
-                height, u.min(), u.max(), LegacyUvAnimation.bigAssTankFluidV(height));
+        double fluidV = LegacyUvAnimation.bigAssTankFluidV(height);
         ResourceLocation texture = type == null ? HbmFluids.NONE.getTexture() : type.getTexture();
-        for (LegacyTileRenderPlans.TexturedQuadPlan quad : plan.quads()) {
-            renderTexturedQuad(texture, poseStack, buffer, packedLight, packedOverlay,
-                    plan.blend().modernRenderMode(), quad);
-        }
+        double off = LegacyTileRenderPlans.BIG_ASS_TANK_FLUID_SIDE_OFFSET;
+        double base = LegacyTileRenderPlans.BIG_ASS_TANK_FLUID_BASE_Y;
+        double half = LegacyTileRenderPlans.BIG_ASS_TANK_FLUID_HALF_WIDTH;
+        int alpha = 192;
+        VertexConsumer consumer = LegacyTexturedQuadRenderer.vertexAlphaConsumer(texture, buffer,
+                LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE);
+        PoseStack.Pose pose = poseStack.last();
+        LegacyTexturedQuadRenderer.quadWithVertexAlpha(consumer, pose, packedLight, packedOverlay,
+                1.0F, 0.0F, 0.0F,
+                -off, base, -half, u.min(), 0.0D, alpha,
+                -off, base + height, -half, u.min(), fluidV, alpha,
+                -off, base + height, half, u.max(), fluidV, alpha,
+                -off, base, half, u.max(), 0.0D, alpha,
+                0xFFFFFF);
+        LegacyTexturedQuadRenderer.quadWithVertexAlpha(consumer, pose, packedLight, packedOverlay,
+                -1.0F, 0.0F, 0.0F,
+                off, base, -half, u.max(), 0.0D, alpha,
+                off, base + height, -half, u.max(), fluidV, alpha,
+                off, base + height, half, u.min(), fluidV, alpha,
+                off, base, half, u.min(), 0.0D, alpha,
+                0xFFFFFF);
     }
 
     public static void renderBat9000Fluid(HbmFluidTank tank, BlockState state, PoseStack poseStack,
@@ -91,11 +111,39 @@ public final class LegacyFluidTankRenderHelper {
         if (tank.isEmpty() || tank.getMaxFill() <= 0) {
             return;
         }
-        LegacyTileRenderPlans.Bat9000FluidPlan plan = LegacyTileRenderPlans.bat9000FluidPlan(tank.getFill(),
-                tank.getMaxFill(), fluidColor(tank.getTankType()));
-        for (LegacyTileRenderPlans.UntexturedQuadPlan quad : plan.quads()) {
-            renderUntexturedQuad(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, quad);
-        }
+        double height = (double) Math.max(0, tank.getFill()) * LegacyTileRenderPlans.BAT9000_FLUID_HEIGHT
+                / (double) tank.getMaxFill();
+        double off = LegacyTileRenderPlans.BAT9000_FLUID_OFFSET;
+        double base = LegacyTileRenderPlans.BAT9000_FLUID_BASE_Y;
+        double top = base + height;
+        double half = LegacyTileRenderPlans.BAT9000_FLUID_HALF_WIDTH;
+        int color = fluidColor(tank.getTankType());
+        LegacyUntexturedQuadRenderer.QuadBatch batch = LegacyUntexturedQuadRenderer.quadBatch(poseStack, buffer,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+        LegacyUntexturedQuadRenderer.quad(batch,
+                -off, base, -half,
+                -off, top, -half,
+                -off, top, half,
+                -off, base, half,
+                color, 255, 255, 255, 255);
+        LegacyUntexturedQuadRenderer.quad(batch,
+                off, base, -half,
+                off, top, -half,
+                off, top, half,
+                off, base, half,
+                color, 255, 255, 255, 255);
+        LegacyUntexturedQuadRenderer.quad(batch,
+                -half, base, -off,
+                -half, top, -off,
+                half, top, -off,
+                half, base, -off,
+                color, 255, 255, 255, 255);
+        LegacyUntexturedQuadRenderer.quad(batch,
+                -half, base, off,
+                -half, top, off,
+                half, top, off,
+                half, base, off,
+                color, 255, 255, 255, 255);
     }
 
     public static void renderSmallTankDiamonds(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
@@ -103,8 +151,21 @@ public final class LegacyFluidTankRenderHelper {
         if (type == null || type == HbmFluids.NONE) {
             return;
         }
-        renderDangerDiamondPlan(LegacyTileRenderPlans.smallTankDangerDiamondPlan(true), type,
-                poseStack, buffer, packedLight, packedOverlay);
+        renderDangerDiamondTransform(type, poseStack, buffer, packedLight, packedOverlay,
+                -0.25D, 0.5D, -1.501D, 90.0F, 1.0F, 0.375F, 0.375F);
+        renderDangerDiamondTransform(type, poseStack, buffer, packedLight, packedOverlay,
+                0.25D, 0.5D, 1.501D, -90.0F, 1.0F, 0.375F, 0.375F);
+    }
+
+    public static void enqueueSmallTankDiamonds(PresentStage stage, FluidType type, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (type == null || type == HbmFluids.NONE) {
+            return;
+        }
+        enqueueDangerDiamondTransform(stage, type, poseStack, buffer, packedLight, packedOverlay,
+                -0.25D, 0.5D, -1.501D, 90.0F, 1.0F, 0.375F, 0.375F);
+        enqueueDangerDiamondTransform(stage, type, poseStack, buffer, packedLight, packedOverlay,
+                0.25D, 0.5D, 1.501D, -90.0F, 1.0F, 0.375F, 0.375F);
     }
 
     public static void renderBigAssTankDiamonds(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
@@ -112,8 +173,19 @@ public final class LegacyFluidTankRenderHelper {
         if (type == null || type == HbmFluids.NONE) {
             return;
         }
-        renderDangerDiamondPlan(LegacyTileRenderPlans.bigAssTankDangerDiamondPlan(true), type,
-                poseStack, buffer, packedLight, packedOverlay);
+        renderRadialDangerDiamonds(type, poseStack, buffer, packedLight, packedOverlay,
+                2, 22.5F, 180.0F, 5.5D, 2.0D, 0.0D,
+                1.0F, 1.0F, 1.0F);
+    }
+
+    public static void enqueueBigAssTankDiamonds(PresentStage stage, FluidType type, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (type == null || type == HbmFluids.NONE) {
+            return;
+        }
+        enqueueRadialDangerDiamonds(stage, type, poseStack, buffer, packedLight, packedOverlay,
+                2, 22.5F, 180.0F, 5.5D, 2.0D, 0.0D,
+                1.0F, 1.0F, 1.0F);
     }
 
     public static void renderBat9000Diamonds(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
@@ -121,8 +193,39 @@ public final class LegacyFluidTankRenderHelper {
         if (type == null || type == HbmFluids.NONE) {
             return;
         }
-        renderDangerDiamondPlan(LegacyTileRenderPlans.bat9000DangerDiamondPlan(true), type,
-                poseStack, buffer, packedLight, packedOverlay);
+        renderRadialDangerDiamonds(type, poseStack, buffer, packedLight, packedOverlay,
+                4, 45.0F, 90.0F, 2.5D, 2.25D, 0.0D,
+                1.0F, 0.75F, 0.75F);
+    }
+
+    public static void enqueueBat9000Diamonds(PresentStage stage, FluidType type, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (type == null || type == HbmFluids.NONE) {
+            return;
+        }
+        enqueueRadialDangerDiamonds(stage, type, poseStack, buffer, packedLight, packedOverlay,
+                4, 45.0F, 90.0F, 2.5D, 2.25D, 0.0D,
+                1.0F, 0.75F, 0.75F);
+    }
+
+    public static void renderFluidBarrelDiamonds(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        if (type == null || type == HbmFluids.NONE) {
+            return;
+        }
+        renderRadialDangerDiamonds(type, poseStack, buffer, packedLight, packedOverlay,
+                4, 0.0F, 90.0F, 0.4D, 0.3D, -0.24D,
+                1.0F, 0.25F, 0.25F);
+    }
+
+    public static void enqueueFluidBarrelDiamonds(PresentStage stage, FluidType type, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (type == null || type == HbmFluids.NONE) {
+            return;
+        }
+        enqueueRadialDangerDiamonds(stage, type, poseStack, buffer, packedLight, packedOverlay,
+                4, 0.0F, 90.0F, 0.4D, 0.3D, -0.24D,
+                1.0F, 0.25F, 0.25F);
     }
 
     public static void renderDangerDiamonds(LegacyTileRenderPlans.TankDangerDiamondPlan plan, FluidType type,
@@ -131,6 +234,65 @@ public final class LegacyFluidTankRenderHelper {
             return;
         }
         renderDangerDiamondPlan(plan, type, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void enqueueDangerDiamonds(PresentStage stage, LegacyTileRenderPlans.TankDangerDiamondPlan plan,
+            FluidType type, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (type == null || type == HbmFluids.NONE) {
+            return;
+        }
+        enqueueDangerDiamondPlan(stage, plan, type, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    private static void renderRadialDangerDiamonds(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, int count, float startYaw, float yawStep,
+            double translateX, double translateY, double translateZ,
+            float scaleX, float scaleY, float scaleZ) {
+        for (int i = 0; i < count; i++) {
+            poseStack.pushPose();
+            rotateYDegrees(poseStack, startYaw + yawStep * i);
+            poseStack.translate(translateX, translateY, translateZ);
+            poseStack.scale(scaleX, scaleY, scaleZ);
+            renderDangerDiamond(type, poseStack, buffer, packedLight, packedOverlay);
+            poseStack.popPose();
+        }
+    }
+
+    private static void enqueueRadialDangerDiamonds(PresentStage stage, FluidType type, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, int count, float startYaw, float yawStep,
+            double translateX, double translateY, double translateZ,
+            float scaleX, float scaleY, float scaleZ) {
+        for (int i = 0; i < count; i++) {
+            poseStack.pushPose();
+            rotateYDegrees(poseStack, startYaw + yawStep * i);
+            poseStack.translate(translateX, translateY, translateZ);
+            poseStack.scale(scaleX, scaleY, scaleZ);
+            enqueueDangerDiamond(stage, type, poseStack, buffer, packedLight, packedOverlay);
+            poseStack.popPose();
+        }
+    }
+
+    private static void renderDangerDiamondTransform(FluidType type, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, double translateX, double translateY, double translateZ,
+            float yawDegrees, float scaleX, float scaleY, float scaleZ) {
+        poseStack.pushPose();
+        poseStack.translate(translateX, translateY, translateZ);
+        rotateYDegrees(poseStack, yawDegrees);
+        poseStack.scale(scaleX, scaleY, scaleZ);
+        renderDangerDiamond(type, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void enqueueDangerDiamondTransform(PresentStage stage, FluidType type, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay,
+            double translateX, double translateY, double translateZ,
+            float yawDegrees, float scaleX, float scaleY, float scaleZ) {
+        poseStack.pushPose();
+        poseStack.translate(translateX, translateY, translateZ);
+        rotateYDegrees(poseStack, yawDegrees);
+        poseStack.scale(scaleX, scaleY, scaleZ);
+        enqueueDangerDiamond(stage, type, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
     }
 
     private static void renderTankPart(LegacyWavefrontModel model, String part, FluidType type,
@@ -162,6 +324,13 @@ public final class LegacyFluidTankRenderHelper {
                 type.getFlammability(), type.getReactivity(), dangerSymbol(type.getSymbol()));
     }
 
+    private static void enqueueDangerDiamond(PresentStage stage, FluidType type, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyMachineEffectPresenter.enqueueDangerDiamond(stage, poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, type.getPoison(),
+                type.getFlammability(), type.getReactivity(), dangerSymbol(type.getSymbol()));
+    }
+
     private static void renderDangerDiamondPlan(LegacyTileRenderPlans.TankDangerDiamondPlan plan, FluidType type,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!plan.hasFluid()) {
@@ -169,12 +338,12 @@ public final class LegacyFluidTankRenderHelper {
         }
         for (LegacyTileRenderPlans.DiamondTransformPlan transform : plan.transforms()) {
             poseStack.pushPose();
-            if (transform.role().startsWith("radial_")) {
-                poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(transform.yawDegrees()));
+            if (transform.rotateBeforeTranslate()) {
+                rotateYDegrees(poseStack, transform.yawDegrees());
                 poseStack.translate(transform.translateX(), transform.translateY(), transform.translateZ());
             } else {
                 poseStack.translate(transform.translateX(), transform.translateY(), transform.translateZ());
-                poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(transform.yawDegrees()));
+                rotateYDegrees(poseStack, transform.yawDegrees());
             }
             poseStack.scale(transform.scaleX(), transform.scaleY(), transform.scaleZ());
             renderDangerDiamond(type, poseStack, buffer, packedLight, packedOverlay);
@@ -182,25 +351,25 @@ public final class LegacyFluidTankRenderHelper {
         }
     }
 
-    private static void renderTexturedQuad(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
-            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
-            LegacyTileRenderPlans.TexturedQuadPlan quad) {
-        if (quad.vertices().size() != 4) {
+    private static void enqueueDangerDiamondPlan(PresentStage stage,
+            LegacyTileRenderPlans.TankDangerDiamondPlan plan, FluidType type,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!plan.hasFluid()) {
             return;
         }
-        float normalX = quad.role().startsWith("pos_x") ? -1.0F : 1.0F;
-        LegacyTileRenderPlans.QuadVertexPlan v0 = quad.vertices().get(0);
-        LegacyTileRenderPlans.QuadVertexPlan v1 = quad.vertices().get(1);
-        LegacyTileRenderPlans.QuadVertexPlan v2 = quad.vertices().get(2);
-        LegacyTileRenderPlans.QuadVertexPlan v3 = quad.vertices().get(3);
-        LegacyTexturedQuadRenderer.quad(texture, poseStack, buffer, packedLight, packedOverlay, renderMode,
-                normalX, 0.0F, 0.0F,
-                vertex(v0), vertex(v1), vertex(v2), vertex(v3));
-    }
-
-    private static LegacyTexturedQuadRenderer.Vertex vertex(LegacyTileRenderPlans.QuadVertexPlan vertex) {
-        return LegacyTexturedQuadRenderer.vertex(vertex.x(), vertex.y(), vertex.z(), vertex.u(), vertex.v(),
-                vertex.color(), vertex.alpha());
+        for (LegacyTileRenderPlans.DiamondTransformPlan transform : plan.transforms()) {
+            poseStack.pushPose();
+            if (transform.rotateBeforeTranslate()) {
+                rotateYDegrees(poseStack, transform.yawDegrees());
+                poseStack.translate(transform.translateX(), transform.translateY(), transform.translateZ());
+            } else {
+                poseStack.translate(transform.translateX(), transform.translateY(), transform.translateZ());
+                rotateYDegrees(poseStack, transform.yawDegrees());
+            }
+            poseStack.scale(transform.scaleX(), transform.scaleY(), transform.scaleZ());
+            enqueueDangerDiamond(stage, type, poseStack, buffer, packedLight, packedOverlay);
+            poseStack.popPose();
+        }
     }
 
     private static void renderUntexturedQuad(PoseStack poseStack, MultiBufferSource buffer,
@@ -256,6 +425,13 @@ public final class LegacyFluidTankRenderHelper {
     private static ResourceLocation createTankTexture(String name) {
         return new ResourceLocation(HbmNtm.MOD_ID,
                 "textures/models/tank/tank_" + name + ".png");
+    }
+
+    private static void rotateYDegrees(PoseStack poseStack, float yawDegrees) {
+        float radians = yawDegrees * Mth.DEG_TO_RAD;
+        PoseStack.Pose pose = poseStack.last();
+        pose.pose().rotateY(radians);
+        pose.normal().rotateY(radians);
     }
 
     private static LegacyDangerDiamondRenderer.Symbol dangerSymbol(FluidSymbol symbol) {

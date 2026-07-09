@@ -57,13 +57,17 @@ public class MassStorageBlockEntity extends BlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             if (slot == SLOT_INPUT) {
-                return type().isEmpty() || HbmItemStackUtil.areStacksCompatible(type(), stack);
+                ItemStack type = typeStack();
+                return type.isEmpty() || HbmItemStackUtil.areStacksCompatible(type, stack);
             }
             return slot == SLOT_FILTER;
         }
 
         @Override
         protected void onContentsChanged(int slot) {
+            if (slot == SLOT_FILTER) {
+                invalidateRenderCaches();
+            }
             setChangedAndUpdate();
         }
     };
@@ -113,6 +117,10 @@ public class MassStorageBlockEntity extends BlockEntity
     private boolean locked;
     private double lockMod = 0.1D;
     private boolean cheesable = true;
+    private ItemStack cachedRenderType = ItemStack.EMPTY;
+    private int cachedRenderTextStockpile = Integer.MIN_VALUE;
+    private boolean cachedRenderTextUnicode;
+    private String cachedRenderText = "0";
 
     public MassStorageBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MASS_STORAGE.get(), pos, state);
@@ -145,7 +153,31 @@ public class MassStorageBlockEntity extends BlockEntity
     }
 
     public ItemStack type() {
-        return items.getStackInSlot(SLOT_FILTER).copy();
+        return typeStack().copy();
+    }
+
+    public ItemStack renderType() {
+        ItemStack type = typeStack();
+        if (type.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        if (cachedRenderType.isEmpty() || !ItemStack.isSameItemSameTags(cachedRenderType, type)) {
+            cachedRenderType = type.copyWithCount(1);
+        }
+        return cachedRenderType;
+    }
+
+    public String renderCountText(boolean unicode) {
+        if (stockpile != cachedRenderTextStockpile || unicode != cachedRenderTextUnicode) {
+            cachedRenderTextStockpile = stockpile;
+            cachedRenderTextUnicode = unicode;
+            cachedRenderText = formatStockpileText(stockpile, unicode);
+        }
+        return cachedRenderText;
+    }
+
+    public boolean hasType() {
+        return !typeStack().isEmpty();
     }
 
     public void tick() {
@@ -158,11 +190,12 @@ public class MassStorageBlockEntity extends BlockEntity
             level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
         }
 
-        if (type().isEmpty()) {
+        ItemStack type = typeStack();
+        if (type.isEmpty()) {
             stockpile = 0;
         }
         ItemStack input = items.getStackInSlot(SLOT_INPUT);
-        if (canInsert(input)) {
+        if (canInsert(input, type)) {
             int amount = Math.min(capacity() - stockpile, input.getCount());
             input.shrink(amount);
             if (input.isEmpty()) {
@@ -172,12 +205,15 @@ public class MassStorageBlockEntity extends BlockEntity
             setChangedAndUpdate();
         }
         if (output) {
-            provide(type().isEmpty() ? 0 : type().getMaxStackSize());
+            provide(type.isEmpty() ? 0 : type.getMaxStackSize(), type);
         }
     }
 
     public boolean canInsert(ItemStack stack) {
-        ItemStack type = type();
+        return canInsert(stack, typeStack());
+    }
+
+    private boolean canInsert(ItemStack stack, ItemStack type) {
         return !type.isEmpty() && stockpile < capacity() && !stack.isEmpty()
                 && HbmItemStackUtil.areStacksCompatible(type, stack);
     }
@@ -197,21 +233,22 @@ public class MassStorageBlockEntity extends BlockEntity
     }
 
     public ItemStack quickExtract() {
-        if (!output || type().isEmpty()) {
+        ItemStack type = typeStack();
+        if (!output || type.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        int amount = type().getMaxStackSize();
+        int amount = type.getMaxStackSize();
         if (stockpile < amount) {
             return ItemStack.EMPTY;
         }
-        ItemStack result = type().copyWithCount(amount);
+        ItemStack result = type.copyWithCount(amount);
         stockpile -= amount;
         setChangedAndUpdate();
         return result;
     }
 
     public int totalStockpile() {
-        ItemStack type = type();
+        ItemStack type = typeStack();
         if (type.isEmpty()) {
             return 0;
         }
@@ -236,7 +273,7 @@ public class MassStorageBlockEntity extends BlockEntity
     }
 
     private int changeTotalStockpile(int amount, boolean actually, int sign) {
-        ItemStack type = type();
+        ItemStack type = typeStack();
         if (type.isEmpty() || amount <= 0) {
             return amount;
         }
@@ -292,7 +329,10 @@ public class MassStorageBlockEntity extends BlockEntity
     }
 
     public void provide(int requested) {
-        ItemStack type = type();
+        provide(requested, typeStack());
+    }
+
+    private void provide(int requested, ItemStack type) {
         if (requested <= 0 || stockpile <= 0 || type.isEmpty()) {
             return;
         }
@@ -431,6 +471,7 @@ public class MassStorageBlockEntity extends BlockEntity
             items.setStackInSlot(slot, tag.contains("slot" + slot, net.minecraft.nbt.Tag.TAG_COMPOUND)
                     ? ItemStack.of(tag.getCompound("slot" + slot)) : ItemStack.EMPTY);
         }
+        invalidateRenderCaches();
         stockpile = tag.getInt(LEGACY_STACK_TAG);
         output = tag.getBoolean(LEGACY_OUTPUT_TAG);
         if (tag.contains(LEGACY_CAPACITY_TAG)) {
@@ -452,6 +493,7 @@ public class MassStorageBlockEntity extends BlockEntity
         for (int slot = 0; slot < items.getSlots(); slot++) {
             items.setStackInSlot(slot, ItemStack.EMPTY);
         }
+        invalidateRenderCaches();
         stockpile = 0;
         setChanged();
     }
@@ -519,6 +561,7 @@ public class MassStorageBlockEntity extends BlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmItemStackUtil.loadLegacyItems(tag, items);
+        invalidateRenderCaches();
         stockpile = tag.getInt(LEGACY_STACK_TAG);
         output = tag.getBoolean(LEGACY_OUTPUT_TAG);
         capacity = tag.contains(LEGACY_CAPACITY_TAG) ? tag.getInt(LEGACY_CAPACITY_TAG)
@@ -566,7 +609,8 @@ public class MassStorageBlockEntity extends BlockEntity
     @Override
     public void receiveControl(ServerPlayer player, CompoundTag data) {
         if (data.contains("provide")) {
-            provide(data.getBoolean("provide") ? Math.max(1, type().getMaxStackSize()) : 1);
+            ItemStack type = typeStack();
+            provide(data.getBoolean("provide") ? Math.max(1, type.getMaxStackSize()) : 1, type);
         }
         if (data.contains("toggle")) {
             output = !output;
@@ -587,6 +631,31 @@ public class MassStorageBlockEntity extends BlockEntity
     public void invalidateCaps() {
         super.invalidateCaps();
         itemCapability.invalidate();
+    }
+
+    private ItemStack typeStack() {
+        return items.getStackInSlot(SLOT_FILTER);
+    }
+
+    private void invalidateRenderCaches() {
+        cachedRenderType = ItemStack.EMPTY;
+        cachedRenderTextStockpile = Integer.MIN_VALUE;
+    }
+
+    private static String formatStockpileText(int stackSize, boolean isUnicode) {
+        if (stackSize >= 100_000_000 || stackSize >= 1_000_000 && isUnicode) {
+            return String.format(Locale.ROOT, "%.0fM", stackSize / 1_000_000.0F);
+        }
+        if (stackSize >= 1_000_000) {
+            return String.format(Locale.ROOT, "%.1fM", stackSize / 1_000_000.0F);
+        }
+        if (stackSize >= 100_000 || stackSize >= 10_000 && isUnicode) {
+            return String.format(Locale.ROOT, "%.0fK", stackSize / 1_000.0F);
+        }
+        if (stackSize >= 10_000) {
+            return String.format(Locale.ROOT, "%.1fK", stackSize / 1_000.0F);
+        }
+        return String.valueOf(stackSize);
     }
 
     private boolean tryPick(Player player, ItemStack held) {

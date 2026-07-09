@@ -5,6 +5,7 @@
                },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:sourgas",
-                  "amount":  14000
-              }
+                  "amount":  28000
+              },
+    "source_order":  37
 }

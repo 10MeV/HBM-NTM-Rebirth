@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:petroleum"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:glass_panes"
+      },
+      "legacy_ore": "paneGlass"
+    }
+  ],
+  "internal_name": "chem.polarized",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 16,
+      "item": "hbm_ntm_rebirth:part_generic_glass_polarized"
+    }
+  ],
+  "pools": [],
+  "power": 500,
+  "source_order": 66
+}

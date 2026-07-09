@@ -1,20 +1,51 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.explosivelenses1",
   "duration": 400,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:plates/aluminium" }, "count": 8, "legacy_ore": "plateAluminum" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:det_cord" }, "count": 8 },
-    { "ingredient": { "tag": "forge:plates/saturnite" }, "count": 2, "legacy_ore": "plateSaturnite" },
-    { "ingredient": { "tag": "forge:ingots/any_high_explosive" }, "count": 20, "legacy_ore": "ingotAnyHighExplosive" },
-    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 4, "legacy_ore": "ingotAnyPlastic" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:early_explosive_lenses" }
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/aluminium"
+      },
+      "legacy_ore": "plateAluminum"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:det_cord"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:plates/saturnite"
+      },
+      "legacy_ore": "plateSaturnite"
+    },
+    {
+      "count": 20,
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    }
   ],
+  "internal_name": "ass.explosivelenses1",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:early_explosive_lenses"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 211
 }

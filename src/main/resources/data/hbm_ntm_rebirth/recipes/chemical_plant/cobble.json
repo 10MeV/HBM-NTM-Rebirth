@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 20,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:water"
+    },
+    {
+      "amount": 25,
+      "fluid": "hbm_ntm_rebirth:lava"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.cobble",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "minecraft:cobblestone"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 19
+}

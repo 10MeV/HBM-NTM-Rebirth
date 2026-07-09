@@ -9,7 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ItemProcessingRecipeRuntime {
     private static final Comparator<ItemProcessingRecipe> ORDER =
-            Comparator.comparing(recipe -> recipe.getId().toString());
+            Comparator.comparingInt(ItemProcessingRecipe::sourceOrder)
+                    .thenComparing(recipe -> recipe.getId().toString());
 
     public static List<ItemProcessingRecipe> recipes(Level level, ItemProcessingRecipe.Machine machine) {
         return level.getRecipeManager().getAllRecipesFor(machine.type()).stream()
@@ -25,6 +26,7 @@ public final class ItemProcessingRecipeRuntime {
         }
         return recipes(level, machine).stream()
                 .filter(recipe -> recipe.matches(stack))
+                .sorted(matchOrder(stack))
                 .findFirst()
                 .orElse(null);
     }
@@ -37,8 +39,30 @@ public final class ItemProcessingRecipeRuntime {
         }
         return recipes(level, machine).stream()
                 .filter(recipe -> recipe.matches(stack, fluidType))
+                .sorted(matchOrder(stack))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public static int inputAmount(Level level, ItemProcessingRecipe.Machine machine, ItemStack stack) {
+        ItemProcessingRecipe recipe = find(level, machine, stack);
+        return recipe == null ? 0 : Math.max(1, recipe.input().count());
+    }
+
+    private static Comparator<ItemProcessingRecipe> matchOrder(ItemStack stack) {
+        return Comparator.comparingInt((ItemProcessingRecipe recipe) -> matchPriority(recipe, stack))
+                .thenComparing(ORDER);
+    }
+
+    private static int matchPriority(ItemProcessingRecipe recipe, ItemStack stack) {
+        HbmIngredient input = recipe.input();
+        if (input.legacyWildcard()) {
+            return 2;
+        }
+        if (input.legacyOreName() != null || input.isTagIngredient()) {
+            return 1;
+        }
+        return 0;
     }
 
     private ItemProcessingRecipeRuntime() {

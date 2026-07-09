@@ -9,15 +9,20 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -25,8 +30,24 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class HeatBoilerBlock extends LegacyVisibleMultiblockMachineBlock {
+    public static final EnumProperty<BoilerVisualState> VISUAL =
+            EnumProperty.create("visual", BoilerVisualState.class);
+    private static final double OVERPRESSURE_THRESHOLD = 0.9D;
+
     public HeatBoilerBlock(Properties properties, LegacyMachineDefinition definition) {
         super(properties, definition);
+        registerDefaultState(defaultBlockState().setValue(VISUAL, BoilerVisualState.NORMAL));
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(VISUAL);
     }
 
     @Nullable
@@ -85,5 +106,31 @@ public class HeatBoilerBlock extends LegacyVisibleMultiblockMachineBlock {
         }
         HeatableFluidTrait trait = type.getTrait(HeatableFluidTrait.class);
         return trait != null && trait.getEfficiency(HeatingType.BOILER) > 0.0D;
+    }
+
+    public static BoilerVisualState visualState(boolean hasExploded, int steamFill, int steamMaxFill) {
+        if (hasExploded) {
+            return BoilerVisualState.EXPLODED;
+        }
+        return steamMaxFill > 0 && steamFill > steamMaxFill * OVERPRESSURE_THRESHOLD
+                ? BoilerVisualState.OVERPRESSURE
+                : BoilerVisualState.NORMAL;
+    }
+
+    public enum BoilerVisualState implements StringRepresentable {
+        NORMAL("normal"),
+        OVERPRESSURE("overpressure"),
+        EXPLODED("exploded");
+
+        private final String serializedName;
+
+        BoilerVisualState(String serializedName) {
+            this.serializedName = serializedName;
+        }
+
+        @Override
+        public String getSerializedName() {
+            return serializedName;
+        }
     }
 }

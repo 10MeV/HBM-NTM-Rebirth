@@ -10,7 +10,9 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.menu.StorageDrumMenu;
+import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
+import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmBlockStateUtil;
@@ -21,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
@@ -32,7 +35,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -48,6 +50,7 @@ public class StorageDrumBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int SLOT_COUNT = 24;
     private static final int TANK_CAPACITY = 16_000;
     private static final double RADIATION_RANGE = 32.0D;
+    private static final int SHORT_DECAY_META_COUNT = 5;
     private static final int[] LONG_LIQUID = { 0, 0, 0, 0, 0 };
     private static final int[] LONG_GAS = { 0, 50, 100, 0, 250 };
     private static final int[] SHORT_LIQUID = { 0, 50, 150, 250, 350, 500, 750, 1_000 };
@@ -260,7 +263,7 @@ public class StorageDrumBlockEntity extends HbmFluidNetworkBlockEntity
         String id = itemId(stack);
         int meta = Math.max(0, stack.getDamageValue());
         int longMeta = rectify(meta, LONG_LIQUID.length);
-        int shortMeta = rectify(meta, LONG_LIQUID.length);
+        int shortMeta = rectify(meta, SHORT_DECAY_META_COUNT);
 
         if (matches(id, "nuclear_waste_long") && roll(level, VersatileConfig.getLongDecayChance())) {
             return new DecayResult(itemStack("nuclear_waste_long_depleted", meta), LONG_LIQUID[longMeta], LONG_GAS[longMeta]);
@@ -296,25 +299,36 @@ public class StorageDrumBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private void radiate(Level level, float radiation) {
-        Vec3 center = Vec3.atCenterOf(worldPosition);
-        AABB box = new AABB(center, center).inflate(RADIATION_RANGE);
+        double centerX = worldPosition.getX() + 0.5D;
+        double centerY = worldPosition.getY() + 0.5D;
+        double centerZ = worldPosition.getZ() + 0.5D;
+        AABB box = new AABB(centerX, centerY, centerZ, centerX, centerY, centerZ).inflate(RADIATION_RANGE);
+        BlockPos.MutableBlockPos sample = new BlockPos.MutableBlockPos();
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box)) {
-            Vec3 delta = entity.getEyePosition().subtract(center);
-            double length = delta.length();
+            double deltaX = entity.getX() - centerX;
+            double deltaY = entity.getEyeY() - centerY;
+            double deltaZ = entity.getZ() - centerZ;
+            double lengthSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+            double length = Math.sqrt(lengthSqr);
             if (length <= 0.0D) {
                 continue;
             }
-            Vec3 normal = delta.normalize();
+            double normalX = deltaX / length;
+            double normalY = deltaY / length;
+            double normalZ = deltaZ / length;
             float resistance = 0.0F;
             for (int i = 1; i < length; i++) {
-                BlockPos sample = BlockPos.containing(center.add(normal.scale(i)));
+                sample.set(
+                        Mth.floor(centerX + normalX * i),
+                        Mth.floor(centerY + normalY * i),
+                        Mth.floor(centerZ + normalZ * i));
                 resistance += HbmBlockStateUtil.explosionResistance(level.getBlockState(sample), level, sample);
             }
             if (resistance < 1.0F) {
                 resistance = 1.0F;
             }
-            float exposure = radiation / resistance / (float) (length * length);
-            RadiationUtil.contaminate(entity, exposure, true);
+            float exposure = radiation / resistance / (float) lengthSqr;
+            RadiationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, exposure);
         }
     }
 

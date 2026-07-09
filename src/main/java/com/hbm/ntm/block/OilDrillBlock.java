@@ -37,15 +37,26 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class OilDrillBlock extends LegacyVisibleMultiblockMachineBlock {
+    private static final String DERRICK_MODEL = "models/machines/derrick.obj";
+    private static final String PUMPJACK_MODEL = "models/machines/pumpjack.obj";
+
     public OilDrillBlock(Properties properties, LegacyMachineDefinition definition) {
         super(properties, definition);
     }
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return "models/machines/pumpjack.obj".equals(definition().modelLocation().getPath())
-                ? RenderShape.MODEL
+        String modelPath = definition().modelLocation().getPath();
+        if (PUMPJACK_MODEL.equals(modelPath)) {
+            return RenderShape.MODEL;
+        }
+        return usesChunkBakedStaticModel()
+                ? LegacyMachineRenderShapes.chunkBakedStaticOrEntity()
                 : super.getRenderShape(state);
+    }
+
+    public boolean usesChunkBakedStaticModel() {
+        return DERRICK_MODEL.equals(definition().modelLocation().getPath());
     }
 
     @Nullable

@@ -1,10 +1,15 @@
 {
   "type": "hbm_ntm_rebirth:press",
-  "stamp": "plate",
-  "ingredient": {
-    "item": "hbm_ntm_rebirth:ingot_lead"
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/lead"
+    },
+    "legacy_ore": "ingotLead"
   },
   "result": {
     "item": "hbm_ntm_rebirth:plate_lead"
-  }
+  },
+  "source_order": 16,
+  "stamp": "plate"
 }

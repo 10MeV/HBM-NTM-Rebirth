@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.plate.tcalloy",
+  "duration": 1200,
+  "power": 1000000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:cast_plates/tc_alloy" }, "count": 2, "legacy_ore": "plateTripleTcAlloy" }
+  ],
+  "input_fluids": [
+    { "fluid": "hbm_ntm_rebirth:oxygen", "amount": 1000 }
+  ],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:plate_welded_tcalloy" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 13
+}

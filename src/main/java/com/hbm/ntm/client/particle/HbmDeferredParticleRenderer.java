@@ -25,6 +25,7 @@ import org.joml.Quaternionf;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,8 +72,22 @@ public final class HbmDeferredParticleRenderer {
     private static final Map<ResourceLocation, RenderType> TEXTURED_NO_DEPTH_WRITE = new ConcurrentHashMap<>();
     private static final Map<ResourceLocation, RenderType> TEXTURED_ADDITIVE_NO_DEPTH_WRITE = new ConcurrentHashMap<>();
     private static final List<Entry> QUEUE = new ArrayList<>();
+    private static final List<Entry> DRAIN = new ArrayList<>();
+    private static final List<Entry> ENTRY_POOL = new ArrayList<>();
+    private static final Comparator<Entry> DISTANCE_DESCENDING =
+            Comparator.comparingDouble(Entry::distanceToCameraSqr).reversed();
     private static final Set<DeferredParticle> SEEN =
             Collections.newSetFromMap(new IdentityHashMap<>());
+    private static final ThreadLocal<Vector3f[]> TEXTURE_SHEET_CORNERS =
+            ThreadLocal.withInitial(HbmDeferredParticleRenderer::newVectorQuad);
+    private static final ThreadLocal<Vector3f[]> CAMERA_BILLBOARD_BASIS =
+            ThreadLocal.withInitial(() -> new Vector3f[] { new Vector3f(), new Vector3f() });
+    private static final ThreadLocal<RenderPassBillboardBasis> RENDER_PASS_BILLBOARD_BASIS =
+            ThreadLocal.withInitial(RenderPassBillboardBasis::new);
+    private static final ThreadLocal<RenderPassParticleSheetConsumers> RENDER_PASS_PARTICLE_SHEET_CONSUMERS =
+            ThreadLocal.withInitial(RenderPassParticleSheetConsumers::new);
+    private static final ThreadLocal<Quaternionf> ROLL_ROTATION =
+            ThreadLocal.withInitial(Quaternionf::new);
     private static long enqueuedParticles;
     private static long duplicateSkips;
     private static long renderPasses;
@@ -93,7 +108,11 @@ public final class HbmDeferredParticleRenderer {
             duplicateSkips++;
             return;
         }
-        QUEUE.add(new Entry(particle, camera.getPosition().distanceToSqr(x, y, z)));
+        Vec3 cameraPos = camera.getPosition();
+        double dx = cameraPos.x() - x;
+        double dy = cameraPos.y() - y;
+        double dz = cameraPos.z() - z;
+        QUEUE.add(acquireEntry(particle, dx * dx + dy * dy + dz * dz));
         enqueuedParticles++;
         recordPeakQueueSize(QUEUE.size());
     }
@@ -105,12 +124,12 @@ public final class HbmDeferredParticleRenderer {
             return;
         }
 
-        List<Entry> entries = new ArrayList<>(QUEUE);
+        DRAIN.addAll(QUEUE);
         QUEUE.clear();
         SEEN.clear();
         renderPasses++;
-        renderedParticles += entries.size();
-        lastRenderQueuedParticles = entries.size();
+        renderedParticles += DRAIN.size();
+        lastRenderQueuedParticles = DRAIN.size();
 
         PoseStack modelView = RenderSystem.getModelViewStack();
         modelView.pushPose();
@@ -118,14 +137,19 @@ public final class HbmDeferredParticleRenderer {
         modelView.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
         modelView.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
         RenderSystem.applyModelViewMatrix();
+        beginRenderPassBillboardBasis(camera);
+        beginRenderPassParticleSheetConsumers(buffer);
         try {
-            entries.sort(Comparator.comparingDouble((Entry entry) -> entry.distanceToCameraSqr).reversed());
-            for (Entry entry : entries) {
+            DRAIN.sort(DISTANCE_DESCENDING);
+            for (Entry entry : DRAIN) {
                 entry.particle.renderDeferred(buffer, camera, partialTick);
             }
-            lastRenderSubmittedParticles = entries.size();
+            lastRenderSubmittedParticles = DRAIN.size();
             endDeferredBatches(buffer);
         } finally {
+            endRenderPassParticleSheetConsumers();
+            endRenderPassBillboardBasis();
+            releaseEntries(DRAIN);
             modelView.popPose();
             RenderSystem.applyModelViewMatrix();
         }
@@ -135,10 +159,20 @@ public final class HbmDeferredParticleRenderer {
         return PARTICLE_SHEET_DEPTH_WRITE;
     }
 
+    public static VertexConsumer particleSheetDepthWriteConsumer(MultiBufferSource buffer) {
+        RenderPassParticleSheetConsumers consumers = RENDER_PASS_PARTICLE_SHEET_CONSUMERS.get();
+        return consumers.depthWriteConsumer(buffer);
+    }
+
     public static RenderType texturedDepthWrite(ResourceLocation texture) {
         return TEXTURED_DEPTH_WRITE.computeIfAbsent(texture,
                 key -> createRenderType("hbm_deferred_particle_depth_write_" + sanitize(key), key,
                         NORMAL_ALPHA_TRANSPARENCY, true));
+    }
+
+    public static VertexConsumer texturedDepthWriteConsumer(ResourceLocation texture, MultiBufferSource buffer) {
+        RenderPassParticleSheetConsumers consumers = RENDER_PASS_PARTICLE_SHEET_CONSUMERS.get();
+        return consumers.texturedDepthWriteConsumer(texture, buffer);
     }
 
     public static RenderType texturedNoDepthWrite(ResourceLocation texture) {
@@ -149,6 +183,11 @@ public final class HbmDeferredParticleRenderer {
 
     public static RenderType particleSheetAdditiveNoDepthWrite() {
         return PARTICLE_SHEET_ADDITIVE_NO_DEPTH_WRITE;
+    }
+
+    public static VertexConsumer particleSheetAdditiveNoDepthWriteConsumer(MultiBufferSource buffer) {
+        RenderPassParticleSheetConsumers consumers = RENDER_PASS_PARTICLE_SHEET_CONSUMERS.get();
+        return consumers.additiveNoDepthWriteConsumer(buffer);
     }
 
     public static RenderType texturedAdditiveNoDepthWrite(ResourceLocation texture) {
@@ -164,7 +203,27 @@ public final class HbmDeferredParticleRenderer {
             double x2, double y2, double z2, float u2, float v2,
             double x3, double y3, double z3, float u3, float v3,
             int color, int alpha) {
-        VertexConsumer consumer = buffer.getBuffer(texturedNoDepthWrite(texture));
+        VertexConsumer consumer = texturedNoDepthWriteConsumer(texture, buffer);
+        emitTexturedNoDepthWriteQuad(consumer, packedLight,
+                x0, y0, z0, u0, v0,
+                x1, y1, z1, u1, v1,
+                x2, y2, z2, u2, v2,
+                x3, y3, z3, u3, v3,
+                color, alpha);
+        return true;
+    }
+
+    public static VertexConsumer texturedNoDepthWriteConsumer(ResourceLocation texture, MultiBufferSource buffer) {
+        RenderPassParticleSheetConsumers consumers = RENDER_PASS_PARTICLE_SHEET_CONSUMERS.get();
+        return consumers.texturedNoDepthWriteConsumer(texture, buffer);
+    }
+
+    public static void emitTexturedNoDepthWriteQuad(VertexConsumer consumer, int packedLight,
+            double x0, double y0, double z0, float u0, float v0,
+            double x1, double y1, double z1, float u1, float v1,
+            double x2, double y2, double z2, float u2, float v2,
+            double x3, double y3, double z3, float u3, float v3,
+            int color, int alpha) {
         emitTexturedParticleQuad(consumer, packedLight,
                 x0, y0, z0, u0, v0,
                 x1, y1, z1, u1, v1,
@@ -172,7 +231,6 @@ public final class HbmDeferredParticleRenderer {
                 x3, y3, z3, u3, v3,
                 color, alpha);
         directTexturedNoDepthWriteQuads++;
-        return true;
     }
 
     public static boolean renderTexturedAdditiveNoDepthWriteQuad(ResourceLocation texture, MultiBufferSource buffer,
@@ -182,7 +240,27 @@ public final class HbmDeferredParticleRenderer {
             double x2, double y2, double z2, float u2, float v2,
             double x3, double y3, double z3, float u3, float v3,
             int color, int alpha) {
-        VertexConsumer consumer = buffer.getBuffer(texturedAdditiveNoDepthWrite(texture));
+        VertexConsumer consumer = texturedAdditiveNoDepthWriteConsumer(texture, buffer);
+        emitTexturedAdditiveNoDepthWriteQuad(consumer, packedLight,
+                x0, y0, z0, u0, v0,
+                x1, y1, z1, u1, v1,
+                x2, y2, z2, u2, v2,
+                x3, y3, z3, u3, v3,
+                color, alpha);
+        return true;
+    }
+
+    public static VertexConsumer texturedAdditiveNoDepthWriteConsumer(ResourceLocation texture, MultiBufferSource buffer) {
+        RenderPassParticleSheetConsumers consumers = RENDER_PASS_PARTICLE_SHEET_CONSUMERS.get();
+        return consumers.texturedAdditiveNoDepthWriteConsumer(texture, buffer);
+    }
+
+    public static void emitTexturedAdditiveNoDepthWriteQuad(VertexConsumer consumer, int packedLight,
+            double x0, double y0, double z0, float u0, float v0,
+            double x1, double y1, double z1, float u1, float v1,
+            double x2, double y2, double z2, float u2, float v2,
+            double x3, double y3, double z3, float u3, float v3,
+            int color, int alpha) {
         emitTexturedParticleQuad(consumer, packedLight,
                 x0, y0, z0, u0, v0,
                 x1, y1, z1, u1, v1,
@@ -190,7 +268,6 @@ public final class HbmDeferredParticleRenderer {
                 x3, y3, z3, u3, v3,
                 color, alpha);
         directTexturedAdditiveNoDepthWriteQuads++;
-        return true;
     }
 
     public static void emitParticleSheetQuad(VertexConsumer consumer, int packedLight,
@@ -228,18 +305,18 @@ public final class HbmDeferredParticleRenderer {
         float renderX = (float) (Mth.lerp(partialTick, xo, x) - cameraPos.x());
         float renderY = (float) (Mth.lerp(partialTick, yo, y) - cameraPos.y());
         float renderZ = (float) (Mth.lerp(partialTick, zo, z) - cameraPos.z());
-        Quaternionf rotation = roll == 0.0F
-                ? camera.rotation()
-                : new Quaternionf(camera.rotation()).rotateZ(Mth.lerp(partialTick, oldRoll, roll));
-        Vector3f[] corners = {
-                new Vector3f(-1.0F, -1.0F, 0.0F),
-                new Vector3f(-1.0F, 1.0F, 0.0F),
-                new Vector3f(1.0F, 1.0F, 0.0F),
-                new Vector3f(1.0F, -1.0F, 0.0F)
-        };
-        for (Vector3f corner : corners) {
-            corner.rotate(rotation).mul(quadSize).add(renderX, renderY, renderZ);
+        if (roll == 0.0F) {
+            Vector3f[] basis = cameraBillboardBasis(camera, 1.0F);
+            emitCameraUnitParticleSheetQuad(consumer, packedLight, basis[0], basis[1],
+                    renderX, renderY, renderZ, quadSize, u0, u1, v0, v1, red, green, blue, alpha);
+            return;
         }
+        Quaternionf rotation = ROLL_ROTATION.get().set(camera.rotation()).rotateZ(Mth.lerp(partialTick, oldRoll, roll));
+        Vector3f[] corners = TEXTURE_SHEET_CORNERS.get();
+        corners[0].set(-1.0F, -1.0F, 0.0F).rotate(rotation).mul(quadSize).add(renderX, renderY, renderZ);
+        corners[1].set(-1.0F, 1.0F, 0.0F).rotate(rotation).mul(quadSize).add(renderX, renderY, renderZ);
+        corners[2].set(1.0F, 1.0F, 0.0F).rotate(rotation).mul(quadSize).add(renderX, renderY, renderZ);
+        corners[3].set(1.0F, -1.0F, 0.0F).rotate(rotation).mul(quadSize).add(renderX, renderY, renderZ);
         emitParticleSheetQuad(consumer, packedLight,
                 corners[0], u1, v1,
                 corners[1], u1, v0,
@@ -248,10 +325,105 @@ public final class HbmDeferredParticleRenderer {
                 red, green, blue, alpha);
     }
 
+    static void emitUnitParticleSheetQuad(VertexConsumer consumer, int packedLight, Quaternionf rotation,
+            float x, float y, float z, float size,
+            float u0, float u1, float v0, float v1,
+            float red, float green, float blue, float alpha) {
+        emitLocalParticleSheetQuad(consumer, packedLight, rotation, x, y, z,
+                -size, -size, 0.0F, u1, v1,
+                -size, size, 0.0F, u1, v0,
+                size, size, 0.0F, u0, v0,
+                size, -size, 0.0F, u0, v1,
+                red, green, blue, alpha);
+    }
+
+    static void emitCameraUnitParticleSheetQuad(VertexConsumer consumer, Camera camera, int packedLight,
+            float x, float y, float z, float size,
+            float u0, float u1, float v0, float v1,
+            float red, float green, float blue, float alpha) {
+        Vector3f[] basis = cameraBillboardBasis(camera, 1.0F);
+        emitCameraUnitParticleSheetQuad(consumer, packedLight, basis[0], basis[1],
+                x, y, z, size, u0, u1, v0, v1, red, green, blue, alpha);
+    }
+
+    static void emitCameraUnitParticleSheetQuad(VertexConsumer consumer, int packedLight,
+            Vector3f rightUnit, Vector3f upUnit,
+            float x, float y, float z, float size,
+            float u0, float u1, float v0, float v1,
+            float red, float green, float blue, float alpha) {
+        float rightX = rightUnit.x() * size;
+        float rightY = rightUnit.y() * size;
+        float rightZ = rightUnit.z() * size;
+        float upX = upUnit.x() * size;
+        float upY = upUnit.y() * size;
+        float upZ = upUnit.z() * size;
+        emitParticleSheetQuad(consumer, packedLight,
+                x - rightX - upX, y - rightY - upY, z - rightZ - upZ, u1, v1,
+                x - rightX + upX, y - rightY + upY, z - rightZ + upZ, u1, v0,
+                x + rightX + upX, y + rightY + upY, z + rightZ + upZ, u0, v0,
+                x + rightX - upX, y + rightY - upY, z + rightZ - upZ, u0, v1,
+                red, green, blue, alpha);
+    }
+
+    static void emitLocalParticleSheetQuad(VertexConsumer consumer, int packedLight, Quaternionf rotation,
+            float x, float y, float z,
+            float x0, float y0, float z0, float u0, float v0,
+            float x1, float y1, float z1, float u1, float v1,
+            float x2, float y2, float z2, float u2, float v2,
+            float x3, float y3, float z3, float u3, float v3,
+            float red, float green, float blue, float alpha) {
+        Vector3f[] corners = TEXTURE_SHEET_CORNERS.get();
+        corners[0].set(x0, y0, z0).rotate(rotation).add(x, y, z);
+        corners[1].set(x1, y1, z1).rotate(rotation).add(x, y, z);
+        corners[2].set(x2, y2, z2).rotate(rotation).add(x, y, z);
+        corners[3].set(x3, y3, z3).rotate(rotation).add(x, y, z);
+        emitParticleSheetQuad(consumer, packedLight,
+                corners[0], u0, v0,
+                corners[1], u1, v1,
+                corners[2], u2, v2,
+                corners[3], u3, v3,
+                red, green, blue, alpha);
+    }
+
+    static Vector3f[] cameraBillboardBasis(Camera camera, float scale) {
+        if (scale == 1.0F) {
+            RenderPassBillboardBasis renderPassBasis = RENDER_PASS_BILLBOARD_BASIS.get();
+            if (renderPassBasis.valid) {
+                return renderPassBasis.basis;
+            }
+        }
+        Quaternionf rotation = camera.rotation();
+        Vector3f[] basis = CAMERA_BILLBOARD_BASIS.get();
+        basis[0].set(1.0F, 0.0F, 0.0F).rotate(rotation).mul(scale);
+        basis[1].set(0.0F, 1.0F, 0.0F).rotate(rotation).mul(scale);
+        return basis;
+    }
+
+    private static void beginRenderPassBillboardBasis(Camera camera) {
+        RENDER_PASS_BILLBOARD_BASIS.get().update(camera);
+    }
+
+    private static void endRenderPassBillboardBasis() {
+        RENDER_PASS_BILLBOARD_BASIS.get().valid = false;
+    }
+
+    private static void beginRenderPassParticleSheetConsumers(MultiBufferSource buffer) {
+        RENDER_PASS_PARTICLE_SHEET_CONSUMERS.get().begin(buffer);
+    }
+
+    private static void endRenderPassParticleSheetConsumers() {
+        RENDER_PASS_PARTICLE_SHEET_CONSUMERS.get().end();
+    }
+
+    static Quaternionf scratchRotation() {
+        return ROLL_ROTATION.get().identity();
+    }
+
     public static void clear() {
         clearCalls++;
-        lastClearQueuedParticles = QUEUE.size();
-        QUEUE.clear();
+        lastClearQueuedParticles = QUEUE.size() + DRAIN.size();
+        releaseEntries(QUEUE);
+        releaseEntries(DRAIN);
         SEEN.clear();
     }
 
@@ -279,6 +451,25 @@ public final class HbmDeferredParticleRenderer {
         if (size > peakQueueSize) {
             peakQueueSize = size;
         }
+    }
+
+    private static Vector3f[] newVectorQuad() {
+        return new Vector3f[] { new Vector3f(), new Vector3f(), new Vector3f(), new Vector3f() };
+    }
+
+    private static Entry acquireEntry(DeferredParticle particle, double distanceToCameraSqr) {
+        int last = ENTRY_POOL.size() - 1;
+        Entry entry = last >= 0 ? ENTRY_POOL.remove(last) : new Entry();
+        return entry.set(particle, distanceToCameraSqr);
+    }
+
+    private static void releaseEntries(List<Entry> entries) {
+        for (int i = 0; i < entries.size(); i++) {
+            Entry entry = entries.get(i);
+            entry.clear();
+            ENTRY_POOL.add(entry);
+        }
+        entries.clear();
     }
 
     private static void endDeferredBatches(MultiBufferSource.BufferSource buffer) {
@@ -364,6 +555,109 @@ public final class HbmDeferredParticleRenderer {
             long directTexturedAdditiveNoDepthWriteQuads) {
     }
 
-    private record Entry(DeferredParticle particle, double distanceToCameraSqr) {
+    private static final class RenderPassBillboardBasis {
+        private final Vector3f[] basis = new Vector3f[] { new Vector3f(), new Vector3f() };
+        private boolean valid;
+
+        private void update(Camera camera) {
+            Quaternionf rotation = camera.rotation();
+            this.basis[0].set(1.0F, 0.0F, 0.0F).rotate(rotation);
+            this.basis[1].set(0.0F, 1.0F, 0.0F).rotate(rotation);
+            this.valid = true;
+        }
+    }
+
+    private static final class RenderPassParticleSheetConsumers {
+        private MultiBufferSource buffer;
+        private VertexConsumer depthWriteConsumer;
+        private VertexConsumer additiveNoDepthWriteConsumer;
+        private final Map<ResourceLocation, VertexConsumer> texturedDepthWriteConsumers = new HashMap<>();
+        private final Map<ResourceLocation, VertexConsumer> texturedNoDepthWriteConsumers = new HashMap<>();
+        private final Map<ResourceLocation, VertexConsumer> texturedAdditiveNoDepthWriteConsumers = new HashMap<>();
+        private boolean valid;
+
+        private void begin(MultiBufferSource buffer) {
+            this.buffer = buffer;
+            this.depthWriteConsumer = null;
+            this.additiveNoDepthWriteConsumer = null;
+            this.texturedDepthWriteConsumers.clear();
+            this.texturedNoDepthWriteConsumers.clear();
+            this.texturedAdditiveNoDepthWriteConsumers.clear();
+            this.valid = true;
+        }
+
+        private void end() {
+            this.buffer = null;
+            this.depthWriteConsumer = null;
+            this.additiveNoDepthWriteConsumer = null;
+            this.texturedDepthWriteConsumers.clear();
+            this.texturedNoDepthWriteConsumers.clear();
+            this.texturedAdditiveNoDepthWriteConsumers.clear();
+            this.valid = false;
+        }
+
+        private VertexConsumer depthWriteConsumer(MultiBufferSource buffer) {
+            if (!this.valid || this.buffer != buffer) {
+                return buffer.getBuffer(PARTICLE_SHEET_DEPTH_WRITE);
+            }
+            if (this.depthWriteConsumer == null) {
+                this.depthWriteConsumer = buffer.getBuffer(PARTICLE_SHEET_DEPTH_WRITE);
+            }
+            return this.depthWriteConsumer;
+        }
+
+        private VertexConsumer additiveNoDepthWriteConsumer(MultiBufferSource buffer) {
+            if (!this.valid || this.buffer != buffer) {
+                return buffer.getBuffer(PARTICLE_SHEET_ADDITIVE_NO_DEPTH_WRITE);
+            }
+            if (this.additiveNoDepthWriteConsumer == null) {
+                this.additiveNoDepthWriteConsumer = buffer.getBuffer(PARTICLE_SHEET_ADDITIVE_NO_DEPTH_WRITE);
+            }
+            return this.additiveNoDepthWriteConsumer;
+        }
+
+        private VertexConsumer texturedDepthWriteConsumer(ResourceLocation texture, MultiBufferSource buffer) {
+            if (!this.valid || this.buffer != buffer) {
+                return buffer.getBuffer(texturedDepthWrite(texture));
+            }
+            return this.texturedDepthWriteConsumers.computeIfAbsent(texture,
+                    key -> buffer.getBuffer(texturedDepthWrite(key)));
+        }
+
+        private VertexConsumer texturedNoDepthWriteConsumer(ResourceLocation texture, MultiBufferSource buffer) {
+            if (!this.valid || this.buffer != buffer) {
+                return buffer.getBuffer(texturedNoDepthWrite(texture));
+            }
+            return this.texturedNoDepthWriteConsumers.computeIfAbsent(texture,
+                    key -> buffer.getBuffer(texturedNoDepthWrite(key)));
+        }
+
+        private VertexConsumer texturedAdditiveNoDepthWriteConsumer(ResourceLocation texture, MultiBufferSource buffer) {
+            if (!this.valid || this.buffer != buffer) {
+                return buffer.getBuffer(texturedAdditiveNoDepthWrite(texture));
+            }
+            return this.texturedAdditiveNoDepthWriteConsumers.computeIfAbsent(texture,
+                    key -> buffer.getBuffer(texturedAdditiveNoDepthWrite(key)));
+        }
+    }
+
+    private static final class Entry {
+        private DeferredParticle particle;
+        private double distanceToCameraSqr;
+
+        private Entry set(DeferredParticle particle, double distanceToCameraSqr) {
+            this.particle = particle;
+            this.distanceToCameraSqr = distanceToCameraSqr;
+            return this;
+        }
+
+        private void clear() {
+            this.particle = null;
+            this.distanceToCameraSqr = 0.0D;
+        }
+
+        private double distanceToCameraSqr() {
+            return this.distanceToCameraSqr;
+        }
     }
 }

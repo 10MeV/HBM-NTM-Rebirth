@@ -22,6 +22,7 @@ import com.hbm.ntm.blockentity.BrickFurnaceBlockEntity;
 import com.hbm.ntm.blockentity.BreedingReactorBlockEntity;
 import com.hbm.ntm.blockentity.BombMultiBlockEntity;
 import com.hbm.ntm.blockentity.CableDiodeBlockEntity;
+import com.hbm.ntm.blockentity.CapacitorBlockEntity;
 import com.hbm.ntm.blockentity.CargoElevatorBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticCrackerBlockEntity;
 import com.hbm.ntm.blockentity.CatalyticReformerBlockEntity;
@@ -33,6 +34,7 @@ import com.hbm.ntm.blockentity.ChungusBlockEntity;
 import com.hbm.ntm.blockentity.CompressorBlockEntity;
 import com.hbm.ntm.blockentity.CombustionEngineBlockEntity;
 import com.hbm.ntm.blockentity.CombinationOvenBlockEntity;
+import com.hbm.ntm.blockentity.ConveyorPressBlockEntity;
 import com.hbm.ntm.blockentity.CondenserBlockEntity;
 import com.hbm.ntm.blockentity.CompactLauncherBlockEntity;
 import com.hbm.ntm.blockentity.ConnectorBlockEntity;
@@ -124,9 +126,11 @@ import com.hbm.ntm.blockentity.LegacyGenericSelectorMachineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLargeTurbineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
+import com.hbm.ntm.blockentity.LegacyPedestalBlockEntity;
 import com.hbm.ntm.blockentity.LegacyVolcanoCoreBlockEntity;
 import com.hbm.ntm.blockentity.LargeLaunchPadBlockEntity;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
+import com.hbm.ntm.blockentity.LauncherStructCoreBlockEntity;
 import com.hbm.ntm.blockentity.LaunchTableBlockEntity;
 import com.hbm.ntm.blockentity.LiquefactorBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
@@ -140,6 +144,7 @@ import com.hbm.ntm.blockentity.MissileAssemblyBlockEntity;
 import com.hbm.ntm.blockentity.MiningLaserBlockEntity;
 import com.hbm.ntm.blockentity.MixerBlockEntity;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
+import com.hbm.ntm.blockentity.NavalMineBlockEntity;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.blockentity.OilburnerBlockEntity;
 import com.hbm.ntm.blockentity.OilDrillBlockEntity;
@@ -263,6 +268,20 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<ElectricPressBlockEntity>> ELECTRIC_PRESS =
             BLOCK_ENTITIES.register("electric_press", () ->
                     BlockEntityType.Builder.of(ElectricPressBlockEntity::new, ModBlocks.MACHINE_EPRESS.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ConveyorPressBlockEntity>> CONVEYOR_PRESS =
+            BLOCK_ENTITIES.register("conveyor_press", () ->
+                    BlockEntityType.Builder.of(ConveyorPressBlockEntity::new,
+                            ModBlocks.MACHINE_CONVEYOR_PRESS.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<CapacitorBlockEntity>> CAPACITOR =
+            BLOCK_ENTITIES.register("capacitor", () ->
+                    BlockEntityType.Builder.of(CapacitorBlockEntity::new,
+                            ModBlocks.CAPACITOR_COPPER.get(),
+                            ModBlocks.CAPACITOR_GOLD.get(),
+                            ModBlocks.CAPACITOR_NIOBIUM.get(),
+                            ModBlocks.CAPACITOR_TANTALIUM.get(),
+                            ModBlocks.CAPACITOR_SCHRABIDATE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<SirenBlockEntity>> SIREN =
             BLOCK_ENTITIES.register("siren", () ->
@@ -675,6 +694,12 @@ public final class ModBlockEntities {
             BLOCK_ENTITIES.register("soyuz_struct", () ->
                     BlockEntityType.Builder.of(SoyuzStructBlockEntity::new,
                             ModBlocks.STRUCT_SOYUZ_CORE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LauncherStructCoreBlockEntity>> LAUNCHER_STRUCT_CORE =
+            BLOCK_ENTITIES.register("launcher_struct_core", () ->
+                    BlockEntityType.Builder.of(LauncherStructCoreBlockEntity::new,
+                            ModBlocks.STRUCT_LAUNCHER_CORE.get(),
+                            ModBlocks.STRUCT_LAUNCHER_CORE_LARGE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<LaunchPadBlockEntity>> LAUNCH_PAD =
             BLOCK_ENTITIES.register("launch_pad", () ->
@@ -1507,6 +1532,12 @@ public final class ModBlockEntities {
                             LegacyLanternBlockEntity::new,
                             ModBlocks.legacyBlock("lantern").get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<LegacyPedestalBlockEntity>> PEDESTAL =
+            BLOCK_ENTITIES.register("pedestal", () ->
+                    BlockEntityType.Builder.of(
+                            LegacyPedestalBlockEntity::new,
+                            ModBlocks.PEDESTAL.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<NuclearDeviceBlockEntity>> NUCLEAR_DEVICE =
             BLOCK_ENTITIES.register("nuclear_device", () ->
                     BlockEntityType.Builder.of(
@@ -1532,6 +1563,10 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<BalefireBombBlockEntity>> BALEFIRE_BOMB =
             BLOCK_ENTITIES.register("balefire_bomb", () ->
                     BlockEntityType.Builder.of(BalefireBombBlockEntity::new, ModBlocks.NUKE_FSTBMB.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<NavalMineBlockEntity>> NAVAL_MINE =
+            BLOCK_ENTITIES.register("naval_mine", () ->
+                    BlockEntityType.Builder.of(NavalMineBlockEntity::new, ModBlocks.MINE_NAVAL.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<LegacyChargeBlockEntity>> LEGACY_CHARGE =
             BLOCK_ENTITIES.register("legacy_charge", () ->

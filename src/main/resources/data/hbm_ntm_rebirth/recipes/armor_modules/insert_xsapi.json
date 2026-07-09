@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "K": {
+      "item": "hbm_ntm_rebirth:insert_esapi"
+    },
+    "P": {
+      "tag": "forge:ingots/asbestos"
+    },
+    "S": {
+      "tag": "forge:plates/saturnite"
+    }
+  },
+  "pattern": [
+    "PKP",
+    "DSD",
+    "PKP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:insert_xsapi"
+  },
+  "show_notification": true
+}

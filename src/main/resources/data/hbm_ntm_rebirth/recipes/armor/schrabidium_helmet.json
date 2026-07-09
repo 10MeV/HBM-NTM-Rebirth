@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:ingot_schrabidium"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:pellet_charged"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:starmetal_helmet"
+    }
+  },
+  "pattern": [
+    "EEE",
+    "ESE",
+    " P "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:schrabidium_helmet"
+  },
+  "show_notification": true
+}

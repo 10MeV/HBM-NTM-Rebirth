@@ -13,8 +13,8 @@ import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.item.LaserWavelength;
 import com.hbm.ntm.menu.SilexMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.recipe.SilexRecipe;
 import com.hbm.ntm.recipe.SilexRecipeRuntime;
-import com.hbm.ntm.recipe.SilexRecipeRuntime.SilexRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
@@ -78,7 +78,7 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_INPUT -> SilexRecipeRuntime.isValidInput(stack);
+                case SLOT_INPUT -> SilexRecipeRuntime.isValidInput(SilexBlockEntity.this.level, stack);
                 case SLOT_IDENTIFIER -> stack.getItem() instanceof IFluidIdentifierItem;
                 case SLOT_CONTAINER_IN -> true;
                 default -> false;
@@ -153,7 +153,7 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private void loadFluidSource() {
-        Optional<SilexRecipe> fluidRecipe = SilexRecipeRuntime.findFluidSource(tank.getTankType());
+        Optional<SilexRecipe> fluidRecipe = SilexRecipeRuntime.findFluidSource(level, tank.getTankType());
         if (fluidRecipe.isPresent()) {
             if (currentFill == 0) {
                 currentFluid = tank.getTankType();
@@ -172,7 +172,7 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
             return;
         }
         ItemStack input = items.getStackInSlot(SLOT_INPUT);
-        Optional<SilexRecipe> recipe = SilexRecipeRuntime.find(input);
+        Optional<SilexRecipe> recipe = SilexRecipeRuntime.find(level, input);
         if (recipe.isEmpty()) {
             return;
         }
@@ -213,9 +213,9 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
             return Optional.empty();
         }
         if (currentFluid != HbmFluids.NONE) {
-            return SilexRecipeRuntime.findFluidSource(currentFluid);
+            return SilexRecipeRuntime.findFluidSource(level, currentFluid);
         }
-        return SilexRecipeRuntime.find(currentStack);
+        return SilexRecipeRuntime.find(level, currentStack);
     }
 
     private void dequeue() {

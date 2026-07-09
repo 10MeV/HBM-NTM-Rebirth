@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:hazmat_boots_grey"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:cladding_lead"
+    },
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    }
+  },
+  "pattern": [
+    "ICI",
+    "IBI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:liquidator_boots"
+  },
+  "show_notification": true
+}

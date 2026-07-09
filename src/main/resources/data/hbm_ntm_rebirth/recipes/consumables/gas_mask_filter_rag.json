@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": {
+      "item": "hbm_ntm_rebirth:rag_damp"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    "I",
+    "F"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:gas_mask_filter_rag"
+  },
+  "show_notification": true
+}

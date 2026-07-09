@@ -1,12 +1,12 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.fluid.trait.PollutingFluidTrait;
 import com.hbm.ntm.fluid.trait.PollutingFluidTrait.PollutionKind;
 import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionSavedData;
 import com.hbm.ntm.pollution.PollutionType;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -110,7 +110,7 @@ public final class HbmFluidReleaseEffects {
                 if (radiationTrait != null) {
                     radiation = radiationTrait.getRadiationPerMb() * amount;
                     if (apply && radiation > 0.0F && level != null && pos != null) {
-                        ChunkRadiationManager.incrementRadiation(level, pos, radiation);
+                        ChunkRadiationManager.proxy.incrementRad(level, pos, radiation);
                     }
                 }
             }

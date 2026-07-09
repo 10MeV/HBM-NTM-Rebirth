@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.particle;
 
+import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -14,11 +15,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,7 +26,11 @@ public class FoamParticle extends TextureSheetParticle implements HbmDeferredPar
 
     private final SpriteSet sprites;
     private final int visualId;
-    private final List<TrailPoint> trail = new ArrayList<>();
+    private double[] trailX = new double[15];
+    private double[] trailY = new double[15];
+    private double[] trailZ = new double[15];
+    private int trailHead;
+    private int trailCount;
     private int trailLength = 15;
     private float baseScale = 1.0F;
     private float maxScale = 1.5F;
@@ -36,6 +38,10 @@ public class FoamParticle extends TextureSheetParticle implements HbmDeferredPar
     private float jitter = 0.15F;
     private float drag = 0.96F;
     private int explosionPhase;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private FoamParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites) {
         super(level, x, y, z);
@@ -51,6 +57,7 @@ public class FoamParticle extends TextureSheetParticle implements HbmDeferredPar
         this.alpha = 0.8F;
         this.hasPhysics = true;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     public void setBaseScale(float baseScale) {
@@ -63,6 +70,10 @@ public class FoamParticle extends TextureSheetParticle implements HbmDeferredPar
 
     public void setTrailLength(int trailLength) {
         this.trailLength = Math.max(1, trailLength);
+        ensureTrailCapacity(this.trailLength);
+        if (this.trailCount > this.trailLength) {
+            this.trailCount = this.trailLength;
+        }
     }
 
     public void setBuoyancy(float buoyancy) {
@@ -74,10 +85,7 @@ public class FoamParticle extends TextureSheetParticle implements HbmDeferredPar
         this.xo = this.x;
         this.yo = this.y;
         this.zo = this.z;
-        this.trail.add(0, new TrailPoint(this.x, this.y, this.z));
-        while (this.trail.size() > this.trailLength) {
-            this.trail.remove(this.trail.size() - 1);
-        }
+        addTrailPoint(this.x, this.y, this.z);
         if (++this.age >= this.lifetime) {
             this.remove();
             return;
@@ -114,6 +122,7 @@ public class FoamParticle extends TextureSheetParticle implements HbmDeferredPar
             return;
         }
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -123,27 +132,69 @@ public class FoamParticle extends TextureSheetParticle implements HbmDeferredPar
 
     @Override
     public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
-        renderFoamBubbles(consumer, camera, Mth.lerp(partialTick, this.xo, this.x),
+        VertexConsumer consumer = HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer);
+        Vec3 cameraPos = camera.getPosition();
+        Vector3f[] basis = HbmDeferredParticleRenderer.cameraBillboardBasis(camera, 1.0F);
+        Vector3f rightUnit = basis[0];
+        Vector3f upUnit = basis[1];
+        renderFoamBubbles(consumer, cameraPos, rightUnit, upUnit, Mth.lerp(partialTick, this.xo, this.x),
                 Mth.lerp(partialTick, this.yo, this.y),
                 Mth.lerp(partialTick, this.zo, this.z), this.quadSize, this.alpha);
 
-        for (int i = 1; i < this.trail.size(); i++) {
-            TrailPoint point = this.trail.get(i);
+        for (int i = 1; i < this.trailCount; i++) {
+            int trailIndex = trailIndex(i);
             float trailFactor = 1.0F - (float) i / (float) this.trailLength;
-            renderFoamBubbles(consumer, camera, point.x, point.y, point.z,
+            renderFoamBubbles(consumer, cameraPos, rightUnit, upUnit,
+                    this.trailX[trailIndex], this.trailY[trailIndex], this.trailZ[trailIndex],
                     this.quadSize * trailFactor,
                     this.alpha * trailFactor * 0.7F);
         }
     }
 
-    private void renderFoamBubbles(VertexConsumer consumer, Camera camera, double worldX, double worldY, double worldZ,
+    private void addTrailPoint(double x, double y, double z) {
+        ensureTrailCapacity(this.trailLength);
+        int capacity = this.trailX.length;
+        this.trailHead = (this.trailHead + capacity - 1) % capacity;
+        this.trailX[this.trailHead] = x;
+        this.trailY[this.trailHead] = y;
+        this.trailZ[this.trailHead] = z;
+        if (this.trailCount < this.trailLength) {
+            this.trailCount++;
+        }
+    }
+
+    private int trailIndex(int newestOffset) {
+        return (this.trailHead + newestOffset) % this.trailX.length;
+    }
+
+    private void ensureTrailCapacity(int required) {
+        if (required <= this.trailX.length) {
+            return;
+        }
+        int oldLength = this.trailX.length;
+        double[] oldX = this.trailX;
+        double[] oldY = this.trailY;
+        double[] oldZ = this.trailZ;
+        int newLength = Math.max(required, oldLength * 2);
+        this.trailX = new double[newLength];
+        this.trailY = new double[newLength];
+        this.trailZ = new double[newLength];
+        for (int i = 0; i < this.trailCount; i++) {
+            int oldIndex = (this.trailHead + i) % oldLength;
+            this.trailX[i] = oldX[oldIndex];
+            this.trailY[i] = oldY[oldIndex];
+            this.trailZ[i] = oldZ[oldIndex];
+        }
+        this.trailHead = 0;
+    }
+
+    private void renderFoamBubbles(VertexConsumer consumer, Vec3 cameraPos, Vector3f rightUnit, Vector3f upUnit,
+            double worldX, double worldY, double worldZ,
             float scale, float alpha) {
-        Random visualRandom = new Random(this.visualId + (long) (worldX * 100.0D) + (long) (worldY * 10.0D) + (long) worldZ);
+        Random visualRandom = LegacyRenderRandom.seeded(this.visualId + (long) (worldX * 100.0D)
+                + (long) (worldY * 10.0D) + (long) worldZ);
         int bubbleCount = this.explosionPhase == 0 ? 8 : this.explosionPhase == 1 ? 6 : 4;
         float offset = this.explosionPhase == 0 ? 0.4F : this.explosionPhase == 1 ? 0.6F : 0.9F;
-        Vec3 cameraPos = camera.getPosition();
-        Quaternionf rotation = camera.rotation();
         int light = LightTexture.FULL_BRIGHT;
 
         for (int i = 0; i < bubbleCount; i++) {
@@ -152,22 +203,17 @@ public class FoamParticle extends TextureSheetParticle implements HbmDeferredPar
             float x = (float) (worldX - cameraPos.x() + visualRandom.nextGaussian() * offset);
             float y = (float) (worldY - cameraPos.y() + visualRandom.nextGaussian() * offset * 0.7F);
             float z = (float) (worldZ - cameraPos.z() + visualRandom.nextGaussian() * offset);
-            Vector3f[] corners = new Vector3f[] {
-                    new Vector3f(-1.0F, -1.0F, 0.0F),
-                    new Vector3f(-1.0F, 1.0F, 0.0F),
-                    new Vector3f(1.0F, 1.0F, 0.0F),
-                    new Vector3f(1.0F, -1.0F, 0.0F)
-            };
-            for (Vector3f corner : corners) {
-                corner.rotate(rotation).mul(bubbleScale).add(x, y, z);
-            }
-            HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, light,
-                    corners[0], getU1(), getV1(),
-                    corners[1], getU1(), getV0(),
-                    corners[2], getU0(), getV0(),
-                    corners[3], getU0(), getV1(),
+            HbmDeferredParticleRenderer.emitCameraUnitParticleSheetQuad(consumer, light, rightUnit, upUnit,
+                    x, y, z, bubbleScale, this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                     whiteness, whiteness, whiteness, alpha);
         }
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     @Override
@@ -192,8 +238,5 @@ public class FoamParticle extends TextureSheetParticle implements HbmDeferredPar
                 double xSpeed, double ySpeed, double zSpeed) {
             return new FoamParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, sprites);
         }
-    }
-
-    private record TrailPoint(double x, double y, double z) {
     }
 }

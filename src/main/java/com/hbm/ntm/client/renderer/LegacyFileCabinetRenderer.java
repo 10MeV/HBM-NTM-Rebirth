@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.LegacyFileCabinetBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -13,6 +14,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class LegacyFileCabinetRenderer implements BlockEntityRenderer<LegacyFileCabinetBlockEntity> {
     private static final double DRAWER_TRAVEL = 0.6875D;
@@ -33,6 +35,12 @@ public class LegacyFileCabinetRenderer implements BlockEntityRenderer<LegacyFile
     }
 
     @Override
+    public boolean shouldRender(LegacyFileCabinetBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(LegacyFileCabinetBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
@@ -45,7 +53,8 @@ public class LegacyFileCabinetRenderer implements BlockEntityRenderer<LegacyFile
         poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(state)));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             renderModel(poseStack, buffer, texture(blockEntity.variant()), modelLight, packedOverlay,
-                    blockEntity.lowerExtent(partialTick), blockEntity.upperExtent(partialTick), false);
+                    blockEntity.lowerExtent(partialTick), blockEntity.upperExtent(partialTick),
+                    LegacyMachineRenderShapes.renderChunkBakedStaticsInBer());
         }
         poseStack.popPose();
     }

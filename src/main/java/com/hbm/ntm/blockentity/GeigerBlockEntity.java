@@ -1,10 +1,10 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.tile.IInfoProviderEC;
 import com.hbm.ntm.compat.CompatEnergyControl;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.ContaminationUtil;
@@ -49,7 +49,7 @@ public class GeigerBlockEntity extends BlockEntity implements IInfoProviderEC, R
         if (level == null) {
             return 0.0F;
         }
-        return ChunkRadiationManager.getRadiation(level, worldPosition);
+        return ChunkRadiationManager.proxy.getRadiation(level, worldPosition);
     }
 
     private void playTickSound(Level level, BlockPos pos) {

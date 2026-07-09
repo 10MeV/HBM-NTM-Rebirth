@@ -1,0 +1,42 @@
+{
+    "type":  "hbm_ntm_rebirth:arc_furnace",
+    "internal_name":  "arc.custom.ore_th232",
+    "duration":  400,
+    "power":  1000,
+    "input_items":  [
+                        {
+                            "count":  1,
+                            "ingredient":  {
+                                               "tag":  "forge:ores/th232"
+                                           },
+                            "legacy_ore":  "oreTh232"
+                        }
+                    ],
+    "input_fluids":  [
+
+                     ],
+    "output_items":  [
+
+                     ],
+    "output_fluids":  [
+
+                      ],
+    "arc_material_outputs":  [
+                                 {
+                                     "amount":  144,
+                                     "material":  "Thorium232"
+                                 },
+                                 {
+                                     "amount":  24,
+                                     "material":  "Uranium"
+                                 },
+                                 {
+                                     "amount":  162,
+                                     "material":  "Stone"
+                                 }
+                             ],
+    "pools":  [
+
+              ],
+    "source_order":  2292
+}

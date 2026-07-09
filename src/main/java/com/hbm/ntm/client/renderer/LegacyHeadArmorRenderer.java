@@ -1,7 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.armor.ArmorModGasMaskItem;
+import api.hbm.item.IGasMask;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.radiation.ArmorUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -112,7 +112,7 @@ public final class LegacyHeadArmorRenderer {
             return ItemStack.EMPTY;
         }
         ItemStack mod = ArmorModHandler.pryMod(head, ArmorModHandler.helmet_only);
-        return mod.getItem() instanceof ArmorModGasMaskItem ? mod : ItemStack.EMPTY;
+        return mod.getItem() instanceof IGasMask ? mod : ItemStack.EMPTY;
     }
 
     private static Spec specFor(ItemStack stack) {

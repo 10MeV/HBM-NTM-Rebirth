@@ -21,6 +21,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.IItemHandler;
 
@@ -873,6 +875,22 @@ public final class HbmItemStackUtil {
 
     public static void spillItems(Level level, BlockPos pos, Container items) {
         spillItems(level, pos, items, level == null ? null : level.random);
+    }
+
+    public static void spillItems(Level level, int x, int y, int z, Block block, RandomSource random) {
+        spillItems(level, new BlockPos(x, y, z), block, random);
+    }
+
+    public static void spillItems(Level level, BlockPos pos, Block block, RandomSource random) {
+        if (level == null || pos == null || level.isClientSide) {
+            return;
+        }
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof Container container) {
+            spillItems(level, pos, container, random);
+            Block notifyBlock = block == null ? level.getBlockState(pos).getBlock() : block;
+            level.updateNeighbourForOutputSignal(pos, notifyBlock);
+        }
     }
 
     public static void spillStack(Level level, BlockPos pos, ItemStack stack, RandomSource random) {

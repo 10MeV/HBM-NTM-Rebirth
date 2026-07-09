@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/polymer"
+    },
+    "count": 1,
+    "legacy_ore": "ingotPolymer"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_pc"
+  },
+  "source_order": 25
+}

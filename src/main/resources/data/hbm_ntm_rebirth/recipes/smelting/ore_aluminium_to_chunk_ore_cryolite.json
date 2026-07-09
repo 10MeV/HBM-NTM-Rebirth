@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 2.5,
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:ore_aluminium"
+  },
+  "result": "hbm_ntm_rebirth:chunk_ore_cryolite"
+}

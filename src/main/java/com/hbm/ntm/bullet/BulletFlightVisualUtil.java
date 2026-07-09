@@ -26,14 +26,24 @@ public final class BulletFlightVisualUtil {
             return 0;
         }
 
-        Vec3 delta = currentPosition.subtract(previousPosition);
-        double distance = Math.max(delta.length(), 0.1D);
-        Vec3 direction = delta.lengthSqr() == 0.0D ? Vec3.ZERO : delta.normalize();
+        double deltaX = currentPosition.x - previousPosition.x;
+        double deltaY = currentPosition.y - previousPosition.y;
+        double deltaZ = currentPosition.z - previousPosition.z;
+        double distanceSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+        double trueDistance = Math.sqrt(distanceSqr);
+        double distance = Math.max(trueDistance, 0.1D);
+        double invDistance = distanceSqr == 0.0D ? 0.0D : 1.0D / trueDistance;
+        double directionX = deltaX * invDistance;
+        double directionY = deltaY * invDistance;
+        double directionZ = deltaZ * invDistance;
 
         int spawned = 0;
         for (double offset = 0.0D; offset < distance; offset += 0.5D) {
-            Vec3 particle = currentPosition.subtract(direction.scale(offset));
-            ParticleUtil.spawnVanillaExt(level, particle.x, particle.y, particle.z, config.vanillaParticle(),
+            ParticleUtil.spawnVanillaExt(level,
+                    currentPosition.x - directionX * offset,
+                    currentPosition.y - directionY * offset,
+                    currentPosition.z - directionZ * offset,
+                    config.vanillaParticle(),
                     0.0D, 0.0D, 0.0D);
             spawned++;
         }
@@ -56,8 +66,11 @@ public final class BulletFlightVisualUtil {
                     (motion.z + roll.nextGaussian() * 0.05D) * modifier);
         }
 
-        Vec3 flame = position.add(motion.scale(0.5D));
-        ParticleUtil.spawnVanillaExt(level, flame.x, flame.y, flame.z, ParticleUtil.VANILLA_FLAME,
+        ParticleUtil.spawnVanillaExt(level,
+                position.x + motion.x * 0.5D,
+                position.y + motion.y * 0.5D,
+                position.z + motion.z * 0.5D,
+                ParticleUtil.VANILLA_FLAME,
                 0.0D, 0.0D, 0.0D);
         return 16;
     }

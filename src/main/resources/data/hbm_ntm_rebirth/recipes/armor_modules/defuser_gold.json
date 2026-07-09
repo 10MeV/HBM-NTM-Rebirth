@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "item": "minecraft:gunpowder"
+    },
+    "P": {
+      "tag": "forge:plates/gold"
+    },
+    "R": {
+      "tag": "minecraft:music_discs"
+    }
+  },
+  "pattern": [
+    "GPG",
+    "PRP",
+    "GPG"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:defuser_gold"
+  },
+  "show_notification": true
+}

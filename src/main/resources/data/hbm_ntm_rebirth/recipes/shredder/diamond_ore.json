@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ores/diamond" } },
-  "output": { "item": "hbm_ntm_rebirth:gravel_diamond", "count": 2 }
+  "output": { "item": "hbm_ntm_rebirth:gravel_diamond", "count": 2 },
+  "source_order": 50
 }

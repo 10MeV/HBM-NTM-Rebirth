@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/schrabidium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_schrabidium"
+    },
+    "legacy_id": "hbm:crystal_schrabidium",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_schrabidium", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_schrabidium", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_plutonium" },
-    { "item": "hbm_ntm_rebirth:powder_lithium_tiny" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_schrabidium"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_schrabidium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_plutonium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_lithium_tiny"
+    }
+  ],
+  "source_order": 49
 }

@@ -4,6 +4,7 @@ import com.hbm.inventory.material.NTMMaterial.SmeltingBehavior;
 import com.hbm.ntm.item.FoundryScrapsItem;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -23,6 +24,8 @@ public class Mats {
     public static final HashMap<String, NTMMaterial> matByName = new HashMap<>();
     private static final Map<String, MaterialShapes> MODERN_PATH_PREFIXES = new HashMap<>();
     private static final Map<String, NTMMaterial> MODERN_PATH_MATERIALS = new HashMap<>();
+    private static final Map<MaterialShapes, List<String>> MODERN_SHAPE_PATH_PREFIXES = new HashMap<>();
+    private static final Map<NTMMaterial, List<String>> MODERN_MATERIAL_PATH_NAMES = new HashMap<>();
 
     public static final int _VS = 0;
     public static final int _AS = 30;
@@ -34,11 +37,13 @@ public class Mats {
     public static final NTMMaterial MAT_IRON = makeSmeltable(2600, "Iron", 0xFFFFFF, 0x353535, 0xFFA259).m();
     public static final NTMMaterial MAT_GOLD = makeSmeltable(7900, "Gold", 0xFFFF8B, 0xC26E00, 0xE8D754).m();
     public static final NTMMaterial MAT_REDSTONE = makeSmeltable(_VS + 1, "Redstone", 0xE3260C, 0x700E06, 0xFF1000).n();
+    public static final NTMMaterial MAT_OBSIDIAN = makeSmeltable(_VS + 2, "Obsidian", 0x3D234D).n();
     public static final NTMMaterial MAT_HEMATITE = makeAdditive(2601, "Hematite", 0xDFB7AE, 0x5F372E, 0x6E463D).m();
     public static final NTMMaterial MAT_WROUGHTIRON = makeSmeltable(2602, "WroughtIron", 0xFAAB89).m();
     public static final NTMMaterial MAT_PIGIRON = makeSmeltable(2603, "PigIron", 0xFF8B59).m();
     public static final NTMMaterial MAT_TITANIUM = makeSmeltable(2200, "Titanium", "Ti", 0xF7F3F2, 0x4F4C4B, 0xA99E79).m();
     public static final NTMMaterial MAT_COPPER = makeSmeltable(2900, "Copper", "Cu", 0xFDCA88, 0x601E0D, 0xC18336).m();
+    public static final NTMMaterial MAT_MALACHITE = makeAdditive(2901, "Malachite", 0xA2F0C8, 0x227048, 0x61AF87).m();
     public static final NTMMaterial MAT_TUNGSTEN = makeSmeltable(7400, "Tungsten", "W", 0x868686, 0x000000, 0x977474).m();
     public static final NTMMaterial MAT_ALUMINIUM = makeSmeltable(1300, "Aluminium", "Aluminum", "Al", 0xFFFFFF, 0x344550, 0xD0B8EB).m();
     public static final NTMMaterial MAT_LEAD = makeSmeltable(8200, "Lead", "Pb", 0xA6A6B2, 0x03030F, 0x646470).m();
@@ -97,15 +102,30 @@ public class Mats {
         registerModernPrefix("powder_tiny_", DUSTTINY);
         registerModernPrefix("powder_", DUST);
         registerModernPrefix("nugget_", NUGGET);
+        registerModernPrefix("billet_", BILLET);
         registerModernPrefix("bolt_", BOLT);
+        registerModernPrefix("shell_", SHELL);
+        registerModernPrefix("pipes_", PIPE);
         registerModernPrefix("wire_dense_", DENSEWIRE);
+        registerModernPrefix("wire_fine_", WIRE);
         registerModernPrefix("wire_", WIRE);
+        registerModernPrefix("barrel_light_", LIGHTBARREL);
+        registerModernPrefix("barrel_heavy_", HEAVYBARREL);
+        registerModernPrefix("receiver_light_", LIGHTRECEIVER);
+        registerModernPrefix("receiver_heavy_", HEAVYRECEIVER);
+        registerModernPrefix("mechanism_", MECHANISM);
+        registerModernPrefix("stock_", STOCK);
+        registerModernPrefix("grip_", GRIP);
         registerModernPrefix("block_", BLOCK);
 
         registerModernMaterial(MAT_IRON, "iron");
         registerModernMaterial(MAT_GRAPHITE, "graphite");
         registerModernMaterial(MAT_GOLD, "gold");
+        registerModernMaterial(MAT_REDSTONE, "redstone");
+        registerModernMaterial(MAT_OBSIDIAN, "obsidian");
+        registerModernMaterial(MAT_HEMATITE, "hematite");
         registerModernMaterial(MAT_COPPER, "copper");
+        registerModernMaterial(MAT_MALACHITE, "malachite");
         registerModernMaterial(MAT_TITANIUM, "titanium");
         registerModernMaterial(MAT_TUNGSTEN, "tungsten");
         registerModernMaterial(MAT_ALUMINIUM, "aluminium", "aluminum");
@@ -198,12 +218,35 @@ public class Mats {
 
     private static void registerModernPrefix(String prefix, MaterialShapes shape) {
         MODERN_PATH_PREFIXES.put(prefix, shape);
+        MODERN_SHAPE_PATH_PREFIXES.computeIfAbsent(shape, key -> new ArrayList<>()).add(prefix);
     }
 
     private static void registerModernMaterial(NTMMaterial material, String... names) {
         for (String name : names) {
-            MODERN_PATH_MATERIALS.put(name.toLowerCase(Locale.ROOT), material);
+            String pathName = name.toLowerCase(Locale.ROOT);
+            MODERN_PATH_MATERIALS.put(pathName, material);
+            MODERN_MATERIAL_PATH_NAMES.computeIfAbsent(material, key -> new ArrayList<>()).add(pathName);
         }
+    }
+
+    public static List<String> modernPathPrefixes(MaterialShapes shape) {
+        List<String> prefixes = MODERN_SHAPE_PATH_PREFIXES.get(shape);
+        return prefixes == null ? List.of() : List.copyOf(prefixes);
+    }
+
+    public static List<String> modernPathNames(NTMMaterial material) {
+        if (material == null) {
+            return List.of();
+        }
+        LinkedHashSet<String> names = new LinkedHashSet<>();
+        List<String> registered = MODERN_MATERIAL_PATH_NAMES.get(material);
+        if (registered != null) {
+            names.addAll(registered);
+        }
+        for (String name : material.names) {
+            names.add(name.toLowerCase(Locale.ROOT));
+        }
+        return List.copyOf(names);
     }
 
     public static List<MaterialStack> getMaterialsFromItem(ItemStack stack) {
@@ -273,6 +316,15 @@ public class Mats {
         NTMMaterial bareIngot = "lithium".equals(path) ? MAT_LITHIUM : null;
         if (bareIngot != null) {
             return new MaterialStack(bareIngot, INGOT.q(1));
+        }
+        if ("stone_resource_hematite".equals(path)) {
+            return new MaterialStack(MAT_HEMATITE, INGOT.q(1));
+        }
+        if ("stone_resource_malachite".equals(path)) {
+            return new MaterialStack(MAT_MALACHITE, INGOT.q(6));
+        }
+        if ("chunk_ore_malachite".equals(path)) {
+            return new MaterialStack(MAT_MALACHITE, INGOT.q(1));
         }
         MaterialStack best = null;
         int bestPrefixLength = -1;

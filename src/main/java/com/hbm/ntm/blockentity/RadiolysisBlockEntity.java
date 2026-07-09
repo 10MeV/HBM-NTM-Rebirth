@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.tile.InfoProviderEC;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyProvider;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
@@ -48,7 +49,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RadiolysisBlockEntity extends HbmFluidBlockEntity
-        implements MenuProvider, HbmStandardFluidTransceiver, HbmEnergyProvider, InfoProviderEC {
+        implements MenuProvider, HbmStandardFluidTransceiver, HbmEnergyProvider, HbmEnergyPortInspectable,
+        InfoProviderEC {
     public static final int SLOT_RTG_START = 0;
     public static final int SLOT_RTG_END = 9;
     public static final int SLOT_FLUID_ID_INPUT = 10;
@@ -173,6 +175,13 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
     @Override
     public long getProviderSpeed() {
         return Math.max(0L, heat * 10L);
+    }
+
+    @Override
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        return level == null
+                ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
+                : HbmEnergyUtil.inspectPorts(level, worldPosition, energyPorts());
     }
 
     @Override

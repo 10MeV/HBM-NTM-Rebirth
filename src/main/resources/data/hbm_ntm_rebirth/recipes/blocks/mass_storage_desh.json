@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:container_upgrade_crafting",
+  "category": "building",
+  "key": {
+    "C": {
+      "tag": "forge:circuits/chip"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:mass_storage"
+    },
+    "P": {
+      "tag": "forge:ingots/desh"
+    }
+  },
+  "pattern": [
+    " C ",
+    "PMP",
+    " P "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:mass_storage",
+    "nbt": "{hbmLegacyVariant:1}"
+  },
+  "show_notification": true
+}

@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:crystals/iron" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_iron", "count": 3 }
+  "output": { "item": "hbm_ntm_rebirth:powder_iron", "count": 3 },
+  "source_order": 77
 }

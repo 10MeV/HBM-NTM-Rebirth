@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:block_insulator"
+  }
+}

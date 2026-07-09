@@ -1,0 +1,13 @@
+{
+    "type":  "minecraft:crafting_shapeless",
+    "category":  "misc",
+    "ingredients":  [
+                        {
+                            "item":  "hbm_ntm_rebirth:nitra"
+                        }
+                    ],
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:nitra_small",
+                   "count":  4
+               }
+}

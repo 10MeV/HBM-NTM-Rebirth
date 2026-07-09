@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.LegacyLargeTurbineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
@@ -32,6 +33,12 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
     }
 
     @Override
+    public boolean shouldRender(LegacyLargeTurbineBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }
@@ -49,29 +56,31 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
 
         LegacyMachineDefinition definition = block.definition();
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
-        LegacyTileRenderPlans.BigTurbinePlan plan = LegacyTileRenderPlans.bigTurbinePlan(
-                blockEntity.getLastRotor(), blockEntity.getRotor(), partialTick);
+        double bladeSpin = blockEntity.getLastRotor()
+                + (blockEntity.getRotor() - blockEntity.getLastRotor()) * partialTick;
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) plan.baseRotationY()));
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) LegacyTileRenderPlans.BIG_TURBINE_BASE_ROTATION_Y));
         Vec3 translation = definition.modelTranslation(state);
-        poseStack.translate(translation.x, translation.y, translation.z + plan.translateZ());
+        poseStack.translate(translation.x, translation.y,
+                translation.z + LegacyTileRenderPlans.BIG_TURBINE_TRANSLATE_Z);
 
         LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
-                    BODY, renderMode);
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                        BODY, renderMode);
+            }
 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
-                LegacyTileRenderPlans.RotatingModelPartPlan blades = plan.blades();
                 poseStack.pushPose();
-                poseStack.translate(blades.pivotX(), blades.pivotY(), blades.pivotZ());
-                poseStack.mulPose(Axis.ZP.rotationDegrees((float) blades.angleDegrees()));
-                poseStack.translate(-blades.pivotX(), -blades.pivotY(), -blades.pivotZ());
+                poseStack.translate(0.0D, LegacyTileRenderPlans.BIG_TURBINE_BLADE_PIVOT_Y, 0.0D);
+                poseStack.mulPose(Axis.ZP.rotationDegrees((float) bladeSpin));
+                poseStack.translate(0.0D, -LegacyTileRenderPlans.BIG_TURBINE_BLADE_PIVOT_Y, 0.0D);
                 MODEL.renderOnlyInCallOrder(
-                        definition.partTextures().getOrDefault(blades.partName(), definition.textureLocation()),
+                        definition.partTextures().getOrDefault("Blades", definition.textureLocation()),
                         poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay, BLADES, renderMode);
                 poseStack.popPose();
             }

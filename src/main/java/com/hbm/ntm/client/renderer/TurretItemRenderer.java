@@ -84,44 +84,42 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static AABB legacyCommonBounds(TurretBlockEntityRenderer.StaticTurretModel model) {
         return switch (model) {
-            case CHEKHOV, FRIENDLY -> transformBounds(
+            case CHEKHOV, FRIENDLY -> transformedTranslate(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base", "Carriage", "Body", "Barrels"),
-                    point -> point.add(-0.75D, 0.0D, 0.0D));
-            case JEREMY -> transformBounds(union(
+                    -0.75D, 0.0D, 0.0D);
+            case JEREMY -> transformedTranslate(union(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base", "Carriage"),
                     ObjTurretModels.JEREMY.boundsOnly("Gun")),
-                    point -> point.add(-0.5D, 0.0D, 0.0D));
+                    -0.5D, 0.0D, 0.0D);
             case RICHARD -> union(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base", "Carriage"),
                     ObjTurretModels.RICHARD.boundsOnly("Launcher"));
             case TAUON -> union(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base", "Carriage"),
                     ObjTurretModels.TAUON.boundsOnly("Cannon", "Rotor"));
-            case HOWARD -> transformBounds(union(
+            case HOWARD -> transformedTranslate(union(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base"),
                     ObjTurretModels.HOWARD.boundsOnly("Carriage", "Body", "BarrelsTop", "BarrelsBottom")),
-                    point -> point.add(-0.75D, 0.0D, 0.0D));
-            case HOWARD_DAMAGED -> transformBounds(union(
+                    -0.75D, 0.0D, 0.0D);
+            case HOWARD_DAMAGED -> transformedTranslate(union(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base"),
                     ObjTurretModels.HOWARD.boundsOnly("Carriage"),
                     ObjTurretModels.HOWARD_DAMAGED.boundsOnly("Body", "BarrelsTop", "BarrelsBottom")),
-                    point -> point.add(-0.75D, 0.0D, 0.0D));
-            case SENTRY, SENTRY_DAMAGED -> transformBounds(
+                    -0.75D, 0.0D, 0.0D);
+            case SENTRY, SENTRY_DAMAGED -> transformedRotateY(
                     ObjTurretModels.SENTRY.boundsOnly("Base", "Pivot", "Body", "Drum", "BarrelL", "BarrelR"),
-                    point -> rotateY(point, 90.0F));
+                    90.0F, 1.0D);
             case MAXWELL -> union(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base"),
                     ObjTurretModels.HOWARD.boundsOnly("Carriage"),
                     ObjTurretModels.MAXWELL.boundsOnly("Microwave"));
             case ARTY -> union(
-                    transformBounds(ObjTurretModels.ARTY.boundsOnly("Base", "Carriage"),
-                            point -> rotateY(point.scale(0.5D), -90.0F)),
-                    transformBounds(ObjTurretModels.ARTY.boundsOnly("Cannon", "Barrel"),
-                            point -> rotateY(rotateX(point, 45.0F, 3.0D, 0.0D).scale(0.5D), -90.0F)));
-            case HIMARS -> transformBounds(
+                    transformedRotateY(ObjTurretModels.ARTY.boundsOnly("Base", "Carriage"), -90.0F, 0.5D),
+                    transformedArtyBarrelBounds(ObjTurretModels.ARTY.boundsOnly("Cannon", "Barrel")));
+            case HIMARS -> transformedRotateY(
                     union(ObjTurretModels.ARTY.boundsOnly("Base"),
                             ObjTurretModels.HIMARS.boundsOnly("Carriage", "Launcher", "Crane", "TubeStandard")),
-                    point -> rotateY(point.scale(0.5D), -90.0F));
+                    -90.0F, 0.5D);
             case FRITZ -> union(
                     ObjTurretModels.CHEKHOV.boundsOnly("Base", "Carriage"),
                     ObjTurretModels.FRITZ.boundsOnly("Gun"));
@@ -130,20 +128,25 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void applyLegacyInventoryTransform(TurretBlockEntityRenderer.StaticTurretModel model,
             PoseStack poseStack) {
-        Vec3 translation = legacyInventoryTranslation(model);
-        poseStack.translate(translation.x, translation.y, translation.z);
+        poseStack.translate(legacyInventoryTranslationX(model), legacyInventoryTranslationY(model), 0.0D);
         float scale = legacyInventoryScale(model);
         poseStack.scale(scale, scale, scale);
     }
 
-    private static Vec3 legacyInventoryTranslation(TurretBlockEntityRenderer.StaticTurretModel model) {
+    private static double legacyInventoryTranslationX(TurretBlockEntityRenderer.StaticTurretModel model) {
         return switch (model) {
-            case CHEKHOV, FRIENDLY -> new Vec3(0.0D, -3.0D, 0.0D);
-            case JEREMY, RICHARD, TAUON, FRITZ, HIMARS -> new Vec3(0.0D, -2.0D, 0.0D);
-            case HOWARD, HOWARD_DAMAGED -> new Vec3(0.0D, -4.5D, 0.0D);
-            case SENTRY, SENTRY_DAMAGED -> new Vec3(0.0D, -4.0D, 0.0D);
-            case MAXWELL -> new Vec3(-1.0D, -3.0D, 0.0D);
-            case ARTY -> new Vec3(-3.0D, -4.0D, 0.0D);
+            case MAXWELL -> -1.0D;
+            case ARTY -> -3.0D;
+            default -> 0.0D;
+        };
+    }
+
+    private static double legacyInventoryTranslationY(TurretBlockEntityRenderer.StaticTurretModel model) {
+        return switch (model) {
+            case CHEKHOV, FRIENDLY, MAXWELL -> -3.0D;
+            case JEREMY, RICHARD, TAUON, FRITZ, HIMARS -> -2.0D;
+            case HOWARD, HOWARD_DAMAGED -> -4.5D;
+            case SENTRY, SENTRY_DAMAGED, ARTY -> -4.0D;
         };
     }
 
@@ -165,48 +168,35 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
         return result;
     }
 
-    private static AABB transformBounds(AABB bounds, PointTransform transform) {
-        double minX = Double.POSITIVE_INFINITY;
-        double minY = Double.POSITIVE_INFINITY;
-        double minZ = Double.POSITIVE_INFINITY;
-        double maxX = Double.NEGATIVE_INFINITY;
-        double maxY = Double.NEGATIVE_INFINITY;
-        double maxZ = Double.NEGATIVE_INFINITY;
-
-        for (double x : new double[] { bounds.minX, bounds.maxX }) {
-            for (double y : new double[] { bounds.minY, bounds.maxY }) {
-                for (double z : new double[] { bounds.minZ, bounds.maxZ }) {
-                    Vec3 point = transform.apply(new Vec3(x, y, z));
-                    minX = Math.min(minX, point.x);
-                    minY = Math.min(minY, point.y);
-                    minZ = Math.min(minZ, point.z);
-                    maxX = Math.max(maxX, point.x);
-                    maxY = Math.max(maxY, point.y);
-                    maxZ = Math.max(maxZ, point.z);
-                }
-            }
-        }
-
-        return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+    private static AABB transformedTranslate(AABB bounds, double xOffset, double yOffset, double zOffset) {
+        return LegacyTransformedBounds.transform(bounds,
+                (x, y, z, accumulator) -> accumulator.include(x + xOffset, y + yOffset, z + zOffset));
     }
 
-    private static Vec3 rotateX(Vec3 point, float degrees, double pivotY, double pivotZ) {
-        double radians = Math.toRadians(degrees);
-        double sin = Math.sin(radians);
-        double cos = Math.cos(radians);
-        double y = point.y - pivotY;
-        double z = point.z - pivotZ;
-        return new Vec3(point.x, y * cos - z * sin + pivotY, z * cos + y * sin + pivotZ);
+    private static AABB transformedRotateY(AABB bounds, float degrees, double scale) {
+        double sin = LegacyTransformedBounds.sinDeg(degrees);
+        double cos = LegacyTransformedBounds.cosDeg(degrees);
+        return LegacyTransformedBounds.transform(bounds, (x, y, z, accumulator) -> {
+            double scaledX = x * scale;
+            double scaledY = y * scale;
+            double scaledZ = z * scale;
+            LegacyTransformedBounds.includeRotatedY(accumulator, scaledX, scaledY, scaledZ, sin, cos);
+        });
     }
 
-    private static Vec3 rotateY(Vec3 point, float degrees) {
-        double radians = Math.toRadians(degrees);
-        double sin = Math.sin(radians);
-        double cos = Math.cos(radians);
-        return new Vec3(point.x * cos + point.z * sin, point.y, point.z * cos - point.x * sin);
-    }
-
-    private interface PointTransform {
-        Vec3 apply(Vec3 point);
+    private static AABB transformedArtyBarrelBounds(AABB bounds) {
+        double sinX = LegacyTransformedBounds.sinDeg(45.0F);
+        double cosX = LegacyTransformedBounds.cosDeg(45.0F);
+        double sinY = LegacyTransformedBounds.sinDeg(-90.0F);
+        double cosY = LegacyTransformedBounds.cosDeg(-90.0F);
+        return LegacyTransformedBounds.transform(bounds, (x, y, z, accumulator) -> {
+            double pivotY = y - 3.0D;
+            double rotatedY = pivotY * cosX - z * sinX + 3.0D;
+            double rotatedZ = pivotY * sinX + z * cosX;
+            double scaledX = x * 0.5D;
+            double scaledY = rotatedY * 0.5D;
+            double scaledZ = rotatedZ * 0.5D;
+            LegacyTransformedBounds.includeRotatedY(accumulator, scaledX, scaledY, scaledZ, sinY, cosY);
+        });
     }
 }

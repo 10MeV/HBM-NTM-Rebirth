@@ -4,5 +4,6 @@
   "fluid": { "fluid": "REDMUD", "amount": 75 },
   "input": { "ingredient": { "item": "hbm_ntm_rebirth:powder_calcium" } },
   "output": { "item": "hbm_ntm_rebirth:powder_cement", "count": 8 },
-  "productivity": 0.1
+  "productivity": 0.1,
+  "source_order": 21
 }

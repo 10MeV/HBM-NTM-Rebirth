@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:catalytic_converter"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:crackpipe"
+  }
+}

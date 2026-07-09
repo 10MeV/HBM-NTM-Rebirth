@@ -1,33 +1,75 @@
 package com.hbm.ntm.compat.jei;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.HbmFluidStack;
+import java.util.ArrayList;
 import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
+import mezz.jei.api.gui.drawable.IDrawableAnimated;
+import mezz.jei.api.gui.drawable.IDrawableAnimated.StartDirection;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 
 public final class HbmOilRecipeCategory implements IRecipeCategory<HbmOilRecipe> {
-    private static final int WIDTH = 168;
-    private static final int HEIGHT = 72;
+    private static final int REFINERY_WIDTH = 176;
+    private static final int REFINERY_HEIGHT = 85;
+    private static final ResourceLocation REFINERY_NEI_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/nei/gui_nei_refinery.png");
 
     private final RecipeType<HbmOilRecipe> type;
     private final Component title;
     private final IDrawable icon;
-    private final IDrawableStatic arrow;
+    private final IDrawableStatic background;
+    private final IDrawableStatic slotBackground;
+    private final IDrawableStatic machineBackground;
+    private final IDrawableAnimated refineryPower;
+    private final IDrawableAnimated refineryProgress;
+    private final ItemStack catalyst;
+    private final boolean legacyUniversal;
+    private final int width;
+    private final int height;
 
     HbmOilRecipeCategory(RecipeType<HbmOilRecipe> type, Component title, ItemLike catalyst, IGuiHelper guiHelper) {
+        this(type, title, catalyst, guiHelper, true);
+    }
+
+    HbmOilRecipeCategory(RecipeType<HbmOilRecipe> type, Component title, ItemLike catalyst, IGuiHelper guiHelper,
+            boolean legacyUniversal) {
         this.type = type;
         this.title = title;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
-        this.arrow = guiHelper.getRecipeArrow();
+        this.catalyst = new ItemStack(catalyst);
+        this.legacyUniversal = legacyUniversal;
+        if (legacyUniversal) {
+            this.width = LegacyNeiUniversalLayout.WIDTH;
+            this.height = LegacyNeiUniversalLayout.HEIGHT;
+            this.background = LegacyNeiUniversalLayout.background(guiHelper);
+            this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
+            this.machineBackground = LegacyNeiUniversalLayout.machineBackground(guiHelper);
+            this.refineryPower = null;
+            this.refineryProgress = null;
+        } else {
+            this.width = REFINERY_WIDTH;
+            this.height = REFINERY_HEIGHT;
+            this.background = guiHelper.createDrawable(REFINERY_NEI_TEXTURE, 0, 0, REFINERY_WIDTH, REFINERY_HEIGHT);
+            this.slotBackground = null;
+            this.machineBackground = null;
+            this.refineryPower = guiHelper.createAnimatedDrawable(
+                    guiHelper.createDrawable(REFINERY_NEI_TEXTURE, 0, 86, 16, 52),
+                    480, StartDirection.BOTTOM, false);
+            this.refineryProgress = guiHelper.createAnimatedDrawable(
+                    guiHelper.createDrawable(REFINERY_NEI_TEXTURE, 16, 86, 24, 17),
+                    48, StartDirection.LEFT, false);
+        }
     }
 
     @Override
@@ -42,12 +84,12 @@ public final class HbmOilRecipeCategory implements IRecipeCategory<HbmOilRecipe>
 
     @Override
     public int getWidth() {
-        return WIDTH;
+        return width;
     }
 
     @Override
     public int getHeight() {
-        return HEIGHT;
+        return height;
     }
 
     @Override
@@ -56,43 +98,86 @@ public final class HbmOilRecipeCategory implements IRecipeCategory<HbmOilRecipe>
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, HbmOilRecipe recipe, IFocusGroup focuses) {
-        for (int i = 0; i < recipe.itemInputs().size(); i++) {
-            addItemInput(builder, recipe.itemInputs().get(i), 4 + i * 18, 4);
-        }
-        for (int i = 0; i < recipe.fluidInputs().size(); i++) {
-            addFluidSlot(builder, recipe.fluidInputs().get(i), true, 4 + i * 18, 30);
-        }
+    public IDrawable getBackground() {
+        return background;
+    }
 
-        int fluidOutputStart = Math.max(108, 148 - recipe.fluidOutputs().size() * 18);
-        for (int i = 0; i < recipe.fluidOutputs().size(); i++) {
-            addFluidSlot(builder, recipe.fluidOutputs().get(i), false, fluidOutputStart + i * 18, 30);
+    @Override
+    public void setRecipe(IRecipeLayoutBuilder builder, HbmOilRecipe recipe, IFocusGroup focuses) {
+        if (legacyUniversal) {
+            setLegacyUniversalRecipe(builder, recipe);
+            return;
         }
-        int itemOutputStart = Math.max(108, 148 - recipe.itemOutputs().size() * 18);
-        for (int i = 0; i < recipe.itemOutputs().size(); i++) {
-            ItemStack stack = recipe.itemOutputs().get(i);
-            if (!stack.isEmpty()) {
-                builder.addOutputSlot(itemOutputStart + i * 18, 4)
-                        .addItemStack(stack)
-                        .setOutputSlotBackground();
-            }
-        }
+        setLegacyRefineryRecipe(builder, recipe);
     }
 
     @Override
     public void draw(HbmOilRecipe recipe, mezz.jei.api.gui.ingredient.IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        arrow.draw(guiGraphics, 82, 28);
+        if (!legacyUniversal) {
+            refineryPower.draw(guiGraphics, 3, 6);
+            refineryProgress.draw(guiGraphics, 78, 24);
+        }
     }
 
-    private static void addItemInput(IRecipeLayoutBuilder builder, Ingredient ingredient, int x, int y) {
-        builder.addInputSlot(x, y)
-                .addItemStacks(List.of(ingredient.getItems()))
-                .setStandardSlotBackground();
+    private void setLegacyUniversalRecipe(IRecipeLayoutBuilder builder, HbmOilRecipe recipe) {
+        List<List<ItemStack>> inputs = new ArrayList<>();
+        for (Ingredient ingredient : recipe.itemInputs()) {
+            inputs.add(List.of(ingredient.getItems()));
+        }
+        for (HbmFluidStack fluid : recipe.fluidInputs()) {
+            if (!fluid.isEmpty()) {
+                inputs.add(List.of(LegacyNeiUniversalLayout.fluidIcon(fluid)));
+            }
+        }
+        LegacyNeiUniversalLayout.addInputSlots(builder, slotBackground, inputs);
+
+        List<List<ItemStack>> outputs = new ArrayList<>();
+        for (ItemStack stack : recipe.itemOutputs()) {
+            if (!stack.isEmpty()) {
+                outputs.add(List.of(stack));
+            }
+        }
+        for (HbmFluidStack fluid : recipe.fluidOutputs()) {
+            if (!fluid.isEmpty()) {
+                outputs.add(List.of(LegacyNeiUniversalLayout.fluidIcon(fluid)));
+            }
+        }
+        LegacyNeiUniversalLayout.addOutputSlots(builder, slotBackground, outputs);
+        LegacyNeiUniversalLayout.addMachineCatalyst(builder, machineBackground, catalyst);
     }
 
-    private static void addFluidSlot(IRecipeLayoutBuilder builder, HbmFluidStack hbmStack,
-            boolean input, int x, int y) {
-        JeiFluidSlots.addFluidSlot(builder, hbmStack, input, x, y);
+    private void setLegacyRefineryRecipe(IRecipeLayoutBuilder builder, HbmOilRecipe recipe) {
+        if (!recipe.fluidInputs().isEmpty()) {
+            HbmFluidStack input = recipe.fluidInputs().get(0);
+            if (!input.isEmpty()) {
+                builder.addInputSlot(48, 24)
+                        .addItemStack(LegacyNeiUniversalLayout.fluidIcon(input));
+            }
+        }
+
+        int[][] fluidOutputCoords = {
+                {111, 6},
+                {129, 15},
+                {111, 24},
+                {129, 33}
+        };
+        int fluidOutputs = Math.min(recipe.fluidOutputs().size(), fluidOutputCoords.length);
+        for (int i = 0; i < fluidOutputs; i++) {
+            HbmFluidStack fluid = recipe.fluidOutputs().get(i);
+            if (!fluid.isEmpty()) {
+                int[] pos = fluidOutputCoords[i];
+                builder.addOutputSlot(pos[0], pos[1])
+                        .addItemStack(LegacyNeiUniversalLayout.fluidIcon(fluid));
+            }
+        }
+
+        if (!recipe.itemOutputs().isEmpty()) {
+            ItemStack solid = recipe.itemOutputs().get(0);
+            if (!solid.isEmpty()) {
+                builder.addOutputSlot(111, 42)
+                        .addItemStack(solid);
+            }
+        }
     }
 }

@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SCS",
+    "SIS",
+    "BEB"
+  ],
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:steel_scaffold"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "I": {
+      "item": "minecraft:iron_bars"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:struct_launcher"
+    },
+    "E": {
+      "item": "hbm_ntm_rebirth:battery_lead"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:struct_launcher_core"
+  }
+}

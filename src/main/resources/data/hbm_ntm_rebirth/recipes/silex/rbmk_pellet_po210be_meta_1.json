@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_po210be"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_po210be",
+      "legacy_meta": 1
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "ir",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_polonium",
+      "weight": 35
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_beryllium",
+      "weight": 35
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_lead",
+      "weight": 15
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_coal_tiny",
+      "weight": 15
+    }
+  ],
+  "source_order": 111
+}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:block_niter"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:niter",
+    "count": 9
+  }
+}

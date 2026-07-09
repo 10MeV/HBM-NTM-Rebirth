@@ -214,7 +214,7 @@ public class ThresherBlockEntity extends HbmFluidNetworkBlockEntity
                 pos.getZ() + 0.5D - dir.getStepZ());
         Vec3 upperArm = new Vec3(-dir.getStepX() * 4.0D, 0.0D, -dir.getStepZ() * 4.0D);
         Vec3 lowerArm = new Vec3(-dir.getStepX() * 4.0D, 0.0D, -dir.getStepZ() * 4.0D);
-        float armAngle = (float) Math.toRadians(MAX_ANGLE - angle);
+        float armAngle = (MAX_ANGLE - angle) * Mth.DEG_TO_RAD;
         if (dir.getStepZ() != 0) {
             upperArm = upperArm.xRot(armAngle);
             lowerArm = lowerArm.xRot(-armAngle);

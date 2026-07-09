@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.bscco",
+  "fallback_name": "BSCCO Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_bscco" },
+  "frequency": 3,
+  "input": [
+    { "material": "Bismuth", "amount": 16 },
+    { "material": "Strontium", "amount": 16 },
+    { "material": "Calcium", "amount": 16 },
+    { "material": "Copper", "amount": 24 }
+  ],
+  "output": [
+    { "material": "BSCCO", "amount": 72 }
+  ],
+  "source_order": 12
+}

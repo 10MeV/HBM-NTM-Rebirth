@@ -1,21 +1,47 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.50bmgbypass",
   "duration": 100,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "item": "hbm_ntm_rebirth:casing_large_steel" }, "count": 2, "legacy_id": "hbm:casing", "legacy_meta": 3 },
-    { "ingredient": { "tag": "forge:dusts/any_smokeless" }, "count": 24, "legacy_ore": "dustAnySmokeless" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:item_secret_selenium_steel" }, "legacy_id": "hbm:item_secret", "legacy_meta": 2 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:black_diamond" } }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:ammo_secret_bmg50_black", "count": 12 }
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:casing_large_steel"
+      },
+      "legacy_id": "hbm:casing",
+      "legacy_meta": 3
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:dusts/any_smokeless"
+      },
+      "legacy_ore": "dustAnySmokeless"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:item_secret_selenium_steel"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:black_diamond"
+      }
+    }
   ],
+  "internal_name": "ass.50bmgbypass",
   "output_fluids": [],
+  "output_items": [
+    {
+      "count": 12,
+      "item": "hbm_ntm_rebirth:ammo_secret_bmg50_black"
+    }
+  ],
   "pools": [
     "secret.psalm"
   ],
+  "power": 100,
   "source_order": 316
 }

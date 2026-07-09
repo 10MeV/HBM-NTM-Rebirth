@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/copper" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_copper"
+    },
+    "legacy_id": "hbm:crystal_copper",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_copper", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_copper", "count": 2 },
-    { "item": "hbm_ntm_rebirth:sulfur" },
-    { "item": "hbm_ntm_rebirth:powder_cobalt_tiny" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_copper"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_copper"
+    },
+    {
+      "item": "hbm_ntm_rebirth:sulfur"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_cobalt_tiny"
+    }
+  ],
+  "source_order": 42
 }

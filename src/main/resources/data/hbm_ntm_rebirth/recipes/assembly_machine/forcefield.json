@@ -68,6 +68,7 @@
       "item": "hbm_ntm_rebirth:machine_forcefield"
     }
   ],
+  "pools": [],
   "power": 100,
-  "source_order": 93
+  "source_order": 122
 }

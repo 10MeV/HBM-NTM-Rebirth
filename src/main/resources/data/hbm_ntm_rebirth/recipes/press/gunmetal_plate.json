@@ -1,10 +1,15 @@
 {
   "type": "hbm_ntm_rebirth:press",
-  "stamp": "plate",
-  "ingredient": {
-    "item": "hbm_ntm_rebirth:ingot_gunmetal"
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/gun_metal"
+    },
+    "legacy_ore": "ingotGunMetal"
   },
   "result": {
     "item": "hbm_ntm_rebirth:plate_gunmetal"
-  }
+  },
+  "source_order": 20,
+  "stamp": "plate"
 }

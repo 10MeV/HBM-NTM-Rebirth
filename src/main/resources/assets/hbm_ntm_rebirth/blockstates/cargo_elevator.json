@@ -1,8 +1,12 @@
 {
   "variants": {
-    "facing=north": { "model": "hbm_ntm_rebirth:block/cargo_elevator" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/cargo_elevator", "y": 90 },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/cargo_elevator", "y": 180 },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/cargo_elevator", "y": 270 }
+    "facing=north,platform=false": { "model": "hbm_ntm_rebirth:block/cargo_elevator" },
+    "facing=east,platform=false": { "model": "hbm_ntm_rebirth:block/cargo_elevator", "y": 90 },
+    "facing=south,platform=false": { "model": "hbm_ntm_rebirth:block/cargo_elevator", "y": 180 },
+    "facing=west,platform=false": { "model": "hbm_ntm_rebirth:block/cargo_elevator", "y": 270 },
+    "facing=north,platform=true": { "model": "hbm_ntm_rebirth:block/cargo_elevator_base" },
+    "facing=east,platform=true": { "model": "hbm_ntm_rebirth:block/cargo_elevator_base", "y": 90 },
+    "facing=south,platform=true": { "model": "hbm_ntm_rebirth:block/cargo_elevator_base", "y": 180 },
+    "facing=west,platform=true": { "model": "hbm_ntm_rebirth:block/cargo_elevator_base", "y": 270 }
   }
 }

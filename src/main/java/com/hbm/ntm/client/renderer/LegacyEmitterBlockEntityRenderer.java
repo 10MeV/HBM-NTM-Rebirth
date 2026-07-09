@@ -7,13 +7,13 @@ import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import java.util.List;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
 public class LegacyEmitterBlockEntityRenderer implements BlockEntityRenderer<LegacyEmitterBlockEntity> {
@@ -23,6 +23,13 @@ public class LegacyEmitterBlockEntityRenderer implements BlockEntityRenderer<Leg
     @Override
     public boolean shouldRenderOffScreen(LegacyEmitterBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(LegacyEmitterBlockEntity blockEntity, Vec3 cameraPos) {
+        return hasVisibleBeam(blockEntity)
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -37,25 +44,38 @@ public class LegacyEmitterBlockEntityRenderer implements BlockEntityRenderer<Leg
         if (!(state.getBlock() instanceof LegacyEmitterBlock) || !state.hasProperty(LegacyEmitterBlock.FACING)) {
             return;
         }
-        Level level = blockEntity.getLevel();
-        long gameTime = level == null ? 0L : level.getGameTime();
-        List<LegacyEmitterBeamRenderer.EmitterBeamPlan> plans = LegacyEmitterBeamRenderer.beamPlans(
-                blockEntity.getBeam(), blockEntity.getGirth(), blockEntity.getEffect(), blockEntity.getColor(),
-                gameTime, partialTick);
-        if (plans.isEmpty()) {
+        int beam = blockEntity.getBeam();
+        if (LegacyEmitterBeamRenderer.range(beam) <= 0) {
             return;
         }
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            Level level = blockEntity.getLevel();
+            long gameTime = level == null ? 0L : level.getGameTime();
+            float girth = blockEntity.getGirth();
+            int effect = blockEntity.getEffect();
+            int color = blockEntity.getColor();
 
-        poseStack.pushPose();
-        poseStack.translate(LegacyEmitterBeamRenderer.MODEL_CENTER_X, 0.0D,
-                LegacyEmitterBeamRenderer.MODEL_CENTER_Z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(LegacyEmitterBeamRenderer.BASE_YAW_DEGREES));
-        applyLegacyFacingTransform(poseStack, state.getValue(LegacyEmitterBlock.FACING));
-        poseStack.translate(0.0D, LegacyEmitterBeamRenderer.FINAL_BEAM_OFFSET_Y,
-                LegacyEmitterBeamRenderer.FINAL_BEAM_OFFSET_Z);
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                queuedPose -> LegacyEmitterBeamRenderer.renderPlans(plans, queuedPose, buffer));
-        poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(LegacyEmitterBeamRenderer.MODEL_CENTER_X, 0.0D,
+                    LegacyEmitterBeamRenderer.MODEL_CENTER_Z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(LegacyEmitterBeamRenderer.BASE_YAW_DEGREES));
+            applyLegacyFacingTransform(poseStack, state.getValue(LegacyEmitterBlock.FACING));
+            poseStack.translate(0.0D, LegacyEmitterBeamRenderer.FINAL_BEAM_OFFSET_Y,
+                    LegacyEmitterBeamRenderer.FINAL_BEAM_OFFSET_Z);
+            LegacyMachineEffectPresenter.enqueueEmitterBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                    beam, girth, effect, color, gameTime, partialTick);
+            poseStack.popPose();
+        }
+    }
+
+    private static boolean hasVisibleBeam(LegacyEmitterBlockEntity blockEntity) {
+        BlockState state = blockEntity.getBlockState();
+        return state.getBlock() instanceof LegacyEmitterBlock
+                && state.hasProperty(LegacyEmitterBlock.FACING)
+                && LegacyEmitterBeamRenderer.range(blockEntity.getBeam()) > 0;
     }
 
     private static void applyLegacyFacingTransform(PoseStack poseStack, Direction direction) {

@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:gems/sodalite"
+    },
+    "count": 1,
+    "legacy_ore": "gemSodalite"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:gem_volcanic"
+  },
+  "source_order": 32
+}

@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:syringe_empty"
+    },
+    "N": {
+      "tag": "forge:nuggets/pu238"
+    },
+    "P": {
+      "tag": "forge:nuggets/pu239"
+    },
+    "S": {
+      "tag": "forge:dusts/sulfur"
+    }
+  },
+  "pattern": [
+    "SPS",
+    "NCN",
+    "SPS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:syringe_awesome"
+  }
+}

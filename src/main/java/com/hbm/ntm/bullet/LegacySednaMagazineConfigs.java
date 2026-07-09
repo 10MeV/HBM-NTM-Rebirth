@@ -377,6 +377,10 @@ public final class LegacySednaMagazineConfigs {
         return Optional.ofNullable(BY_KEY.get(legacyKey));
     }
 
+    public static SednaMagazineConfig byKeyOrNull(String legacyKey) {
+        return BY_KEY.get(legacyKey);
+    }
+
     public static Collection<SednaMagazineConfig> byOwner(String legacyOwnerName) {
         List<SednaMagazineConfig> configs = BY_OWNER.get(legacyOwnerName);
         return configs == null ? List.of() : Collections.unmodifiableList(configs);

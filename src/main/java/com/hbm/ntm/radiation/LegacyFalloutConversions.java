@@ -110,6 +110,7 @@ public final class LegacyFalloutConversions {
         defaults.add(entry(LegacyFalloutConversions::isLegacyVanillaLeaves, 60.0D, 100.0D, false, legacy("waste_leaves", 1)));
 
         defaults.add(entry(matchesBlock(Blocks.MOSSY_COBBLESTONE), 100.0D, false, block(Blocks.COAL_ORE, 1)));
+        defaults.add(entry(matchesLegacy("glyphid_base"), 100.0D, false, glyphidVariant("glyphid_base", 2, 1)));
         defaults.add(entry(matchesLegacy("glyphid_spawner"), 100.0D, false, glyphidSpawner(2, 1)));
         defaults.add(entry(matchesLegacy("ore_nether_uranium"), 100.0D, false,
                 legacy("ore_nether_schrabidium", 1),
@@ -135,6 +136,7 @@ public final class LegacyFalloutConversions {
             }
             defaults.add(entry(matchesBlock(Blocks.DIAMOND_ORE), 0.0D, maxDistance, true, legacyLevel("ore_sellafield_radgem", level, 1)));
             defaults.add(entry(matchesBlock(Blocks.BEDROCK), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
+            defaults.add(entry(matchesLegacy("ore_bedrock"), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
             defaults.add(entry(matchesLegacy("ore_bedrock_oil"), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
             defaults.add(entry(matchesLegacy("sellafield_bedrock"), 0.0D, maxDistance, true, bedrockSellafield(level, 1)));
             defaults.add(entry(LegacyFalloutConversions::isLegacyIronMaterial, 0.0D, maxDistance, true, slaked(level, 1)));
@@ -401,6 +403,8 @@ public final class LegacyFalloutConversions {
         templateEntries.add(templateEntry("matchesMaterial", "vine", 0.0D, WOOD_EFFECT_RANGE, false, outcome("minecraft:air", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:leaves", 60.0D, 100.0D, false, outcome("hbm_ntm_rebirth:waste_leaves", 0, 1)));
         templateEntries.add(templateEntry("matchesBlock", "minecraft:mossy_cobblestone", 0.0D, 100.0D, false, outcome("minecraft:coal_ore", 0, 1)));
+        templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:glyphid_base", 0.0D, 100.0D, false,
+                outcome("hbm_ntm_rebirth:glyphid_base", 2, 1)));
         templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:glyphid_spawner", 0.0D, 100.0D, false,
                 outcome("hbm_ntm_rebirth:glyphid_spawner", 2, 1)));
         templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_nether_uranium", 0.0D, 100.0D, false,
@@ -423,6 +427,8 @@ public final class LegacyFalloutConversions {
             templateEntries.add(templateEntry("matchesBlock", "minecraft:diamond_ore", 0.0D, maxDistance, true,
                     outcome("hbm_ntm_rebirth:ore_sellafield_radgem", level, 1)));
             templateEntries.add(templateEntry("matchesBlock", "minecraft:bedrock", 0.0D, maxDistance, true,
+                    outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
+            templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_bedrock", 0.0D, maxDistance, true,
                     outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
             templateEntries.add(templateEntry("matchesBlock", "hbm_ntm_rebirth:ore_bedrock_oil", 0.0D, maxDistance, true,
                     outcome("hbm_ntm_rebirth:sellafield_bedrock", level, 1)));
@@ -526,8 +532,12 @@ public final class LegacyFalloutConversions {
     }
 
     private static WeightedOutcome glyphidSpawner(int variant, int weight) {
+        return glyphidVariant("glyphid_spawner", variant, weight);
+    }
+
+    private static WeightedOutcome glyphidVariant(String legacyName, int variant, int weight) {
         return new WeightedOutcome(weight, context -> {
-            BlockState state = legacyState("glyphid_spawner");
+            BlockState state = legacyState(legacyName);
             return state == null ? null : LegacyGlyphidSpawnerBlock.withLegacyVariant(state, variant);
         });
     }

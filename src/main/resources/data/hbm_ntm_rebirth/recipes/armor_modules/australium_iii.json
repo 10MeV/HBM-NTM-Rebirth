@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "tag": "forge:ingots/australium"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "S": {
+      "tag": "forge:welded_plates/steel"
+    },
+    "W": {
+      "tag": "forge:dense_wires/gold"
+    }
+  },
+  "pattern": [
+    "WSW",
+    "PAP",
+    "SPS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:australium_iii"
+  },
+  "show_notification": true
+}

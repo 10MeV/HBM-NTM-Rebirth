@@ -20,7 +20,7 @@
     {
       "count": 4,
       "ingredient": {
-        "tag": "forge:pipe_steel"
+        "tag": "forge:pipes/steel"
       },
       "legacy_ore": "pipeSteel"
     }

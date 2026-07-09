@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.plate.iron",
+  "duration": 100,
+  "power": 100,
+  "input_items": [
+    { "ingredient": { "tag": "forge:cast_plates/iron" }, "count": 2, "legacy_ore": "plateTripleIron" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:plate_welded_iron" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 7
+}

@@ -1,0 +1,34 @@
+newmtl top
+Kd 0.8 0.8 0.8
+Ka 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+illum 2
+map_Kd #top
+
+newmtl side
+Kd 0.8 0.8 0.8
+Ka 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+illum 2
+map_Kd #side
+
+newmtl bottom
+Kd 0.8 0.8 0.8
+Ka 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+illum 2
+map_Kd #bottom
+
+newmtl inner_top
+Kd 0.8 0.8 0.8
+Ka 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+illum 2
+map_Kd #inner_top
+
+newmtl inner_side
+Kd 0.8 0.8 0.8
+Ka 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+illum 2
+map_Kd #inner_side

@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "custom_localization": true,
+  "duration": 600,
+  "input_fluids": [
+    {
+      "amount": 8000,
+      "fluid": "hbm_ntm_rebirth:lubricant"
+    }
+  ],
+  "input_items": [],
+  "internal_name": "chem.lubeelectrodes",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:arc_electrode_graphite"
+    }
+  ],
+  "pools": [
+    "alt..electrodes"
+  ],
+  "power": 100,
+  "source_order": 48
+}

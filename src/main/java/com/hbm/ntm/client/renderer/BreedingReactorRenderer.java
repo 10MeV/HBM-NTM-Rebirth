@@ -2,7 +2,6 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.BreedingReactorBlockEntity;
-import com.hbm.ntm.client.obj.LegacySparkRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
@@ -12,15 +11,30 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReactorBlockEntity> {
+    private static final float[] LEGACY_SPARK_YAW_RADIANS = {
+            0.0F,
+            ((float) Math.PI) * Mth.DEG_TO_RAD,
+            ((float) (Math.PI * 2.0D)) * Mth.DEG_TO_RAD
+    };
+
     public BreedingReactorRenderer(BlockEntityRendererProvider.Context context) {
     }
 
     @Override
     public boolean shouldRenderOffScreen(BreedingReactorBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(BreedingReactorBlockEntity blockEntity, Vec3 cameraPos) {
+        return blockEntity.getProgress() > 0.0F
+                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -54,19 +68,13 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
             return;
         }
         int seed = (int) ((System.currentTimeMillis() % 10_000L) / 100L);
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                queuedPose -> renderLegacySparks(seed, queuedPose, buffer));
-    }
-
-    private static void renderLegacySparks(int seed, PoseStack poseStack, MultiBufferSource buffer) {
-        for (int i = 0; i < 3; i++) {
-            poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (Math.PI * i)));
-            LegacySparkRenderer.renderSpark(poseStack, buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
-                    seed + i, 0.0D, 1.5625D, 0.0D,
-                    0.15F, 3, 4, 0x00FF00, 0xFFFFFF);
-            poseStack.popPose();
-        }
+        LegacyMachineEffectPresenter.enqueueSparkGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, group -> {
+                    for (int i = 0; i < LEGACY_SPARK_YAW_RADIANS.length; i++) {
+                        group.addRadians(seed + i, 0.0D, 1.5625D, 0.0D, LEGACY_SPARK_YAW_RADIANS[i],
+                                0.15F, 3, 4, 0x00FF00, 0xFFFFFF);
+                    }
+                });
     }
 
     private static float yRotation(Direction facing) {

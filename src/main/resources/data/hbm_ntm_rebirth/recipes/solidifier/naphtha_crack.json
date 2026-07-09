@@ -5,6 +5,7 @@
                },
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:naphtha_crack",
-                  "amount":  41000
-              }
+                  "amount":  84000
+              },
+    "source_order":  27
 }

@@ -2,6 +2,7 @@ package com.hbm.ntm.armor;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.hbm.items.armor.ItemModObsidian;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.BulletConfigSyncRegistry;
@@ -149,7 +150,8 @@ public final class ArmorModEvents {
             return;
         }
         ItemStack cladding = ArmorModHandler.pryMod(stack, ArmorModHandler.cladding);
-        if (cladding.getItem() instanceof ArmorModItems.ObsidianCladding) {
+        if (cladding.getItem() instanceof ItemModObsidian
+                || cladding.getItem() instanceof ArmorModItems.ObsidianCladding) {
             event.getEntity().setInvulnerable(true);
         }
     }

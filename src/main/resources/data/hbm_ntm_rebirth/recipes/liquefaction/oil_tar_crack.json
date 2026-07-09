@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:tar/crack"
+  "source_order": 5,
+  "input": {
+    "ingredient": {
+      "tag": "forge:tar/crack"
+    },
+    "count": 1,
+    "legacy_ore": "cracktar"
   },
   "output": {
     "amount": 100,

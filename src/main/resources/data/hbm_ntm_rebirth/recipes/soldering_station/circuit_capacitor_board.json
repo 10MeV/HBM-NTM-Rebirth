@@ -1,0 +1,37 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor_tantalium"
+      },
+      "count": 3
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_pcb"
+      }
+    }
+  ],
+  "solder": [
+    {
+      "ingredient": {
+        "tag": "forge:wires/lead"
+      },
+      "count": 3,
+      "legacy_ore": "wireFineLead"
+    }
+  ],
+  "fluid": {
+    "fluid": "PEROXIDE",
+    "amount": 250
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:circuit_capacitor_board"
+  },
+  "duration": 200,
+  "consumption": 300,
+  "source_order": 3
+}

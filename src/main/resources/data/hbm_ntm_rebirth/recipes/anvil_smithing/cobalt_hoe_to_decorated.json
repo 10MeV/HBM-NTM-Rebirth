@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "kind": "hot",
+  "left": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:cobalt_hoe"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:cobalt_decorated_hoe",
+    "nbt": "{Damage:0}"
+  },
+  "right": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:ingot_meteorite"
+    }
+  },
+  "source_order": 35,
+  "tier": 3
+}

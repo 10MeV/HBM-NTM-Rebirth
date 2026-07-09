@@ -1,5 +1,27 @@
 {
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/rbmk/crane_console.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [1.0, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Console_Coonsole": true,
+    "Joystick": false,
+    "Meter1": false,
+    "Meter2": false,
+    "Lamp1": false,
+    "Lamp2": false,
+    "Shotgun": false,
+    "Shotgun1": false,
+    "MiniNuke": false
+  },
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/rbmk/rbmk_crane_console"
+    "particle": "hbm_ntm_rebirth:block/rbmk/rbmk_crane_console",
+    "default": "hbm_ntm_rebirth:models/machines/crane_console"
   }
 }

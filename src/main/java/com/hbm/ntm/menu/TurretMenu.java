@@ -56,6 +56,7 @@ public class TurretMenu extends AbstractContainerMenu {
         addSlot(new SlotItemHandler(items, TurretBlockEntityBase.SLOT_BATTERY, 152, 99));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 140, 198);
         addDataSlots();
+        blockEntity.openInventory();
     }
 
     public TurretBlockEntityBase getBlockEntity() {
@@ -133,7 +134,8 @@ public class TurretMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity,
+                TurretBlockEntityBase.LEGACY_USE_DISTANCE_SQR);
     }
 
     @Override
@@ -158,6 +160,12 @@ public class TurretMenu extends AbstractContainerMenu {
             HbmInventoryMenuHelper.finishQuickMove(slot, stack);
         }
         return result;
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        blockEntity.closeInventory();
     }
 
     private void addDataSlots() {

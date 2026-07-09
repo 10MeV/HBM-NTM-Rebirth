@@ -7,5 +7,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:watz",
                   "amount":  4000
-              }
+              },
+    "source_order":  25
 }

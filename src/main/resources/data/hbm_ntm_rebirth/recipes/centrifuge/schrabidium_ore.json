@@ -1,10 +1,25 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/schrabidium" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/schrabidium"
+    },
+    "legacy_ore": "oreSchrabidium"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_schrabidium" },
-    { "item": "hbm_ntm_rebirth:powder_schrabidium" },
-    { "item": "hbm_ntm_rebirth:nugget_solinium" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_schrabidium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_schrabidium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_solinium"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 13
 }

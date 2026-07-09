@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "left": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:gem_alexandrite"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:flask_infusion"
+  },
+  "right": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bottle_nuka"
+    }
+  },
+  "source_order": 37,
+  "tier": 4
+}

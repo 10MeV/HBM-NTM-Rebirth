@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 100,
+  "input_fluids": [
+    {
+      "amount": 200,
+      "fluid": "hbm_ntm_rebirth:lightoil"
+    },
+    {
+      "amount": 200,
+      "fluid": "hbm_ntm_rebirth:mercury"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_desh_mix"
+      }
+    }
+  ],
+  "internal_name": "chem.desh",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_desh"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 33
+}

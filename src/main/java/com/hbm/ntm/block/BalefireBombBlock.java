@@ -34,7 +34,7 @@ public class BalefireBombBlock extends HorizontalMachineBlock implements EntityB
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.INVISIBLE;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable

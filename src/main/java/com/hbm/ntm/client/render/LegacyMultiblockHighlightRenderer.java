@@ -3,10 +3,10 @@ package com.hbm.ntm.client.render;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.client.obj.LegacyLineRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
-import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -19,9 +19,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderHighlightEvent;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public final class LegacyMultiblockHighlightRenderer {
@@ -90,14 +87,15 @@ public final class LegacyMultiblockHighlightRenderer {
         double offsetZ = corePos.getZ() - cameraPos.z;
 
         PoseStack poseStack = event.getPoseStack();
-        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>();
+        VertexConsumer consumer = LegacyLineRenderer.consumer(event.getMultiBufferSource(),
+                LegacyLineRenderer.DEFAULT_LINE_WIDTH, LegacyTexturedRenderMode.CUTOUT_NO_CULL, ALPHA);
+        PoseStack.Pose pose = poseStack.last();
         for (AABB box : shape.toAabbs()) {
-            AABB moved = box.inflate(EXPAND).move(offsetX, offsetY, offsetZ);
-            lines.addAll(LegacyLineRenderer.boxLines(moved.minX, moved.minY, moved.minZ,
-                    moved.maxX, moved.maxY, moved.maxZ, COLOR, ALPHA));
+            LegacyLineRenderer.box(consumer, pose,
+                    box.minX - EXPAND + offsetX, box.minY - EXPAND + offsetY, box.minZ - EXPAND + offsetZ,
+                    box.maxX + EXPAND + offsetX, box.maxY + EXPAND + offsetY, box.maxZ + EXPAND + offsetZ,
+                    COLOR, ALPHA);
         }
-        LegacyLineRenderer.lines(poseStack, event.getMultiBufferSource(), LegacyTexturedRenderMode.CUTOUT_NO_CULL,
-                LegacyLineRenderer.DEFAULT_LINE_WIDTH, lines);
     }
 
     private LegacyMultiblockHighlightRenderer() {

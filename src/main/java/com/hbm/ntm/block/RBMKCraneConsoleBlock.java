@@ -59,7 +59,7 @@ public class RBMKCraneConsoleBlock extends LegacyXrMultiblockBlock implements En
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override

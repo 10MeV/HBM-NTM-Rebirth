@@ -1,10 +1,13 @@
 {
   "type": "hbm_ntm_rebirth:outgasser",
+  "source_order": 18,
   "input": {
     "ingredient": {
       "item": "hbm_ntm_rebirth:oil_tar_wax"
     },
-    "count": 1
+    "count": 1,
+    "legacy_id": "hbm:oil_tar",
+    "legacy_meta": 4
   },
   "fluid_output": {
     "fluid": "RADIOSOLVENT",

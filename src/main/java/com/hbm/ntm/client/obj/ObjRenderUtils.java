@@ -27,6 +27,8 @@ public final class ObjRenderUtils {
     private static final Direction[] DIRECTIONS = Direction.values();
     private static final ThreadLocal<RandomSource> BAKED_MODEL_RANDOM =
             ThreadLocal.withInitial(() -> RandomSource.create(BAKED_MODEL_RANDOM_SEED));
+    private static final ThreadLocal<Vector3f> LEGACY_SHADOW_NORMAL =
+            ThreadLocal.withInitial(Vector3f::new);
 
     public static void renderBlockModel(
             BakedModel model,
@@ -59,10 +61,12 @@ public final class ObjRenderUtils {
         float red = Mth.clamp(((float) (color >> 16 & 255) / 255.0F) * lightMultiplier, 0.0F, 1.0F);
         float green = Mth.clamp(((float) (color >> 8 & 255) / 255.0F) * lightMultiplier, 0.0F, 1.0F);
         float blue = Mth.clamp(((float) (color & 255) / 255.0F) * lightMultiplier, 0.0F, 1.0F);
+        PoseStack.Pose pose = poseStack.last();
         if (legacyShadow) {
-            red *= legacyShadowFactor(poseStack);
-            green *= legacyShadowFactor(poseStack);
-            blue *= legacyShadowFactor(poseStack);
+            float shadow = legacyShadowFactor(pose, Direction.UP);
+            red *= shadow;
+            green *= shadow;
+            blue *= shadow;
         }
         RandomSource random = bakedModelRandom();
 
@@ -71,7 +75,7 @@ public final class ObjRenderUtils {
                     ? overrideRenderType
                     : RenderTypeHelper.getEntityRenderType(renderType, false);
             modelRenderer.renderModel(
-                    poseStack.last(),
+                    pose,
                     buffer.getBuffer(effectiveType),
                     state,
                     model,
@@ -120,11 +124,15 @@ public final class ObjRenderUtils {
         VertexConsumer consumer = buffer.getBuffer(renderType);
         BlockState dummyState = Blocks.AIR.defaultBlockState();
         RandomSource random = bakedModelRandom();
+        PoseStack.Pose pose = poseStack.last();
+        float baseRed = hasColorOverride ? (float) (colorOverride >> 16 & 255) / 255.0F : 1.0F;
+        float baseGreen = hasColorOverride ? (float) (colorOverride >> 8 & 255) / 255.0F : 1.0F;
+        float baseBlue = hasColorOverride ? (float) (colorOverride & 255) / 255.0F : 1.0F;
 
         for (Direction direction : DIRECTIONS) {
-            renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, direction, random, ModelData.EMPTY, renderType), packedLight, packedOverlay, lightMultiplier, colorOverride, hasColorOverride, legacyShadow);
+            renderQuadList(pose, consumer, model.getQuads(dummyState, direction, random, ModelData.EMPTY, renderType), packedLight, packedOverlay, lightMultiplier, baseRed, baseGreen, baseBlue, legacyShadow);
         }
-        renderQuadList(poseStack.last(), consumer, model.getQuads(dummyState, null, random, ModelData.EMPTY, renderType), packedLight, packedOverlay, lightMultiplier, colorOverride, hasColorOverride, legacyShadow);
+        renderQuadList(pose, consumer, model.getQuads(dummyState, null, random, ModelData.EMPTY, renderType), packedLight, packedOverlay, lightMultiplier, baseRed, baseGreen, baseBlue, legacyShadow);
     }
 
     private static void renderQuadList(
@@ -134,28 +142,23 @@ public final class ObjRenderUtils {
             int packedLight,
             int packedOverlay,
             float lightMultiplier,
-            int colorOverride,
-            boolean hasColorOverride,
+            float baseRed,
+            float baseGreen,
+            float baseBlue,
             boolean legacyShadow) {
         for (BakedQuad quad : quads) {
             float shadow = legacyShadow ? legacyShadowFactor(pose, quad.getDirection()) : 1.0F;
-            float red = hasColorOverride ? (float) (colorOverride >> 16 & 255) / 255.0F : 1.0F;
-            float green = hasColorOverride ? (float) (colorOverride >> 8 & 255) / 255.0F : 1.0F;
-            float blue = hasColorOverride ? (float) (colorOverride & 255) / 255.0F : 1.0F;
-            red = Mth.clamp(red * lightMultiplier * shadow, 0.0F, 1.0F);
-            green = Mth.clamp(green * lightMultiplier * shadow, 0.0F, 1.0F);
-            blue = Mth.clamp(blue * lightMultiplier * shadow, 0.0F, 1.0F);
+            float red = Mth.clamp(baseRed * lightMultiplier * shadow, 0.0F, 1.0F);
+            float green = Mth.clamp(baseGreen * lightMultiplier * shadow, 0.0F, 1.0F);
+            float blue = Mth.clamp(baseBlue * lightMultiplier * shadow, 0.0F, 1.0F);
             consumer.putBulkData(pose, quad, red, green, blue, packedLight, packedOverlay);
         }
     }
 
-    private static float legacyShadowFactor(PoseStack poseStack) {
-        return legacyShadowFactor(poseStack.last(), Direction.UP);
-    }
-
     private static float legacyShadowFactor(PoseStack.Pose pose, Direction direction) {
-        Vector3f normal = direction.step();
-        normal.mul(pose.normal());
+        Vector3f normal = LEGACY_SHADOW_NORMAL.get()
+                .set((float) direction.getStepX(), (float) direction.getStepY(), (float) direction.getStepZ())
+                .mul(pose.normal());
         float brightness = (normal.y() + 0.7F) * 0.9F - Math.abs(normal.x()) * 0.1F + Math.abs(normal.z()) * 0.1F;
         return Math.max(0.45F, brightness);
     }

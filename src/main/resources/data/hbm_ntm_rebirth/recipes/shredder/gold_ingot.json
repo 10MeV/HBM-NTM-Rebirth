@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ingots/gold" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_gold" }
+  "output": { "item": "hbm_ntm_rebirth:powder_gold" },
+  "source_order": 1000
 }

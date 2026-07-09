@@ -1,0 +1,39 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "duration": 600,
+  "ignitionTemp": 1000000,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/dineutronium"
+      },
+      "legacy_ore": "ingotDineutronium"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_spark_mix"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/workers_alloy"
+      },
+      "legacy_ore": "ingotWorkersAlloy"
+    }
+  ],
+  "internal_name": "plsm.platednt",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:plate_dineutronium"
+    }
+  ],
+  "pools": [],
+  "power": 10000000,
+  "source_order": 105
+}

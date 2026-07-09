@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:ingot_schrabidium"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:pellet_charged"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:starmetal_legs"
+    }
+  },
+  "pattern": [
+    "EEE",
+    "ESE",
+    "EPE"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:schrabidium_legs"
+  },
+  "show_notification": true
+}

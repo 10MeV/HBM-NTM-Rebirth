@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:cyclotron",
+  "particle": { "ingredient": { "item": "hbm_ntm_rebirth:part_carbon" }, "count": 1 },
+  "input": { "ingredient": { "tag": "forge:dusts/sulfur" }, "count": 1, "legacy_ore": "dustSulfur" },
+  "output": { "item": "hbm_ntm_rebirth:powder_titanium" },
+  "antimatter": 10,
+  "source_order": 21
+}

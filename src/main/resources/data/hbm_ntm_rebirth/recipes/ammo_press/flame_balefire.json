@@ -23,6 +23,7 @@
         "amount": 1000
       },
       "count": 1,
+      "legacy_ore": "container1000balefire",
       "fluid_container": {
         "fluid": "hbm_ntm_rebirth:balefire",
         "amount": 1000

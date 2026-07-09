@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.block.WatzEndBlock;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
 import com.hbm.ntm.fluid.FluidType;
@@ -15,7 +16,6 @@ import com.hbm.ntm.item.WatzPelletItem;
 import com.hbm.ntm.menu.WatzReactorMenu;
 import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.particle.ParticleUtil;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.recipe.WatzFuelRuntime;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -490,7 +490,7 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         clearAllPellets();
         clearUpperStructure(level);
         disassembleToMud(level);
-        ChunkRadiationManager.incrementRadiation(level, worldPosition.above(), 1_000.0F);
+        ChunkRadiationManager.proxy.incrementRad(level, worldPosition.above(), 1_000.0F);
         level.playSound(null, worldPosition.getX() + 0.5D, worldPosition.getY() + 2.0D,
                 worldPosition.getZ() + 0.5D, ModSounds.BLOCK_RBMK_EXPLOSION.get(), SoundSource.BLOCKS, 50.0F, 1.0F);
         ParticleUtil.spawnRbmkMush(level, worldPosition.getX() + 0.5D, worldPosition.getY() + 2.0D,

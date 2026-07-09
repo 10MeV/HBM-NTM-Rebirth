@@ -1,7 +1,23 @@
-﻿{
-  "parent": "minecraft:block/block",
-  "textures": {
-    "particle": "hbm_ntm_rebirth:block/machines/solar_boiler"
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/solar_boiler.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
-  "elements": []
+  "visibility": {
+    "Overglow_3": false,
+    "Overglow_2": false,
+    "Overglow_1": false,
+    "Base": true
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machines/solar_boiler",
+    "default": "hbm_ntm_rebirth:models/machines/solar_boiler",
+    "texture0": "hbm_ntm_rebirth:models/machines/solar_boiler"
+  }
 }

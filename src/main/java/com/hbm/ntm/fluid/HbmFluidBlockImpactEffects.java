@@ -1,9 +1,9 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.compat.CompatExternal;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -63,7 +63,7 @@ public final class HbmFluidBlockImpactEffects {
         }
         float radiation = trait.getRadiationPerMb() * amountMb;
         if (radiation > 0.0F) {
-            ChunkRadiationManager.incrementRadiation(level, pos, radiation);
+            ChunkRadiationManager.proxy.incrementRad(level, pos, radiation);
         }
         return radiation;
     }

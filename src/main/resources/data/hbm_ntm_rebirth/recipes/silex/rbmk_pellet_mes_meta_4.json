@@ -1,0 +1,47 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_mes"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_mes",
+      "legacy_meta": 4
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_schrabidium_fuel",
+      "weight": 10
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_long_tiny",
+      "nbt": "{Damage:2}",
+      "weight": 13
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_short_tiny",
+      "nbt": "{Damage:2}",
+      "weight": 18
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_long_tiny",
+      "nbt": "{Damage:4}",
+      "weight": 13
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_short_tiny",
+      "nbt": "{Damage:7}",
+      "weight": 18
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_coal_tiny",
+      "weight": 28
+    }
+  ],
+  "source_order": 257
+}

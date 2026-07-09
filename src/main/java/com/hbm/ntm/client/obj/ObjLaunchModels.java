@@ -88,6 +88,18 @@ public final class ObjLaunchModels {
     public static final ResourceLocation SOYUZ_LAUNCHER_SUPPORT_TEXTURE = texture("soyuz_launcher_support");
 
     public static final SoyuzLauncherStatePlan SOYUZ_LAUNCHER_STATE = new SoyuzLauncherStatePlan(false, true);
+    private static final SoyuzLauncherPartSpec SOYUZ_LAUNCHER_LEGS_SPEC =
+            fixedSpec(SOYUZ_LAUNCHER_LEGS_LEGACY, SOYUZ_LAUNCHER_LEG_TEXTURE);
+    private static final SoyuzLauncherPartSpec SOYUZ_LAUNCHER_TABLE_SPEC =
+            fixedSpec(SOYUZ_LAUNCHER_TABLE_LEGACY, SOYUZ_LAUNCHER_TABLE_TEXTURE);
+    private static final SoyuzLauncherPartSpec SOYUZ_LAUNCHER_TOWER_BASE_SPEC =
+            fixedSpec(SOYUZ_LAUNCHER_TOWER_BASE_LEGACY, SOYUZ_LAUNCHER_TOWER_BASE_TEXTURE);
+    private static final SoyuzLauncherPartSpec SOYUZ_LAUNCHER_TOWER_SPEC =
+            movingSpec(SOYUZ_LAUNCHER_TOWER_LEGACY, SOYUZ_LAUNCHER_TOWER_TEXTURE, 5.5D, 5.5D, false);
+    private static final SoyuzLauncherPartSpec SOYUZ_LAUNCHER_SUPPORT_BASE_SPEC =
+            fixedSpec(SOYUZ_LAUNCHER_SUPPORT_BASE_LEGACY, SOYUZ_LAUNCHER_SUPPORT_BASE_TEXTURE);
+    private static final SoyuzLauncherPartSpec SOYUZ_LAUNCHER_SUPPORT_SPEC =
+            movingSpec(SOYUZ_LAUNCHER_SUPPORT_LEGACY, SOYUZ_LAUNCHER_SUPPORT_TEXTURE, 5.5D, -6.5D, true);
 
     public static ObjModelPart part(String name) {
         return ObjModelLibrary.blockPart("launch_table/" + name, RenderType.cutout());
@@ -141,12 +153,12 @@ public final class ObjLaunchModels {
 
     public static SoyuzLauncherRenderPlan soyuzLauncherRenderPlan(float rotation) {
         List<SoyuzLauncherPartPlan> parts = List.of(
-                fixed(SOYUZ_LAUNCHER_LEGS_LEGACY, SOYUZ_LAUNCHER_LEG_TEXTURE),
-                fixed(SOYUZ_LAUNCHER_TABLE_LEGACY, SOYUZ_LAUNCHER_TABLE_TEXTURE),
-                fixed(SOYUZ_LAUNCHER_TOWER_BASE_LEGACY, SOYUZ_LAUNCHER_TOWER_BASE_TEXTURE),
-                moving(SOYUZ_LAUNCHER_TOWER_LEGACY, SOYUZ_LAUNCHER_TOWER_TEXTURE, 5.5D, 5.5D, rotation, false),
-                fixed(SOYUZ_LAUNCHER_SUPPORT_BASE_LEGACY, SOYUZ_LAUNCHER_SUPPORT_BASE_TEXTURE),
-                moving(SOYUZ_LAUNCHER_SUPPORT_LEGACY, SOYUZ_LAUNCHER_SUPPORT_TEXTURE, 5.5D, -6.5D, rotation, true));
+                SOYUZ_LAUNCHER_LEGS_SPEC.plan(rotation),
+                SOYUZ_LAUNCHER_TABLE_SPEC.plan(rotation),
+                SOYUZ_LAUNCHER_TOWER_BASE_SPEC.plan(rotation),
+                SOYUZ_LAUNCHER_TOWER_SPEC.plan(rotation),
+                SOYUZ_LAUNCHER_SUPPORT_BASE_SPEC.plan(rotation),
+                SOYUZ_LAUNCHER_SUPPORT_SPEC.plan(rotation));
         return new SoyuzLauncherRenderPlan(rotation, SOYUZ_LAUNCHER_STATE, parts);
     }
 
@@ -163,25 +175,50 @@ public final class ObjLaunchModels {
 
     public static void renderSoyuzLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        for (SoyuzLauncherPartPlan plan : soyuzLauncherRenderPlan(rotation).parts()) {
-            poseStack.pushPose();
-            if (plan.rotates()) {
-                poseStack.translate(0.0D, plan.pivotY(), plan.pivotZ());
-                poseStack.mulPose((plan.negativeXAxis() ? Axis.XN : Axis.XP).rotationDegrees(plan.rotationDegrees()));
-                poseStack.translate(0.0D, -plan.pivotY(), -plan.pivotZ());
-            }
-            plan.model().renderAll(plan.texture(), poseStack, buffer, packedLight, packedOverlay);
-            poseStack.popPose();
+        renderSoyuzLauncher(rotation, poseStack, buffer, packedLight, packedOverlay, true);
+    }
+
+    public static void renderSoyuzLauncherMovingParts(float rotation, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        renderSoyuzLauncher(rotation, poseStack, buffer, packedLight, packedOverlay, false);
+    }
+
+    private static void renderSoyuzLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, boolean includeFixedParts) {
+        if (includeFixedParts) {
+            renderLauncherPart(SOYUZ_LAUNCHER_LEGS_SPEC, poseStack, buffer, packedLight, packedOverlay);
+            renderLauncherPart(SOYUZ_LAUNCHER_TABLE_SPEC, poseStack, buffer, packedLight, packedOverlay);
+            renderLauncherPart(SOYUZ_LAUNCHER_TOWER_BASE_SPEC, poseStack, buffer, packedLight, packedOverlay);
         }
+        renderMovingLauncherPart(SOYUZ_LAUNCHER_TOWER_SPEC, rotation, poseStack, buffer, packedLight, packedOverlay);
+        if (includeFixedParts) {
+            renderLauncherPart(SOYUZ_LAUNCHER_SUPPORT_BASE_SPEC, poseStack, buffer, packedLight, packedOverlay);
+        }
+        renderMovingLauncherPart(SOYUZ_LAUNCHER_SUPPORT_SPEC, rotation, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    private static SoyuzLauncherPartPlan fixed(LegacyWavefrontModel model, ResourceLocation texture) {
-        return new SoyuzLauncherPartPlan(model, texture, 0.0D, 0.0D, 0.0F, false);
+    private static void renderLauncherPart(SoyuzLauncherPartSpec spec, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        spec.model().renderAll(spec.texture(), poseStack, buffer, packedLight, packedOverlay);
     }
 
-    private static SoyuzLauncherPartPlan moving(LegacyWavefrontModel model, ResourceLocation texture, double pivotY,
-            double pivotZ, float rotationDegrees, boolean negativeXAxis) {
-        return new SoyuzLauncherPartPlan(model, texture, pivotY, pivotZ, rotationDegrees, negativeXAxis);
+    private static void renderMovingLauncherPart(SoyuzLauncherPartSpec spec, float rotation, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        poseStack.translate(0.0D, spec.pivotY(), spec.pivotZ());
+        poseStack.mulPose((spec.negativeXAxis() ? Axis.XN : Axis.XP).rotationDegrees(rotation));
+        poseStack.translate(0.0D, -spec.pivotY(), -spec.pivotZ());
+        renderLauncherPart(spec, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static SoyuzLauncherPartSpec fixedSpec(LegacyWavefrontModel model, ResourceLocation texture) {
+        return new SoyuzLauncherPartSpec(model, texture, 0.0D, 0.0D, false, false);
+    }
+
+    private static SoyuzLauncherPartSpec movingSpec(LegacyWavefrontModel model, ResourceLocation texture,
+            double pivotY, double pivotZ, boolean negativeXAxis) {
+        return new SoyuzLauncherPartSpec(model, texture, pivotY, pivotZ, negativeXAxis, true);
     }
 
     private static LegacyWavefrontModel.SelectionHandle missileErectorHandle(String partName) {
@@ -212,6 +249,19 @@ public final class ObjLaunchModels {
 
         public double axisX() {
             return negativeXAxis ? -1.0D : 1.0D;
+        }
+    }
+
+    private record SoyuzLauncherPartSpec(
+            LegacyWavefrontModel model,
+            ResourceLocation texture,
+            double pivotY,
+            double pivotZ,
+            boolean negativeXAxis,
+            boolean moving) {
+        private SoyuzLauncherPartPlan plan(float rotationDegrees) {
+            return new SoyuzLauncherPartPlan(model, texture, pivotY, pivotZ,
+                    moving ? rotationDegrees : 0.0F, negativeXAxis);
         }
     }
 

@@ -525,7 +525,7 @@ public final class HbmFluids {
         double demandLow = 0.25D;
         double demandMedium = 0.5D;
         double demandHigh = 1.0D;
-        double flammabilityLow = 0.5D;
+        double flammabilityLow = 0.25D;
         double flammabilityNormal = 1.0D;
         double flammabilityHigh = 2.0D;
         double complexityRefinery = 1.1D;

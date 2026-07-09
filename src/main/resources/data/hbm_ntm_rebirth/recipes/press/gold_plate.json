@@ -1,10 +1,15 @@
 {
   "type": "hbm_ntm_rebirth:press",
-  "stamp": "plate",
-  "ingredient": {
-    "item": "minecraft:gold_ingot"
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/gold"
+    },
+    "legacy_ore": "ingotGold"
   },
   "result": {
     "item": "hbm_ntm_rebirth:plate_gold"
-  }
+  },
+  "source_order": 12,
+  "stamp": "plate"
 }

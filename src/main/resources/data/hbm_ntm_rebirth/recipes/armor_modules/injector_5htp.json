@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:five_htp"
+    },
+    {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    {
+      "tag": "forge:plates/saturnite"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:injector_5htp"
+  }
+}

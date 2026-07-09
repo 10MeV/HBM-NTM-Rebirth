@@ -3,28 +3,30 @@
   "duration": 800,
   "inputs": [
     {
+      "count": 1,
       "ingredient": {
         "tag": "forge:ores/iron"
       },
-      "count": 1,
       "legacy_ore": "oreIron"
     },
     {
+      "count": 1,
       "ingredient": {
         "tag": "forge:sand"
       },
-      "count": 1,
       "legacy_ore": "sand"
     }
   ],
+  "name": "blast.steelFromOre",
   "outputs": [
     {
-      "item": "hbm_ntm_rebirth:ingot_steel",
-      "count": 2
+      "count": 2,
+      "item": "hbm_ntm_rebirth:ingot_steel"
     },
     {
       "item": "hbm_ntm_rebirth:scraps",
-      "nbt": "{mat:41,amount:144}"
+      "nbt": "{amount:144,mat:41}"
     }
-  ]
+  ],
+  "source_order": 2
 }

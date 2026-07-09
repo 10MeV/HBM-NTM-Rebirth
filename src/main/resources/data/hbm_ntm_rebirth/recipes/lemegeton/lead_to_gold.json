@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/lead"
+    },
+    "count": 1,
+    "legacy_ore": "ingotLead"
+  },
+  "output": {
+    "item": "minecraft:gold_ingot"
+  },
+  "source_order": 10
+}

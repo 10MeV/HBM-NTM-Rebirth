@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "L": {
+      "item": "hbm_ntm_rebirth:lodestone"
+    }
+  },
+  "pattern": [
+    "L L",
+    "I I",
+    "ILI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:horseshoe_magnet"
+  },
+  "show_notification": true
+}

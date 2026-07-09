@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 2.0,
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:crystal_rare"
+  },
+  "result": "hbm_ntm_rebirth:powder_desh_mix"
+}

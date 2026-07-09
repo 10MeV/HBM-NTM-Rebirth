@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:block_u233"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ingot_u233",
+    "count": 9
+  }
+}

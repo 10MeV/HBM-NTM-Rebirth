@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.billetBSCCO",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:billets/bscco" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:billets/bscco" }, "count": 1, "legacy_ore": "billetBSCCO" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "BSCCO", "amount": 48 }
+  ],
+  "pools": [],
+  "source_order": 2174
+}

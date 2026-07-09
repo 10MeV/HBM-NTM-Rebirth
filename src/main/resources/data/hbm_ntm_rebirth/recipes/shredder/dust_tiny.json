@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "item": "hbm_ntm_rebirth:dust_tiny" } },
-  "output": { "item": "hbm_ntm_rebirth:dust_tiny" }
+  "output": { "item": "hbm_ntm_rebirth:dust_tiny" },
+  "source_order": 2
 }

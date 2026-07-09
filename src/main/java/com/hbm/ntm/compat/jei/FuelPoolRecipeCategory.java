@@ -1,30 +1,36 @@
 package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.recipe.FuelPoolRecipes;
+import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
-import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
-import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class FuelPoolRecipeCategory implements IRecipeCategory<FuelPoolRecipes.DisplayRecipe> {
-    private static final int WIDTH = 132;
-    private static final int HEIGHT = 58;
+    private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
+    private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
     private final RecipeType<FuelPoolRecipes.DisplayRecipe> type;
     private final IDrawable icon;
-    private final IDrawableStatic arrow;
+    private final IDrawableStatic background;
+    private final IDrawableStatic slotBackground;
+    private final IDrawableStatic machineBackground;
+    private final ItemStack catalyst;
 
     FuelPoolRecipeCategory(RecipeType<FuelPoolRecipes.DisplayRecipe> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
-        this.arrow = guiHelper.getRecipeArrow();
+        this.background = LegacyNeiUniversalLayout.background(guiHelper);
+        this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
+        this.machineBackground = LegacyNeiUniversalLayout.machineBackground(guiHelper);
+        this.catalyst = new ItemStack(catalyst);
     }
 
     @Override
@@ -53,25 +59,15 @@ public final class FuelPoolRecipeCategory implements IRecipeCategory<FuelPoolRec
     }
 
     @Override
+    public IDrawable getBackground() {
+        return background;
+    }
+
+    @Override
     public void setRecipe(IRecipeLayoutBuilder builder, FuelPoolRecipes.DisplayRecipe recipe,
             IFocusGroup focuses) {
-        builder.addInputSlot(12, 20)
-                .addItemStack(recipe.input())
-                .setStandardSlotBackground();
-        builder.addOutputSlot(104, 20)
-                .addItemStack(recipe.output())
-                .setOutputSlotBackground();
-    }
-
-    @Override
-    public void draw(FuelPoolRecipes.DisplayRecipe recipe, IRecipeSlotsView recipeSlotsView,
-            net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        arrow.draw(guiGraphics, 58, 20);
-    }
-
-    @Override
-    public void getTooltip(ITooltipBuilder tooltip, FuelPoolRecipes.DisplayRecipe recipe,
-            IRecipeSlotsView recipeSlotsView, double mouseX, double mouseY) {
-        tooltip.add(Component.literal("Cooling requires adjacent water in the drum runtime"));
+        LegacyNeiUniversalLayout.addInputSlots(builder, slotBackground, List.of(List.of(recipe.input())));
+        LegacyNeiUniversalLayout.addOutputSlots(builder, slotBackground, List.of(List.of(recipe.output())));
+        LegacyNeiUniversalLayout.addMachineCatalyst(builder, machineBackground, catalyst);
     }
 }

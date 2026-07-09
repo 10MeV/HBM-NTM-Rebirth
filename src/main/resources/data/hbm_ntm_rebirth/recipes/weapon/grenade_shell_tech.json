@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "M": {
+      "tag": "forge:gun_mechanisms/weapon_steel"
+    },
+    "S": {
+      "tag": "forge:shells/weapon_steel"
+    }
+  },
+  "pattern": [
+    "C",
+    "M",
+    "S"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:grenade_shell_tech"
+  },
+  "show_notification": true
+}

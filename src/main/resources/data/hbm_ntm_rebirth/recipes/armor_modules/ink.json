@@ -1,0 +1,50 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "F": [
+      {
+        "item": "minecraft:poppy"
+      },
+      {
+        "item": "minecraft:blue_orchid"
+      },
+      {
+        "item": "minecraft:allium"
+      },
+      {
+        "item": "minecraft:azure_bluet"
+      },
+      {
+        "item": "minecraft:red_tulip"
+      },
+      {
+        "item": "minecraft:orange_tulip"
+      },
+      {
+        "item": "minecraft:white_tulip"
+      },
+      {
+        "item": "minecraft:pink_tulip"
+      },
+      {
+        "item": "minecraft:oxeye_daisy"
+      }
+    ],
+    "I": {
+      "tag": "forge:dyes/black"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:armor_polish"
+    }
+  },
+  "pattern": [
+    "FPF",
+    "PIP",
+    "FPF"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ink"
+  },
+  "show_notification": true
+}

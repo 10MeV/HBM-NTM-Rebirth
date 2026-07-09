@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.CargoElevatorBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -9,6 +10,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorBlockEntity> {
     public static final ResourceLocation TEXTURE = ObjMachineModels.ELEVATOR_TEXTURE;
@@ -31,6 +33,12 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
     }
 
     @Override
+    public boolean shouldRender(CargoElevatorBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }
@@ -46,47 +54,44 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
 
-        LegacyTileRenderPlans.CargoElevatorPlan plan = LegacyTileRenderPlans.cargoElevatorPlan(
-                elevator.shouldRenderPlatform(), elevator.getPrevExtension(), elevator.getExtension(),
-                partialTick, elevator.getHeight());
+        double extension = elevator.getPrevExtension()
+                + (elevator.getExtension() - elevator.getPrevExtension()) * partialTick;
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(elevator)) {
-            if (plan.renderPlatform()) {
-                renderPart(BASE, poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
-                try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(elevator)) {
-                    renderTranslatedParts(plan.platformParts(), poseStack, buffer, modelLight, packedOverlay,
+            if (elevator.shouldRenderPlatform()) {
+                if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                    renderPart(BASE, poseStack, buffer, modelLight, packedOverlay,
                             LegacyTexturedRenderMode.CUTOUT_CULL);
+                }
+                try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(elevator)) {
+                    renderTranslatedPart(PLATFORM, 0.0D, extension, 0.0D, poseStack, buffer, modelLight,
+                            packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+                    for (int i = 0; i < extension + 1.0D; i++) {
+                        renderTranslatedPart(PISTON, 0.0D,
+                                extension + LegacyTileRenderPlans.CARGO_ELEVATOR_PISTON_STEP_Y * i, 0.0D,
+                                poseStack, buffer, modelLight, packedOverlay,
+                                LegacyTexturedRenderMode.CUTOUT_CULL);
+                    }
                 }
             }
 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(elevator)) {
-                renderTranslatedParts(plan.guides(), poseStack, buffer, modelLight, packedOverlay,
-                        LegacyTexturedRenderMode.CUTOUT_CULL);
+                for (int i = 0; i <= Math.max(0, elevator.getHeight()); i++) {
+                    renderTranslatedPart(GUIDES, 0.0D, LegacyTileRenderPlans.CARGO_ELEVATOR_GUIDE_STEP_Y * i,
+                            0.0D, poseStack, buffer, modelLight, packedOverlay,
+                            LegacyTexturedRenderMode.CUTOUT_CULL);
+                }
             }
         }
         poseStack.popPose();
     }
 
-    private static void renderTranslatedParts(
-            Iterable<LegacyTileRenderPlans.TranslatedModelPartPlan> parts, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
-        for (LegacyTileRenderPlans.TranslatedModelPartPlan part : parts) {
-            if (!part.active()) {
-                continue;
-            }
-            poseStack.pushPose();
-            poseStack.translate(part.translateX(), part.translateY(), part.translateZ());
-            renderPart(handle(part), poseStack, buffer, packedLight, packedOverlay, renderMode);
-            poseStack.popPose();
-        }
-    }
-
-    private static LegacyWavefrontModel.SelectionHandle handle(
-            LegacyTileRenderPlans.TranslatedModelPartPlan part) {
-        LegacyWavefrontModel.SelectionHandle handle = handle(part.partName());
-        if (handle != null) {
-            return handle;
-        }
-        throw new IllegalArgumentException("Unexpected cargo elevator part: " + part.partName());
+    private static void renderTranslatedPart(LegacyWavefrontModel.SelectionHandle handle,
+            double translateX, double translateY, double translateZ, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
+        poseStack.pushPose();
+        poseStack.translate(translateX, translateY, translateZ);
+        renderPart(handle, poseStack, buffer, packedLight, packedOverlay, renderMode);
+        poseStack.popPose();
     }
 
     static void renderModelPart(String partName, PoseStack poseStack, MultiBufferSource buffer,

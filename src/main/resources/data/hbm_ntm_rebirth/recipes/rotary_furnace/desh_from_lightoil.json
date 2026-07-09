@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:rotary_furnace",
+  "output": {
+    "material": "Desh",
+    "amount": 144
+  },
+  "duration": 100,
+  "steam": 200,
+  "fluid": {
+    "fluid": "LIGHTOIL",
+    "amount": 100
+  },
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_desh_ready"
+      },
+      "count": 1
+    }
+  ],
+  "source_order": 5
+}

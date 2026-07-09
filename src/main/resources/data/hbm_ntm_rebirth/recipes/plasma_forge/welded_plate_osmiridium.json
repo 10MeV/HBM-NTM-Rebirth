@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:plasma_forge",
+  "auto_switch_group": "autoswitch.weldPlates",
+  "duration": 3000,
+  "ignitionTemp": 500000,
+  "input_fluids": [
+    {
+      "amount": 16000,
+      "fluid": "hbm_ntm_rebirth:reformgas"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:cast_plates/osmiridium"
+      },
+      "legacy_ore": "plateCastOsmiridium"
+    }
+  ],
+  "internal_name": "plsm.weldosmiridium",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:plate_welded_osmiridium"
+    }
+  ],
+  "pools": [],
+  "power": 50000000,
+  "source_order": 117
+}

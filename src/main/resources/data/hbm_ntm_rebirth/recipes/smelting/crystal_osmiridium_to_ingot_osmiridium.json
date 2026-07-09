@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 2.0,
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:crystal_osmiridium"
+  },
+  "result": "hbm_ntm_rebirth:ingot_osmiridium"
+}

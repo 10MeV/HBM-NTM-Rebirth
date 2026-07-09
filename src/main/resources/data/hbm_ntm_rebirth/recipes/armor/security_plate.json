@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/any_plastic"
+    },
+    "K": {
+      "item": "hbm_ntm_rebirth:plate_kevlar"
+    },
+    "W": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "pattern": [
+    "KWK",
+    "IKI",
+    "WKW"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:security_plate"
+  },
+  "show_notification": true
+}

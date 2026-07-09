@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "tag": "forge:dusts/coal"
+    },
+    {
+      "tag": "forge:dusts/asbestos"
+    },
+    {
+      "tag": "forge:nuggets/bismuth"
+    }
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:siox"
+  }
+}

@@ -1,4 +1,4 @@
-﻿{
+{
     "type":  "hbm_ntm_rebirth:purex",
     "internal_name":  "purex.platemox",
     "duration":  100,
@@ -44,6 +44,6 @@
               ],
     "auto_switch_group":  "autoswitch.plate",
     "name_wrapper":  "purex.recycle",
-    "source_order":  152
+    "source_order": 12
 }
 

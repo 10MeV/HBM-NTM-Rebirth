@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -37,7 +38,7 @@ public class MovingItemRenderer extends EntityRenderer<MovingItemEntity> {
         }
 
         poseStack.pushPose();
-        Random random = new Random(entity.getId());
+        Random random = LegacyRenderRandom.seeded(entity.getId());
         poseStack.translate(0.0D, random.nextDouble() * 0.0625D, 0.0D);
         if (!isLegacy3dBlockItem(stack)) {
             poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));

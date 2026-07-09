@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class MultiblockDummyRenderer implements BlockEntityRenderer<MultiblockDummyBlockEntity> {
     private final BlockRenderDispatcher blockRenderer;
@@ -23,8 +24,17 @@ public class MultiblockDummyRenderer implements BlockEntityRenderer<MultiblockDu
     }
 
     @Override
+    public boolean shouldRender(MultiblockDummyBlockEntity dummy, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(dummy, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(dummy, getViewDistance());
+    }
+
+    @Override
     public void render(MultiblockDummyBlockEntity dummy, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(dummy, getViewDistance())) {
+            return;
+        }
         Level level = dummy.getLevel();
         if (level == null) {
             return;
@@ -51,12 +61,15 @@ public class MultiblockDummyRenderer implements BlockEntityRenderer<MultiblockDu
         int modelLight = coreEntity instanceof RBMKColumnBlockEntity column
                 ? LegacyRenderLighting.resolveMultiblockLight(column, packedLight)
                 : packedLight;
-        RBMKColumnRenderer.renderStaticSegment(blockRenderer, coreState, segment, heightAbove, poseStack, buffer,
-                modelLight);
-        if (coreEntity instanceof RBMKColumnBlockEntity column
-                && MultiblockHelper.isOperationalCoreLayoutComplete(level, corePos)) {
-            RBMKColumnRenderer.renderDynamicSegment(column, segment, partialTick, poseStack, buffer, modelLight,
-                    packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(dummy)) {
+            RBMKColumnRenderer.renderStaticSegment(blockRenderer, coreState, segment, heightAbove, poseStack, buffer,
+                    modelLight);
+            if (coreEntity instanceof RBMKColumnBlockEntity column
+                    && RBMKColumnRenderer.hasDynamicSegments(column.kind())
+                    && MultiblockHelper.isOperationalCoreLayoutComplete(level, corePos)) {
+                RBMKColumnRenderer.renderDynamicSegment(column, segment, partialTick, poseStack, buffer, modelLight,
+                        packedOverlay);
+            }
         }
     }
 

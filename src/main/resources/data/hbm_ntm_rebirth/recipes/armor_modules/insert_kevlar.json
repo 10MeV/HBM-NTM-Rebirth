@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "K": {
+      "item": "hbm_ntm_rebirth:plate_kevlar"
+    }
+  },
+  "pattern": [
+    "KIK",
+    "IDI",
+    "KIK"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:insert_kevlar"
+  },
+  "show_notification": true
+}

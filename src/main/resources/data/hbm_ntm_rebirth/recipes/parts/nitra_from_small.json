@@ -1,0 +1,16 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "misc",
+    "pattern":  [
+                    "##",
+                    "##"
+                ],
+    "key":  {
+                "#":  {
+                          "item":  "hbm_ntm_rebirth:nitra_small"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:nitra"
+               }
+}

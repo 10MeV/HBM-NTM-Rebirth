@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachineBlockEntity> {
     public static final ResourceLocation TEXTURE = ObjMachineModels.VENDING_MACHINE_TEXTURE;
@@ -33,6 +34,11 @@ public class VendingMachineRenderer implements BlockEntityRenderer<VendingMachin
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(VendingMachineBlockEntity blockEntity, Vec3 cameraPos) {
+        return false;
     }
 
     @Override

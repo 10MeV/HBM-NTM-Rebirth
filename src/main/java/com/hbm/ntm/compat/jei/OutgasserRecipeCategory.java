@@ -2,11 +2,11 @@ package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.recipe.OutgasserRecipe;
 import com.hbm.ntm.registry.ModBlocks;
+import java.util.ArrayList;
+import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
-import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
-import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
@@ -15,20 +15,27 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-import java.util.List;
-
 public final class OutgasserRecipeCategory implements IRecipeCategory<OutgasserRecipe> {
-    private static final int WIDTH = 150;
-    private static final int HEIGHT = 58;
+    private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
+    private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
     private final RecipeType<OutgasserRecipe> type;
     private final IDrawable icon;
-    private final IDrawableStatic arrow;
+    private final IDrawableStatic background;
+    private final IDrawableStatic slotBackground;
+    private final IDrawableStatic machineBackground;
+    private final List<ItemStack> defaultCatalysts;
+    private final List<ItemStack> fusionOnlyCatalyst;
 
     OutgasserRecipeCategory(RecipeType<OutgasserRecipe> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
-        this.arrow = guiHelper.getRecipeArrow();
+        this.background = LegacyNeiUniversalLayout.background(guiHelper);
+        this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
+        this.machineBackground = LegacyNeiUniversalLayout.machineBackground(guiHelper);
+        this.defaultCatalysts = List.of(new ItemStack(ModBlocks.RBMK_OUTGASSER.get()),
+                new ItemStack(ModBlocks.FUSION_BREEDER.get()));
+        this.fusionOnlyCatalyst = List.of(new ItemStack(ModBlocks.FUSION_BREEDER.get()));
     }
 
     @Override
@@ -57,43 +64,25 @@ public final class OutgasserRecipeCategory implements IRecipeCategory<OutgasserR
     }
 
     @Override
+    public IDrawable getBackground() {
+        return background;
+    }
+
+    @Override
     public void setRecipe(IRecipeLayoutBuilder builder, OutgasserRecipe recipe, IFocusGroup focuses) {
         List<ItemStack> inputs = recipe.input().displayStacks();
         if (!inputs.isEmpty()) {
-            builder.addInputSlot(10, 20)
-                    .addItemStacks(inputs)
-                    .setStandardSlotBackground();
+            LegacyNeiUniversalLayout.addInputSlots(builder, slotBackground, List.of(inputs));
         }
 
-        int outputX = 104;
+        List<List<ItemStack>> outputs = new ArrayList<>();
         if (recipe.solidOutput().isPresent()) {
-            builder.addOutputSlot(outputX, 20)
-                    .addItemStack(recipe.solidOutput().get())
-                    .setOutputSlotBackground();
-            outputX += 20;
+            outputs.add(List.of(recipe.solidOutput().get()));
         }
-        final int fluidOutputX = outputX;
-        recipe.fluidOutput().ifPresent(fluid -> JeiFluidSlots.addFluidSlot(builder, fluid, false, fluidOutputX, 20));
+        recipe.fluidOutput().ifPresent(fluid -> outputs.add(List.of(LegacyNeiUniversalLayout.fluidIcon(fluid))));
+        LegacyNeiUniversalLayout.addOutputSlots(builder, slotBackground, outputs);
 
-        if (recipe.fusionOnly()) {
-            builder.addInputSlot(60, 2)
-                    .addItemStack(new ItemStack(ModBlocks.FUSION_BREEDER.get()))
-                    .setStandardSlotBackground();
-        }
-    }
-
-    @Override
-    public void draw(OutgasserRecipe recipe, IRecipeSlotsView recipeSlotsView,
-            net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        arrow.draw(guiGraphics, 56, 20);
-    }
-
-    @Override
-    public void getTooltip(ITooltipBuilder tooltip, OutgasserRecipe recipe,
-            IRecipeSlotsView recipeSlotsView, double mouseX, double mouseY) {
-        if (recipe.fusionOnly()) {
-            tooltip.add(Component.translatableWithFallback("jei.hbm_ntm_rebirth.outgasser.fusion_only",
-                    "Requires Fusion Breeder"));
-        }
+        LegacyNeiUniversalLayout.addMachineCatalyst(builder, machineBackground,
+                recipe.fusionOnly() ? fusionOnlyCatalyst : defaultCatalysts);
     }
 }

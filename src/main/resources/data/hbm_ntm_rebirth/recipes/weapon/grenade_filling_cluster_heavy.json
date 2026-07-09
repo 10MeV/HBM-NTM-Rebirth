@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "F": {
+      "item": "hbm_ntm_rebirth:pellet_cluster"
+    },
+    "I": {
+      "tag": "forge:plates/weapon_steel"
+    }
+  },
+  "pattern": [
+    "F",
+    "I",
+    "F"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:grenade_filling_cluster_heavy"
+  },
+  "show_notification": true
+}

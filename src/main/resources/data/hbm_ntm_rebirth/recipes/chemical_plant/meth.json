@@ -1,0 +1,39 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "duration": 60,
+  "input_fluids": [
+    {
+      "amount": 400,
+      "fluid": "hbm_ntm_rebirth:lubricant"
+    },
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:peroxide"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "minecraft:wheat"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "minecraft:cocoa_beans"
+      }
+    }
+  ],
+  "internal_name": "chem.meth",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:chocolate"
+    }
+  ],
+  "pools": [],
+  "power": 300,
+  "source_order": 41
+}

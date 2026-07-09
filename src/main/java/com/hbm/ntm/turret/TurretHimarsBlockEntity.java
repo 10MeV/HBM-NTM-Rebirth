@@ -167,6 +167,9 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
 
     @Override
     protected boolean canKeepCurrentTarget(Entity entity) {
+        if (mode == MODE_MANUAL) {
+            return true;
+        }
         return canAcquireTarget(entity);
     }
 
@@ -208,10 +211,9 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
                 if (available != -1) {
                     LegacyArtilleryAmmoCatalog.HimarsRocket rocket =
                             LegacyArtilleryAmmoCatalog.himarsRockets().get(available);
-                    if (consumeSpareRocket(available)) {
-                        typeLoaded = available;
-                        ammo = rocket.amount();
-                    }
+                    typeLoaded = available;
+                    ammo = rocket.amount();
+                    consumeSpareRocket(available);
                 }
             }
         }
@@ -255,23 +257,23 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
             return;
         }
         Vec3 target = getTargetPos();
-        if (hasAmmo() && target != null && spawnShell(typeLoaded, target)) {
+        if (hasAmmo() && target != null) {
+            spawnShell(typeLoaded, target);
             ammo--;
             playTurretSound("hbm:weapon.rocketFlame", 25.0F, 1.0F);
             setChanged();
-            syncRuntimeToTracking();
         }
 
         if (mode == MODE_MANUAL && !targetQueue.isEmpty()) {
             targetQueue.removeFirst();
-            clearTarget();
-            syncRuntimeToTracking();
+            clearTargetPosition();
+            setChanged();
         }
     }
 
-    private boolean spawnShell(int rocketIndex, Vec3 targetPos) {
+    private void spawnShell(int rocketIndex, Vec3 targetPos) {
         if (level == null || level.isClientSide || targetPos == null) {
-            return false;
+            return;
         }
         ArtilleryRocketEntity rocket = new ArtilleryRocketEntity(level);
         Vec3 muzzle = getMuzzlePos();
@@ -284,7 +286,7 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
             rocket.setTarget(targetPos.x, targetPos.y, targetPos.z);
         }
         rocket.setType(rocketIndex);
-        return level.addFreshEntity(rocket);
+        level.addFreshEntity(rocket);
     }
 
     @Override
@@ -322,7 +324,7 @@ public class TurretHimarsBlockEntity extends TurretBlockEntityBase implements Ar
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
         if ("cycle_artillery_mode".equals(tag.getString("Action"))) {
             mode = mode == MODE_AUTO ? MODE_MANUAL : MODE_AUTO;
-            clearTarget();
+            clearTargetPosition();
             targetQueue.clear();
             syncRuntimeToTracking();
             return;

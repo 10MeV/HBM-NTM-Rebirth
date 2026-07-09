@@ -1,0 +1,13 @@
+{
+  "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmBlastFurnace.json",
+  "exported_recipe_count": 14,
+  "failures": [],
+  "legacy_class": "BlastFurnaceRecipesNT",
+  "legacy_file": "hbmBlastFurnace.json",
+  "modern_recipe_type": "blast_furnace",
+  "note": "Deprecated hbmBlastFurnaceLegacy.json belongs to BlastFurnaceRecipes and is not exported here.",
+  "skipped_recipe_count": 0,
+  "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/blast_furnace",
+  "status": "exported",
+  "written_file_count": 1
+}

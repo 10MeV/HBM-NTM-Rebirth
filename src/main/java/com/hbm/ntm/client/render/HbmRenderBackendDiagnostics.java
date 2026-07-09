@@ -27,10 +27,12 @@ import org.lwjgl.opengl.GLCapabilities;
 
 public final class HbmRenderBackendDiagnostics {
     private static final long LOG_INTERVAL_FRAMES = 120L;
+    private static final long AUTO_CHECK_INTERVAL_FRAMES = 600L;
     private static final long AUTO_LOG_INTERVAL_FRAMES = 600L;
     private static final long AUTO_LOG_MACHINE_SUBMISSIONS = 32L;
     private static final long AUTO_LOG_DRAW_CALLS_WITHOUT_OPTIMIZED_BACKEND = 128L;
     private static long lastLoggedFrame;
+    private static long lastAutoCheckedFrame;
     private static long lastAutoLoggedFrame;
     private static boolean glBannerLogged;
 
@@ -45,6 +47,20 @@ public final class HbmRenderBackendDiagnostics {
             return;
         }
 
+        if (configured) {
+            if (frame - lastLoggedFrame < LOG_INTERVAL_FRAMES) {
+                return;
+            }
+        } else {
+            if (lastAutoLoggedFrame > 0L && frame - lastAutoLoggedFrame < AUTO_LOG_INTERVAL_FRAMES) {
+                return;
+            }
+            if (lastAutoCheckedFrame > 0L && frame - lastAutoCheckedFrame < AUTO_CHECK_INTERVAL_FRAMES) {
+                return;
+            }
+            lastAutoCheckedFrame = frame;
+        }
+
         RenderBackendSnapshot backend = LegacyWavefrontModel.renderBackendSnapshot();
         RenderBackendAdditiveSnapshot additive = LegacyWavefrontModel.renderBackendAdditiveSnapshot();
         RenderBackendInstancingSnapshot instancingSnapshot = LegacyWavefrontModel.renderBackendInstancingSnapshot();
@@ -54,9 +70,6 @@ public final class HbmRenderBackendDiagnostics {
         }
 
         if (configured) {
-            if (frame - lastLoggedFrame < LOG_INTERVAL_FRAMES) {
-                return;
-            }
             lastLoggedFrame = frame;
             logGlCapabilityBannerOnce();
             String message = summary(flags, backend, additive, instancingSnapshot, iris);
@@ -65,8 +78,7 @@ public final class HbmRenderBackendDiagnostics {
         }
 
         String autoReason = autoLogReason(backend, additive, instancingSnapshot, iris);
-        if (autoReason == null
-                || (lastAutoLoggedFrame > 0L && frame - lastAutoLoggedFrame < AUTO_LOG_INTERVAL_FRAMES)) {
+        if (autoReason == null) {
             return;
         }
         lastAutoLoggedFrame = frame;
@@ -239,7 +251,7 @@ public final class HbmRenderBackendDiagnostics {
                         + "shader(api=%s,active=%s,pipeline=%s/%s/%d,ext=%s/%s,vboGeom=%s,keys=%s:%d/%d,cache=%s/%s,beid=%s/%s,phase=%s/%s/%s,push=%d/%d/%d,restore=%d/%d) "
                         + "cache(model=%d/%d/%d/%d,views=%d/%d,geom=%d/%d/%d,sel=%d/%d/%d,build=%d/%d/%d,hit/miss/clear=%d/%d/%d,handle=%d/%d/%d,missing=%d) "
                         + "draws(cpu=%d,gpu=%d,gpuUpload=%d/%d,gpuFallback=%d/%d,lastFallback=%s,detail=%s) "
-                        + "culling(queries=%d,visible=%d,frustum=%d,distance=%d,shadowBypass=%d,noFrustum=%d,machines=%d,vertices=%d,route=%d/%d/%d/%d,partRuns=%d,objInst=%d/%d/%d,fade=%d/%d/%d,scoped=%d/%d/%d,unscoped=%d/%d/%d,occ=%d,occEnabled=%d,occDisabled=%d,occNoLevel=%d,near=%d,hit/miss/reuse=%d/%d/%d,ray=%d/%d,occVisible=%d,occCulled=%d,cache=%d,geom=%d,hotObj=%s) "
+                        + "culling(queries=%d,visCache=%d/%d,visible=%d,frustum=%d,distance=%d,shadowBypass=%d,noFrustum=%d,machines=%d,vertices=%d,route=%d/%d/%d/%d,partRuns=%d,objInst=%d/%d/%d,fade=%d/%d/%d,scoped=%d/%d/%d,unscoped=%d/%d/%d,occ=%d,occEnabled=%d,occDisabled=%d,occNoLevel=%d,near=%d,hit/miss/reuse=%d/%d/%d,ray=%d/%d,occVisible=%d,occCulled=%d,cache=%d,geom=%d,hotObj=%s) "
                         + "bakedObj(%s) "
                         + "visibleDefs(blocks/defs=%d/%d,default=%d/%d,profile=%d/%d,direct/fallback=%d/%d,itemParts=%d,partProps=%d) "
                         + "instanced(flush=%d/dup=%d/blocked=%d,tookMs=%d,stateRestoreFail=%d,queued=%d/%d,draws=%d,sliceOverflow=%d/%d,dup=%d,stale=%d/%d,irisStale=%d/%d) "
@@ -325,6 +337,8 @@ public final class HbmRenderBackendDiagnostics {
                 backend.lastFallbackReason(),
                 backend.lastFallbackDetail(),
                 culling.visibilityQueries(),
+                culling.visibilityCacheHits(),
+                culling.visibilityCacheMisses(),
                 culling.visibleQueries(),
                 culling.frustumCulledQueries(),
                 culling.distanceCulledQueries(),

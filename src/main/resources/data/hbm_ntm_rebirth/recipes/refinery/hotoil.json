@@ -22,5 +22,6 @@
               },
     "solid":  {
                   "item":  "hbm_ntm_rebirth:sulfur"
-              }
+              },
+    "source_order":  0
 }

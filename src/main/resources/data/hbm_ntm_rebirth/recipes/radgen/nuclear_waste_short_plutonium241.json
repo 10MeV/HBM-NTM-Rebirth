@@ -1,0 +1,19 @@
+{
+    "type":  "hbm_ntm_rebirth:radgen",
+    "input":  {
+                  "ingredient":  {
+                                     "item":  "hbm_ntm_rebirth:nuclear_waste_short"
+                                 },
+                  "count":  1,
+                  "legacy_id":  "hbm:nuclear_waste_short",
+                  "legacy_meta":  5,
+                  "partial_nbt":  "{Damage:5}"
+              },
+    "power":  1500,
+    "duration":  36000,
+    "source_order":  10,
+    "output":  {
+                   "item":  "hbm_ntm_rebirth:nuclear_waste_short_depleted",
+                   "nbt":  "{Damage:5}"
+               }
+}

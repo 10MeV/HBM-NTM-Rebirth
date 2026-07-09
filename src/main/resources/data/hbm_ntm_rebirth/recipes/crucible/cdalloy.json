@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.cdalloy",
+  "fallback_name": "Cadmium Steel Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_cdalloy" },
+  "frequency": 9,
+  "input": [
+    { "material": "Steel", "amount": 64 },
+    { "material": "Cadmium", "amount": 8 }
+  ],
+  "output": [
+    { "material": "CdAlloy", "amount": 72 }
+  ],
+  "source_order": 7
+}

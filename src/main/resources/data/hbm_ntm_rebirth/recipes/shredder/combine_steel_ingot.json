@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ingots/combine_steel" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_combine_steel" }
+  "output": { "item": "hbm_ntm_rebirth:powder_combine_steel" },
+  "source_order": 1000
 }

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:ingot_bismuth"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:ingot_meteorite"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:starmetal_pickaxe"
+    },
+    "T": {
+      "tag": "forge:bolts/tungsten"
+    }
+  },
+  "pattern": [
+    " BM",
+    "BPB",
+    "TB "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bismuth_pickaxe"
+  },
+  "show_notification": true
+}

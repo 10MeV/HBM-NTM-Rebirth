@@ -4,5 +4,6 @@
     "ingredient": { "item": "hbm_ntm_rebirth:sellafield" },
     "partial_nbt": "{hbmLegacyVariant:5}"
   },
-  "output": { "item": "hbm_ntm_rebirth:scrap_nuclear", "count": 15 }
+  "output": { "item": "hbm_ntm_rebirth:scrap_nuclear", "count": 15 },
+  "source_order": 123
 }

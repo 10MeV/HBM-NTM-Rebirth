@@ -12,6 +12,7 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.IntValue WORLD_RAD;
     public static ForgeConfigSpec.IntValue WORLD_RAD_THRESHOLD;
     public static ForgeConfigSpec.BooleanValue CLEANUP_DEAD_DIRT;
+    public static ForgeConfigSpec.BooleanValue ENABLE_PRISM;
     public static ForgeConfigSpec.BooleanValue ENABLE_MYCELIUM_SPREAD;
     public static ForgeConfigSpec.BooleanValue ENABLE_CRATER_BIOME_RADIATION;
     public static ForgeConfigSpec.DoubleValue CRATER_BIOME_RAD;
@@ -94,6 +95,9 @@ public final class RadiationConfig {
         ENABLE_CHUNK_RADS = builder
                 .comment("Legacy RADIATION_01_enableChunkRads: toggles chunk radiation.")
                 .define("enableChunkRads", true);
+        ENABLE_PRISM = builder
+                .comment("Legacy RADIATION_99_enablePRISM: enables the 3D resistance-aware PRISM chunk radiation handler instead of the default Simple handler.")
+                .define("enablePRISM", false);
         builder.pop();
 
         builder.push("pollution");
@@ -182,6 +186,10 @@ public final class RadiationConfig {
 
     public static boolean chunkRadiationEnabled() {
         return ENABLE_CHUNK_RADS.get();
+    }
+
+    public static boolean prismRadiationEnabled() {
+        return ENABLE_PRISM.get();
     }
 
     public static int radiationFogThreshold() {

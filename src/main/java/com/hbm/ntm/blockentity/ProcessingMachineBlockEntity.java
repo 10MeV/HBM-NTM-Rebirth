@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -56,7 +57,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ProcessingMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
-        HbmStandardFluidReceiver, HbmLegacyLoadedTile {
+        HbmEnergyPortInspectable, HbmStandardFluidReceiver, HbmLegacyLoadedTile {
     private static final String TAG_INVENTORY = "items";
     private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_ENERGY = "Energy";
@@ -187,10 +188,12 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
             HbmFluidItemTransfer.loadTankFromSlot(machine.items, 3, 4, machine.crystallizerTank);
         }
         if (level.getGameTime() % 20L == 0L) {
-            HbmEnergyUtil.subscribeReceiverToAllNeighborNetworks(level, pos, machine);
             if (machine.kind == Kind.CRYSTALLIZER) {
+                HbmEnergyUtil.subscribeReceiverToPorts(level, pos, machine.crystallizerEnergyPorts(), machine);
                 machine.fluidPortSubscriptions.refreshReceiver(level, pos, machine.crystallizerFluidPorts(),
                         List.of(machine.crystallizerTank), machine);
+            } else {
+                HbmEnergyUtil.subscribeReceiverToAllNeighborNetworks(level, pos, machine);
             }
         }
 
@@ -421,6 +424,18 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
                 FluidPort.of(-1, 0, -2, Direction.NORTH));
     }
 
+    private List<HbmEnergyUtil.EnergyPort> crystallizerEnergyPorts() {
+        return List.of(
+                HbmEnergyUtil.EnergyPort.of(2, 0, 1, Direction.EAST),
+                HbmEnergyUtil.EnergyPort.of(2, 0, -1, Direction.EAST),
+                HbmEnergyUtil.EnergyPort.of(-2, 0, 1, Direction.WEST),
+                HbmEnergyUtil.EnergyPort.of(-2, 0, -1, Direction.WEST),
+                HbmEnergyUtil.EnergyPort.of(1, 0, 2, Direction.SOUTH),
+                HbmEnergyUtil.EnergyPort.of(-1, 0, 2, Direction.SOUTH),
+                HbmEnergyUtil.EnergyPort.of(1, 0, -2, Direction.NORTH),
+                HbmEnergyUtil.EnergyPort.of(-1, 0, -2, Direction.NORTH));
+    }
+
     public Kind kind() {
         return kind;
     }
@@ -570,6 +585,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     @Override
     public void setRemoved() {
         if (kind == Kind.CRYSTALLIZER) {
+            HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, crystallizerEnergyPorts(), this);
             fluidPortSubscriptions.detachAllDetailed(level, worldPosition, crystallizerFluidPorts(), this, null);
         }
         super.setRemoved();
@@ -578,6 +594,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     @Override
     public void onChunkUnloaded() {
         if (kind == Kind.CRYSTALLIZER) {
+            HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, crystallizerEnergyPorts(), this);
             fluidPortSubscriptions.detachAllDetailed(level, worldPosition, crystallizerFluidPorts(), this, null);
         }
         super.onChunkUnloaded();
@@ -640,6 +657,14 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     @Override
     public List<HbmFluidTank> getAllTanks() {
         return getReceivingTanks();
+    }
+
+    @Override
+    public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
+        if (level == null || kind != Kind.CRYSTALLIZER) {
+            return new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L);
+        }
+        return HbmEnergyUtil.inspectPorts(level, worldPosition, crystallizerEnergyPorts());
     }
 
     @Override

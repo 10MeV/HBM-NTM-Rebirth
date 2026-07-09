@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.hematite",
+  "fallback_name": "Iron Production from Hematite",
+  "icon": { "item": "hbm_ntm_rebirth:stone_resource_hematite" },
+  "frequency": 6,
+  "input": [
+    { "material": "Hematite", "amount": 144 },
+    { "material": "Flux", "amount": 16 }
+  ],
+  "output": [
+    { "material": "Iron", "amount": 72 },
+    { "material": "Slag", "amount": 24 }
+  ],
+  "source_order": 1
+}

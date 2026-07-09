@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:chemical_plant",
+  "custom_localization": true,
+  "duration": 20,
+  "input_fluids": [
+    {
+      "amount": 8000,
+      "fluid": "hbm_ntm_rebirth:water"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:gems/coal"
+      },
+      "legacy_ore": "gemCoal"
+    }
+  ],
+  "internal_name": "chem.hydrogen",
+  "output_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:hydrogen"
+    }
+  ],
+  "output_items": [],
+  "pools": [],
+  "power": 400,
+  "source_order": 0
+}

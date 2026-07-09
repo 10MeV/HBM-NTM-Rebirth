@@ -12,6 +12,17 @@ import org.lwjgl.opengl.GLCapabilities;
 
 public final class HbmInstancedGlCompat {
     private static final int REQUIRED_VERTEX_ATTRIBS = 14;
+    private static long cachedInstancingContext;
+    private static boolean cachedInstancingSupportResolved;
+    private static boolean cachedDrawArraysInstancingSupport;
+    private static long cachedMaxVertexAttribsContext;
+    private static int cachedMaxVertexAttribs = -1;
+    private static long cachedInstancingDispatchContext;
+    private static boolean cachedInstancingDispatchResolved;
+    private static boolean cachedCoreVertexAttribDivisor;
+    private static boolean cachedArbVertexAttribDivisor;
+    private static boolean cachedCoreDrawArraysInstanced;
+    private static boolean cachedArbDrawArraysInstanced;
 
     private HbmInstancedGlCompat() {
     }
@@ -29,15 +40,23 @@ public final class HbmInstancedGlCompat {
 
     public static boolean supportsDrawArraysInstancing() {
         try {
-            GLCapabilities capabilities = currentCapabilities();
-            if (capabilities == null) {
+            long context = GLFW.glfwGetCurrentContext();
+            if (context == 0L) {
                 return false;
             }
-            boolean hasDivisor = capabilities.glVertexAttribDivisor != 0L
-                    || capabilities.glVertexAttribDivisorARB != 0L;
-            boolean hasDrawArraysInstanced = capabilities.glDrawArraysInstanced != 0L
-                    || capabilities.glDrawArraysInstancedARB != 0L;
-            return hasDivisor && hasDrawArraysInstanced && maxVertexAttribs() >= REQUIRED_VERTEX_ATTRIBS;
+            if (cachedInstancingSupportResolved && cachedInstancingContext == context) {
+                return cachedDrawArraysInstancingSupport;
+            }
+            if (!resolveInstancingDispatchCapabilities()) {
+                return false;
+            }
+            boolean hasDivisor = cachedCoreVertexAttribDivisor || cachedArbVertexAttribDivisor;
+            boolean hasDrawArraysInstanced = cachedCoreDrawArraysInstanced || cachedArbDrawArraysInstanced;
+            boolean supported = hasDivisor && hasDrawArraysInstanced && maxVertexAttribs() >= REQUIRED_VERTEX_ATTRIBS;
+            cachedInstancingContext = context;
+            cachedDrawArraysInstancingSupport = supported;
+            cachedInstancingSupportResolved = true;
+            return supported;
         } catch (Throwable ignored) {
             return false;
         }
@@ -49,10 +68,17 @@ public final class HbmInstancedGlCompat {
 
     public static int maxVertexAttribs() {
         try {
-            if (GLFW.glfwGetCurrentContext() == 0L) {
+            long context = GLFW.glfwGetCurrentContext();
+            if (context == 0L) {
                 return 0;
             }
-            return GL11.glGetInteger(GL20.GL_MAX_VERTEX_ATTRIBS);
+            if (cachedMaxVertexAttribsContext == context && cachedMaxVertexAttribs >= 0) {
+                return cachedMaxVertexAttribs;
+            }
+            int maxAttribs = GL11.glGetInteger(GL20.GL_MAX_VERTEX_ATTRIBS);
+            cachedMaxVertexAttribsContext = context;
+            cachedMaxVertexAttribs = maxAttribs;
+            return maxAttribs;
         } catch (Throwable ignored) {
             return 0;
         }
@@ -83,12 +109,38 @@ public final class HbmInstancedGlCompat {
         }
     }
 
+    private static boolean resolveInstancingDispatchCapabilities() {
+        try {
+            long context = GLFW.glfwGetCurrentContext();
+            if (context == 0L) {
+                return false;
+            }
+            if (cachedInstancingDispatchResolved && cachedInstancingDispatchContext == context) {
+                return true;
+            }
+            GLCapabilities capabilities = currentCapabilities();
+            if (capabilities == null) {
+                return false;
+            }
+            cachedCoreVertexAttribDivisor = capabilities.glVertexAttribDivisor != 0L;
+            cachedArbVertexAttribDivisor = capabilities.glVertexAttribDivisorARB != 0L
+                    || capabilities.GL_ARB_instanced_arrays;
+            cachedCoreDrawArraysInstanced = capabilities.glDrawArraysInstanced != 0L;
+            cachedArbDrawArraysInstanced = capabilities.glDrawArraysInstancedARB != 0L
+                    || capabilities.GL_ARB_draw_instanced;
+            cachedInstancingDispatchContext = context;
+            cachedInstancingDispatchResolved = true;
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     public static void vertexAttribDivisor(int index, int divisor) {
-        GLCapabilities capabilities = currentCapabilities();
-        if (capabilities != null && capabilities.glVertexAttribDivisor != 0L) {
+        boolean resolved = resolveInstancingDispatchCapabilities();
+        if (resolved && cachedCoreVertexAttribDivisor) {
             GL33.glVertexAttribDivisor(index, divisor);
-        } else if (capabilities != null
-                && (capabilities.glVertexAttribDivisorARB != 0L || capabilities.GL_ARB_instanced_arrays)) {
+        } else if (resolved && cachedArbVertexAttribDivisor) {
             ARBInstancedArrays.glVertexAttribDivisorARB(index, divisor);
         } else {
             throw new InstancingUnavailableException("Vertex attrib divisor unavailable in current GL context");
@@ -96,11 +148,10 @@ public final class HbmInstancedGlCompat {
     }
 
     public static void drawArraysInstanced(int mode, int first, int count, int instanceCount) {
-        GLCapabilities capabilities = currentCapabilities();
-        if (capabilities != null && capabilities.glDrawArraysInstanced != 0L) {
+        boolean resolved = resolveInstancingDispatchCapabilities();
+        if (resolved && cachedCoreDrawArraysInstanced) {
             GL31.glDrawArraysInstanced(mode, first, count, instanceCount);
-        } else if (capabilities != null
-                && (capabilities.glDrawArraysInstancedARB != 0L || capabilities.GL_ARB_draw_instanced)) {
+        } else if (resolved && cachedArbDrawArraysInstanced) {
             ARBDrawInstanced.glDrawArraysInstancedARB(mode, first, count, instanceCount);
         } else {
             throw new InstancingUnavailableException("Draw arrays instanced unavailable in current GL context");

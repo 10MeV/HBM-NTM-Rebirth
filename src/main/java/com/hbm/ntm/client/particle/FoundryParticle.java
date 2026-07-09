@@ -127,11 +127,12 @@ public class FoundryParticle extends Particle {
             double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4,
             double uMax, double vMax, double uMin, double vMin) {
         int color = LegacyTexturedQuadRenderer.rgb(red, green, blue);
-        LegacyTexturedQuadRenderer.emitPositionColorTexLightmapQuadIdentity(consumer, LightTexture.FULL_BRIGHT,
-                LegacyTexturedQuadRenderer.vertex(pX + x1, pY + y1, pZ + z1, uMax, vMax, color, 255),
-                LegacyTexturedQuadRenderer.vertex(pX + x2, pY + y2, pZ + z2, uMin, vMax, color, 255),
-                LegacyTexturedQuadRenderer.vertex(pX + x3, pY + y3, pZ + z3, uMin, vMin, color, 255),
-                LegacyTexturedQuadRenderer.vertex(pX + x4, pY + y4, pZ + z4, uMax, vMin, color, 255));
+        LegacyTexturedQuadRenderer.emitPositionColorTexLightmapQuadIdentityDirect(consumer, LightTexture.FULL_BRIGHT,
+                pX + x1, pY + y1, pZ + z1, uMax, vMax,
+                pX + x2, pY + y2, pZ + z2, uMin, vMax,
+                pX + x3, pY + y3, pZ + z3, uMin, vMin,
+                pX + x4, pY + y4, pZ + z4, uMax, vMin,
+                color, 255);
     }
 
     @Override

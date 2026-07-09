@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "L": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "N": {
+      "item": "hbm_ntm_rebirth:bottle_nuka"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:syringe_metal_stimpak"
+    }
+  },
+  "pattern": [
+    " N ",
+    "PSP",
+    "L L"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:syringe_metal_super"
+  }
+}

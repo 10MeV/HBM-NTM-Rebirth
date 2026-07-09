@@ -8,11 +8,13 @@
     "ingredient": {
       "tag": "forge:gems/any_coke"
     },
-    "count": 1
+    "count": 1,
+    "legacy_ore": "gemAnyCoke"
   },
   "output_fluid": {
     "fluid": "SYNGAS",
     "amount": 1000
   },
-  "duration": 100
+  "duration": 100,
+  "source_order": 30
 }

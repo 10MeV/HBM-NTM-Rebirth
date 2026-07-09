@@ -1,5 +1,6 @@
 package com.hbm.ntm.radiation;
 
+import com.hbm.items.machine.ItemRBMKPellet;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
@@ -19,6 +20,9 @@ public class RbmkPelletRadiationModifier implements HazardModifier {
 
     @Override
     public float modify(ItemStack stack, LivingEntity holder, float level) {
+        if (!(stack.getItem() instanceof ItemRBMKPellet)) {
+            return level;
+        }
         int meta = rectify(legacyMeta == null ? stack.getDamageValue() : legacyMeta);
         float depletion = (meta % 5) / 4.0F;
         float modified = level + (target - level) * depletion;

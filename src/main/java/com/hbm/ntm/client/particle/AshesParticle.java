@@ -15,7 +15,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,6 +27,10 @@ public class AshesParticle extends TextureSheetParticle implements HbmDeferredPa
     private final float baseScale;
     private final float rollSpeed;
     private final boolean groundSmokeSeed;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private AshesParticle(ClientLevel level, double x, double y, double z, float scale, SpriteSet sprites) {
         super(level, x, y, z);
@@ -46,6 +49,7 @@ public class AshesParticle extends TextureSheetParticle implements HbmDeferredPa
         this.rollSpeed = (visualId % 2 - 0.5F) * 2.0F * Mth.DEG_TO_RAD;
         this.groundSmokeSeed = visualId % 5 == 0;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     public static AshesParticle create(ClientLevel level, double x, double y, double z, float scale) {
@@ -80,6 +84,7 @@ public class AshesParticle extends TextureSheetParticle implements HbmDeferredPa
         float timeLeft = this.lifetime - this.age;
         this.alpha = timeLeft < 40.0F ? Math.max(timeLeft / 40.0F, 0.0F) : 1.0F;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -89,7 +94,7 @@ public class AshesParticle extends TextureSheetParticle implements HbmDeferredPa
 
     @Override
     public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
+        VertexConsumer consumer = HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer);
         if (this.onGround) {
             renderGroundQuad(consumer, camera, partialTick);
             return;
@@ -97,7 +102,7 @@ public class AshesParticle extends TextureSheetParticle implements HbmDeferredPa
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(consumer, camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
     }
 
@@ -107,23 +112,22 @@ public class AshesParticle extends TextureSheetParticle implements HbmDeferredPa
         float y = (float) (Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y()) + 0.05F;
         float z = (float) (Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z());
         float angle = Mth.lerp(partialTick, this.oRoll, this.roll);
-        Quaternionf rotation = new Quaternionf().rotateY(angle);
-        Vector3f[] corners = new Vector3f[]{
-                new Vector3f(this.baseScale, 0.0F, this.baseScale),
-                new Vector3f(this.baseScale, 0.0F, -this.baseScale),
-                new Vector3f(-this.baseScale, 0.0F, -this.baseScale),
-                new Vector3f(-this.baseScale, 0.0F, this.baseScale)
-        };
-        for (Vector3f corner : corners) {
-            corner.rotate(rotation).add(x, y, z);
-        }
+        Quaternionf rotation = HbmDeferredParticleRenderer.scratchRotation().rotateY(angle);
         int light = getLightColor(partialTick);
-        HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, light,
-                corners[0], getU1(), getV1(),
-                corners[1], getU1(), getV0(),
-                corners[2], getU0(), getV0(),
-                corners[3], getU0(), getV1(),
+        float scale = this.baseScale;
+        HbmDeferredParticleRenderer.emitLocalParticleSheetQuad(consumer, light, rotation, x, y, z,
+                scale, 0.0F, scale, this.cachedU1, this.cachedV1,
+                scale, 0.0F, -scale, this.cachedU1, this.cachedV0,
+                -scale, 0.0F, -scale, this.cachedU0, this.cachedV0,
+                -scale, 0.0F, scale, this.cachedU0, this.cachedV1,
                 rCol, gCol, bCol, alpha);
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     @Override

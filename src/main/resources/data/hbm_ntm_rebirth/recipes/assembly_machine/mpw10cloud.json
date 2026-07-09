@@ -1,48 +1,42 @@
-﻿{
-    "type":  "hbm_ntm_rebirth:assembly_machine",
-    "internal_name":  "ass.mpw10cloud",
-    "duration":  100,
-    "power":  100,
-    "input_items":  [
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:seg_10"
-                                           },
-                            "count":  1
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:plates/steel"
-                                           },
-                            "count":  12,
-                            "legacy_ore":  "plateSteel"
-                        },
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:det_cord"
-                                           },
-                            "count":  2
-                        },
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:powder_magic"
-                                           },
-                            "count":  16
-                        }
-                    ],
-    "input_fluids":  [
-
-                     ],
-    "output_items":  [
-                         {
-                             "item":  "hbm_ntm_rebirth:mp_warhead_10_cloud"
-                         }
-                     ],
-    "output_fluids":  [
-
-                      ],
-    "pools":  [
-
-              ],
-    "source_order":  309
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:seg_10"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:det_cord"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_magic"
+      }
+    }
+  ],
+  "internal_name": "ass.mpw10cloud",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:mp_warhead_10_cloud"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 309
 }

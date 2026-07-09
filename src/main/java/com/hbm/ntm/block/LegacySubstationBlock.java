@@ -54,7 +54,7 @@ public class LegacySubstationBlock extends LegacyXrMultiblockBlock implements En
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable

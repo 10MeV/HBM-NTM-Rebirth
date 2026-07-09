@@ -18,14 +18,18 @@ public final class BulletCasingEjectUtil {
         if (position == null || ejectorId < 0 || casingName == null || casingName.isBlank()) {
             return CasingRequest.NONE;
         }
-        return CasingRequest.legacyEjector(position, ejectorId, casingName, pitchRadians, yawRadians, crouched);
+        return CasingRequest.legacyEjector(position.x, position.y, position.z, ejectorId, casingName,
+                pitchRadians, yawRadians, crouched);
     }
 
     public static CasingRequest legacyEjectorFromShooter(LivingEntity shooter, int ejectorId, String casingName) {
         if (shooter == null) {
             return CasingRequest.NONE;
         }
-        return legacyEjectorRequest(shooter.position(), ejectorId, casingName,
+        if (ejectorId < 0 || casingName == null || casingName.isBlank()) {
+            return CasingRequest.NONE;
+        }
+        return CasingRequest.legacyEjector(shooter.getX(), shooter.getY(), shooter.getZ(), ejectorId, casingName,
                 shooter.getXRot() * Mth.DEG_TO_RAD, shooter.getYRot() * Mth.DEG_TO_RAD, shooter.isCrouching());
     }
 
@@ -35,8 +39,18 @@ public final class BulletCasingEjectUtil {
         if (position == null || motion == null || casingName == null || casingName.isBlank()) {
             return CasingRequest.NONE;
         }
-        return CasingRequest.direct(position, motion, yaw, pitch, momentumPitch, momentumYaw, casingName,
-                smoking, smokeLife, smokeLift, nodeLife);
+        return directRequest(position.x, position.y, position.z, motion.x, motion.y, motion.z, yaw, pitch,
+                momentumPitch, momentumYaw, casingName, smoking, smokeLife, smokeLift, nodeLife);
+    }
+
+    public static CasingRequest directRequest(double x, double y, double z, double motionX, double motionY,
+            double motionZ, float yaw, float pitch, float momentumPitch, float momentumYaw, String casingName,
+            boolean smoking, int smokeLife, double smokeLift, int nodeLife) {
+        if (casingName == null || casingName.isBlank()) {
+            return CasingRequest.NONE;
+        }
+        return CasingRequest.direct(x, y, z, motionX, motionY, motionZ, yaw, pitch, momentumPitch, momentumYaw,
+                casingName, smoking, smokeLife, smokeLift, nodeLife);
     }
 
     public static CasingRequest directFromShooter(LivingEntity shooter, double frontOffset, double heightOffset,
@@ -58,23 +72,33 @@ public final class BulletCasingEjectUtil {
         double adjustedHeightOffset = shooter.isCrouching() ? heightOffset - 0.075F : heightOffset;
         float pitch = shooter.getXRot();
         float yaw = shooter.getYRot();
-        Vec3 offset = rotatePlayerRelative(new Vec3(sideOffset, adjustedHeightOffset, frontOffset), pitch, yaw);
-        Vec3 position = new Vec3(shooter.getX() + offset.x,
-                shooter.getY() + shooter.getEyeHeight() + offset.y,
-                shooter.getZ() + offset.z);
+        double pitchRadians = -pitch * Mth.DEG_TO_RAD;
+        double pitchCos = Math.cos(pitchRadians);
+        double pitchSin = Math.sin(pitchRadians);
+        double yawRadians = -yaw * Mth.DEG_TO_RAD;
+        double yawCos = Math.cos(yawRadians);
+        double yawSin = Math.sin(yawRadians);
+
+        double offsetY = adjustedHeightOffset * pitchCos - frontOffset * pitchSin;
+        double offsetZPitch = adjustedHeightOffset * pitchSin + frontOffset * pitchCos;
+        double x = shooter.getX() + sideOffset * yawCos + offsetZPitch * yawSin;
+        double y = shooter.getY() + shooter.getEyeHeight() + offsetY;
+        double z = shooter.getZ() + offsetZPitch * yawCos - sideOffset * yawSin;
 
         RandomSource roll = random == null ? shooter.getRandom() : random;
-        Vec3 localMotion = rotatePlayerRelative(new Vec3(sideMotion, heightMotion, frontMotion), pitch, yaw);
+        double motionYLocal = heightMotion * pitchCos - frontMotion * pitchSin;
+        double motionZPitch = heightMotion * pitchSin + frontMotion * pitchCos;
+        double motionXLocal = sideMotion * yawCos + motionZPitch * yawSin;
+        double motionZLocal = motionZPitch * yawCos - sideMotion * yawSin;
         Vec3 shooterMotion = shooter.getDeltaMovement();
-        double motionX = shooterMotion.x + localMotion.x + roll.nextGaussian() * motionVariance;
-        double motionY = shooterMotion.y + localMotion.y + roll.nextGaussian() * motionVariance;
-        double motionZ = shooterMotion.z + localMotion.z + roll.nextGaussian() * motionVariance;
+        double motionX = shooterMotion.x + motionXLocal + roll.nextGaussian() * motionVariance;
+        double motionY = shooterMotion.y + motionYLocal + roll.nextGaussian() * motionVariance;
+        double motionZ = shooterMotion.z + motionZLocal + roll.nextGaussian() * motionVariance;
         if (shooter instanceof Player player && player.getAbilities().flying) {
             motionY -= 0.04D;
         }
-        Vec3 motion = new Vec3(motionX, motionY, motionZ);
 
-        return directRequest(position, motion, yaw, pitch, momentumPitch, momentumYaw, casingName,
+        return directRequest(x, y, z, motionX, motionY, motionZ, yaw, pitch, momentumPitch, momentumYaw, casingName,
                 smoking, smokeLife, smokeLift, nodeLife);
     }
 
@@ -85,12 +109,20 @@ public final class BulletCasingEjectUtil {
             return CasingRequest.NONE;
         }
         RandomSource roll = random == null ? RandomSource.create() : random;
-        Vec3 localMotion = rotatePlayerRelative(new Vec3(sideMotion, heightMotion, frontMotion), pitch, yaw);
-        Vec3 motion = new Vec3(
-                localMotion.x + roll.nextGaussian() * motionVariance,
-                localMotion.y + roll.nextGaussian() * motionVariance,
-                localMotion.z + roll.nextGaussian() * motionVariance);
-        return directRequest(position, motion, yaw, pitch, momentumPitch, momentumYaw, casingName,
+        double pitchRadians = -pitch * Mth.DEG_TO_RAD;
+        double pitchCos = Math.cos(pitchRadians);
+        double pitchSin = Math.sin(pitchRadians);
+        double motionYLocal = heightMotion * pitchCos - frontMotion * pitchSin;
+        double motionZPitch = heightMotion * pitchSin + frontMotion * pitchCos;
+
+        double yawRadians = -yaw * Mth.DEG_TO_RAD;
+        double yawCos = Math.cos(yawRadians);
+        double yawSin = Math.sin(yawRadians);
+        double motionX = sideMotion * yawCos + motionZPitch * yawSin + roll.nextGaussian() * motionVariance;
+        double motionY = motionYLocal + roll.nextGaussian() * motionVariance;
+        double motionZ = motionZPitch * yawCos - sideMotion * yawSin + roll.nextGaussian() * motionVariance;
+        return directRequest(position.x, position.y, position.z, motionX, motionY, motionZ, yaw, pitch,
+                momentumPitch, momentumYaw, casingName,
                 smoking, smokeLife, smokeLift, nodeLife);
     }
 
@@ -98,31 +130,17 @@ public final class BulletCasingEjectUtil {
         if (level == null || request == null || !request.valid()) {
             return false;
         }
-        Vec3 pos = request.position();
         if (request.kind() == CasingKind.LEGACY_EJECTOR) {
-            ParticleUtil.spawnLegacyCasing(level, pos.x, pos.y, pos.z, request.ejectorId(), request.casingName(),
-                    request.pitch(), request.yaw(), request.crouched());
+            ParticleUtil.spawnLegacyCasing(level, request.x(), request.y(), request.z(), request.ejectorId(),
+                    request.casingName(), request.pitch(), request.yaw(), request.crouched());
             return true;
         }
-        ParticleUtil.spawnCasing(level, pos.x, pos.y, pos.z,
-                request.motion().x, request.motion().y, request.motion().z,
+        ParticleUtil.spawnCasing(level, request.x(), request.y(), request.z(),
+                request.motionX(), request.motionY(), request.motionZ(),
                 request.yaw(), request.pitch(), request.momentumPitch(), request.momentumYaw(),
                 request.casingName(), request.smoking(), request.smokeLife(), request.smokeLift(),
                 request.nodeLife());
         return true;
-    }
-
-    private static Vec3 rotatePlayerRelative(Vec3 vector, float pitchDegrees, float yawDegrees) {
-        Vec3 pitchRotated = rotateX(vector, -pitchDegrees * Mth.DEG_TO_RAD);
-        return pitchRotated.yRot(-yawDegrees * Mth.DEG_TO_RAD);
-    }
-
-    private static Vec3 rotateX(Vec3 vector, double radians) {
-        double cos = Math.cos(radians);
-        double sin = Math.sin(radians);
-        double y = vector.y * cos - vector.z * sin;
-        double z = vector.y * sin + vector.z * cos;
-        return new Vec3(vector.x, y, z);
     }
 
     public enum CasingKind {
@@ -131,15 +149,25 @@ public final class BulletCasingEjectUtil {
         DIRECT
     }
 
-    public record CasingRequest(CasingKind kind, Vec3 position, Vec3 motion, int ejectorId, String casingName,
-            float pitch, float yaw, float momentumPitch, float momentumYaw, boolean crouched, boolean smoking,
-            int smokeLife, double smokeLift, int nodeLife, boolean valid) {
-        public static final CasingRequest NONE = new CasingRequest(CasingKind.NONE, Vec3.ZERO, Vec3.ZERO, -1, "",
-                0.0F, 0.0F, DEFAULT_MOMENTUM_PITCH, DEFAULT_MOMENTUM_YAW, false, false, 0, 0.0D, 0, false);
+    public record CasingRequest(CasingKind kind, double x, double y, double z, double motionX, double motionY,
+            double motionZ, int ejectorId, String casingName, float pitch, float yaw, float momentumPitch,
+            float momentumYaw, boolean crouched, boolean smoking, int smokeLife, double smokeLift, int nodeLife,
+            boolean valid) {
+        public static final CasingRequest NONE = new CasingRequest(CasingKind.NONE, 0.0D, 0.0D, 0.0D,
+                0.0D, 0.0D, 0.0D, -1, "", 0.0F, 0.0F, DEFAULT_MOMENTUM_PITCH, DEFAULT_MOMENTUM_YAW,
+                false, false, 0, 0.0D, 0, false);
 
         public static CasingRequest legacyEjector(Vec3 position, int ejectorId, String casingName,
                 float pitchRadians, float yawRadians, boolean crouched) {
-            return new CasingRequest(CasingKind.LEGACY_EJECTOR, position, Vec3.ZERO, ejectorId, casingName,
+            return position == null
+                    ? NONE
+                    : legacyEjector(position.x, position.y, position.z, ejectorId, casingName, pitchRadians,
+                            yawRadians, crouched);
+        }
+
+        public static CasingRequest legacyEjector(double x, double y, double z, int ejectorId, String casingName,
+                float pitchRadians, float yawRadians, boolean crouched) {
+            return new CasingRequest(CasingKind.LEGACY_EJECTOR, x, y, z, 0.0D, 0.0D, 0.0D, ejectorId, casingName,
                     pitchRadians, yawRadians, DEFAULT_MOMENTUM_PITCH, DEFAULT_MOMENTUM_YAW, crouched, false,
                     0, 0.0D, 0, true);
         }
@@ -147,8 +175,17 @@ public final class BulletCasingEjectUtil {
         public static CasingRequest direct(Vec3 position, Vec3 motion, float yaw, float pitch,
                 float momentumPitch, float momentumYaw, String casingName, boolean smoking, int smokeLife,
                 double smokeLift, int nodeLife) {
-            return new CasingRequest(CasingKind.DIRECT, position, motion, -1, casingName, pitch, yaw,
-                    momentumPitch, momentumYaw, false, smoking, smokeLife, smokeLift, nodeLife, true);
+            return position == null || motion == null
+                    ? NONE
+                    : direct(position.x, position.y, position.z, motion.x, motion.y, motion.z, yaw, pitch,
+                            momentumPitch, momentumYaw, casingName, smoking, smokeLife, smokeLift, nodeLife);
+        }
+
+        public static CasingRequest direct(double x, double y, double z, double motionX, double motionY,
+                double motionZ, float yaw, float pitch, float momentumPitch, float momentumYaw, String casingName,
+                boolean smoking, int smokeLife, double smokeLift, int nodeLife) {
+            return new CasingRequest(CasingKind.DIRECT, x, y, z, motionX, motionY, motionZ, -1, casingName,
+                    pitch, yaw, momentumPitch, momentumYaw, false, smoking, smokeLife, smokeLift, nodeLife, true);
         }
     }
 

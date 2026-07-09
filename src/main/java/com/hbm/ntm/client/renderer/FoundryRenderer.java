@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.FoundryOutletBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.FoundryBaseBlockEntity;
 import com.hbm.ntm.blockentity.FoundryCastingBlockEntity;
 import com.hbm.ntm.blockentity.FoundryChannelBlockEntity;
@@ -32,10 +33,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
     private static final TextureAtlasSprite LAVA = sprite("lava_gray");
-    private static final TextureAtlasSprite SLAG = sprite("slag");
     private static final TextureSet BASIN_TEXTURES = simpleTextures("basin");
     private static final TextureSet MOLD_TEXTURES = simpleTextures("mold");
     private static final TextureSet CHANNEL_TEXTURES = simpleTextures("channel");
@@ -53,35 +54,76 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
     }
 
     @Override
+    public boolean shouldRender(T blockEntity, Vec3 cameraPos) {
+        if (blockEntity instanceof FoundryCastingBlockEntity casting && !hasCastingBerVisuals(casting)) {
+            return false;
+        }
+        if (blockEntity instanceof FoundryChannelBlockEntity channel && !hasChannelBerVisuals(channel)) {
+            return false;
+        }
+        if (blockEntity instanceof FoundryTankBlockEntity tank && !hasTankBerVisuals(tank)) {
+            return false;
+        }
+        if (blockEntity instanceof FoundryOutletBlockEntity outlet && !hasOutletBerVisuals(outlet)) {
+            return false;
+        }
+        if (blockEntity instanceof FoundrySlagBlockEntity) {
+            return false;
+        }
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
+    }
+
+    @Override
     public void render(T blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        if (blockEntity instanceof FoundryCastingBlockEntity casting) {
+            if (!hasCastingBerVisuals(casting)
+                    || !LegacyBlockEntityRenderCulling.shouldRenderMachine(casting, getViewDistance())) {
+                return;
+            }
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(casting)) {
+                int modelLight = LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                        ? LegacyRenderLighting.resolveBlockEntityLight(casting, packedLight)
+                        : packedLight;
+                renderCasting(casting, poseStack, buffer, modelLight, packedLight, packedOverlay);
+            }
+            return;
+        }
+        if (blockEntity instanceof FoundryChannelBlockEntity channel && !hasChannelBerVisuals(channel)) {
+            return;
+        }
+        if (blockEntity instanceof FoundryTankBlockEntity tank && !hasTankBerVisuals(tank)) {
+            return;
+        }
+        if (blockEntity instanceof FoundryOutletBlockEntity outlet && !hasOutletBerVisuals(outlet)) {
+            return;
+        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        LegacyBlockEntityRenderCulling.recordMachineSubmission(blockEntity);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
 
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
-
-        if (blockEntity instanceof FoundryCastingBlockEntity casting) {
-            renderCasting(casting, poseStack, buffer, modelLight, packedLight, packedOverlay);
-        } else if (blockEntity instanceof FoundryChannelBlockEntity channel) {
-            renderChannel(channel, poseStack, buffer, modelLight, packedOverlay);
-        } else if (blockEntity instanceof FoundryTankBlockEntity tank) {
-            renderTank(tank, poseStack, buffer, modelLight, packedOverlay);
-        } else if (blockEntity instanceof FoundryOutletBlockEntity outlet) {
-            renderOutlet(outlet, poseStack, buffer, modelLight, packedOverlay);
-        } else if (blockEntity instanceof FoundrySlagBlockEntity slag) {
-            renderSlag(slag, poseStack, buffer, packedOverlay);
+            if (blockEntity instanceof FoundryChannelBlockEntity channel) {
+                renderChannel(channel, poseStack, buffer, modelLight, packedOverlay);
+            } else if (blockEntity instanceof FoundryTankBlockEntity tank) {
+                renderTank(tank, poseStack, buffer, modelLight, packedOverlay);
+            } else if (blockEntity instanceof FoundryOutletBlockEntity outlet) {
+                renderOutlet(outlet, poseStack, buffer, modelLight, packedOverlay);
+            }
         }
     }
 
     private static void renderCasting(FoundryCastingBlockEntity casting, PoseStack poseStack,
             MultiBufferSource buffer, int modelLight, int packedLight, int packedOverlay) {
-        LegacyIsbrhBlockPlans.FoundryOpenVesselRenderPlan plan = casting.getMoldSize() == 0
-                ? LegacyIsbrhBlockPlans.foundryMoldWorldPlan(0xFFFFFF, false)
-                : LegacyIsbrhBlockPlans.foundryBasinWorldPlan(0xFFFFFF, false);
-        renderFaces(plan.faces(), plan.colorPlan(), textureSet(plan.kind()), poseStack, buffer, modelLight,
-                packedOverlay);
+        if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            LegacyIsbrhBlockPlans.FoundryOpenVesselRenderPlan plan = casting.getMoldSize() == 0
+                    ? LegacyIsbrhBlockPlans.foundryMoldWorldPlan(0xFFFFFF, false)
+                    : LegacyIsbrhBlockPlans.foundryBasinWorldPlan(0xFFFFFF, false);
+            renderFaces(plan.faces(), plan.colorPlan(), textureSet(plan.kind()), poseStack, buffer, modelLight,
+                    packedOverlay);
+        }
         renderCastingFluid(casting, poseStack, buffer, packedOverlay);
         renderCastingItems(casting, poseStack, buffer, packedLight);
     }
@@ -98,7 +140,9 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
                 0xFFFFFF, false, posX, negX, posZ, negZ,
                 channel.getAmount(), channel.getCapacity(), channel.getMoltenColor());
         TextureSet textures = textureSet("channel");
-        renderFaces(plan.shellFaces(), plan.colorPlan(), textures, poseStack, buffer, packedLight, packedOverlay);
+        if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            renderFaces(plan.shellFaces(), plan.colorPlan(), textures, poseStack, buffer, packedLight, packedOverlay);
+        }
         renderFluidSurfaces(plan.fluidSurfaces(), textures, poseStack, buffer, packedLight, packedOverlay);
     }
 
@@ -120,7 +164,9 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
                 isOutletFacing(level, pos.relative(Direction.NORTH), Direction.NORTH),
                 tank.getAmount(), tank.getCapacity(), tank.getMoltenColor());
         TextureSet textures = textureSet("tank");
-        renderFaces(plan.shellFaces(), plan.colorPlan(), textures, poseStack, buffer, packedLight, packedOverlay);
+        if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            renderFaces(plan.shellFaces(), plan.colorPlan(), textures, poseStack, buffer, packedLight, packedOverlay);
+        }
         renderFluidSurfaces(plan.fluidSurfaces(), textures, poseStack, buffer, packedLight, packedOverlay);
     }
 
@@ -133,16 +179,8 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
         String kind = state.is(ModBlocks.FOUNDRY_SLAGTAP.get()) ? "slagtap" : "outlet";
         LegacyIsbrhBlockPlans.FoundryOutletRenderPlan plan = LegacyIsbrhBlockPlans.foundryOutletWorldPlan(
                 legacyOutletMetadata(facing), outlet.getFilter() != null, outlet.isClosed(), 0xFFFFFF, false);
-        renderFaces(plan.faces(), plan.colorPlan(), textureSet(kind), poseStack, buffer, packedLight, packedOverlay);
-    }
-
-    private static void renderSlag(FoundrySlagBlockEntity slag, PoseStack poseStack, MultiBufferSource buffer,
-            int packedOverlay) {
-        int color = slag.getMaterialType() == null ? 0xFFFFFF : slag.getMaterialType().moltenColor;
-        double height = Math.max(0.0625D, Math.min(1.0D, slag.getFillLevel()));
-        LegacyAtlasCuboidRenderer.croppedCuboid(SLAG, poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay,
-                color, 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
-                0.0D, 0.0D, 0.0D, 1.0D, height, 1.0D);
+        renderOutletFaces(plan.faces(), plan.colorPlan(), textureSet(kind), poseStack, buffer, packedLight,
+                packedOverlay, LegacyMachineRenderShapes.renderChunkBakedStaticsInBer());
     }
 
     private static void renderCastingFluid(FoundryCastingBlockEntity casting, PoseStack poseStack,
@@ -157,21 +195,23 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
         double min = 0.125D;
         double max = 0.875D;
         int color = casting.getMaterialType().moltenColor;
-        LegacyTexturedQuadRenderer.spriteQuad(LAVA, poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 1.0F, 0.0F,
-                LegacyTexturedQuadRenderer.spritePixelVertex(min, y, min, 0.0D, 16.0D, color, 255),
-                LegacyTexturedQuadRenderer.spritePixelVertex(min, y, max, 16.0D, 16.0D, color, 255),
-                LegacyTexturedQuadRenderer.spritePixelVertex(max, y, max, 16.0D, 0.0D, color, 255),
-                LegacyTexturedQuadRenderer.spritePixelVertex(max, y, min, 0.0D, 0.0D, color, 255));
+        LegacyTexturedQuadRenderer.spritePixelQuadDirect(LAVA, poseStack, buffer, LightTexture.FULL_BRIGHT,
+                packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 1.0F, 0.0F,
+                min, y, min, 0.0D, 16.0D,
+                min, y, max, 16.0D, 16.0D,
+                max, y, max, 16.0D, 0.0D,
+                max, y, min, 0.0D, 0.0D,
+                color, 255);
         double highlightY = y + 0.001D;
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                queuedPose -> LegacyTexturedQuadRenderer.spriteQuad(LAVA, queuedPose, buffer,
-                        LightTexture.FULL_BRIGHT, packedOverlay,
-                        LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 0.0F, 1.0F, 0.0F,
-                        LegacyTexturedQuadRenderer.spritePixelVertex(min, highlightY, min, 0.0D, 16.0D, color, 77),
-                        LegacyTexturedQuadRenderer.spritePixelVertex(min, highlightY, max, 16.0D, 16.0D, color, 77),
-                        LegacyTexturedQuadRenderer.spritePixelVertex(max, highlightY, max, 16.0D, 0.0D, color, 77),
-                        LegacyTexturedQuadRenderer.spritePixelVertex(max, highlightY, min, 0.0D, 0.0D, color, 77)));
+        LegacyMachineEffectPresenter.enqueueAtlasSpriteQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                quads -> LegacyTexturedQuadRenderer.spritePixelQuadDirect(LAVA, quads,
+                        LightTexture.FULL_BRIGHT, packedOverlay, 0.0F, 1.0F, 0.0F,
+                        min, highlightY, min, 0.0D, 16.0D,
+                        min, highlightY, max, 16.0D, 16.0D,
+                        max, highlightY, max, 16.0D, 0.0D,
+                        max, highlightY, min, 0.0D, 0.0D,
+                        color, 77));
     }
 
     private static void renderCastingItems(FoundryCastingBlockEntity casting, PoseStack poseStack,
@@ -202,29 +242,52 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
     private static void renderFaces(Iterable<LegacyIsbrhBlockPlans.FoundryFaceDrawPlan> faces,
             LegacyIsbrhBlockPlans.FoundryColorPlan colors, TextureSet textures, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(poseStack,
+                buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
         for (LegacyIsbrhBlockPlans.FoundryFaceDrawPlan face : faces) {
             int light = face.fullBright() ? LightTexture.FULL_BRIGHT : packedLight;
-            renderFace(face, textures.sprite(face.iconRole()), poseStack, buffer, light, packedOverlay,
+            renderFace(face, textures.sprite(face.iconRole()), batch, light, packedOverlay,
                     faceColor(colors, face.colorRole()));
         }
     }
 
+    private static void renderOutletFaces(Iterable<LegacyIsbrhBlockPlans.FoundryFaceDrawPlan> faces,
+            LegacyIsbrhBlockPlans.FoundryColorPlan colors, TextureSet textures, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, boolean renderCore) {
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(poseStack,
+                buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
+        for (LegacyIsbrhBlockPlans.FoundryFaceDrawPlan face : faces) {
+            if (!renderCore && !isOutletDynamicFace(face)) {
+                continue;
+            }
+            int light = face.fullBright() ? LightTexture.FULL_BRIGHT : packedLight;
+            renderFace(face, textures.sprite(face.iconRole()), batch, light, packedOverlay,
+                    faceColor(colors, face.colorRole()));
+        }
+    }
+
+    private static boolean isOutletDynamicFace(LegacyIsbrhBlockPlans.FoundryFaceDrawPlan face) {
+        return "iconFilter".equals(face.iconRole()) || "iconLock".equals(face.iconRole());
+    }
+
     private static void renderFluidSurfaces(Iterable<LegacyIsbrhBlockPlans.FoundryFluidSurfacePlan> surfaces,
             TextureSet textures, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(poseStack,
+                buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
         for (LegacyIsbrhBlockPlans.FoundryFluidSurfacePlan surface : surfaces) {
             int light = surface.fullBright() ? LightTexture.FULL_BRIGHT : packedLight;
             LegacyAtlasCuboidRenderer.CuboidBounds bounds = surface.bounds();
             if (bounds == null) {
                 continue;
             }
-            LegacyAtlasCuboidRenderer.croppedCuboid(textures.sprite(surface.iconRole()), poseStack, buffer,
-                    light, packedOverlay, surface.color(), 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
-                    bounds.minX(), bounds.minY(), bounds.minZ(), bounds.maxX(), bounds.maxY(), bounds.maxZ());
+            LegacyAtlasCuboidRenderer.croppedCuboid(textures.sprite(surface.iconRole()), batch,
+                    light, packedOverlay, surface.color(), 255, bounds.minX(), bounds.minY(), bounds.minZ(),
+                    bounds.maxX(), bounds.maxY(), bounds.maxZ());
         }
     }
 
     private static void renderFace(LegacyIsbrhBlockPlans.FoundryFaceDrawPlan face, TextureAtlasSprite sprite,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int color) {
+            LegacyTexturedQuadRenderer.SpriteQuadBatch batch, int packedLight, int packedOverlay, int color) {
         LegacyAtlasCuboidRenderer.CuboidBounds bounds = face.boundsOverride();
         double minX = bounds == null ? 0.0D : bounds.minX();
         double minY = bounds == null ? 0.0D : bounds.minY();
@@ -240,42 +303,48 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
         maxZ += face.offsetZ();
 
         switch (face.direction()) {
-            case UP -> LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 1.0F, 0.0F,
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, minZ, 16.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, minZ, 0.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, maxZ, 0.0D, 16.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, maxZ, 16.0D, 16.0D, color, 255));
-            case DOWN -> LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, -1.0F, 0.0F,
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, minZ, 16.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, minZ, 0.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, maxZ, 0.0D, 16.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, maxZ, 16.0D, 16.0D, color, 255));
-            case SOUTH -> LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 0.0F, 1.0F,
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, maxZ, 16.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, maxZ, 0.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, maxZ, 0.0D, 16.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, maxZ, 16.0D, 16.0D, color, 255));
-            case NORTH -> LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 0.0F, -1.0F,
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, minZ, 16.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, minZ, 0.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, minZ, 0.0D, 16.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, minZ, 16.0D, 16.0D, color, 255));
-            case EAST -> LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_NO_CULL, 1.0F, 0.0F, 0.0F,
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, maxZ, 16.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, maxY, minZ, 0.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, minZ, 0.0D, 16.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(maxX, minY, maxZ, 16.0D, 16.0D, color, 255));
-            case WEST -> LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, packedOverlay,
-                    LegacyTexturedRenderMode.CUTOUT_NO_CULL, -1.0F, 0.0F, 0.0F,
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, minZ, 16.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, maxY, maxZ, 0.0D, 0.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, maxZ, 0.0D, 16.0D, color, 255),
-                    LegacyTexturedQuadRenderer.spritePixelVertex(minX, minY, minZ, 16.0D, 16.0D, color, 255));
+            case UP -> LegacyTexturedQuadRenderer.spritePixelQuadDirect(sprite, batch, packedLight,
+                    packedOverlay, 0.0F, 1.0F, 0.0F,
+                    maxX, maxY, minZ, 16.0D, 0.0D,
+                    minX, maxY, minZ, 0.0D, 0.0D,
+                    minX, maxY, maxZ, 0.0D, 16.0D,
+                    maxX, maxY, maxZ, 16.0D, 16.0D,
+                    color, 255);
+            case DOWN -> LegacyTexturedQuadRenderer.spritePixelQuadDirect(sprite, batch, packedLight,
+                    packedOverlay, 0.0F, -1.0F, 0.0F,
+                    maxX, minY, minZ, 16.0D, 0.0D,
+                    minX, minY, minZ, 0.0D, 0.0D,
+                    minX, minY, maxZ, 0.0D, 16.0D,
+                    maxX, minY, maxZ, 16.0D, 16.0D,
+                    color, 255);
+            case SOUTH -> LegacyTexturedQuadRenderer.spritePixelQuadDirect(sprite, batch, packedLight,
+                    packedOverlay, 0.0F, 0.0F, 1.0F,
+                    maxX, maxY, maxZ, 16.0D, 0.0D,
+                    minX, maxY, maxZ, 0.0D, 0.0D,
+                    minX, minY, maxZ, 0.0D, 16.0D,
+                    maxX, minY, maxZ, 16.0D, 16.0D,
+                    color, 255);
+            case NORTH -> LegacyTexturedQuadRenderer.spritePixelQuadDirect(sprite, batch, packedLight,
+                    packedOverlay, 0.0F, 0.0F, -1.0F,
+                    maxX, maxY, minZ, 16.0D, 0.0D,
+                    minX, maxY, minZ, 0.0D, 0.0D,
+                    minX, minY, minZ, 0.0D, 16.0D,
+                    maxX, minY, minZ, 16.0D, 16.0D,
+                    color, 255);
+            case EAST -> LegacyTexturedQuadRenderer.spritePixelQuadDirect(sprite, batch, packedLight,
+                    packedOverlay, 1.0F, 0.0F, 0.0F,
+                    maxX, maxY, maxZ, 16.0D, 0.0D,
+                    maxX, maxY, minZ, 0.0D, 0.0D,
+                    maxX, minY, minZ, 0.0D, 16.0D,
+                    maxX, minY, maxZ, 16.0D, 16.0D,
+                    color, 255);
+            case WEST -> LegacyTexturedQuadRenderer.spritePixelQuadDirect(sprite, batch, packedLight,
+                    packedOverlay, -1.0F, 0.0F, 0.0F,
+                    minX, maxY, minZ, 16.0D, 0.0D,
+                    minX, maxY, maxZ, 0.0D, 0.0D,
+                    minX, minY, maxZ, 0.0D, 16.0D,
+                    minX, minY, minZ, 16.0D, 16.0D,
+                    color, 255);
         }
     }
 
@@ -331,6 +400,29 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
         };
     }
 
+    private static boolean hasCastingBerVisuals(FoundryCastingBlockEntity casting) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                || casting.getMaterialType() != null && casting.getAmount() > 0 && casting.getMoltenLevel() > 0.0D
+                || !casting.getMoldStack().isEmpty()
+                || !casting.getOutputStack().isEmpty();
+    }
+
+    private static boolean hasChannelBerVisuals(FoundryChannelBlockEntity channel) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                || channel.getMaterialType() != null && channel.getAmount() > 0;
+    }
+
+    private static boolean hasTankBerVisuals(FoundryTankBlockEntity tank) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                || tank.getMaterialType() != null && tank.getAmount() > 0;
+    }
+
+    private static boolean hasOutletBerVisuals(FoundryOutletBlockEntity outlet) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                || outlet.getFilter() != null
+                || outlet.isClosed();
+    }
+
     private static TextureSet textureSet(String kind) {
         return switch (kind) {
             case "basin" -> BASIN_TEXTURES;
@@ -343,7 +435,7 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
     }
 
     private static TextureAtlasSprite sprite(String name) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + name);
     }
 
     private static TextureSet simpleTextures(String kind) {

@@ -2,6 +2,7 @@ package com.hbm.util;
 
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.fluid.FluidType;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -45,6 +46,8 @@ public final class Compat {
     public static final String MOD_RC = com.hbm.ntm.compat.Compat.MOD_RC;
     public static final String MOD_TORCHERINO = com.hbm.ntm.compat.Compat.MOD_TORCHERINO;
     public static final String MOD_TOR = com.hbm.ntm.compat.Compat.MOD_TOR;
+    public static final String MOD_OPENCOMPUTERS = com.hbm.ntm.compat.Compat.MOD_OPENCOMPUTERS;
+    public static final String MOD_OC = com.hbm.ntm.compat.Compat.MOD_OC;
 
     public enum ReikaIsotope {
         C14, U235, U238, Pu239, Pu244, Th232, Rn222, Ra226, Sr90, Po210, Cs134, Xe135, Zr93, Mo99,
@@ -148,6 +151,10 @@ public final class Compat {
 
     public static ItemStack tryLoadBlockStack(ResourceLocation id, int count) {
         return com.hbm.ntm.compat.Compat.tryLoadBlockStack(id, count);
+    }
+
+    public static List<ItemStack> scrapeItemFromME(ItemStack meDrive) {
+        return com.hbm.ntm.compat.Compat.scrapeItemFromME(meDrive);
     }
 
     public static ItemStack getPreferredItemOutput(List<ItemStack> candidates) {
@@ -272,6 +279,36 @@ public final class Compat {
 
     public static com.hbm.ntm.compat.Compat.CompatHazmatReport registerCompatHazmat() {
         return com.hbm.ntm.compat.Compat.registerCompatHazmat();
+    }
+
+    public static void registerCompatFluidContainers() {
+        com.hbm.ntm.compat.Compat.registerCompatFluidContainers();
+    }
+
+    public static void handleRailcraftNonsense() {
+        com.hbm.ntm.compat.Compat.handleRailcraftNonsense();
+    }
+
+    @Nullable
+    public static Class<?> getChunkBiomeHook() {
+        return com.hbm.ntm.compat.Compat.getChunkBiomeHook();
+    }
+
+    @Nullable
+    public static Method getBiomeShortArray;
+
+    @Nullable
+    public static Method getBiomeShortArray() {
+        return com.hbm.ntm.compat.Compat.getBiomeShortArray();
+    }
+
+    @Nullable
+    public static short[] getBiomeShortArray(Object instance) {
+        return com.hbm.ntm.compat.Compat.getBiomeShortArray(instance);
+    }
+
+    public static void blacklistAccelerator(Class<?> clazz) {
+        com.hbm.ntm.compat.Compat.blacklistAccelerator(clazz);
     }
 
     public static ResourceLocation resource(String id) {

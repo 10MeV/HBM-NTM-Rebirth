@@ -29,6 +29,8 @@ public final class BulletUpdateBehaviorUtil {
     private static final float FOLLY_SUPERMATTER_SHOOTER_RADIATION = 150.0F;
     private static final float FOLLY_SUPERMATTER_DT_NEGATION = 100.0F;
     private static final float FOLLY_SUPERMATTER_DR_PIERCING = 0.99F;
+    private static final double ROCKET_STEERING_PLAYER_RANGE_SQ = 100.0D * 100.0D;
+    private static final double ROCKET_STEERING_MIN_TARGET_RANGE_SQ = 3.0D * 3.0D;
 
     public static KnownUpdateResult applyKnownPreMoveUpdate(BulletConfig config, Entity projectile,
             @Nullable Entity shooter, Vec3 motion, @Nullable Entity currentHomingTarget) {
@@ -134,7 +136,10 @@ public final class BulletUpdateBehaviorUtil {
             return;
         }
         double effectiveBeamLength = beamLength > 1.0E-7D ? beamLength : FOLLY_SUPERMATTER_RANGE;
-        spawnFollySupermatterVisual(projectile.level(), projectile.position(), direction,
+        double originX = projectile.getX();
+        double originY = projectile.getY();
+        double originZ = projectile.getZ();
+        spawnFollySupermatterVisual(projectile.level(), originX, originY, originZ, direction,
                 projectile.getXRot(), projectile.getYRot(), projectile.tickCount, effectiveBeamLength);
 
         if (projectile.tickCount != FOLLY_SUPERMATTER_EFFECT_TICK) {
@@ -145,19 +150,20 @@ public final class BulletUpdateBehaviorUtil {
                     RadiationUtil.ContaminationType.CREATIVE, FOLLY_SUPERMATTER_SHOOTER_RADIATION);
         }
 
-        Vec3 origin = projectile.position();
         AABB beamArea = projectile.getBoundingBox()
-                .expandTowards(direction.scale(effectiveBeamLength))
+                .expandTowards(direction.x * effectiveBeamLength, direction.y * effectiveBeamLength,
+                        direction.z * effectiveBeamLength)
                 .inflate(1.0D);
         java.util.List<Entity> entities = projectile.level().getEntities(projectile, beamArea,
                 entity -> entity.isAlive() && entity != shooter);
         float damage = overrideDamage > 0.0F ? overrideDamage : config.damageMax();
         int minY = projectile.level().getMinBuildHeight();
         int maxY = projectile.level().getMaxBuildHeight();
+        BlockPos.MutableBlockPos clearPos = new BlockPos.MutableBlockPos();
         for (int distance = 1; distance < effectiveBeamLength; distance += 2) {
-            int x = (int) Math.floor(origin.x + direction.x * distance);
-            int y = (int) Math.floor(origin.y + direction.y * distance);
-            int z = (int) Math.floor(origin.z + direction.z * distance);
+            int x = (int) Math.floor(originX + direction.x * distance);
+            int y = (int) Math.floor(originY + direction.y * distance);
+            int z = (int) Math.floor(originZ + direction.z * distance);
 
             for (int ix = x - 1; ix <= x + 1; ix++) {
                 for (int iy = y - 1; iy <= y + 1; iy++) {
@@ -165,9 +171,9 @@ public final class BulletUpdateBehaviorUtil {
                         continue;
                     }
                     for (int iz = z - 1; iz <= z + 1; iz++) {
-                        BlockPos pos = new BlockPos(ix, iy, iz);
-                        if (projectile.level().hasChunkAt(pos)) {
-                            projectile.level().setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                        clearPos.set(ix, iy, iz);
+                        if (projectile.level().hasChunkAt(clearPos)) {
+                            projectile.level().setBlock(clearPos, Blocks.AIR.defaultBlockState(), 3);
                         }
                         AABB cell = new AABB(ix - 1.0D, iy - 1.0D, iz - 1.0D,
                                 ix + 2.0D, iy + 2.0D, iz + 2.0D);
@@ -188,17 +194,20 @@ public final class BulletUpdateBehaviorUtil {
         return new Vec3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
     }
 
-    private static void spawnFollySupermatterVisual(Level level, Vec3 origin, Vec3 direction,
+    private static void spawnFollySupermatterVisual(Level level, double originX, double originY, double originZ,
+            Vec3 direction,
             float pitch, float yaw, int ticksExisted, double beamLength) {
         if (ticksExisted >= FOLLY_SUPERMATTER_VISUAL_TICKS) {
             return;
         }
         double distance = ticksExisted * FOLLY_SUPERMATTER_VISUAL_SPACING;
-        Vec3 position = origin.add(direction.scale(distance));
+        double x = originX + direction.x * distance;
+        double y = originY + direction.y * distance;
+        double z = originZ + direction.z * distance;
         double scaledBeamLength = Math.max(beamLength, 1.0E-7D);
         float scale = 2.0F + ticksExisted / (float) (scaledBeamLength / FOLLY_SUPERMATTER_VISUAL_SPACING)
                 * 3.0F;
-        ParticleUtil.spawnPlasmaBlast(level, position.x, position.y, position.z,
+        ParticleUtil.spawnPlasmaBlast(level, x, y, z,
                 0.75F, 0.75F, 0.75F, pitch + 90.0F, -yaw, scale, 250.0D);
     }
 
@@ -254,23 +263,33 @@ public final class BulletUpdateBehaviorUtil {
         if (threshold <= 0.0F || level == null || previousPosition == null || currentPosition == null) {
             return 0;
         }
-        Vec3 delta = currentPosition.subtract(previousPosition);
-        double motion = Math.max(delta.length(), 0.1D);
-        Vec3 direction = delta.lengthSqr() < 1.0E-7D ? Vec3.ZERO : delta.normalize();
+        double deltaX = currentPosition.x - previousPosition.x;
+        double deltaY = currentPosition.y - previousPosition.y;
+        double deltaZ = currentPosition.z - previousPosition.z;
+        double distanceSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+        double trueDistance = Math.sqrt(distanceSqr);
+        double motion = Math.max(trueDistance, 0.1D);
+        double invDistance = distanceSqr < 1.0E-7D ? 0.0D : 1.0D / trueDistance;
+        double directionX = deltaX * invDistance;
+        double directionY = deltaY * invDistance;
+        double directionZ = deltaZ * invDistance;
+        BlockPos.MutableBlockPos mutablePos = level.isClientSide() ? null : new BlockPos.MutableBlockPos();
         int changed = 0;
         for (double distance = 0.0D; distance < motion; distance += 0.5D) {
-            Vec3 point = currentPosition.subtract(direction.scale(distance));
+            double pointX = currentPosition.x - directionX * distance;
+            double pointY = currentPosition.y - directionY * distance;
+            double pointZ = currentPosition.z - directionZ * distance;
             if (level.isClientSide()) {
-                ParticleUtil.spawnVanillaExt(level, point.x, point.y, point.z, ParticleUtil.VANILLA_FIREWORKS,
+                ParticleUtil.spawnVanillaExt(level, pointX, pointY, pointZ, ParticleUtil.VANILLA_FIREWORKS,
                         0.0D, 0.0D, 0.0D);
                 changed++;
                 continue;
             }
-            BlockPos pos = new BlockPos((int) Math.floor(point.x), (int) Math.floor(point.y),
-                    (int) Math.floor(point.z));
-            BlockState state = level.getBlockState(pos);
-            float hardness = state.getDestroySpeed(level, pos);
-            if (!state.isAir() && hardness >= 0.0F && hardness < threshold && level.destroyBlock(pos, false)) {
+            mutablePos.set((int) Math.floor(pointX), (int) Math.floor(pointY), (int) Math.floor(pointZ));
+            BlockState state = level.getBlockState(mutablePos);
+            float hardness = state.getDestroySpeed(level, mutablePos);
+            if (!state.isAir() && hardness >= 0.0F && hardness < threshold
+                    && level.destroyBlock(mutablePos.immutable(), false)) {
                 changed++;
             }
         }
@@ -304,7 +323,7 @@ public final class BulletUpdateBehaviorUtil {
         if (!config.hasBehavior(BulletBehaviorTag.ROCKET_STEER)
                 || !(shooter instanceof Player player)
                 || !canSteerRocket(config, player)
-                || position.distanceTo(player.position()) > 100.0D) {
+                || distanceToSqr(position, player) > ROCKET_STEERING_PLAYER_RANGE_SQ) {
             return motion;
         }
 
@@ -313,10 +332,17 @@ public final class BulletUpdateBehaviorUtil {
             return motion;
         }
         Vec3 target = hit.getLocation().subtract(position);
-        if (target.length() < 3.0D || motion.lengthSqr() <= 1.0E-7D) {
+        if (target.lengthSqr() < ROCKET_STEERING_MIN_TARGET_RANGE_SQ || motion.lengthSqr() <= 1.0E-7D) {
             return motion;
         }
         return target.normalize().scale(motion.length());
+    }
+
+    private static double distanceToSqr(Vec3 position, Entity entity) {
+        double dx = position.x - entity.getX();
+        double dy = position.y - entity.getY();
+        double dz = position.z - entity.getZ();
+        return dx * dx + dy * dy + dz * dz;
     }
 
     private static boolean isAlwaysSteeringRocket(BulletConfig config) {

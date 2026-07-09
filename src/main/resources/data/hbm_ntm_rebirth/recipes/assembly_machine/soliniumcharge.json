@@ -1,20 +1,49 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.soliniumcharge",
   "duration": 300,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:ingots/any_high_explosive" }, "count": 3, "legacy_ore": "ingotAnyHighExplosive" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:neutron_reflector" }, "count": 2 },
-    { "ingredient": { "item": "hbm_ntm_rebirth:plate_polymer" }, "count": 6 },
-    { "ingredient": { "tag": "forge:wires/tungsten" }, "count": 6, "legacy_ore": "wireFineTungsten" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:biomass_compressed" }, "count": 4 }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:solinium_propellant" }
+  "input_items": [
+    {
+      "count": 3,
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:neutron_reflector"
+      }
+    },
+    {
+      "count": 6,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_polymer"
+      }
+    },
+    {
+      "count": 6,
+      "ingredient": {
+        "tag": "forge:wires/tungsten"
+      },
+      "legacy_ore": "wireFineTungsten"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:biomass_compressed"
+      }
+    }
   ],
+  "internal_name": "ass.soliniumcharge",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:solinium_propellant"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 230
 }

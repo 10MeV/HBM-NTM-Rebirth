@@ -1,12 +1,12 @@
 package com.hbm.ntm.item;
 
 import com.hbm.inventory.material.MaterialShapes;
+import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.NTMMaterial;
 import com.hbm.ntm.registry.ModItems;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -78,6 +78,14 @@ public class FoundryMoldItem extends Item {
         return stack;
     }
 
+    public static ItemStack stackForId(int id) {
+        Mold mold = BY_ID.get(id);
+        if (mold == null) {
+            throw new IllegalArgumentException("Unknown foundry mold id " + id);
+        }
+        return stackFor(mold);
+    }
+
     public static Mold getMold(ItemStack stack) {
         if (stack.getItem() instanceof FoundryMoldItem) {
             int id = stack.hasTag() ? stack.getTag().getInt(TAG_MOLD) : 0;
@@ -88,6 +96,10 @@ public class FoundryMoldItem extends Item {
 
     public static boolean isMold(ItemStack stack) {
         return getMold(stack) != null;
+    }
+
+    public static List<Mold> molds() {
+        return List.copyOf(MOLDS);
     }
 
     public static void addCreativeStacks(CreativeModeTab.Output output, FoundryMoldItem item) {
@@ -159,11 +171,12 @@ public class FoundryMoldItem extends Item {
                     return block;
                 }
             }
-            for (String materialName : material.names) {
-                Item item = findItem(shape.name() + "_" + materialName.toLowerCase(Locale.ROOT));
-                if (item != Items.AIR) {
-                    ItemStack stack = new ItemStack(item, amount);
-                    return stack;
+            for (String prefix : Mats.modernPathPrefixes(shape)) {
+                for (String materialName : Mats.modernPathNames(material)) {
+                    Item item = findItem(prefix + materialName);
+                    if (item != Items.AIR) {
+                        return new ItemStack(item, amount);
+                    }
                 }
             }
             return ItemStack.EMPTY;
@@ -196,15 +209,14 @@ public class FoundryMoldItem extends Item {
     }
 
     private static ItemStack blockOverride(NTMMaterial material) {
-        for (String name : material.names) {
-            String lower = name.toLowerCase(Locale.ROOT);
-            if ("stone".equals(lower)) {
+        for (String name : Mats.modernPathNames(material)) {
+            if ("stone".equals(name)) {
                 return new ItemStack(Items.STONE);
             }
-            if ("obsidian".equals(lower)) {
+            if ("obsidian".equals(name)) {
                 return new ItemStack(Items.OBSIDIAN);
             }
-            Item item = findItem("block_" + lower);
+            Item item = findItem("block_" + name);
             if (item != Items.AIR) {
                 return new ItemStack(item);
             }

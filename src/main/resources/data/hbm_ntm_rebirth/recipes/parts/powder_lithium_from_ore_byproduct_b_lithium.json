@@ -1,0 +1,17 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "misc",
+    "pattern":  [
+                    "###",
+                    "###",
+                    "###"
+                ],
+    "key":  {
+                "#":  {
+                          "item":  "hbm_ntm_rebirth:ore_byproduct_b_lithium"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:powder_lithium"
+               }
+}

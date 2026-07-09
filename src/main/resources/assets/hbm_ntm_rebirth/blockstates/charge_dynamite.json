@@ -1,10 +1,10 @@
 {
   "variants": {
-    "facing=down": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
+    "facing=down": { "model": "hbm_ntm_rebirth:block/charge_dynamite_down" },
     "facing=up": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
-    "facing=north": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/charge_dynamite" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/charge_dynamite" }
+    "facing=north": { "model": "hbm_ntm_rebirth:block/charge_dynamite_horizontal", "y": 90 },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/charge_dynamite_horizontal", "y": 270 },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/charge_dynamite_horizontal", "y": 180 },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/charge_dynamite_horizontal" }
   }
 }

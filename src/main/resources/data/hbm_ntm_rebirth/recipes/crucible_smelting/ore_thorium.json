@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/thorium"
+    },
+    "legacy_ore": "oreThorium"
+  },
+  "output": [
+    {
+      "amount": 144,
+      "material": "Thorium232"
+    },
+    {
+      "amount": 24,
+      "material": "Uranium"
+    },
+    {
+      "amount": 162,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 32
+}

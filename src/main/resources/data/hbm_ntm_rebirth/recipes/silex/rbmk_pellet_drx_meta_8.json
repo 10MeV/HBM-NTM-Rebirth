@@ -1,0 +1,43 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_drx"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_drx",
+      "legacy_meta": 8
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "gamma",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:undefined",
+      "weight": 1
+    },
+    {
+      "item": "hbm_ntm_rebirth:undefined",
+      "weight": 1
+    },
+    {
+      "item": "hbm_ntm_rebirth:undefined",
+      "weight": 1
+    },
+    {
+      "item": "hbm_ntm_rebirth:undefined",
+      "weight": 1
+    },
+    {
+      "item": "hbm_ntm_rebirth:undefined",
+      "weight": 1
+    },
+    {
+      "item": "hbm_ntm_rebirth:undefined",
+      "weight": 1
+    }
+  ],
+  "source_order": 218
+}

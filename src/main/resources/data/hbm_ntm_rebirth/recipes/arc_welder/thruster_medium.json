@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.thruster.medium",
+  "duration": 100,
+  "power": 2000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 8, "legacy_ore": "plateSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 1 },
+    { "ingredient": { "tag": "forge:ingots/graphite" }, "count": 8, "legacy_ore": "ingotGraphite" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:thruster_medium" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 19
+}

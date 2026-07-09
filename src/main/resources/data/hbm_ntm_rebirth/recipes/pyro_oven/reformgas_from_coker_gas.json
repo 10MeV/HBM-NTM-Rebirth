@@ -8,5 +8,6 @@
     "fluid": "REFORMGAS",
     "amount": 100
   },
-  "duration": 60
+  "duration": 60,
+  "source_order": 38
 }

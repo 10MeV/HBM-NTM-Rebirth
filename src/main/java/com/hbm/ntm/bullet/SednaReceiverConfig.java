@@ -58,7 +58,11 @@ public record SednaReceiverConfig(
     }
 
     public Optional<SednaMagazineConfig> magazine() {
-        return LegacySednaMagazineConfigs.byKey(magazineKey);
+        return Optional.ofNullable(magazineOrNull());
+    }
+
+    public SednaMagazineConfig magazineOrNull() {
+        return LegacySednaMagazineConfigs.byKeyOrNull(magazineKey);
     }
 
     public Optional<ResourceLocation> fireSoundLocation() {

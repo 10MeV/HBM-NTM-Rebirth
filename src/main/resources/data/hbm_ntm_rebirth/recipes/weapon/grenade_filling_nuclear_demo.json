@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:neutron_reflector"
+    },
+    "P": {
+      "tag": "forge:nuggets/pu239"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:ball_tatb"
+    }
+  },
+  "pattern": [
+    "TPT",
+    "CPC",
+    "TPT"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:grenade_filling_nuclear_demo"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "food",
+  "pattern": [
+    "WEW",
+    "MPM",
+    "WEW"
+  ],
+  "key": {
+    "W": { "item": "minecraft:wheat" },
+    "E": { "item": "minecraft:egg" },
+    "M": { "item": "minecraft:milk_bucket" },
+    "P": { "item": "hbm_ntm_rebirth:man_core" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:bomb_waffle"
+  }
+}

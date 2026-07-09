@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "F": {
+      "item": "hbm_ntm_rebirth:filter_coal"
+    },
+    "I": {
+      "tag": "forge:plates/iron"
+    }
+  },
+  "pattern": [
+    "I",
+    "F"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:gas_mask_filter"
+  },
+  "show_notification": true
+}

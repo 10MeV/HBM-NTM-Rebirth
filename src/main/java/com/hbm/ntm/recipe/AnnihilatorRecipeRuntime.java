@@ -22,13 +22,13 @@ public final class AnnihilatorRecipeRuntime {
             if (!recipe.key().equals(key)) {
                 continue;
             }
-            ItemStack payout = recipe.highestPayout(previous, increment.current());
+            AnnihilatorRecipe.PayoutMatch match = recipe.highestPayoutMatch(previous, increment.current());
+            ItemStack payout = match.payout();
             if (payout.isEmpty()) {
                 continue;
             }
-            BigInteger amount = highestTriggeredAmount(recipe, previous, increment.current());
-            if (amount.compareTo(highestAmount) > 0) {
-                highestAmount = amount;
+            if (match.amount().compareTo(highestAmount) > 0) {
+                highestAmount = match.amount();
                 highest = payout;
             }
         }
@@ -37,20 +37,6 @@ public final class AnnihilatorRecipeRuntime {
 
     private static BigInteger previousForPayout(AnnihilatorSavedData.IncrementResult increment,
             boolean alwaysPayOut) {
-        return alwaysPayOut && increment.previous().signum() > 0 ? null : increment.previous();
-    }
-
-    private static BigInteger highestTriggeredAmount(AnnihilatorRecipe recipe, BigInteger previous,
-            BigInteger current) {
-        BigInteger highest = BigInteger.ZERO;
-        for (AnnihilatorRecipe.Milestone milestone : recipe.milestones()) {
-            if (previous != null && previous.compareTo(milestone.amount()) >= 0) {
-                continue;
-            }
-            if (current.compareTo(milestone.amount()) >= 0 && milestone.amount().compareTo(highest) > 0) {
-                highest = milestone.amount();
-            }
-        }
-        return highest;
+        return alwaysPayOut && increment.hadPrevious() ? null : increment.previous();
     }
 }

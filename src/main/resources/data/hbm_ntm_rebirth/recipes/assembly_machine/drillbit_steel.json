@@ -1,0 +1,31 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/steel"
+      },
+      "legacy_ore": "ingotSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/tungsten"
+      },
+      "legacy_ore": "ingotTungsten"
+    }
+  ],
+  "internal_name": "ass.drillsteel",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:drillbit_steel"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 107
+}

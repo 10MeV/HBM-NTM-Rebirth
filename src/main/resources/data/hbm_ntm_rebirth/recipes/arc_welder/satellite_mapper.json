@@ -12,5 +12,6 @@
     { "item": "hbm_ntm_rebirth:sat_mapper" }
   ],
   "output_fluids": [],
-  "pools": []
+  "pools": [],
+  "source_order": 42
 }

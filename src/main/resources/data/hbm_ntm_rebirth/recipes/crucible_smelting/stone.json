@@ -1,0 +1,17 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:stone"
+    },
+    "legacy_ore": "stone"
+  },
+  "output": [
+    {
+      "amount": 648,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 0
+}

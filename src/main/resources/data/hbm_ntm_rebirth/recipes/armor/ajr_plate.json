@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:titanium_plate"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor_desh"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_armor_ajr"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:gas_empty"
+    }
+  },
+  "pattern": [
+    "MPM",
+    "TBT",
+    "PPP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ajr_plate"
+  },
+  "show_notification": true
+}

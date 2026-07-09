@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.HbmNtm;
@@ -14,7 +15,7 @@ import com.hbm.ntm.fluid.trait.ToxinFluidTrait;
 import com.hbm.ntm.fluid.trait.VentRadiationFluidTrait;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.ArmorUtil;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationUtil;
 import java.util.ArrayList;
@@ -56,7 +57,8 @@ public final class HbmFluidContactEffects {
             ContactContext context) {
         FluidType type = fluid == null ? HbmFluids.NONE : fluid;
         ContactReport report = new ContactReport(type, intensity);
-        if (type == HbmFluids.NONE || entity == null || intensity <= 0.0F) {
+        if (type == HbmFluids.NONE || entity == null
+                || (intensity <= 0.0F && context.profile != ContactProfile.CHEMICAL_PROJECTILE)) {
             return report;
         }
 
@@ -175,12 +177,14 @@ public final class HbmFluidContactEffects {
                             : Math.min(combustible.getCombustionEnergyPerBucket() / 100_000.0F, 15.0F));
             heat *= intensity;
             float damage = (0.2F + heat) * intensity;
-            int seconds = Math.max(1, Mth.ceil(5.0F * intensity));
+            int seconds = Mth.ceil(5.0F * intensity);
             report.addDirectDamage("flamethrower", damage);
             report.fireTicks = Math.max(report.fireTicks, seconds * 20);
-            if (apply) {
+            if (apply && damage > 0.0F) {
                 EntityDamageUtil.attackEntityFromIgnoreIFrame(entity,
                         damageSource(entity, ModDamageSources.FLAMETHROWER, context), damage);
+            }
+            if (apply && seconds > 0) {
                 entity.setSecondsOnFire(seconds);
             }
         }
@@ -224,10 +228,11 @@ public final class HbmFluidContactEffects {
         }
         if (apply) {
             if (living != null) {
-                RadiationUtil.contaminate(living, radiation, true);
+                RadiationUtil.contaminate(living, HazardType.RADIATION, RadiationUtil.ContaminationType.CREATIVE,
+                        radiation);
             }
             if (context.profile == ContactProfile.CHEMICAL_PROJECTILE) {
-                ChunkRadiationManager.incrementRadiation(entity.level(), entity.blockPosition(), radiation);
+                ChunkRadiationManager.proxy.incrementRad(entity.level(), entity.blockPosition(), radiation);
             }
         }
     }
@@ -242,6 +247,9 @@ public final class HbmFluidContactEffects {
         }
         MobEffect effect = trait.isWithering() ? MobEffects.WITHER : MobEffects.POISON;
         int duration = scaleDuration(5 * 20, intensity);
+        if (duration <= 0) {
+            return;
+        }
         int amplifier = 0;
         report.addEffect(effect, duration, amplifier);
         if (apply) {
@@ -268,7 +276,7 @@ public final class HbmFluidContactEffects {
                 if (delay == 0 || living.level().getGameTime() % delay == 0) {
                     float amount = damage.getAmount() * intensity;
                     report.addDirectDamage(damage.getDamageType().toString(), amount);
-                    if (apply) {
+                    if (apply && amount > 0.0F) {
                         EntityDamageUtil.attackEntityFromIgnoreIFrame(living, resolveDamage(living.level(), damage.getDamageType()), amount);
                     }
                 }
@@ -280,6 +288,9 @@ public final class HbmFluidContactEffects {
                         continue;
                     }
                     int duration = scaleDuration(spec.durationTicks(), intensity);
+                    if (duration <= 0) {
+                        continue;
+                    }
                     report.addEffect(effect.get(), duration, spec.amplifier());
                     if (apply) {
                         living.addEffect(new MobEffectInstance(effect.get(), duration, spec.amplifier(), spec.ambient(), true));
@@ -290,7 +301,7 @@ public final class HbmFluidContactEffects {
                 if (delay == 0 || living.level().getGameTime() % delay == 0) {
                     float amount = damage.getAmount() * intensity;
                     report.addDirectDamage(damage.getDamageType().toString(), amount);
-                    if (apply) {
+                    if (apply && amount > 0.0F) {
                         EntityDamageUtil.attackEntityFromIgnoreIFrame(living,
                                 resolveDamage(living.level(), damage.getDamageType()), amount);
                     }
@@ -303,6 +314,9 @@ public final class HbmFluidContactEffects {
                         continue;
                     }
                     int duration = scaleDuration(spec.durationTicks(), intensity);
+                    if (duration <= 0) {
+                        continue;
+                    }
                     report.addEffect(effect.get(), duration, spec.amplifier());
                     if (apply) {
                         living.addEffect(new MobEffectInstance(effect.get(), duration, spec.amplifier(), spec.ambient(), true));
@@ -381,7 +395,7 @@ public final class HbmFluidContactEffects {
     }
 
     private static int scaleDuration(int durationTicks, float intensity) {
-        return Math.max(1, Mth.ceil(durationTicks * intensity));
+        return (int) (durationTicks * intensity);
     }
 
     private HbmFluidContactEffects() {

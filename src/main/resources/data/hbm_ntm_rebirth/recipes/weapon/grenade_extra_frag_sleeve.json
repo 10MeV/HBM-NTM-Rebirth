@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "forge:bolts/steel"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    }
+  },
+  "pattern": [
+    "BBB",
+    " T ",
+    "BBB"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:grenade_extra_frag_sleeve"
+  },
+  "show_notification": true
+}

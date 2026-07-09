@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:kerosene",
                   "amount":  1400
-              }
+              },
+    "source_order":  35
 }

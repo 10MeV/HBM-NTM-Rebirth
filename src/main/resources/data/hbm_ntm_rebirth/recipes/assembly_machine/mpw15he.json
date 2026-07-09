@@ -1,49 +1,45 @@
-﻿{
-    "type":  "hbm_ntm_rebirth:assembly_machine",
-    "internal_name":  "ass.mpw15he",
-    "duration":  200,
-    "power":  100,
-    "input_items":  [
-                        {
-                            "ingredient":  {
-                                               "item":  "hbm_ntm_rebirth:seg_15"
-                                           },
-                            "count":  1
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:plates/steel"
-                                           },
-                            "count":  12,
-                            "legacy_ore":  "plateSteel"
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:ingots/any_high_explosive"
-                                           },
-                            "count":  12,
-                            "legacy_ore":  "ingotAnyHighExplosive"
-                        },
-                        {
-                            "ingredient":  {
-                                               "tag":  "forge:circuits/basic"
-                                           },
-                            "count":  3
-                        }
-                    ],
-    "input_fluids":  [
-
-                     ],
-    "output_items":  [
-                         {
-                             "item":  "hbm_ntm_rebirth:mp_warhead_15_he"
-                         }
-                     ],
-    "output_fluids":  [
-
-                      ],
-    "pools":  [
-
-              ],
-    "source_order":  310
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:seg_15"
+      }
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
+    }
+  ],
+  "internal_name": "ass.mpw15he",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:mp_warhead_15_he"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 310
 }

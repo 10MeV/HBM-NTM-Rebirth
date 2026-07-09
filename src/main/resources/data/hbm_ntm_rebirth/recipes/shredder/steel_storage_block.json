@@ -1,4 +1,4 @@
-﻿{
+{
     "type":  "hbm_ntm_rebirth:shredder",
     "input":  {
                   "ingredient":  {
@@ -8,5 +8,6 @@
     "output":  {
                    "item":  "hbm_ntm_rebirth:powder_steel",
                    "count":  9
-               }
+               },
+  "source_order": 1005
 }

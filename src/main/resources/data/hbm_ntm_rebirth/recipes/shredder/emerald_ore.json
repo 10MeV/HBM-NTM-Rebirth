@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ores/emerald" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_emerald", "count": 2 }
+  "output": { "item": "hbm_ntm_rebirth:powder_emerald", "count": 2 },
+  "source_order": 1004
 }

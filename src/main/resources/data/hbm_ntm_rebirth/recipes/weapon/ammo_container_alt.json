@@ -1,15 +1,17 @@
 {
   "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "##",
-    "##"
-  ],
+  "category": "equipment",
   "key": {
     "#": {
       "item": "hbm_ntm_rebirth:nitra"
     }
   },
+  "pattern": [
+    "##",
+    "##"
+  ],
   "result": {
     "item": "hbm_ntm_rebirth:ammo_container_alt"
-  }
+  },
+  "show_notification": true
 }

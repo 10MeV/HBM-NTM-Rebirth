@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:difurnace",
+  "internal_name": "difurnace.tcalloy",
+  "source_order": 8,
+  "inputs": [
+    {
+      "ingredient": [
+        {
+          "tag": "forge:ingots/steel"
+        },
+        {
+          "tag": "forge:plates/steel"
+        },
+        {
+          "tag": "forge:gems/steel"
+        },
+        {
+          "tag": "forge:dusts/steel"
+        }
+      ],
+      "count": 1,
+      "legacy_dictframe": "Steel"
+    },
+    {
+      "ingredient": {
+        "tag": "forge:nuggets/technetium99"
+      },
+      "count": 1,
+      "legacy_ore": "nuggetTechnetium99"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_tcalloy"
+  }
+}

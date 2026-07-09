@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class MicrowaveRenderer implements BlockEntityRenderer<MicrowaveBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjMachineModels.MICROWAVE;
@@ -23,6 +24,12 @@ public class MicrowaveRenderer implements BlockEntityRenderer<MicrowaveBlockEnti
     @Override
     public boolean shouldRenderOffScreen(MicrowaveBlockEntity blockEntity) {
         return false;
+    }
+
+    @Override
+    public boolean shouldRender(MicrowaveBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override

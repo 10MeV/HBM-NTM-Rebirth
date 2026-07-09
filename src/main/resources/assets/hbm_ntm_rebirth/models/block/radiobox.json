@@ -1,6 +1,34 @@
 {
-  "parent": "hbm_ntm_rebirth:block/empty",
+  "parent": "minecraft:block/block",
   "textures": {
-    "particle": "hbm_ntm_rebirth:block/radiobox"
-  }
+    "particle": "hbm_ntm_rebirth:block/radiobox",
+    "radio": "hbm_ntm_rebirth:models/model_radio"
+  },
+  "render_type": "minecraft:cutout",
+  "elements": [
+    {
+      "from": [4, 1, 12],
+      "to": [12, 15, 16],
+      "faces": {
+        "north": { "uv": [8, 2, 12, 9], "texture": "#radio" },
+        "south": { "uv": [6, 2, 10, 9], "texture": "#radio" },
+        "east": { "uv": [0, 2, 2, 9], "texture": "#radio" },
+        "west": { "uv": [6, 2, 8, 9], "texture": "#radio" },
+        "up": { "uv": [2, 0, 6, 2], "texture": "#radio" },
+        "down": { "uv": [6, 0, 10, 2], "texture": "#radio" }
+      }
+    },
+    {
+      "from": [4.5, 1.5, 11.5],
+      "to": [11.5, 14.5, 12.5],
+      "faces": {
+        "north": { "uv": [4.5, 9.5, 8, 16], "texture": "#radio" },
+        "south": { "uv": [4, 9.5, 7.5, 16], "texture": "#radio" },
+        "east": { "uv": [0, 9.5, 0.5, 16], "texture": "#radio" },
+        "west": { "uv": [4, 9.5, 4.5, 16], "texture": "#radio" },
+        "up": { "uv": [0.5, 9, 4, 9.5], "texture": "#radio" },
+        "down": { "uv": [4, 9, 7.5, 9.5], "texture": "#radio" }
+      }
+    }
+  ]
 }

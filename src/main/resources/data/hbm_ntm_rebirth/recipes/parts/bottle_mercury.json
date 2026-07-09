@@ -1,0 +1,20 @@
+{
+    "type":  "minecraft:crafting_shaped",
+    "category":  "misc",
+    "pattern":  [
+                    "MMM",
+                    "MBM",
+                    "MMM"
+                ],
+    "key":  {
+                "B":  {
+                          "item":  "minecraft:glass_bottle"
+                      },
+                "M":  {
+                          "item":  "hbm_ntm_rebirth:ingot_mercury"
+                      }
+            },
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:bottle_mercury"
+               }
+}

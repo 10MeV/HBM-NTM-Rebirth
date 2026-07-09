@@ -34,7 +34,7 @@ public final class MobConfig {
             rampantSmokeStackOverride = com.hbm.ntm.config.RadiationConfig.rampantSmokeStackOverride();
             pollutionMult = com.hbm.ntm.config.RadiationConfig.pollutionMultiplier();
             targetingThreshold = com.hbm.ntm.config.RadiationConfig.glyphidTargetingThreshold();
-        } catch (IllegalStateException ignored) {
+        } catch (IllegalStateException | NullPointerException ignored) {
             // Keep legacy defaults until Forge finishes loading the modern config.
         }
     }

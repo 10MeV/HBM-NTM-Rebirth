@@ -1,6 +1,6 @@
 package com.hbm.commands;
 
-import com.hbm.ntm.radiation.ChunkRadiationManager;
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.RadiationConstants;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
@@ -55,21 +55,22 @@ public class CommandRadiation {
     }
 
     private static int clear(CommandSourceStack source) {
-        ChunkRadiationManager.clear(source.getLevel());
-        source.sendSuccess(() -> Component.literal("Cleared radiation data!"), true);
+        ChunkRadiationManager.proxy.clearSystem(source.getLevel());
+        source.sendSuccess(() -> Component.literal("Cleared radiation data!"), false);
         return 1;
     }
 
     private static int set(CommandSourceStack source, float amount) {
-        ChunkRadiationManager.setRadiation(source.getLevel(), BlockPos.containing(source.getPosition()), amount);
-        source.sendSuccess(() -> Component.literal("Radiation set."), true);
-        return Math.round(amount);
+        BlockPos pos = BlockPos.containing(source.getPosition());
+        ChunkRadiationManager.proxy.setRadiation(source.getLevel(), pos.getX(), pos.getY(), pos.getZ(), amount);
+        source.sendSuccess(() -> Component.literal("Radiation set."), false);
+        return 1;
     }
 
     private static Float parseAmount(String value) {
         try {
             float amount = Float.parseFloat(value);
-            if (amount < 0.0F || amount > RadiationConstants.MAX_CHUNK_RADIATION) {
+            if (!Float.isFinite(amount) || amount < 0.0F || amount > RadiationConstants.MAX_CHUNK_RADIATION) {
                 return null;
             }
             return amount;

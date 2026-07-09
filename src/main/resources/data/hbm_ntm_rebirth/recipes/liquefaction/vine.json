@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
+  "source_order": 32,
   "ingredient": {
     "item": "minecraft:vine"
   },

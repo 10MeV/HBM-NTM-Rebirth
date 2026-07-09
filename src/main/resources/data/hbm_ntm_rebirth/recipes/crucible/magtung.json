@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.magtung",
+  "fallback_name": "Magnetized Tungsten Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_magnetized_tungsten" },
+  "frequency": 3,
+  "input": [
+    { "material": "Tungsten", "amount": 72 },
+    { "material": "Schrabidium", "amount": 8 }
+  ],
+  "output": [
+    { "material": "MagnetizedTungsten", "amount": 72 }
+  ],
+  "source_order": 11
+}

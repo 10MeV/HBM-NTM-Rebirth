@@ -26,6 +26,7 @@ public class SatelliteChipItem extends Item implements ISatelliteChip {
                 ? List.of()
                 : Arrays.stream(descriptionKeys).filter(key -> key != null && !key.isBlank()).toList();
         Satellite.registerSatelliteItem(this, satelliteType);
+        com.hbm.saveddata.satellites.Satellite.registerSatellite(satelliteType, this);
     }
 
     public LegacySatelliteType satelliteType() {

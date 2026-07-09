@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "I": {
+      "tag": "forge:plates/iron"
+    },
+    "P": {
+      "tag": "forge:ingots/any_rubber"
+    }
+  },
+  "pattern": [
+    "P P",
+    "IDI",
+    "P P"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:pads_rubber"
+  },
+  "show_notification": true
+}

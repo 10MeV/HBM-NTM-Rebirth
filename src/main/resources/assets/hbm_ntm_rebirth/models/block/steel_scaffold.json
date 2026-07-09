@@ -3,6 +3,7 @@
   "automatic_culling": false,
   "loader": "forge:obj",
   "model": "hbm_ntm_rebirth:models/blocks/scaffold.obj",
+  "render_type": "minecraft:solid",
   "textures": {
     "default": "hbm_ntm_rebirth:block/legacy_blocks/scaffold_steel",
     "particle": "hbm_ntm_rebirth:block/legacy_blocks/scaffold_steel",

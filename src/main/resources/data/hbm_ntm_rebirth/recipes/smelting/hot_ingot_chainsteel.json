@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:hot_smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.0,
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:ingot_chainsteel"
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:ingot_chainsteel"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.missile.abm",
+  "duration": 100,
+  "power": 5000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:ingots/any_high_explosive" }, "count": 3, "legacy_ore": "ingotAnyHighexplosive" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:missile_assembly" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:thruster_small" }, "count": 4 }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:missile_anti_ballistic" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 24
+}

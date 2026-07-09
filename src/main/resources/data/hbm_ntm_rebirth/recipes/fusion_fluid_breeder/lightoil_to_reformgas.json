@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:fusion_fluid_breeder",
+  "source_order": 1,
   "input": { "fluid": "hbm_ntm_rebirth:lightoil", "amount": 1000 },
   "output": { "fluid": "hbm_ntm_rebirth:reformgas", "amount": 1000 }
 }

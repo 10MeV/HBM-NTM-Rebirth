@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/bismuth"
+    },
+    "count": 1,
+    "legacy_ore": "ingotBismuth"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_osmiridium"
+  },
+  "source_order": 12
+}

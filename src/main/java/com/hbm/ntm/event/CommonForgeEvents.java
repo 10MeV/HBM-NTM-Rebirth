@@ -14,6 +14,11 @@ import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.damage.DamageResistanceHandler;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
+import com.hbm.ntm.entity.mob.EntityCyberCrab;
+import com.hbm.ntm.entity.mob.EntityCreeperNuclear;
+import com.hbm.ntm.entity.mob.EntityCreeperTainted;
+import com.hbm.ntm.entity.mob.EntityTaintCrab;
+import com.hbm.ntm.entity.mob.EntityTeslaCrab;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
@@ -54,12 +59,16 @@ import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModEffects;
+import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.recipe.AnvilSmithingRecipe;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.uninos.HbmUninosNodespaces;
 import com.hbm.ntm.util.AchievementHandler;
 import com.hbm.ntm.util.HbmCraftingAdvancementUtil;
 import com.hbm.ntm.world.BlockMigrationHelper;
+import com.hbm.ntm.world.TomImpactWorldEffects;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
@@ -70,6 +79,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -88,6 +98,7 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -96,8 +107,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -110,6 +124,7 @@ import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraft.world.level.storage.LevelResource;
+import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
@@ -193,6 +208,104 @@ public final class CommonForgeEvents {
         DamageResistanceHandler.notifyDamageDealt(entity, event.getSource(), event.getAmount());
     }
 
+    @SubscribeEvent
+    public static void onLivingDeath(LivingDeathEvent event) {
+        LivingEntity entity = event.getEntity();
+        handleCyberCrabDeathDrop(event, entity);
+        if (!(entity instanceof EntityCreeperTainted)
+                || !ModDamageSources.is(event.getSource(), ModDamageSources.BOXCAR)
+                || !(entity.level() instanceof ServerLevel level)) {
+            return;
+        }
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, entity.getBoundingBox().inflate(50.0D))) {
+            AchievementHandler.award(player, AchievementHandler.HIDDEN);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingDrops(LivingDropsEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (!(entity.level() instanceof ServerLevel level)
+                || !level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
+            return;
+        }
+        int looting = event.getLootingLevel();
+        if (entity instanceof EntityTaintCrab) {
+            int count = entity.getRandom().nextInt(3);
+            if (looting > 0) {
+                count += entity.getRandom().nextInt(looting + 1);
+            }
+            for (int i = 0; i < count; i++) {
+                addCapturedDrop(event, entity, new ItemStack(ModItems.COPPER_COIL.get()));
+            }
+        }
+        if (!event.isRecentlyHit()) {
+            return;
+        }
+        if (entity instanceof EntityTeslaCrab) {
+            addRareCrabDrop(event, entity, looting, new ItemStack(ModItems.COPPER_COIL.get()));
+        } else if (entity instanceof EntityTaintCrab) {
+            addRareCrabDrop(event, entity, looting, legacyItemStack("coil_magnetized_tungsten"));
+        }
+    }
+
+    private static void handleCyberCrabDeathDrop(LivingDeathEvent event, LivingEntity entity) {
+        if (!(entity instanceof EntityCyberCrab)
+                || !(entity.level() instanceof ServerLevel level)
+                || !level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
+            return;
+        }
+        Entity sourceEntity = event.getSource().getEntity();
+        if (!(sourceEntity instanceof ServerPlayer) || sourceEntity instanceof FakePlayer) {
+            return;
+        }
+        if (entity.getRandom().nextInt(500) == 0) {
+            entity.spawnAtLocation(new ItemStack(ModItems.WD40.get()), 0.0F);
+        }
+    }
+
+    private static void addRareCrabDrop(LivingDropsEvent event, LivingEntity entity, int looting, ItemStack stack) {
+        int chance = entity.getRandom().nextInt(200) - looting;
+        if (chance < 5) {
+            addCapturedDrop(event, entity, stack);
+        }
+    }
+
+    private static ItemStack legacyItemStack(String legacyName) {
+        RegistryObject<Item> item = ModItems.legacyItem(legacyName);
+        return item == null ? ItemStack.EMPTY : new ItemStack(item.get());
+    }
+
+    private static void addCapturedDrop(LivingDropsEvent event, LivingEntity entity, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        event.getDrops().add(new ItemEntity(entity.level(), entity.getX(), entity.getY(), entity.getZ(), stack.copy()));
+    }
+
+    @SubscribeEvent
+    public static void onLivingUseItemFinish(LivingEntityUseItemEvent.Finish event) {
+        if (!(event.getEntity() instanceof Player player) || player.level().isClientSide) {
+            return;
+        }
+        ItemStack stack = event.getItem();
+        if (stack.isEmpty() || !stack.getItem().isEdible() || !stack.hasTag()) {
+            return;
+        }
+        if (stack.getTag().getBoolean(AnvilSmithingRecipe.TAG_CYANIDE)) {
+            for (int i = 0; i < 10; i++) {
+                player.hurt(ModDamageSources.source(player.level(),
+                        player.level().random.nextBoolean()
+                                ? ModDamageSources.EUTHANIZED_SELF
+                                : ModDamageSources.EUTHANIZED_SELF2),
+                        1000.0F);
+            }
+        }
+        if (stack.getTag().getBoolean(AnvilSmithingRecipe.TAG_RED_PILL)) {
+            player.addEffect(new MobEffectInstance(ModEffects.DEATH.get(), 60 * 60 * 20, 0));
+        }
+    }
+
     private static void dispatchLegacyArmorAttackHandlers(LivingAttackEvent event, LivingEntity entity) {
         if (!(entity instanceof Player player)) {
             return;
@@ -229,7 +342,7 @@ public final class CommonForgeEvents {
             RTTYSystem.updateBroadcastQueue(event.getServer());
             RadarScanner.updateSystem(event.getServer().getAllLevels());
             for (ServerLevel level : event.getServer().getAllLevels()) {
-                TomImpactSavedData.tickExistingImpactClimate(level);
+                TomImpactWorldEffects.tickLegacyWorldStart(level);
             }
             return;
         }
@@ -441,6 +554,11 @@ public final class CommonForgeEvents {
     }
 
     @SubscribeEvent
+    public static void onMobPositionCheck(MobSpawnEvent.PositionCheck event) {
+        TomImpactWorldEffects.handleExtinction(event);
+    }
+
+    @SubscribeEvent
     public static void onMobFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
         Mob mob = event.getEntity();
         PollutionManager.decorateMob(mob);
@@ -585,13 +703,15 @@ public final class CommonForgeEvents {
 
     private static void syncRadiation(ServerPlayer player) {
         HbmExtendedProperties.sync(player,
-                ChunkRadiationManager.getRadiation(player.level(), player.blockPosition()),
+                com.hbm.handler.radiation.ChunkRadiationManager.proxy.getRadiation(
+                        player.level(), player.blockPosition()),
                 HazmatRegistry.getResistance(player));
     }
 
     private static void syncRadiationThreaded(ServerPlayer player) {
         HbmExtendedProperties.syncThreaded(player,
-                ChunkRadiationManager.getRadiation(player.level(), player.blockPosition()),
+                com.hbm.handler.radiation.ChunkRadiationManager.proxy.getRadiation(
+                        player.level(), player.blockPosition()),
                 HazmatRegistry.getResistance(player));
     }
 
@@ -667,8 +787,7 @@ public final class CommonForgeEvents {
     public static void onChunkDataLoad(ChunkDataEvent.Load event) {
         BlockMigrationHelper.load(event.getChunk(), event.getData());
         if (event.getChunk().getWorldForge() instanceof ServerLevel level) {
-            ChunkRadiationManager.loadLegacyChunkRadiation(level, event.getChunk().getPos(),
-                    event.getData().getFloat(ChunkRadiationManager.LEGACY_CHUNK_NBT_KEY));
+            ChunkRadiationManager.loadChunkData(level, event.getChunk().getPos(), event.getData());
         }
     }
 
@@ -677,7 +796,7 @@ public final class CommonForgeEvents {
         BlockMigrationHelper.save(event.getData());
         if (event.getLevel() instanceof ServerLevel level) {
             ChunkPos pos = event.getChunk().getPos();
-            event.getData().putFloat(ChunkRadiationManager.LEGACY_CHUNK_NBT_KEY, ChunkRadiationManager.getChunkRadiation(level, pos));
+            ChunkRadiationManager.saveChunkData(level, pos, event.getData());
         }
     }
 
@@ -696,6 +815,9 @@ public final class CommonForgeEvents {
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!event.getLevel().isClientSide()) {
             TomImpactSavedData.resetLastCached();
+            if (event.getLevel() instanceof Level level) {
+                ChunkRadiationManager.loadLevel(level);
+            }
         }
     }
 
@@ -721,7 +843,8 @@ public final class CommonForgeEvents {
     }
 
     private static void handleChunkRadiationFx(LivingEntity entity) {
-        float radiation = ChunkRadiationManager.getRadiation(entity.level(), entity.blockPosition());
+        float radiation = com.hbm.handler.radiation.ChunkRadiationManager.proxy.getRadiation(
+                entity.level(), entity.blockPosition());
         if (entity.level().dimension() == Level.NETHER) {
             float hellRadiation = RadiationConfig.hellRadiation();
             if (hellRadiation > 0.0F && radiation < hellRadiation) {
@@ -803,7 +926,18 @@ public final class CommonForgeEvents {
     private static boolean handleLegacyRadiationTransformations(LivingEntity entity) {
         float radiation = HbmLivingProperties.getRadiation(entity);
         if (radiation >= 200.0F && entity.getClass().equals(Creeper.class)) {
-            entity.hurt(ModDamageSources.radiation(entity.level()), 100.0F);
+            if (entity.level() instanceof ServerLevel level && entity.isAlive()) {
+                if (level.random.nextInt(3) == 0) {
+                    EntityCreeperNuclear nuclearCreeper = ModEntityTypes.NUCLEAR_CREEPER.get().create(level);
+                    if (nuclearCreeper != null) {
+                        nuclearCreeper.moveTo(entity.getX(), entity.getY(), entity.getZ(), entity.getYRot(), entity.getXRot());
+                        level.addFreshEntity(nuclearCreeper);
+                        entity.discard();
+                        return true;
+                    }
+                }
+                entity.hurt(ModDamageSources.radiation(level), 100.0F);
+            }
             return true;
         } else if (radiation >= 50.0F && entity instanceof Cow cow && !(entity instanceof MushroomCow) && cow.level() instanceof ServerLevel level) {
             MushroomCow mushroomCow = EntityType.MOOSHROOM.create(level);
@@ -822,6 +956,7 @@ public final class CommonForgeEvents {
                 return true;
             }
         }
+        // Legacy Duck -> EntityQuackos is omitted because EntityQuackos is boss-display content.
         return false;
     }
 
@@ -1080,6 +1215,9 @@ public final class CommonForgeEvents {
     }
 
     private static void handleTemperatureEffects(LivingEntity entity) {
+        if (entity.isDeadOrDying()) {
+            return;
+        }
         if (entity.fireImmune()) {
             HbmLivingProperties.clearFire(entity);
             HbmLivingProperties.clearPhosphorus(entity);

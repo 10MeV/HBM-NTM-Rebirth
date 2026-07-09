@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:titanium_legs"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor_desh"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:plate_armor_ajr"
+    }
+  },
+  "pattern": [
+    "MPM",
+    "PBP",
+    "P P"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ajr_legs"
+  },
+  "show_notification": true
+}

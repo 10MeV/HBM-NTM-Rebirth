@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:outgasser",
+  "source_order": 1,
   "input": {
     "ingredient": {
       "tag": "forge:ingots/lithium"

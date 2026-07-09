@@ -1,5 +1,7 @@
+mtllib fstbmb.mtl
 # Blender v2.76 (sub 0) OBJ File: 'faustibomb.blend'
 # www.blender.org
+usemtl default
 o Balefire
 v 0.215259 1.269682 2.000000
 v 0.397748 1.147748 2.000000
@@ -31,6 +33,7 @@ f 5/1/1 10/2/1 9/3/2 4/4/2
 f 4/4/2 9/3/2 8/5/3 3/7/3
 f 2/6/4 3/7/3 8/5/3 7/8/4
 f 2/6/4 7/8/4 6/9/5 1/10/5
+usemtl default
 o Body
 v 1.105000 0.750000 1.150000
 v 1.080000 0.793301 1.150000

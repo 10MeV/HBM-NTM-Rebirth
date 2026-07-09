@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:drillbit_steel"
+      },
+      "legacy_id": "hbm:drillbit",
+      "legacy_meta": 0
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:dusts/diamond"
+      },
+      "legacy_ore": "dustDiamond"
+    }
+  ],
+  "internal_name": "ass.drillsteeldiamond",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:drillbit_steel_diamond"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 108
+}

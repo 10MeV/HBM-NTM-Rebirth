@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:press",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "minecraft:jungle_log"
+    },
+    "legacy_id": "minecraft:log",
+    "legacy_meta": 3
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:ball_resin"
+  },
+  "source_order": 7,
+  "stamp": "flat"
+}

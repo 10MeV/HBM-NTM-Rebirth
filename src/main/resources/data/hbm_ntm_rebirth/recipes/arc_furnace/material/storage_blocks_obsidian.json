@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.blockObsidian",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:storage_blocks/obsidian" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:storage_blocks/obsidian" }, "count": 1, "legacy_ore": "blockObsidian" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Obsidian", "amount": 648 }
+  ],
+  "pools": [],
+  "source_order": 1107
+}

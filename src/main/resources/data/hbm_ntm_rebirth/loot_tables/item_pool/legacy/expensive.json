@@ -191,6 +191,21 @@
               "function": "minecraft:set_count"
             }
           ],
+          "name": "hbm_ntm_rebirth:syringe_awesome"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
           "name": "hbm_ntm_rebirth:red_barrel",
           "weight": 6
         },

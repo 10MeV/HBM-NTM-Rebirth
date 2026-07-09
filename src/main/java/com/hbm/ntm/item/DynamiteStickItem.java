@@ -1,5 +1,6 @@
 package com.hbm.ntm.item;
 
+import com.hbm.items.weapon.ItemGenericGrenade;
 import com.hbm.ntm.entity.projectile.DynamiteStickEntity;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -18,6 +19,8 @@ public class DynamiteStickItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        ItemStack thrown = stack.copy();
+        thrown.setCount(1);
         if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
@@ -25,8 +28,11 @@ public class DynamiteStickItem extends Item {
                 SoundSource.PLAYERS, 0.5F, 0.4F / (level.random.nextFloat() * 0.4F + 0.8F));
         if (!level.isClientSide) {
             DynamiteStickEntity dynamite = new DynamiteStickEntity(level, player);
-            dynamite.setItem(new ItemStack(this));
-            dynamite.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+            dynamite.setItem(thrown);
+            float throwForce = this instanceof ItemGenericGrenade grenade
+                    ? (float) grenade.getThrowForce(thrown)
+                    : 1.5F;
+            dynamite.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, throwForce, 1.0F);
             level.addFreshEntity(dynamite);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);

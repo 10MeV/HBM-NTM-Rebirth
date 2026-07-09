@@ -31,7 +31,13 @@ public class ItemArmorMod extends ArmorModItem {
 
     protected ItemArmorMod(Item.Properties properties, int type, boolean helmet, boolean chestplate,
                            boolean leggings, boolean boots) {
-        super(properties, ArmorModHandler.slotByLegacyIndex(type), helmet, chestplate, leggings, boots);
+        this(properties, type, helmet, chestplate, leggings, boots, true);
+    }
+
+    protected ItemArmorMod(Item.Properties properties, int type, boolean helmet, boolean chestplate,
+                           boolean leggings, boolean boots, boolean forceSingleStack) {
+        super(properties, ArmorModHandler.slotByLegacyIndex(type), helmet, chestplate, leggings, boots,
+                forceSingleStack);
         this.type = type;
         this.helmet = helmet;
         this.chestplate = chestplate;

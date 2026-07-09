@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "F": {
+      "item": "minecraft:iron_ingot"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "P": {
+      "item": "minecraft:leather"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "GPG",
+    " F "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:gas_mask_olde"
+  },
+  "show_notification": true
+}

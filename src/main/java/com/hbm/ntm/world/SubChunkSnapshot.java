@@ -31,13 +31,16 @@ public class SubChunkSnapshot {
         if (level == null || key == null) {
             return EMPTY;
         }
-        if (!allowGeneration && !level.hasChunk(key.getChunkXPos(), key.getChunkZPos())) {
-            return EMPTY;
-        }
-
         LevelChunk chunk;
         try {
-            chunk = level.getChunk(key.getChunkXPos(), key.getChunkZPos());
+            if (allowGeneration) {
+                chunk = level.getChunk(key.getChunkXPos(), key.getChunkZPos());
+            } else {
+                chunk = WorldUtil.provideChunk(level, key.getChunkXPos(), key.getChunkZPos()).orElse(null);
+                if (chunk == null) {
+                    return EMPTY;
+                }
+            }
         } catch (RuntimeException ex) {
             return EMPTY;
         }
@@ -51,6 +54,36 @@ public class SubChunkSnapshot {
             return EMPTY;
         }
 
+        return snapshotFromSection(section);
+    }
+
+    public static SubChunkSnapshot getSnapshotLegacy(Level level, SubChunkKey key, boolean allowGeneration) {
+        level.getChunkSource();
+        LevelChunk chunk;
+        if (allowGeneration) {
+            chunk = level.getChunk(key.getChunkXPos(), key.getChunkZPos());
+        } else if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            chunk = WorldUtil.provideChunk(serverLevel, key.getChunkXPos(), key.getChunkZPos()).orElse(null);
+            if (chunk == null) {
+                return EMPTY;
+            }
+        } else {
+            if (!level.hasChunk(key.getChunkXPos(), key.getChunkZPos())) {
+                return EMPTY;
+            }
+            chunk = level.getChunk(key.getChunkXPos(), key.getChunkZPos());
+        }
+
+        int sectionIndex = level.getSectionIndexFromSectionY(key.getSectionY());
+        LevelChunkSection section = chunk.getSections()[sectionIndex];
+        if (section == null || section.hasOnlyAir()) {
+            return EMPTY;
+        }
+
+        return snapshotFromSection(section);
+    }
+
+    private static SubChunkSnapshot snapshotFromSection(LevelChunkSection section) {
         short[] data = new short[16 * 16 * 16];
         List<BlockState> palette = new ArrayList<>();
         Map<BlockState, Short> indexes = new HashMap<>();
@@ -149,6 +182,18 @@ public class SubChunkSnapshot {
 
     public Block getBlock(int x, int y, int z) {
         return getBlockState(x, y, z).getBlock();
+    }
+
+    public BlockState getBlockStateUnchecked(int x, int y, int z) {
+        if (this == EMPTY || data == null) {
+            return Blocks.AIR.defaultBlockState();
+        }
+        short paletteIndex = data[index(x, y, z)];
+        return paletteIndex >= 0 && paletteIndex < palette.length ? palette[paletteIndex] : Blocks.AIR.defaultBlockState();
+    }
+
+    public Block getBlockUnchecked(int x, int y, int z) {
+        return getBlockStateUnchecked(x, y, z).getBlock();
     }
 
     public BlockState getBlockState(BlockPos worldPos) {

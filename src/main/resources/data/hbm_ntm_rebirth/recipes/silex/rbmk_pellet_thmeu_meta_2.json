@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_thmeu"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_thmeu",
+      "legacy_meta": 2
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "ir",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_thorium_fuel",
+      "weight": 44
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_u233",
+      "weight": 14
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_long_tiny",
+      "nbt": "{Damage:3}",
+      "weight": 42
+    }
+  ],
+  "source_order": 133
+}

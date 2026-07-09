@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:bottle2_empty"
+    },
+    {
+      "item": "hbm_ntm_rebirth:syringe_metal_empty"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_magic"
+    },
+    {
+      "tag": "forge:nuggets/schrabidium"
+    },
+    {
+      "item": "minecraft:potion"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:syringe_taint"
+  }
+}

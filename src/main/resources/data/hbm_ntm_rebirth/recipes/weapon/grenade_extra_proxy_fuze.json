@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_chip"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:safety_fuse"
+    }
+  },
+  "pattern": [
+    "C",
+    "F"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:grenade_extra_proxy_fuze"
+  },
+  "show_notification": true
+}

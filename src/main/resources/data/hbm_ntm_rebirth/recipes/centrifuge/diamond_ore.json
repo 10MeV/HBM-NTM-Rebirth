@@ -1,10 +1,25 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/diamond" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/diamond"
+    },
+    "legacy_ore": "oreDiamond"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_diamond" },
-    { "item": "hbm_ntm_rebirth:powder_diamond" },
-    { "item": "hbm_ntm_rebirth:powder_diamond" },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "item": "hbm_ntm_rebirth:powder_diamond"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_diamond"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_diamond"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 5
 }

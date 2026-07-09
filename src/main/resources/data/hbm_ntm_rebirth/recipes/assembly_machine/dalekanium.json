@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:block_meteor"
+      }
+    }
+  ],
+  "internal_name": "ass.dalekanium",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:plate_dalekanium"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 14
+}

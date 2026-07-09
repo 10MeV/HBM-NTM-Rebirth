@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "R": {
+      "item": "hbm_ntm_rebirth:rag_piss"
+    }
+  },
+  "pattern": [
+    "RRR"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:mask_piss"
+  },
+  "show_notification": true
+}

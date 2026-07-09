@@ -1,24 +1,28 @@
-﻿{
-    "type":  "hbm_ntm_rebirth:centrifuge",
-    "input":  {
-                  "ingredient":  {
-                                     "tag":  "forge:crystals/lithium"
-                                 }
-              },
-    "outputs":  [
-                    {
-                        "item":  "hbm_ntm_rebirth:powder_lithium",
-                        "count":  2
-                    },
-                    {
-                        "item":  "hbm_ntm_rebirth:powder_lithium",
-                        "count":  2
-                    },
-                    {
-                        "item":  "hbm_ntm_rebirth:powder_quartz"
-                    },
-                    {
-                        "item":  "hbm_ntm_rebirth:fluorite"
-                    }
-                ]
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_lithium"
+    },
+    "legacy_id": "hbm:crystal_lithium",
+    "legacy_meta": 0
+  },
+  "outputs": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_lithium"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_lithium"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_quartz"
+    },
+    {
+      "item": "hbm_ntm_rebirth:fluorite"
+    }
+  ],
+  "source_order": 53
 }

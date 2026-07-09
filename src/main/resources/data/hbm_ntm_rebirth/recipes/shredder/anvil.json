@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "item": "minecraft:anvil" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_iron", "count": 31 }
+  "output": { "item": "hbm_ntm_rebirth:powder_iron", "count": 31 },
+  "source_order": 113
 }

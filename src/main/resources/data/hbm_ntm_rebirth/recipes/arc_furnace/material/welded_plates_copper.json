@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.plateSextupleCopper",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:welded_plates/copper" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:welded_plates/copper" }, "count": 1, "legacy_ore": "plateSextupleCopper" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Copper", "amount": 432 }
+  ],
+  "pools": [],
+  "source_order": 1196
+}

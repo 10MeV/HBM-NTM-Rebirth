@@ -727,6 +727,9 @@ public final class DamageResistanceHandler {
                 com.hbm.util.DamageResistanceHandler.CATEGORY_ENERGY.equals(CATEGORY_ENERGY)
                         && com.hbm.util.DamageResistanceHandler.categoryKey(
                                 com.hbm.util.DamageResistanceHandler.DamageClass.LASER).equals(CATEGORY_ENERGY));
+        expect(problems, "legacy util handler public constructor/gson bridge",
+                new com.hbm.util.DamageResistanceHandler() != null
+                        && com.hbm.util.DamageResistanceHandler.gson != null);
         expect(problems, "legacy util handler null provider bridge",
                 com.hbm.util.DamageResistanceHandler.getProviderResistance(null, (DamageSource) null, 1.0F) == null);
         expect(problems, "legacy util handler null damage class provider bridge",
@@ -769,6 +772,15 @@ public final class DamageResistanceHandler {
         com.hbm.util.DamageResistanceHandler.itemStats.put(facadeItem, facadeItemStats);
         com.hbm.util.DamageResistanceHandler.itemStats.clear();
         expect(problems, "legacy util handler item map clear sync", itemStats(facadeItem) == null);
+        JsonObject emptyLegacyResistanceRoot = new JsonObject();
+        emptyLegacyResistanceRoot.add("itemStats", new JsonArray());
+        emptyLegacyResistanceRoot.add("setStats", new JsonArray());
+        emptyLegacyResistanceRoot.add("entityStats", new JsonArray());
+        com.hbm.util.DamageResistanceHandler.itemStats.put(facadeItem, facadeItemStats);
+        com.hbm.util.DamageResistanceHandler.deserialize(emptyLegacyResistanceRoot);
+        expect(problems, "legacy util handler deserialize preserves existing map entries",
+                itemStats(facadeItem) != null);
+        com.hbm.util.DamageResistanceHandler.itemStats.remove(facadeItem);
         com.hbm.util.Tuple.Quartet<Item, Item, Item, Item> facadeSet = new com.hbm.util.Tuple.Quartet<>(
                 net.minecraft.world.item.Items.LEATHER_HELMET,
                 net.minecraft.world.item.Items.LEATHER_CHESTPLATE,

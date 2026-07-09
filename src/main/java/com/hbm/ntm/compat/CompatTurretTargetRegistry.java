@@ -1,13 +1,16 @@
 package com.hbm.ntm.compat;
 
-import com.hbm.ntm.api.entity.LegacyMissileRadarDetectable;
 import com.hbm.ntm.api.entity.RadarContext;
 import com.hbm.ntm.api.entity.RadarDetectable;
+import com.hbm.ntm.entity.missile.MissileEntity;
 import com.hbm.ntm.turret.TurretBlockEntityBase;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ambient.AmbientCreature;
+import net.minecraft.world.entity.animal.AbstractGolem;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.monster.Enemy;
@@ -38,6 +41,9 @@ public final class CompatTurretTargetRegistry {
 
     static {
         registerFriendly(entity -> entity instanceof Animal
+                || entity instanceof WaterAnimal
+                || entity instanceof AmbientCreature
+                || entity instanceof AbstractGolem
                 || entity instanceof Npc
                 || entity instanceof TamableAnimal
                 || (entity instanceof Enemy
@@ -145,7 +151,7 @@ public final class CompatTurretTargetRegistry {
                 && !detectable.canBeSeenBy(RadarContext.legacy(serverLevel, turret.getBlockPos()))) {
             return false;
         }
-        if (entity instanceof LegacyMissileRadarDetectable missile) {
+        if (entity instanceof MissileEntity missile) {
             return missile.radarVerticalMotion() < 0.0D;
         }
         return MACHINE.stream().anyMatch(predicate -> predicate.test(entity))

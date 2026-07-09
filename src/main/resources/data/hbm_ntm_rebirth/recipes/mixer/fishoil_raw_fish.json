@@ -5,9 +5,24 @@
     "amount": 100
   },
   "solid_input": {
-    "ingredient": {
-      "tag": "forge:raw_fishes"
-    }
+    "ingredient": [
+      {
+        "item": "minecraft:cod"
+      },
+      {
+        "item": "minecraft:salmon"
+      },
+      {
+        "item": "minecraft:tropical_fish"
+      },
+      {
+        "item": "minecraft:pufferfish"
+      }
+    ],
+    "count": 1,
+    "legacy_id": "minecraft:fish",
+    "legacy_meta": 32767,
+    "legacy_wildcard": true
   },
   "duration": 50
 }

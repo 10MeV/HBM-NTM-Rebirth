@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "tag": "forge:nuggets/pu239" },
+    { "tag": "forge:nuggets/pu239" },
+    { "tag": "forge:nuggets/pu239" },
+    { "tag": "forge:nuggets/pu239" },
+    { "tag": "forge:nuggets/pu239" },
+    { "tag": "forge:nuggets/pu239" },
+    { "tag": "forge:nuggets/pu240" },
+    { "tag": "forge:nuggets/pu240" },
+    { "tag": "forge:nuggets/pu240" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:ingot_pu_mix" }
+}

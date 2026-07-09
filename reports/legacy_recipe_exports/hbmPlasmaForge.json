@@ -1,0 +1,1151 @@
+{
+  "recipes": [
+    {
+      "duration": 600,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "ingotEuphemium",
+          4
+        ],
+        [
+          "dict",
+          "dustAstatine",
+          3
+        ],
+        [
+          "dict",
+          "dustBismuth"
+        ],
+        [
+          "dict",
+          "gemVolcanic"
+        ],
+        [
+          "dict",
+          "ingotOsmiridium"
+        ]
+      ],
+      "name": "plsm.plateeuphemium",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_euphemium",
+            4
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 600,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "ingotDineutronium",
+          4
+        ],
+        [
+          "item",
+          "hbm:powder_spark_mix",
+          2
+        ],
+        [
+          "dict",
+          "ingotWorkersAlloy"
+        ]
+      ],
+      "name": "plsm.platednt",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_dineutronium",
+            4
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 600,
+      "ignitionTemp": 10000000,
+      "inputFluid": [
+        [
+          "STELLAR_FLUX",
+          4000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateCastAnyBismoidBronze",
+          2
+        ],
+        [
+          "dict",
+          "plateWeldedCMBSteel"
+        ],
+        [
+          "item",
+          "hbm:ingot_cft",
+          1,
+          -1
+        ]
+      ],
+      "name": "plsm.hde",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:part_generic",
+            1,
+            4
+          ]
+        ]
+      ],
+      "power": 25000000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 50,
+      "ignitionTemp": 500000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastIron",
+          2
+        ]
+      ],
+      "name": "plsm.weldiron",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            2600
+          ]
+        ]
+      ],
+      "power": 100
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 50,
+      "ignitionTemp": 500000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastSteel",
+          2
+        ]
+      ],
+      "name": "plsm.weldsteel",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            30
+          ]
+        ]
+      ],
+      "power": 500
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 50,
+      "ignitionTemp": 500000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastCopper",
+          2
+        ]
+      ],
+      "name": "plsm.weldcopper",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            2900
+          ]
+        ]
+      ],
+      "power": 1000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 300,
+      "ignitionTemp": 500000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastTitanium",
+          2
+        ]
+      ],
+      "name": "plsm.weldtitanium",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            2200
+          ]
+        ]
+      ],
+      "power": 50000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 300,
+      "ignitionTemp": 500000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastZirconium",
+          2
+        ]
+      ],
+      "name": "plsm.weldzirconium",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            4000
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 150,
+      "ignitionTemp": 500000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastAluminum",
+          2
+        ]
+      ],
+      "name": "plsm.weldaluminium",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            1300
+          ]
+        ]
+      ],
+      "power": 10000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 600,
+      "ignitionTemp": 500000,
+      "inputFluid": [
+        [
+          "OXYGEN",
+          1000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateCastTcAlloy",
+          2
+        ]
+      ],
+      "name": "plsm.weldtcalloy",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            36
+          ]
+        ]
+      ],
+      "power": 1000000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 600,
+      "ignitionTemp": 500000,
+      "inputFluid": [
+        [
+          "OXYGEN",
+          1000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateCastCdAlloy",
+          2
+        ]
+      ],
+      "name": "plsm.weldcdalloy",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            43
+          ]
+        ]
+      ],
+      "power": 1000000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 600,
+      "ignitionTemp": 500000,
+      "inputFluid": [
+        [
+          "OXYGEN",
+          1000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateCastTungsten",
+          2
+        ]
+      ],
+      "name": "plsm.weldtungsten",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            7400
+          ]
+        ]
+      ],
+      "power": 250000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 600,
+      "ignitionTemp": 500000,
+      "inputFluid": [
+        [
+          "REFORMGAS",
+          1000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateCastCMBSteel",
+          2
+        ]
+      ],
+      "name": "plsm.weldcmb",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            39
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "autoSwitchGroup": "autoswitch.weldPlates",
+      "duration": 3000,
+      "ignitionTemp": 500000,
+      "inputFluid": [
+        [
+          "REFORMGAS",
+          16000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateCastOsmiridium",
+          2
+        ]
+      ],
+      "name": "plsm.weldosmiridium",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:plate_welded",
+            1,
+            7699
+          ]
+        ]
+      ],
+      "power": 50000000
+    },
+    {
+      "duration": 1200,
+      "ignitionTemp": 3000000,
+      "inputItem": [
+        [
+          "item",
+          "hbm:fusion_component",
+          64
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64,
+          3
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64,
+          3
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64,
+          3
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64,
+          2
+        ],
+        [
+          "item",
+          "hbm:fusion_component",
+          64,
+          2
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          4,
+          13
+        ]
+      ],
+      "name": "plsm.fusionvessel",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:fusion_torus"
+          ]
+        ]
+      ],
+      "power": 2000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "item",
+          "hbm:ingot_cft",
+          2,
+          -1
+        ],
+        [
+          "dict",
+          "plateCastAnyBismoidBronze",
+          4
+        ],
+        [
+          "item",
+          "hbm:tile.glass_quartz",
+          16
+        ]
+      ],
+      "name": "plsm.icfcell",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_laser_cell"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputFluid": [
+        [
+          "XENON",
+          16000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedTungsten",
+          4
+        ],
+        [
+          "dict",
+          "wireDenseMagnetizedTungsten",
+          16
+        ]
+      ],
+      "name": "plsm.icfemitter",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_laser_emitter"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedAnyResistantAlloy"
+        ],
+        [
+          "dict",
+          "wireDenseNeodymium",
+          16
+        ],
+        [
+          "dict",
+          "wireDenseSchrabidium",
+          2
+        ]
+      ],
+      "name": "plsm.icfcapacitor",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_laser_capacitor"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedAnyResistantAlloy",
+          2
+        ],
+        [
+          "dict",
+          "wireDenseDineutronium",
+          4
+        ],
+        [
+          "dict",
+          "wireDenseSchrabidium",
+          4
+        ]
+      ],
+      "name": "plsm.icfturbo",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_laser_turbo"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastAnyBismoidBronze",
+          4
+        ],
+        [
+          "dict",
+          "plateCastBigMt",
+          4
+        ],
+        [
+          "dict",
+          "ingotAnyHardplastic",
+          16
+        ]
+      ],
+      "name": "plsm.icfcasing",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_laser_casing"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastAnyBismoidBronze",
+          4
+        ],
+        [
+          "dict",
+          "ingotAnyHardplastic",
+          16
+        ],
+        [
+          "dict",
+          "wireDenseNeodymium",
+          16
+        ]
+      ],
+      "name": "plsm.icfport",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_laser_port"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "item",
+          "hbm:ingot_cft",
+          16,
+          -1
+        ],
+        [
+          "dict",
+          "plateCastAnyBismoidBronze",
+          4
+        ],
+        [
+          "dict",
+          "ingotAnyHardplastic",
+          16
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          16,
+          12
+        ]
+      ],
+      "name": "plsm.icfcontroller",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_controller"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedSteel",
+          4
+        ],
+        [
+          "dict",
+          "plateWeldedTitanium",
+          2
+        ]
+      ],
+      "name": "plsm.icfscaffold",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_component_scaffold"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "item",
+          "hbm:ingot_cft",
+          1,
+          -1
+        ],
+        [
+          "dict",
+          "plateCastCMBSteel"
+        ],
+        [
+          "dict",
+          "plateWeldedTungsten",
+          2
+        ]
+      ],
+      "name": "plsm.icfvessel",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_component_vessel"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedSteel",
+          2
+        ],
+        [
+          "dict",
+          "plateWeldedCopper",
+          2
+        ],
+        [
+          "dict",
+          "plateCastAnyBismoidBronze"
+        ]
+      ],
+      "name": "plsm.icfstructural",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:icf_component_structure"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 3000,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedCombineSteel",
+          16
+        ],
+        [
+          "dict",
+          "plateWeldedAnyResistantAlloy",
+          16
+        ],
+        [
+          "dict",
+          "plateCastAnyBismoidBronze",
+          16
+        ],
+        [
+          "dict",
+          "wireDenseSchrabidium",
+          32
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          32,
+          12
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          16,
+          13
+        ]
+      ],
+      "name": "plsm.icfcore",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:struct_icf_core"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 800,
+      "ignitionTemp": 1000000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastGold",
+          8
+        ],
+        [
+          "item",
+          "hbm:motor",
+          4
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          1,
+          12
+        ]
+      ],
+      "name": "plsm.icfpress",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:machine_icf_press"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 6000,
+      "ignitionTemp": 25000000,
+      "inputItem": [
+        [
+          "dict",
+          "blockSchrabidium",
+          35
+        ],
+        [
+          "item",
+          "hbm:billet_yharonite",
+          64
+        ],
+        [
+          "item",
+          "hbm:billet_yharonite",
+          64
+        ],
+        [
+          "item",
+          "hbm:fragment_meteorite",
+          64
+        ],
+        [
+          "item",
+          "hbm:fragment_meteorite",
+          64
+        ],
+        [
+          "item",
+          "hbm:fragment_meteorite",
+          64
+        ],
+        [
+          "item",
+          "hbm:fragment_meteorite",
+          64
+        ],
+        [
+          "item",
+          "hbm:fragment_meteorite",
+          64
+        ],
+        [
+          "item",
+          "hbm:fragment_meteorite",
+          64
+        ],
+        [
+          "item",
+          "hbm:fragment_meteorite",
+          64
+        ],
+        [
+          "item",
+          "hbm:fragment_meteorite",
+          64
+        ]
+      ],
+      "name": "plsm.schrabhammer",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:schrabidium_hammer"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 12000,
+      "ignitionTemp": 50000000,
+      "inputFluid": [
+        [
+          "STELLAR_FLUX",
+          12000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedOsmiridium",
+          16
+        ],
+        [
+          "dict",
+          "wireDenseDineutronium",
+          16
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          12,
+          13
+        ],
+        [
+          "item",
+          "hbm:singularity_spark"
+        ],
+        [
+          "item",
+          "hbm:powder_chlorophyte",
+          64
+        ]
+      ],
+      "name": "plsm.dfccore",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:dfc_core"
+          ]
+        ]
+      ],
+      "power": 100000000
+    },
+    {
+      "duration": 1200,
+      "ignitionTemp": 50000000,
+      "inputFluid": [
+        [
+          "STELLAR_FLUX",
+          4000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedOsmiridium",
+          16
+        ],
+        [
+          "dict",
+          "wireDenseStarmetal",
+          16
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          8,
+          13
+        ]
+      ],
+      "name": "plsm.dfcemitter",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:dfc_emitter"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 1200,
+      "ignitionTemp": 50000000,
+      "inputFluid": [
+        [
+          "STELLAR_FLUX",
+          4000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedOsmiridium",
+          16
+        ],
+        [
+          "dict",
+          "plateCastStarmetal",
+          16
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          8,
+          13
+        ]
+      ],
+      "name": "plsm.dfcreceiver",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:dfc_receiver"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 1200,
+      "ignitionTemp": 50000000,
+      "inputFluid": [
+        [
+          "STELLAR_FLUX",
+          4000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedOsmiridium",
+          16
+        ],
+        [
+          "dict",
+          "plateCastBigMt",
+          16
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          4,
+          9
+        ]
+      ],
+      "name": "plsm.dfcinjector",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:dfc_injector"
+          ]
+        ]
+      ],
+      "power": 10000000
+    },
+    {
+      "duration": 1200,
+      "ignitionTemp": 50000000,
+      "inputFluid": [
+        [
+          "STELLAR_FLUX",
+          4000
+        ]
+      ],
+      "inputItem": [
+        [
+          "dict",
+          "plateWeldedOsmiridium",
+          16
+        ],
+        [
+          "dict",
+          "wireDenseSchrabidium",
+          16
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          8,
+          13
+        ]
+      ],
+      "name": "plsm.dfcstabilizer",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:dfc_stabilizer"
+          ]
+        ]
+      ],
+      "power": 10000000
+    }
+  ]
+}

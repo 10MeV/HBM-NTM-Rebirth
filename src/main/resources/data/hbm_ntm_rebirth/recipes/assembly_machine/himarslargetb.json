@@ -14,7 +14,8 @@
       "count": 12,
       "ingredient": {
         "tag": "forge:ingots/any_hardplastic"
-      }
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
     },
     {
       "count": 36,
@@ -34,17 +35,12 @@
         "amount": 1000,
         "fluid": "hbm_ntm_rebirth:kerosene_reform"
       },
-      "ingredient": [
-        {
-          "item": "hbm_ntm_rebirth:canister_full"
-        },
-        {
-          "item": "hbm_ntm_rebirth:fluid_tank_full"
-        },
-        {
-          "item": "hbm_ntm_rebirth:fluid_tank_lead_full"
-        }
-      ]
+      "ingredient": {
+        "type": "hbm_ntm_rebirth:fluid_container",
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:kerosene_reform"
+      },
+      "legacy_ore": "container1000kerosenereform"
     },
     {
       "count": 16,
@@ -52,20 +48,20 @@
         "amount": 1000,
         "fluid": "hbm_ntm_rebirth:peroxide"
       },
-      "ingredient": [
-        {
-          "item": "hbm_ntm_rebirth:fluid_tank_full"
-        },
-        {
-          "item": "hbm_ntm_rebirth:fluid_tank_lead_full"
-        }
-      ]
+      "ingredient": {
+        "type": "hbm_ntm_rebirth:fluid_container",
+        "amount": 1000,
+        "fluid": "hbm_ntm_rebirth:peroxide"
+      },
+      "legacy_ore": "container1000peroxide"
     },
     {
       "count": 1,
       "ingredient": {
-        "tag": "forge:circuits/advanced"
-      }
+        "item": "hbm_ntm_rebirth:circuit_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 9
     }
   ],
   "internal_name": "ass.himarslargetb",
@@ -76,5 +72,6 @@
     }
   ],
   "pools": [],
-  "power": 100
+  "power": 100,
+  "source_order": 248
 }

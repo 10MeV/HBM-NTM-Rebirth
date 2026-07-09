@@ -20,8 +20,7 @@ public final class OilSpot {
         for (int i = 0; i < count; i++) {
             int x = origin.getX() + (int) (level.random.nextGaussian() * width);
             int z = origin.getZ() + (int) (level.random.nextGaussian() * width);
-            int surfaceY = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,
-                    new BlockPos(x, 0, z)).getY();
+            int surfaceY = WorldUtil.legacyGetHeightValue(level, x, z);
 
             for (int y = surfaceY; y > surfaceY - 4 && y > level.getMinBuildHeight(); y--) {
                 BlockPos pos = new BlockPos(x, y, z);

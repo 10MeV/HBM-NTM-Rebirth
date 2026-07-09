@@ -54,13 +54,10 @@ public class SoyuzLauncherMenu extends AbstractContainerMenu {
             }
         });
         addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_DESIGNATOR, 62, 36));
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_SATELLITE, 116, 18));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_ORBITAL, 116, 36) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.is(ModItems.MISSILE_SOYUZ_LANDER.get());
-            }
-        });
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                SoyuzLauncherBlockEntity.SLOT_SATELLITE, 116, 18));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                SoyuzLauncherBlockEntity.SLOT_ORBITAL, 116, 36));
         addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_KEROSENE_INPUT, 8, 90));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_KEROSENE_OUTPUT, 8, 108));
         addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_OXYGEN_INPUT, 26, 90));

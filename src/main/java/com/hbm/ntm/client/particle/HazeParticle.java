@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.particle;
 
+import com.hbm.ntm.world.WorldUtil;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -9,21 +10,36 @@ import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.Random;
 
 @OnlyIn(Dist.CLIENT)
 public class HazeParticle extends TextureSheetParticle implements HbmDeferredParticleRenderer.DeferredParticle {
+    private static final int LEGACY_QUAD_COUNT = 25;
+    private static final long LEGACY_RANDOM_SEED = 50L;
+    private static final float[] LAYER_OFFSET_X = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_OFFSET_Y = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_OFFSET_Z = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_JITTER_X = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_JITTER_Y = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_JITTER_Z = new float[LEGACY_QUAD_COUNT];
+    private static final float[] LAYER_SIZE_FACTOR = new float[LEGACY_QUAD_COUNT];
+
+    static {
+        precomputeStaticRenderLayers();
+    }
+
     private static SpriteSet sharedSprites;
     private final SpriteSet sprites;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     private HazeParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
         super(level, x, y, z);
@@ -33,6 +49,33 @@ public class HazeParticle extends TextureSheetParticle implements HbmDeferredPar
         this.quadSize = 10.0F;
         this.hasPhysics = false;
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
+    }
+
+    private static void precomputeStaticRenderLayers() {
+        Random fixed = new Random(LEGACY_RANDOM_SEED);
+        float cumulativeX = 0.0F;
+        float cumulativeY = 0.0F;
+        float cumulativeZ = 0.0F;
+        for (int i = 0; i < LEGACY_QUAD_COUNT; i++) {
+            cumulativeX += (float) (fixed.nextGaussian() * 2.5D);
+            cumulativeY += (float) (fixed.nextGaussian() * 0.15D);
+            cumulativeZ += (float) (fixed.nextGaussian() * 2.5D);
+            LAYER_OFFSET_X[i] = cumulativeX;
+            LAYER_OFFSET_Y[i] = cumulativeY;
+            LAYER_OFFSET_Z[i] = cumulativeZ;
+            LAYER_SIZE_FACTOR[i] = (float) (fixed.nextDouble() * 0.25D + 0.75D);
+            LAYER_JITTER_X[i] = (float) (fixed.nextGaussian() * 0.5D);
+            LAYER_JITTER_Y[i] = (float) (fixed.nextGaussian() * 0.5D);
+            LAYER_JITTER_Z[i] = (float) (fixed.nextGaussian() * 0.5D);
+        }
     }
 
     public static HazeParticle create(ClientLevel level, double x, double y, double z) {
@@ -58,10 +101,11 @@ public class HazeParticle extends TextureSheetParticle implements HbmDeferredPar
         this.move(this.xd, this.yd, this.zd);
         int x = Mth.floor(this.x) + this.random.nextInt(15) - 7;
         int z = Mth.floor(this.z) + this.random.nextInt(15) - 7;
-        int y = this.level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, new BlockPos(x, 0, z)).getY();
+        int y = WorldUtil.legacyGetHeightValue(this.level, x, z);
         this.level.addParticle(net.minecraft.core.particles.ParticleTypes.LAVA,
                 x + this.random.nextDouble(), y + 0.1D, z + this.random.nextDouble(), 0.0D, 0.0D, 0.0D);
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     @Override
@@ -75,35 +119,19 @@ public class HazeParticle extends TextureSheetParticle implements HbmDeferredPar
         if (alpha <= 0.0F) {
             return;
         }
-        VertexConsumer consumer = buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite());
+        VertexConsumer consumer = HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer);
         Vec3 cameraPos = camera.getPosition();
-        Quaternionf rotation = camera.rotation();
-        Random fixed = new Random(50L);
-        float cumulativeX = 0.0F;
-        float cumulativeY = 0.0F;
-        float cumulativeZ = 0.0F;
-        for (int i = 0; i < 25; i++) {
-            cumulativeX += (float) (fixed.nextGaussian() * 2.5D);
-            cumulativeY += (float) (fixed.nextGaussian() * 0.15D);
-            cumulativeZ += (float) (fixed.nextGaussian() * 2.5D);
-            float size = (float) ((fixed.nextDouble() * 0.25D + 0.75D) * this.quadSize);
-            float x = (float) (Mth.lerp(partialTick, this.xo, this.x) + cumulativeX + fixed.nextGaussian() * 0.5D - cameraPos.x());
-            float y = (float) (Mth.lerp(partialTick, this.yo, this.y) + cumulativeY + fixed.nextGaussian() * 0.5D - cameraPos.y());
-            float z = (float) (Mth.lerp(partialTick, this.zo, this.z) + cumulativeZ + fixed.nextGaussian() * 0.5D - cameraPos.z());
-            Vector3f[] corners = new Vector3f[] {
-                    new Vector3f(-size, -size, 0.0F),
-                    new Vector3f(-size, size, 0.0F),
-                    new Vector3f(size, size, 0.0F),
-                    new Vector3f(size, -size, 0.0F)
-            };
-            for (Vector3f corner : corners) {
-                corner.rotate(rotation).add(x, y, z);
-            }
-            HbmDeferredParticleRenderer.emitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT,
-                    corners[0], getU1(), getV1(),
-                    corners[1], getU1(), getV0(),
-                    corners[2], getU0(), getV0(),
-                    corners[3], getU0(), getV1(),
+        double baseX = Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x();
+        double baseY = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y();
+        double baseZ = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
+        var basis = HbmDeferredParticleRenderer.cameraBillboardBasis(camera, 1.0F);
+        for (int i = 0; i < LEGACY_QUAD_COUNT; i++) {
+            float size = LAYER_SIZE_FACTOR[i] * this.quadSize;
+            float x = (float) baseX + LAYER_OFFSET_X[i] + LAYER_JITTER_X[i];
+            float y = (float) baseY + LAYER_OFFSET_Y[i] + LAYER_JITTER_Y[i];
+            float z = (float) baseZ + LAYER_OFFSET_Z[i] + LAYER_JITTER_Z[i];
+            HbmDeferredParticleRenderer.emitCameraUnitParticleSheetQuad(consumer, LightTexture.FULL_BRIGHT, basis[0], basis[1],
+                    x, y, z, size, this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                     this.rCol, this.gCol, this.bCol, alpha);
         }
     }

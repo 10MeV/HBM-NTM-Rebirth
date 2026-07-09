@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.config.PotionConfig;
 import com.hbm.ntm.player.HbmLivingProperties;
+import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
@@ -42,6 +43,9 @@ public class LegacySyringeItem extends Item {
 
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (kind == Kind.MED_BAG) {
+            return false;
+        }
         applyTo(target.level(), stack, target, attacker);
         return false;
     }
@@ -52,6 +56,11 @@ public class LegacySyringeItem extends Item {
         for (int i = 0; i < lines; i++) {
             tooltip.add(Component.translatable(getDescriptionId() + ".desc." + i));
         }
+    }
+
+    @Override
+    public boolean isFoil(ItemStack stack) {
+        return kind.foil || super.isFoil(stack);
     }
 
     private boolean applyTo(Level level, ItemStack stack, LivingEntity target, LivingEntity source) {
@@ -81,17 +90,61 @@ public class LegacySyringeItem extends Item {
                 target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10 * 20, 0));
                 PotionConfig.applyPotionSickness(target, 15);
             }
+            case MED_BAG -> {
+                target.setHealth(target.getMaxHealth());
+                target.removeEffect(MobEffects.BLINDNESS);
+                target.removeEffect(MobEffects.CONFUSION);
+                target.removeEffect(MobEffects.DIG_SLOWDOWN);
+                target.removeEffect(MobEffects.HUNGER);
+                target.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+                target.removeEffect(MobEffects.POISON);
+                target.removeEffect(MobEffects.WEAKNESS);
+                target.removeEffect(MobEffects.WITHER);
+                target.removeEffect(ModEffects.RADIATION.get());
+                PotionConfig.applyPotionSickness(target, 15);
+            }
             case TAINT -> {
                 target.addEffect(new MobEffectInstance(ModEffects.TAINT.get(), 60 * 20, 0));
                 target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 5 * 20, 0));
             }
             case MKUNICORN -> HbmLivingProperties.applyMkuContagion(target);
+            case ANTIDOTE -> {
+                target.removeAllEffects();
+                PotionConfig.applyPotionSickness(target, 5);
+            }
+            case POISON -> {
+                if (target == source) {
+                    target.hurt(ModDamageSources.source(level, target.getRandom().nextBoolean()
+                            ? ModDamageSources.EUTHANIZED_SELF
+                            : ModDamageSources.EUTHANIZED_SELF2), 30.0F);
+                } else {
+                    target.hurt(ModDamageSources.euthanized(level, source, source), 30.0F);
+                }
+            }
+            case AWESOME -> {
+                target.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 50 * 20, 9));
+                target.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 50 * 20, 9));
+                target.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 50 * 20, 0));
+                target.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 50 * 20, 24));
+                target.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 50 * 20, 9));
+                target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 50 * 20, 6));
+                target.addEffect(new MobEffectInstance(MobEffects.JUMP, 50 * 20, 9));
+                target.addEffect(new MobEffectInstance(MobEffects.HEALTH_BOOST, 50 * 20, 9));
+                target.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 50 * 20, 4));
+                target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 5 * 20, 4));
+                target.addEffect(new MobEffectInstance(ModEffects.RADX.get(), 50 * 20, 9));
+                PotionConfig.applyPotionSickness(target, 5);
+            }
         }
 
         stack.shrink(1);
-        playSyringeSound(level, target);
-        if (kind != Kind.MKUNICORN) {
-            giveContainer(source, new ItemStack(ModItems.SYRINGE_METAL_EMPTY.get()));
+        if (kind != Kind.MED_BAG) {
+            playSyringeSound(level, target);
+        }
+        if (kind.returnsContainer) {
+            giveContainer(source, new ItemStack(kind.ordinaryContainer
+                    ? ModItems.SYRINGE_EMPTY.get()
+                    : ModItems.SYRINGE_METAL_EMPTY.get()));
         }
         if (kind == Kind.TAINT) {
             giveContainer(source, new ItemStack(ModItems.BOTTLE2_EMPTY.get()));
@@ -114,15 +167,34 @@ public class LegacySyringeItem extends Item {
         MEDX(true, 1),
         PSYCHO(true, 2),
         SUPER(true, 2),
+        MED_BAG(true, 2, false, false, false),
         TAINT(false, 3),
-        MKUNICORN(false, 1);
+        MKUNICORN(false, 1, false, false, false),
+        ANTIDOTE(true, 1, true, false),
+        POISON(false, 1, true, false),
+        AWESOME(true, 1, true, true);
 
         private final boolean blocksPotionSickness;
         private final int tooltipLines;
+        private final boolean ordinaryContainer;
+        private final boolean foil;
+        private final boolean returnsContainer;
 
         Kind(boolean blocksPotionSickness, int tooltipLines) {
+            this(blocksPotionSickness, tooltipLines, false, false, true);
+        }
+
+        Kind(boolean blocksPotionSickness, int tooltipLines, boolean ordinaryContainer, boolean foil) {
+            this(blocksPotionSickness, tooltipLines, ordinaryContainer, foil, true);
+        }
+
+        Kind(boolean blocksPotionSickness, int tooltipLines, boolean ordinaryContainer, boolean foil,
+                boolean returnsContainer) {
             this.blocksPotionSickness = blocksPotionSickness;
             this.tooltipLines = tooltipLines;
+            this.ordinaryContainer = ordinaryContainer;
+            this.foil = foil;
+            this.returnsContainer = returnsContainer;
         }
     }
 }

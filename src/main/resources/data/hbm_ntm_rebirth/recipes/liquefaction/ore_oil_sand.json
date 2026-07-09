@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
+  "source_order": 21,
   "ingredient": {
     "item": "hbm_ntm_rebirth:ore_oil_sand"
   },

@@ -1,20 +1,59 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.himarssmallhe",
   "duration": 100,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:plates/steel" }, "count": 24, "legacy_ore": "plateSteel" },
-    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 24, "legacy_ore": "ingotAnyPlastic" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:rocket_fuel" }, "count": 48 },
-    { "ingredient": { "tag": "forge:ingots/any_plastic_explosive" }, "count": 18, "legacy_ore": "ingotAnyPlasticExplosive" },
-    { "ingredient": { "tag": "forge:ingots/any_high_explosive" }, "count": 48, "legacy_ore": "ingotAnyHighExplosive" },
-    { "ingredient": { "tag": "forge:circuits/basic" }, "count": 6, "legacy_ore": "circuitBasic" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:ammo_himars_standard_he" }
+  "input_items": [
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "count": 48,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rocket_fuel"
+      }
+    },
+    {
+      "count": 18,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic_explosive"
+      },
+      "legacy_ore": "ingotAnyPlasticExplosive"
+    },
+    {
+      "count": 48,
+      "ingredient": {
+        "tag": "forge:ingots/any_high_explosive"
+      },
+      "legacy_ore": "ingotAnyHighExplosive"
+    },
+    {
+      "count": 6,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 8
+    }
   ],
+  "internal_name": "ass.himarssmallhe",
   "output_fluids": [],
-  "pools": []
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:ammo_himars_standard_he"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 242
 }

@@ -14,6 +14,7 @@ import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
+import com.hbm.ntm.entity.item.LegacyFallingBlockEntity;
 import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.entity.logic.DeathBlastEntity;
@@ -23,6 +24,13 @@ import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.entity.logic.TomBlastEntity;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
+import com.hbm.ntm.entity.mob.EntityCyberCrab;
+import com.hbm.ntm.entity.mob.EntityCreeperNuclear;
+import com.hbm.ntm.entity.mob.EntityCreeperTainted;
+import com.hbm.ntm.entity.mob.EntityDuck;
+import com.hbm.ntm.entity.mob.EntityRADBeast;
+import com.hbm.ntm.entity.mob.EntityTaintCrab;
+import com.hbm.ntm.entity.mob.EntityTeslaCrab;
 import com.hbm.ntm.entity.missile.AntiBallisticMissileEntity;
 import com.hbm.ntm.entity.missile.CustomMissileEntity;
 import com.hbm.ntm.entity.missile.MinerRocketEntity;
@@ -41,6 +49,7 @@ import com.hbm.ntm.entity.projectile.RBMKDebrisEntity;
 import com.hbm.ntm.entity.projectile.RubbleEntity;
 import com.hbm.ntm.entity.projectile.SawbladeEntity;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
+import com.hbm.ntm.entity.projectile.WastePearlEntity;
 import com.hbm.ntm.entity.projectile.ZirnoxDebrisEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -68,6 +77,63 @@ public final class ModEntityTypes {
                     .clientTrackingRange(64)
                     .updateInterval(3)
                     .build("entity_c_package"));
+
+    public static final RegistryObject<EntityType<EntityCreeperNuclear>> NUCLEAR_CREEPER =
+            ENTITY_TYPES.register("entity_mob_nuclear_creeper", () -> EntityType.Builder
+                    .<EntityCreeperNuclear>of(com.hbm.entity.mob.EntityCreeperNuclear::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.7F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_mob_nuclear_creeper"));
+
+    public static final RegistryObject<EntityType<EntityCreeperTainted>> TAINTED_CREEPER =
+            ENTITY_TYPES.register("entity_mob_tainted_creeper", () -> EntityType.Builder
+                    .<EntityCreeperTainted>of(com.hbm.entity.mob.EntityCreeperTainted::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.7F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_mob_tainted_creeper"));
+
+    public static final RegistryObject<EntityType<EntityCyberCrab>> CYBER_CRAB =
+            ENTITY_TYPES.register("entity_cyber_crab", () -> EntityType.Builder
+                    .<EntityCyberCrab>of(EntityCyberCrab::new, MobCategory.MONSTER)
+                    .sized(0.75F, 0.35F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_cyber_crab"));
+
+    public static final RegistryObject<EntityType<EntityTeslaCrab>> TESLA_CRAB =
+            ENTITY_TYPES.register("entity_tesla_crab", () -> EntityType.Builder
+                    .<EntityTeslaCrab>of(com.hbm.entity.mob.EntityTeslaCrab::new, MobCategory.MONSTER)
+                    .sized(0.75F, 1.25F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_tesla_crab"));
+
+    public static final RegistryObject<EntityType<EntityTaintCrab>> TAINT_CRAB =
+            ENTITY_TYPES.register("entity_taint_crab", () -> EntityType.Builder
+                    .<EntityTaintCrab>of(com.hbm.entity.mob.EntityTaintCrab::new, MobCategory.MONSTER)
+                    .sized(1.25F, 1.25F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_taint_crab"));
+
+    public static final RegistryObject<EntityType<EntityDuck>> DUCK =
+            ENTITY_TYPES.register("entity_fucc_a_ducc", () -> EntityType.Builder
+                    .<EntityDuck>of(com.hbm.entity.mob.EntityDuck::new, MobCategory.CREATURE)
+                    .sized(0.3F, 0.7F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_fucc_a_ducc"));
+
+    public static final RegistryObject<EntityType<EntityRADBeast>> RAD_BEAST =
+            ENTITY_TYPES.register("entity_ntm_radiation_blaze", () -> EntityType.Builder
+                    .<EntityRADBeast>of(com.hbm.entity.mob.EntityRADBeast::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.8F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .fireImmune()
+                    .build("entity_ntm_radiation_blaze"));
 
     public static final RegistryObject<EntityType<NukeExplosionMk5Entity>> NUKE_EXPLOSION_MK5 =
             ENTITY_TYPES.register("entity_nuke_explosion_mk5", () -> EntityType.Builder
@@ -159,7 +225,7 @@ public final class ModEntityTypes {
 
     public static final RegistryObject<EntityType<MistEntity>> MIST =
             ENTITY_TYPES.register("entity_mist", () -> EntityType.Builder
-                    .<MistEntity>of(MistEntity::new, MobCategory.MISC)
+                    .<MistEntity>of(com.hbm.entity.effect.EntityMist::new, MobCategory.MISC)
                     .sized(1.0F, 1.0F)
                     .clientTrackingRange(250)
                     .updateInterval(1)
@@ -270,6 +336,14 @@ public final class ModEntityTypes {
                     .clientTrackingRange(160)
                     .updateInterval(1)
                     .build("entity_tnt_primed_base"));
+
+    public static final RegistryObject<EntityType<LegacyFallingBlockEntity>> LEGACY_FALLING_BLOCK =
+            ENTITY_TYPES.register("entity_falling_block_nt", () -> EntityType.Builder
+                    .<LegacyFallingBlockEntity>of(LegacyFallingBlockEntity::new, MobCategory.MISC)
+                    .sized(0.98F, 0.98F)
+                    .clientTrackingRange(160)
+                    .updateInterval(1)
+                    .build("entity_falling_block_nt"));
 
     public static final RegistryObject<EntityType<MissileEntity>> MISSILE_GENERIC =
             ENTITY_TYPES.register("entity_missile_generic", () -> EntityType.Builder
@@ -614,12 +688,20 @@ public final class ModEntityTypes {
 
     public static final RegistryObject<EntityType<ChemicalProjectileEntity>> CHEMICAL_PROJECTILE =
             ENTITY_TYPES.register("entity_chemthrower_splash", () -> EntityType.Builder
-                    .<ChemicalProjectileEntity>of(ChemicalProjectileEntity::new, MobCategory.MISC)
+                    .<ChemicalProjectileEntity>of(com.hbm.entity.projectile.EntityChemical::new, MobCategory.MISC)
                     .sized(0.25F, 0.25F)
                     .clientTrackingRange(128)
                     .updateInterval(1)
                     .fireImmune()
                     .build("entity_chemthrower_splash"));
+
+    public static final RegistryObject<EntityType<WastePearlEntity>> WASTE_PEARL =
+            ENTITY_TYPES.register("entity_waste_pearl", () -> EntityType.Builder
+                    .<WastePearlEntity>of(com.hbm.entity.grenade.EntityWastePearl::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .build("entity_waste_pearl"));
 
     public static final RegistryObject<EntityType<DynamiteStickEntity>> DYNAMITE_STICK =
             ENTITY_TYPES.register("entity_dynamite_stick", () -> EntityType.Builder

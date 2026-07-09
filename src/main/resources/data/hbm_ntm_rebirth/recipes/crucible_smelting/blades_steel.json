@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:blades_steel"
+    }
+  },
+  "output": [
+    {
+      "amount": 288,
+      "material": "Steel"
+    }
+  ],
+  "source_order": 9
+}

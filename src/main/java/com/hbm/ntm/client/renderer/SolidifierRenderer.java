@@ -22,6 +22,10 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
             MODEL.prepareRenderOnlyInCallOrder("Fluid");
     private static final LegacyWavefrontModel.SelectionHandle GLASS =
             MODEL.prepareRenderOnlyInCallOrder("Glass");
+    private static final int GLASS_RED = 191;
+    private static final int GLASS_GREEN = 255;
+    private static final int GLASS_BLUE = 255;
+    private static final int GLASS_ALPHA = 38;
 
     public SolidifierRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -34,6 +38,12 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(SolidifierBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -57,85 +67,55 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
         poseStack.translate(translation.x, translation.y, translation.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
 
-        LegacyTileRenderPlans.ScaledModelPartPlan fluidPlan = LegacyTileRenderPlans.solidifierFluidPlan(
-                blockEntity.getTank().getFill(), blockEntity.getTank().getMaxFill(),
-                blockEntity.getTank().getTankType().getColor());
-        LegacyTileRenderPlans.ModelPartTintPlan glassPlan = LegacyTileRenderPlans.solidifierGlassPlan();
+        double fluidHeight = fluidHeight(blockEntity.getTank().getFill(), blockEntity.getTank().getMaxFill());
+        int fluidColor = blockEntity.getTank().getTankType().getColor();
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, queuedPose -> {
-                renderFluid(fluidPlan, queuedPose, buffer, modelLight, packedOverlay);
-                renderTintedPart(glassPlan, queuedPose, buffer, modelLight, packedOverlay);
-            });
+            enqueueFluid(fluidHeight, fluidColor, poseStack, buffer);
+            enqueueGlass(poseStack, buffer, modelLight, packedOverlay);
         }
 
         poseStack.popPose();
     }
 
-    private static void renderFluid(LegacyTileRenderPlans.ScaledModelPartPlan plan, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!plan.active()) {
+    private static void enqueueFluid(double height, int fluidColor, PoseStack poseStack, MultiBufferSource buffer) {
+        if (height <= 0.0D) {
             return;
         }
         poseStack.pushPose();
-        poseStack.translate(0.0D, plan.pivotY(), 0.0D);
-        poseStack.scale((float) plan.scaleX(), (float) plan.scaleY(), (float) plan.scaleZ());
-        poseStack.translate(0.0D, -plan.pivotY(), 0.0D);
-        renderScaledPart(plan, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.0D, LegacyTileRenderPlans.SOLIDIFIER_FLUID_PIVOT_Y, 0.0D);
+        poseStack.scale(1.0F, (float) height, 1.0F);
+        poseStack.translate(0.0D, -LegacyTileRenderPlans.SOLIDIFIER_FLUID_PIVOT_Y, 0.0D);
+        LegacyMachineEffectPresenter.enqueueUntexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                poseStack, buffer, parts -> parts.add(MODEL, FLUID, red(fluidColor), green(fluidColor),
+                        blue(fluidColor), 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL));
         poseStack.popPose();
     }
 
-    private static void renderScaledPart(LegacyTileRenderPlans.ScaledModelPartPlan plan, PoseStack poseStack,
+    private static void enqueueGlass(PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (plan.textured()) {
-            renderModelPart(FLUID, poseStack, buffer, packedLight, packedOverlay, plan.color(), plan.blend());
-        } else {
-            renderModelPartUntextured(FLUID, poseStack, buffer, plan.color(), plan.blend());
+        LegacyMachineEffectPresenter.enqueueTexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                poseStack, buffer, parts -> parts.add(MODEL, GLASS, MODEL.textureLocation(), packedLight,
+                        packedOverlay, GLASS_RED, GLASS_GREEN, GLASS_BLUE, GLASS_ALPHA, false,
+                        LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                        LegacyWavefrontModel.UvTransform.DEFAULT));
+    }
+
+    private static double fluidHeight(int fill, int maxFill) {
+        if (maxFill <= 0) {
+            return 0.0D;
         }
+        return Math.max(0.0D, Math.min(1.0D, (double) Math.max(0, fill) / (double) maxFill));
     }
 
-    private static void renderTintedPart(LegacyTileRenderPlans.ModelPartTintPlan plan, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!plan.active()) {
-            return;
-        }
-        if (plan.textured()) {
-            renderModelPart(GLASS, poseStack, buffer, packedLight, packedOverlay, plan.color(), plan.blend());
-        } else {
-            renderModelPartUntextured(GLASS, poseStack, buffer, plan.color(), plan.blend());
-        }
+    private static int red(int color) {
+        return color >> 16 & 255;
     }
 
-    private static void renderModelPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTileRenderPlans.RgbaPlan color,
-            LegacyTileRenderPlans.BlendStatePlan blend) {
-        MODEL.renderOnlyInCallOrder(MODEL.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
-                red(color), green(color), blue(color), alpha(color), false, renderMode(blend),
-                LegacyWavefrontModel.UvTransform.DEFAULT, handle);
+    private static int green(int color) {
+        return color >> 8 & 255;
     }
 
-    private static void renderModelPartUntextured(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
-            MultiBufferSource buffer, LegacyTileRenderPlans.RgbaPlan color, LegacyTileRenderPlans.BlendStatePlan blend) {
-        MODEL.renderOnlyUntextured(poseStack, buffer, red(color), green(color), blue(color), alpha(color),
-                renderMode(blend), handle);
-    }
-
-    private static int red(LegacyTileRenderPlans.RgbaPlan color) {
-        return color == null ? 255 : color.redByte();
-    }
-
-    private static int green(LegacyTileRenderPlans.RgbaPlan color) {
-        return color == null ? 255 : color.greenByte();
-    }
-
-    private static int blue(LegacyTileRenderPlans.RgbaPlan color) {
-        return color == null ? 255 : color.blueByte();
-    }
-
-    private static int alpha(LegacyTileRenderPlans.RgbaPlan color) {
-        return color == null ? 255 : color.alphaByte();
-    }
-
-    private static LegacyTexturedRenderMode renderMode(LegacyTileRenderPlans.BlendStatePlan blend) {
-        return blend == null ? LegacyTexturedRenderMode.CUTOUT_NO_CULL : blend.modernRenderMode();
+    private static int blue(int color) {
+        return color & 255;
     }
 }

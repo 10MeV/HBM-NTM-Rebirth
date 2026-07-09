@@ -21,14 +21,20 @@ public class FuelPoolRecipe implements Recipe<Container> {
     private final ResourceLocation id;
     private final HbmIngredient input;
     private final HbmItemOutput output;
+    private final int sourceOrder;
 
     public FuelPoolRecipe(ResourceLocation id, HbmIngredient input, HbmItemOutput output) {
+        this(id, input, output, Integer.MAX_VALUE);
+    }
+
+    public FuelPoolRecipe(ResourceLocation id, HbmIngredient input, HbmItemOutput output, int sourceOrder) {
         if (input == null || output == null || output.representativeStack().isEmpty()) {
             throw new IllegalArgumentException("Fuel pool recipe requires non-empty input and output");
         }
         this.id = id;
         this.input = input;
         this.output = output;
+        this.sourceOrder = sourceOrder;
     }
 
     public HbmIngredient input() {
@@ -37,6 +43,10 @@ public class FuelPoolRecipe implements Recipe<Container> {
 
     public HbmItemOutput output() {
         return output;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
     }
 
     public boolean matches(ItemStack stack) {
@@ -107,19 +117,22 @@ public class FuelPoolRecipe implements Recipe<Container> {
             if (output.oneOf()) {
                 throw new JsonSyntaxException("Fuel pool recipe " + id + " requires a deterministic output");
             }
-            return new FuelPoolRecipe(id, input, output);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
+            return new FuelPoolRecipe(id, input, output, sourceOrder);
         }
 
         @Nullable
         @Override
         public FuelPoolRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buffer) {
-            return new FuelPoolRecipe(id, HbmIngredient.fromNetwork(buffer), HbmItemOutput.fromNetwork(buffer));
+            return new FuelPoolRecipe(id, HbmIngredient.fromNetwork(buffer), HbmItemOutput.fromNetwork(buffer),
+                    buffer.readVarInt());
         }
 
         @Override
         public void toNetwork(FriendlyByteBuf buffer, FuelPoolRecipe recipe) {
             recipe.input.toNetwork(buffer);
             recipe.output.toNetwork(buffer);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.render.LegacyRenderRandom;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public final class LegacySkyboxRenderer {
     }
 
     public static List<SkyQuad> starQuads(long seed, int attempts) {
-        Random random = new Random(seed);
+        Random random = LegacyRenderRandom.seeded(seed);
         List<SkyQuad> quads = new ArrayList<>();
         for (int i = 0; i < attempts; ++i) {
             double d0 = random.nextFloat() * 2.0F - 1.0F;

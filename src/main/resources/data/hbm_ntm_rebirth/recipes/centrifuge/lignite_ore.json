@@ -1,10 +1,28 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:ores/lignite" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/lignite"
+    },
+    "legacy_ore": "oreLignite"
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_lignite", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_lignite", "count": 2 },
-    { "item": "hbm_ntm_rebirth:powder_lignite", "count": 2 },
-    { "item": "minecraft:gravel" }
-  ]
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_lignite"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_lignite"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:powder_lignite"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 2
 }

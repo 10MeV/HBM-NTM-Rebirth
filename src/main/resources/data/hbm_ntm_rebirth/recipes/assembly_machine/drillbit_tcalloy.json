@@ -1,0 +1,38 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 20,
+      "ingredient": {
+        "tag": "forge:ingots/any_resistant_alloy"
+      },
+      "legacy_ore": "ingotAnyResistantAlloy"
+    },
+    {
+      "count": 12,
+      "ingredient": {
+        "tag": "forge:ingots/desh"
+      },
+      "legacy_ore": "ingotDesh"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    }
+  ],
+  "internal_name": "ass.drilltc",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:drillbit_tcalloy"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 113
+}

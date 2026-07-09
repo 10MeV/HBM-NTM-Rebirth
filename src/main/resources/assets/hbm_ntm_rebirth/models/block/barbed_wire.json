@@ -1,0 +1,12 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/blocks/barbed_wire.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "default": "hbm_ntm_rebirth:block/barbed_wire_model",
+    "particle": "hbm_ntm_rebirth:block/barbed_wire_model",
+    "texture0": "hbm_ntm_rebirth:block/barbed_wire_model"
+  }
+}

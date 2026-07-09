@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hbm_ntm_rebirth:holotape_image_digamma"
+    },
+    {
+      "tag": "forge:tools/screwdrivers"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    {
+      "item": "hbm_ntm_rebirth:armor_polish"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:holotape_image_restored"
+  }
+}

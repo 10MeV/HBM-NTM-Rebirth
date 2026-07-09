@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.ntmpipeTcAlloy",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:pipes/tc_alloy" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:pipes/tc_alloy" }, "count": 1, "legacy_ore": "ntmpipeTcAlloy" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "TcAlloy", "amount": 216 }
+  ],
+  "pools": [],
+  "source_order": 1977
+}

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "F": {
+      "item": "hbm_ntm_rebirth:safety_fuse"
+    },
+    "S": {
+      "tag": "forge:bolts/steel"
+    }
+  },
+  "pattern": [
+    " S ",
+    " F ",
+    "FFF"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:grenade_fuze_s15"
+  },
+  "show_notification": true
+}

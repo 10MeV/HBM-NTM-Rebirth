@@ -11,6 +11,7 @@ import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmEnergyHandler,
-        HbmLoadedEnergy, InfoProviderEC, HbmLegacyLoadedTile {
+        HbmLoadedEnergy, HbmEnergyPortInspectable, InfoProviderEC, HbmLegacyLoadedTile {
     private static final String TAG_ENERGY = "Energy";
     private static final int ENERGY_PORT_KEEPALIVE_TICKS = 20;
 
@@ -107,6 +108,7 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
         return List.of();
     }
 
+    @Override
     public HbmEnergyUtil.PortSetSnapshot inspectEnergyPorts() {
         return level == null
                 ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)

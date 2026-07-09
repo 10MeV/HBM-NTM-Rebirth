@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:gas_cent",
+  "input": {
+    "fluid": "hbm_ntm_rebirth:watz",
+    "amount": 1000
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:powder_iron"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_lead"
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste_tiny"
+    },
+    {
+      "item": "hbm_ntm_rebirth:dust",
+      "count": 2
+    }
+  ],
+  "high_speed": false,
+  "centrifuges": 2,
+  "input_type": "MUD",
+  "output_type": "NONE",
+  "source_order": 3
+}

@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/steel"
+    },
+    "count": 1,
+    "legacy_ore": "ingotSteel"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_dura_steel"
+  },
+  "source_order": 1
+}

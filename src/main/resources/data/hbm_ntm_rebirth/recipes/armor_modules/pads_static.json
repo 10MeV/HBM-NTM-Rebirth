@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:ingots/copper"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:pads_slime"
+    }
+  },
+  "pattern": [
+    "CDC",
+    "ISI",
+    "CDC"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:pads_static"
+  },
+  "show_notification": true
+}

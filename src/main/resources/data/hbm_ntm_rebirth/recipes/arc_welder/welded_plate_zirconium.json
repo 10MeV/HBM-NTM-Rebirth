@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.plate.zirconium",
+  "duration": 600,
+  "power": 10000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:cast_plates/zirconium" }, "count": 2, "legacy_ore": "plateTripleZirconium" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:plate_welded_zirconium" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 11
+}

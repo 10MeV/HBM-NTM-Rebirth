@@ -1,19 +1,34 @@
 {
   "variants": {
-    "facing=east": {
+    "facing=east,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/blast_furnace"
+    },
+    "facing=east,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_blast_furnace"
+    },
+    "facing=north,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/blast_furnace",
+      "y": 90
+    },
+    "facing=north,tilted=true": {
       "model": "hbm_ntm_rebirth:block/machine_blast_furnace",
       "y": 90
     },
-    "facing=north": {
-      "model": "hbm_ntm_rebirth:block/machine_blast_furnace"
+    "facing=south,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/blast_furnace",
+      "y": 270
     },
-    "facing=south": {
-      "model": "hbm_ntm_rebirth:block/machine_blast_furnace",
-      "y": 180
-    },
-    "facing=west": {
+    "facing=south,tilted=true": {
       "model": "hbm_ntm_rebirth:block/machine_blast_furnace",
       "y": 270
+    },
+    "facing=west,tilted=false": {
+      "model": "hbm_ntm_rebirth:block/machines/blast_furnace",
+      "y": 180
+    },
+    "facing=west,tilted=true": {
+      "model": "hbm_ntm_rebirth:block/machine_blast_furnace",
+      "y": 180
     }
   }
 }

@@ -1,0 +1,55 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip_quantum"
+      },
+      "count": 16
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip_bismoid"
+      },
+      "count": 48
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_atomic_clock"
+      },
+      "count": 8
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_controller_advanced"
+      },
+      "count": 2
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_overdrive_1"
+      }
+    }
+  ],
+  "solder": [
+    {
+      "ingredient": {
+        "tag": "forge:wires/lead"
+      },
+      "count": 32,
+      "legacy_ore": "wireFineLead"
+    }
+  ],
+  "fluid": {
+    "fluid": "PERFLUOROMETHYL_COLD",
+    "amount": 6000
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:circuit_controller_quantum"
+  },
+  "duration": 600,
+  "consumption": 250000,
+  "source_order": 8
+}

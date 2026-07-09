@@ -1,0 +1,49 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "custom_localization": true,
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_pcb"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 3
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/any_plastic"
+      },
+      "legacy_ore": "ingotAnyPlastic"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:wires/tungsten"
+      },
+      "legacy_ore": "wireFineTungsten"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/niobium"
+      },
+      "legacy_ore": "ingotNiobium"
+    }
+  ],
+  "internal_name": "ass.analogAlt",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:circuit_analog"
+    }
+  ],
+  "pools": [
+    "alt..circuit"
+  ],
+  "power": 250,
+  "source_order": 33
+}

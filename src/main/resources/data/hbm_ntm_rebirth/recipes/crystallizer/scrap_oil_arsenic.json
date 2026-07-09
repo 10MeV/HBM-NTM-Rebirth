@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 100,
+  "fluid": { "fluid": "RADIOSOLVENT", "amount": 100 },
+  "input": {
+    "ingredient": { "item": "hbm_ntm_rebirth:scrap_oil" },
+    "count": 16
+  },
+  "output": { "item": "hbm_ntm_rebirth:nugget_arsenic" },
+  "productivity": 0.3,
+  "source_order": 43
+}

@@ -4,8 +4,16 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Plane": true
+  },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/reactors/zirnox_destroyed",
-    "default": "hbm_ntm_rebirth:block/reactors/zirnox_destroyed"
+    "default": "hbm_ntm_rebirth:models/zirnox_destroyed"
   }
 }

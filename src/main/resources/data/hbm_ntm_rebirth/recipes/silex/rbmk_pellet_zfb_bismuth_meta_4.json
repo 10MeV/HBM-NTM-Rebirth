@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_zfb_bismuth"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_zfb_bismuth",
+      "legacy_meta": 4
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:nugget_uranium",
+      "weight": 10
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_pu241",
+      "weight": 10
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_bismuth",
+      "weight": 130
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_zirconium",
+      "weight": 150
+    }
+  ],
+  "source_order": 270
+}

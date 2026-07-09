@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "minecraft:logs"
+  "source_order": 7,
+  "input": {
+    "ingredient": {
+      "tag": "minecraft:logs"
+    },
+    "count": 1,
+    "legacy_ore": "logWood"
   },
   "output": {
     "amount": 100,

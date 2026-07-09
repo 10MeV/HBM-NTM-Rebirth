@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_atomic_clock"
+    },
+    "K": {
+      "item": "hbm_ntm_rebirth:crystal_redstone"
+    },
+    "W": {
+      "tag": "forge:plates/weapon_steel"
+    }
+  },
+  "pattern": [
+    " C ",
+    "KWK"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:grenade_filling_laser"
+  },
+  "show_notification": true
+}

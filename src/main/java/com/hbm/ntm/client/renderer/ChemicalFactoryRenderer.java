@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -24,6 +25,8 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
             ObjMachineModels.CHEMICAL_FACTORY.prepareRenderOnlyInCallOrder("Base");
     private static final LegacyWavefrontModel.SelectionHandle FRAME =
             ObjMachineModels.CHEMICAL_FACTORY.prepareRenderOnlyInCallOrder("Frame");
+    private static final LegacyWavefrontModel.SelectionHandle BASE_FRAME =
+            ObjMachineModels.CHEMICAL_FACTORY.prepareRenderOnlyInCallOrder("Base", "Frame");
     private static final LegacyWavefrontModel.SelectionHandle FAN_1 =
             ObjMachineModels.CHEMICAL_FACTORY.prepareRenderOnlyInCallOrder("Fan1");
     private static final LegacyWavefrontModel.SelectionHandle FAN_2 =
@@ -43,6 +46,12 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
     }
 
     @Override
+    public boolean shouldRender(ChemicalFactoryBlockEntity chemicalFactory, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(chemicalFactory, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(chemicalFactory, getViewDistance());
+    }
+
+    @Override
     public void render(ChemicalFactoryBlockEntity chemicalFactory, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(chemicalFactory, getViewDistance())) {
@@ -58,7 +67,6 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
         float anim = Mth.lerp(partialTick, chemicalFactory.getPrevAnim(), chemicalFactory.getAnim());
-        LegacyTileRenderPlans.ChemicalFactoryPlan plan = LegacyTileRenderPlans.chemicalFactoryPlan(anim);
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(chemicalFactory);
                 LegacyRenderLighting.ModelViewSamplingScope ignored =
@@ -71,29 +79,29 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
             poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
             ResourceLocation texture = definition.textureLocation();
 
-            renderModelPart(model, "Base", texture, poseStack, buffer, modelLight, packedOverlay);
-            if (chemicalFactory.shouldRenderFrame()) {
-                renderModelPart(model, "Frame", texture, poseStack, buffer, modelLight, packedOverlay);
-            }
+            renderStaticBaseFrame(model, chemicalFactory.shouldRenderFrame(), texture, poseStack, buffer,
+                    modelLight, packedOverlay);
 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(chemicalFactory)) {
-                for (LegacyTileRenderPlans.RotatingModelPartPlan fan : plan.fans()) {
-                    renderRotatingPart(model, fan, texture, poseStack, buffer, modelLight, packedOverlay);
-                }
+                double fanAngle = anim * LegacyTileRenderPlans.CHEMICAL_FACTORY_FAN_ROTATION_SCALE % 360.0D;
+                renderRotatingYPart(model, "Fan1", LegacyTileRenderPlans.CHEMICAL_FACTORY_FAN_PIVOT_X,
+                        0.0D, 0.0D, fanAngle, texture, poseStack, buffer, modelLight, packedOverlay);
+                renderRotatingYPart(model, "Fan2", -LegacyTileRenderPlans.CHEMICAL_FACTORY_FAN_PIVOT_X,
+                        0.0D, 0.0D, fanAngle, texture, poseStack, buffer, modelLight, packedOverlay);
             }
 
             poseStack.popPose();
         }
     }
 
-    private static void renderRotatingPart(LegacyWavefrontModel model,
-            LegacyTileRenderPlans.RotatingModelPartPlan part, ResourceLocation texture, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    private static void renderRotatingYPart(LegacyWavefrontModel model, String partName,
+            double pivotX, double pivotY, double pivotZ, double angleDegrees, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        poseStack.translate(part.pivotX(), part.pivotY(), part.pivotZ());
-        rotate(poseStack, part.axisX(), part.axisY(), part.axisZ(), part.angleDegrees());
-        poseStack.translate(-part.pivotX(), -part.pivotY(), -part.pivotZ());
-        renderModelPart(model, part.partName(), texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(pivotX, pivotY, pivotZ);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) angleDegrees));
+        poseStack.translate(-pivotX, -pivotY, -pivotZ);
+        renderModelPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
@@ -107,6 +115,16 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
         model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
+    private static void renderStaticBaseFrame(LegacyWavefrontModel model, boolean frameVisible,
+            ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay) {
+        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            return;
+        }
+        model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                frameVisible ? BASE_FRAME : BASE);
+    }
+
     private static LegacyWavefrontModel.SelectionHandle handle(String partName) {
         if (partName == null) {
             return null;
@@ -118,17 +136,5 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
             case "Fan2" -> FAN_2;
             default -> null;
         };
-    }
-
-    private static void rotate(PoseStack poseStack, float axisX, float axisY, float axisZ, double degrees) {
-        if (axisX != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (degrees * axisX)));
-        }
-        if (axisY != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (degrees * axisY)));
-        }
-        if (axisZ != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (degrees * axisZ)));
-        }
     }
 }

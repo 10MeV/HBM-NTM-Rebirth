@@ -1,0 +1,40 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "top": "hbm_ntm_rebirth:block/foundry_channel_top",
+    "bottom": "hbm_ntm_rebirth:block/foundry_channel_bottom",
+    "side": "hbm_ntm_rebirth:block/foundry_channel_side",
+    "inner": "hbm_ntm_rebirth:block/foundry_channel_inner",
+    "particle": "hbm_ntm_rebirth:block/foundry_channel_side"
+  },
+  "elements": [
+    {
+      "from": [10, 0, 5],
+      "to": [16, 2, 11],
+      "faces": {
+        "down": { "texture": "#bottom" },
+        "up": { "texture": "#bottom" },
+        "east": { "texture": "#side" }
+      }
+    },
+    {
+      "from": [10, 0, 5],
+      "to": [16, 8, 6],
+      "faces": {
+        "up": { "texture": "#top" },
+        "north": { "texture": "#side" },
+        "south": { "texture": "#inner" }
+      }
+    },
+    {
+      "from": [10, 0, 10],
+      "to": [16, 8, 11],
+      "faces": {
+        "up": { "texture": "#top" },
+        "north": { "texture": "#inner" },
+        "south": { "texture": "#side" }
+      }
+    }
+  ]
+}

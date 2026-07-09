@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 
 public final class RadiationHud {
     private static final ResourceLocation OVERLAY_MISC = new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/overlay_misc.png");
+    private static final int BAR_LENGTH = 74;
     private static long lastSurveyMs;
     private static float previousRadiation;
     private static float lastRadiation;
@@ -47,23 +48,41 @@ public final class RadiationHud {
             lastRadiation = radiation;
         }
 
-        LegacyScreenQuadRenderer.RadCounterPlan plan = LegacyScreenQuadRenderer.radCounterPlan(screenHeight,
-                HbmClientConfig.geigerOffsetHorizontal(), HbmClientConfig.geigerOffsetVertical(), radiation, rate);
-        graphics.blit(OVERLAY_MISC, plan.frame().x(), plan.frame().y(), plan.frameTexture().u(),
-                plan.frameTexture().v(), plan.frame().width(), plan.frame().height());
-        if (plan.fill().width() > 0) {
-            graphics.blit(OVERLAY_MISC, plan.fill().x(), plan.fill().y(), plan.fillTexture().u(),
-                    plan.fillTexture().v(), plan.fill().width(), plan.fill().height());
+        int x = 16 + HbmClientConfig.geigerOffsetHorizontal();
+        int y = screenHeight - 20 - HbmClientConfig.geigerOffsetVertical();
+        int bar = LegacyScreenQuadRenderer.scaled(radiation, 1000.0D, BAR_LENGTH);
+        graphics.blit(OVERLAY_MISC, x, y, 0, 0, 94, 18);
+        if (bar > 0) {
+            graphics.blit(OVERLAY_MISC, x + 1, y + 1, 1, 19, bar, 16);
         }
-        if (plan.warning().visible()) {
-            graphics.blit(OVERLAY_MISC, plan.warning().rect().x(), plan.warning().rect().y(),
-                    plan.warning().texture().u(), plan.warning().texture().v(),
-                    plan.warning().rect().width(), plan.warning().rect().height());
+        int warningU = warningTextureU(rate);
+        if (warningU >= 0) {
+            graphics.blit(OVERLAY_MISC, x + BAR_LENGTH + 2, y - 18, warningU, 36, 18, 18);
         }
-        if (!plan.label().isEmpty()) {
-            graphics.drawString(Minecraft.getInstance().font, plan.label(), plan.labelX(), plan.labelY(),
-                    0xFF000000 | plan.labelColor(), false);
+        String label = radiationLabel(rate);
+        if (!label.isEmpty()) {
+            graphics.drawString(Minecraft.getInstance().font, label, x, y - 8, 0xFFFF0000, false);
         }
+    }
+
+    private static int warningTextureU(double radiationRate) {
+        if (radiationRate >= 25.0D) {
+            return 36;
+        }
+        if (radiationRate >= 10.0D) {
+            return 18;
+        }
+        return radiationRate >= 2.5D ? 0 : -1;
+    }
+
+    private static String radiationLabel(double radiationRate) {
+        if (radiationRate > 1000.0D) {
+            return ">1000 RAD/s";
+        }
+        if (radiationRate >= 1.0D) {
+            return Math.round(radiationRate) + " RAD/s";
+        }
+        return radiationRate > 0.0D ? "<1 RAD/s" : "";
     }
 
     private RadiationHud() {

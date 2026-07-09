@@ -14,7 +14,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.Random;
@@ -23,6 +22,20 @@ import java.util.Random;
 public class MukeFlashParticle extends Particle implements HbmDeferredParticleRenderer.DeferredParticle {
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/particle/flare.png");
+    private static final int FLARE_COUNT = 24;
+    private static final float[] FLARE_OFFSET_X = new float[FLARE_COUNT];
+    private static final float[] FLARE_OFFSET_Y = new float[FLARE_COUNT];
+    private static final float[] FLARE_OFFSET_Z = new float[FLARE_COUNT];
+
+    static {
+        Random random = new Random();
+        for (int i = 0; i < FLARE_COUNT; i++) {
+            random.setSeed(i * 31L + 1L);
+            FLARE_OFFSET_X[i] = (float) (random.nextDouble() * 15.0D - 7.5D);
+            FLARE_OFFSET_Y[i] = (float) (random.nextDouble() * 7.5D - 3.75D);
+            FLARE_OFFSET_Z[i] = (float) (random.nextDouble() * 15.0D - 7.5D);
+        }
+    }
 
     private final boolean balefire;
 
@@ -103,24 +116,30 @@ public class MukeFlashParticle extends Particle implements HbmDeferredParticleRe
         double x = Mth.lerp(partialTick, this.xo, this.x) - cameraPos.x();
         double y = Mth.lerp(partialTick, this.yo, this.y) - cameraPos.y();
         double z = Mth.lerp(partialTick, this.zo, this.z) - cameraPos.z();
-        Quaternionf rotation = camera.rotation();
-        Vector3f right = new Vector3f(1.0F, 0.0F, 0.0F).rotate(rotation).mul(scale);
-        Vector3f up = new Vector3f(0.0F, 1.0F, 0.0F).rotate(rotation).mul(scale);
-        Random random = new Random();
+        Vector3f[] basis = HbmDeferredParticleRenderer.cameraBillboardBasis(camera, 1.0F);
+        Vector3f rightUnit = basis[0];
+        Vector3f upUnit = basis[1];
+        float rightX = rightUnit.x() * scale;
+        float rightY = rightUnit.y() * scale;
+        float rightZ = rightUnit.z() * scale;
+        float upX = upUnit.x() * scale;
+        float upY = upUnit.y() * scale;
+        float upZ = upUnit.z() * scale;
+        VertexConsumer flareConsumer =
+                HbmDeferredParticleRenderer.texturedAdditiveNoDepthWriteConsumer(TEXTURE, buffer);
+        int packedAlpha = (int) (alpha * 255.0F);
 
-        for (int i = 0; i < 24; i++) {
-            random.setSeed(i * 31L + 1L);
-            float px = (float) (x + random.nextDouble() * 15.0D - 7.5D);
-            float py = (float) (y + random.nextDouble() * 7.5D - 3.75D);
-            float pz = (float) (z + random.nextDouble() * 15.0D - 7.5D);
+        for (int i = 0; i < FLARE_COUNT; i++) {
+            float px = (float) x + FLARE_OFFSET_X[i];
+            float py = (float) y + FLARE_OFFSET_Y[i];
+            float pz = (float) z + FLARE_OFFSET_Z[i];
 
-            HbmDeferredParticleRenderer.renderTexturedAdditiveNoDepthWriteQuad(TEXTURE, buffer,
-                    LightTexture.FULL_BRIGHT, 0.0F, 1.0F, 0.0F,
-                    px - right.x() - up.x(), py - right.y() - up.y(), pz - right.z() - up.z(), 1.0F, 1.0F,
-                    px - right.x() + up.x(), py - right.y() + up.y(), pz - right.z() + up.z(), 1.0F, 0.0F,
-                    px + right.x() + up.x(), py + right.y() + up.y(), pz + right.z() + up.z(), 0.0F, 0.0F,
-                    px + right.x() - up.x(), py + right.y() - up.y(), pz + right.z() - up.z(), 0.0F, 1.0F,
-                    0xFFE5BF, (int) (alpha * 255.0F));
+            HbmDeferredParticleRenderer.emitTexturedAdditiveNoDepthWriteQuad(flareConsumer, LightTexture.FULL_BRIGHT,
+                    px - rightX - upX, py - rightY - upY, pz - rightZ - upZ, 1.0F, 1.0F,
+                    px - rightX + upX, py - rightY + upY, pz - rightZ + upZ, 1.0F, 0.0F,
+                    px + rightX + upX, py + rightY + upY, pz + rightZ + upZ, 0.0F, 0.0F,
+                    px + rightX - upX, py + rightY - upY, pz + rightZ - upZ, 0.0F, 1.0F,
+                    0xFFE5BF, packedAlpha);
         }
     }
 

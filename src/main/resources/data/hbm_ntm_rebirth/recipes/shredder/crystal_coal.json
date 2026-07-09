@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:crystals/coal" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_coal", "count": 3 }
+  "output": { "item": "hbm_ntm_rebirth:powder_coal", "count": 3 },
+  "source_order": 76
 }

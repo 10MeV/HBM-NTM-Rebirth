@@ -109,9 +109,10 @@ public class SoyuzEntity extends Entity {
         if (level() instanceof ServerLevel serverLevel) {
             if (mode == MODE_SATELLITE) {
                 ItemStack load = payload.get(0);
-                if (Satellite.getTypeFromStack(load).isPresent()) {
+                if (load.getItem() instanceof ISatelliteChip) {
                     int frequency = ISatelliteChip.getFrequencyFromStack(load);
-                    Satellite.orbit(serverLevel, load, frequency, getX(), getY(), getZ());
+                    Satellite.orbit(serverLevel, Satellite.getIDFromItem(load.getItem()), frequency,
+                            getX(), getY(), getZ());
                 }
             } else if (mode == MODE_CAPSULE) {
                 SoyuzCapsuleEntity capsule = new SoyuzCapsuleEntity(serverLevel);

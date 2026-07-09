@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:cobalt_plate"
+    },
+    "E": {
+      "item": "hbm_ntm_rebirth:ingot_starmetal"
+    }
+  },
+  "pattern": [
+    "ECE",
+    "EEE",
+    "EEE"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:starmetal_plate"
+  },
+  "show_notification": true
+}

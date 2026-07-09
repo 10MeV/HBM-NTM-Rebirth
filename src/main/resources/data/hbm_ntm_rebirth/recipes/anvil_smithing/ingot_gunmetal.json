@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_smithing",
+  "left": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/copper"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_gunmetal"
+  },
+  "right": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ingots/aluminium"
+    }
+  },
+  "source_order": 38,
+  "tier": 1
+}

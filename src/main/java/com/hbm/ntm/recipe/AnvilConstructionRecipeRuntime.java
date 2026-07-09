@@ -27,7 +27,8 @@ public final class AnvilConstructionRecipeRuntime {
             return List.of();
         }
         return level.getRecipeManager().getAllRecipesFor(ModRecipes.ANVIL_CONSTRUCTION.type().get()).stream()
-                .sorted(Comparator.comparing(recipe -> recipe.getId().toString()))
+                .sorted(Comparator.comparingInt(AnvilConstructionRecipe::sourceOrder)
+                        .thenComparing(recipe -> recipe.getId().toString()))
                 .toList();
     }
 

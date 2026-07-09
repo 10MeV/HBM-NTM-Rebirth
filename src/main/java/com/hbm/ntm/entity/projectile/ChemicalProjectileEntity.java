@@ -8,6 +8,7 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fluid.trait.SimpleFluidTraits;
+import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
@@ -44,6 +45,8 @@ import java.util.List;
 public class ChemicalProjectileEntity extends LegacyThrowableEntity {
     private static final EntityDataAccessor<Integer> FLUID_ID =
             SynchedEntityData.defineId(ChemicalProjectileEntity.class, EntityDataSerializers.INT);
+    private int cachedDustColor = Integer.MIN_VALUE;
+    private DustParticleOptions cachedDustParticle;
 
     public ChemicalProjectileEntity(EntityType<? extends ChemicalProjectileEntity> type, Level level) {
         super(type, level);
@@ -74,8 +77,9 @@ public class ChemicalProjectileEntity extends LegacyThrowableEntity {
         super.tick();
     }
 
-    public void setFluid(FluidType fluid) {
+    public ChemicalProjectileEntity setFluid(FluidType fluid) {
         entityData.set(FLUID_ID, fluid == null ? HbmFluids.NONE.getId() : fluid.getId());
+        return this;
     }
 
     public FluidType fluid() {
@@ -113,7 +117,7 @@ public class ChemicalProjectileEntity extends LegacyThrowableEntity {
             float green = ((color >> 8) & 255) / 255.0F;
             float blue = (color & 255) / 255.0F;
             Vec3 motion = getDeltaMovement();
-            level().addParticle(new DustParticleOptions(new Vector3f(red, green, blue), 0.75F),
+            level().addParticle(liquidDustParticle(color, red, green, blue),
                     getX(), getY(), getZ(),
                     motion.x + random.nextGaussian() * 0.05D,
                     motion.y - 0.2D + random.nextGaussian() * 0.05D,
@@ -121,6 +125,14 @@ public class ChemicalProjectileEntity extends LegacyThrowableEntity {
         } else if (currentStyle == ChemicalStyle.BURNING) {
             level().addParticle(ParticleTypes.FLAME, getX(), getY() - 0.125D, getZ(), 0.0D, 0.0D, 0.0D);
         }
+    }
+
+    private DustParticleOptions liquidDustParticle(int color, float red, float green, float blue) {
+        if (cachedDustParticle == null || cachedDustColor != color) {
+            cachedDustColor = color;
+            cachedDustParticle = new DustParticleOptions(new Vector3f(red, green, blue), 0.75F);
+        }
+        return cachedDustParticle;
     }
 
     private void affect(Entity entity, float intensity) {
@@ -134,7 +146,8 @@ public class ChemicalProjectileEntity extends LegacyThrowableEntity {
         if (currentStyle == ChemicalStyle.AMAT) {
             EntityDamageUtil.attackEntityFromIgnoreIFrame(entity, ModDamageSources.radiation(level()), 1.0F);
             if (living != null) {
-                RadiationUtil.contaminate(living, 50.0F * adjustedIntensity, true);
+                RadiationUtil.contaminate(living, HazardType.RADIATION, RadiationUtil.ContaminationType.CREATIVE,
+                        50.0F * adjustedIntensity);
                 return;
             }
         }

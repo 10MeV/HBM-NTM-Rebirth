@@ -1,12 +1,15 @@
 package com.hbm.ntm.recipe;
 
+import com.hbm.ntm.item.NuclearWasteItem;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,6 +21,9 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation BATTERY_PACK = hbm("battery_pack");
     public static final ResourceLocation BATTERY_SC = hbm("battery_sc");
     public static final ResourceLocation CIRCUIT = hbm("circuit");
+    public static final ResourceLocation CIRCUIT_STAR_PIECE = hbm("circuit_star_piece");
+    public static final ResourceLocation CHEMICAL_DYE = hbm("chemical_dye");
+    public static final ResourceLocation BLUEPRINT_FOLDER = hbm("blueprint_folder");
     public static final ResourceLocation PLATE_CAST = hbm("plate_cast");
     public static final ResourceLocation PLATE_WELDED = hbm("plate_welded");
     public static final ResourceLocation WIRE_FINE = hbm("wire_fine");
@@ -37,6 +43,10 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation STAMP_BOOK = hbm("stamp_book");
     public static final ResourceLocation PAGE_OF = hbm("page_of_");
     public static final ResourceLocation CASING = hbm("casing");
+    public static final ResourceLocation GRENADE_SHELL = hbm("grenade_shell");
+    public static final ResourceLocation GRENADE_FUZE = hbm("grenade_fuze");
+    public static final ResourceLocation GRENADE_FILLING = hbm("grenade_filling");
+    public static final ResourceLocation GRENADE_EXTRA = hbm("grenade_extra");
     public static final ResourceLocation FUEL_ADDITIVE = hbm("fuel_additive");
     public static final ResourceLocation DRILLBIT = hbm("drillbit");
     public static final ResourceLocation PISTON_SET = hbm("piston_set");
@@ -54,17 +64,47 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation PWR_FUEL_DEPLETED = hbm("pwr_fuel_depleted");
     public static final ResourceLocation WATZ_PELLET = hbm("watz_pellet");
     public static final ResourceLocation AMMO_STANDARD = hbm("ammo_standard");
+    public static final ResourceLocation AMMO_SECRET = hbm("ammo_secret");
     public static final ResourceLocation FUSION_COMPONENT = hbm("fusion_component");
+    public static final ResourceLocation WEAPON_MOD_SPECIAL = hbm("weapon_mod_special");
+    public static final ResourceLocation CANNED_CONSERVE = hbm("canned_conserve");
+    public static final ResourceLocation APPLE_LEAD = hbm("apple_lead");
+    public static final ResourceLocation APPLE_SCHRABIDIUM = hbm("apple_schrabidium");
     public static final ResourceLocation ITEM_SECRET = hbm("item_secret");
+    public static final ResourceLocation INGOT_STEEL_DUSTED = hbm("ingot_steel_dusted");
     public static final ResourceLocation MOTOR = hbm("motor");
     public static final ResourceLocation MOTOR_DESH = hbm("motor_desh");
     public static final ResourceLocation REACTOR_CORE = hbm("reactor_core");
     public static final ResourceLocation INGOT_CFT = hbm("ingot_cft");
     public static final ResourceLocation ROD_QUAD_EMPTY = hbm("rod_quad_empty");
+    public static final ResourceLocation NUCLEAR_WASTE_LONG = hbm("nuclear_waste_long");
+    public static final ResourceLocation NUCLEAR_WASTE_LONG_TINY = hbm("nuclear_waste_long_tiny");
+    public static final ResourceLocation NUCLEAR_WASTE_LONG_DEPLETED = hbm("nuclear_waste_long_depleted");
+    public static final ResourceLocation NUCLEAR_WASTE_LONG_DEPLETED_TINY = hbm("nuclear_waste_long_depleted_tiny");
+    public static final ResourceLocation NUCLEAR_WASTE_SHORT = hbm("nuclear_waste_short");
+    public static final ResourceLocation NUCLEAR_WASTE_SHORT_TINY = hbm("nuclear_waste_short_tiny");
+    public static final ResourceLocation NUCLEAR_WASTE_SHORT_DEPLETED = hbm("nuclear_waste_short_depleted");
+    public static final ResourceLocation NUCLEAR_WASTE_SHORT_DEPLETED_TINY = hbm("nuclear_waste_short_depleted_tiny");
+    public static final ResourceLocation TILE_SAND_MIX = hbm("tile.sand_mix");
+    public static final ResourceLocation TILE_GLASS_QUARTZ = hbm("tile.glass_quartz");
+    public static final ResourceLocation TILE_STONE_RESOURCE = hbm("tile.stone_resource");
 
     private static final Map<ResourceLocation, LinkedHashMap<Integer, RegistryObject<Item>>> ITEM_VARIANTS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, LinkedHashMap<Integer, ItemLike>> VANILLA_META_VARIANTS = new LinkedHashMap<>();
 
     static {
+        registerVanillaMeta(new ResourceLocation("minecraft", "log"), Map.of(
+                3, Items.JUNGLE_LOG));
+        registerVanillaMeta(new ResourceLocation("minecraft", "coal"), Map.of(
+                1, Items.CHARCOAL));
+        registerVanillaMeta(new ResourceLocation("minecraft", "dye"), Map.of(
+                4, Items.LAPIS_LAZULI));
+        registerVanillaMeta(new ResourceLocation("minecraft", "fish"), Map.of(
+                0, Items.COD,
+                1, Items.SALMON,
+                2, Items.TROPICAL_FISH,
+                3, Items.PUFFERFISH));
+
         register(BATTERY_PACK,
                 ModItems.BATTERY_REDSTONE,
                 ModItems.BATTERY_LEAD,
@@ -90,20 +130,41 @@ public final class LegacyMetaItemMappings {
                 ModItems.BATTERY_SC_PB209,
                 ModItems.BATTERY_SC_AM241);
         registerList(CIRCUIT, ModItems.CIRCUIT_ITEMS);
+        registerList(CIRCUIT_STAR_PIECE, ModItems.CIRCUIT_STAR_PIECE_ITEMS);
+        registerList(CHEMICAL_DYE, ModItems.CHEMICAL_DYE_ITEMS);
+        register(BLUEPRINT_FOLDER,
+                ModItems.BLUEPRINT_FOLDER,
+                ModItems.BLUEPRINT_FOLDER_DISCOVER,
+                ModItems.BLUEPRINT_FOLDER_SECRET);
         registerSparse(PLATE_CAST, Map.of(
                 39, requireLegacyItem("plate_cast_combine_steel"),
                 46, requireLegacyItem("plate_cast_bismuth_bronze"),
                 47, requireLegacyItem("plate_cast_arsenic_bronze"),
                 7_400, requireLegacyItem("plate_cast_tungsten")));
-        registerSparse(PLATE_WELDED, Map.of(
+        registerSparse(PLATE_WELDED, sparseMap(
+                2_600, requireLegacyItem("plate_welded_iron"),
+                30, requireLegacyItem("plate_welded_steel"),
+                2_900, requireLegacyItem("plate_welded_copper"),
+                2_200, requireLegacyItem("plate_welded_titanium"),
+                4_000, requireLegacyItem("plate_welded_zirconium"),
+                1_300, requireLegacyItem("plate_welded_aluminium"),
                 36, requireLegacyItem("plate_welded_tcalloy"),
-                43, requireLegacyItem("plate_welded_cdalloy")));
-        registerSparse(WIRE_FINE, Map.of(
+                43, requireLegacyItem("plate_welded_cdalloy"),
+                7_400, requireLegacyItem("plate_welded_tungsten"),
+                39, requireLegacyItem("plate_welded_combine_steel"),
+                7_699, requireLegacyItem("plate_welded_osmiridium")));
+        registerSparse(WIRE_FINE, sparseMap(
+                699, requireLegacyItem("wire_fine_carbon"),
                 1_300, requireLegacyItem("wire_fine_aluminium"),
                 2_900, requireLegacyItem("wire_fine_copper"),
+                30, requireLegacyItem("wire_fine_steel"),
                 31, requireLegacyItem("wire_fine_mingrade"),
+                38, requireLegacyItem("wire_fine_magnetized_tungsten"),
+                4_000, requireLegacyItem("wire_fine_zirconium"),
                 7_400, requireLegacyItem("wire_fine_tungsten"),
-                7_900, requireLegacyItem("wire_gold")));
+                7_900, requireLegacyItem("wire_gold"),
+                8_200, requireLegacyItem("wire_fine_lead"),
+                12_626, requireLegacyItem("wire_fine_schrabidium")));
         registerSparse(WIRE_DENSE, Map.of(
                 2_200, requireLegacyItem("wire_dense_titanium"),
                 2_900, requireLegacyItem("wire_dense_copper"),
@@ -146,13 +207,6 @@ public final class LegacyMetaItemMappings {
                 0, requireLegacyItem("plant_item_tobacco"),
                 1, requireLegacyItem("plant_item_rope"),
                 2, requireLegacyItem("plant_item_mustardwillow")));
-        registerSparse(PLANT_FLOWER, Map.of(
-                0, requireLegacyItem("plant_flower_foxglove"),
-                1, requireLegacyItem("plant_flower_tobacco"),
-                2, requireLegacyItem("plant_flower_nightshade"),
-                3, requireLegacyItem("plant_flower_weed"),
-                4, requireLegacyItem("plant_flower_cd0"),
-                5, requireLegacyItem("plant_flower_cd1")));
         registerSparse(PARTS_LEGENDARY, Map.of(
                 0, requireLegacyItem("parts_legendary_tier1"),
                 1, requireLegacyItem("parts_legendary_tier2"),
@@ -176,21 +230,78 @@ public final class LegacyMetaItemMappings {
                 4, requireLegacyItem("casing_shotshell"),
                 5, requireLegacyItem("casing_buckshot"),
                 6, requireLegacyItem("casing_buckshot_advanced")));
+        register(GRENADE_SHELL,
+                requireLegacyItem("grenade_shell_frag"),
+                requireLegacyItem("grenade_shell_stick"),
+                requireLegacyItem("grenade_shell_tech"),
+                requireLegacyItem("grenade_shell_nuke"));
+        register(GRENADE_FUZE,
+                requireLegacyItem("grenade_fuze_s3"),
+                requireLegacyItem("grenade_fuze_s7"),
+                requireLegacyItem("grenade_fuze_s15"),
+                requireLegacyItem("grenade_fuze_impact"),
+                requireLegacyItem("grenade_fuze_airburst"));
+        register(GRENADE_FILLING,
+                requireLegacyItem("grenade_filling_powder"),
+                requireLegacyItem("grenade_filling_he"),
+                requireLegacyItem("grenade_filling_demo"),
+                requireLegacyItem("grenade_filling_inc"),
+                requireLegacyItem("grenade_filling_wp"),
+                requireLegacyItem("grenade_filling_cluster"),
+                requireLegacyItem("grenade_filling_emp"),
+                requireLegacyItem("grenade_filling_plasma"),
+                requireLegacyItem("grenade_filling_laser"),
+                requireLegacyItem("grenade_filling_cluster_heavy"),
+                requireLegacyItem("grenade_filling_nuclear"),
+                requireLegacyItem("grenade_filling_nuclear_demo"),
+                requireLegacyItem("grenade_filling_schrab"));
+        register(GRENADE_EXTRA,
+                requireLegacyItem("grenade_extra_glue"),
+                requireLegacyItem("grenade_extra_proxy_fuze"),
+                requireLegacyItem("grenade_extra_frag_sleeve"),
+                requireLegacyItem("grenade_extra_triplex"));
         registerSparse(AMMO_STANDARD, Map.ofEntries(
+                Map.entry(0, requireLegacyItem("ammo_standard_stone")),
+                Map.entry(1, requireLegacyItem("ammo_standard_stone_ap")),
+                Map.entry(2, requireLegacyItem("ammo_standard_stone_iron")),
+                Map.entry(3, requireLegacyItem("ammo_standard_stone_shot")),
+                Map.entry(4, requireLegacyItem("ammo_standard_m357_bp")),
                 Map.entry(5, requireLegacyItem("ammo_standard_m357_sp")),
                 Map.entry(6, requireLegacyItem("ammo_standard_m357_fmj")),
+                Map.entry(7, requireLegacyItem("ammo_standard_m357_jhp")),
+                Map.entry(8, requireLegacyItem("ammo_standard_m357_ap")),
+                Map.entry(9, requireLegacyItem("ammo_standard_m357_express")),
+                Map.entry(10, requireLegacyItem("ammo_standard_m44_bp")),
                 Map.entry(11, requireLegacyItem("ammo_standard_m44_sp")),
                 Map.entry(12, requireLegacyItem("ammo_standard_m44_fmj")),
+                Map.entry(13, requireLegacyItem("ammo_standard_m44_jhp")),
+                Map.entry(14, requireLegacyItem("ammo_standard_m44_ap")),
+                Map.entry(15, requireLegacyItem("ammo_standard_m44_express")),
+                Map.entry(16, requireLegacyItem("ammo_standard_p22_sp")),
+                Map.entry(17, requireLegacyItem("ammo_standard_p22_fmj")),
+                Map.entry(18, requireLegacyItem("ammo_standard_p22_jhp")),
+                Map.entry(19, requireLegacyItem("ammo_standard_p22_ap")),
                 Map.entry(20, requireLegacyItem("ammo_standard_p9_sp")),
                 Map.entry(21, requireLegacyItem("ammo_standard_p9_fmj")),
                 Map.entry(22, requireLegacyItem("ammo_standard_p9_jhp")),
+                Map.entry(23, requireLegacyItem("ammo_standard_p9_ap")),
+                Map.entry(24, requireLegacyItem("ammo_standard_r556_sp")),
+                Map.entry(25, requireLegacyItem("ammo_standard_r556_fmj")),
+                Map.entry(26, requireLegacyItem("ammo_standard_r556_jhp")),
+                Map.entry(27, requireLegacyItem("ammo_standard_r556_ap")),
                 Map.entry(28, requireLegacyItem("ammo_standard_r762_sp")),
+                Map.entry(29, requireLegacyItem("ammo_standard_r762_fmj")),
+                Map.entry(30, requireLegacyItem("ammo_standard_r762_jhp")),
+                Map.entry(31, requireLegacyItem("ammo_standard_r762_ap")),
                 Map.entry(32, requireLegacyItem("ammo_standard_r762_du")),
                 Map.entry(33, requireLegacyItem("ammo_standard_bmg50_sp")),
                 Map.entry(34, requireLegacyItem("ammo_standard_bmg50_fmj")),
                 Map.entry(35, requireLegacyItem("ammo_standard_bmg50_jhp")),
                 Map.entry(36, requireLegacyItem("ammo_standard_bmg50_ap")),
                 Map.entry(37, requireLegacyItem("ammo_standard_bmg50_du")),
+                Map.entry(38, requireLegacyItem("ammo_standard_b75")),
+                Map.entry(39, requireLegacyItem("ammo_standard_b75_inc")),
+                Map.entry(40, requireLegacyItem("ammo_standard_b75_exp")),
                 Map.entry(41, requireLegacyItem("ammo_standard_g12_bp")),
                 Map.entry(42, requireLegacyItem("ammo_standard_g12_bp_magnum")),
                 Map.entry(43, requireLegacyItem("ammo_standard_g12_bp_slug")),
@@ -200,21 +311,100 @@ public final class LegacyMetaItemMappings {
                 Map.entry(47, requireLegacyItem("ammo_standard_g12_magnum")),
                 Map.entry(48, requireLegacyItem("ammo_standard_g12_explosive")),
                 Map.entry(49, requireLegacyItem("ammo_standard_g12_phosphorus")),
+                Map.entry(50, requireLegacyItem("ammo_standard_g26_flare")),
                 Map.entry(51, requireLegacyItem("ammo_standard_g26_flare_supply")),
                 Map.entry(52, requireLegacyItem("ammo_standard_g26_flare_weapon")),
                 Map.entry(53, requireLegacyItem("ammo_standard_g40_he")),
+                Map.entry(54, requireLegacyItem("ammo_standard_g40_heat")),
+                Map.entry(55, requireLegacyItem("ammo_standard_g40_demo")),
+                Map.entry(56, requireLegacyItem("ammo_standard_g40_inc")),
+                Map.entry(57, requireLegacyItem("ammo_standard_g40_phosphorus")),
                 Map.entry(58, requireLegacyItem("ammo_standard_rocket_he")),
+                Map.entry(59, requireLegacyItem("ammo_standard_rocket_heat")),
+                Map.entry(60, requireLegacyItem("ammo_standard_rocket_demo")),
+                Map.entry(61, requireLegacyItem("ammo_standard_rocket_inc")),
+                Map.entry(62, requireLegacyItem("ammo_standard_rocket_phosphorus")),
+                Map.entry(63, requireLegacyItem("ammo_standard_flame_diesel")),
+                Map.entry(64, requireLegacyItem("ammo_standard_flame_gas")),
+                Map.entry(65, requireLegacyItem("ammo_standard_flame_napalm")),
+                Map.entry(66, requireLegacyItem("ammo_standard_flame_balefire")),
+                Map.entry(67, requireLegacyItem("ammo_standard_capacitor")),
+                Map.entry(68, requireLegacyItem("ammo_standard_capacitor_overcharge")),
+                Map.entry(69, requireLegacyItem("ammo_standard_capacitor_ir")),
+                Map.entry(70, requireLegacyItem("ammo_standard_tau_uranium")),
+                Map.entry(71, requireLegacyItem("ammo_standard_coil_tungsten")),
+                Map.entry(72, requireLegacyItem("ammo_standard_coil_ferrouranium")),
                 Map.entry(73, requireLegacyItem("ammo_standard_nuke_standard")),
                 Map.entry(74, requireLegacyItem("ammo_standard_nuke_demo")),
                 Map.entry(75, requireLegacyItem("ammo_standard_nuke_high")),
                 Map.entry(76, requireLegacyItem("ammo_standard_nuke_tots")),
+                Map.entry(77, requireLegacyItem("ammo_standard_nuke_hive")),
+                Map.entry(78, requireLegacyItem("ammo_standard_g10")),
+                Map.entry(79, requireLegacyItem("ammo_standard_g10_shrapnel")),
+                Map.entry(80, requireLegacyItem("ammo_standard_g10_du")),
+                Map.entry(81, requireLegacyItem("ammo_standard_g10_slug")),
+                Map.entry(82, requireLegacyItem("ammo_standard_r762_he")),
                 Map.entry(83, requireLegacyItem("ammo_standard_bmg50_he")),
+                Map.entry(84, requireLegacyItem("ammo_standard_g10_explosive")),
+                Map.entry(85, requireLegacyItem("ammo_standard_p45_sp")),
+                Map.entry(86, requireLegacyItem("ammo_standard_p45_fmj")),
+                Map.entry(87, requireLegacyItem("ammo_standard_p45_jhp")),
+                Map.entry(88, requireLegacyItem("ammo_standard_p45_ap")),
+                Map.entry(89, requireLegacyItem("ammo_standard_p45_du")),
+                Map.entry(90, requireLegacyItem("ammo_standard_ct_hook")),
+                Map.entry(91, requireLegacyItem("ammo_standard_ct_mortar")),
+                Map.entry(92, requireLegacyItem("ammo_standard_ct_mortar_charge")),
+                Map.entry(93, requireLegacyItem("ammo_standard_nuke_balefire")),
                 Map.entry(94, requireLegacyItem("ammo_standard_bmg50_sm"))));
-        registerSparse(FUSION_COMPONENT, Map.of(
-                0, requireLegacyItem("fusion_component_bscco"),
-                1, requireLegacyItem("fusion_component_bscco_welded"),
-                2, requireLegacyItem("fusion_component_blanket"),
-                3, requireLegacyItem("fusion_component_motor")));
+        registerSparse(AMMO_SECRET, Map.of(
+                0, requireLegacyItem("ammo_secret_folly_sm"),
+                1, requireLegacyItem("ammo_secret_folly_nuke"),
+                2, requireLegacyItem("ammo_secret_m44_equestrian"),
+                3, requireLegacyItem("ammo_secret_g12_equestrian"),
+                4, requireLegacyItem("ammo_secret_bmg50_equestrian"),
+                5, requireLegacyItem("ammo_secret_p35_800"),
+                6, requireLegacyItem("ammo_secret_bmg50_black"),
+                7, requireLegacyItem("ammo_secret_p35_800_bl")));
+        registerSparse(WEAPON_MOD_SPECIAL, Map.of(
+                0, requireLegacyItem("weapon_mod_special_silencer"),
+                1, requireLegacyItem("weapon_mod_special_scope"),
+                7, requireLegacyItem("weapon_mod_special_furniture_black")));
+        registerSparse(CANNED_CONSERVE, Map.ofEntries(
+                Map.entry(0, requireLegacyItem("canned_beef")),
+                Map.entry(1, requireLegacyItem("canned_tuna")),
+                Map.entry(2, requireLegacyItem("canned_mystery")),
+                Map.entry(3, requireLegacyItem("canned_pashtet")),
+                Map.entry(4, requireLegacyItem("canned_cheese")),
+                Map.entry(5, requireLegacyItem("canned_slime")),
+                Map.entry(6, requireLegacyItem("canned_milk")),
+                Map.entry(7, requireLegacyItem("canned_ass")),
+                Map.entry(8, requireLegacyItem("canned_pizza")),
+                Map.entry(9, requireLegacyItem("canned_tube")),
+                Map.entry(10, requireLegacyItem("canned_tomato")),
+                Map.entry(11, requireLegacyItem("canned_asbestos")),
+                Map.entry(12, requireLegacyItem("canned_bhole")),
+                Map.entry(13, requireLegacyItem("canned_hotdogs")),
+                Map.entry(14, requireLegacyItem("canned_leftovers")),
+                Map.entry(15, requireLegacyItem("canned_yogurt")),
+                Map.entry(16, requireLegacyItem("canned_stew")),
+                Map.entry(17, requireLegacyItem("canned_chinese")),
+                Map.entry(18, requireLegacyItem("canned_oil")),
+                Map.entry(19, requireLegacyItem("canned_fist")),
+                Map.entry(20, requireLegacyItem("canned_spam")),
+                Map.entry(21, requireLegacyItem("canned_fried")),
+                Map.entry(22, requireLegacyItem("canned_napalm")),
+                Map.entry(23, requireLegacyItem("canned_diesel")),
+                Map.entry(24, requireLegacyItem("canned_kerosene")),
+                Map.entry(25, requireLegacyItem("canned_recursion")),
+                Map.entry(26, requireLegacyItem("canned_bark"))));
+        register(APPLE_LEAD,
+                ModItems.APPLE_LEAD,
+                ModItems.APPLE_LEAD_INGOT,
+                ModItems.APPLE_LEAD_BLOCK);
+        register(APPLE_SCHRABIDIUM,
+                ModItems.APPLE_SCHRABIDIUM,
+                ModItems.APPLE_SCHRABIDIUM_INGOT,
+                ModItems.APPLE_SCHRABIDIUM_BLOCK);
         registerSparse(ITEM_SECRET, Map.of(
                 2, requireLegacyItem("item_secret_selenium_steel")));
         registerSparse(MOTOR, Map.of(
@@ -225,79 +415,52 @@ public final class LegacyMetaItemMappings {
                 -1, requireLegacyItem("reactor_core")));
         registerSparse(INGOT_CFT, Map.of(
                 -1, requireLegacyItem("ingot_cft")));
-        registerSparse(ROD_QUAD_EMPTY, Map.of(
-                -1, requireLegacyItem("rod_quad_empty")));
-        registerSparse(FUEL_ADDITIVE, Map.of(
-                0, requireLegacyItem("fuel_additive_antiknock"),
-                1, requireLegacyItem("fuel_additive_deicer")));
+        registerList(NUCLEAR_WASTE_LONG, repeated(requireLegacyItem("nuclear_waste_long"), 5));
+        registerList(NUCLEAR_WASTE_LONG_TINY, repeated(requireLegacyItem("nuclear_waste_long_tiny"), 5));
+        registerList(NUCLEAR_WASTE_LONG_DEPLETED, repeated(requireLegacyItem("nuclear_waste_long_depleted"), 5));
+        registerList(NUCLEAR_WASTE_LONG_DEPLETED_TINY,
+                repeated(requireLegacyItem("nuclear_waste_long_depleted_tiny"), 5));
+        registerList(NUCLEAR_WASTE_SHORT, repeated(requireLegacyItem("nuclear_waste_short"), 8));
+        registerList(NUCLEAR_WASTE_SHORT_TINY, repeated(requireLegacyItem("nuclear_waste_short_tiny"), 8));
+        registerList(NUCLEAR_WASTE_SHORT_DEPLETED, repeated(requireLegacyItem("nuclear_waste_short_depleted"), 8));
+        registerList(NUCLEAR_WASTE_SHORT_DEPLETED_TINY,
+                repeated(requireLegacyItem("nuclear_waste_short_depleted_tiny"), 8));
+        registerDamageBacked("rbmk_pellet_ueu", 10);
+        registerDamageBacked("rbmk_pellet_meu", 10);
+        registerDamageBacked("rbmk_pellet_heu233", 10);
+        registerDamageBacked("rbmk_pellet_heu235", 10);
+        registerDamageBacked("rbmk_pellet_uzh", 10);
+        registerDamageBacked("rbmk_pellet_thmeu", 10);
+        registerDamageBacked("rbmk_pellet_lep", 10);
+        registerDamageBacked("rbmk_pellet_mep", 10);
+        registerDamageBacked("rbmk_pellet_hep239", 10);
+        registerDamageBacked("rbmk_pellet_hep241", 10);
+        registerDamageBacked("rbmk_pellet_men", 10);
+        registerDamageBacked("rbmk_pellet_hen", 10);
+        registerDamageBacked("rbmk_pellet_mox", 10);
+        registerDamageBacked("rbmk_pellet_leaus", 10);
+        registerDamageBacked("rbmk_pellet_heaus", 10);
+        registerDamageBacked("rbmk_pellet_les", 10);
+        registerDamageBacked("rbmk_pellet_mes", 10);
+        registerDamageBacked("rbmk_pellet_hes", 10);
+        registerDamageBacked("rbmk_pellet_balefire", 5);
+        registerDamageBacked("rbmk_pellet_balefire_gold", 5);
+        registerDamageBacked("rbmk_pellet_flashlead", 5);
+        registerDamageBacked("rbmk_pellet_po210be", 5);
+        registerDamageBacked("rbmk_pellet_pu238be", 10);
+        registerDamageBacked("rbmk_pellet_ra226be", 5);
+        registerDamageBacked("rbmk_pellet_drx", 10);
+        registerDamageBacked("rbmk_pellet_zfb_bismuth", 10);
+        registerDamageBacked("rbmk_pellet_zfb_pu241", 10);
+        registerDamageBacked("rbmk_pellet_zfb_am_mix", 10);
         registerList(DRILLBIT, ModItems.DRILLBIT_ITEMS);
         registerList(PISTON_SET, ModItems.PISTON_SET_ITEMS);
         registerList(ARC_ELECTRODE, ModItems.ARC_ELECTRODE_ITEMS.subList(0, 4));
         registerList(ARC_ELECTRODE_BURNT, ModItems.ARC_ELECTRODE_ITEMS.subList(4, 8));
         registerList(PA_COIL, ModItems.PA_COIL_ITEMS);
-        register(PELLET_RTG_DEPLETED,
-                requireLegacyItem("pellet_rtg_depleted_bismuth"),
-                requireLegacyItem("pellet_rtg_depleted_mercury"),
-                requireLegacyItem("pellet_rtg_depleted_neptunium"),
-                requireLegacyItem("pellet_rtg_depleted_lead"),
-                requireLegacyItem("pellet_rtg_depleted_zirconium"),
-                requireLegacyItem("pellet_rtg_depleted_nickel"));
         registerSparse(HOLOTAPE_IMAGE, Map.of(
+                0, requireLegacyItem("holotape_image_digamma"),
                 1, requireLegacyItem("holotape_image_restored")));
-        register(ROD,
-                requireLegacyItem("rod_lithium"),
-                requireLegacyItem("rod_tritium"),
-                requireLegacyItem("rod_co"),
-                requireLegacyItem("rod_co60"),
-                requireLegacyItem("rod_th232"),
-                requireLegacyItem("rod_thf"),
-                requireLegacyItem("rod_u235"),
-                requireLegacyItem("rod_np237"),
-                requireLegacyItem("rod_u238"),
-                requireLegacyItem("rod_pu238"),
-                requireLegacyItem("rod_pu239"),
-                requireLegacyItem("rod_rgp"),
-                requireLegacyItem("rod_waste"),
-                requireLegacyItem("rod_lead"),
-                requireLegacyItem("rod_uranium"),
-                requireLegacyItem("rod_ra226"),
-                requireLegacyItem("rod_ac227"));
-        register(ROD_DUAL,
-                requireLegacyItem("rod_dual_lithium"),
-                requireLegacyItem("rod_dual_tritium"),
-                requireLegacyItem("rod_dual_co"),
-                requireLegacyItem("rod_dual_co60"),
-                requireLegacyItem("rod_dual_th232"),
-                requireLegacyItem("rod_dual_thf"),
-                requireLegacyItem("rod_dual_u235"),
-                requireLegacyItem("rod_dual_np237"),
-                requireLegacyItem("rod_dual_u238"),
-                requireLegacyItem("rod_dual_pu238"),
-                requireLegacyItem("rod_dual_pu239"),
-                requireLegacyItem("rod_dual_rgp"),
-                requireLegacyItem("rod_dual_waste"),
-                requireLegacyItem("rod_dual_lead"),
-                requireLegacyItem("rod_dual_uranium"),
-                requireLegacyItem("rod_dual_ra226"),
-                requireLegacyItem("rod_dual_ac227"));
-        register(ROD_QUAD,
-                requireLegacyItem("rod_quad_lithium"),
-                requireLegacyItem("rod_quad_tritium"),
-                requireLegacyItem("rod_quad_co"),
-                requireLegacyItem("rod_quad_co60"),
-                requireLegacyItem("rod_quad_th232"),
-                requireLegacyItem("rod_quad_thf"),
-                requireLegacyItem("rod_quad_u235"),
-                requireLegacyItem("rod_quad_np237"),
-                requireLegacyItem("rod_quad_u238"),
-                requireLegacyItem("rod_quad_pu238"),
-                requireLegacyItem("rod_quad_pu239"),
-                requireLegacyItem("rod_quad_rgp"),
-                requireLegacyItem("rod_quad_waste"),
-                requireLegacyItem("rod_quad_lead"),
-                requireLegacyItem("rod_quad_uranium"),
-                requireLegacyItem("rod_quad_ra226"),
-                requireLegacyItem("rod_quad_ac227"));
         register(ROD_ZIRNOX,
                 requireLegacyItem("rod_zirnox_natural_uranium_fuel"),
                 requireLegacyItem("rod_zirnox_uranium_fuel"),
@@ -314,6 +477,7 @@ public final class LegacyMetaItemMappings {
         registerList(PWR_FUEL_HOT, ModItems.PWR_FUEL_HOT_ITEMS);
         registerList(PWR_FUEL_DEPLETED, ModItems.PWR_FUEL_DEPLETED_ITEMS);
         registerList(WATZ_PELLET, ModItems.WATZ_PELLET_ITEMS);
+        registerList(INGOT_STEEL_DUSTED, ModItems.INGOT_STEEL_DUSTED_ITEMS);
     }
 
     @SafeVarargs
@@ -343,6 +507,18 @@ public final class LegacyMetaItemMappings {
         ITEM_VARIANTS.put(legacyId, variants);
     }
 
+    @SuppressWarnings("unchecked")
+    private static Map<Integer, RegistryObject<Item>> sparseMap(Object... metaItemPairs) {
+        if (metaItemPairs.length % 2 != 0) {
+            throw new IllegalArgumentException("Sparse legacy item map requires meta/item pairs");
+        }
+        LinkedHashMap<Integer, RegistryObject<Item>> variants = new LinkedHashMap<>();
+        for (int i = 0; i < metaItemPairs.length; i += 2) {
+            variants.put((Integer) metaItemPairs[i], (RegistryObject<Item>) metaItemPairs[i + 1]);
+        }
+        return variants;
+    }
+
     public static Optional<RegistryObject<Item>> item(ResourceLocation legacyId, int legacyMeta) {
         Map<Integer, RegistryObject<Item>> variants = ITEM_VARIANTS.get(legacyId);
         if (variants == null) {
@@ -357,13 +533,85 @@ public final class LegacyMetaItemMappings {
     }
 
     public static Optional<ItemStack> stack(ResourceLocation legacyId, int legacyMeta, int count) {
-        return item(legacyId, legacyMeta).map(item -> new ItemStack(item.get(), Math.max(1, count)));
+        return stack(legacyId, legacyMeta, count, true);
+    }
+
+    public static Optional<ItemStack> stackPreservingCount(ResourceLocation legacyId, int legacyMeta, int count) {
+        return stack(legacyId, legacyMeta, count, false);
+    }
+
+    private static Optional<ItemStack> stack(ResourceLocation legacyId, int legacyMeta, int count, boolean clampCount) {
+        int stackCount = clampCount ? Math.max(1, count) : count;
+        Optional<ItemStack> vanillaStack = vanillaStack(legacyId, legacyMeta, stackCount);
+        if (vanillaStack.isPresent()) {
+            return vanillaStack;
+        }
+        return item(legacyId, legacyMeta).map(item -> {
+            Item resolved = item.get();
+            if (resolved instanceof NuclearWasteItem) {
+                ItemStack stack = NuclearWasteItem.stack(resolved, legacyMeta, stackCount);
+                if (!clampCount) {
+                    stack.setCount(count);
+                }
+                return stack;
+            }
+            ItemStack stack = new ItemStack(resolved, stackCount);
+            if (isDamageValueBacked(legacyId)) {
+                stack.setDamageValue(Math.max(0, legacyMeta));
+            }
+            return stack;
+        });
+    }
+
+    public static Optional<LegacyStackIdentity> legacyIdentity(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return Optional.empty();
+        }
+
+        for (Map.Entry<ResourceLocation, LinkedHashMap<Integer, ItemLike>> family : VANILLA_META_VARIANTS.entrySet()) {
+            for (Map.Entry<Integer, ItemLike> variant : family.getValue().entrySet()) {
+                if (stack.getItem() == variant.getValue().asItem()) {
+                    return Optional.of(new LegacyStackIdentity(family.getKey(), variant.getKey()));
+                }
+            }
+        }
+
+        List<LegacyStackIdentity> matches = new ArrayList<>();
+        for (Map.Entry<ResourceLocation, LinkedHashMap<Integer, RegistryObject<Item>>> family : ITEM_VARIANTS.entrySet()) {
+            for (Map.Entry<Integer, RegistryObject<Item>> variant : family.getValue().entrySet()) {
+                if (stack.getItem() == variant.getValue().get()) {
+                    matches.add(new LegacyStackIdentity(family.getKey(), variant.getKey()));
+                }
+            }
+        }
+        if (matches.size() == 1) {
+            return Optional.of(matches.get(0));
+        }
+
+        List<LegacyStackIdentity> damageMatches = matches.stream()
+                .filter(identity -> isDamageValueBacked(identity.legacyId())
+                        && identity.legacyMeta() == stack.getDamageValue())
+                .toList();
+        return damageMatches.size() == 1 ? Optional.of(damageMatches.get(0)) : Optional.empty();
     }
 
     public static List<ItemStack> stacks(ResourceLocation legacyId, int count) {
+        Map<Integer, ItemLike> vanillaVariants = VANILLA_META_VARIANTS.get(legacyId);
+        if (vanillaVariants != null) {
+            int safeCount = Math.max(1, count);
+            return vanillaVariants.keySet().stream()
+                    .map(meta -> vanillaStack(legacyId, meta, safeCount).orElse(ItemStack.EMPTY))
+                    .filter(stack -> !stack.isEmpty())
+                    .toList();
+        }
+        Map<Integer, RegistryObject<Item>> variants = ITEM_VARIANTS.get(legacyId);
+        if (variants == null) {
+            return List.of();
+        }
         int safeCount = Math.max(1, count);
-        return variants(legacyId).stream()
-                .map(item -> new ItemStack(item.get(), safeCount))
+        return variants.keySet().stream()
+                .map(meta -> stack(legacyId, meta, safeCount).orElse(ItemStack.EMPTY))
+                .filter(stack -> !stack.isEmpty())
                 .toList();
     }
 
@@ -378,6 +626,22 @@ public final class LegacyMetaItemMappings {
 
     public static int variantCount(ResourceLocation legacyId) {
         return variants(legacyId).size();
+    }
+
+    public static boolean isDamageValueBacked(ResourceLocation legacyId) {
+        Map<Integer, RegistryObject<Item>> variants = ITEM_VARIANTS.get(legacyId);
+        if (variants == null || variants.size() <= 1) {
+            return false;
+        }
+        RegistryObject<Item> first = null;
+        for (RegistryObject<Item> variant : variants.values()) {
+            if (first == null) {
+                first = variant;
+            } else if (first != variant) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static Set<ResourceLocation> legacyIds() {
@@ -404,8 +668,43 @@ public final class LegacyMetaItemMappings {
         return item;
     }
 
+    private static void registerVanillaMeta(ResourceLocation legacyId, Map<Integer, ? extends ItemLike> variantsByMeta) {
+        if (VANILLA_META_VARIANTS.containsKey(legacyId)) {
+            throw new IllegalStateException("Duplicate vanilla legacy item mapping family: " + legacyId);
+        }
+        LinkedHashMap<Integer, ItemLike> variants = new LinkedHashMap<>();
+        variantsByMeta.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> variants.put(entry.getKey(), entry.getValue()));
+        VANILLA_META_VARIANTS.put(legacyId, variants);
+    }
+
+    private static Optional<ItemStack> vanillaStack(ResourceLocation legacyId, int legacyMeta, int count) {
+        Map<Integer, ItemLike> variants = VANILLA_META_VARIANTS.get(legacyId);
+        if (variants == null) {
+            return Optional.empty();
+        }
+        ItemLike item = variants.get(legacyMeta);
+        return item == null ? Optional.empty() : Optional.of(new ItemStack(item, count));
+    }
+
+    private static void registerDamageBacked(String legacyName, int variants) {
+        registerList(hbm(legacyName), repeated(requireLegacyItem(legacyName), variants));
+    }
+
+    private static List<RegistryObject<Item>> repeated(RegistryObject<Item> item, int count) {
+        java.util.ArrayList<RegistryObject<Item>> variants = new java.util.ArrayList<>(Math.max(0, count));
+        for (int meta = 0; meta < count; meta++) {
+            variants.add(item);
+        }
+        return List.copyOf(variants);
+    }
+
     private static ResourceLocation hbm(String path) {
         return new ResourceLocation("hbm", path);
+    }
+
+    public record LegacyStackIdentity(ResourceLocation legacyId, int legacyMeta) {
     }
 
     private LegacyMetaItemMappings() {

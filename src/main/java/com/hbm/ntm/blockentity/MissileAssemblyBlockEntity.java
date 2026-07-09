@@ -219,6 +219,16 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
         return assemblyFromInputs();
     }
 
+    public boolean hasPreviewParts() {
+        if (level != null && level.isClientSide && !clientMultipart.isEmpty()) {
+            return true;
+        }
+        return !items.getStackInSlot(SLOT_WARHEAD).isEmpty()
+                || !items.getStackInSlot(SLOT_FUSELAGE).isEmpty()
+                || !items.getStackInSlot(SLOT_STABILITY).isEmpty()
+                || !items.getStackInSlot(SLOT_THRUSTER).isEmpty();
+    }
+
     @Override
     public void handleClientMissileMultipart(MissileMultipartSnapshot multipart) {
         clientMultipart = multipart == null ? MissileMultipartSnapshot.EMPTY : multipart;

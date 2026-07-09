@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "ingredients": [
+    { "tag": "forge:dusts/redstone" },
+    { "tag": "forge:dusts/emerald" },
+    { "item": "minecraft:wheat" },
+    { "tag": "forge:bolts/steel" },
+    { "tag": "forge:wires/copper" },
+    { "tag": "forge:plates/steel" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:pancake"
+  }
+}

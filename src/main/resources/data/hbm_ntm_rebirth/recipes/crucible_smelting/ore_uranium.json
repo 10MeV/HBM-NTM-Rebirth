@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:crucible_smelting",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "tag": "forge:ores/uranium"
+    },
+    "legacy_ore": "oreUranium"
+  },
+  "output": [
+    {
+      "amount": 144,
+      "material": "Uranium"
+    },
+    {
+      "amount": 24,
+      "material": "Lead"
+    },
+    {
+      "amount": 162,
+      "material": "Stone"
+    }
+  ],
+  "source_order": 29
+}

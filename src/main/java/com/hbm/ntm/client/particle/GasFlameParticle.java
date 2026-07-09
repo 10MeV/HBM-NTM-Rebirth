@@ -21,6 +21,10 @@ public class GasFlameParticle extends TextureSheetParticle implements HbmDeferre
     private final SpriteSet sprites;
     private final float colorMod;
     private final float baseScale;
+    private float cachedU0;
+    private float cachedU1;
+    private float cachedV0;
+    private float cachedV1;
 
     public GasFlameParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed,
             SpriteSet sprites, float scale) {
@@ -34,6 +38,7 @@ public class GasFlameParticle extends TextureSheetParticle implements HbmDeferre
         this.friction = 1.0F;
         updateColor();
         this.setSpriteFromAge(sprites);
+        this.cacheSpriteUv();
     }
 
     public static SpriteSet sharedSprites() {
@@ -57,6 +62,7 @@ public class GasFlameParticle extends TextureSheetParticle implements HbmDeferre
             this.zd *= 0.75D;
             updateColor();
             this.setSpriteFromAge(sprites);
+            this.cacheSpriteUv();
         }
     }
 
@@ -76,11 +82,18 @@ public class GasFlameParticle extends TextureSheetParticle implements HbmDeferre
     @Override
     public void renderDeferred(MultiBufferSource.BufferSource buffer, Camera camera, float partialTick) {
         HbmDeferredParticleRenderer.emitTextureSheetParticleQuad(
-                buffer.getBuffer(HbmDeferredParticleRenderer.particleSheetDepthWrite()), camera, partialTick,
+                HbmDeferredParticleRenderer.particleSheetDepthWriteConsumer(buffer), camera, partialTick,
                 this.xo, this.yo, this.zo, this.x, this.y, this.z,
                 this.oRoll, this.roll, this.getQuadSize(partialTick),
-                this.getU0(), this.getU1(), this.getV0(), this.getV1(),
+                this.cachedU0, this.cachedU1, this.cachedV0, this.cachedV1,
                 this.rCol, this.gCol, this.bCol, this.alpha, this.getLightColor(partialTick));
+    }
+
+    private void cacheSpriteUv() {
+        this.cachedU0 = this.getU0();
+        this.cachedU1 = this.getU1();
+        this.cachedV0 = this.getV0();
+        this.cachedV1 = this.getV1();
     }
 
     @Override

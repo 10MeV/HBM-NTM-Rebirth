@@ -28,6 +28,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class MachinePartProjectileEntity extends LegacyThrowableEntity {
+    private static final double STOP_SPEED_SQ = 0.75D * 0.75D;
     private static final EntityDataAccessor<Integer> ORIENTATION =
             SynchedEntityData.defineId(MachinePartProjectileEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> META =
@@ -71,7 +72,7 @@ public abstract class MachinePartProjectileEntity extends LegacyThrowableEntity 
         }
         int orientation = getOrientation();
         if (orientation < 6) {
-            if (getDeltaMovement().length() < 0.75D) {
+            if (getDeltaMovement().lengthSqr() < STOP_SPEED_SQ) {
                 orientation += 6;
                 setOrientation(orientation);
             } else {

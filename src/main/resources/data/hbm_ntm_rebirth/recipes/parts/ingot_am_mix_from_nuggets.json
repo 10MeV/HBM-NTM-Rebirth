@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "tag": "forge:nuggets/americium241" },
+    { "tag": "forge:nuggets/americium241" },
+    { "tag": "forge:nuggets/americium241" },
+    { "tag": "forge:nuggets/americium242" },
+    { "tag": "forge:nuggets/americium242" },
+    { "tag": "forge:nuggets/americium242" },
+    { "tag": "forge:nuggets/americium242" },
+    { "tag": "forge:nuggets/americium242" },
+    { "tag": "forge:nuggets/americium242" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:ingot_am_mix" }
+}

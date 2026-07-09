@@ -40,6 +40,7 @@ import com.hbm.ntm.damage.DamageResistanceTooltipUtil;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyDebug;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
+import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.event.CommonForgeEvents;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -80,6 +81,7 @@ import com.hbm.ntm.recipe.LegacyGenericRecipeHandlers;
 import com.hbm.ntm.recipe.LegacySerializableRecipeHandlers;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.radiation.CraterRadiationData;
 import com.hbm.ntm.radiation.HazmatRegistry;
@@ -115,6 +117,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -259,7 +262,7 @@ public final class ModCommands {
 
         dispatcher.register(legacyPacketThreadingCommand("ntmpackets"));
         dispatcher.register(legacyPacketThreadingCommand("ntmpacket"));
-        dispatcher.register(satelliteCommand("ntmsatellites"));
+        dispatcher.register(legacySatelliteCommand("ntmsatellites"));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> satelliteCommand() {
@@ -1062,6 +1065,11 @@ public final class ModCommands {
                 + " total=" + annihilator.totalAmount()
                 + " keys=" + annihilator.keyKindCounts()
                 + " kindTotals=" + annihilator.keyKindTotals()
+                + " nullPoolMaps=" + annihilator.nullPoolMapCount()
+                + " nullPools=" + annihilator.nullPoolValueCount()
+                + " nullItemMaps=" + annihilator.nullItemMapCount()
+                + " unknownKeys=" + annihilator.unknownKeyEntryCount()
+                + " nullAmounts=" + annihilator.nullAmountEntryCount()
                 + " readOnly=true"), false);
         sendAnnihilatorPoolSummaries(source, annihilator.topPoolSummariesSnapshot(8));
         return annihilator.poolCount();
@@ -1074,6 +1082,11 @@ public final class ModCommands {
                 + " entries=" + status.totalAnnihilatorEntries()
                 + " problemPools=" + status.totalAnnihilatorProblemPools()
                 + " total=" + status.totalAnnihilatorAmount()
+                + " nullPoolMaps=" + status.totalAnnihilatorNullPoolMaps()
+                + " nullPools=" + status.totalAnnihilatorNullPoolValues()
+                + " nullItemMaps=" + status.totalAnnihilatorNullItemMaps()
+                + " unknownKeys=" + status.totalAnnihilatorUnknownKeyEntries()
+                + " nullAmounts=" + status.totalAnnihilatorNullAmountEntries()
                 + " readOnly=true"), false);
         for (WorldSavedDataDiagnostics.LevelStatus level : status.levels()) {
             if (level.hasAnnihilator()) {
@@ -1093,13 +1106,17 @@ public final class ModCommands {
         AnnihilatorSavedData annihilator = data.get();
         source.sendSuccess(() -> Component.literal("annihilator pools=" + annihilator.poolCount()
                 + " entries=" + annihilator.poolEntryCount()
-                + " total=" + annihilator.totalAmount()), false);
+                + " total=" + annihilator.totalAmount()
+                + " nullPoolMaps=" + annihilator.nullPoolMapCount()
+                + " nullItemMaps=" + annihilator.nullItemMapCount()), false);
         for (String pool : annihilator.poolNamesSnapshot()) {
             source.sendSuccess(() -> Component.literal(pool
                     + " entries=" + annihilator.poolEntryCount(pool)
                     + " total=" + annihilator.totalAmount(pool)
                     + " keys=" + annihilator.keyKindCounts(pool)
-                    + " kindTotals=" + annihilator.keyKindTotals(pool)), false);
+                    + " kindTotals=" + annihilator.keyKindTotals(pool)
+                    + " unknownKeys=" + annihilator.unknownKeyEntryCount(pool)
+                    + " nullAmounts=" + annihilator.nullAmountEntryCount(pool)), false);
         }
         return annihilator.poolCount();
     }
@@ -1193,7 +1210,9 @@ public final class ModCommands {
                 + " entries=" + annihilator.poolEntryCount(pool)
                 + " total=" + annihilator.totalAmount(pool)
                 + " keys=" + annihilator.keyKindCounts(pool)
-                + " kindTotals=" + annihilator.keyKindTotals(pool)), false);
+                + " kindTotals=" + annihilator.keyKindTotals(pool)
+                + " unknownKeys=" + annihilator.unknownKeyEntryCount(pool)
+                + " nullAmounts=" + annihilator.nullAmountEntryCount(pool)), false);
         sendAnnihilatorEntries(source, annihilator.topEntriesSnapshot(pool, 12));
         return annihilator.poolEntryCount(pool);
     }
@@ -1242,7 +1261,11 @@ public final class ModCommands {
                 + " entries=" + pool.entries()
                 + " total=" + pool.totalAmount()
                 + " keys=" + pool.keyKindCounts()
-                + " kindTotals=" + pool.keyKindTotals()), false));
+                + " kindTotals=" + pool.keyKindTotals()
+                + " unknownKeys=" + pool.unknownKeyEntries()
+                + " nullAmounts=" + pool.nullAmountEntries()
+                + " nullPool=" + pool.nullPoolValue()
+                + " nullItems=" + pool.nullItemMap()), false));
     }
 
     private static void sendAnnihilatorEntries(CommandSourceStack source,
@@ -1650,6 +1673,91 @@ public final class ModCommands {
                                         .executes(context -> setHeldSatelliteChipFrequency(
                                                 context.getSource(),
                                                 IntegerArgumentType.getInteger(context, "frequency"))))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> legacySatelliteCommand(String name) {
+        return Commands.literal(name)
+                .requires(source -> source.hasPermission(4))
+                .then(Commands.literal("orbit")
+                        .executes(context -> legacyOrbitHeldSatellite(context.getSource())))
+                .then(Commands.literal("descend")
+                        .then(Commands.argument("frequency", IntegerArgumentType.integer())
+                                .suggests((context, builder) -> {
+                                    if (!(context.getSource().getEntity() instanceof ServerPlayer)) {
+                                        return CompletableFuture.completedFuture(builder.build());
+                                    }
+                                    return SharedSuggestionProvider.suggest(
+                                            SatelliteSavedData.get(context.getSource().getLevel()).sats.keySet()
+                                                    .stream()
+                                                    .map(String::valueOf)
+                                                    .collect(Collectors.toList()),
+                                            builder);
+                                })
+                                .executes(context -> legacyDescendSatellite(
+                                        context.getSource(),
+                                        IntegerArgumentType.getInteger(context, "frequency")))))
+                .then(Commands.literal("list")
+                        .executes(context -> legacyListSatellites(context.getSource())));
+    }
+
+    @Nullable
+    private static ServerPlayer legacySatellitePlayer(CommandSourceStack source) {
+        if (source.getEntity() instanceof ServerPlayer player) {
+            return player;
+        }
+        source.sendFailure(Component.translatable("commands.satellite.should_be_run_as_player"));
+        return null;
+    }
+
+    private static int legacyOrbitHeldSatellite(CommandSourceStack source) {
+        ServerPlayer player = legacySatellitePlayer(source);
+        if (player == null) {
+            return 0;
+        }
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof ISatelliteChip) || stack.getItem() == ModItems.SAT_CHIP.get()) {
+            source.sendFailure(Component.translatable("commands.satellite.not_a_satellite"));
+            return 0;
+        }
+
+        Satellite.orbit(player.serverLevel(), stack.getItem(), ISatelliteChip.getFrequencyFromStack(stack),
+                player.getX(), player.getY(), player.getZ());
+        stack.shrink(1);
+        source.sendSuccess(() -> Component.translatable("commands.satellite.satellite_orbited")
+                .withStyle(ChatFormatting.GREEN), false);
+        return 1;
+    }
+
+    private static int legacyDescendSatellite(CommandSourceStack source, int frequency) {
+        if (legacySatellitePlayer(source) == null) {
+            return 0;
+        }
+        SatelliteSavedData data = SatelliteSavedData.get(source.getLevel());
+        if (data.sats.containsKey(frequency)) {
+            data.sats.remove(frequency);
+            data.markDirty();
+            source.sendSuccess(() -> Component.translatable("commands.satellite.satellite_descended")
+                    .withStyle(ChatFormatting.GREEN), false);
+            return frequency;
+        }
+        source.sendFailure(Component.translatable("commands.satellite.no_satellite"));
+        return 0;
+    }
+
+    private static int legacyListSatellites(CommandSourceStack source) {
+        if (legacySatellitePlayer(source) == null) {
+            return 0;
+        }
+        SatelliteSavedData data = SatelliteSavedData.get(source.getLevel());
+        if (data.sats.isEmpty()) {
+            source.sendFailure(Component.translatable("commands.satellite.no_active_satellites"));
+            return 0;
+        }
+        data.sats.forEach((frequency, satellite) -> source.sendSuccess(
+                () -> Component.literal(frequency + " - " + satellite.getClass().getSimpleName())
+                        .withStyle(ChatFormatting.GREEN),
+                false));
+        return data.sats.size();
     }
 
     private static int orbitHeldSatellite(CommandSourceStack source) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
@@ -2890,13 +2998,13 @@ public final class ModCommands {
     }
 
     private static int clearPollution(CommandSourceStack source, BlockPos pos) {
-        PollutionManager.setPollutionData(source.getLevel(), pos, new PollutionSavedData.PollutionSample());
+        PollutionManager.clearPollutionData(source.getLevel(), pos);
         source.sendSuccess(() -> Component.literal("Cleared pollution at " + pos.toShortString() + "."), true);
         return 1;
     }
 
     private static int clearPollution(CommandSourceStack source, PollutionGridPos pos) {
-        PollutionManager.setPollutionData(source.getLevel(), pos, new PollutionSavedData.PollutionSample());
+        PollutionManager.clearPollutionData(source.getLevel(), pos);
         source.sendSuccess(() -> Component.literal("Cleared pollution grid " + pos.formatLabel() + "."), true);
         return 1;
     }
@@ -3682,10 +3790,8 @@ public final class ModCommands {
     private static int getEnergyPorts(CommandSourceStack source, BlockPos pos) {
         BlockEntity blockEntity = getCoreAwareBlockEntity(source, pos);
         HbmEnergyUtil.PortSetSnapshot snapshot;
-        if (blockEntity instanceof HbmEnergyBlockEntity energyBlockEntity) {
-            snapshot = energyBlockEntity.inspectEnergyPorts();
-        } else if (blockEntity instanceof HbmEnergyAndFluidBlockEntity energyAndFluidBlockEntity) {
-            snapshot = energyAndFluidBlockEntity.inspectEnergyPorts();
+        if (blockEntity instanceof HbmEnergyPortInspectable inspectable) {
+            snapshot = inspectable.inspectEnergyPorts();
         } else {
             source.sendFailure(Component.literal("No HBM energy port machine at " + pos.toShortString()));
             return 0;
@@ -5102,6 +5208,7 @@ public final class ModCommands {
         source.sendSuccess(() -> Component.literal("Legacy SerializableRecipe handlers: total="
                 + coverage.totalHandlers()
                 + ", genericImporter=" + coverage.genericSupported()
+                + ", specialImporter=" + coverage.specialImporter()
                 + ", modernSerializerOnly=" + coverage.modernSerializerOnly()
                 + ", unsupported=" + coverage.unsupported()), false);
         for (LegacySerializableRecipeHandlers.Handler handler : handlers) {

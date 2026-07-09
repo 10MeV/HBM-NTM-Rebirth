@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:lemegeton",
+  "input": {
+    "ingredient": {
+      "tag": "forge:ingots/mingrade"
+    },
+    "count": 1,
+    "legacy_ore": "ingotMingrade"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:ingot_desh"
+  },
+  "source_order": 8
+}

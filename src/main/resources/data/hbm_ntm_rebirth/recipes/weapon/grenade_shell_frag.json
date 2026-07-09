@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "forge:bolts/steel"
+    },
+    "P": {
+      "tag": "forge:plates/aluminium"
+    },
+    "S": {
+      "tag": "forge:shells/steel"
+    }
+  },
+  "pattern": [
+    "B",
+    "P",
+    "S"
+  ],
+  "result": {
+    "count": 4,
+    "item": "hbm_ntm_rebirth:grenade_shell_frag"
+  },
+  "show_notification": true
+}

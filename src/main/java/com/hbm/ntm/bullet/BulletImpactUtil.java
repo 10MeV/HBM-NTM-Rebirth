@@ -1,5 +1,6 @@
 package com.hbm.ntm.bullet;
 
+import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.block.ShotDetonatableBlock;
 import com.hbm.ntm.compat.CompatExternal;
 import com.hbm.ntm.damage.DamageClass;
@@ -26,7 +27,6 @@ import com.hbm.ntm.fluid.HbmFluidRepairable;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.radiation.ArmorUtil;
-import com.hbm.ntm.radiation.ChunkRadiationManager;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModEffects;
 import com.hbm.ntm.sound.LegacySoundPlayer;
@@ -746,7 +746,7 @@ public final class BulletImpactUtil {
                 int distance = Math.abs(x) + Math.abs(z);
                 if (distance < 4) {
                     float radiation = 50.0F / (distance + 1.0F) * multiplier;
-                    ChunkRadiationManager.incrementRadiation(level,
+                    ChunkRadiationManager.proxy.incrementRad(level,
                             BlockPos.containing(Math.floor(position.x + x * 16.0D),
                                     Math.floor(position.y), Math.floor(position.z + z * 16.0D)),
                             radiation);

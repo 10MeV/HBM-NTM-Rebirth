@@ -1,12 +1,12 @@
 package com.hbm.ntm.explosion;
 
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.Objects;
@@ -106,7 +106,7 @@ public class ExplosionBalefire {
 
         int worldX = posX + x;
         int worldZ = posZ + z;
-        int y = level.getHeight(Heightmap.Types.WORLD_SURFACE, worldX, worldZ);
+        int y = WorldUtil.legacyGetHeightValue(level, worldX, worldZ);
         int maxDepth = (int) (10 + radius * 0.25D);
         int depthOffset = (int) ((maxDepth * distance / (double) radius) + (Math.sin(distance * 0.15D + 2.0D) * 2.0D));
         int minBuildHeight = level.getMinBuildHeight();

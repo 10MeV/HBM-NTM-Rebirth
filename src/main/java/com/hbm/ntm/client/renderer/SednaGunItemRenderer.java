@@ -4,7 +4,9 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.bullet.BulletConfig;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.bullet.SednaWeaponModEvaluator;
+import com.hbm.ntm.bullet.SednaGunConfig;
 import com.hbm.ntm.bullet.SednaMagazineConfig;
+import com.hbm.ntm.bullet.SednaReceiverConfig;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
 import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -26,7 +28,9 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -38,7 +42,6 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -77,6 +80,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             "textures/models/weapons/lasrifle_mods.png");
     private static final ResourceLocation G3_ATTACHMENTS_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
             "textures/models/weapons/g3_attachments.png");
+    private static final char[] FOLLY_BOOT_LETTERS = "VStarOS".toCharArray();
+    private static final String FOLLY_TTY_POST = ChatFormatting.GREEN + "POST successful - Code 0";
+    private static final String FOLLY_TTY_RAM_INSTALLED = ChatFormatting.GREEN + "8,388,608 bytes of RAM installed";
+    private static final String FOLLY_TTY_RAM_AVAILABLE = ChatFormatting.GREEN + "5,187,427 bytes available";
+    private static final String FOLLY_TTY_SPLINES = ChatFormatting.GREEN + "Reticulating splines...";
+    private static final String FOLLY_TTY_NO_KEYBOARD = ChatFormatting.GREEN + "No keyboard found!";
+    private static final String FOLLY_TTY_BOOTING = ChatFormatting.GREEN + "Booting from /dev/sda1...";
     private static final ResourceLocation G3_GREEN_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
             "textures/models/weapons/g3_polymer_green.png");
     private static final ResourceLocation G3_BLACK_TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
@@ -654,48 +664,42 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     }
 
     private static boolean isMagazineLoaded(ItemStack stack) {
-        if (!(stack.getItem() instanceof SednaGunItem gunItem) || stack.getTag() == null) {
+        if (!(stack.getItem() instanceof SednaGunItem gunItem)) {
             return false;
         }
-        return gunItem.gunConfig().magazines().stream()
-                .anyMatch(magazine -> !magazine.nbtCountKey().isBlank()
-                        && stack.getTag().getInt(magazine.nbtCountKey()) > 0);
+        CompoundTag tag = stack.getTag();
+        return tag != null && firstLoadedMagazine(gunItem, tag) != null;
     }
 
     private static String loadedMagazineType(ItemStack stack) {
-        if (!(stack.getItem() instanceof SednaGunItem gunItem) || stack.getTag() == null) {
+        if (!(stack.getItem() instanceof SednaGunItem gunItem)) {
             return "";
         }
-        return gunItem.gunConfig().magazines().stream()
-                .filter(magazine -> !magazine.nbtCountKey().isBlank()
-                        && stack.getTag().getInt(magazine.nbtCountKey()) > 0)
-                .map(magazine -> stack.getTag().getString(magazine.nbtTypeKey()))
-                .findFirst()
-                .orElse("");
+        CompoundTag tag = stack.getTag();
+        SednaMagazineConfig magazine = tag == null ? null : firstLoadedMagazine(gunItem, tag);
+        return magazine == null ? "" : tag.getString(magazine.nbtTypeKey());
     }
 
     private static double primaryMagazineFill(ItemStack stack) {
-        if (!(stack.getItem() instanceof SednaGunItem gunItem) || stack.getTag() == null) {
+        if (!(stack.getItem() instanceof SednaGunItem gunItem)) {
             return 0.0D;
         }
-        return gunItem.gunConfig().magazines().stream()
-                .findFirst()
-                .filter(magazine -> !magazine.nbtCountKey().isBlank() && magazine.capacity() > 0)
-                .map(magazine -> (double) stack.getTag().getInt(magazine.nbtCountKey())
-                        / (double) Math.max(1, magazine.capacity()))
-                .map(fill -> Math.max(0.0D, Math.min(1.0D, fill)))
-                .orElse(0.0D);
+        CompoundTag tag = stack.getTag();
+        SednaMagazineConfig magazine = tag == null ? null : firstMagazine(gunItem);
+        if (magazine == null || magazine.nbtCountKey().isBlank() || magazine.capacity() <= 0) {
+            return 0.0D;
+        }
+        double fill = (double) tag.getInt(magazine.nbtCountKey()) / (double) Math.max(1, magazine.capacity());
+        return Math.max(0.0D, Math.min(1.0D, fill));
     }
 
     private static int primaryMagazineAmount(ItemStack stack) {
-        if (!(stack.getItem() instanceof SednaGunItem gunItem) || stack.getTag() == null) {
+        if (!(stack.getItem() instanceof SednaGunItem gunItem)) {
             return 0;
         }
-        return gunItem.gunConfig().magazines().stream()
-                .findFirst()
-                .filter(magazine -> !magazine.nbtCountKey().isBlank())
-                .map(magazine -> stack.getTag().getInt(magazine.nbtCountKey()))
-                .orElse(0);
+        CompoundTag tag = stack.getTag();
+        SednaMagazineConfig magazine = tag == null ? null : firstMagazine(gunItem);
+        return magazine == null || magazine.nbtCountKey().isBlank() ? 0 : tag.getInt(magazine.nbtCountKey());
     }
 
     private static int teslaFirstPersonCapacitorCount(ItemStack stack) {
@@ -706,11 +710,70 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (player == null) {
             return 0;
         }
-        return gunItem.gunConfig().magazines().stream()
-                .filter(magazine -> magazine.kind() == SednaMagazineConfig.Kind.BELT)
-                .findFirst()
-                .map(magazine -> beltAmmoCount(player, magazine))
-                .orElse(0);
+        SednaMagazineConfig magazine = firstMagazineOfKind(gunItem, SednaMagazineConfig.Kind.BELT);
+        return magazine == null ? 0 : beltAmmoCount(player, magazine);
+    }
+
+    private static double magazineFillByOwner(ItemStack stack, String legacyOwnerName) {
+        if (!(stack.getItem() instanceof SednaGunItem gunItem)) {
+            return 0.0D;
+        }
+        CompoundTag tag = stack.getTag();
+        SednaMagazineConfig magazine = tag == null ? null : firstMagazineByOwner(gunItem, legacyOwnerName);
+        if (magazine == null || magazine.nbtCountKey().isBlank() || magazine.capacity() <= 0) {
+            return 0.0D;
+        }
+        double fill = (double) tag.getInt(magazine.nbtCountKey()) / (double) magazine.capacity();
+        return Math.max(0.0D, Math.min(1.0D, fill));
+    }
+
+    private static SednaMagazineConfig firstLoadedMagazine(SednaGunItem gunItem, CompoundTag tag) {
+        for (SednaGunConfig.GunModeConfig mode : gunItem.gunConfig().configs()) {
+            for (SednaReceiverConfig receiver : mode.receivers()) {
+                SednaMagazineConfig magazine = receiver.magazineOrNull();
+                if (magazine != null && !magazine.nbtCountKey().isBlank()
+                        && tag.getInt(magazine.nbtCountKey()) > 0) {
+                    return magazine;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static SednaMagazineConfig firstMagazine(SednaGunItem gunItem) {
+        for (SednaGunConfig.GunModeConfig mode : gunItem.gunConfig().configs()) {
+            for (SednaReceiverConfig receiver : mode.receivers()) {
+                SednaMagazineConfig magazine = receiver.magazineOrNull();
+                if (magazine != null) {
+                    return magazine;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static SednaMagazineConfig firstMagazineOfKind(SednaGunItem gunItem, SednaMagazineConfig.Kind kind) {
+        for (SednaGunConfig.GunModeConfig mode : gunItem.gunConfig().configs()) {
+            for (SednaReceiverConfig receiver : mode.receivers()) {
+                SednaMagazineConfig magazine = receiver.magazineOrNull();
+                if (magazine != null && magazine.kind() == kind) {
+                    return magazine;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static SednaMagazineConfig firstMagazineByOwner(SednaGunItem gunItem, String legacyOwnerName) {
+        for (SednaGunConfig.GunModeConfig mode : gunItem.gunConfig().configs()) {
+            for (SednaReceiverConfig receiver : mode.receivers()) {
+                SednaMagazineConfig magazine = receiver.magazineOrNull();
+                if (magazine != null && legacyOwnerName.equals(magazine.legacyOwnerName())) {
+                    return magazine;
+                }
+            }
+        }
+        return null;
     }
 
     private static void renderFolly(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
@@ -783,17 +846,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.popPose();
         }
 
-        List<String> tty = follyTtyLines(player, elapsed);
-        if (!tty.isEmpty()) {
+        if (follyHasTtyLines(elapsed)) {
             poseStack.pushPose();
             float fontSize = 0.005F;
             poseStack.translate(2.5D, 1.375D, -2.75D);
             poseStack.scale(fontSize, -fontSize, fontSize);
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            for (String line : tty) {
-                renderLegacyModelText(font, line, color, poseStack, buffer);
-                poseStack.translate(0.0D, font.lineHeight + 2.0D, 0.0D);
-            }
+            renderFollyTtyLines(font, player, elapsed, color, poseStack, buffer);
             poseStack.popPose();
         }
     }
@@ -810,9 +869,8 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             return "";
         }
         int splashIndex = (int) ((elapsedMillis - 3000L) * 35L / 2000L) - 10;
-        char[] letters = "VStarOS".toCharArray();
         StringBuilder splash = new StringBuilder();
-        for (int i = 0; i < letters.length; i++) {
+        for (int i = 0; i < FOLLY_BOOT_LETTERS.length; i++) {
             if (i < splashIndex - 1) {
                 splash.append(ChatFormatting.LIGHT_PURPLE);
             }
@@ -831,36 +889,46 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             if (i > splashIndex + 2) {
                 splash.append(ChatFormatting.BLACK);
             }
-            splash.append(letters[i]);
+            splash.append(FOLLY_BOOT_LETTERS[i]);
         }
         return splash.toString();
     }
 
-    private static List<String> follyTtyLines(Player player, long elapsedMillis) {
-        List<String> tty = new ArrayList<>();
+    private static boolean follyHasTtyLines(long elapsedMillis) {
+        return (elapsedMillis > 250L && elapsedMillis < 3000L) || elapsedMillis > 5000L;
+    }
+
+    private static void renderFollyTtyLines(Font font, Player player, long elapsedMillis, int color,
+            PoseStack poseStack, MultiBufferSource buffer) {
         if (elapsedMillis < 3000L) {
             if (elapsedMillis > 250L) {
-                tty.add(ChatFormatting.GREEN + "POST successful - Code 0");
+                renderFollyTtyLine(font, FOLLY_TTY_POST, color, poseStack, buffer);
             }
             if (elapsedMillis > 500L) {
-                tty.add(ChatFormatting.GREEN + "8,388,608 bytes of RAM installed");
-                tty.add(ChatFormatting.GREEN + "5,187,427 bytes available");
+                renderFollyTtyLine(font, FOLLY_TTY_RAM_INSTALLED, color, poseStack, buffer);
+                renderFollyTtyLine(font, FOLLY_TTY_RAM_AVAILABLE, color, poseStack, buffer);
             }
             if (elapsedMillis > 750L) {
-                tty.add(ChatFormatting.GREEN + "Reticulating splines...");
+                renderFollyTtyLine(font, FOLLY_TTY_SPLINES, color, poseStack, buffer);
             }
             if (elapsedMillis > 1500L) {
-                tty.add(ChatFormatting.GREEN + "No keyboard found!");
+                renderFollyTtyLine(font, FOLLY_TTY_NO_KEYBOARD, color, poseStack, buffer);
             }
             if (elapsedMillis > 2000L) {
-                tty.add(ChatFormatting.GREEN + "Booting from /dev/sda1...");
+                renderFollyTtyLine(font, FOLLY_TTY_BOOTING, color, poseStack, buffer);
             }
         }
         if (elapsedMillis > 5000L) {
-            tty.add(follyTargetLine(player));
-            tty.add(ChatFormatting.GREEN + "Angle: " + ((int) (-player.getXRot() * 100.0F) / 100.0D));
+            renderFollyTtyLine(font, follyTargetLine(player), color, poseStack, buffer);
+            renderFollyTtyLine(font, ChatFormatting.GREEN + "Angle: " + ((int) (-player.getXRot() * 100.0F) / 100.0D),
+                    color, poseStack, buffer);
         }
-        return tty;
+    }
+
+    private static void renderFollyTtyLine(Font font, String line, int color, PoseStack poseStack,
+            MultiBufferSource buffer) {
+        renderLegacyModelText(font, line, color, poseStack, buffer);
+        poseStack.translate(0.0D, font.lineHeight + 2.0D, 0.0D);
     }
 
     private static String follyTargetLine(Player player) {
@@ -1148,7 +1216,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             shells[i][2] = angle - 90.0D;
             double delta = anglesLoaded[i];
             angle += delta;
-            double radians = Math.toRadians(-delta);
+            double radians = -delta * Mth.DEG_TO_RAD;
             double nextVx = vx * Math.cos(radians) - vy * Math.sin(radians);
             double nextVy = vx * Math.sin(radians) + vy * Math.cos(radians);
             vx = nextVx;
@@ -1577,15 +1645,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.pushPose();
         if (displayContext.firstPerson()) {
-            double fill = 0.0D;
-            if (stack.getItem() instanceof SednaGunItem gunItem && stack.getTag() != null) {
-                fill = gunItem.gunConfig().magazines().stream()
-                        .filter(magazine -> "gun_chemthrower".equals(magazine.legacyOwnerName()))
-                        .findFirst()
-                        .map(magazine -> (double) stack.getTag().getInt(magazine.nbtCountKey())
-                                / (double) Math.max(1, magazine.capacity()))
-                        .orElse(0.0D);
-            }
+            double fill = magazineFillByOwner(stack, "gun_chemthrower");
             poseStack.translate(0.0D, 0.875D, 1.75D);
             poseStack.mulPose(Axis.XP.rotationDegrees((float) (135.0D - fill * 270.0D)));
             poseStack.translate(0.0D, -0.875D, -1.75D);
@@ -1602,15 +1662,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.pushPose();
         if (displayContext.firstPerson()) {
-            double fill = 0.0D;
-            if (stack.getItem() instanceof SednaGunItem gunItem && stack.getTag() != null) {
-                fill = gunItem.gunConfig().magazines().stream()
-                        .filter(magazine -> "gun_drill".equals(magazine.legacyOwnerName()))
-                        .findFirst()
-                        .map(magazine -> (double) stack.getTag().getInt(magazine.nbtCountKey())
-                                / (double) Math.max(1, magazine.capacity()))
-                        .orElse(0.0D);
-            }
+            double fill = magazineFillByOwner(stack, "gun_drill");
             poseStack.translate(1.0D, 2.0625D, -1.75D);
             poseStack.mulPose(Axis.XP.rotationDegrees(45.0F));
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) (-135.0D + fill * 270.0D)));

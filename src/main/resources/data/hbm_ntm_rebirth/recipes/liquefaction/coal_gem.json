@@ -1,7 +1,12 @@
 {
   "type": "hbm_ntm_rebirth:liquefaction",
-  "ingredient": {
-    "tag": "forge:gems/coal"
+  "source_order": 0,
+  "input": {
+    "ingredient": {
+      "tag": "forge:gems/coal"
+    },
+    "count": 1,
+    "legacy_ore": "gemCoal"
   },
   "output": {
     "amount": 100,

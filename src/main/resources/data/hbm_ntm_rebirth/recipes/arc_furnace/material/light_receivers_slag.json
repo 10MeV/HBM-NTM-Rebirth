@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.receiverLightSlag",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:light_receivers/slag" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:light_receivers/slag" }, "count": 1, "legacy_ore": "receiverLightSlag" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Slag", "amount": 288 }
+  ],
+  "pools": [],
+  "source_order": 2142
+}

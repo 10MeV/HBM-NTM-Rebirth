@@ -20,24 +20,41 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public abstract class LegacyItemBagMenu extends AbstractContainerMenu {
+    private static final int DEFAULT_SLOT_STACK_LIMIT = 64;
+
     protected final Inventory playerInventory;
     protected final InteractionHand hand;
     protected final ItemBackedBagContainer bagInventory;
     protected final int bagSlotCount;
+    private final int slotStackLimit;
 
     protected LegacyItemBagMenu(MenuType<?> menuType, int containerId, Inventory playerInventory,
             FriendlyByteBuf data, int bagSlotCount, Predicate<ItemStack> slotValidator) {
-        this(menuType, containerId, playerInventory, data.readEnum(InteractionHand.class), bagSlotCount,
+        this(menuType, containerId, playerInventory, data, bagSlotCount, DEFAULT_SLOT_STACK_LIMIT,
                 slotValidator);
     }
 
     protected LegacyItemBagMenu(MenuType<?> menuType, int containerId, Inventory playerInventory,
+            FriendlyByteBuf data, int bagSlotCount, int slotStackLimit, Predicate<ItemStack> slotValidator) {
+        this(menuType, containerId, playerInventory, data.readEnum(InteractionHand.class), bagSlotCount,
+                slotStackLimit, slotValidator);
+    }
+
+    protected LegacyItemBagMenu(MenuType<?> menuType, int containerId, Inventory playerInventory,
             InteractionHand hand, int bagSlotCount, Predicate<ItemStack> slotValidator) {
+        this(menuType, containerId, playerInventory, hand, bagSlotCount, DEFAULT_SLOT_STACK_LIMIT,
+                slotValidator);
+    }
+
+    protected LegacyItemBagMenu(MenuType<?> menuType, int containerId, Inventory playerInventory,
+            InteractionHand hand, int bagSlotCount, int slotStackLimit, Predicate<ItemStack> slotValidator) {
         super(menuType, containerId);
         this.playerInventory = playerInventory;
         this.hand = hand;
         this.bagSlotCount = bagSlotCount;
-        this.bagInventory = new ItemBackedBagContainer(getBagStack(), bagSlotCount, slotValidator);
+        this.slotStackLimit = Math.max(1, slotStackLimit);
+        this.bagInventory = new ItemBackedBagContainer(getBagStack(), bagSlotCount, this.slotStackLimit,
+                slotValidator);
     }
 
     protected abstract Supplier<? extends Item> bagItem();
@@ -49,10 +66,32 @@ public abstract class LegacyItemBagMenu extends AbstractContainerMenu {
     protected void addBagSlots(int x, int y, int rows, int columns) {
         for (int row = 0; row < rows; row++) {
             for (int column = 0; column < columns; column++) {
-                addSlot(HbmInventoryMenuHelper.legacyContainerSlot(bagInventory,
-                        column + row * columns, x + column * 18, y + row * 18));
+                int slot = column + row * columns;
+                addSlot(createBagSlot(slot, x + column * 18, y + row * 18));
             }
         }
+    }
+
+    private Slot createBagSlot(int slot, int x, int y) {
+        if (slotStackLimit >= DEFAULT_SLOT_STACK_LIMIT) {
+            return HbmInventoryMenuHelper.legacyContainerSlot(bagInventory, slot, x, y);
+        }
+        return new Slot(bagInventory, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return bagInventory.canPlaceItem(slot, stack);
+            }
+
+            @Override
+            public int getMaxStackSize() {
+                return slotStackLimit;
+            }
+
+            @Override
+            public int getMaxStackSize(ItemStack stack) {
+                return slotStackLimit;
+            }
+        };
     }
 
     protected void addLegacyPlayerInventory(int inventoryY, int hotbarY) {
@@ -124,12 +163,15 @@ public abstract class LegacyItemBagMenu extends AbstractContainerMenu {
 
     protected static class ItemBackedBagContainer extends SimpleContainer {
         private final ItemStack bagStack;
+        private final int slotStackLimit;
         private final Predicate<ItemStack> slotValidator;
         private boolean loading = true;
 
-        private ItemBackedBagContainer(ItemStack bagStack, int slotCount, Predicate<ItemStack> slotValidator) {
+        private ItemBackedBagContainer(ItemStack bagStack, int slotCount, int slotStackLimit,
+                Predicate<ItemStack> slotValidator) {
             super(slotCount);
             this.bagStack = bagStack;
+            this.slotStackLimit = slotStackLimit;
             this.slotValidator = slotValidator;
             NonNullList<ItemStack> stacks = HbmItemStackUtil.readStacksFromNbt(bagStack, slotCount);
             for (int slot = 0; slot < Math.min(slotCount, stacks.size()); slot++) {
@@ -141,6 +183,11 @@ public abstract class LegacyItemBagMenu extends AbstractContainerMenu {
         @Override
         public boolean canPlaceItem(int slot, ItemStack stack) {
             return slotValidator.test(stack);
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return slotStackLimit;
         }
 
         @Override

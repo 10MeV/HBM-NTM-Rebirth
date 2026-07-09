@@ -8,6 +8,7 @@ import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModItems;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,10 @@ import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 
 public final class ElectrolyserRecipeRuntime {
+    private static final Comparator<ElectrolyserFluidRecipe> FLUID_RECIPE_ORDER =
+            Comparator.comparing(recipe -> recipe.getId().toString());
+    private static final Comparator<ElectrolyserMetalRecipe> METAL_RECIPE_ORDER =
+            Comparator.comparing(recipe -> recipe.getId().toString());
     private static final List<FluidRecipe> DEFAULT_FLUID_RECIPES = List.of(
             fluid(HbmFluids.WATER, 2_000, HbmFluids.HYDROGEN, 200, HbmFluids.OXYGEN, 200, 10),
             fluid(HbmFluids.HEAVYWATER, 2_000, HbmFluids.DEUTERIUM, 200, HbmFluids.OXYGEN, 200, 10),
@@ -120,7 +125,10 @@ public final class ElectrolyserRecipeRuntime {
     public static List<FluidRecipe> fluidRecipes(@Nullable RecipeManager recipeManager) {
         Map<FluidType, FluidRecipe> recipes = new LinkedHashMap<>();
         if (recipeManager != null) {
-            for (ElectrolyserFluidRecipe recipe : recipeManager.getAllRecipesFor(ModRecipes.ELECTROLYZER_FLUID.type().get())) {
+            for (ElectrolyserFluidRecipe recipe : recipeManager
+                    .getAllRecipesFor(ModRecipes.ELECTROLYZER_FLUID.type().get()).stream()
+                    .sorted(FLUID_RECIPE_ORDER)
+                    .toList()) {
                 FluidRecipe entry = fromDatapack(recipe);
                 recipes.put(entry.input(), entry);
             }
@@ -128,7 +136,7 @@ public final class ElectrolyserRecipeRuntime {
         for (Map.Entry<FluidType, FluidRecipe> entry : RUNTIME_FLUID_RECIPES.entrySet()) {
             recipes.putIfAbsent(entry.getKey(), entry.getValue());
         }
-        if (recipes.isEmpty()) {
+        if (recipeManager == null && recipes.isEmpty()) {
             for (FluidRecipe recipe : DEFAULT_FLUID_RECIPES) {
                 recipes.put(recipe.input(), recipe);
             }
@@ -143,11 +151,14 @@ public final class ElectrolyserRecipeRuntime {
     public static List<MetalRecipe> metalRecipes(@Nullable RecipeManager recipeManager) {
         List<MetalRecipe> recipes = new ArrayList<>();
         if (recipeManager != null) {
-            for (ElectrolyserMetalRecipe recipe : recipeManager.getAllRecipesFor(ModRecipes.ELECTROLYZER_METAL.type().get())) {
+            for (ElectrolyserMetalRecipe recipe : recipeManager
+                    .getAllRecipesFor(ModRecipes.ELECTROLYZER_METAL.type().get()).stream()
+                    .sorted(METAL_RECIPE_ORDER)
+                    .toList()) {
                 recipes.add(fromDatapack(recipe));
             }
         }
-        if (recipes.isEmpty()) {
+        if (recipeManager == null && recipes.isEmpty()) {
             recipes.addAll(METAL_RECIPES);
         }
         return List.copyOf(recipes);
@@ -182,16 +193,12 @@ public final class ElectrolyserRecipeRuntime {
     @Nullable
     public static FluidRecipe fluidForInput(@Nullable Level level, FluidType input) {
         if (level != null) {
-            List<ElectrolyserFluidRecipe> datapackRecipes =
-                    level.getRecipeManager().getAllRecipesFor(ModRecipes.ELECTROLYZER_FLUID.type().get());
-            FluidRecipe recipe = findDatapack(datapackRecipes, input);
-            if (recipe != null) {
-                return recipe;
+            for (FluidRecipe recipe : fluidRecipes(level.getRecipeManager())) {
+                if (recipe.input() == input) {
+                    return recipe;
+                }
             }
-            recipe = RUNTIME_FLUID_RECIPES.get(input);
-            if (recipe != null || !datapackRecipes.isEmpty()) {
-                return recipe;
-            }
+            return null;
         }
         return fluidForInput(input);
     }
@@ -252,17 +259,6 @@ public final class ElectrolyserRecipeRuntime {
         for (FluidRecipe recipe : DEFAULT_FLUID_RECIPES) {
             if (recipe.input() == input) {
                 return recipe;
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    private static FluidRecipe findDatapack(List<ElectrolyserFluidRecipe> recipes, FluidType input) {
-        for (ElectrolyserFluidRecipe recipe : recipes) {
-            FluidRecipe entry = fromDatapack(recipe);
-            if (entry.input() == input) {
-                return entry;
             }
         }
         return null;

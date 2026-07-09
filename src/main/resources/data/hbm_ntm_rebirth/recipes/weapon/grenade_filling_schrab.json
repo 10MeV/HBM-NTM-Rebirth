@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "forge:cast_plates/combine_steel"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_controller"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:cell_sas3"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:ball_tatb"
+    }
+  },
+  "pattern": [
+    "BCB",
+    "TST",
+    "BCB"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:grenade_filling_schrab"
+  },
+  "show_notification": true
+}

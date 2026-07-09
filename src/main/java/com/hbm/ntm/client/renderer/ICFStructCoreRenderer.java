@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class ICFStructCoreRenderer implements BlockEntityRenderer<ICFStructCoreBlockEntity> {
     private static final TextureAtlasSprite SCAFFOLD = sprite("legacy_blocks/icf_component");
@@ -39,21 +40,38 @@ public class ICFStructCoreRenderer implements BlockEntityRenderer<ICFStructCoreB
     }
 
     @Override
-    public void render(ICFStructCoreBlockEntity blockEntity, float partialTick, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        BlockState state = blockEntity.getBlockState();
-        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
-                ? state.getValue(HorizontalMachineBlock.FACING)
-                : Direction.NORTH;
-        Direction rot = facing.getClockWise();
-        int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-
-        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
-                queuedPose -> renderPreview(facing, rot, queuedPose, buffer, light));
+    public boolean shouldRender(ICFStructCoreBlockEntity blockEntity, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
-    private static void renderPreview(Direction facing, Direction rot, PoseStack poseStack,
-            MultiBufferSource buffer, int light) {
+    @Override
+    public void render(ICFStructCoreBlockEntity blockEntity, float partialTick, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
+            return;
+        }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            int alpha = LegacyBlockEntityRenderCulling.fadedStaticAlpha(
+                    LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA);
+            if (alpha <= 0) {
+                return;
+            }
+            BlockState state = blockEntity.getBlockState();
+            Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
+                    ? state.getValue(HorizontalMachineBlock.FACING)
+                    : Direction.NORTH;
+            Direction rot = facing.getClockWise();
+            int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
+
+            LegacyMachineEffectPresenter.enqueueAtlasSpriteQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                    poseStack, buffer, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                    quads -> renderPreview(facing, rot, quads, light, alpha));
+        }
+    }
+
+    private static void renderPreview(Direction facing, Direction rot,
+            LegacyTexturedQuadRenderer.SpritePixelQuadSink quads, int light, int alpha) {
         for (int y = 0; y < ICFStructCoreBlockEntity.PREVIEW_HEIGHT; y++) {
             for (int width = ICFStructCoreBlockEntity.PREVIEW_WIDTH_MIN;
                     width <= ICFStructCoreBlockEntity.PREVIEW_WIDTH_MAX; width++) {
@@ -67,9 +85,7 @@ public class ICFStructCoreRenderer implements BlockEntityRenderer<ICFStructCoreB
                     double z = facing.getStepZ() * width + rot.getStepZ() * length;
                     TextureAtlasSprite sprite = textureFor(component);
                     LegacyAtlasCuboidRenderer.smallBlock(sprite, sprite, sprite, sprite, sprite, sprite,
-                            poseStack, buffer, light, OverlayTexture.NO_OVERLAY, 0xFFFFFF,
-                            LegacyAtlasCuboidRenderer.SMALL_BLOCK_GHOST_ALPHA,
-                            LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, x, y, z);
+                            quads, light, OverlayTexture.NO_OVERLAY, 0xFFFFFF, alpha, x, y, z);
                 }
             }
         }
@@ -84,6 +100,6 @@ public class ICFStructCoreRenderer implements BlockEntityRenderer<ICFStructCoreB
     }
 
     private static TextureAtlasSprite sprite(String name) {
-        return LegacyTexturedQuadRenderer.blockSprite(new ResourceLocation(HbmNtm.MOD_ID, "block/" + name));
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + name);
     }
 }

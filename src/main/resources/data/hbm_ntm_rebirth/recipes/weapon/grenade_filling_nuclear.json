@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:plates/weapon_steel"
+    },
+    "P": {
+      "tag": "forge:nuggets/pu239"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:ball_tatb"
+    }
+  },
+  "pattern": [
+    " T ",
+    "CPC",
+    " T "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:grenade_filling_nuclear"
+  },
+  "show_notification": true
+}

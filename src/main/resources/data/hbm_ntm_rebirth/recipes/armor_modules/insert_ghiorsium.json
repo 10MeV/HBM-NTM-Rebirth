@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "P": {
+      "tag": "forge:ingots/gh336"
+    },
+    "S": {
+      "tag": "forge:ingots/u238"
+    }
+  },
+  "pattern": [
+    "DPD",
+    "PSP",
+    "DPD"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:insert_ghiorsium"
+  },
+  "show_notification": true
+}

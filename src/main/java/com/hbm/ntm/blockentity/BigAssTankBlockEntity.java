@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.block.BigAssTankBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidProvider;
@@ -108,6 +109,7 @@ public class BigAssTankBlockEntity extends LegacyBigTankBlockEntity {
             tiltBlocksChecked = 0;
             tiltBlocksValid = 0;
         }
+        changed = syncTiltedBlockState(level, isTilted()) || changed;
 
         BlockPos floor = standardFloor7x7(tiltBlocksChecked);
         tiltBlocksChecked++;
@@ -119,7 +121,7 @@ public class BigAssTankBlockEntity extends LegacyBigTankBlockEntity {
 
     private boolean setTiltedState(Level level, boolean tilted) {
         if (isTilted() == tilted) {
-            return false;
+            return syncTiltedBlockState(level, tilted);
         }
         if (tilted) {
             level.playSound(null, worldPosition, ModSounds.BLOCK_METAL_IMPACT.get(), SoundSource.BLOCKS, 3.0F, 1.0F);
@@ -128,7 +130,18 @@ public class BigAssTankBlockEntity extends LegacyBigTankBlockEntity {
         markFluidSubscriptionDirty();
         invalidateFluidHandlers();
         setChanged();
-        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        if (!syncTiltedBlockState(level, tilted)) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+        return true;
+    }
+
+    private boolean syncTiltedBlockState(Level level, boolean tilted) {
+        BlockState state = getBlockState();
+        if (!state.hasProperty(BigAssTankBlock.TILTED) || state.getValue(BigAssTankBlock.TILTED) == tilted) {
+            return false;
+        }
+        level.setBlock(worldPosition, state.setValue(BigAssTankBlock.TILTED, tilted), Block.UPDATE_CLIENTS);
         return true;
     }
 

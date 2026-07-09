@@ -1,0 +1,243 @@
+{
+  "recipes": [
+    {
+      "duration": 100,
+      "inputs": [
+        [
+          "dict",
+          "ingotIron"
+        ],
+        [
+          "dict",
+          "gemCoal"
+        ]
+      ],
+      "output": [
+        "Steel",
+        144
+      ],
+      "steam": 100
+    },
+    {
+      "duration": 100,
+      "inputs": [
+        [
+          "dict",
+          "ingotIron"
+        ],
+        [
+          "dict",
+          "gemAnyCoke"
+        ]
+      ],
+      "output": [
+        "Steel",
+        144
+      ],
+      "steam": 100
+    },
+    {
+      "duration": 200,
+      "inputs": [
+        [
+          "dict",
+          "bedrockorefragmentIron",
+          9
+        ],
+        [
+          "dict",
+          "gemCoal"
+        ]
+      ],
+      "output": [
+        "Steel",
+        288
+      ],
+      "steam": 25
+    },
+    {
+      "duration": 200,
+      "inputs": [
+        [
+          "dict",
+          "bedrockorefragmentIron",
+          9
+        ],
+        [
+          "dict",
+          "gemAnyCoke"
+        ]
+      ],
+      "output": [
+        "Steel",
+        432
+      ],
+      "steam": 25
+    },
+    {
+      "duration": 400,
+      "inputs": [
+        [
+          "dict",
+          "bedrockorefragmentIron",
+          9
+        ],
+        [
+          "dict",
+          "gemAnyCoke"
+        ],
+        [
+          "item",
+          "hbm:powder_flux"
+        ]
+      ],
+      "output": [
+        "Steel",
+        576
+      ],
+      "steam": 25
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "LIGHTOIL",
+        100
+      ],
+      "inputs": [
+        [
+          "item",
+          "hbm:powder_desh_ready"
+        ]
+      ],
+      "output": [
+        "Desh",
+        144
+      ],
+      "steam": 200
+    },
+    {
+      "duration": 200,
+      "inputs": [
+        [
+          "dict",
+          "ingotCopper",
+          3
+        ],
+        [
+          "dict",
+          "ingotAluminum"
+        ]
+      ],
+      "output": [
+        "Gunmetal",
+        576
+      ],
+      "steam": 100
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "GAS_COKER",
+        100
+      ],
+      "inputs": [
+        [
+          "dict",
+          "ingotSteel"
+        ],
+        [
+          "item",
+          "hbm:powder_flux",
+          2
+        ]
+      ],
+      "output": [
+        "WeaponSteel",
+        144
+      ],
+      "steam": 400
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "REFORMGAS",
+        250
+      ],
+      "inputs": [
+        [
+          "dict",
+          "dustDuraSteel",
+          4
+        ],
+        [
+          "dict",
+          "dustCopper"
+        ]
+      ],
+      "output": [
+        "Saturnite",
+        288
+      ],
+      "steam": 400
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "REFORMGAS",
+        250
+      ],
+      "inputs": [
+        [
+          "dict",
+          "dustDuraSteel",
+          4
+        ],
+        [
+          "dict",
+          "dustCopper"
+        ],
+        [
+          "dict",
+          "dustBorax"
+        ]
+      ],
+      "output": [
+        "Saturnite",
+        576
+      ],
+      "steam": 300
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "SODIUM_ALUMINATE",
+        150
+      ],
+      "inputs": [],
+      "output": [
+        "Aluminium",
+        288
+      ],
+      "steam": 400
+    },
+    {
+      "duration": 40,
+      "fluid": [
+        "SODIUM_ALUMINATE",
+        150
+      ],
+      "inputs": [
+        [
+          "item",
+          "hbm:powder_flux",
+          2
+        ]
+      ],
+      "output": [
+        "Aluminium",
+        432
+      ],
+      "steam": 200
+    }
+  ]
+}

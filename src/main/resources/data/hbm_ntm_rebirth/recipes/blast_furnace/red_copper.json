@@ -3,24 +3,26 @@
   "duration": 400,
   "inputs": [
     {
+      "count": 1,
       "ingredient": {
         "tag": "forge:ingots/copper"
       },
-      "count": 1,
       "legacy_ore": "ingotCopper"
     },
     {
+      "count": 1,
       "ingredient": {
         "item": "minecraft:redstone"
       },
-      "count": 1,
       "legacy_ore": "dustRedstone"
     }
   ],
+  "name": "blast.mingrade",
   "outputs": [
     {
-      "item": "hbm_ntm_rebirth:ingot_red_copper",
-      "count": 2
+      "count": 2,
+      "item": "hbm_ntm_rebirth:ingot_red_copper"
     }
-  ]
+  ],
+  "source_order": 4
 }

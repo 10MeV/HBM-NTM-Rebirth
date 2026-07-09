@@ -27,9 +27,15 @@ public class AnvilConstructionRecipe implements Recipe<Container> {
     private final int tierLower;
     private final int tierUpper;
     private final OverlayType overlay;
+    private final int sourceOrder;
 
     public AnvilConstructionRecipe(ResourceLocation id, List<HbmIngredient> inputs, List<HbmItemOutput> outputs,
             int tierLower, int tierUpper, OverlayType overlay) {
+        this(id, inputs, outputs, tierLower, tierUpper, overlay, Integer.MAX_VALUE);
+    }
+
+    public AnvilConstructionRecipe(ResourceLocation id, List<HbmIngredient> inputs, List<HbmItemOutput> outputs,
+            int tierLower, int tierUpper, OverlayType overlay, int sourceOrder) {
         if (inputs.isEmpty()) {
             throw new IllegalArgumentException("Anvil construction recipe must have at least one input");
         }
@@ -42,6 +48,7 @@ public class AnvilConstructionRecipe implements Recipe<Container> {
         this.tierLower = Math.max(0, tierLower);
         this.tierUpper = tierUpper < 0 ? -1 : Math.max(this.tierLower, tierUpper);
         this.overlay = overlay == null ? OverlayType.NONE : overlay;
+        this.sourceOrder = sourceOrder;
     }
 
     public List<HbmIngredient> inputs() {
@@ -62,6 +69,10 @@ public class AnvilConstructionRecipe implements Recipe<Container> {
 
     public OverlayType overlay() {
         return overlay;
+    }
+
+    public int sourceOrder() {
+        return sourceOrder;
     }
 
     public boolean isTierValid(int tier) {
@@ -177,7 +188,8 @@ public class AnvilConstructionRecipe implements Recipe<Container> {
                     ? GsonHelper.getAsInt(json, "tier_upper")
                     : GsonHelper.getAsInt(json, "tierUpper", -1);
             OverlayType overlay = OverlayType.byName(GsonHelper.getAsString(json, "overlay", "none"));
-            return new AnvilConstructionRecipe(id, inputs, outputs, tierLower, tierUpper, overlay);
+            int sourceOrder = GsonHelper.getAsInt(json, "source_order", Integer.MAX_VALUE);
+            return new AnvilConstructionRecipe(id, inputs, outputs, tierLower, tierUpper, overlay, sourceOrder);
         }
 
         @Nullable
@@ -188,7 +200,8 @@ public class AnvilConstructionRecipe implements Recipe<Container> {
             int tierLower = buffer.readVarInt();
             int tierUpper = buffer.readVarInt();
             OverlayType overlay = buffer.readEnum(OverlayType.class);
-            return new AnvilConstructionRecipe(id, inputs, outputs, tierLower, tierUpper, overlay);
+            int sourceOrder = buffer.readVarInt();
+            return new AnvilConstructionRecipe(id, inputs, outputs, tierLower, tierUpper, overlay, sourceOrder);
         }
 
         @Override
@@ -198,6 +211,7 @@ public class AnvilConstructionRecipe implements Recipe<Container> {
             buffer.writeVarInt(recipe.tierLower);
             buffer.writeVarInt(recipe.tierUpper);
             buffer.writeEnum(recipe.overlay);
+            buffer.writeVarInt(recipe.sourceOrder);
         }
 
         private static List<HbmIngredient> readInputs(JsonObject json) {

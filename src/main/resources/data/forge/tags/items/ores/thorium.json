@@ -1,6 +1,7 @@
 {
-  "replace": false,
   "values": [
-    "hbm_ntm_rebirth:ore_thorium"
+    "hbm_ntm_rebirth:deepslate_ore_thorium",
+    "hbm_ntm_rebirth:ore_thorium",
+    "hbm_ntm_rebirth:deepslate_ore_thorium"
   ]
 }

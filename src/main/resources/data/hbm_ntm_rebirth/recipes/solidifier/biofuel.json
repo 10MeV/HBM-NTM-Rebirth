@@ -6,5 +6,6 @@
     "input":  {
                   "fluid":  "hbm_ntm_rebirth:biofuel",
                   "amount":  3600
-              }
+              },
+    "source_order":  42
 }

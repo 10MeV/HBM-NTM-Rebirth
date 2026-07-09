@@ -19,7 +19,6 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -55,13 +54,10 @@ public class ArtilleryDesignatorItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains(TAG_X) || !tag.contains(TAG_Y) || !tag.contains(TAG_Z)) {
+        if (tag == null) {
             return InteractionResultHolder.pass(stack);
         }
         BlockHitResult hit = RayTraceUtil.rayTrace(player, 500.0D, 1.0F);
-        if (hit.getType() != HitResult.Type.BLOCK) {
-            return InteractionResultHolder.pass(stack);
-        }
         if (!level.isClientSide) {
             BlockEntity blockEntity = level.getBlockEntity(new BlockPos(tag.getInt(TAG_X), tag.getInt(TAG_Y), tag.getInt(TAG_Z)));
             if (blockEntity instanceof ArtilleryTargetReceiver receiver) {
@@ -76,7 +72,7 @@ public class ArtilleryDesignatorItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains(TAG_X) || !tag.contains(TAG_Y) || !tag.contains(TAG_Z)) {
+        if (tag == null) {
             tooltip.add(Component.literal("No turret linked!").withStyle(ChatFormatting.RED));
             return;
         }

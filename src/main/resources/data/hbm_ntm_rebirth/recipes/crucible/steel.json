@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.steel",
+  "fallback_name": "Steel Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_steel" },
+  "frequency": 20,
+  "input": [
+    { "material": "Iron", "amount": 16 },
+    { "material": "Carbon", "amount": 24 },
+    { "material": "Flux", "amount": 8 }
+  ],
+  "output": [
+    { "material": "Steel", "amount": 16 }
+  ],
+  "source_order": 0
+}

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "OOO",
+    "PDP",
+    "OOO"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cladding_obsidian"
+  },
+  "show_notification": true
+}

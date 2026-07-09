@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.FluidPipeAnchorBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
@@ -32,7 +33,14 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
 
     @Override
     public boolean shouldRenderOffScreen(FluidPipeAnchorBlockEntity anchor) {
-        return true;
+        return false;
+    }
+
+    @Override
+    public boolean shouldRender(FluidPipeAnchorBlockEntity anchor, Vec3 cameraPos) {
+        return hasBerVisuals(anchor)
+                && BlockEntityRenderer.super.shouldRender(anchor, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(anchor, getViewDistance());
     }
 
     @Override
@@ -43,19 +51,33 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
     @Override
     public void render(FluidPipeAnchorBlockEntity anchor, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        boolean renderStaticAnchor = LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
+        boolean renderRemoteConnections = anchor.hasRemoteConnections();
+        if (!renderStaticAnchor && !renderRemoteConnections) {
+            return;
+        }
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(anchor, getViewDistance())) {
+            return;
+        }
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(anchor, packedLight);
         Direction facing = anchor.getBlockState().hasProperty(FluidPipeAnchorBlock.FACING)
                 ? anchor.getBlockState().getValue(FluidPipeAnchorBlock.FACING)
                 : Direction.UP;
 
-        poseStack.pushPose();
-        poseStack.translate(0.5D, 0.5D, 0.5D);
-        rotateToFacing(poseStack, facing);
-        poseStack.translate(0.0D, -0.5D, 0.0D);
-        renderPart(ANCHOR, poseStack, buffer, modelLight, packedOverlay);
-        poseStack.popPose();
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(anchor)) {
+            if (renderStaticAnchor) {
+                poseStack.pushPose();
+                poseStack.translate(0.5D, 0.5D, 0.5D);
+                rotateToFacing(poseStack, facing);
+                poseStack.translate(0.0D, -0.5D, 0.0D);
+                renderPart(ANCHOR, poseStack, buffer, modelLight, packedOverlay);
+                poseStack.popPose();
+            }
 
-        renderRemoteConnections(anchor, poseStack, buffer, modelLight, packedOverlay);
+            if (renderRemoteConnections) {
+                renderRemoteConnections(anchor, poseStack, buffer, modelLight, packedOverlay);
+            }
+        }
     }
 
     private static void rotateToFacing(PoseStack poseStack, Direction facing) {
@@ -86,24 +108,38 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
             return;
         }
 
-        Vec3 anchorPoint = center(anchor.getBlockPos());
-        for (BlockPos remotePos : anchor.getRemoteConnections()) {
+        BlockPos anchorPos = anchor.getBlockPos();
+        double anchorX = anchorPos.getX() + 0.5D;
+        double anchorY = anchorPos.getY() + 0.5D;
+        double anchorZ = anchorPos.getZ() + 0.5D;
+        var fluidType = anchor.getFluidType();
+        int fluidColor = fluidType.getColor();
+        for (BlockPos remotePos : anchor.getRemoteConnectionsView()) {
             BlockEntity blockEntity = level.getBlockEntity(remotePos);
+            double connectionX = remotePos.getX() + 0.5D;
+            double connectionY = remotePos.getY() + 0.5D;
+            double connectionZ = remotePos.getZ() + 0.5D;
             if (!(blockEntity instanceof FluidPipeAnchorBlockEntity other)
-                    || anchor.getFluidType() != other.getFluidType()
-                    || !isDominant(anchorPoint, center(remotePos))) {
+                    || fluidType != other.getFluidType()
+                    || !isDominant(anchorX, anchorY, anchorZ, connectionX, connectionY, connectionZ)) {
                 continue;
             }
-            renderConnection(anchorPoint, center(remotePos), anchor.getFluidType().getColor(),
+            renderConnection(anchorX, anchorY, anchorZ, connectionX, connectionY, connectionZ,
+                    fluidColor,
                     poseStack, buffer, packedLight, packedOverlay);
         }
     }
 
-    private static void renderConnection(Vec3 anchorPoint, Vec3 connectionPoint, int fluidColor,
+    private static boolean hasBerVisuals(FluidPipeAnchorBlockEntity anchor) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer() || anchor.hasRemoteConnections();
+    }
+
+    private static void renderConnection(double anchorX, double anchorY, double anchorZ,
+            double connectionX, double connectionY, double connectionZ, int fluidColor,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        double dX = connectionPoint.x - anchorPoint.x;
-        double dY = connectionPoint.y - anchorPoint.y;
-        double dZ = connectionPoint.z - anchorPoint.z;
+        double dX = connectionX - anchorX;
+        double dY = connectionY - anchorY;
+        double dZ = connectionZ - anchorZ;
         double hyp = Math.sqrt(dX * dX + dZ * dZ);
         double yaw = Math.toDegrees(Math.atan2(dX, dZ));
         double pitch = Math.toDegrees(Math.atan2(dY, hyp));
@@ -136,10 +172,6 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
         poseStack.popPose();
     }
 
-    private static Vec3 center(BlockPos pos) {
-        return new Vec3(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
-    }
-
     private static void renderPart(LegacyWavefrontModel.SelectionHandle handle, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, packedLight, packedOverlay, handle);
@@ -154,19 +186,20 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
     /**
      * Matches the legacy renderer's single-owner rule so a connected pair does not render the pipe twice.
      */
-    public static boolean isDominant(Vec3 first, Vec3 second) {
-        if (first.x < second.x) {
+    public static boolean isDominant(double firstX, double firstY, double firstZ,
+            double secondX, double secondY, double secondZ) {
+        if (firstX < secondX) {
             return true;
         }
-        if (first.x > second.x) {
+        if (firstX > secondX) {
             return false;
         }
-        if (first.y < second.y) {
+        if (firstY < secondY) {
             return true;
         }
-        if (first.y > second.y) {
+        if (firstY > secondY) {
             return false;
         }
-        return first.z < second.z;
+        return firstZ < secondZ;
     }
 }

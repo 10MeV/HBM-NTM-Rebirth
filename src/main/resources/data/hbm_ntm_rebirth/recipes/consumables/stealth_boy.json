@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "minecraft:stone_button"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "I": {
+      "tag": "forge:ingots/steel"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    }
+  },
+  "pattern": [
+    " B",
+    "LI",
+    "LC"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:stealth_boy"
+  },
+  "show_notification": true
+}

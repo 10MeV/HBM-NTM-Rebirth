@@ -1,0 +1,13 @@
+{
+    "type":  "minecraft:crafting_shapeless",
+    "category":  "misc",
+    "ingredients":  [
+                        {
+                            "item":  "hbm_ntm_rebirth:bottle_mercury"
+                        }
+                    ],
+    "result":  {
+                   "item":  "hbm_ntm_rebirth:ingot_mercury",
+                   "count":  8
+               }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "tag": "forge:nuggets/am241" },
+    { "tag": "forge:nuggets/am241" },
+    { "tag": "forge:nuggets/am241" },
+    { "tag": "forge:nuggets/am242" },
+    { "tag": "forge:nuggets/am242" },
+    { "tag": "forge:nuggets/am242" },
+    { "tag": "forge:nuggets/am242" },
+    { "tag": "forge:nuggets/am242" },
+    { "tag": "forge:nuggets/am242" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:ingot_am_mix" }
+}

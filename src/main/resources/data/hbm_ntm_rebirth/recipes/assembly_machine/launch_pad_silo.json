@@ -1,19 +1,46 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.launchpadsilo",
   "duration": 200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "tag": "forge:welded_plates/steel" }, "count": 8 },
-    { "ingredient": { "tag": "forge:storage_blocks/any_concrete" }, "count": 8 },
-    { "ingredient": { "tag": "forge:ingots/any_hardplastic" }, "count": 16, "legacy_ore": "ingotAnyHardPlastic" },
-    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "count": 4, "legacy_id": "hbm:circuit", "legacy_meta": 9 }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:launch_pad" }
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:welded_plates/steel"
+      },
+      "legacy_ore": "plateWeldedSteel"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:any/concrete"
+      },
+      "legacy_ore": "anyConcrete"
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_advanced"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 9
+    }
   ],
+  "internal_name": "ass.launchpadsilo",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:launch_pad"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 269
 }

@@ -11,5 +11,6 @@
     "output2":  {
                     "fluid":  "NONE",
                     "amount":  0
-                }
+                },
+    "source_order":  6
 }

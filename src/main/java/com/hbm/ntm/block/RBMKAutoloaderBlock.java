@@ -116,7 +116,7 @@ public class RBMKAutoloaderBlock extends BaseEntityBlock implements MultiblockCo
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Override

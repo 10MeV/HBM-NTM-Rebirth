@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": { "ingredient": { "item": "hbm_ntm_rebirth:ingot_am_mix" }, "count": 1 }
+  },
+  "fluid_produced": 900,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:nugget_am241", "weight": 3 },
+    { "item": "hbm_ntm_rebirth:nugget_am242", "weight": 6 }
+  ],
+  "source_order": 4
+}

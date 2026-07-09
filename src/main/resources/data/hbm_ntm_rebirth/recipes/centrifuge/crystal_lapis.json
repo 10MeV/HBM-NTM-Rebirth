@@ -1,10 +1,29 @@
 {
   "type": "hbm_ntm_rebirth:centrifuge",
-  "input": { "ingredient": { "tag": "forge:crystals/lapis" } },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:crystal_lapis"
+    },
+    "legacy_id": "hbm:crystal_lapis",
+    "legacy_meta": 0
+  },
   "outputs": [
-    { "item": "hbm_ntm_rebirth:powder_lapis", "count": 4 },
-    { "item": "hbm_ntm_rebirth:powder_lapis", "count": 4 },
-    { "item": "hbm_ntm_rebirth:powder_cobalt" },
-    { "item": "hbm_ntm_rebirth:gem_sodalite", "count": 2 }
-  ]
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:powder_lapis"
+    },
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:powder_lapis"
+    },
+    {
+      "item": "hbm_ntm_rebirth:powder_cobalt"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:gem_sodalite"
+    }
+  ],
+  "source_order": 34
 }

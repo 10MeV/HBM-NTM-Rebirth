@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HbmFluidNodeBlock;
 import com.hbm.ntm.block.FluidPipeBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
@@ -12,6 +13,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +30,14 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
     @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+    }
+
+    @Override
+    public boolean shouldRender(FluidPipeBlockEntity pipe, Vec3 cameraPos) {
+        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
+                && hasConnectionProperties(pipe.getBlockState())
+                && BlockEntityRenderer.super.shouldRender(pipe, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(pipe, getViewDistance());
     }
 
     @Override
@@ -63,8 +73,9 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
 
+        boolean renderStaticBase = LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(pipe)) {
-            renderParts(mask, style, color, poseStack, buffer, modelLight, packedOverlay);
+            renderParts(mask, style, color, poseStack, buffer, modelLight, packedOverlay, renderStaticBase);
         }
 
         poseStack.popPose();
@@ -80,10 +91,12 @@ public class FluidPipeRenderer implements BlockEntityRenderer<FluidPipeBlockEnti
     }
 
     private static void renderParts(int mask, int style, int color, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            MultiBufferSource buffer, int packedLight, int packedOverlay, boolean renderBase) {
         LegacyWavefrontModel.SelectionHandle handle = PART_HANDLES[mask];
-        ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(BASE_TEXTURE_LOCATIONS[style], poseStack, buffer,
-                packedLight, packedOverlay, 255, 255, 255, 255, true, handle);
+        if (renderBase) {
+            ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(BASE_TEXTURE_LOCATIONS[style], poseStack, buffer,
+                    packedLight, packedOverlay, 255, 255, 255, 255, true, handle);
+        }
         ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(OVERLAY_TEXTURE_LOCATIONS[style], poseStack, buffer,
                 packedLight, packedOverlay, color >> 16 & 255, color >> 8 & 255, color & 255, 255, true, handle);
     }

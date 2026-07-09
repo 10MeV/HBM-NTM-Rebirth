@@ -1,7 +1,8 @@
 package com.hbm.ntm.recipe;
 
 import com.hbm.ntm.registry.ModItems;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.world.item.Item;
@@ -10,7 +11,10 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.RegistryObject;
 
 public final class BreedingReactorRecipeRuntime {
-    private static final Map<Item, BreederRecipe> RECIPES = new HashMap<>();
+    private static final Map<Item, BreederRecipe> RECIPES = new LinkedHashMap<>();
+    private static final Comparator<BreedingReactorRecipe> RECIPE_ORDER =
+            Comparator.comparingInt(BreedingReactorRecipe::sourceOrder)
+                    .thenComparing(recipe -> recipe.getId().toString());
 
     static {
         rod("lithium", "tritium", 200);
@@ -34,15 +38,22 @@ public final class BreedingReactorRecipeRuntime {
     }
 
     public static BreederRecipe recipeFor(Level level, ItemStack stack) {
-        if (level != null && !stack.isEmpty()) {
-            for (BreedingReactorRecipe recipe : level.getRecipeManager()
-                    .getAllRecipesFor(ModRecipes.BREEDING_REACTOR.type().get())) {
-                if (recipe.matches(stack)) {
-                    return recipe.asRuntimeRecipe();
-                }
+        if (level == null) {
+            return recipeFor(stack);
+        }
+        if (stack.isEmpty()) {
+            return null;
+        }
+        for (BreedingReactorRecipe recipe : level.getRecipeManager()
+                .getAllRecipesFor(ModRecipes.BREEDING_REACTOR.type().get())
+                .stream()
+                .sorted(RECIPE_ORDER)
+                .toList()) {
+            if (recipe.matches(stack)) {
+                return recipe.asRuntimeRecipe();
             }
         }
-        return recipeFor(stack);
+        return null;
     }
 
     public static boolean isInput(ItemStack stack) {
@@ -63,15 +74,12 @@ public final class BreedingReactorRecipeRuntime {
         if (level == null) {
             return displayRecipes();
         }
-        List<DisplayRecipe> dynamic = level.getRecipeManager()
+        return level.getRecipeManager()
                 .getAllRecipesFor(ModRecipes.BREEDING_REACTOR.type().get()).stream()
+                .sorted(RECIPE_ORDER)
                 .flatMap(recipe -> recipe.input().displayStacks().stream()
                         .map(input -> new DisplayRecipe(input, recipe.asRuntimeRecipe())))
                 .toList();
-        if (dynamic.isEmpty()) {
-            return displayRecipes();
-        }
-        return java.util.stream.Stream.concat(dynamic.stream(), displayRecipes().stream()).toList();
     }
 
     private static void rod(String input, String output, int flux) {

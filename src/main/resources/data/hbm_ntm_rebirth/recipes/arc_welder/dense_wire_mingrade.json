@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:arc_welder",
+  "internal_name": "arc.wire.mingrade",
+  "duration": 100,
+  "power": 10000,
+  "input_items": [
+    { "ingredient": { "tag": "forge:wires/mingrade" }, "count": 8, "legacy_ore": "wireFineMingrade" }
+  ],
+  "input_fluids": [],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:wire_dense_mingrade" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "source_order": 5
+}

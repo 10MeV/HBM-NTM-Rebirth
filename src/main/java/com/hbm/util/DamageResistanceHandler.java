@@ -5,6 +5,6 @@ package com.hbm.util;
  */
 @Deprecated(forRemoval = false)
 public class DamageResistanceHandler extends com.hbm.ntm.util.DamageResistanceHandler {
-    protected DamageResistanceHandler() {
+    public DamageResistanceHandler() {
     }
 }

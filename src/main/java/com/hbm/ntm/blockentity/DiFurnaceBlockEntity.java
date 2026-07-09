@@ -5,8 +5,7 @@ import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.menu.DiFurnaceMenu;
-import com.hbm.ntm.recipe.BlastFurnaceRecipe;
-import com.hbm.ntm.recipe.HbmItemOutput;
+import com.hbm.ntm.recipe.DiFurnaceRecipe;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -250,7 +249,7 @@ public class DiFurnaceBlockEntity extends HbmFluidBlockEntity
         boolean extension = hasExtension();
         sendSmoke(level, pos, extension);
         loadFuel();
-        BlastFurnaceRecipe recipe = findRecipe(level);
+        DiFurnaceRecipe recipe = findRecipe(level);
         if (canProcess(recipe)) {
             fuel = Math.max(0, fuel - 1);
             progress += extension ? 3 : 1;
@@ -298,22 +297,22 @@ public class DiFurnaceBlockEntity extends HbmFluidBlockEntity
     }
 
     @Nullable
-    private BlastFurnaceRecipe findRecipe(Level level) {
+    private DiFurnaceRecipe findRecipe(Level level) {
         ItemStack upper = items.getStackInSlot(SLOT_UPPER);
         ItemStack lower = items.getStackInSlot(SLOT_LOWER);
         if (upper.isEmpty() || lower.isEmpty()) {
             return null;
         }
-        for (BlastFurnaceRecipe recipe : level.getRecipeManager()
-                .getAllRecipesFor(ModRecipes.BLAST_FURNACE.type().get())) {
-            if (recipe.inputs().size() == 2 && recipe.outputs().size() == 1 && recipe.matches(upper, lower)) {
+        for (DiFurnaceRecipe recipe : level.getRecipeManager()
+                .getAllRecipesFor(ModRecipes.DIFURNACE.type().get())) {
+            if (recipe.matches(upper, lower)) {
                 return recipe;
             }
         }
         return null;
     }
 
-    private boolean canProcess(@Nullable BlastFurnaceRecipe recipe) {
+    private boolean canProcess(@Nullable DiFurnaceRecipe recipe) {
         if (recipe == null || !hasPower()) {
             return false;
         }
@@ -324,14 +323,13 @@ public class DiFurnaceBlockEntity extends HbmFluidBlockEntity
         if (consumeUpper <= 0 || consumeLower <= 0) {
             return false;
         }
-        ItemStack output = recipe.outputs().get(0).representativeStack();
+        ItemStack output = recipe.output().representativeStack();
         return HbmInventoryUtil.doesHandlerHaveSpaceUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT, output);
     }
 
-    private void process(BlastFurnaceRecipe recipe) {
-        HbmItemOutput output = recipe.outputs().get(0);
+    private void process(DiFurnaceRecipe recipe) {
         HbmInventoryUtil.tryAddItemToHandlerUnchecked(items, SLOT_OUTPUT, SLOT_OUTPUT,
-                output.representativeStack());
+                recipe.output().representativeStack());
         ItemStack upper = items.getStackInSlot(SLOT_UPPER);
         ItemStack lower = items.getStackInSlot(SLOT_LOWER);
         int consumeUpper = recipe.consumedCountForSlot(0, upper, lower);

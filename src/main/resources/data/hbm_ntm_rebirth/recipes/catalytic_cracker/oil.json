@@ -11,5 +11,6 @@
     "output2":  {
                     "fluid":  "hbm_ntm_rebirth:petroleum",
                     "amount":  20
-                }
+                },
+    "source_order":  0
 }

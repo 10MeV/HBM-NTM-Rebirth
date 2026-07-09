@@ -88,16 +88,23 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
         List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
                 new AABB(origin, origin).inflate(radius), LivingEntity::isAlive);
         List<TeslaTarget> ret = new ArrayList<>();
+        double radiusSqr = radius * radius;
 
         for (LivingEntity target : nearby) {
             if (target instanceof Ocelot || target == source) {
                 continue;
             }
 
-            Vec3 targetPoint = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
-            if (targetPoint.subtract(origin).length() > RANGE) {
+            double targetX = target.getX();
+            double targetY = target.getY() + target.getBbHeight() * 0.5D;
+            double targetZ = target.getZ();
+            double deltaX = targetX - origin.x;
+            double deltaY = targetY - origin.y;
+            double deltaZ = targetZ - origin.z;
+            if (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > radiusSqr) {
                 continue;
             }
+            Vec3 targetPoint = new Vec3(targetX, targetY, targetZ);
             if (HbmWorldUtil.isObstructed(level, origin, targetPoint)) {
                 continue;
             }
@@ -143,6 +150,10 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
 
     public Vec3 sourcePosition() {
         return new Vec3(worldPosition.getX() + 0.5D, worldPosition.getY() + OFFSET, worldPosition.getZ() + 0.5D);
+    }
+
+    public boolean hasTargets() {
+        return !targets.isEmpty();
     }
 
     public List<TeslaTarget> getTargets() {

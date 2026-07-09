@@ -1,19 +1,44 @@
 {
   "type": "hbm_ntm_rebirth:assembly_machine",
-  "internal_name": "ass.boypropellant",
   "duration": 200,
-  "power": 100,
-  "input_items": [
-    { "ingredient": { "item": "hbm_ntm_rebirth:cordite" }, "count": 8 },
-    { "ingredient": { "tag": "forge:plates/iron" }, "count": 8, "legacy_ore": "plateIron" },
-    { "ingredient": { "tag": "forge:plates/aluminium" }, "count": 4, "legacy_ore": "plateAluminum" },
-    { "ingredient": { "tag": "forge:wires/mingrade" }, "count": 4, "legacy_ore": "wireFineMingrade" }
-  ],
   "input_fluids": [],
-  "output_items": [
-    { "item": "hbm_ntm_rebirth:boy_propellant" }
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:cordite"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/iron"
+      },
+      "legacy_ore": "plateIron"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:plates/aluminium"
+      },
+      "legacy_ore": "plateAluminum"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:wires/mingrade"
+      },
+      "legacy_ore": "wireFineMingrade"
+    }
   ],
+  "internal_name": "ass.boypropellant",
   "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:boy_propellant"
+    }
+  ],
   "pools": [],
+  "power": 100,
   "source_order": 218
 }

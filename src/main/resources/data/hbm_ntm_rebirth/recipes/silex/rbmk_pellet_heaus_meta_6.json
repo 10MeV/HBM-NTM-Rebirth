@@ -1,0 +1,39 @@
+{
+  "type": "hbm_ntm_rebirth:silex",
+  "source": {
+    "item": {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:rbmk_pellet_heaus"
+      },
+      "count": 1,
+      "legacy_id": "hbm:rbmk_pellet_heaus",
+      "legacy_meta": 6
+    }
+  },
+  "fluid_produced": 600,
+  "fluid_consumed": 100,
+  "laser_strength": "visible",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:powder_xe135_tiny",
+      "weight": 1
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_australium_greater",
+      "weight": 69
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_au198",
+      "weight": 15
+    },
+    {
+      "item": "minecraft:gold_nugget",
+      "weight": 9
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_pb209",
+      "weight": 6
+    }
+  ],
+  "source_order": 101
+}

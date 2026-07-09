@@ -18,6 +18,7 @@ import com.hbm.ntm.item.missile.MissilePartItem;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.HoeItem;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
@@ -124,6 +125,18 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "blueprints");
             return;
         }
+        if (path.equals("blueprint_folder")) {
+            generatedItem(path, "blueprint_folder");
+            return;
+        }
+        if (path.equals("blueprint_folder_discover")) {
+            generatedItem(path, "blueprint_folder_discover");
+            return;
+        }
+        if (path.equals("blueprint_folder_secret")) {
+            generatedItem(path, "blueprint_folder_secret");
+            return;
+        }
         if (path.equals("pollution_detector")) {
             generatedItem(path, "pollution_detector");
             return;
@@ -148,7 +161,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
             layeredItem(path, "fluid_icon", "fluid_identifier_overlay");
             return;
         }
-        if (path.equals("holotape_image_restored")) {
+        if (path.equals("holotape_image_digamma") || path.equals("holotape_image_restored")) {
             generatedItem(path, "holotape");
             return;
         }
@@ -178,6 +191,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
         }
         if (path.equals("ingot_mercury")) {
             generatedItem(path, "nugget_mercury");
+            return;
+        }
+        if (path.equals("ingot_redstone")) {
+            generatedItem(path, "ingot_raw");
             return;
         }
         if (path.equals("plate_cast_ferrouranium")) {
@@ -236,7 +253,23 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "wire_tungsten");
             return;
         }
+        if (path.equals("wire_fine_carbon")) {
+            generatedItem(path, "wire_carbon");
+            return;
+        }
+        if (path.equals("wire_fine_schrabidium")) {
+            generatedItem(path, "wire_schrabidium");
+            return;
+        }
+        if (path.equals("wire_fine_magnetized_tungsten")) {
+            generatedItem(path, "wire_magnetized_tungsten");
+            return;
+        }
         if (path.equals("wire_fine_lead") || path.equals("wire_fine_zirconium")) {
+            generatedItem(path, "wire_fine");
+            return;
+        }
+        if (path.equals("wire_fine_steel")) {
             generatedItem(path, "wire_fine");
             return;
         }
@@ -372,6 +405,26 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "casing." + path.substring("casing_".length()));
             return;
         }
+        if (path.startsWith("grenade_shell_")) {
+            generatedItem(path, "grenade_shell." + path.substring("grenade_shell_".length()));
+            return;
+        }
+        if (path.startsWith("grenade_fuze_")) {
+            generatedItem(path, "grenade_fuze." + path.substring("grenade_fuze_".length()));
+            return;
+        }
+        if (path.startsWith("grenade_filling_")) {
+            generatedItem(path, "grenade_filling." + path.substring("grenade_filling_".length()));
+            return;
+        }
+        if (path.startsWith("grenade_extra_")) {
+            generatedItem(path, "grenade_extra." + path.substring("grenade_extra_".length()));
+            return;
+        }
+        if (path.equals("grenade_universal")) {
+            generatedItem(path, path);
+            return;
+        }
         if (path.startsWith("ammo_standard_")) {
             generatedItem(path, "ammo_standard." + path.substring("ammo_standard_".length()));
             return;
@@ -437,6 +490,14 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "singularity_4");
             return;
         }
+        if (path.startsWith("circuit_star_piece_")) {
+            generatedItem(path, "circuit_star_piece." + path.substring("circuit_star_piece_".length()));
+            return;
+        }
+        if (path.startsWith("chemical_dye_")) {
+            layeredItem(path, "chemical_dye", "chemical_dye_overlay");
+            return;
+        }
         if (path.startsWith("circuit_")) {
             generatedItem(path, circuitTexture(path));
             return;
@@ -497,7 +558,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
             handheldItem(path, abilityTexture);
             return;
         }
-        if (item instanceof HbmAbilityToolItem || item instanceof HbmAbilitySwordItem) {
+        if (item instanceof HbmAbilityToolItem || item instanceof HbmAbilitySwordItem || item instanceof HoeItem) {
             handheldItem(path, path);
             return;
         }

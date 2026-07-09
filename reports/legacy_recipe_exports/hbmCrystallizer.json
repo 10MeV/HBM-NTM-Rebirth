@@ -1,0 +1,1795 @@
+{
+  "recipes": [
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreCoal"
+      ],
+      "output": [
+        "hbm:crystal_coal"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreIron"
+      ],
+      "output": [
+        "hbm:crystal_iron"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreGold"
+      ],
+      "output": [
+        "hbm:crystal_gold"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreRedstone"
+      ],
+      "output": [
+        "hbm:crystal_redstone"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreLapis"
+      ],
+      "output": [
+        "hbm:crystal_lapis"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreDiamond"
+      ],
+      "output": [
+        "hbm:crystal_diamond"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreUranium"
+      ],
+      "output": [
+        "hbm:crystal_uranium"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreThorium"
+      ],
+      "output": [
+        "hbm:crystal_thorium"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "orePlutonium"
+      ],
+      "output": [
+        "hbm:crystal_plutonium"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreTitanium"
+      ],
+      "output": [
+        "hbm:crystal_titanium"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreSulfur"
+      ],
+      "output": [
+        "hbm:crystal_sulfur"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreSaltpeter"
+      ],
+      "output": [
+        "hbm:crystal_niter"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreCopper"
+      ],
+      "output": [
+        "hbm:crystal_copper"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreTungsten"
+      ],
+      "output": [
+        "hbm:crystal_tungsten"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreAluminum"
+      ],
+      "output": [
+        "hbm:crystal_aluminium"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreFluorite"
+      ],
+      "output": [
+        "hbm:crystal_fluorite"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreBeryllium"
+      ],
+      "output": [
+        "hbm:crystal_beryllium"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreLead"
+      ],
+      "output": [
+        "hbm:crystal_lead"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreSchrabidium"
+      ],
+      "output": [
+        "hbm:crystal_schrabidium"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreLithium"
+      ],
+      "output": [
+        "hbm:crystal_lithium"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreCobalt"
+      ],
+      "output": [
+        "hbm:crystal_cobalt"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "REDMUD",
+        75
+      ],
+      "input": [
+        "item",
+        "hbm:powder_calcium"
+      ],
+      "output": [
+        "hbm:powder_cement",
+        8
+      ],
+      "productivity": 0.1
+    },
+    {
+      "duration": 300,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "dict",
+        "ingotMalachite"
+      ],
+      "output": [
+        "hbm:scraps",
+        1,
+        0,
+        "{amount:72,mat:2900}"
+      ],
+      "productivity": 0.1
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreRareEarth"
+      ],
+      "output": [
+        "hbm:crystal_rare"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "oreCinnabar"
+      ],
+      "output": [
+        "hbm:crystal_cinnebar"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:ore_nether_fire"
+      ],
+      "output": [
+        "hbm:crystal_phosphorus"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:ore_tikite"
+      ],
+      "output": [
+        "hbm:crystal_trixite"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:gravel_diamond"
+      ],
+      "output": [
+        "hbm:crystal_diamond"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "ingotSchraranium"
+      ],
+      "output": [
+        "hbm:crystal_schraranium"
+      ],
+      "productivity": 0.05
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "sand"
+      ],
+      "output": [
+        "hbm:ingot_fiberglass"
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "OXYGEN",
+        250
+      ],
+      "input": [
+        "dict",
+        "ingotSilicon"
+      ],
+      "output": [
+        "minecraft:quartz",
+        2
+      ],
+      "productivity": 0.1
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "blockRedstone"
+      ],
+      "output": [
+        "hbm:ingot_mercury"
+      ],
+      "productivity": 0.25
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "crystalCinnabar"
+      ],
+      "output": [
+        "hbm:nugget_mercury",
+        3
+      ],
+      "productivity": 0.25
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SULFURIC_ACID",
+        500
+      ],
+      "input": [
+        "dict",
+        "dustBorax"
+      ],
+      "output": [
+        "hbm:powder_boron_tiny",
+        3
+      ],
+      "productivity": 0.25
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "blockCoal"
+      ],
+      "output": [
+        "hbm:block_graphite"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "minecraft:cobblestone"
+      ],
+      "output": [
+        "hbm:reinforced_stone"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:gravel_obsidian"
+      ],
+      "output": [
+        "hbm:brick_obsidian"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "minecraft:rotten_flesh"
+      ],
+      "output": [
+        "minecraft:leather"
+      ],
+      "productivity": 0.25
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:coal_infernal"
+      ],
+      "output": [
+        "hbm:solid_fuel"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:stone_gneiss"
+      ],
+      "output": [
+        "hbm:powder_lithium"
+      ],
+      "productivity": 0.25
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "item",
+        "minecraft:bone_meal"
+      ],
+      "output": [
+        "minecraft:slime_ball",
+        4
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "SULFURIC_ACID",
+        1000
+      ],
+      "input": [
+        "item",
+        "minecraft:bone"
+      ],
+      "output": [
+        "minecraft:slime_ball",
+        16
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "item",
+        "hbm:plant_item",
+        10,
+        2
+      ],
+      "output": [
+        "hbm:powder_cadmium"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "RADIOSOLVENT",
+        100
+      ],
+      "input": [
+        "item",
+        "hbm:scrap_oil",
+        16
+      ],
+      "output": [
+        "hbm:nugget_arsenic"
+      ],
+      "productivity": 0.3
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "XYLENE",
+        1000
+      ],
+      "input": [
+        "item",
+        "hbm:powder_ash",
+        4,
+        5
+      ],
+      "output": [
+        "hbm:ingot_cft",
+        1,
+        -1
+      ],
+      "productivity": 0.1
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "dustDiamond"
+      ],
+      "output": [
+        "minecraft:diamond"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "dustEmerald"
+      ],
+      "output": [
+        "minecraft:emerald"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "dict",
+        "dustLapis"
+      ],
+      "output": [
+        "minecraft:dye",
+        1,
+        4
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:powder_semtex_mix"
+      ],
+      "output": [
+        "hbm:ingot_semtex"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:powder_desh_ready"
+      ],
+      "output": [
+        "hbm:ingot_desh"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:powder_meteorite"
+      ],
+      "output": [
+        "hbm:fragment_meteorite"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "FISHOIL",
+        4000
+      ],
+      "input": [
+        "dict",
+        "dustCadmium"
+      ],
+      "output": [
+        "hbm:ingot_rubber",
+        16
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "SOURGAS",
+        25
+      ],
+      "input": [
+        "dict",
+        "ingotLatex"
+      ],
+      "output": [
+        "hbm:ingot_rubber"
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "NITROGLYCERIN",
+        250
+      ],
+      "input": [
+        "item",
+        "hbm:powder_sawdust"
+      ],
+      "output": [
+        "hbm:cordite"
+      ],
+      "productivity": 0.25
+    },
+    {
+      "duration": 10,
+      "fluid": [
+        "CONCRETE",
+        1000
+      ],
+      "input": [
+        "item",
+        "hbm:rebar"
+      ],
+      "output": [
+        "hbm:concrete_rebar"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:meteorite_sword_treated"
+      ],
+      "output": [
+        "hbm:meteorite_sword_etched"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "SCHRABIDIC",
+        1000
+      ],
+      "input": [
+        "item",
+        "hbm:powder_impure_osmiridium"
+      ],
+      "output": [
+        "hbm:crystal_osmiridium"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:0}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:1}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        1
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:2}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        2
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:3}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        3
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:4}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        4
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:5}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        5
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:6}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        6
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:7}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        7
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:8}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        8
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:9}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        9
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:10}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        10
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:11}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        11
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:12}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        12
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:13}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        13
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:14}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        14
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:15}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        15
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:16}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        16
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:17}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        17
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:18}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        18
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:19}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        19
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:20}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        20
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:21}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        21
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 600,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "nbt",
+        "hbm:scrap_plastic",
+        1,
+        0,
+        "{ScrapType:22}"
+      ],
+      "output": [
+        "hbm:circuit_star_piece",
+        1,
+        22
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "WOODOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCoal"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "WOODOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustTitanium"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        15
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "WOODOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustIron"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        1
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "WOODOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustTungsten"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        11
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "WOODOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCopper"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        2
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "WOODOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCobalt"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        4
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "FISHOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCoal"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "FISHOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustTitanium"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        15
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "FISHOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustIron"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        1
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "FISHOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustTungsten"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        11
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "FISHOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCopper"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        2
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "FISHOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCobalt"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        4
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "LIGHTOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCoal"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "LIGHTOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustTitanium"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        15
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "LIGHTOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustIron"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        1
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "LIGHTOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustTungsten"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        11
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "LIGHTOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCopper"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        2
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "LIGHTOIL",
+        100
+      ],
+      "input": [
+        "dict",
+        "dustCobalt"
+      ],
+      "output": [
+        "hbm:chemical_dye",
+        4,
+        4
+      ],
+      "productivity": 0.15
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "item",
+        "hbm:oil_tar"
+      ],
+      "output": [
+        "hbm:oil_tar",
+        1,
+        4
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "CHLORINE",
+        100
+      ],
+      "input": [
+        "item",
+        "hbm:oil_tar",
+        1,
+        1
+      ],
+      "output": [
+        "hbm:oil_tar",
+        1,
+        4
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "CHLORINE",
+        100
+      ],
+      "input": [
+        "item",
+        "hbm:oil_tar",
+        1,
+        5
+      ],
+      "output": [
+        "hbm:oil_tar",
+        1,
+        4
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "IONGEL",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:oil_tar",
+        1,
+        4
+      ],
+      "output": [
+        "hbm:pellet_charged"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "ESTRADIOL",
+        250
+      ],
+      "input": [
+        "item",
+        "hbm:oil_tar",
+        1,
+        5
+      ],
+      "output": [
+        "hbm:pill_red"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "COLLOID",
+        1000
+      ],
+      "input": [
+        "dict",
+        "sand"
+      ],
+      "output": [
+        "minecraft:clay"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "NITROGLYCERIN",
+        1000
+      ],
+      "input": [
+        "item",
+        "hbm:tile.sand_mix",
+        1,
+        4
+      ],
+      "output": [
+        "hbm:ball_dynamite",
+        16
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 20,
+      "fluid": [
+        "NITROGLYCERIN",
+        250
+      ],
+      "input": [
+        "dict",
+        "dustNetherQuartz"
+      ],
+      "output": [
+        "hbm:ball_dynamite",
+        4
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 1200,
+      "fluid": [
+        "PEROXIDE",
+        500
+      ],
+      "input": [
+        "item",
+        "hbm:moon_turf",
+        16
+      ],
+      "output": [
+        "hbm:chunk_ore",
+        1,
+        3
+      ],
+      "productivity": 0.0
+    }
+  ]
+}

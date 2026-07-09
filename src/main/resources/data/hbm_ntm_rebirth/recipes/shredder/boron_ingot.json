@@ -1,5 +1,6 @@
 {
   "type": "hbm_ntm_rebirth:shredder",
   "input": { "ingredient": { "tag": "forge:ingots/boron" } },
-  "output": { "item": "hbm_ntm_rebirth:powder_boron" }
+  "output": { "item": "hbm_ntm_rebirth:powder_boron" },
+  "source_order": 1000
 }

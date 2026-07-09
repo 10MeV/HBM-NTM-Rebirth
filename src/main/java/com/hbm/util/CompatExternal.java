@@ -2,7 +2,8 @@ package com.hbm.util;
 
 import com.hbm.ntm.api.fluid.HbmFluidContainerRegisterListener;
 import com.hbm.ntm.api.fluid.HbmFluidRegisterListener;
-import com.hbm.ntm.api.recipe.RecipeRegisterListener;
+import api.hbm.recipe.IRecipeRegisterListener;
+import com.hbm.inventory.recipes.loader.SerializableRecipe;
 import com.hbm.ntm.compat.CompatCustomWarheadRegistry;
 import com.hbm.ntm.compat.CompatRecipeRegistry;
 import com.hbm.ntm.compat.CompatTurretTargetRegistry;
@@ -106,12 +107,14 @@ public final class CompatExternal {
         return com.hbm.ntm.compat.CompatExternal.getAllTanks(level, x, y, z);
     }
 
-    public static void registerRecipeRegisterListener(RecipeRegisterListener listener) {
-        com.hbm.ntm.compat.CompatExternal.registerRecipeRegisterListener(listener);
+    public static void registerRecipeRegisterListener(IRecipeRegisterListener listener) {
+        if (listener != null) {
+            SerializableRecipe.additionalListeners.add(listener);
+        }
     }
 
-    public static boolean unregisterRecipeRegisterListener(RecipeRegisterListener listener) {
-        return com.hbm.ntm.compat.CompatExternal.unregisterRecipeRegisterListener(listener);
+    public static boolean unregisterRecipeRegisterListener(IRecipeRegisterListener listener) {
+        return listener != null && SerializableRecipe.additionalListeners.remove(listener);
     }
 
     public static CompatRecipeRegistry.Diagnostics recipeDiagnostics() {

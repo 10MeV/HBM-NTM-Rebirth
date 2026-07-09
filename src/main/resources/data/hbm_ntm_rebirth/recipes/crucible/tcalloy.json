@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:crucible",
+  "internal_name": "crucible.tcalloy",
+  "fallback_name": "Technetium Steel Production",
+  "icon": { "item": "hbm_ntm_rebirth:ingot_tcalloy" },
+  "frequency": 9,
+  "input": [
+    { "material": "Steel", "amount": 64 },
+    { "material": "Tc99", "amount": 8 }
+  ],
+  "output": [
+    { "material": "TcAlloy", "amount": 72 }
+  ],
+  "source_order": 6
+}

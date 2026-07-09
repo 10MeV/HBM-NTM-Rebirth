@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "food",
+  "pattern": [
+    "RWR",
+    "WPW",
+    "RWR"
+  ],
+  "key": {
+    "R": { "item": "minecraft:sugar_cane" },
+    "W": { "item": "hbm_ntm_rebirth:nuclear_waste" },
+    "P": { "item": "minecraft:pumpkin_seeds" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:schnitzel_vegan",
+    "count": 3
+  }
+}

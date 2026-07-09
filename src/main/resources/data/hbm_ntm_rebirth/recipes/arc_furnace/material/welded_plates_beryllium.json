@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "internal_name": "arc.autogen.plateSextupleBeryllium",
+  "duration": 400,
+  "power": 1000,
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": { "type": "forge:tag_empty", "tag": "forge:welded_plates/beryllium" }
+    }
+  ],
+  "input_items": [
+    { "ingredient": { "tag": "forge:welded_plates/beryllium" }, "count": 1, "legacy_ore": "plateSextupleBeryllium" }
+  ],
+  "input_fluids": [],
+  "output_items": [],
+  "output_fluids": [],
+  "arc_material_outputs": [
+    { "material": "Beryllium", "amount": 432 }
+  ],
+  "pools": [],
+  "source_order": 1380
+}

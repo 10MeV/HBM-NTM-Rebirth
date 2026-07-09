@@ -1,7 +1,72 @@
-﻿{
-  "parent": "minecraft:block/block",
+{
+  "loader": "forge:composite",
+  "children": {
+    "legs": {
+      "loader": "forge:obj",
+      "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_legs.obj",
+      "flip_v": true,
+      "automatic_culling": false,
+      "render_type": "minecraft:cutout",
+      "transform": {
+        "translation": [0.5, -4.0, 0.5],
+        "rotation": [0, 0, 0],
+        "scale": 1.0
+      },
+      "textures": {
+        "particle": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_legs",
+        "default": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_legs"
+      }
+    },
+    "table": {
+      "loader": "forge:obj",
+      "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_table.obj",
+      "flip_v": true,
+      "automatic_culling": false,
+      "render_type": "minecraft:cutout",
+      "transform": {
+        "translation": [0.5, -4.0, 0.5],
+        "rotation": [0, 0, 0],
+        "scale": 1.0
+      },
+      "textures": {
+        "particle": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_table",
+        "default": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_table"
+      }
+    },
+    "tower_base": {
+      "loader": "forge:obj",
+      "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_tower_base.obj",
+      "flip_v": true,
+      "automatic_culling": false,
+      "render_type": "minecraft:cutout",
+      "transform": {
+        "translation": [0.5, -4.0, 0.5],
+        "rotation": [0, 0, 0],
+        "scale": 1.0
+      },
+      "textures": {
+        "particle": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_tower_base",
+        "default": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_tower_base"
+      }
+    },
+    "support_base": {
+      "loader": "forge:obj",
+      "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_support_base.obj",
+      "flip_v": true,
+      "automatic_culling": false,
+      "render_type": "minecraft:cutout",
+      "transform": {
+        "translation": [0.5, -4.0, 0.5],
+        "rotation": [0, 0, 0],
+        "scale": 1.0
+      },
+      "textures": {
+        "particle": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_support_base",
+        "default": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_support_base"
+      }
+    }
+  },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/launch_table/soyuz_launcher_table"
-  },
-  "elements": []
+  }
 }

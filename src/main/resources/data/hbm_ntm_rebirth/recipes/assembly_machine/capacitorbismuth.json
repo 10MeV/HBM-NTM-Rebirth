@@ -3,14 +3,35 @@
   "duration": 100,
   "input_fluids": [],
   "input_items": [
-    { "count": 24, "ingredient": { "tag": "forge:ingots/any_hardplastic" } },
-    { "count": 24, "ingredient": { "tag": "forge:ingots/bismuth" } },
-    { "count": 1, "ingredient": { "tag": "forge:circuits/chip_quantum" } }
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
+    },
+    {
+      "count": 24,
+      "ingredient": {
+        "tag": "forge:ingots/bismuth"
+      },
+      "legacy_ore": "ingotBismuth"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip_quantum"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 16
+    }
   ],
   "internal_name": "ass.capacitorbismuth",
   "output_fluids": [],
   "output_items": [
-    { "item": "hbm_ntm_rebirth:capacitor_bismuth" }
+    {
+      "item": "hbm_ntm_rebirth:capacitor_bismuth"
+    }
   ],
   "pools": [],
   "power": 25000,

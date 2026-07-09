@@ -1,28 +1,33 @@
 package com.hbm.ntm.compat.jei;
 
+import java.util.ArrayList;
+import java.util.List;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
-import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class AshpitRecipeCategory implements IRecipeCategory<AshpitJeiRecipe> {
-    private static final int WIDTH = 140;
-    private static final int HEIGHT = 60;
-
     private final RecipeType<AshpitJeiRecipe> type;
     private final IDrawable icon;
-    private final IDrawableStatic arrow;
+    private final IDrawableStatic background;
+    private final IDrawableStatic slotBackground;
+    private final IDrawableStatic machineBackground;
+    private final ItemStack catalyst;
 
     AshpitRecipeCategory(RecipeType<AshpitJeiRecipe> type, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
-        this.arrow = guiHelper.getRecipeArrow();
+        this.background = LegacyNeiUniversalLayout.background(guiHelper);
+        this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
+        this.machineBackground = LegacyNeiUniversalLayout.machineBackground(guiHelper);
+        this.catalyst = new ItemStack(catalyst);
     }
 
     @Override
@@ -37,12 +42,12 @@ public final class AshpitRecipeCategory implements IRecipeCategory<AshpitJeiReci
 
     @Override
     public int getWidth() {
-        return WIDTH;
+        return LegacyNeiUniversalLayout.WIDTH;
     }
 
     @Override
     public int getHeight() {
-        return HEIGHT;
+        return LegacyNeiUniversalLayout.HEIGHT;
     }
 
     @Override
@@ -51,25 +56,22 @@ public final class AshpitRecipeCategory implements IRecipeCategory<AshpitJeiReci
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, AshpitJeiRecipe recipe, IFocusGroup focuses) {
-        builder.addInputSlot(8, 22)
-                .addItemStacks(recipe.machines())
-                .setStandardSlotBackground();
-        if (recipe.hasFluidInput()) {
-            JeiFluidSlots.addFluidSlot(builder, recipe.fluidInput(), true, 38, 22);
-        } else {
-            builder.addInputSlot(38, 22)
-                    .addItemStacks(recipe.itemInputs())
-                    .setStandardSlotBackground();
-        }
-        builder.addOutputSlot(114, 22)
-                .addItemStack(recipe.output())
-                .setOutputSlotBackground();
+    public IDrawable getBackground() {
+        return background;
     }
 
     @Override
-    public void draw(AshpitJeiRecipe recipe, IRecipeSlotsView recipeSlotsView,
-            net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        arrow.draw(guiGraphics, 72, 22);
+    public void setRecipe(IRecipeLayoutBuilder builder, AshpitJeiRecipe recipe, IFocusGroup focuses) {
+        List<List<ItemStack>> inputs = new ArrayList<>();
+        inputs.add(recipe.machines());
+        if (recipe.hasFluidInput()) {
+            inputs.add(List.of(LegacyNeiUniversalLayout.fluidIcon(recipe.fluidInput())));
+        } else {
+            inputs.add(recipe.itemInputs());
+        }
+
+        LegacyNeiUniversalLayout.addInputSlots(builder, slotBackground, inputs);
+        LegacyNeiUniversalLayout.addOutputSlots(builder, slotBackground, List.of(List.of(recipe.output())));
+        LegacyNeiUniversalLayout.addMachineCatalyst(builder, machineBackground, catalyst);
     }
 }

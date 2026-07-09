@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:radiolysis",
+  "input": {
+    "fluid": "hbm_ntm_rebirth:water",
+    "amount": 100
+  },
+  "output1": {
+    "fluid": "hbm_ntm_rebirth:peroxide",
+    "amount": 80
+  },
+  "output2": {
+    "fluid": "hbm_ntm_rebirth:hydrogen",
+    "amount": 20
+  },
+  "source_order": 0
+}

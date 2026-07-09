@@ -2,6 +2,7 @@
   "type": "hbm_ntm_rebirth:crystallizer",
   "duration": 600,
   "fluid": { "fluid": "PEROXIDE", "amount": 500 },
-  "input": { "ingredient": { "tag": "forge:storage_blocks/coal" } },
-  "output": { "item": "hbm_ntm_rebirth:block_graphite" }
+  "input": { "ingredient": { "tag": "forge:storage_blocks/coal" }, "legacy_ore": "blockCoal" },
+  "output": { "item": "hbm_ntm_rebirth:block_graphite" },
+  "source_order": 34
 }

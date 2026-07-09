@@ -1,0 +1,57 @@
+{
+  "type": "hbm_ntm_rebirth:soldering_station",
+  "toppings": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip_bismoid"
+      },
+      "count": 4
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "count": 16
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "count": 24
+    }
+  ],
+  "pcb": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_pcb"
+      },
+      "count": 12
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "count": 2,
+      "legacy_ore": "ingotAnyHardPlastic"
+    }
+  ],
+  "solder": [
+    {
+      "ingredient": {
+        "tag": "forge:wires/lead"
+      },
+      "count": 12,
+      "legacy_ore": "wireFineLead"
+    }
+  ],
+  "fluid": {
+    "fluid": "SOLVENT",
+    "amount": 1000
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:circuit_bismoid"
+  },
+  "duration": 400,
+  "consumption": 10000,
+  "source_order": 4
+}

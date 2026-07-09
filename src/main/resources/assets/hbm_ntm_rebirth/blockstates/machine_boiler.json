@@ -1,17 +1,47 @@
 {
   "variants": {
-    "facing=east": {
+    "facing=east,visual=exploded": {
       "model": "hbm_ntm_rebirth:block/machine_boiler",
       "y": 90
     },
-    "facing=north": {
+    "facing=east,visual=normal": {
+      "model": "hbm_ntm_rebirth:block/machines/boiler",
+      "y": 90
+    },
+    "facing=east,visual=overpressure": {
+      "model": "hbm_ntm_rebirth:block/machine_boiler",
+      "y": 90
+    },
+    "facing=north,visual=exploded": {
       "model": "hbm_ntm_rebirth:block/machine_boiler"
     },
-    "facing=south": {
+    "facing=north,visual=normal": {
+      "model": "hbm_ntm_rebirth:block/machines/boiler"
+    },
+    "facing=north,visual=overpressure": {
+      "model": "hbm_ntm_rebirth:block/machine_boiler"
+    },
+    "facing=south,visual=exploded": {
       "model": "hbm_ntm_rebirth:block/machine_boiler",
       "y": 180
     },
-    "facing=west": {
+    "facing=south,visual=normal": {
+      "model": "hbm_ntm_rebirth:block/machines/boiler",
+      "y": 180
+    },
+    "facing=south,visual=overpressure": {
+      "model": "hbm_ntm_rebirth:block/machine_boiler",
+      "y": 180
+    },
+    "facing=west,visual=exploded": {
+      "model": "hbm_ntm_rebirth:block/machine_boiler",
+      "y": 270
+    },
+    "facing=west,visual=normal": {
+      "model": "hbm_ntm_rebirth:block/machines/boiler",
+      "y": 270
+    },
+    "facing=west,visual=overpressure": {
       "model": "hbm_ntm_rebirth:block/machine_boiler",
       "y": 270
     }

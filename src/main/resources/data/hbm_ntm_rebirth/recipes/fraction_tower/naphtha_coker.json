@@ -11,5 +11,6 @@
     "output2":  {
                     "fluid":  "hbm_ntm_rebirth:lightoil_crack",
                     "amount":  25
-                }
+                },
+    "source_order":  15
 }

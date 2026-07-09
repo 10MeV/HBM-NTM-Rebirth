@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:liquefaction",
+  "source_order": 27,
+  "input": {
+    "ingredient": [
+      {
+        "item": "minecraft:cod"
+      },
+      {
+        "item": "minecraft:salmon"
+      },
+      {
+        "item": "minecraft:tropical_fish"
+      },
+      {
+        "item": "minecraft:pufferfish"
+      }
+    ],
+    "count": 1,
+    "legacy_id": "minecraft:fish",
+    "legacy_meta": 32767,
+    "legacy_wildcard": true
+  },
+  "output": {
+    "amount": 100,
+    "fluid": "FISHOIL",
+    "pressure": 0
+  }
+}

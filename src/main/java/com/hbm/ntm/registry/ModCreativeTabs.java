@@ -13,12 +13,15 @@ import com.hbm.ntm.item.ICFPelletItem;
 import com.hbm.ntm.item.FoundryMoldItem;
 import com.hbm.ntm.item.FoundryScrapsItem;
 import com.hbm.ntm.item.GuideBookItem;
+import com.hbm.ntm.item.LegacyTemFlakesItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.item.MarshmallowItem;
+import com.hbm.ntm.item.NuclearWasteItem;
 import com.hbm.ntm.item.RBMKPelletItem;
 import com.hbm.ntm.item.SirenCassetteItem;
 import com.hbm.ntm.item.TrinketBlockItem;
+import com.hbm.ntm.item.UniversalGrenadeItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +48,8 @@ public final class ModCreativeTabs {
                         ModItems.PARTS_TAB_ITEMS.forEach(item -> {
                             if (item.get() instanceof DepletedFuelItem depletedFuel) {
                                 DepletedFuelItem.addCreativeStacks(dedupedOutput, depletedFuel);
+                            } else if (item.get() instanceof NuclearWasteItem waste) {
+                                NuclearWasteItem.addCreativeStacks(dedupedOutput, waste);
                             } else {
                                 dedupedOutput.accept(item.get());
                             }
@@ -75,6 +80,8 @@ public final class ModCreativeTabs {
                         ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> {
                             if (item.get() instanceof HbmBatteryItem battery) {
                                 battery.addCreativeStacks(dedupedOutput, item.get().getDefaultInstance());
+                            } else if (item.get() instanceof LegacyTemFlakesItem) {
+                                LegacyTemFlakesItem.addCreativeStacks(dedupedOutput, item.get());
                             } else if (item.get() instanceof MarshmallowItem) {
                                 MarshmallowItem.addCreativeStacks(dedupedOutput, item.get());
                             } else if (item.get() instanceof GuideBookItem) {
@@ -177,6 +184,8 @@ public final class ModCreativeTabs {
             FoundryMoldItem.addCreativeStacks(output, mold);
         } else if (item.get() instanceof FoundryScrapsItem scraps) {
             FoundryScrapsItem.addCreativeStacks(output, scraps);
+        } else if (item.get() instanceof NuclearWasteItem waste) {
+            NuclearWasteItem.addCreativeStacks(output, waste);
         } else if (item.get() instanceof RBMKPelletItem pellet) {
             RBMKPelletItem.addCreativeStacks(output, pellet);
         } else if (item.get() instanceof ICFPelletItem) {
@@ -185,6 +194,8 @@ public final class ModCreativeTabs {
             SirenCassetteItem.addCreativeStacks(output, cassette);
             } else if (item.get() instanceof SoyuzRocketItem soyuz) {
                 SoyuzRocketItem.addCreativeStacks(output, soyuz);
+        } else if (item.get() instanceof UniversalGrenadeItem) {
+            UniversalGrenadeItem.addCreativeStacks(output);
             } else {
             acceptSingleStack(output, item.get());
         }
