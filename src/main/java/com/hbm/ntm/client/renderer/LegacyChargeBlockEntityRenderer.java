@@ -5,8 +5,8 @@ import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.LegacyChargeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -68,22 +68,22 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
 
     private static void applyLegacyRotation(PoseStack poseStack, Direction facing) {
         switch (facing) {
-            case DOWN -> poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+            case DOWN -> LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
             case UP -> {
             }
             case NORTH -> {
-                poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, -90.0F);
             }
             case SOUTH -> {
-                poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, -90.0F);
             }
             case WEST -> {
-                poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, -90.0F);
             }
-            case EAST -> poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
+            case EAST -> LegacyPoseRotations.rotateZDegrees(poseStack, -90.0F);
         }
     }
 
@@ -95,8 +95,8 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
         poseStack.pushPose();
         poseStack.translate(-0.05F, -0.185F, 0.15F);
         poseStack.scale(0.0125F, -0.0125F, 0.0125F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
         font.drawInBatch(text, 0.0F, 0.0F, 0x00FF00, false, poseStack.last().pose(), buffer,
                 Font.DisplayMode.NORMAL, 0, packedLight);
         poseStack.popPose();

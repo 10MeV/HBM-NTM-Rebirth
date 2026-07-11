@@ -1,10 +1,12 @@
 package com.hbm.items.machine;
 
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.util.EnumUtil;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.RegistryObject;
 
 /**
  * Legacy 1.7.10 package bridge for breeder rod metadata families.
@@ -35,6 +37,25 @@ public class ItemBreedingRod extends Item {
 
     public BreedingRodType type() {
         return type;
+    }
+
+    @Override
+    public boolean hasCraftingRemainingItem(ItemStack stack) {
+        return family != null;
+    }
+
+    @Override
+    public ItemStack getCraftingRemainingItem(ItemStack stack) {
+        if (family == null) {
+            return ItemStack.EMPTY;
+        }
+        String emptyRodName = switch (family) {
+            case SINGLE -> "rod_empty";
+            case DUAL -> "rod_dual_empty";
+            case QUAD -> "rod_quad_empty";
+        };
+        RegistryObject<Item> emptyRod = ModItems.legacyItem(emptyRodName);
+        return emptyRod == null ? ItemStack.EMPTY : new ItemStack(emptyRod.get());
     }
 
     public ItemStack stackFromEnum(int count, Enum<?> material) {

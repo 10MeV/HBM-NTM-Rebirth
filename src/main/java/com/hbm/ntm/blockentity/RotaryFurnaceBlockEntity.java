@@ -96,6 +96,8 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
     private final HbmFluidTank steamTank;
     private final HbmFluidTank spentSteamTank;
     private final HbmFluidTank smokeTank;
+    private final List<HbmFluidTank> receivingTanks;
+    private final List<HbmFluidTank> sendingTanks;
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -165,6 +167,8 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
         this.steamTank = steamTank;
         this.spentSteamTank = spentSteamTank;
         this.smokeTank = smokeTank;
+        this.receivingTanks = List.of(inputTank, steamTank);
+        this.sendingTanks = List.of(spentSteamTank, smokeTank);
         this.steamTank.setTankType(HbmFluids.STEAM);
         this.spentSteamTank.setTankType(HbmFluids.SPENTSTEAM);
         this.smokeTank.setTankType(HbmFluids.SMOKE);
@@ -196,6 +200,9 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
             return;
         }
         furnace.lastAnim = furnace.anim;
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (furnace.isProgressing) {
             furnace.anim += Math.max((int) furnace.burnHeat, 1);
         }
@@ -298,12 +305,12 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
 
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
-        return List.of(inputTank, steamTank);
+        return receivingTanks;
     }
 
     @Override
     public List<HbmFluidTank> getSendingTanks() {
-        return List.of(spentSteamTank, smokeTank);
+        return sendingTanks;
     }
 
     @Override
@@ -468,7 +475,7 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
         boolean oldVenting = isVenting;
 
         setFluidTankTypeFromIdentifierSlot(items, SLOT_FLUID_ID, inputTank);
-        refreshTrackedTransceiverFluidPortsReport(getReceivingTanks(), getSendingTanks(), this);
+        refreshTrackedTransceiverFluidPorts(getReceivingTanks(), getSendingTanks(), this);
         if (spentSteamTank.getFill() > 0) {
             tryProvideFluidToPorts(spentSteamTank.getTankType(), spentSteamTank.getPressure(), this);
         }

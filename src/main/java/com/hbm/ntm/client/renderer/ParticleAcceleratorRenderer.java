@@ -11,7 +11,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjParticleAcceleratorModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -55,7 +55,7 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
         poseStack.pushPose();
         poseStack.translate(0.5D, yOffset(variant), 0.5D);
         if (variant != ParticleAcceleratorBlock.Variant.DIPOLE) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(yaw(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, yaw(state));
         }
 
         LegacyWavefrontModel model = model(variant);
@@ -86,10 +86,10 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
         float flash = Math.max(0.0F, beamline.getFlash(partialTick));
         if (flash > 0.0F) {
             int color = Math.min(255, (int) (230.0F * flash));
-            LegacyMachineEffectPresenter.enqueueUntexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
-                    poseStack, buffer, group -> group.add(ObjParticleAcceleratorModels.BEAMLINE,
-                            ObjParticleAcceleratorModels.beamlineGlassHandle(), color, color, 255, 180,
-                            LegacyTexturedRenderMode.ADDITIVE_CULL_NO_DEPTH_WRITE));
+            LegacyMachineEffectPresenter.enqueueUntexturedObjPart(PresentStage.AFTER_BLOCK_ENTITIES,
+                    poseStack, buffer, ObjParticleAcceleratorModels.BEAMLINE,
+                    ObjParticleAcceleratorModels.beamlineGlassHandle(), color, color, 255, 180,
+                    LegacyTexturedRenderMode.ADDITIVE_CULL_NO_DEPTH_WRITE);
         }
     }
 

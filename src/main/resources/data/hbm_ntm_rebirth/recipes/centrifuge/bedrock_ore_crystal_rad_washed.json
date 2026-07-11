@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"rad_washed\",type:\"crystal\"}"
+  },
+  "outputs": [
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:501,name:\"Borax\"}"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:1702,name:\"Molysite\"}"
+    },
+    {
+      "count": 9,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:1101,name:\"Sodalite\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"crystal\"}"
+    }
+  ],
+  "source_order": 151
+}

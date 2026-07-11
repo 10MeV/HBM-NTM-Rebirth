@@ -49,9 +49,6 @@ public class DfcReceiverBlockEntity extends HbmEnergyAndFluidBlockEntity
         receiver.tickServer(level, pos, state);
     }
 
-    public static void clientTick(Level level, BlockPos pos, BlockState state, DfcReceiverBlockEntity receiver) {
-    }
-
     private void tickServer(Level level, BlockPos pos, BlockState state) {
         long output = joules * 5000L;
         energy.setMaxPower(Math.max(0L, output));

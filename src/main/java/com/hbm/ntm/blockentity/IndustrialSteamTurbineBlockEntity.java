@@ -55,11 +55,13 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, IndustrialSteamTurbineBlockEntity turbine) {
         turbine.lastRotor = turbine.rotor;
-        double speed = turbine.spin >= 0.5D ? 30.0D : Math.sqrt(Math.max(0.0D, turbine.spin) * 2.0D) * 30.0D;
-        turbine.rotor += speed;
-        if (turbine.rotor >= 360.0D) {
-            turbine.lastRotor -= 360.0D;
-            turbine.rotor -= 360.0D;
+        if (!LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            double speed = turbine.spin >= 0.5D ? 30.0D : Math.sqrt(Math.max(0.0D, turbine.spin) * 2.0D) * 30.0D;
+            turbine.rotor += speed;
+            if (turbine.rotor >= 360.0D) {
+                turbine.lastRotor -= 360.0D;
+                turbine.rotor -= 360.0D;
+            }
         }
         turbine.updateAudioLoop();
     }

@@ -77,10 +77,15 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     private static final int MAX_LIQUID = MaterialShapes.BLOCK.q(128);
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(UpgradeType.SPEED, 3);
 
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot == SLOT_UPGRADE) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -151,8 +156,7 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
             furnace.subscribeEnergyReceiverToPorts(furnace.energyPorts(state), furnace.energy);
         }
 
-        furnace.upgrade = LegacyMachineUpgradeManager.checkSlots(furnace.items, SLOT_UPGRADE, SLOT_UPGRADE,
-                VALID_UPGRADES).getLevel(UpgradeType.SPEED);
+        furnace.upgrade = furnace.upgradeLevels().getLevel(UpgradeType.SPEED);
         furnace.progressing = false;
 
         if (furnace.lid > 0.0F) {
@@ -209,6 +213,10 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ArcFurnaceBlockEntity furnace) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            furnace.previousLid = furnace.lid;
+            return;
+        }
         float oldLid = furnace.previousLid;
         float currentLid = furnace.lid;
         if (currentLid != oldLid && level.getNearestPlayer(pos.getX() + 0.5D, pos.getY() + 4.0D,
@@ -681,8 +689,12 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
         hasMaterial = tag.getBoolean(TAG_HAS_MATERIAL);
         liquids.clear();
         liquids.addAll(Mats.readList(tag.getList(TAG_LIQUIDS, net.minecraft.nbt.Tag.TAG_COMPOUND)));
-        upgrade = LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE, SLOT_UPGRADE, VALID_UPGRADES)
-                .getLevel(UpgradeType.SPEED);
+        upgradeSlotCache.invalidate();
+        upgrade = upgradeLevels().getLevel(UpgradeType.SPEED);
+    }
+
+    private LegacyMachineUpgradeManager.Levels upgradeLevels() {
+        return upgradeSlotCache.get(items, SLOT_UPGRADE, SLOT_UPGRADE, VALID_UPGRADES);
     }
 
     @Override

@@ -5,9 +5,9 @@ import com.hbm.ntm.blockentity.MissileAssemblyBlockEntity;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
 import com.hbm.ntm.client.obj.ObjMissilePartModels.LegacyMissilePart;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.item.missile.CustomMissilePartProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -55,7 +55,7 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(legacyRotation(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, legacyRotation(facing));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             renderPreviewMissile(assembly, poseStack, buffer, modelLight);
         }
@@ -89,10 +89,10 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.5D, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
         poseStack.translate(-plan.multipartHeight() / 2.0D, 0.0D, 0.0D);
-        poseStack.mulPose(Axis.XN.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.ZN.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, -90.0F);
         ObjMissilePartModels.renderMissile(thruster, fins, fuselage, warhead,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();

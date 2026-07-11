@@ -85,6 +85,9 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final HbmFluidTank lubricantTank;
     private final HbmFluidTank waterTank;
     private final HbmFluidTank steamTank;
+    private final List<HbmFluidTank> fuelLubeReceivingTanks;
+    private final List<HbmFluidTank> receivingTanks;
+    private final List<HbmFluidTank> sendingTanks;
     private final HbmFluidPortSubscriptionTracker fuelLubePortSubscriptions =
             new HbmFluidPortSubscriptionTracker();
     private final HbmFluidPortSubscriptionTracker waterPortSubscriptions =
@@ -143,6 +146,9 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
         this.lubricantTank = lubricantTank;
         this.waterTank = waterTank;
         this.steamTank = steamTank;
+        this.fuelLubeReceivingTanks = List.of(fuelTank, lubricantTank);
+        this.receivingTanks = List.of(fuelTank, lubricantTank, waterTank);
+        this.sendingTanks = List.of(steamTank);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, TurbineGasBlockEntity turbine) {
@@ -319,8 +325,8 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         double consumption = maxFuelConsumption(fuelTank.getTankType());
         if (level.getGameTime() % 20L == 0L && fuelTank.getTankType() != HbmFluids.OXYHYDROGEN) {
-            PollutionManager.applyPollutionDelta(level, pos, PollutionType.SOOT,
-                    com.hbm.handler.pollution.PollutionHandler.SOOT_PER_SECOND * 3.0F);
+            PollutionManager.incrementPollution(level, pos, PollutionType.SOOT,
+                    PollutionManager.SOOT_PER_SECOND * 3.0F);
         }
         makePower(level, consumption, throttle);
     }
@@ -437,9 +443,8 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     private void refreshLegacyPortSubscriptions(Level level, BlockPos pos) {
         Direction facing = facing();
         fuelLubePortSubscriptions.refreshReceiver(level, pos, fuelLubeFluidPorts(facing),
-                List.of(fuelTank, lubricantTank), this);
-        waterPortSubscriptions.refreshReceiver(level, pos, waterFluidPorts(facing),
-                List.of(waterTank), this);
+                fuelLubeReceivingTanks, this);
+        waterPortSubscriptions.refreshReceiver(level, pos, waterFluidPorts(facing), waterTank, this);
     }
 
     private void tryProvideSteamToLegacyPorts(Level level, BlockPos pos) {
@@ -597,12 +602,12 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
-        return List.of(fuelTank, lubricantTank, waterTank);
+        return receivingTanks;
     }
 
     @Override
     public List<HbmFluidTank> getSendingTanks() {
-        return List.of(steamTank);
+        return sendingTanks;
     }
 
     @Override

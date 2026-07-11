@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/concrete_colored_ext.machine_stripe",
+    "down": "hbm_ntm_rebirth:block/concrete_colored_ext.machine",
+    "up": "hbm_ntm_rebirth:block/concrete_colored_ext.machine",
+    "north": "hbm_ntm_rebirth:block/concrete_colored_ext.machine_stripe",
+    "east": "hbm_ntm_rebirth:block/concrete_colored_ext.machine_stripe",
+    "south": "hbm_ntm_rebirth:block/concrete_colored_ext.machine_stripe",
+    "west": "hbm_ntm_rebirth:block/concrete_colored_ext.machine_stripe"
+  }
+}

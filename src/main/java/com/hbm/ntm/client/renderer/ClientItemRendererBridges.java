@@ -51,6 +51,10 @@ public final class ClientItemRendererBridges {
         LegacyItemRendererBridge.accept(consumer, () -> LegacyLanternItemRenderer.INSTANCE);
     }
 
+    public static void acceptShimmerWeapon(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> LegacyShimmerWeaponItemRenderer.INSTANCE);
+    }
+
     public static void acceptNuclearDevice(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> NuclearDeviceItemRenderer.INSTANCE);
     }

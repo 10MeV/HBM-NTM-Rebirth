@@ -9,8 +9,8 @@ import com.hbm.ntm.blockentity.RadioReceiverBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer.TexturedQuadBatch;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -69,8 +69,8 @@ public class RadioDecoRenderer<T extends BlockEntity> implements BlockEntityRend
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.scale(0.55F, 0.55F, 0.55F);
         poseStack.translate(-0.5D, -0.5D, -0.5D);
         if (state.getBlock() instanceof RadioboxBlock) {
@@ -128,7 +128,7 @@ public class RadioDecoRenderer<T extends BlockEntity> implements BlockEntityRend
         }
         poseStack.pushPose();
         poseStack.translate(4.0D, 16.0D, -10.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(active ? -160.0F : -20.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, active ? -160.0F : -20.0F);
         TexturedQuadBatch leverBatch = LegacyTexturedQuadRenderer.texturedQuadBatch(RADIOBOX_TEXTURE, poseStack,
                 buffer, LegacyTexturedRenderMode.CUTOUT_CULL, 255);
         cube(leverBatch, 32.0F, 32.0F, packedLight, packedOverlay,
@@ -139,8 +139,8 @@ public class RadioDecoRenderer<T extends BlockEntity> implements BlockEntityRend
 
     private static void applyLegacyRoot(PoseStack poseStack, float yaw) {
         poseStack.translate(0.5D, 1.5D, 0.5D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, yaw);
         poseStack.scale(1.0F / 16.0F, 1.0F / 16.0F, 1.0F / 16.0F);
     }
 

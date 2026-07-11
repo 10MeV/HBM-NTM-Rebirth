@@ -5,8 +5,8 @@ import com.hbm.ntm.client.obj.LegacyUvAnimation;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjWeaponModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
@@ -71,9 +71,9 @@ public final class LegacyTomRenderer {
             applyInitialFlameScale(poseStack);
             float baseYaw = flameBaseYaw(currentMillis);
             for (int i = 0; i < FLAME_LAYERS; i++) {
-                poseStack.mulPose(Axis.YP.rotationDegrees(baseYaw + FLAME_RANDOM_YAWS[i]));
+                LegacyPoseRotations.rotateYDegrees(poseStack, baseYaw + FLAME_RANDOM_YAWS[i]);
                 flameSequence.render(poseStack);
-                poseStack.mulPose(Axis.YN.rotationDegrees(baseYaw));
+                LegacyPoseRotations.rotateYDegrees(poseStack, -baseYaw);
                 applyScale(poseStack, LAYER_POST_SCALE);
             }
         } finally {
@@ -91,11 +91,11 @@ public final class LegacyTomRenderer {
     }
 
     public static void applyBeforeFlameLayer(PoseStack poseStack, FlameLayer layer) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(layer.renderYaw()));
+        LegacyPoseRotations.rotateYDegrees(poseStack, layer.renderYaw());
     }
 
     public static void applyAfterFlameLayer(PoseStack poseStack, FlameLayer layer) {
-        poseStack.mulPose(Axis.YN.rotationDegrees(layer.undoYaw()));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -layer.undoYaw());
         applyScale(poseStack, layer.postScale());
     }
 

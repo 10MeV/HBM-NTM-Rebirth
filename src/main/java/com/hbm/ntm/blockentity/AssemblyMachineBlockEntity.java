@@ -96,9 +96,14 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
             UpgradeType.POWER, 3,
             UpgradeType.OVERDRIVE, 3);
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_END - SLOT_UPGRADE_START + 1);
     private final ItemStackHandler items = new ItemStackHandler(17) {
         @Override
         protected void onContentsChanged(int slot) {
+            if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
+                invalidateUpgradeFactors();
+            }
             setChanged();
         }
 
@@ -132,11 +137,14 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private final HbmEnergyStorage energy = new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_MAX_POWER, 0L);
     private final HbmFluidTank inputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
     private final HbmFluidTank outputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
+    private final List<HbmFluidTank> inputTankList = List.of(inputTank);
+    private final List<HbmFluidTank> outputTankList = List.of(outputTank);
+    private final List<HbmFluidTank> allTankList = List.of(inputTank, outputTank);
     private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AssemblyAccessibleItemHandler());
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
-            ForgeRecipeFluidHandlerAdapter.create(List.of(inputTank), List.of(outputTank), 0,
+            ForgeRecipeFluidHandlerAdapter.create(inputTankList, outputTankList, 0,
                     this::onFluidContentsChanged));
     private final AssemblerArm[] arms = new AssemblerArm[] { new AssemblerArm(1L), new AssemblerArm(2L) };
 
@@ -150,6 +158,9 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private String selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
     private Object audioLoop;
     private boolean wasClientProcessing;
+    @Nullable
+    private ProcessingFactors cachedUpgradeFactors;
+    private long appliedMaxPower = Long.MIN_VALUE;
 
     public AssemblyMachineBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ASSEMBLY_MACHINE.get(), pos, state);
@@ -180,21 +191,24 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, AssemblyMachineBlockEntity blockEntity) {
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
         blockEntity.prevRing = blockEntity.ring;
-        boolean animate = blockEntity.didProcess;
+        boolean animate = blockEntity.didProcess && !skipAnimation;
         if (animate) {
             blockEntity.updateRing(level);
         }
-        for (AssemblerArm arm : blockEntity.arms) {
-            arm.updateInterp();
-            if (animate) {
-                arm.updateArm();
-                if (arm.struckThisTick()) {
-                    LegacyMachineAudioBridge.playLocal(blockEntity, "hbm:block.assemblerStrike",
-                            0.5F, 1.0F, 50.0D);
+        if (!skipAnimation) {
+            for (AssemblerArm arm : blockEntity.arms) {
+                arm.updateInterp();
+                if (animate) {
+                    arm.updateArm();
+                    if (arm.struckThisTick()) {
+                        LegacyMachineAudioBridge.playLocal(blockEntity, "hbm:block.assemblerStrike",
+                                0.5F, 1.0F, 50.0D);
+                    }
+                } else {
+                    arm.returnToNullPos();
                 }
-            } else {
-                arm.returnToNullPos();
             }
         }
         blockEntity.updateAudioLoop();
@@ -235,17 +249,17 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public List<HbmFluidTank> getAllTanks() {
-        return List.of(inputTank, outputTank);
+        return allTankList;
     }
 
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
-        return List.of(inputTank);
+        return inputTankList;
     }
 
     @Override
     public List<HbmFluidTank> getSendingTanks() {
-        return List.of(outputTank);
+        return outputTankList;
     }
 
     @Override
@@ -310,7 +324,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         return recipe != null
                 && energy.getPower() >= recipe.getPower()
                 && GenericMachineRecipeRuntime.canProcess(recipe, items, INPUT_SLOTS, OUTPUT_SLOTS,
-                List.of(inputTank), List.of(outputTank));
+                inputTankList, outputTankList);
     }
 
     public boolean isProcessing() {
@@ -412,6 +426,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         if (selectedRecipe.isBlank()) {
             selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
         }
+        invalidateUpgradeFactors();
+        appliedMaxPower = Long.MIN_VALUE;
     }
 
     @Override
@@ -550,7 +566,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
         ProcessingResult result = GenericMachineRecipeRuntime.update(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
                 selectedRecipe, progress, items.getStackInSlot(SLOT_BLUEPRINT), energy, items, INPUT_SLOTS, OUTPUT_SLOTS,
-                List.of(inputTank), List.of(outputTank), upgradeFactors(), true, TANK_CAPACITY, worldPosition);
+                inputTankList, outputTankList, upgradeFactors(), true, TANK_CAPACITY, worldPosition);
         selectedRecipe = result.selectedRecipe();
         progress = result.progress();
         didProcess = result.didProcess();
@@ -563,8 +579,11 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private ProcessingFactors upgradeFactors() {
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(
-                items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
+        if (cachedUpgradeFactors != null) {
+            return cachedUpgradeFactors;
+        }
+        LegacyMachineUpgradeManager.Levels levels =
+                upgradeSlotCache.get(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
         double speed = 1.0D;
         double pow = 1.0D;
         int speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
@@ -575,7 +594,13 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
         pow -= powerLevel * 0.25D;
         pow += speedLevel;
         pow += overdriveLevel * 10.0D / 3.0D;
-        return new ProcessingFactors(speed, pow);
+        cachedUpgradeFactors = new ProcessingFactors(speed, pow);
+        return cachedUpgradeFactors;
+    }
+
+    private void invalidateUpgradeFactors() {
+        cachedUpgradeFactors = null;
+        upgradeSlotCache.invalidate();
     }
 
     private void processMeteoriteSword() {
@@ -586,14 +611,22 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private void setupTanks(@Nullable GenericMachineRecipe recipe) {
-        GenericMachineRecipeRuntime.setupTanksReport(recipe, List.of(inputTank), List.of(outputTank), TANK_CAPACITY);
+        GenericMachineRecipeRuntime.setupTanks(recipe, inputTankList, outputTankList, TANK_CAPACITY);
     }
 
     private void updateDynamicCapacity(@Nullable GenericMachineRecipe recipe) {
-        long targetMax = recipe == null ? DEFAULT_MAX_POWER : Math.max(DEFAULT_MAX_POWER, recipe.getPower() * 100L);
-        targetMax = Math.max(targetMax, energy.getPower());
+        applyDynamicCapacity(recipe == null ? DEFAULT_MAX_POWER : recipe.getPower() * 100L);
+    }
+
+    private void applyDynamicCapacity(long targetBase) {
+        long targetMax = Math.max(Math.max(targetBase, DEFAULT_MAX_POWER), energy.getPower());
+        if (appliedMaxPower == targetMax && energy.getMaxPower() == targetMax
+                && energy.getReceiverSpeed() == targetMax && energy.getProviderSpeed() == 0L) {
+            return;
+        }
         energy.setMaxPower(targetMax);
         energy.setTransferRates(targetMax, 0L);
+        appliedMaxPower = targetMax;
     }
 
     private int subscribeEnergyReceiverToPorts() {
@@ -618,7 +651,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private void refreshFluidPortSubscriptions() {
         if (level != null && !level.isClientSide) {
             fluidPortSubscriptions.refreshTransceiver(level, worldPosition, FLUID_PORTS,
-                    List.of(inputTank), List.of(outputTank), this);
+                    inputTankList, outputTankList, this);
         }
     }
 

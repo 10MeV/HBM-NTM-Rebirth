@@ -135,12 +135,10 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
 
     private boolean processFluidContainers() {
         ItemStackHandler items = getItems();
-        return items != null && processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
-                HbmFluidItemTransfer.loadTransfers(
-                        SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank),
-                HbmFluidItemTransfer.unloadTransfers(
-                        SLOT_OUTPUT_1_CONTAINER, SLOT_OUTPUT_1_CONTAINER_OUTPUT, 2,
-                        reformateTank, petroleumTank, hydrogenTank)));
+        return items != null
+                && (processFluidItemLoadTransfer(items, SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank)
+                | processFluidItemUnloadTransfers(items, SLOT_OUTPUT_1_CONTAINER,
+                        SLOT_OUTPUT_1_CONTAINER_OUTPUT, 2, reformateTank, petroleumTank, hydrogenTank));
     }
 
     private boolean reform() {
@@ -152,26 +150,30 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
         if (energy.getPower() < POWER_PER_OPERATION) {
             return changed;
         }
-        HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
-                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, 100)),
-                List.of(recipe.first(), recipe.second(), recipe.third()),
-                List.of(inputTank),
-                List.of(reformateTank, petroleumTank, hydrogenTank),
-                false);
-        if (!report.complete()) {
+        if (!HbmFluidRecipeIO.canConsumeInput(inputTank, 100)
+                || !HbmFluidRecipeIO.canProduceOutput(reformateTank, recipe.first())
+                || !HbmFluidRecipeIO.canProduceOutput(petroleumTank, recipe.second())
+                || !HbmFluidRecipeIO.canProduceOutput(hydrogenTank, recipe.third())) {
             return changed;
         }
+        HbmFluidRecipeIO.consumeInput(inputTank, 100, false);
+        HbmFluidRecipeIO.produceOutput(reformateTank, recipe.first(), false);
+        HbmFluidRecipeIO.produceOutput(petroleumTank, recipe.second(), false);
+        HbmFluidRecipeIO.produceOutput(hydrogenTank, recipe.third(), false);
         consumePower(POWER_PER_OPERATION);
         onFluidContentsChanged();
         return true;
     }
 
     private boolean setupRecipeTanks(TripleRecipe recipe) {
-        List<HbmFluidStack> outputs = recipe == null
-                ? List.of()
-                : List.of(recipe.first(), recipe.second(), recipe.third());
-        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
-                List.of(), outputs, List.of(), List.of(reformateTank, petroleumTank, hydrogenTank)).changed();
+        if (recipe == null) {
+            return HbmFluidRecipeIO.conformTankChanged(reformateTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(petroleumTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(hydrogenTank, null, 0);
+        }
+        return HbmFluidRecipeIO.conformTankChanged(reformateTank, recipe.first(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(petroleumTank, recipe.second(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(hydrogenTank, recipe.third(), 0);
     }
 
     private boolean hasCatalyst() {

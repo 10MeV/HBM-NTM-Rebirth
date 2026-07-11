@@ -49,11 +49,10 @@ public class ElectricFurnaceBlock extends HorizontalMachineBlock implements Enti
         if (type != ModBlockEntities.ELECTRIC_FURNACE.get()) {
             return null;
         }
-        return level.isClientSide
-                ? (tickLevel, tickPos, tickState, blockEntity) ->
-                ElectricFurnaceBlockEntity.clientTick(tickLevel, tickPos, tickState,
-                        (ElectricFurnaceBlockEntity) blockEntity)
-                : (tickLevel, tickPos, tickState, blockEntity) ->
+        if (level.isClientSide) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) ->
                 ElectricFurnaceBlockEntity.serverTick(tickLevel, tickPos, tickState,
                         (ElectricFurnaceBlockEntity) blockEntity);
     }

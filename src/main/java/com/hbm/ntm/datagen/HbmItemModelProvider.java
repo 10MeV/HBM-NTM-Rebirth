@@ -553,6 +553,18 @@ public class HbmItemModelProvider extends ItemModelProvider {
                     .parent(new ModelFile.UncheckedModelFile(modLoc("block/network/pipe_anchor")));
             return;
         }
+        if (path.equals("shimmer_sledge") || path.equals("shimmer_axe")) {
+            builtinEntityItem(path);
+            return;
+        }
+        if (path.equals("shimmer_head")) {
+            generatedItem(path, "shimmer_head_original");
+            return;
+        }
+        if (path.equals("shimmer_axe_head")) {
+            generatedItem(path, "shimmer_axe_head");
+            return;
+        }
         String abilityTexture = abilityTexture(path);
         if (abilityTexture != null) {
             handheldItem(path, abilityTexture);

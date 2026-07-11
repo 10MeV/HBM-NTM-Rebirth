@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:pyro_oven",
+  "duration": 10,
+  "input_item": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary\",type:\"light\"}"
+  },
+  "output_fluid": {
+    "amount": 50,
+    "fluid": "VITRIOL"
+  },
+  "output_item": {
+    "item": "hbm_ntm_rebirth:bedrock_ore",
+    "nbt": "{grade:\"primary_roasted\",type:\"light\"}"
+  },
+  "source_order": 41
+}

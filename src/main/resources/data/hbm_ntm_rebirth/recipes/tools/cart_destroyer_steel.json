@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:blades_steel"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:cart_empty_steel"
+    },
+    "L": {
+      "type": "hbm_ntm_rebirth:fluid_container",
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:lava"
+    },
+    "S": {
+      "tag": "forge:ingots/steel"
+    }
+  },
+  "pattern": [
+    "S S",
+    "BLB",
+    "SCS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cart_destroyer_steel"
+  },
+  "show_notification": true
+}

@@ -51,6 +51,17 @@ public class HbmLanguageProvider extends LanguageProvider {
                 "\"I hope the lead I'm mining will be used in your paint\"");
         add("advancements.hbm_ntm_rebirth.hidden.title", "Hidden Catalog");
         add("advancements.hbm_ntm_rebirth.hidden.description", "Kill a tainted creeper with a falling boxcar.");
+        add("advancements.hbm_ntm_rebirth.blast_furnace.title", "Coal and Iron");
+        add("advancements.hbm_ntm_rebirth.blast_furnace.description",
+                "They salvaged a sunken dreadnought for Explorer 1.");
+        add("advancements.hbm_ntm_rebirth.assembly.title", "The Factory Grows");
+        add("advancements.hbm_ntm_rebirth.assembly.description", "Wait, it's already 1 am?");
+        add("advancements.hbm_ntm_rebirth.chemplant.title", "The Factory Grows Pt. 2");
+        add("advancements.hbm_ntm_rebirth.chemplant.description", "Now you're thinking with chemicals!");
+        add("advancements.hbm_ntm_rebirth.desh.title", "Le Verrier");
+        add("advancements.hbm_ntm_rebirth.desh.description", "\"Come on then, you lot. Places to go!\"");
+        add("advancements.hbm_ntm_rebirth.technetium.title", "Big Man, Pig Man");
+        add("advancements.hbm_ntm_rebirth.technetium.description", "It's medicinal, it's medicinal!");
         add("advancements.hbm_ntm_rebirth.digamma_see.title", "ENTER THE ABYSS");
         add("advancements.hbm_ntm_rebirth.digamma_see.description", "It's a bit dark, bring a flashlight.");
         add("advancements.hbm_ntm_rebirth.digamma_feel.title", "SEWAGE-INFUSED GARBAGE WORLD");
@@ -157,6 +168,24 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.blueprint_folder", "Blueprint Booklet");
         add("item.hbm_ntm_rebirth.blueprint_folder_discover", "Blueprint Booklet");
         add("item.hbm_ntm_rebirth.blueprint_folder_secret", "Blueprint Booklet");
+        add("item.hbm_ntm_rebirth.bobmazon", "Bobmazon");
+        add("block.hbm_ntm_rebirth.concrete_colored_ext.bronze",
+                "Builder's Choice Concrete - Bronze Plating");
+        add("block.hbm_ntm_rebirth.concrete_colored_ext.hazard",
+                "Builder's Choice Concrete - Hazard Stripe");
+        add("block.hbm_ntm_rebirth.concrete_colored_ext.indigo",
+                "Builder's Choice Concrete - Deep Indigo");
+        add("block.hbm_ntm_rebirth.concrete_colored_ext.machine",
+                "Builder's Choice Concrete - Industrial Tinge");
+        add("block.hbm_ntm_rebirth.concrete_colored_ext.machine_stripe",
+                "Builder's Choice Concrete - Industrial Stripe");
+        add("block.hbm_ntm_rebirth.concrete_colored_ext.pink",
+                "Builder's Choice Concrete - Manly Pink");
+        add("block.hbm_ntm_rebirth.concrete_colored_ext.purple",
+                "Builder's Choice Concrete - Mysterious Purple");
+        add("block.hbm_ntm_rebirth.concrete_colored_ext.sand",
+                "Builder's Choice Concrete - Desert Storm");
+        add("tile.nospawn", "Mobs cannot spawn on this block!");
         add("item.hbm_ntm_rebirth.upgrade_speed_1", "Speed Upgrade Mk.I");
         add("item.hbm_ntm_rebirth.upgrade_speed_2", "Speed Upgrade Mk.II");
         add("item.hbm_ntm_rebirth.upgrade_speed_3", "Speed Upgrade Mk.III");
@@ -186,6 +215,21 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.nothing", "Nothing");
         add("item.hbm_ntm_rebirth.wiring_red_copper", "Cable Drum");
         add("item.hbm_ntm_rebirth.power_net_tool", "Cable Network Analysis Tool");
+        add("item.hbm_ntm_rebirth.boat_rubber", "Rubber Boat");
+        add("item.hbm_ntm_rebirth.rebar_placer", "Rebar Placer");
+        add("container.rebar", "Rebar Placer");
+        add("item.hbm_ntm_rebirth.cart_empty_wood", "Minecart");
+        add("item.hbm_ntm_rebirth.cart_empty_steel", "Minecart");
+        add("item.hbm_ntm_rebirth.cart_empty_painted", "Minecart");
+        add("item.hbm_ntm_rebirth.cart_powder_wood", "Powder Cart");
+        add("item.hbm_ntm_rebirth.cart_powder_steel", "Powder Cart");
+        add("item.hbm_ntm_rebirth.cart_powder_painted", "Powder Cart");
+        add("item.hbm_ntm_rebirth.cart_semtex_wood", "Semtex Cart");
+        add("item.hbm_ntm_rebirth.cart_semtex_steel", "Semtex Cart");
+        add("item.hbm_ntm_rebirth.cart_semtex_painted", "Semtex Cart");
+        add("item.hbm_ntm_rebirth.cart_destroyer_steel", "Scrap Destroying Cart");
+        add("item.hbm_ntm_rebirth.cart_destroyer_painted", "Scrap Destroying Cart");
+        add("item.hbm_ntm_rebirth.cart_crate", "Crate Cart");
         add("item.hbm_ntm_rebirth.nuke_electric_kit", "Electronic Engineer's Kit");
         add("block.hbm_ntm_rebirth.deco_toaster", "Broken Toaster");
         add("item.hbm_ntm_rebirth.stamp_iron_plate", "Plate Stamp (Iron)");
@@ -248,8 +292,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.iv_xp", "Experience Bag");
         add("item.hbm_ntm_rebirth.iv_xp_empty", "Empty Experience Bag");
         add("item.hbm_ntm_rebirth.radaway", "RadAway");
+        add("item.hbm_ntm_rebirth.radaway.desc", "Removes 140 RAD");
         add("item.hbm_ntm_rebirth.radaway_strong", "Strong RadAway");
+        add("item.hbm_ntm_rebirth.radaway_strong.desc", "Removes 350 RAD");
         add("item.hbm_ntm_rebirth.radaway_flush", "Elite RadAway");
+        add("item.hbm_ntm_rebirth.radaway_flush.desc", "Removes 1000 RAD");
         add("item.hbm_ntm_rebirth.radx", "Rad-X");
         add("item.hbm_ntm_rebirth.radx.desc", "Increases radiation resistance by 0.2 (37%%) for 3 minutes");
         add("item.hbm_ntm_rebirth.five_htp", "Enteramine Pills");
@@ -2399,6 +2446,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.ore_basalt_asbestos", "Asbestos-Rich Basalt");
         add("block.hbm_ntm_rebirth.ore_basalt_gem", "Gem-Rich Basalt");
         add("block.hbm_ntm_rebirth.ore_basalt_molysite", "Molysite-Rich Basalt");
+        add("block.hbm_ntm_rebirth.block_coke.coal", "Block of Coal Coke");
+        add("block.hbm_ntm_rebirth.block_coke.lignite", "Block of Lignite Coke");
+        add("block.hbm_ntm_rebirth.block_coke.petroleum", "Block of Petroleum Coke");
         add("block.hbm_ntm_rebirth.volcanic_lava_block", "Volcanic Lava");
         add("block.hbm_ntm_rebirth.rad_lava_block", "Volcanic Lava");
         add("block.hbm_ntm_rebirth.volcano_core", "Volcano Core");
@@ -2660,7 +2710,13 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.ingot_meteorite", "Meteorite Ingot");
         add("item.hbm_ntm_rebirth.ingot_meteorite_forged", "Forged Meteorite Ingot");
         add("item.hbm_ntm_rebirth.blade_meteorite", "Meteorite Blade");
+        add("item.hbm_ntm_rebirth.shimmer_head", "Heavy Hammer Head");
+        add("item.hbm_ntm_rebirth.shimmer_axe_head", "Heavy Axe Head");
         add("item.hbm_ntm_rebirth.shimmer_handle", "Reinforced Polymer Handle");
+        add("item.hbm_ntm_rebirth.shimmer_sledge", "Shimmer Sledge");
+        add("item.hbm_ntm_rebirth.shimmer_sledge.desc", "Breaks everything, even portals.");
+        add("item.hbm_ntm_rebirth.shimmer_axe", "Shimmer Axe");
+        add("item.hbm_ntm_rebirth.shimmer_axe.desc", "Timber!");
         add("item.hbm_ntm_rebirth.fuel_tank_large", "Large Fuel Tank");
         add("item.hbm_ntm_rebirth.fuel_tank_medium", "Medium Fuel Tank");
         add("item.hbm_ntm_rebirth.fuel_tank_small", "Small Fuel Tank");
@@ -2921,6 +2977,7 @@ public class HbmLanguageProvider extends LanguageProvider {
     private void addEntityTranslations() {
         add("entity.hbm_ntm_rebirth.entity_c_item", "Moving Item");
         add("entity.hbm_ntm_rebirth.entity_c_package", "Moving Package");
+        add("entity.hbm_ntm_rebirth.entity_rubber_boat", "Rubber Boat");
         add("entity.hbm_ntm_rebirth.entity_fucc_a_ducc", "Duck");
         add("entity.hbm_ntm_rebirth.entity_mob_tainted_creeper", "Tainted Creeper");
         add("entity.hbm_ntm_rebirth.entity_cyber_crab", "Cyber Crab");
@@ -3700,9 +3757,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.cell_balefire", "Gaseous Balefire Cell");
         add("item.hbm_ntm_rebirth.cell_antimatter", "Antimatter Cell");
         add("item.hbm_ntm_rebirth.cell_anti_schrabidium", "Antischrabidium Cell");
+        add("item.hbm_ntm_rebirth.cell_deuterium", "Deuterium Cell");
         add("item.hbm_ntm_rebirth.cell_empty", "Empty Cell");
+        add("item.hbm_ntm_rebirth.cell_puf6", "Plutonium Hexafluoride Cell");
         add("item.hbm_ntm_rebirth.cell_sas3", "Schrabidium Trisulfide Cell");
         add("item.hbm_ntm_rebirth.cell_tritium", "Tritium Cell");
+        add("item.hbm_ntm_rebirth.cell_uf6", "Uranium Hexafluoride Cell");
         add("item.hbm_ntm_rebirth.centrifuge_element", "Centrifuge Element");
         add("item.hbm_ntm_rebirth.cinnebar", "Cinnabar");
         add("item.hbm_ntm_rebirth.coal_infernal", "Infernal Coal");

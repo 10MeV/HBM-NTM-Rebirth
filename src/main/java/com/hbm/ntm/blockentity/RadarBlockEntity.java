@@ -154,6 +154,10 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, RadarBlockEntity radar) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            radar.previousRotation = radar.rotation;
+            return;
+        }
         RadarHostTickProfile.Rotation rotation = RadarHostTickProfile.advanceRotation(
                 radar.previousRotation, radar.rotation, radar.getPower() > 0L);
         radar.previousRotation = rotation.previous();

@@ -85,10 +85,18 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
 
     private final Kind kind;
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
+    private final LegacyMachineUpgradeManager.SlotCache centrifugeUpgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(2);
+    private final LegacyMachineUpgradeManager.SlotCache crystallizerUpgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(2);
     private final ItemStackHandler items = new ItemStackHandler(8) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= 5 && slot <= 7) {
+                centrifugeUpgradeSlotCache.invalidate();
+                crystallizerUpgradeSlotCache.invalidate();
+            }
             if (kind == Kind.CRYSTALLIZER) {
                 LegacyUpgradeSlotSound.playIfUpgrade(ProcessingMachineBlockEntity.this, slot, getStackInSlot(slot),
                         5, 6, 0.5D, 1.0F, 1.0F);
@@ -231,8 +239,9 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
             return;
         }
 
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
         machine.prevAngle = machine.angle;
-        if (machine.isOn) {
+        if (machine.isOn && !skipAnimation) {
             machine.angle += 5.0F * machine.getCycleCount();
             if (machine.angle >= 360.0F) {
                 machine.angle -= 360.0F;
@@ -279,15 +288,14 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     }
 
     private boolean tickCrystallizer(Level level) {
-        UpgradeFactors factors = crystallizerUpgradeFactors();
+        LegacyMachineUpgradeManager.Levels levels = crystallizerUpgradeLevels();
+        UpgradeFactors factors = crystallizerUpgradeFactors(levels);
         consumption = factors.consumption();
         boolean changed = false;
         boolean wasOn = isOn;
         isOn = false;
 
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(items, 5, 6,
-                CRYSTALLIZER_UPGRADES);
-        int cycles = getCycleCount();
+        int cycles = getCycleCount(levels);
         for (int i = 0; i < cycles; i++) {
             ItemProcessingRecipe recipe = ItemProcessingRecipeRuntime.find(level,
                     ItemProcessingRecipe.Machine.CRYSTALLIZER, items.getStackInSlot(0),
@@ -335,8 +343,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     }
 
     private UpgradeFactors centrifugeUpgradeFactors() {
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(items, 6, 7,
-                CENTRIFUGE_UPGRADES);
+        LegacyMachineUpgradeManager.Levels levels = centrifugeUpgradeLevels();
         int speed = 1 + Math.min(levels.getLevel(UpgradeType.SPEED), 3);
         long power = CENTRIFUGE_BASE_CONSUMPTION
                 + (long) Math.min(levels.getLevel(UpgradeType.SPEED), 3) * CENTRIFUGE_BASE_CONSUMPTION;
@@ -348,8 +355,10 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     }
 
     private UpgradeFactors crystallizerUpgradeFactors() {
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(items, 5, 6,
-                CRYSTALLIZER_UPGRADES);
+        return crystallizerUpgradeFactors(crystallizerUpgradeLevels());
+    }
+
+    private UpgradeFactors crystallizerUpgradeFactors(LegacyMachineUpgradeManager.Levels levels) {
         int speed = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
         int effect = Math.min(levels.getLevel(UpgradeType.EFFECT), 3);
         return new UpgradeFactors(1, CRYSTALLIZER_DEMAND + (long) speed * CRYSTALLIZER_DEMAND
@@ -369,9 +378,19 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
         if (kind != Kind.CRYSTALLIZER) {
             return 1;
         }
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(items, 5, 6,
-                CRYSTALLIZER_UPGRADES);
+        return getCycleCount(crystallizerUpgradeLevels());
+    }
+
+    private int getCycleCount(LegacyMachineUpgradeManager.Levels levels) {
         return Math.min(1 + Math.min(levels.getLevel(UpgradeType.OVERDRIVE), 3) * 2, 7);
+    }
+
+    private LegacyMachineUpgradeManager.Levels centrifugeUpgradeLevels() {
+        return centrifugeUpgradeSlotCache.get(items, 6, 7, CENTRIFUGE_UPGRADES);
+    }
+
+    private LegacyMachineUpgradeManager.Levels crystallizerUpgradeLevels() {
+        return crystallizerUpgradeSlotCache.get(items, 5, 6, CRYSTALLIZER_UPGRADES);
     }
 
     private boolean canOutput(List<ItemStack> outputs, int firstSlot, int lastSlot) {
@@ -515,6 +534,8 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
         if (tag.contains(TAG_TANK)) {
             crystallizerTank.readFromNbt(tag, TAG_TANK);
         }
+        centrifugeUpgradeSlotCache.invalidate();
+        crystallizerUpgradeSlotCache.invalidate();
     }
 
     @Override

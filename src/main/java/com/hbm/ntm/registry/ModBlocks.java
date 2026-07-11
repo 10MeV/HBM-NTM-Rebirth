@@ -57,6 +57,7 @@ import com.hbm.ntm.block.CompressorBlock;
 import com.hbm.ntm.block.CombustionEngineBlock;
 import com.hbm.ntm.block.CombinationOvenBlock;
 import com.hbm.ntm.block.CondenserBlock;
+import com.hbm.ntm.block.ConcreteColoredExtBlock;
 import com.hbm.ntm.block.ConveyorPressBlock;
 import com.hbm.ntm.block.CoolingTowerBlock;
 import com.hbm.ntm.block.CraneLogisticsBlock;
@@ -143,6 +144,7 @@ import com.hbm.ntm.block.LegacyBarbedWireBlock;
 import com.hbm.ntm.block.LegacyChainBlock;
 import com.hbm.ntm.block.LegacyComplexShapeBlock;
 import com.hbm.ntm.block.LegacyConnectorBlock;
+import com.hbm.ntm.block.LegacyCokeBlock;
 import com.hbm.ntm.block.LegacyCoriumFiniteBlock;
 import com.hbm.ntm.block.LegacyCaveSpikeBlock;
 import com.hbm.ntm.block.LegacyCrystalVirusBlock;
@@ -165,6 +167,7 @@ import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMediumPylonBlock;
 import com.hbm.ntm.block.LegacyNtmFlowerBlock;
 import com.hbm.ntm.block.LegacyOreBlock;
+import com.hbm.ntm.block.RebarBlock;
 import com.hbm.ntm.block.OldBoilerBlock;
 import com.hbm.ntm.block.LegacyHotBlock;
 import com.hbm.ntm.block.LegacyLeavesLayerBlock;
@@ -812,6 +815,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> POLE_TOP = poleTop("pole_top");
     public static final RegistryObject<Block> POLE_SATELLITE_RECEIVER =
             poleSatelliteReceiver("pole_satellite_receiver");
+    public static final RegistryObject<Block> CONCRETE_COLORED_EXT = concreteColoredExt("concrete_colored_ext");
     public static final RegistryObject<Block> VENDING_MACHINE = vendingMachine("vending_machine");
     public static final RegistryObject<Block> MACHINE_ASSEMBLY_MACHINE = assemblyMachine("machine_assembly_machine");
     public static final RegistryObject<Block> MACHINE_TELEPORTER = teleporterMachine("machine_teleporter");
@@ -1240,6 +1244,7 @@ public final class ModBlocks {
             "pribris_radiating", MapColor.COLOR_GREEN, RBMKDebrisBlock.Kind.RADIATING);
     public static final RegistryObject<Block> PRIBRIS_DIGAMMA = pribrisDebris(
             "pribris_digamma", MapColor.COLOR_BLACK, RBMKDebrisBlock.Kind.DIGAMMA);
+    public static final RegistryObject<Block> BLOCK_COKE = cokeBlock("block_coke");
     public static final RegistryObject<Block> ORE_BASALT = basaltOre("ore_basalt");
     public static final RegistryObject<Block> VOLCANIC_LAVA_BLOCK = volcanicLavaBlock("volcanic_lava_block", false);
     public static final RegistryObject<Block> RAD_LAVA_BLOCK = volcanicLavaBlock("rad_lava_block", true);
@@ -2014,7 +2019,7 @@ public final class ModBlocks {
             PLANT_FLOWER_CD0, PLANT_FLOWER_CD1,
             BLOCK_CAP_NUKA, BLOCK_CAP_QUANTUM, BLOCK_CAP_SPARKLE, BLOCK_CAP_RAD, BLOCK_CAP_KORL, BLOCK_CAP_FRITZ,
             ASH_DIGAMMA, BALEFIRE, PRIBRIS, PRIBRIS_BURNING, PRIBRIS_RADIATING, PRIBRIS_DIGAMMA,
-            ORE_BASALT, VOLCANIC_LAVA_BLOCK, RAD_LAVA_BLOCK, BLOCK_FOAM, MUD_BLOCK,
+            BLOCK_COKE, CONCRETE_COLORED_EXT, ORE_BASALT, VOLCANIC_LAVA_BLOCK, RAD_LAVA_BLOCK, BLOCK_FOAM, MUD_BLOCK,
                     STEEL_SCAFFOLD, STEEL_BEAM, STEEL_GRATE, STEEL_GRATE_WIDE, CHAIN, BARBED_WIRE,
                     POLE_TOP, POLE_SATELLITE_RECEIVER, DECO_TOASTER, TEKTITE,
                     ORE_TEKTITE_OSMIRIDIUM, BLOCK_GRAPHITE, BLOCK_SEMTEX, BLOCK_C4,
@@ -7498,6 +7503,35 @@ public final class ModBlocks {
                                 + LegacyBasaltOreBlock.Variant.byLegacyMeta(variant).getSerializedName())));
     }
 
+    private static RegistryObject<Block> cokeBlock(String name) {
+        return registerBlockWithItem(
+                name,
+                () -> new LegacyCokeBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.METAL)
+                        .strength(5.0F, 10.0F)
+                        .sound(SoundType.METAL)
+                        .requiresCorrectToolForDrops()),
+                block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), LegacyCokeBlock.VARIANT,
+                        LegacyCokeBlock.Variant.values().length,
+                        variant -> Component.translatable("block." + HbmNtm.MOD_ID + ".block_coke."
+                                + LegacyCokeBlock.Variant.byLegacyMeta(variant).serializedName())));
+    }
+
+    private static RegistryObject<Block> concreteColoredExt(String name) {
+        return registerBlockWithItem(
+                name,
+                () -> new ConcreteColoredExtBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.STONE)
+                        .strength(15.0F, 140.0F)
+                        .sound(SoundType.STONE)
+                        .requiresCorrectToolForDrops()
+                        .isValidSpawn((state, level, pos, type) -> false)),
+                block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), ConcreteColoredExtBlock.VARIANT,
+                        ConcreteColoredExtBlock.Variant.values().length,
+                        variant -> Component.translatable("block." + HbmNtm.MOD_ID + ".concrete_colored_ext."
+                                + ConcreteColoredExtBlock.Variant.byLegacyMeta(variant).serializedName())));
+    }
+
     private static RegistryObject<Block> volcanicLavaBlock(String name, boolean radioactive) {
         RegistryObject<Block> block = registerBlockWithoutItem(name,
                 () -> new LegacyVolcanicLavaBlock(
@@ -7775,7 +7809,7 @@ public final class ModBlocks {
             case "spotlight_fluoro" -> LegacySpotlightBlock.fluoro(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15), true);
             case "spotlight_halogen" -> LegacySpotlightBlock.halogen(simpleResourceProperties(name, textureName).noOcclusion().lightLevel(state -> 15), true);
             case "floodlight" -> LegacyComplexShapeBlock.floodlight(simpleResourceProperties(name, textureName).noOcclusion());
-            case "rebar" -> LegacyComplexShapeBlock.rebar(simpleResourceProperties(name, textureName).noOcclusion());
+            case "rebar" -> new RebarBlock(simpleResourceProperties(name, textureName).noOcclusion());
             case "wood_barrier" -> LegacyComplexShapeBlock.woodBarrier(simpleResourceProperties(name, textureName).noOcclusion());
             case "sandbags" -> LegacyComplexShapeBlock.sandbags(simpleResourceProperties(name, textureName).noOcclusion());
             case "block_yellowcake" -> new BlockHazardFalling(simpleResourceProperties(name, textureName),

@@ -108,7 +108,7 @@ public class CapacitorBlockEntity extends HbmEnergyBlockEntity
         EnergyPort port = resolveOutputPort();
         return level == null || port == null
                 ? new HbmEnergyUtil.PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L)
-                : HbmEnergyUtil.inspectPorts(level, worldPosition, List.of(port));
+                : HbmEnergyUtil.inspectPortSet(level, worldPosition, port);
     }
 
     private void subscribeInput() {
@@ -128,7 +128,7 @@ public class CapacitorBlockEntity extends HbmEnergyBlockEntity
             clearOutputSubscription();
             lastOutputPort = outputPort;
         }
-        HbmEnergyUtil.tryProvideToPorts(level, worldPosition, List.of(outputPort), energy);
+        HbmEnergyUtil.tryProvideToPort(level, worldPosition, outputPort, energy);
     }
 
     @Nullable

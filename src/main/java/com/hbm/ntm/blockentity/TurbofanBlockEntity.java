@@ -139,8 +139,8 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         boolean changed = turbofan.setFluidTankTypeFromIdentifierSlot(turbofan.items, SLOT_IDENTIFIER,
                 turbofan.fuelTank);
-        changed |= turbofan.processFluidItemTransfers(turbofan.items,
-                HbmFluidItemTransfer.loadTransfers(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, turbofan.fuelTank));
+        changed |= turbofan.processFluidItemLoadTransfer(
+                turbofan.items, SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, turbofan.fuelTank);
         turbofan.bloodTank.setTankType(HbmFluids.BLOOD);
 
         turbofan.wasOn = false;
@@ -163,7 +163,7 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         turbofan.tryProvideSmokeToPorts(level, pos);
         if (turbofan.fuelTank.getTankType() != HbmFluids.NONE) {
-            turbofan.refreshTrackedReceiverFluidPortsReport(List.of(turbofan.fuelTank), turbofan);
+            turbofan.refreshTrackedReceiverFluidPorts(turbofan.fuelTank, turbofan);
         }
         turbofan.energy.setPower(Math.min(MAX_POWER, turbofan.energy.getPower()));
 
@@ -188,6 +188,7 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (!level.isClientSide) {
             return;
         }
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
         turbofan.lastSpin = turbofan.spin;
         if (turbofan.wasOn) {
             if (turbofan.momentum < 100) {
@@ -196,10 +197,12 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
         } else if (turbofan.momentum > 0) {
             turbofan.momentum--;
         }
-        turbofan.spin += turbofan.momentum / 2.0F;
-        if (turbofan.spin >= 360.0F) {
-            turbofan.spin -= 360.0F;
-            turbofan.lastSpin -= 360.0F;
+        if (!skipAnimation) {
+            turbofan.spin += turbofan.momentum / 2.0F;
+            if (turbofan.spin >= 360.0F) {
+                turbofan.spin -= 360.0F;
+                turbofan.lastSpin -= 360.0F;
+            }
         }
         float volume = turbofan.momentum / 50.0F;
         float pitch = turbofan.momentum / 200.0F + 0.5F + turbofan.afterburner * 0.16F;

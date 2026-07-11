@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"sulfuric_washed\",type:\"heavy\"}"
+  },
+  "outputs": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:7900,name:\"Gold\"}"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:7900,name:\"Gold\"}"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:400,name:\"Beryllium\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"heavy\"}"
+    }
+  ],
+  "source_order": 85
+}

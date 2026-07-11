@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -135,7 +136,9 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     }
 
     protected int subscribeFluidProviderToPorts(com.hbm.ntm.fluid.FluidType type, com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return subscribeFluidProviderToPortsReport(type, provider).subscribedPorts();
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.subscribeProviderToPorts(level, worldPosition, getFluidPorts(), type, provider);
     }
 
     protected HbmFluidUtil.PortSubscribeReport subscribeFluidProviderToPortsReport(FluidType type,
@@ -154,7 +157,9 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     }
 
     protected int subscribeFluidReceiverToPorts(com.hbm.ntm.fluid.FluidType type, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
-        return subscribeFluidReceiverToPortsReport(type, receiver).subscribedPorts();
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.subscribeReceiverToPorts(level, worldPosition, getFluidPorts(), type, receiver);
     }
 
     protected HbmFluidUtil.PortSubscribeReport subscribeFluidReceiverToPortsReport(FluidType type,
@@ -173,7 +178,11 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     }
 
     protected int tryProvideFluidToPorts(com.hbm.ntm.fluid.FluidType type, int pressure, com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return tryProvideFluidToPortsReport(type, pressure, provider).touchedPorts();
+        if (provider == null || type == null || type == HbmFluids.NONE
+                || provider.getFluidAvailable(type, pressure) <= 0L || level == null || level.isClientSide) {
+            return 0;
+        }
+        return HbmFluidUtil.tryProvideToPorts(level, worldPosition, getFluidPorts(), type, pressure, provider);
     }
 
     protected HbmFluidUtil.PortTransferReport tryProvideFluidToPortsReport(FluidType type, int pressure,
@@ -270,6 +279,27 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
                 : fluidPortSubscriptions.refreshReceiver(level, worldPosition, getFluidPorts(), receivingTanks, receiver);
     }
 
+    protected void refreshTrackedReceiverFluidPorts(
+            Iterable<HbmFluidTank> receivingTanks, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.refreshReceiverNoReport(level, worldPosition, getFluidPorts(), receivingTanks, receiver);
+        }
+    }
+
+    protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport refreshTrackedReceiverFluidPortsReport(
+            HbmFluidTank receivingTank, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
+                : fluidPortSubscriptions.refreshReceiver(level, worldPosition, getFluidPorts(), receivingTank, receiver);
+    }
+
+    protected void refreshTrackedReceiverFluidPorts(
+            HbmFluidTank receivingTank, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.refreshReceiverNoReport(level, worldPosition, getFluidPorts(), receivingTank, receiver);
+        }
+    }
+
     protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshDetailReport refreshTrackedReceiverFluidPortsDetailedReport(
             Iterable<HbmFluidTank> receivingTanks, com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
         return level == null || level.isClientSide
@@ -283,6 +313,27 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
         return level == null || level.isClientSide
                 ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
                 : fluidPortSubscriptions.refreshProvider(level, worldPosition, getFluidPorts(), sendingTanks, provider);
+    }
+
+    protected void refreshTrackedProviderFluidPorts(
+            Iterable<HbmFluidTank> sendingTanks, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.refreshProviderNoReport(level, worldPosition, getFluidPorts(), sendingTanks, provider);
+        }
+    }
+
+    protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport refreshTrackedProviderFluidPortsReport(
+            HbmFluidTank sendingTank, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
+                : fluidPortSubscriptions.refreshProvider(level, worldPosition, getFluidPorts(), sendingTank, provider);
+    }
+
+    protected void refreshTrackedProviderFluidPorts(
+            HbmFluidTank sendingTank, com.hbm.ntm.fluid.HbmFluidProvider provider) {
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.refreshProviderNoReport(level, worldPosition, getFluidPorts(), sendingTank, provider);
+        }
     }
 
     protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshDetailReport refreshTrackedProviderFluidPortsDetailedReport(
@@ -300,6 +351,33 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
                 ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
                 : fluidPortSubscriptions.refreshTransceiver(
                         level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
+    }
+
+    protected void refreshTrackedTransceiverFluidPorts(
+            Iterable<HbmFluidTank> receivingTanks, Iterable<HbmFluidTank> sendingTanks,
+            com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.refreshTransceiverNoReport(
+                    level, worldPosition, getFluidPorts(), receivingTanks, sendingTanks, transceiver);
+        }
+    }
+
+    protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport refreshTrackedTransceiverFluidPortsReport(
+            HbmFluidTank receivingTank, HbmFluidTank sendingTank,
+            com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
+        return level == null || level.isClientSide
+                ? HbmFluidPortSubscriptionTracker.TrackedPortRefreshReport.empty()
+                : fluidPortSubscriptions.refreshTransceiver(
+                        level, worldPosition, getFluidPorts(), receivingTank, sendingTank, transceiver);
+    }
+
+    protected void refreshTrackedTransceiverFluidPorts(
+            HbmFluidTank receivingTank, HbmFluidTank sendingTank,
+            com.hbm.ntm.fluid.HbmStandardFluidTransceiver transceiver) {
+        if (level != null && !level.isClientSide) {
+            fluidPortSubscriptions.refreshTransceiverNoReport(
+                    level, worldPosition, getFluidPorts(), receivingTank, sendingTank, transceiver);
+        }
     }
 
     protected HbmFluidPortSubscriptionTracker.TrackedPortRefreshDetailReport refreshTrackedTransceiverFluidPortsDetailedReport(
@@ -417,7 +495,9 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected int unsubscribeFluidProviderFromPorts(com.hbm.ntm.fluid.FluidType type,
             com.hbm.ntm.fluid.HbmFluidProvider provider) {
-        return unsubscribeFluidProviderFromPortsReport(type, provider).unsubscribedPorts();
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.unsubscribeProviderFromPorts(level, worldPosition, getFluidPorts(), type, provider);
     }
 
     protected HbmFluidUtil.PortDetachReport unsubscribeFluidProviderFromPortsReport(FluidType type,
@@ -438,7 +518,9 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected int unsubscribeFluidReceiverFromPorts(com.hbm.ntm.fluid.FluidType type,
             com.hbm.ntm.fluid.HbmFluidReceiver receiver) {
-        return unsubscribeFluidReceiverFromPortsReport(type, receiver).unsubscribedPorts();
+        return level == null || level.isClientSide
+                ? 0
+                : HbmFluidUtil.unsubscribeReceiverFromPorts(level, worldPosition, getFluidPorts(), type, receiver);
     }
 
     protected HbmFluidUtil.PortDetachReport unsubscribeFluidReceiverFromPortsReport(FluidType type,
@@ -823,7 +905,138 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
     }
 
     protected boolean processFluidItemTransfers(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers) {
-        return processFluidItemTransfersReport(items, transfers).moved();
+        boolean moved = HbmFluidItemTransfer.processTransfers(items, transfers);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemLoadTransfer(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank) {
+        boolean moved = HbmFluidItemTransfer.processLoadTransfer(items, inputSlot, outputSlot, tank);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemUnloadTransfer(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank) {
+        boolean moved = HbmFluidItemTransfer.processUnloadTransfer(items, inputSlot, outputSlot, tank);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemLoadTransfers(IItemHandlerModifiable items, int inputSlotStart,
+            int outputSlotStart, Iterable<HbmFluidTank> tanks) {
+        boolean moved = HbmFluidItemTransfer.processLoadTransfers(items, inputSlotStart, outputSlotStart, tanks);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemLoadTransfers(IItemHandlerModifiable items, int inputSlotStart,
+            int outputSlotStart, int slotStride, Iterable<HbmFluidTank> tanks) {
+        boolean moved = HbmFluidItemTransfer.processLoadTransfers(
+                items, inputSlotStart, outputSlotStart, slotStride, tanks);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemLoadTransfers(IItemHandlerModifiable items, int inputSlotStart,
+            int outputSlotStart, int slotStride, HbmFluidTank firstTank, HbmFluidTank secondTank) {
+        boolean moved = HbmFluidItemTransfer.processLoadTransfers(
+                items, inputSlotStart, outputSlotStart, slotStride, firstTank, secondTank);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart,
+            int outputSlotStart, Iterable<HbmFluidTank> tanks) {
+        boolean moved = HbmFluidItemTransfer.processUnloadTransfers(items, inputSlotStart, outputSlotStart, tanks);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart,
+            int outputSlotStart, int slotStride, Iterable<HbmFluidTank> tanks) {
+        boolean moved = HbmFluidItemTransfer.processUnloadTransfers(
+                items, inputSlotStart, outputSlotStart, slotStride, tanks);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart,
+            int outputSlotStart, int slotStride, HbmFluidTank firstTank, HbmFluidTank secondTank) {
+        boolean moved = HbmFluidItemTransfer.processUnloadTransfers(
+                items, inputSlotStart, outputSlotStart, slotStride, firstTank, secondTank);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart,
+            int outputSlotStart, int slotStride, HbmFluidTank firstTank, HbmFluidTank secondTank,
+            HbmFluidTank thirdTank) {
+        boolean moved = HbmFluidItemTransfer.processUnloadTransfers(
+                items, inputSlotStart, outputSlotStart, slotStride, firstTank, secondTank, thirdTank);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart,
+            int outputSlotStart, int slotStride, HbmFluidTank firstTank, HbmFluidTank secondTank,
+            HbmFluidTank thirdTank, HbmFluidTank fourthTank) {
+        boolean moved = HbmFluidItemTransfer.processUnloadTransfers(
+                items, inputSlotStart, outputSlotStart, slotStride, firstTank, secondTank, thirdTank, fourthTank);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    @SafeVarargs
+    protected final boolean processFluidItemTransferGroups(IItemHandlerModifiable items,
+            Iterable<TankSlotTransfer>... transferGroups) {
+        boolean moved = HbmFluidItemTransfer.processTransferGroups(items, transferGroups);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemTransferGroups(IItemHandlerModifiable items,
+            Iterable<TankSlotTransfer> firstGroup, Iterable<TankSlotTransfer> secondGroup) {
+        boolean moved = HbmFluidItemTransfer.processTransferGroups(items, firstGroup, secondGroup);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
+    }
+
+    protected final boolean processFluidItemTransferGroups(IItemHandlerModifiable items,
+            Iterable<TankSlotTransfer> firstGroup, Iterable<TankSlotTransfer> secondGroup,
+            Iterable<TankSlotTransfer> thirdGroup) {
+        boolean moved = HbmFluidItemTransfer.processTransferGroups(items, firstGroup, secondGroup, thirdGroup);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
     }
 
     protected TankSlotTransferResult loadFluidTankFromSlotReport(
@@ -949,7 +1162,7 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     @Override
     public HbmFluidNode getFluidNode() {
-        return fluidNodes.values().stream().findFirst().orElse(null);
+        return fluidNodes.isEmpty() ? null : fluidNodes.values().iterator().next();
     }
 
     protected void setFluidNode(HbmFluidNode node) {
@@ -968,6 +1181,14 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     protected Set<com.hbm.ntm.fluid.FluidType> getTrackedFluidNodeTypes() {
         return new HashSet<>(fluidNodes.keySet());
+    }
+
+    protected Iterable<com.hbm.ntm.fluid.FluidType> getTrackedFluidNodeTypesView() {
+        return fluidNodes.keySet();
+    }
+
+    protected Iterator<com.hbm.ntm.fluid.FluidType> getTrackedFluidNodeTypeIterator() {
+        return fluidNodes.keySet().iterator();
     }
 
     @Override

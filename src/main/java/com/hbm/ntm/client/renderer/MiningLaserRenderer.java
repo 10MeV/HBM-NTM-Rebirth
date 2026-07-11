@@ -4,7 +4,6 @@ import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.MiningLaserBlockEntity;
-import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
@@ -12,7 +11,7 @@ import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -95,15 +94,15 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
             }
 
             poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) yaw));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) yaw);
             renderModelPart("Pivot", ObjMachineModels.MINING_LASER_PIVOT_TEXTURE, poseStack, buffer, modelLight,
                     packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
             poseStack.popPose();
 
             poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) yaw));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) yaw);
             poseStack.translate(0.0D, -1.0D, 0.0D);
-            poseStack.mulPose(Axis.XN.rotationDegrees((float) pitch + 90.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, -((float) pitch + 90.0F));
             poseStack.translate(0.0D, 1.0D, 0.0D);
             renderModelPart("Laser", ObjMachineModels.MINING_LASER_LASER_TEXTURE, poseStack, buffer, modelLight,
                     packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
@@ -116,15 +115,9 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
             int start = blockEntity.getLevel() == null ? 0
                     : (int) (blockEntity.getLevel().getGameTime() * -25L % 360L);
             int segments = Math.max(1, range * 2);
-            LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                    false, beams -> {
-                for (int offset = 0; offset < 360; offset += 120) {
-                    beams.add(beamX, beamY, beamZ,
-                        LegacyBeamRenderer.WaveType.SPIRAL,
-                        0xA00000, 0xA00000,
-                        start + offset, segments, 0.075F, 3, 0.025F);
-                }
-            });
+            LegacyMachineEffectPresenter.enqueueSpiralSolidBeamFan(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                    buffer, false, beamX, beamY, beamZ, 0xA00000, start, 120.0D, 3, segments, 0.075F, 3,
+                    0.025F);
         }
         poseStack.popPose();
     }

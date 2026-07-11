@@ -70,9 +70,6 @@ public class DfcInjectorBlockEntity extends HbmFluidNetworkBlockEntity
         injector.tickServer(level, pos, state);
     }
 
-    public static void clientTick(Level level, BlockPos pos, BlockState state, DfcInjectorBlockEntity injector) {
-    }
-
     private void tickServer(Level level, BlockPos pos, BlockState state) {
         HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_TANK0_ID, SLOT_TANK0_OUT, fuel1, level, pos);
         HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(items, SLOT_TANK1_ID, SLOT_TANK1_OUT, fuel2, level, pos);

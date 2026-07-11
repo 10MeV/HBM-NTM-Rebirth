@@ -110,29 +110,37 @@ public class ThresherBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ThresherBlockEntity thresher) {
-        thresher.previousAngle = thresher.angle;
-        thresher.lastSpin = thresher.spin;
-        if (thresher.turnProgress > 0) {
-            thresher.angle += Mth.wrapDegrees(thresher.targetAngle - thresher.angle) / thresher.turnProgress;
-            thresher.turnProgress--;
-        } else {
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
+        if (skipAnimation) {
             thresher.angle = thresher.targetAngle;
-        }
-        if (thresher.on && !thresher.suspended) {
-            if (thresher.angle > 0.0F) {
-                thresher.spin += 15.0F;
+            thresher.previousAngle = thresher.angle;
+            thresher.turnProgress = 0;
+            thresher.lastSpin = thresher.spin;
+        } else {
+            thresher.previousAngle = thresher.angle;
+            thresher.lastSpin = thresher.spin;
+            if (thresher.turnProgress > 0) {
+                thresher.angle += Mth.wrapDegrees(thresher.targetAngle - thresher.angle) / thresher.turnProgress;
+                thresher.turnProgress--;
+            } else {
+                thresher.angle = thresher.targetAngle;
             }
-            Direction dir = facing(state);
-            Direction rot = dir.getClockWise();
-            level.addParticle(ParticleTypes.SMOKE,
-                    pos.getX() + 0.5D + dir.getStepX() * 0.8125D + rot.getStepX() * 0.375D,
-                    pos.getY() + 1.5625D,
-                    pos.getZ() + 0.5D + dir.getStepZ() * 0.8125D + rot.getStepZ() * 0.375D,
-                    0.0D, 0.0D, 0.0D);
-        }
-        if (thresher.spin >= 360.0F) {
-            thresher.spin -= 360.0F;
-            thresher.lastSpin -= 360.0F;
+            if (thresher.on && !thresher.suspended) {
+                if (thresher.angle > 0.0F) {
+                    thresher.spin += 15.0F;
+                }
+                Direction dir = facing(state);
+                Direction rot = dir.getClockWise();
+                level.addParticle(ParticleTypes.SMOKE,
+                        pos.getX() + 0.5D + dir.getStepX() * 0.8125D + rot.getStepX() * 0.375D,
+                        pos.getY() + 1.5625D,
+                        pos.getZ() + 0.5D + dir.getStepZ() * 0.8125D + rot.getStepZ() * 0.375D,
+                        0.0D, 0.0D, 0.0D);
+            }
+            if (thresher.spin >= 360.0F) {
+                thresher.spin -= 360.0F;
+                thresher.lastSpin -= 360.0F;
+            }
         }
         thresher.audioLoop = LegacyMachineAudioBridge.updateLoop(thresher.audioLoop, thresher,
                 "hbm:block.turbofanOperate", thresher.on && !thresher.suspended, 15.0D, 10.0F, 1.0F, 1.0F);

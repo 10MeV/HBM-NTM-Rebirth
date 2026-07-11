@@ -107,10 +107,15 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
             UpgradeType.EFFECT, 3);
 
     private final HbmFluidTank tank;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_END - SLOT_UPGRADE_START + 1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
+                upgradeSlotCache.invalidate();
+            }
             LegacyUpgradeSlotSound.playIfUpgrade(ExcavatorBlockEntity.this, slot, getStackInSlot(slot),
                     SLOT_UPGRADE_START, SLOT_UPGRADE_END, 1.5D, 1.0F, 1.0F);
         }
@@ -181,6 +186,12 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ExcavatorBlockEntity excavator) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            excavator.previousDrillExtension = excavator.drillExtension;
+            excavator.previousDrillRotation = excavator.drillRotation;
+            excavator.previousCrusherRotation = excavator.crusherRotation;
+            return;
+        }
         excavator.tickClient();
     }
 
@@ -197,7 +208,7 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         if (level.getGameTime() % 20L == 0L) {
             changed |= tryEjectBuffer(level);
-            refreshTrackedReceiverFluidPortsReport(getReceivingTanks(), this);
+            refreshTrackedReceiverFluidPorts(getReceivingTanks(), this);
         }
 
         if (chuteTimer > 0) {
@@ -635,7 +646,7 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldPower = powerLevel;
         int oldRadius = radiusLevel;
         LegacyMachineUpgradeManager.Levels levels =
-                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
+                upgradeSlotCache.get(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
         speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
         powerLevel = Math.min(levels.getLevel(UpgradeType.POWER), 3);
         radiusLevel = Math.min(levels.getLevel(UpgradeType.EFFECT), 3);
@@ -939,6 +950,7 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
         } else {
             HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
         }
+        upgradeSlotCache.invalidate();
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         enableDrill = tag.getBoolean(TAG_DRILL);
         enableCrusher = tag.getBoolean(TAG_CRUSHER);

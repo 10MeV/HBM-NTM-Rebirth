@@ -128,14 +128,11 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
 
     private boolean processFluidContainers() {
         ItemStackHandler items = getItems();
-        return items != null && processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
-                HbmFluidItemTransfer.loadTransfers(
-                        SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank),
-                HbmFluidItemTransfer.loadTransfers(
-                        SLOT_HYDROGEN_INPUT, SLOT_HYDROGEN_OUTPUT, hydrogenTank),
-                HbmFluidItemTransfer.unloadTransfers(
-                        SLOT_OUTPUT_LEFT_CONTAINER, SLOT_OUTPUT_LEFT_CONTAINER_OUTPUT, 2,
-                        desulfurizedOilTank, sourGasTank)));
+        return items != null
+                && (processFluidItemLoadTransfer(items, SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank)
+                | processFluidItemLoadTransfer(items, SLOT_HYDROGEN_INPUT, SLOT_HYDROGEN_OUTPUT, hydrogenTank)
+                | processFluidItemUnloadTransfers(items, SLOT_OUTPUT_LEFT_CONTAINER,
+                        SLOT_OUTPUT_LEFT_CONTAINER_OUTPUT, 2, desulfurizedOilTank, sourGasTank));
     }
 
     private boolean reform() {
@@ -147,15 +144,16 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
         if (energy.getPower() < POWER_PER_OPERATION) {
             return changed;
         }
-        HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
-                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, 100), recipe.first()),
-                List.of(recipe.second(), recipe.third()),
-                List.of(inputTank, hydrogenTank),
-                List.of(desulfurizedOilTank, sourGasTank),
-                false);
-        if (!report.complete()) {
+        if (!HbmFluidRecipeIO.canConsumeInput(inputTank, 100)
+                || !HbmFluidRecipeIO.canConsumeInput(hydrogenTank, recipe.first())
+                || !HbmFluidRecipeIO.canProduceOutput(desulfurizedOilTank, recipe.second())
+                || !HbmFluidRecipeIO.canProduceOutput(sourGasTank, recipe.third())) {
             return changed;
         }
+        HbmFluidRecipeIO.consumeInput(inputTank, 100, false);
+        HbmFluidRecipeIO.consumeInput(hydrogenTank, recipe.first(), false);
+        HbmFluidRecipeIO.produceOutput(desulfurizedOilTank, recipe.second(), false);
+        HbmFluidRecipeIO.produceOutput(sourGasTank, recipe.third(), false);
         consumePower(POWER_PER_OPERATION);
         onFluidContentsChanged();
         return true;
@@ -163,14 +161,12 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
 
     private boolean setupRecipeTanks(TripleRecipe recipe) {
         if (recipe == null) {
-            return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
-                    List.of(), List.of(), List.of(), List.of(desulfurizedOilTank, sourGasTank)).changed();
+            return HbmFluidRecipeIO.conformTankChanged(desulfurizedOilTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(sourGasTank, null, 0);
         }
-        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
-                List.of(recipe.first()),
-                List.of(recipe.second(), recipe.third()),
-                List.of(hydrogenTank),
-                List.of(desulfurizedOilTank, sourGasTank)).changed();
+        return HbmFluidRecipeIO.conformTankChanged(hydrogenTank, recipe.first(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(desulfurizedOilTank, recipe.second(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(sourGasTank, recipe.third(), 0);
     }
 
     private boolean hasCatalyst() {

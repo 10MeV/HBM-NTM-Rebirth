@@ -2,7 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.LegacyPedestalBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -53,7 +53,7 @@ public class LegacyPedestalRenderer implements BlockEntityRenderer<LegacyPedesta
             poseStack.translate(0.0D, 0.125D + bob, 0.0D);
             if (player != null) {
                 float yaw = Mth.lerp(partialTick, player.yRotO, player.getYRot());
-                poseStack.mulPose(Axis.YN.rotationDegrees(yaw + 180.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, -(yaw + 180.0F));
             }
         }
 

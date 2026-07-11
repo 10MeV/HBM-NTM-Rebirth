@@ -54,10 +54,12 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
         klystron.prevFan = klystron.fan;
         klystron.fanSpeed += klystron.connected ? FAN_ACCELERATION : -FAN_ACCELERATION;
         klystron.fanSpeed = Math.max(0.0F, Math.min(5.0F, klystron.fanSpeed));
-        klystron.fan += klystron.fanSpeed;
-        if (klystron.fan >= 360.0F) {
-            klystron.fan -= 360.0F;
-            klystron.prevFan -= 360.0F;
+        if (!LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            klystron.fan += klystron.fanSpeed;
+            if (klystron.fan >= 360.0F) {
+                klystron.fan -= 360.0F;
+                klystron.prevFan -= 360.0F;
+            }
         }
         float speed = klystron.fanSpeed / 5.0F;
         klystron.audio = LegacyMachineAudioBridge.updateLoop(klystron.audio, klystron, "FEL_LOOP",

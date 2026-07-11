@@ -2,7 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -35,7 +35,7 @@ public class LegacyPrimedExplosiveRenderer extends EntityRenderer<LegacyPrimedEx
             float scale = 1.0F + pulse * 0.3F;
             poseStack.scale(scale, scale, scale);
         }
-        poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
         poseStack.translate(-0.5D, -0.5D, -0.5D);
         TntMinecartRenderer.renderWhiteSolidBlock(blockRenderer, entity.blockState(), poseStack, buffer, packedLight,
                 fuse / 5 % 2 == 0);

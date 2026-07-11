@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 100,
+  "fluid": {
+    "amount": 250,
+    "fluid": "WATER"
+  },
+  "input": {
+    "count": 4,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"solvent_byproduct\",type:\"rare\"}"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:bedrock_ore",
+    "nbt": "{grade:\"solvent_washed\",type:\"rare\"}"
+  },
+  "source_order": 216
+}

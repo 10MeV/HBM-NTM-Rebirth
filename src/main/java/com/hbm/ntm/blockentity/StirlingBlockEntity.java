@@ -113,6 +113,10 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
         if (!level.isClientSide) {
             return;
         }
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            stirling.lastSpin = stirling.spin;
+            return;
+        }
         float momentum = stirling.maxHeat() <= 0 ? 0.0F : stirling.powerBuffer * 50.0F / (float) stirling.maxHeat();
         if (stirling.kind().creative()) {
             momentum = Math.min(momentum, 45.0F);

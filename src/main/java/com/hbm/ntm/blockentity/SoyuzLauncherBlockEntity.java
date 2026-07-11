@@ -141,6 +141,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         launcher.updateAudioLoop();
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (!level.getEntitiesOfClass(SoyuzEntity.class,
                         new AABB(pos.getX() - 5.0D, pos.getY(), pos.getZ() - 5.0D,
                                 pos.getX() + 5.0D, pos.getY() + 10.0D, pos.getZ() + 5.0D)).isEmpty()) {
@@ -162,8 +165,8 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldCountdown = countdown;
         boolean oldStarting = starting;
 
-        processFluidItemTransfers(items, HbmFluidItemTransfer.loadTransfers(
-                SLOT_KEROSENE_INPUT, SLOT_KEROSENE_OUTPUT, 2, keroseneTank(), oxygenTank()));
+        processFluidItemLoadTransfers(items, SLOT_KEROSENE_INPUT, SLOT_KEROSENE_OUTPUT, 2,
+                keroseneTank(), oxygenTank());
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
 
         if (!starting || !canLaunch()) {

@@ -16,6 +16,10 @@ import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.compat.CompatRecipeRegistry;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.BedrockOreItem;
+import com.hbm.ntm.item.BedrockOreItem.BedrockOreGrade;
+import com.hbm.ntm.item.BedrockOreItem.BedrockOreType;
+import com.hbm.ntm.item.BedrockOreFragmentItem;
 import com.hbm.ntm.item.FluidIconItem;
 import com.hbm.ntm.item.FoundryMoldItem;
 import com.hbm.ntm.item.FoundryScrapsItem;
@@ -77,6 +81,47 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public final class HbmRecipeProvider extends RecipeProvider {
+    private static final BedrockOreGrade[] BEDROCK_ORE_PRIMARY_SPLIT_INPUTS = {
+            BedrockOreGrade.PRIMARY,
+            BedrockOreGrade.PRIMARY_ROASTED,
+            BedrockOreGrade.PRIMARY_SULFURIC,
+            BedrockOreGrade.PRIMARY_NOSULFURIC,
+            BedrockOreGrade.PRIMARY_SOLVENT,
+            BedrockOreGrade.PRIMARY_NOSOLVENT,
+            BedrockOreGrade.PRIMARY_RAD,
+            BedrockOreGrade.PRIMARY_NORAD
+    };
+    private static final List<BedrockOreProducts> BEDROCK_ORE_PRODUCTS = List.of(
+            new BedrockOreProducts(BedrockOreType.LIGHT_METAL,
+                    bo(Mats.MAT_IRON, 9), bo(Mats.MAT_COPPER, 9),
+                    bo(Mats.MAT_TITANIUM, 6), bo(Mats.MAT_BAUXITE, 9), bo(Mats.MAT_CRYOLITE, 3),
+                    bo(Mats.MAT_CHLOROCALCITE, 5), bo(Mats.MAT_LITHIUM, 5), bo(Mats.MAT_SODIUM, 3),
+                    bo(Mats.MAT_CHLOROCALCITE, 6), bo(Mats.MAT_LITHIUM, 6), bo(Mats.MAT_SODIUM, 6)),
+            new BedrockOreProducts(BedrockOreType.HEAVY_METAL,
+                    bo(Mats.MAT_TUNGSTEN, 9), bo(Mats.MAT_LEAD, 9),
+                    bo(Mats.MAT_GOLD, 2), bo(Mats.MAT_GOLD, 2), bo(Mats.MAT_BERYLLIUM, 3),
+                    bo(Mats.MAT_TUNGSTEN, 9), bo(Mats.MAT_LEAD, 9), bo(Mats.MAT_GOLD, 5),
+                    bo(Mats.MAT_BISMUTH, 2), bo(Mats.MAT_TANTALIUM, 2), bo(Mats.MAT_GOLD, 6)),
+            new BedrockOreProducts(BedrockOreType.RARE_EARTH,
+                    bo(Mats.MAT_COBALT, 5), bo(Mats.MAT_RAREEARTH, 5),
+                    bo(Mats.MAT_BORON, 5), bo(Mats.MAT_LANTHANIUM, 3), bo(Mats.MAT_NIOBIUM, 4),
+                    bo(Mats.MAT_NEODYMIUM, 3), bo(Mats.MAT_STRONTIUM, 3), bo(Mats.MAT_ZIRCONIUM, 3),
+                    bo(Mats.MAT_NIOBIUM, 5), bo(Mats.MAT_NEODYMIUM, 5), bo(Mats.MAT_STRONTIUM, 3)),
+            new BedrockOreProducts(BedrockOreType.ACTINIDE,
+                    bo(Mats.MAT_URANIUM, 4), bo(Mats.MAT_THORIUM, 4),
+                    bo(Mats.MAT_RADIUM, 2), bo(Mats.MAT_RADIUM, 2), bo(Mats.MAT_POLONIUM, 2),
+                    bo(Mats.MAT_RADIUM, 2), bo(Mats.MAT_RADIUM, 2), bo(Mats.MAT_POLONIUM, 2),
+                    bo(Mats.MAT_TECHNETIUM, 1), bo(Mats.MAT_TECHNETIUM, 1), bo(Mats.MAT_U238, 1)),
+            new BedrockOreProducts(BedrockOreType.NON_METAL,
+                    bo(Mats.MAT_COAL, 9), bo(Mats.MAT_SULFUR, 9),
+                    bo(Mats.MAT_LIGNITE, 9), bo(Mats.MAT_KNO, 6), bo(Mats.MAT_FLUORITE, 6),
+                    bo(Mats.MAT_PHOSPHORUS, 5), bo(Mats.MAT_FLUORITE, 6), bo(Mats.MAT_SULFUR, 6),
+                    bo(Mats.MAT_CHLOROCALCITE, 6), bo(Mats.MAT_SILICON, 2), bo(Mats.MAT_SILICON, 2)),
+            new BedrockOreProducts(BedrockOreType.CRYSTALLINE,
+                    bo(Mats.MAT_REDSTONE, 9), bo(Mats.MAT_CINNABAR, 4),
+                    bo(Mats.MAT_SODALITE, 9), bo(Mats.MAT_ASBESTOS, 6), bo(Mats.MAT_DIAMOND, 3),
+                    bo(Mats.MAT_CINNABAR, 3), bo(Mats.MAT_ASBESTOS, 5), bo(Mats.MAT_EMERALD, 3),
+                    bo(Mats.MAT_BORAX, 3), bo(Mats.MAT_MOLYSITE, 3), bo(Mats.MAT_SODALITE, 9)));
     private static final List<String> LEGACY_DEPLETED_WASTE_ITEMS = List.of(
             "waste_natural_uranium",
             "waste_uranium",
@@ -937,6 +982,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
         centrifuge(consumer, "powder_ash_coal", HbmIngredient.of(item("powder_ash_coal"), 1), 28,
                 out("powder_coal_tiny", 2), out("powder_boron_tiny", 1), out("dust_tiny", 6));
 
+        bedrockOreCentrifugeRecipes(consumer, 56);
+
         centrifuge(consumer, "blaze_rod", HbmIngredient.of(Items.BLAZE_ROD, 1), 29,
                 new ItemStack(Items.BLAZE_POWDER), new ItemStack(Items.BLAZE_POWDER), out("powder_fire", 1),
                 out("powder_fire", 1));
@@ -1023,6 +1070,156 @@ public final class HbmRecipeProvider extends RecipeProvider {
         JsonObject json = CompatRecipeRegistry.createCentrifuge(input, outputs);
         json.addProperty("source_order", sourceOrder);
         consumer.accept(finishedRecipe(id("centrifuge/" + name), json, ModRecipes.CENTRIFUGE.serializer().get()));
+    }
+
+    private static void bedrockOreCentrifugeRecipes(Consumer<FinishedRecipe> consumer, int sourceOrderStart) {
+        int sourceOrder = sourceOrderStart;
+        for (BedrockOreType type : BedrockOreType.values()) {
+            String suffix = type.suffix();
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_base",
+                    bedrockOreInput(BedrockOreGrade.BASE, type), sourceOrder++,
+                    bedrockOre(BedrockOreGrade.PRIMARY, type), new ItemStack(Blocks.GRAVEL));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_base_roasted",
+                    bedrockOreInput(BedrockOreGrade.BASE_ROASTED, type), sourceOrder++,
+                    bedrockOre(BedrockOreGrade.PRIMARY, type), new ItemStack(Blocks.GRAVEL));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_base_washed",
+                    bedrockOreInput(BedrockOreGrade.BASE_WASHED, type), sourceOrder++,
+                    bedrockOre(BedrockOreGrade.PRIMARY, type), bedrockOre(BedrockOreGrade.PRIMARY, type),
+                    new ItemStack(Blocks.GRAVEL));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary_sulfuric",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY_SULFURIC, type), sourceOrder++,
+                    bedrockOre(BedrockOreGrade.PRIMARY_NOSULFURIC, type, 2),
+                    bedrockOre(BedrockOreGrade.SULFURIC_BYPRODUCT, type, 2));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary_solvent",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY_SOLVENT, type), sourceOrder++,
+                    bedrockOre(BedrockOreGrade.PRIMARY_NOSOLVENT, type, 2),
+                    bedrockOre(BedrockOreGrade.SULFURIC_BYPRODUCT, type, 2),
+                    bedrockOre(BedrockOreGrade.SOLVENT_BYPRODUCT, type, 2));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary_rad",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY_RAD, type), sourceOrder++,
+                    bedrockOre(BedrockOreGrade.PRIMARY_NORAD, type, 2),
+                    bedrockOre(BedrockOreGrade.SULFURIC_BYPRODUCT, type, 2),
+                    bedrockOre(BedrockOreGrade.SOLVENT_BYPRODUCT, type, 2),
+                    bedrockOre(BedrockOreGrade.RAD_BYPRODUCT, type, 2));
+            BedrockOreProducts products = bedrockOreProducts(type);
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY, type), sourceOrder++,
+                    bedrockOreFragment(products.primary1(), 1), bedrockOreFragment(products.primary2(), 1));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary_roasted",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY_ROASTED, type), sourceOrder++,
+                    bedrockOreFragment(products.primary1(), 1), bedrockOreFragment(products.primary2(), 1));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary_nosulfuric",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY_NOSULFURIC, type), sourceOrder++,
+                    bedrockOreFragment(products.primary1(), 1), bedrockOreFragment(products.primary2(), 1),
+                    bedrockOre(BedrockOreGrade.CRUMBS, type));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary_nosolvent",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY_NOSOLVENT, type), sourceOrder++,
+                    bedrockOreFragment(products.primary1(), 1), bedrockOreFragment(products.primary2(), 1),
+                    bedrockOre(BedrockOreGrade.CRUMBS, type));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary_norad",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY_NORAD, type), sourceOrder++,
+                    bedrockOreFragment(products.primary1(), 1), bedrockOreFragment(products.primary2(), 1),
+                    bedrockOre(BedrockOreGrade.CRUMBS, type));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary_first",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY_FIRST, type), sourceOrder++,
+                    bedrockOreFragment(products.primary1(), 1), bedrockOreFragment(products.primary1(), 1),
+                    bedrockOreFragment(products.primary2(), 1), bedrockOre(BedrockOreGrade.CRUMBS, type));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_primary_second",
+                    bedrockOreInput(BedrockOreGrade.PRIMARY_SECOND, type), sourceOrder++,
+                    bedrockOreFragment(products.primary1(), 1), bedrockOreFragment(products.primary2(), 1),
+                    bedrockOreFragment(products.primary2(), 1), bedrockOre(BedrockOreGrade.CRUMBS, type));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_sulfuric_washed",
+                    bedrockOreInput(BedrockOreGrade.SULFURIC_WASHED, type), sourceOrder++,
+                    bedrockOreFragment(products.byproductAcid1(), 1),
+                    bedrockOreFragment(products.byproductAcid2(), 1),
+                    bedrockOreFragment(products.byproductAcid3(), 1),
+                    bedrockOre(BedrockOreGrade.CRUMBS, type));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_solvent_washed",
+                    bedrockOreInput(BedrockOreGrade.SOLVENT_WASHED, type), sourceOrder++,
+                    bedrockOreFragment(products.byproductSolvent1(), 1),
+                    bedrockOreFragment(products.byproductSolvent2(), 1),
+                    bedrockOreFragment(products.byproductSolvent3(), 1),
+                    bedrockOre(BedrockOreGrade.CRUMBS, type));
+            centrifuge(consumer, "bedrock_ore_" + suffix + "_rad_washed",
+                    bedrockOreInput(BedrockOreGrade.RAD_WASHED, type), sourceOrder++,
+                    bedrockOreFragment(products.byproductRad1(), 1),
+                    bedrockOreFragment(products.byproductRad2(), 1),
+                    bedrockOreFragment(products.byproductRad3(), 1),
+                    bedrockOre(BedrockOreGrade.CRUMBS, type));
+        }
+    }
+
+    private static HbmIngredient bedrockOreInput(BedrockOreGrade grade, BedrockOreType type) {
+        return bedrockOreInput(grade, type, 1);
+    }
+
+    private static HbmIngredient bedrockOreInput(BedrockOreGrade grade, BedrockOreType type, int amount) {
+        return HbmIngredient.partialNbt(BedrockOreItem.make(grade, type, amount));
+    }
+
+    private static ItemStack bedrockOre(BedrockOreGrade grade, BedrockOreType type) {
+        return bedrockOre(grade, type, 1);
+    }
+
+    private static ItemStack bedrockOre(BedrockOreGrade grade, BedrockOreType type, int amount) {
+        return BedrockOreItem.make(grade, type, amount);
+    }
+
+    private static BedrockOreOutput bo(NTMMaterial material, int amount) {
+        return new BedrockOreOutput(material, amount);
+    }
+
+    private static BedrockOreProducts bedrockOreProducts(BedrockOreType type) {
+        for (BedrockOreProducts products : BEDROCK_ORE_PRODUCTS) {
+            if (products.type() == type) {
+                return products;
+            }
+        }
+        throw new IllegalStateException("Missing new bedrock ore output mapping for " + type);
+    }
+
+    private static ItemStack bedrockOreFragment(BedrockOreOutput output, double multiplier) {
+        int count = Math.min((int) Math.ceil(output.amount() * multiplier), 64);
+        return BedrockOreFragmentItem.make(output.material(), count);
+    }
+
+    private static HbmIngredient bedrockOreFragmentInput(NTMMaterial material, int count) {
+        return HbmIngredient.partialNbt(BedrockOreFragmentItem.make(material, count));
+    }
+
+    @Nullable
+    private static MaterialStack bedrockOreFluid(BedrockOreOutput output, double multiplier) {
+        if (output.material().smeltable != SmeltingBehavior.SMELTABLE) {
+            return null;
+        }
+        int amount = (int) Math.ceil(MaterialShapes.FRAGMENT.q(output.amount()) * multiplier);
+        return mat(output.material(), amount);
+    }
+
+    private record BedrockOreOutput(NTMMaterial material, int amount) {
+    }
+
+    private record BedrockOreProducts(BedrockOreType type, BedrockOreOutput primary1,
+                                      BedrockOreOutput primary2, BedrockOreOutput byproductAcid1,
+                                      BedrockOreOutput byproductAcid2, BedrockOreOutput byproductAcid3,
+                                      BedrockOreOutput byproductSolvent1,
+                                      BedrockOreOutput byproductSolvent2,
+                                      BedrockOreOutput byproductSolvent3, BedrockOreOutput byproductRad1,
+                                      BedrockOreOutput byproductRad2, BedrockOreOutput byproductRad3) {
+    }
+
+    private record BedrockOreProductEntry(@Nullable BedrockOreOutput output, double multiplier, ItemStack stack) {
+        private BedrockOreProductEntry(BedrockOreOutput output, double multiplier) {
+            this(output, multiplier, ItemStack.EMPTY);
+        }
+
+        private BedrockOreProductEntry(ItemStack stack) {
+            this(null, 0.0D, stack.copy());
+        }
+    }
+
+    private record BedrockOreElectrolyzerProduct(MaterialStack output1, @Nullable MaterialStack output2,
+                                                 List<ItemStack> byproducts) {
     }
 
     private static void gasCentRecipes(Consumer<FinishedRecipe> consumer) {
@@ -1184,6 +1381,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
         crystallizer(consumer, "powder_impure_osmiridium", HbmIngredient.of(item("powder_impure_osmiridium"), 1),
                 item("crystal_osmiridium"), baseTime, HbmFluids.SCHRABIDIC, 1_000, 0.0F, 56);
 
+        bedrockOreCrystallizerRecipes(consumer, 128);
+
         PlasticScrapItem.ScrapType[] scrapTypes = PlasticScrapItem.ScrapType.values();
         for (int meta = 0; meta < scrapTypes.length; meta++) {
             PlasticScrapItem.ScrapType type = scrapTypes[meta];
@@ -1227,6 +1426,91 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
         crystallizer(consumer, "moon_turf", HbmIngredient.of(item("moon_turf"), 16),
                 item("chunk_ore_moonstone"), 1200, 0.0F, 407);
+    }
+
+    private static void bedrockOreCrystallizerRecipes(Consumer<FinishedRecipe> consumer, int sourceOrderStart) {
+        int sourceOrder = sourceOrderStart;
+        for (BedrockOreType type : BedrockOreType.values()) {
+            String suffix = type.suffix();
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_base_water",
+                    BedrockOreGrade.BASE, type, 1, BedrockOreGrade.BASE_WASHED, 100, HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_base_roasted_water",
+                    BedrockOreGrade.BASE_ROASTED, type, 1, BedrockOreGrade.BASE_WASHED, 100, HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_primary_sulfuric",
+                    BedrockOreGrade.PRIMARY, type, 1, BedrockOreGrade.PRIMARY_SULFURIC, 200,
+                    HbmFluids.SULFURIC_ACID, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_primary_roasted_sulfuric",
+                    BedrockOreGrade.PRIMARY_ROASTED, type, 1, BedrockOreGrade.PRIMARY_SULFURIC, 200,
+                    HbmFluids.SULFURIC_ACID, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_primary_solvent",
+                    BedrockOreGrade.PRIMARY, type, 1, BedrockOreGrade.PRIMARY_SOLVENT, 200,
+                    HbmFluids.SOLVENT, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_primary_roasted_solvent",
+                    BedrockOreGrade.PRIMARY_ROASTED, type, 1, BedrockOreGrade.PRIMARY_SOLVENT, 200,
+                    HbmFluids.SOLVENT, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_primary_nosulfuric_solvent",
+                    BedrockOreGrade.PRIMARY_NOSULFURIC, type, 1, BedrockOreGrade.PRIMARY_SOLVENT, 200,
+                    HbmFluids.SOLVENT, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_primary_rad",
+                    BedrockOreGrade.PRIMARY, type, 1, BedrockOreGrade.PRIMARY_RAD, 200,
+                    HbmFluids.RADIOSOLVENT, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_primary_roasted_rad",
+                    BedrockOreGrade.PRIMARY_ROASTED, type, 1, BedrockOreGrade.PRIMARY_RAD, 200,
+                    HbmFluids.RADIOSOLVENT, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_primary_nosulfuric_rad",
+                    BedrockOreGrade.PRIMARY_NOSULFURIC, type, 1, BedrockOreGrade.PRIMARY_RAD, 200,
+                    HbmFluids.RADIOSOLVENT, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_primary_nosolvent_rad",
+                    BedrockOreGrade.PRIMARY_NOSOLVENT, type, 1, BedrockOreGrade.PRIMARY_RAD, 200,
+                    HbmFluids.RADIOSOLVENT, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_sulfuric_byproduct_water",
+                    BedrockOreGrade.SULFURIC_BYPRODUCT, type, 4, BedrockOreGrade.SULFURIC_WASHED, 100,
+                    HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_sulfuric_roasted_water",
+                    BedrockOreGrade.SULFURIC_ROASTED, type, 4, BedrockOreGrade.SULFURIC_WASHED, 100,
+                    HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_sulfuric_arc_water",
+                    BedrockOreGrade.SULFURIC_ARC, type, 4, BedrockOreGrade.SULFURIC_WASHED, 100,
+                    HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_solvent_byproduct_water",
+                    BedrockOreGrade.SOLVENT_BYPRODUCT, type, 4, BedrockOreGrade.SOLVENT_WASHED, 100,
+                    HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_solvent_roasted_water",
+                    BedrockOreGrade.SOLVENT_ROASTED, type, 4, BedrockOreGrade.SOLVENT_WASHED, 100,
+                    HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_solvent_arc_water",
+                    BedrockOreGrade.SOLVENT_ARC, type, 4, BedrockOreGrade.SOLVENT_WASHED, 100,
+                    HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_rad_byproduct_water",
+                    BedrockOreGrade.RAD_BYPRODUCT, type, 4, BedrockOreGrade.RAD_WASHED, 100,
+                    HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_rad_roasted_water",
+                    BedrockOreGrade.RAD_ROASTED, type, 4, BedrockOreGrade.RAD_WASHED, 100,
+                    HbmFluids.WATER, 250);
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_rad_arc_water",
+                    BedrockOreGrade.RAD_ARC, type, 4, BedrockOreGrade.RAD_WASHED, 100,
+                    HbmFluids.WATER, 250);
+            for (BedrockOreGrade input : BEDROCK_ORE_PRIMARY_SPLIT_INPUTS) {
+                sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder,
+                        suffix + "_" + input.serializedName() + "_hydrogen", input, type, 1,
+                        BedrockOreGrade.PRIMARY_FIRST, 200, HbmFluids.HYDROGEN, 250);
+            }
+            for (BedrockOreGrade input : BEDROCK_ORE_PRIMARY_SPLIT_INPUTS) {
+                sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder,
+                        suffix + "_" + input.serializedName() + "_chlorine", input, type, 1,
+                        BedrockOreGrade.PRIMARY_SECOND, 200, HbmFluids.CHLORINE, 250);
+            }
+            sourceOrder = bedrockOreCrystallizer(consumer, sourceOrder, suffix + "_crumbs_slop",
+                    BedrockOreGrade.CRUMBS, type, 64, BedrockOreGrade.BASE, 200, HbmFluids.SLOP, 1_000);
+        }
+    }
+
+    private static int bedrockOreCrystallizer(Consumer<FinishedRecipe> consumer, int sourceOrder, String name,
+            BedrockOreGrade inputGrade, BedrockOreType type, int inputCount, BedrockOreGrade outputGrade,
+            int duration, FluidType fluid, int fluidAmount) {
+        crystallizer(consumer, "bedrock_ore_" + name, bedrockOreInput(inputGrade, type, inputCount),
+                bedrockOre(outputGrade, type), duration, fluid, fluidAmount, 0.0F, sourceOrder);
+        return sourceOrder + 1;
     }
 
     private static void crystallizer(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
@@ -1340,9 +1624,86 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .sourceOrder(11)
                 .save(consumer, id("arc_furnace/borax"));
 
+        bedrockOreArcFurnaceRecipes(consumer, 12);
+
         int nextSourceOrder = arcFurnaceMaterialAutogenRecipes(consumer, 1000);
         nextSourceOrder = arcFurnaceCustomSmeltableRecipes(consumer, nextSourceOrder);
         arcFurnaceFurnaceSmeltableRecipes(consumer, nextSourceOrder);
+    }
+
+    private static int bedrockOreArcFurnaceRecipes(Consumer<FinishedRecipe> consumer, int sourceOrderStart) {
+        int sourceOrder = sourceOrderStart;
+        for (BedrockOreType type : BedrockOreType.values()) {
+            String suffix = type.suffix();
+            BedrockOreProducts products = bedrockOreProducts(type);
+            sourceOrder = bedrockOreArcSolid(consumer, sourceOrder, suffix + "_sulfuric_byproduct",
+                    BedrockOreGrade.SULFURIC_BYPRODUCT, type, BedrockOreGrade.SULFURIC_ARC, 2);
+            sourceOrder = bedrockOreArcSolid(consumer, sourceOrder, suffix + "_sulfuric_roasted",
+                    BedrockOreGrade.SULFURIC_ROASTED, type, BedrockOreGrade.SULFURIC_ARC, 4);
+            sourceOrder = bedrockOreArcSolid(consumer, sourceOrder, suffix + "_solvent_byproduct",
+                    BedrockOreGrade.SOLVENT_BYPRODUCT, type, BedrockOreGrade.SOLVENT_ARC, 2);
+            sourceOrder = bedrockOreArcSolid(consumer, sourceOrder, suffix + "_solvent_roasted",
+                    BedrockOreGrade.SOLVENT_ROASTED, type, BedrockOreGrade.SOLVENT_ARC, 4);
+            sourceOrder = bedrockOreArcSolid(consumer, sourceOrder, suffix + "_rad_byproduct",
+                    BedrockOreGrade.RAD_BYPRODUCT, type, BedrockOreGrade.RAD_ARC, 2);
+            sourceOrder = bedrockOreArcSolid(consumer, sourceOrder, suffix + "_rad_roasted",
+                    BedrockOreGrade.RAD_ROASTED, type, BedrockOreGrade.RAD_ARC, 4);
+
+            sourceOrder = bedrockOreArcFluid(consumer, sourceOrder, suffix + "_primary_first",
+                    BedrockOreGrade.PRIMARY_FIRST, type,
+                    bedrockOreFluid(products.primary1(), 5), bedrockOreFluid(products.primary2(), 2));
+            sourceOrder = bedrockOreArcFluid(consumer, sourceOrder, suffix + "_primary_second",
+                    BedrockOreGrade.PRIMARY_SECOND, type,
+                    bedrockOreFluid(products.primary1(), 2), bedrockOreFluid(products.primary2(), 5));
+            sourceOrder = bedrockOreArcFluid(consumer, sourceOrder, suffix + "_crumbs",
+                    BedrockOreGrade.CRUMBS, type,
+                    bedrockOreFluid(products.primary1(), 1), bedrockOreFluid(products.primary2(), 1));
+            sourceOrder = bedrockOreArcFluid(consumer, sourceOrder, suffix + "_sulfuric_washed",
+                    BedrockOreGrade.SULFURIC_WASHED, type,
+                    bedrockOreFluid(products.byproductAcid1(), 3),
+                    bedrockOreFluid(products.byproductAcid2(), 3),
+                    bedrockOreFluid(products.byproductAcid3(), 3));
+            sourceOrder = bedrockOreArcFluid(consumer, sourceOrder, suffix + "_solvent_washed",
+                    BedrockOreGrade.SOLVENT_WASHED, type,
+                    bedrockOreFluid(products.byproductSolvent1(), 3),
+                    bedrockOreFluid(products.byproductSolvent2(), 3),
+                    bedrockOreFluid(products.byproductSolvent3(), 3));
+            sourceOrder = bedrockOreArcFluid(consumer, sourceOrder, suffix + "_rad_washed",
+                    BedrockOreGrade.RAD_WASHED, type,
+                    bedrockOreFluid(products.byproductRad1(), 3),
+                    bedrockOreFluid(products.byproductRad2(), 3),
+                    bedrockOreFluid(products.byproductRad3(), 3));
+        }
+        return sourceOrder;
+    }
+
+    private static int bedrockOreArcSolid(Consumer<FinishedRecipe> consumer, int sourceOrder, String name,
+            BedrockOreGrade inputGrade, BedrockOreType type, BedrockOreGrade outputGrade, int outputCount) {
+        GenericMachineRecipeBuilder.arcFurnace("arc.bedrock_ore." + name, 400, 1_000)
+                .inputIngredient(bedrockOreInput(inputGrade, type))
+                .outputItem(bedrockOre(outputGrade, type, outputCount))
+                .sourceOrder(sourceOrder)
+                .save(consumer, id("arc_furnace/bedrock_ore_" + name));
+        return sourceOrder + 1;
+    }
+
+    private static int bedrockOreArcFluid(Consumer<FinishedRecipe> consumer, int sourceOrder, String name,
+            BedrockOreGrade inputGrade, BedrockOreType type, @Nullable MaterialStack... outputs) {
+        GenericMachineRecipeBuilder builder = GenericMachineRecipeBuilder.arcFurnace("arc.bedrock_ore." + name,
+                400, 1_000)
+                .inputIngredient(bedrockOreInput(inputGrade, type))
+                .sourceOrder(sourceOrder);
+        int outputCount = 0;
+        for (MaterialStack output : outputs) {
+            if (output != null && !output.isEmpty()) {
+                builder.arcMaterialOutput(output);
+                outputCount++;
+            }
+        }
+        if (outputCount > 0) {
+            builder.save(consumer, id("arc_furnace/bedrock_ore_" + name));
+        }
+        return sourceOrder + 1;
     }
 
     private static int arcFurnaceMaterialAutogenRecipes(Consumer<FinishedRecipe> consumer, int sourceOrder) {
@@ -1571,18 +1932,36 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void arcFurnaceFurnaceSmeltableRecipes(Consumer<FinishedRecipe> consumer, int sourceOrder) {
+        int ironOreSourceOrder = sourceOrder++;
         arcFurnaceFurnaceSmeltable(consumer, "iron_ore", Blocks.IRON_ORE,
-                new ItemStack(Items.IRON_INGOT), sourceOrder++);
+                new ItemStack(Items.IRON_INGOT), ironOreSourceOrder);
+        arcFurnaceFurnaceSmeltable(consumer, "deepslate_iron_ore", Blocks.DEEPSLATE_IRON_ORE,
+                new ItemStack(Items.IRON_INGOT), ironOreSourceOrder);
+        int goldOreSourceOrder = sourceOrder++;
         arcFurnaceFurnaceSmeltable(consumer, "gold_ore", Blocks.GOLD_ORE,
-                new ItemStack(Items.GOLD_INGOT), sourceOrder++);
+                new ItemStack(Items.GOLD_INGOT), goldOreSourceOrder);
+        arcFurnaceFurnaceSmeltable(consumer, "deepslate_gold_ore", Blocks.DEEPSLATE_GOLD_ORE,
+                new ItemStack(Items.GOLD_INGOT), goldOreSourceOrder);
+        int diamondOreSourceOrder = sourceOrder++;
         arcFurnaceFurnaceSmeltable(consumer, "diamond_ore", Blocks.DIAMOND_ORE,
-                new ItemStack(Items.DIAMOND), sourceOrder++);
+                new ItemStack(Items.DIAMOND), diamondOreSourceOrder);
+        arcFurnaceFurnaceSmeltable(consumer, "deepslate_diamond_ore", Blocks.DEEPSLATE_DIAMOND_ORE,
+                new ItemStack(Items.DIAMOND), diamondOreSourceOrder);
+        int emeraldOreSourceOrder = sourceOrder++;
         arcFurnaceFurnaceSmeltable(consumer, "emerald_ore", Blocks.EMERALD_ORE,
-                new ItemStack(Items.EMERALD), sourceOrder++);
+                new ItemStack(Items.EMERALD), emeraldOreSourceOrder);
+        arcFurnaceFurnaceSmeltable(consumer, "deepslate_emerald_ore", Blocks.DEEPSLATE_EMERALD_ORE,
+                new ItemStack(Items.EMERALD), emeraldOreSourceOrder);
+        int redstoneOreSourceOrder = sourceOrder++;
         arcFurnaceFurnaceSmeltable(consumer, "redstone_ore", Blocks.REDSTONE_ORE,
-                new ItemStack(Items.REDSTONE), sourceOrder++);
+                new ItemStack(Items.REDSTONE), redstoneOreSourceOrder);
+        arcFurnaceFurnaceSmeltable(consumer, "deepslate_redstone_ore", Blocks.DEEPSLATE_REDSTONE_ORE,
+                new ItemStack(Items.REDSTONE), redstoneOreSourceOrder);
+        int lapisOreSourceOrder = sourceOrder++;
         arcFurnaceFurnaceSmeltable(consumer, "lapis_ore", Blocks.LAPIS_ORE,
-                new ItemStack(Items.LAPIS_LAZULI), sourceOrder++);
+                new ItemStack(Items.LAPIS_LAZULI), lapisOreSourceOrder);
+        arcFurnaceFurnaceSmeltable(consumer, "deepslate_lapis_ore", Blocks.DEEPSLATE_LAPIS_ORE,
+                new ItemStack(Items.LAPIS_LAZULI), lapisOreSourceOrder);
         arcFurnaceFurnaceSmeltable(consumer, "nether_quartz_ore", Blocks.NETHER_QUARTZ_ORE,
                 new ItemStack(Items.QUARTZ), sourceOrder++);
         arcFurnaceFurnaceSmeltable(consumer, "clay_ball", Items.CLAY_BALL,
@@ -1897,6 +2276,30 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 new ItemStack(Items.SUGAR, 2), HbmFluids.ETHANOL, 50);
         combinationOven(consumer, "clay", HbmIngredient.of(Blocks.CLAY, 1),
                 new ItemStack(Blocks.BRICKS), null, 0);
+
+        bedrockOreCombinationOvenRecipes(consumer);
+    }
+
+    private static void bedrockOreCombinationOvenRecipes(Consumer<FinishedRecipe> consumer) {
+        for (BedrockOreType type : BedrockOreType.values()) {
+            String suffix = type.suffix();
+            bedrockOreCombinationOven(consumer, suffix + "_base", BedrockOreGrade.BASE, type,
+                    BedrockOreGrade.BASE_ROASTED);
+            bedrockOreCombinationOven(consumer, suffix + "_primary", BedrockOreGrade.PRIMARY, type,
+                    BedrockOreGrade.PRIMARY_ROASTED);
+            bedrockOreCombinationOven(consumer, suffix + "_sulfuric_byproduct",
+                    BedrockOreGrade.SULFURIC_BYPRODUCT, type, BedrockOreGrade.SULFURIC_ROASTED);
+            bedrockOreCombinationOven(consumer, suffix + "_solvent_byproduct",
+                    BedrockOreGrade.SOLVENT_BYPRODUCT, type, BedrockOreGrade.SOLVENT_ROASTED);
+            bedrockOreCombinationOven(consumer, suffix + "_rad_byproduct",
+                    BedrockOreGrade.RAD_BYPRODUCT, type, BedrockOreGrade.RAD_ROASTED);
+        }
+    }
+
+    private static void bedrockOreCombinationOven(Consumer<FinishedRecipe> consumer, String name,
+            BedrockOreGrade inputGrade, BedrockOreType type, BedrockOreGrade outputGrade) {
+        combinationOven(consumer, "bedrock_ore_" + name, bedrockOreInput(inputGrade, type),
+                bedrockOre(outputGrade, type), HbmFluids.VITRIOL, 50);
     }
 
     private static void combinationOven(Consumer<FinishedRecipe> consumer, String name, HbmIngredient input,
@@ -1957,20 +2360,20 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
     private static void diFurnaceRecipes(Consumer<FinishedRecipe> consumer) {
         diFurnace(consumer, "steel_from_ingot", "difurnace.steelFromIngot", 0,
-                diFurnaceDictFrame("Iron"),
-                diFurnaceDictFrame("Coal"),
+                diFurnaceDictFrame("Iron", "ingot", "plate", "dust"),
+                diFurnaceDictFrame("Coal", "gem", "dust"),
                 diFurnaceOutput("ingot_steel", 1));
         diFurnace(consumer, "steel_from_coke", "difurnace.steelFromCoke", 1,
-                diFurnaceDictFrame("Iron"),
-                diFurnaceDictFrame("AnyCoke"),
+                diFurnaceDictFrame("Iron", "ingot", "plate", "dust"),
+                diFurnaceDictFrame("AnyCoke", "gem"),
                 diFurnaceOutput("ingot_steel", 1));
         diFurnace(consumer, "steel_from_ore_coal", "difurnace.steelFromOreCoal", 2,
                 diFurnaceInput(HbmIngredient.legacyOre("oreIron", 1)),
-                diFurnaceDictFrame("Coal"),
+                diFurnaceDictFrame("Coal", "gem", "dust"),
                 diFurnaceOutput("ingot_steel", 2));
         diFurnace(consumer, "steel_from_ore_coke", "difurnace.steelFromOreCoke", 3,
                 diFurnaceInput(HbmIngredient.legacyOre("oreIron", 1)),
-                diFurnaceDictFrame("AnyCoke"),
+                diFurnaceDictFrame("AnyCoke", "gem"),
                 diFurnaceOutput("ingot_steel", 3));
         diFurnace(consumer, "steel_from_ore_flux", "difurnace.steelFromOreFlux", 4,
                 diFurnaceInput(HbmIngredient.legacyOre("oreIron", 1)),
@@ -1978,19 +2381,19 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 diFurnaceOutput("ingot_steel", 3));
 
         diFurnace(consumer, "red_copper", "difurnace.redCopper", 5,
-                diFurnaceDictFrame("Copper"),
-                diFurnaceDictFrame("Redstone"),
+                diFurnaceDictFrame("Copper", "ingot", "plate", "dust"),
+                diFurnaceDictFrame("Redstone", "dust"),
                 diFurnaceOutput("ingot_red_copper", 2));
         diFurnace(consumer, "canister_napalm", "difurnace.canisterNapalm", 6,
                 diFurnaceGasolineCanisterInput(),
                 diFurnaceInput(HbmIngredient.legacyOre("slimeball", Ingredient.of(Items.SLIME_BALL), 1)),
                 diFurnaceOutput("canister_napalm", 1));
         diFurnace(consumer, "magnetized_tungsten", "difurnace.magnetizedTungsten", 7,
-                diFurnaceDictFrame("Tungsten"),
+                diFurnaceDictFrame("Tungsten", "ingot", "dust"),
                 diFurnaceInput(HbmIngredient.legacyOre("nuggetSchrabidium", 1)),
                 diFurnaceOutput("ingot_magnetized_tungsten", 1));
         diFurnace(consumer, "tcalloy", "difurnace.tcalloy", 8,
-                diFurnaceDictFrame("Steel"),
+                diFurnaceDictFrame("Steel", "ingot", "plate", "dust"),
                 diFurnaceInput(HbmIngredient.legacyOre("nuggetTechnetium99", 1)),
                 diFurnaceOutput("ingot_tcalloy", 1));
         diFurnace(consumer, "paa", "difurnace.paa", 9,
@@ -1998,16 +2401,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 diFurnaceInput(legacyHbmItem("plate_mixed")),
                 diFurnaceOutput("plate_paa", 2));
         diFurnace(consumer, "starmetal", "difurnace.starmetal", 10,
-                diFurnaceDictFrame("Saturnite"),
+                diFurnaceDictFrame("Saturnite", "ingot", "plate"),
                 diFurnaceInput(legacyHbmItem("ingot_meteorite")),
                 diFurnaceOutput("ingot_starmetal", 2));
         diFurnace(consumer, "meteorite", "difurnace.meteorite", 11,
-                diFurnaceDictFrame("Cobalt"),
+                diFurnaceDictFrame("Cobalt", "ingot", "dust"),
                 diFurnaceInput(legacyHbmItem("powder_meteorite")),
                 diFurnaceOutput("ingot_meteorite", 1));
         diFurnace(consumer, "meteorite_sword_alloyed", "difurnace.meteoriteSwordAlloyed", 12,
                 diFurnaceInput(legacyHbmItem("meteorite_sword_hardened")),
-                diFurnaceDictFrame("Cobalt"),
+                diFurnaceDictFrame("Cobalt", "ingot", "dust"),
                 diFurnaceOutput("meteorite_sword_alloyed", 1), true);
     }
 
@@ -2037,12 +2440,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
         return input.toJson();
     }
 
-    private static JsonObject diFurnaceDictFrame(String materialName) {
+    private static JsonObject diFurnaceDictFrame(String materialName, String... shapes) {
         JsonArray alternatives = new JsonArray();
-        addLegacyOreAlternative(alternatives, "ingot" + materialName);
-        addLegacyOreAlternative(alternatives, "plate" + materialName);
-        addLegacyOreAlternative(alternatives, "gem" + materialName);
-        addLegacyOreAlternative(alternatives, "dust" + materialName);
+        for (String shape : shapes) {
+            addLegacyOreAlternative(alternatives, shape + materialName);
+        }
         JsonObject input = HbmIngredient.of(Ingredient.fromJson(alternatives), 1).toJson();
         input.addProperty("legacy_dictframe", materialName);
         return input;
@@ -2409,7 +2811,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         GenericMachineRecipeBuilder.plasmaForge("plsm.icfcasing", 800, 10_000_000)
                 .plasmaForgeExtra(1_000_000)
                 .inputLegacyOre("plateCastAnyBismoidBronze", 4)
-                .inputLegacyOre("plateCastBigMt", 4)
+                .inputLegacyOre("plateCastSaturnite", 4)
                 .inputLegacyOre("ingotAnyHardplastic", 16)
                 .outputItem(ModBlocks.ICF_LASER_CASING.get())
                 .sourceOrder(123)
@@ -2534,7 +2936,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .plasmaForgeExtra(50_000_000)
                 .inputFluid(HbmFluids.STELLAR_FLUX, 4_000)
                 .inputLegacyOre("plateWeldedOsmiridium", 16)
-                .inputLegacyOre("plateCastBigMt", 16)
+                .inputLegacyOre("plateCastSaturnite", 16)
                 .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 4)
                 .outputItem(ModBlocks.DFC_INJECTOR.get())
                 .sourceOrder(141)
@@ -2996,6 +3398,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 mat(Mats.MAT_COBALT, MaterialShapes.INGOT.q(3)),
                 mat(Mats.MAT_IRON, MaterialShapes.INGOT.q(4)),
                 out("powder_copper", 4), out("powder_lithium_tiny", 3));
+        bedrockOreElectrolyzerRecipes(consumer);
     }
 
     private static void electrolyzerMetal(Consumer<FinishedRecipe> consumer, String name, String input,
@@ -3003,6 +3406,58 @@ public final class HbmRecipeProvider extends RecipeProvider {
         JsonObject json = CompatRecipeRegistry.createElectrolyzerMetal(HbmIngredient.of(item(input), 1), output1,
                 output2, byproducts, 600);
         consumer.accept(finishedCompatRecipe(id("electrolyzer_metal/" + name), json));
+    }
+
+    private static void bedrockOreElectrolyzerRecipes(Consumer<FinishedRecipe> consumer) {
+        for (BedrockOreType type : BedrockOreType.values()) {
+            String suffix = type.suffix();
+            BedrockOreProducts products = bedrockOreProducts(type);
+            electrolyzerBedrockOre(consumer, suffix + "_primary_first", BedrockOreGrade.PRIMARY_FIRST, type,
+                    List.of(new BedrockOreProductEntry(products.primary1(), 8),
+                            new BedrockOreProductEntry(products.primary2(), 4),
+                            new BedrockOreProductEntry(bedrockOre(BedrockOreGrade.CRUMBS, type))));
+            electrolyzerBedrockOre(consumer, suffix + "_primary_second", BedrockOreGrade.PRIMARY_SECOND, type,
+                    List.of(new BedrockOreProductEntry(products.primary1(), 4),
+                            new BedrockOreProductEntry(products.primary2(), 8),
+                            new BedrockOreProductEntry(bedrockOre(BedrockOreGrade.CRUMBS, type))));
+            electrolyzerBedrockOre(consumer, suffix + "_crumbs", BedrockOreGrade.CRUMBS, type,
+                    List.of(new BedrockOreProductEntry(products.primary1(), 2),
+                            new BedrockOreProductEntry(products.primary2(), 2)));
+        }
+    }
+
+    private static void electrolyzerBedrockOre(Consumer<FinishedRecipe> consumer, String name,
+            BedrockOreGrade inputGrade, BedrockOreType type, List<BedrockOreProductEntry> entries) {
+        BedrockOreElectrolyzerProduct product = bedrockOreElectrolyzerProduct(entries);
+        JsonObject json = CompatRecipeRegistry.createElectrolyzerMetal(bedrockOreInput(inputGrade, type),
+                product.output1(), product.output2(), product.byproducts().toArray(ItemStack[]::new), 600);
+        consumer.accept(finishedCompatRecipe(id("electrolyzer_metal/bedrock_ore_" + name), json));
+    }
+
+    private static BedrockOreElectrolyzerProduct bedrockOreElectrolyzerProduct(
+            List<BedrockOreProductEntry> entries) {
+        List<MaterialStack> moltenProducts = new ArrayList<>();
+        List<ItemStack> solidProducts = new ArrayList<>();
+        for (BedrockOreProductEntry entry : entries) {
+            if (entry.output() != null) {
+                MaterialStack melt = moltenProducts.size() < 2
+                        ? bedrockOreFluid(entry.output(), entry.multiplier())
+                        : null;
+                if (melt != null && !melt.isEmpty()) {
+                    moltenProducts.add(melt);
+                } else {
+                    solidProducts.add(bedrockOreFragment(entry.output(), entry.multiplier()));
+                }
+            } else if (!entry.stack().isEmpty()) {
+                solidProducts.add(entry.stack().copy());
+            }
+        }
+        if (moltenProducts.isEmpty()) {
+            moltenProducts.add(mat(Mats.MAT_SLAG, MaterialShapes.INGOT.q(2)));
+        }
+        MaterialStack output1 = moltenProducts.get(0);
+        MaterialStack output2 = moltenProducts.size() > 1 ? moltenProducts.get(1) : null;
+        return new BedrockOreElectrolyzerProduct(output1, output2, solidProducts);
     }
 
     private static void rotaryFurnaceRecipes(Consumer<FinishedRecipe> consumer) {
@@ -3018,13 +3473,26 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(2)), 200, 25, null,
                 HbmIngredient.legacyOre("bedrockorefragmentIron", 9),
                 HbmIngredient.legacyOre("gemCoal", Ingredient.of(Items.COAL), 1));
+        rotaryFurnace(consumer, "steel_bedrock_ore_fragment_from_coal", 2,
+                mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(2)), 200, 25, null,
+                bedrockOreFragmentInput(Mats.MAT_IRON, 9),
+                HbmIngredient.legacyOre("gemCoal", Ingredient.of(Items.COAL), 1));
         rotaryFurnace(consumer, "steel_fragments_from_coke", 3,
                 mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(3)), 200, 25, null,
                 HbmIngredient.legacyOre("bedrockorefragmentIron", 9),
                 HbmIngredient.legacyOre("gemAnyCoke", 1));
+        rotaryFurnace(consumer, "steel_bedrock_ore_fragment_from_coke", 3,
+                mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(3)), 200, 25, null,
+                bedrockOreFragmentInput(Mats.MAT_IRON, 9),
+                HbmIngredient.legacyOre("gemAnyCoke", 1));
         rotaryFurnace(consumer, "steel_fragments_from_coke_flux", 4,
                 mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(4)), 400, 25, null,
                 HbmIngredient.legacyOre("bedrockorefragmentIron", 9),
+                HbmIngredient.legacyOre("gemAnyCoke", 1),
+                HbmIngredient.of(item("powder_flux"), 1));
+        rotaryFurnace(consumer, "steel_bedrock_ore_fragment_from_coke_flux", 4,
+                mat(Mats.MAT_STEEL, MaterialShapes.INGOT.q(4)), 400, 25, null,
+                bedrockOreFragmentInput(Mats.MAT_IRON, 9),
                 HbmIngredient.legacyOre("gemAnyCoke", 1),
                 HbmIngredient.of(item("powder_flux"), 1));
         rotaryFurnace(consumer, "desh_from_lightoil", 5,
@@ -4340,20 +4808,28 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 RecipeCategory.FOOD);
 
         legacySmeltingRecipe(consumer, "ore_thorium_to_ingot_th232", block("ore_thorium"), item("ingot_th232"), 3.0F);
+        legacySmeltingRecipe(consumer, "deepslate_ore_thorium_to_ingot_th232", block("deepslate_ore_thorium"), item("ingot_th232"), 3.0F);
         legacySmeltingRecipe(consumer, "ore_uranium_to_ingot_uranium", block("ore_uranium"), item("ingot_uranium"), 6.0F);
+        legacySmeltingRecipe(consumer, "deepslate_ore_uranium_to_ingot_uranium", block("deepslate_ore_uranium"), item("ingot_uranium"), 6.0F);
         legacySmeltingRecipe(consumer, "ore_uranium_scorched_to_ingot_uranium", block("ore_uranium_scorched"), item("ingot_uranium"), 6.0F);
         legacySmeltingRecipe(consumer, "ore_nether_uranium_to_ingot_uranium", block("ore_nether_uranium"), item("ingot_uranium"), 12.0F);
         legacySmeltingRecipe(consumer, "ore_nether_uranium_scorched_to_ingot_uranium", block("ore_nether_uranium_scorched"), item("ingot_uranium"), 12.0F);
         legacySmeltingRecipe(consumer, "ore_nether_plutonium_to_ingot_plutonium", block("ore_nether_plutonium"), item("ingot_plutonium"), 24.0F);
         legacySmeltingRecipe(consumer, "ore_titanium_to_ingot_titanium", block("ore_titanium"), item("ingot_titanium"), 3.0F);
+        legacySmeltingRecipe(consumer, "deepslate_ore_titanium_to_ingot_titanium", block("deepslate_ore_titanium"), item("ingot_titanium"), 3.0F);
         legacySmeltingRecipe(consumer, "ore_tungsten_to_ingot_tungsten", block("ore_tungsten"), item("ingot_tungsten"), 6.0F);
+        legacySmeltingRecipe(consumer, "deepslate_ore_tungsten_to_ingot_tungsten", block("deepslate_ore_tungsten"), item("ingot_tungsten"), 6.0F);
         legacySmeltingRecipe(consumer, "ore_nether_tungsten_to_ingot_tungsten", block("ore_nether_tungsten"), item("ingot_tungsten"), 12.0F);
         legacySmeltingRecipe(consumer, "ore_aluminium_to_chunk_ore_cryolite", block("ore_aluminium"), item("chunk_ore_cryolite"), 2.5F);
+        legacySmeltingRecipe(consumer, "deepslate_ore_aluminium_to_chunk_ore_cryolite", block("deepslate_ore_aluminium"), item("chunk_ore_cryolite"), 2.5F);
         legacySmeltingRecipe(consumer, "ore_lead_to_ingot_lead", block("ore_lead"), item("ingot_lead"), 3.0F);
+        legacySmeltingRecipe(consumer, "deepslate_ore_lead_to_ingot_lead", block("deepslate_ore_lead"), item("ingot_lead"), 3.0F);
         legacySmeltingRecipe(consumer, "ore_beryllium_to_ingot_beryllium", block("ore_beryllium"), item("ingot_beryllium"), 2.0F);
+        legacySmeltingRecipe(consumer, "deepslate_ore_beryllium_to_ingot_beryllium", block("deepslate_ore_beryllium"), item("ingot_beryllium"), 2.0F);
         legacySmeltingRecipe(consumer, "ore_schrabidium_to_ingot_schrabidium", block("ore_schrabidium"), item("ingot_schrabidium"), 128.0F);
         legacySmeltingRecipe(consumer, "ore_nether_schrabidium_to_ingot_schrabidium", block("ore_nether_schrabidium"), item("ingot_schrabidium"), 256.0F);
         legacySmeltingRecipe(consumer, "ore_cobalt_to_ingot_cobalt", block("ore_cobalt"), item("ingot_cobalt"), 2.0F);
+        legacySmeltingRecipe(consumer, "deepslate_ore_cobalt_to_ingot_cobalt", block("deepslate_ore_cobalt"), item("ingot_cobalt"), 2.0F);
         legacySmeltingRecipe(consumer, "ore_nether_cobalt_to_ingot_cobalt", block("ore_nether_cobalt"), item("ingot_cobalt"), 2.0F);
         legacySmeltingRecipe(consumer, "ore_gneiss_iron_to_iron_ingot", block("ore_gneiss_iron"), Items.IRON_INGOT, 5.0F);
         legacySmeltingRecipe(consumer, "ore_gneiss_gold_to_gold_ingot", block("ore_gneiss_gold"), Items.GOLD_INGOT, 5.0F);
@@ -4786,6 +5262,24 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_steel_block", has(forgeTag("storage_blocks/steel")))
                 .save(consumer, id("tools/smashing_hammer"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SHIMMER_SLEDGE.get())
+                .pattern("H")
+                .pattern("G")
+                .pattern("G")
+                .define('H', item("shimmer_head"))
+                .define('G', item("shimmer_handle"))
+                .unlockedBy("has_shimmer_head", has(item("shimmer_head")))
+                .save(consumer, id("tools/shimmer_sledge"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.SHIMMER_AXE.get())
+                .pattern("H")
+                .pattern("G")
+                .pattern("G")
+                .define('H', item("shimmer_axe_head"))
+                .define('G', item("shimmer_handle"))
+                .unlockedBy("has_shimmer_axe_head", has(item("shimmer_axe_head")))
+                .save(consumer, id("tools/shimmer_axe"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.METEORITE_SWORD.get())
                 .pattern("  B")
                 .pattern("GB ")
@@ -4908,6 +5402,81 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('P', vanillaTag("planks"))
                 .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
                 .save(consumer, id("tools/bottle_opener"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, Items.SADDLE)
+                .pattern("LLL")
+                .pattern("LRL")
+                .pattern(" S ")
+                .define('L', Items.LEATHER)
+                .define('R', item("plant_item_rope"))
+                .define('S', forgeTag("ingots/steel"))
+                .unlockedBy("has_rope", has(item("plant_item_rope")))
+                .save(consumer, id("tools/saddle"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.BOBMAZON.get())
+                .requires(Items.BOOK)
+                .requires(Items.GOLD_NUGGET)
+                .requires(Items.STRING)
+                .requires(forgeTag("dyes/blue"))
+                .unlockedBy("has_book", has(Items.BOOK))
+                .save(consumer, id("tools/bobmazon"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, ModItems.BOAT_RUBBER.get())
+                .pattern("L L")
+                .pattern("LLL")
+                .define('L', forgeTag("ingots/any_rubber"))
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("tools/boat_rubber"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.REBAR_PLACER.get())
+                .pattern("RDR")
+                .pattern("DWD")
+                .pattern("RDR")
+                .define('R', ModBlocks.legacyBlock("rebar").get())
+                .define('D', item("ducttape"))
+                .define('W', item("wrench"))
+                .unlockedBy("has_rebar", has(ModBlocks.legacyBlock("rebar").get()))
+                .save(consumer, id("tools/rebar_placer"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, ModItems.CART_EMPTY_WOOD.get())
+                .pattern("P P")
+                .pattern("WPW")
+                .define('P', ItemTags.WOODEN_SLABS)
+                .define('W', vanillaTag("planks"))
+                .unlockedBy("has_wooden_slab", has(ItemTags.WOODEN_SLABS))
+                .save(consumer, id("tools/cart_empty_wood"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, ModItems.CART_EMPTY_STEEL.get())
+                .pattern("P P")
+                .pattern("IPI")
+                .define('P', forgeTag("plates/steel"))
+                .define('I', forgeTag("ingots/steel"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("tools/cart_empty_steel"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TRANSPORTATION, ModItems.CART_EMPTY_PAINTED.get())
+                .requires(ModItems.CART_EMPTY_STEEL.get())
+                .requires(forgeTag("dyes/red"))
+                .unlockedBy("has_empty_steel_cart", has(ModItems.CART_EMPTY_STEEL.get()))
+                .save(consumer, id("tools/cart_empty_painted"));
+
+        cartPowderRecipe(consumer, "wood", ModItems.CART_EMPTY_WOOD.get(), ModItems.CART_POWDER_WOOD.get());
+        cartPowderRecipe(consumer, "steel", ModItems.CART_EMPTY_STEEL.get(), ModItems.CART_POWDER_STEEL.get());
+        cartPowderRecipe(consumer, "painted", ModItems.CART_EMPTY_PAINTED.get(), ModItems.CART_POWDER_PAINTED.get());
+        cartSemtexRecipe(consumer, "wood", ModItems.CART_EMPTY_WOOD.get(), ModItems.CART_SEMTEX_WOOD.get());
+        cartSemtexRecipe(consumer, "steel", ModItems.CART_EMPTY_STEEL.get(), ModItems.CART_SEMTEX_STEEL.get());
+        cartSemtexRecipe(consumer, "painted", ModItems.CART_EMPTY_PAINTED.get(), ModItems.CART_SEMTEX_PAINTED.get());
+        cartDestroyerRecipe(consumer, "steel", ModItems.CART_EMPTY_STEEL.get(),
+                ModItems.CART_DESTROYER_STEEL.get());
+        cartDestroyerRecipe(consumer, "painted", ModItems.CART_EMPTY_PAINTED.get(),
+                ModItems.CART_DESTROYER_PAINTED.get());
+        ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, ModItems.CART_CRATE.get())
+                .pattern("C")
+                .pattern("S")
+                .define('C', ModBlocks.CRATE_STEEL.get())
+                .define('S', Items.MINECART)
+                .unlockedBy("has_steel_crate", has(ModBlocks.CRATE_STEEL.get()))
+                .save(consumer, id("tools/cart_crate"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, ModItems.OIL_DETECTOR.get())
                 .pattern("W I")
@@ -7196,6 +7765,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
         storageBlockPair(consumer, "block_waste", "nuclear_waste");
         storageBlockPair(consumer, "block_beryllium", "ingot_beryllium");
         storageBlockPair(consumer, "block_schrabidium", "ingot_schrabidium");
+        cokeBlockPair(consumer, "coal", "coke_coal", 0);
+        cokeBlockPair(consumer, "lignite", "coke_lignite", 1);
+        cokeBlockPair(consumer, "petroleum", "coke_petroleum", 2);
 
         ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("block_schrabidium_cluster"))
                 .pattern("#S#")
@@ -7457,6 +8029,37 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .requires(block(blockName))
                 .unlockedBy("has_" + blockName, has(block(blockName)))
                 .save(consumer, id("parts/" + itemName + "_from_" + blockName));
+    }
+
+    private static void cokeBlockPair(Consumer<FinishedRecipe> consumer, String suffix, String itemName, int variant) {
+        JsonObject compact = new JsonObject();
+        compact.addProperty("category", "building");
+        JsonArray pattern = new JsonArray();
+        pattern.add("###");
+        pattern.add("###");
+        pattern.add("###");
+        compact.add("pattern", pattern);
+        JsonObject key = new JsonObject();
+        key.add("#", ingredientItem(item(itemName)));
+        compact.add("key", key);
+        JsonObject result = ingredientItem(block("block_coke"));
+        result.addProperty("count", 1);
+        result.addProperty("nbt", "{hbmLegacyVariant:" + variant + "}");
+        compact.add("result", result);
+        compact.addProperty("show_notification", true);
+        consumer.accept(finishedRecipe(id("parts/block_coke_" + suffix), compact,
+                ModRecipes.LEGACY_NBT_SHAPED.get()));
+
+        JsonObject unpack = new JsonObject();
+        unpack.addProperty("category", "misc");
+        JsonArray ingredients = new JsonArray();
+        ingredients.add(ingredientNbtItem(block("block_coke"), "{hbmLegacyVariant:" + variant + "}"));
+        unpack.add("ingredients", ingredients);
+        JsonObject unpackResult = ingredientItem(item(itemName));
+        unpackResult.addProperty("count", 9);
+        unpack.add("result", unpackResult);
+        consumer.accept(finishedRecipe(id("parts/" + itemName + "_from_block_coke_" + suffix), unpack,
+                RecipeSerializer.SHAPELESS_RECIPE));
     }
 
     private static void nuggetIngotPair(Consumer<FinishedRecipe> consumer, String ingotName, String nuggetName) {
@@ -8025,6 +8628,26 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_gold_plate", has(forgeTag("plates/gold")))
                 .save(consumer, id("parts/shimmer_handle"));
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("shimmer_head"))
+                .pattern("SSS")
+                .pattern("DTD")
+                .pattern("SSS")
+                .define('S', forgeTag("ingots/steel"))
+                .define('D', block("block_desh"))
+                .define('T', block("block_tungsten"))
+                .unlockedBy("has_desh_block", has(block("block_desh")))
+                .save(consumer, id("parts/shimmer_head"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("shimmer_axe_head"))
+                .pattern("PII")
+                .pattern("PBB")
+                .pattern("PII")
+                .define('P', forgeTag("plates/steel"))
+                .define('B', block("block_desh"))
+                .define('I', forgeTag("ingots/tungsten"))
+                .unlockedBy("has_desh_block", has(block("block_desh")))
+                .save(consumer, id("parts/shimmer_axe_head"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.AMS_LENS.get())
                 .pattern("PDP")
                 .pattern("GDG")
@@ -8056,15 +8679,6 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('I', forgeTag("ingots/steel"))
                 .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
                 .save(consumer, id("parts/sphere_steel"));
-
-        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("blade_tungsten"), 2)
-                .pattern("TP")
-                .pattern("TP")
-                .pattern("TT")
-                .define('T', forgeTag("ingots/tungsten"))
-                .define('P', forgeTag("plates/tungsten"))
-                .unlockedBy("has_tungsten_ingot", has(forgeTag("ingots/tungsten")))
-                .save(consumer, id("parts/blade_tungsten"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("turbine_tungsten"))
                 .pattern("BBB")
@@ -9747,7 +10361,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         GenericMachineRecipeBuilder.assembly("ass.watzrod", 200, 100)
                 .inputLegacyOre("plateCastSteel", 2)
                 .inputLegacyOre("ingotZirconium", 2)
-                .inputLegacyOre("ingotBigMt", 2)
+                .inputLegacyOre("ingotSaturnite", 2)
                 .inputLegacyOre("ingotAnyHardPlastic", 4)
                 .outputItem(new ItemStack(ModBlocks.WATZ_ELEMENT.get(), 3))
                 .sourceOrder(186)
@@ -9864,8 +10478,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
         watzPellet(consumer, "lead", forgeTag("ingots/lead"));
         watzPellet(consumer, "boron", forgeTag("ingots/boron"));
         watzPellet(consumer, "du", item("ingot_u238"));
-        watzPellet(consumer, "nqd", forgeTag("ingots/naquadah_enriched"));
-        watzPellet(consumer, "nqr", forgeTag("ingots/naquadria"));
+        conditionalWatzPellet(consumer, "nqd", forgeTag("ingots/naquadah_enriched"));
+        conditionalWatzPellet(consumer, "nqr", forgeTag("ingots/naquadria"));
     }
 
     private static void watzPellet(Consumer<FinishedRecipe> consumer, String pelletSuffix, ItemLike ingot) {
@@ -9888,6 +10502,48 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('I', ingot)
                 .unlockedBy("has_" + ingot.location().getPath().replace('/', '_'), has(ingot))
                 .save(consumer, id("watz/watz_pellet_" + pelletSuffix));
+    }
+
+    private static void conditionalWatzPellet(Consumer<FinishedRecipe> consumer, String pelletSuffix,
+            TagKey<Item> ingot) {
+        JsonObject payload = new JsonObject();
+        payload.addProperty("category", "misc");
+        JsonArray conditions = new JsonArray();
+        conditions.add(notTagEmptyCondition(ingot));
+        payload.add("conditions", conditions);
+
+        JsonArray pattern = new JsonArray();
+        pattern.add(" I ");
+        pattern.add("IGI");
+        pattern.add(" I ");
+        payload.add("pattern", pattern);
+
+        JsonObject key = new JsonObject();
+        JsonObject graphite = new JsonObject();
+        graphite.addProperty("tag", "forge:ingots/graphite");
+        key.add("G", graphite);
+        JsonObject ingotKey = new JsonObject();
+        ingotKey.addProperty("tag", ingot.location().toString());
+        key.add("I", ingotKey);
+        payload.add("key", key);
+
+        JsonObject result = new JsonObject();
+        result.addProperty("item", id("watz_pellet_" + pelletSuffix).toString());
+        payload.add("result", result);
+        payload.addProperty("show_notification", true);
+
+        consumer.accept(finishedRecipe(id("watz/watz_pellet_" + pelletSuffix), payload,
+                RecipeSerializer.SHAPED_RECIPE));
+    }
+
+    private static JsonObject notTagEmptyCondition(TagKey<Item> tag) {
+        JsonObject tagEmpty = new JsonObject();
+        tagEmpty.addProperty("type", "forge:tag_empty");
+        tagEmpty.addProperty("tag", tag.location().toString());
+        JsonObject not = new JsonObject();
+        not.addProperty("type", "forge:not");
+        not.add("value", tagEmpty);
+        return not;
     }
 
     private static void assemblyMachineBodyRecipes(Consumer<FinishedRecipe> consumer) {
@@ -10826,6 +11482,24 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void fluidContainerRecipes(Consumer<FinishedRecipe> consumer) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.CELL_EMPTY.get(), 6)
+                .pattern(" S ")
+                .pattern("G G")
+                .pattern(" S ")
+                .define('S', ModItems.STEEL_PLATE.get())
+                .define('G', forgeTag("glass_panes"))
+                .unlockedBy("has_steel_plate", has(ModItems.STEEL_PLATE.get()))
+                .save(consumer, id("control/cell_empty"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, item("cell_deuterium"), 8)
+                .pattern("DDD")
+                .pattern("DTD")
+                .pattern("DDD")
+                .define('D', ModItems.CELL_EMPTY.get())
+                .define('T', item("mike_deut"))
+                .unlockedBy("has_mike_deut", has(item("mike_deut")))
+                .save(consumer, id("control/cell_deuterium"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModItems.CANISTER_EMPTY.get(), 2)
                 .pattern("S ")
                 .pattern("AA")
@@ -11381,6 +12055,8 @@ public final class HbmRecipeProvider extends RecipeProvider {
         pyroSolidFuel(consumer, HbmFluids.XYLENE, sourceOrder++);
         pyroSolidFuel(consumer, HbmFluids.BALEFIRE, 24_000_000L, item("solid_fuel_bf"), sourceOrder++);
 
+        bedrockOrePyroOvenRecipes(consumer, 40);
+
         PyroOvenRecipeBuilder.pyro(100)
                 .inputFluid(HbmFluids.STEAM, 250)
                 .inputLegacyOre("gemAnyCoke", forgeTag("gems/any_coke"), 1)
@@ -11485,6 +12161,34 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(fuel)
                 .sourceOrder(sourceOrder)
                 .save(consumer, id("pyro_oven/solid_fuel_from_" + fluid.toPath()));
+    }
+
+    private static void bedrockOrePyroOvenRecipes(Consumer<FinishedRecipe> consumer, int sourceOrderStart) {
+        int sourceOrder = sourceOrderStart;
+        for (BedrockOreType type : BedrockOreType.values()) {
+            String suffix = type.suffix();
+            sourceOrder = bedrockOrePyroOven(consumer, sourceOrder, suffix + "_base", BedrockOreGrade.BASE, type,
+                    BedrockOreGrade.BASE_ROASTED);
+            sourceOrder = bedrockOrePyroOven(consumer, sourceOrder, suffix + "_primary", BedrockOreGrade.PRIMARY,
+                    type, BedrockOreGrade.PRIMARY_ROASTED);
+            sourceOrder = bedrockOrePyroOven(consumer, sourceOrder, suffix + "_sulfuric_byproduct",
+                    BedrockOreGrade.SULFURIC_BYPRODUCT, type, BedrockOreGrade.SULFURIC_ROASTED);
+            sourceOrder = bedrockOrePyroOven(consumer, sourceOrder, suffix + "_solvent_byproduct",
+                    BedrockOreGrade.SOLVENT_BYPRODUCT, type, BedrockOreGrade.SOLVENT_ROASTED);
+            sourceOrder = bedrockOrePyroOven(consumer, sourceOrder, suffix + "_rad_byproduct",
+                    BedrockOreGrade.RAD_BYPRODUCT, type, BedrockOreGrade.RAD_ROASTED);
+        }
+    }
+
+    private static int bedrockOrePyroOven(Consumer<FinishedRecipe> consumer, int sourceOrder, String name,
+            BedrockOreGrade inputGrade, BedrockOreType type, BedrockOreGrade outputGrade) {
+        PyroOvenRecipeBuilder.pyro(10)
+                .inputItem(bedrockOreInput(inputGrade, type))
+                .outputFluid(HbmFluids.VITRIOL, 50)
+                .outputItem(bedrockOre(outputGrade, type))
+                .sourceOrder(sourceOrder)
+                .save(consumer, id("pyro_oven/bedrock_ore_" + name));
+        return sourceOrder + 1;
     }
 
     private static int pyroAutoAmount(FluidType fluid, long tuPerFuel) {
@@ -12380,6 +13084,43 @@ public final class HbmRecipeProvider extends RecipeProvider {
             throw new IllegalStateException("Missing legacy block for recipe: " + legacyName);
         }
         return block.get();
+    }
+
+    private static void cartPowderRecipe(Consumer<FinishedRecipe> consumer, String base, ItemLike emptyCart,
+            ItemLike output) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, output)
+                .pattern("PPP")
+                .pattern("PCP")
+                .pattern("PPP")
+                .define('P', Items.GUNPOWDER)
+                .define('C', emptyCart)
+                .unlockedBy("has_empty_cart", has(emptyCart))
+                .save(consumer, id("tools/cart_powder_" + base));
+    }
+
+    private static void cartSemtexRecipe(Consumer<FinishedRecipe> consumer, String base, ItemLike emptyCart,
+            ItemLike output) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, output)
+                .pattern("S")
+                .pattern("C")
+                .define('S', ModBlocks.SEMTEX.get())
+                .define('C', emptyCart)
+                .unlockedBy("has_empty_cart", has(emptyCart))
+                .save(consumer, id("tools/cart_semtex_" + base));
+    }
+
+    private static void cartDestroyerRecipe(Consumer<FinishedRecipe> consumer, String base, ItemLike emptyCart,
+            ItemLike output) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, output)
+                .pattern("S S")
+                .pattern("BLB")
+                .pattern("SCS")
+                .define('S', forgeTag("ingots/steel"))
+                .define('B', ModItems.SHREDDER_BLADES_STEEL.get())
+                .define('L', HbmFluidContainerIngredient.of(HbmFluids.LAVA, 1_000))
+                .define('C', emptyCart)
+                .unlockedBy("has_empty_cart", has(emptyCart))
+                .save(consumer, id("tools/cart_destroyer_" + base));
     }
 
     private static void legacyArmorTableRecipe(Consumer<FinishedRecipe> consumer) {
@@ -15117,6 +15858,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
             object.add("ingredient", Ingredient.of(item).toJson());
             object.addProperty("count", Math.max(1, count));
             inputItem = object;
+            return this;
+        }
+
+        private PyroOvenRecipeBuilder inputItem(HbmIngredient ingredient) {
+            inputItem = ingredient.toJson();
             return this;
         }
 

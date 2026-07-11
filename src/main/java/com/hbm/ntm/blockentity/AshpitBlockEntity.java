@@ -99,6 +99,9 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
             return;
         }
         ashpit.prevDoorAngle = ashpit.doorAngle;
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         float swingSpeed = ashpit.doorAngle / 10.0F + 3.0F;
         ashpit.doorAngle += ashpit.playersUsing > 0 ? swingSpeed : -swingSpeed;
         ashpit.doorAngle = Mth.clamp(ashpit.doorAngle, 0.0F, 135.0F);

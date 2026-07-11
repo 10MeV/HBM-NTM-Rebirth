@@ -12,9 +12,6 @@
           "tag": "forge:plates/copper"
         },
         {
-          "tag": "forge:gems/copper"
-        },
-        {
           "tag": "forge:dusts/copper"
         }
       ],
@@ -23,15 +20,6 @@
     },
     {
       "ingredient": [
-        {
-          "tag": "forge:ingots/redstone"
-        },
-        {
-          "tag": "forge:plates/redstone"
-        },
-        {
-          "tag": "forge:gems/redstone"
-        },
         {
           "tag": "forge:dusts/redstone"
         }

@@ -144,6 +144,9 @@ public class WaterPumpBlockEntity extends HbmFluidNetworkBlockEntity
             return;
         }
         pump.lastRotor = pump.rotor;
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (pump.active) {
             pump.rotor += 10.0F;
         }

@@ -72,7 +72,7 @@ public final class HazardRegistry {
     public static final float sa327 = RadiationConstants.SA327;
     public static final float saf = RadiationConstants.SA_FUEL;
     public static final float sas3 = RadiationConstants.SAS3;
-    public static final float gh336 = 5.0F;
+    public static final float gh336 = RadiationConstants.GH336;
     public static final float mud = 1.0F;
     public static final float radsource_mult = RadiationConstants.RADSOURCE_MULTIPLIER;
     public static final float pobe = RadiationConstants.PO210_BE;
@@ -85,7 +85,7 @@ public final class HazardRegistry {
     public static final float bfb = 500_000.0F;
 
     public static final float sr = RadiationConstants.SCHRARANIUM;
-    public static final float sb = RadiationConstants.SCHRARANIUM;
+    public static final float sb = RadiationConstants.SCHRABIDATE;
     public static final float trx = RadiationConstants.TRIXITE;
     public static final float trn = RadiationConstants.TRINITITE;
     public static final float wst = RadiationConstants.WASTE;

@@ -6,7 +6,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNukeModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -45,7 +45,7 @@ public class NuclearDeviceRenderer implements BlockEntityRenderer<NuclearDeviceB
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(NuclearDeviceBlock.legacyRenderYaw(blockEntity.kind(), facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, NuclearDeviceBlock.legacyRenderYaw(blockEntity.kind(), facing));
         applyLegacyBlockTranslation(blockEntity.kind(), poseStack);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             renderKind(blockEntity.kind(), poseStack, buffer, modelLight, packedOverlay);

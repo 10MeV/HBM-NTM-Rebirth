@@ -4,7 +4,7 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
 import com.hbm.ntm.registry.ModItems;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -202,10 +202,10 @@ public class MissileItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees(135.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees((System.currentTimeMillis() / 15L) % 360L));
+            LegacyPoseRotations.rotateZDegrees(poseStack, 135.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, (System.currentTimeMillis() / 15L) % 360L);
         } else {
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             if (displayContext == ItemDisplayContext.GROUND) {
                 poseStack.scale(0.8F, 0.8F, 0.8F);
             } else if (displayContext.firstPerson()) {

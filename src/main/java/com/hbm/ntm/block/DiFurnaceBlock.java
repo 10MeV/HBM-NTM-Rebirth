@@ -50,11 +50,10 @@ public class DiFurnaceBlock extends HorizontalMachineBlock implements EntityBloc
         if (type != ModBlockEntities.DIFURNACE.get()) {
             return null;
         }
-        return level.isClientSide
-                ? (tickLevel, tickPos, tickState, blockEntity) ->
-                DiFurnaceBlockEntity.clientTick(tickLevel, tickPos, tickState,
-                        (DiFurnaceBlockEntity) blockEntity)
-                : (tickLevel, tickPos, tickState, blockEntity) ->
+        if (level.isClientSide) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) ->
                 DiFurnaceBlockEntity.serverTick(tickLevel, tickPos, tickState,
                         (DiFurnaceBlockEntity) blockEntity);
     }

@@ -4,11 +4,13 @@ import net.minecraft.advancements.critereon.EnchantmentPredicate;
 import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
+import com.hbm.ntm.block.ConcreteColoredExtBlock;
 import com.hbm.ntm.block.DecoToasterBlock;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
 import com.hbm.ntm.block.LegacyBasaltOreBlock;
+import com.hbm.ntm.block.LegacyCokeBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.RedCableBoxBlock;
 import com.hbm.ntm.fluid.HbmFluidDuctVariants;
@@ -113,6 +115,8 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 legacyStateVariantDrop(ModBlocks.RAD_ABSORBER.get(), LegacyRadAbsorberBlock.TIER, 4));
         add(ModBlocks.DECO_TOASTER.get(),
                 legacyStateVariantDrop(ModBlocks.DECO_TOASTER.get(), DecoToasterBlock.VARIANT, 3));
+        add(ModBlocks.CONCRETE_COLORED_EXT.get(),
+                legacyStateVariantDrop(ModBlocks.CONCRETE_COLORED_EXT.get(), ConcreteColoredExtBlock.VARIANT, 8));
         addNoDrop(ModBlocks.BARREL_STEEL.get());
         addNoDrop(ModBlocks.BARREL_TCALLOY.get());
         addNoDrop(ModBlocks.BARREL_ANTIMATTER.get());
@@ -190,7 +194,11 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .filter(block -> block != ModBlocks.BURNING_EARTH && block != ModBlocks.IMPACT_DIRT)
                 .filter(block -> !"glyphid_base".equals(block.getId().getPath()))
                 .filter(block -> !"glyphid_spawner".equals(block.getId().getPath()))
+                .filter(block -> block != ModBlocks.CONCRETE_COLORED_EXT)
+                .filter(block -> block != ModBlocks.BLOCK_COKE)
                 .forEach(block -> dropSelf(block.get()));
+        add(ModBlocks.BLOCK_COKE.get(),
+                legacyStateVariantDrop(ModBlocks.BLOCK_COKE.get(), LegacyCokeBlock.VARIANT, 3));
         addNoDrop(ModBlocks.legacyBlock("glyphid_base").get());
         add(ModBlocks.legacyBlock("glyphid_spawner").get(), this::glyphidSpawnerDrop);
         addLegacyOreDrops();
@@ -302,15 +310,27 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
 
     private void addLegacyOreDrops() {
         addLegacyFortuneOreDrop("ore_fluorite", "fluorite", 2.0F, 4.0F);
+        addLegacyFortuneOreDrop("deepslate_ore_fluorite", "fluorite", 2.0F, 4.0F);
         addLegacyFortuneOreDrop("ore_niter", "niter", 2.0F, 4.0F);
+        addLegacyFortuneOreDrop("deepslate_ore_niter", "niter", 2.0F, 4.0F);
         addLegacyFortuneOreDrop("ore_sulfur", "sulfur", 2.0F, 4.0F);
+        addLegacyFortuneOreDrop("deepslate_ore_sulfur", "sulfur", 2.0F, 4.0F);
         addLegacyFortuneOreDrop("ore_nether_sulfur", "sulfur", 2.0F, 4.0F);
+        addLegacySingleOreDrop("ore_asbestos", "ingot_asbestos");
+        addLegacySingleOreDrop("deepslate_ore_asbestos", "ingot_asbestos");
+        addLegacySingleOreDrop("ore_gneiss_asbestos", "ingot_asbestos");
+        addLegacySingleOreDrop("ore_rare", "chunk_ore_rare");
+        addLegacySingleOreDrop("deepslate_ore_rare", "chunk_ore_rare");
+        addLegacySingleOreDrop("ore_gneiss_rare", "chunk_ore_rare");
         addLegacySingleOreDrop("ore_lignite", "lignite");
+        addLegacySingleOreDrop("deepslate_ore_lignite", "lignite");
         addLegacySingleOreDrop("ore_nether_coal", "coal_infernal");
         addLegacySingleOreDrop("ore_cinnebar", "cinnebar");
+        addLegacySingleOreDrop("deepslate_ore_cinnebar", "cinnebar");
         addLegacySingleOreDrop("ore_coltan", "fragment_coltan");
         addLegacySingleOreDrop("deepslate_ore_coltan", "fragment_coltan");
         addLegacyFortuneOreDrop("ore_cobalt", "fragment_cobalt", 4.0F, 9.0F);
+        addLegacyFortuneOreDrop("deepslate_ore_cobalt", "fragment_cobalt", 4.0F, 9.0F);
         addLegacyFortuneOreDrop("ore_nether_cobalt", "fragment_cobalt", 5.0F, 12.0F);
         addLegacyFortuneOreDrop("stone_resource_malachite", "chunk_ore_malachite", 3.0F, 4.0F);
         add(ModBlocks.STALACTITE_SULFUR.get(), block -> singleItemDrop(ModItems.legacyItem("sulfur").get()));

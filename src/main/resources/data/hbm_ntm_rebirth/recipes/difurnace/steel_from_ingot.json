@@ -12,9 +12,6 @@
           "tag": "forge:plates/iron"
         },
         {
-          "tag": "forge:gems/iron"
-        },
-        {
           "tag": "forge:dusts/iron"
         }
       ],
@@ -23,12 +20,6 @@
     },
     {
       "ingredient": [
-        {
-          "tag": "forge:ingots/coal"
-        },
-        {
-          "tag": "forge:plates/coal"
-        },
         {
           "tag": "forge:gems/coal"
         },

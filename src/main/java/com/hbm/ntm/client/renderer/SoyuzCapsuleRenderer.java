@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.obj.ObjSoyuzModels;
 import com.hbm.ntm.entity.missile.SoyuzCapsuleEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -24,8 +24,8 @@ public class SoyuzCapsuleRenderer extends EntityRenderer<SoyuzCapsuleEntity> {
         float zWobble = (float) Math.sin(time * 0.05D) * 5.0F;
         float xWobble = (float) Math.sin(time * 0.05D + Math.PI * 0.5D) * 5.0F;
         poseStack.translate(0.0D, 7.0D, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(zWobble));
-        poseStack.mulPose(Axis.XP.rotationDegrees(xWobble));
+        LegacyPoseRotations.rotateZDegrees(poseStack, zWobble);
+        LegacyPoseRotations.rotateXDegrees(poseStack, xWobble);
         poseStack.translate(0.0D, -7.0D, 0.0D);
         ObjSoyuzModels.renderLanderCapsule(false, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         ObjSoyuzModels.renderLanderChute(poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);

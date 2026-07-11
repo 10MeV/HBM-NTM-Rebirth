@@ -89,6 +89,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.MushroomCow;
@@ -466,8 +467,12 @@ public final class CommonForgeEvents {
             return;
         }
 
-        if (entity.tickCount % 20 == 0) {
+        boolean radiationSyncTick = entity.tickCount % 20 == 0;
+        if (radiationSyncTick) {
             HbmLivingProperties.flushEnvironmentBuffer(entity);
+            if (entity instanceof ServerPlayer serverPlayer) {
+                syncRadiationThreaded(serverPlayer);
+            }
         }
 
         handleBombTimer(entity);
@@ -482,8 +487,7 @@ public final class CommonForgeEvents {
             HazardExposureUtil.updateLivingInventory(entity);
         }
 
-        if (entity.tickCount % 20 == 0 && entity instanceof ServerPlayer serverPlayer) {
-            syncRadiationThreaded(serverPlayer);
+        if (radiationSyncTick && entity instanceof ServerPlayer serverPlayer) {
             syncPollution(serverPlayer);
         }
     }
@@ -562,6 +566,9 @@ public final class CommonForgeEvents {
     public static void onMobFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
         Mob mob = event.getEntity();
         PollutionManager.decorateMob(mob);
+        if (event.getSpawnType() == MobSpawnType.NATURAL && mob.level() instanceof ServerLevel level) {
+            PollutionManager.trySpawnRampantScout(level, mob.blockPosition());
+        }
     }
 
     @SubscribeEvent
@@ -883,9 +890,6 @@ public final class CommonForgeEvents {
             if (entity.isAlive()) {
                 entity.setHealth(0.0F);
                 entity.die(radiationSource);
-            }
-            if (entity.isDeadOrDying()) {
-                ParticleUtil.spawnGiblets(entity, ParticleUtil.GIBLET_MEAT);
             }
             if (entity instanceof ServerPlayer player) {
                 AchievementHandler.award(player, AchievementHandler.RAD_DEATH);

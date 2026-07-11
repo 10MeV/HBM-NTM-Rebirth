@@ -7,11 +7,11 @@ import com.hbm.ntm.blockentity.OreSlopperBlockEntity.SlopperAnimation;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.item.BedrockOreItem;
 import com.hbm.ntm.item.BedrockOreItem.BedrockOreGrade;
 import com.hbm.ntm.item.BedrockOreItem.BedrockOreType;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -73,10 +73,10 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
         LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
@@ -100,21 +100,21 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
                 double blades = blockEntity.getBlades(partialTick);
                 poseStack.pushPose();
                 poseStack.translate(0.375D, 2.75D, 0.0D);
-                poseStack.mulPose(Axis.ZP.rotationDegrees((float) blades));
+                LegacyPoseRotations.rotateZDegrees(poseStack, (float) blades);
                 poseStack.translate(-0.375D, -2.75D, 0.0D);
                 renderPart(BLADES_LEFT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
                 poseStack.popPose();
 
                 poseStack.pushPose();
                 poseStack.translate(-0.375D, 2.75D, 0.0D);
-                poseStack.mulPose(Axis.ZN.rotationDegrees((float) blades));
+                LegacyPoseRotations.rotateZDegrees(poseStack, (float) -blades);
                 poseStack.translate(0.375D, -2.75D, 0.0D);
                 renderPart(BLADES_RIGHT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
                 poseStack.popPose();
 
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 1.875D, -1.0D);
-                poseStack.mulPose(Axis.XN.rotationDegrees((float) blockEntity.getFan(partialTick)));
+                LegacyPoseRotations.rotateXDegrees(poseStack, (float) -blockEntity.getFan(partialTick));
                 poseStack.translate(0.0D, -1.875D, 1.0D);
                 renderPart(FAN, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
                 poseStack.popPose();
@@ -136,8 +136,8 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
         ItemStack stack = BedrockOreItem.make(BedrockOreGrade.BASE, BedrockOreType.LIGHT_METAL);
         poseStack.pushPose();
         poseStack.translate(0.0625D, 4.3125D, 2.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
         poseStack.scale(1.75F, 1.75F, 1.75F);
         Minecraft.getInstance().getItemRenderer().renderStatic(
                 stack,

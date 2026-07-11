@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
 import com.hbm.ntm.entity.missile.CustomMissileEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -30,8 +30,8 @@ public class CustomMissileRenderer extends EntityRenderer<CustomMissileEntity> {
                 ObjMissilePartModels.part(entity.thrusterLegacyName());
 
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot())));
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F - Mth.lerp(partialTick, entity.xRotO, entity.getXRot())));
+        LegacyPoseRotations.rotateYDegrees(poseStack, Mth.lerp(partialTick, entity.yRotO, entity.getYRot()));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F - Mth.lerp(partialTick, entity.xRotO, entity.getXRot()));
         ObjMissilePartModels.renderMissile(thruster, fins, fuselage, warhead, poseStack, buffer,
                 packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();

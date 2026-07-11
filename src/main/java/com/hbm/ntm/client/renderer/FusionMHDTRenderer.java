@@ -1,11 +1,11 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.FusionMHDTBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -43,7 +43,7 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, FusionBreederRenderer.rotation(state));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
                 ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
@@ -54,7 +54,7 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
                 poseStack.pushPose();
                 float rotor = blockEntity.getRotor(partialTick) % 15.0F;
                 poseStack.translate(0.0D, 1.5D, 0.0D);
-                poseStack.mulPose(Axis.XP.rotationDegrees(rotor));
+                LegacyPoseRotations.rotateXDegrees(poseStack, rotor);
                 poseStack.translate(0.0D, -1.5D, 0.0D);
                 ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
                         poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Coils");

@@ -1,0 +1,34 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "arc_material_outputs": [
+    {
+      "amount": 216,
+      "material": "Tungsten"
+    },
+    {
+      "amount": 216,
+      "material": "Lead"
+    },
+    {
+      "amount": 120,
+      "material": "Gold"
+    }
+  ],
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:bedrock_ore"
+      },
+      "partial_nbt": "{grade:\"solvent_washed\",type:\"heavy\"}"
+    }
+  ],
+  "internal_name": "arc.bedrock_ore.heavy_solvent_washed",
+  "output_fluids": [],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 34
+}

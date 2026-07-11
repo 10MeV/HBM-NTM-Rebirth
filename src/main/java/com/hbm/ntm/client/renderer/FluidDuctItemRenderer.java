@@ -12,7 +12,7 @@ import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import com.hbm.ntm.item.FluidPipeStyleBlockItem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -90,13 +90,13 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void applyCenteredDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(0.72F, 0.72F, 0.72F);
             return;
         }
 
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.scale(0.7F, 0.7F, 0.7F);
         if (displayContext == ItemDisplayContext.GROUND) {
             poseStack.scale(0.8F, 0.8F, 0.8F);

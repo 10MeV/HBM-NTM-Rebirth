@@ -5,7 +5,6 @@ import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
-import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
@@ -18,6 +17,8 @@ import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.fuel.LegacyBurnTimeModule;
 import com.hbm.ntm.menu.WoodBurnerMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.pollution.PollutionManager;
+import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.recipe.WoodBurnerRecipeRuntime;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
@@ -73,7 +74,6 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final LegacyBurnTimeModule BURN_MODULE = WoodBurnerRecipeRuntime.burnModule();
 
     private final HbmFluidTank tank;
-    private final MachinePollutionBuffers pollution = new MachinePollutionBuffers(50);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -129,15 +129,14 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         burner.powerGen = 0;
         boolean changed = burner.setFluidTankTypeFromIdentifierSlot(burner.items, SLOT_IDENTIFIER, burner.tank);
-        changed |= burner.processFluidItemTransfers(burner.items,
-                HbmFluidItemTransfer.loadTransfers(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, burner.tank));
+        changed |= burner.processFluidItemLoadTransfer(
+                burner.items, SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, burner.tank);
         HbmEnergyUtil.chargeItemFromStorage(burner.items.getStackInSlot(SLOT_BATTERY),
                 burner.energy, burner.energy.getProviderSpeed());
 
         if (burner.tank.getTankType() != HbmFluids.NONE) {
-            burner.refreshTrackedReceiverFluidPortsReport(List.of(burner.tank), burner);
+            burner.refreshTrackedReceiverFluidPorts(burner.tank, burner);
         }
-        burner.sendSmokeToPorts(level, pos);
         burner.tryProvideEnergyToPorts();
 
         changed |= burner.liquidBurn ? burner.tickLiquidBurn(level, pos) : burner.tickSolidBurn(level, pos);
@@ -157,7 +156,8 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, WoodBurnerBlockEntity burner) {
-        if (!level.isClientSide || burner.powerGen <= 0) {
+        if (!level.isClientSide || burner.powerGen <= 0
+                || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         Direction facing = burner.facing();
@@ -178,8 +178,8 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
             powerGen += 100;
             changed = true;
             if (level.getGameTime() % 20L == 0L) {
-                pollution.pollute(level, pos, com.hbm.ntm.pollution.PollutionType.SOOT,
-                        com.hbm.handler.pollution.PollutionHandler.SOOT_PER_SECOND);
+                PollutionManager.incrementPollution(level, pos, PollutionType.SOOT,
+                        PollutionManager.SOOT_PER_SECOND);
             }
         }
         return changed;
@@ -221,7 +221,8 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
         powerGen += (int) (trait.getHeatEnergyPerBucket() * toBurn / 2_000L);
         tank.drain(toBurn, false);
         if (level.getGameTime() % 20L == 0L) {
-            pollution.polluteFluidRelease(level, pos, tank.getTankType(), FluidReleaseType.BURN, toBurn / 2.0F);
+            PollutionManager.incrementPollution(level, pos, PollutionType.SOOT,
+                    PollutionManager.SOOT_PER_SECOND * toBurn / 2.0F);
         }
         return true;
     }
@@ -259,13 +260,6 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
             return true;
         }
         return false;
-    }
-
-    private void sendSmokeToPorts(Level level, BlockPos pos) {
-        for (FluidPort port : getWoodBurnerFluidPorts()) {
-            BlockPos connector = pos.offset(port.offset());
-            pollution.sendSmoke(level, connector.getX(), connector.getY(), connector.getZ(), port.direction());
-        }
     }
 
     private List<EnergyPort> getWoodBurnerEnergyPorts() {
@@ -408,7 +402,6 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_INVENTORY, items);
-        pollution.writeLegacyNbt(tag);
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putInt(TAG_BURN_TIME, burnTime);
         tag.putInt(TAG_MAX_BURN_TIME, maxBurnTime);
@@ -425,7 +418,6 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
-        pollution.readLegacyNbt(tag);
         if (tag.contains(TAG_LEGACY_POWER)) {
             energy.setPower(tag.getLong(TAG_LEGACY_POWER));
         }

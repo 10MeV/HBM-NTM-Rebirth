@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"sulfuric_washed\",type:\"rare\"}"
+  },
+  "outputs": [
+    {
+      "count": 5,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:500,name:\"Boron\"}"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:5700,name:\"Lanthanum\"}"
+    },
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:4100,name:\"Niobium\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"rare\"}"
+    }
+  ],
+  "source_order": 101
+}

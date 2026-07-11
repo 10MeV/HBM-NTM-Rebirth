@@ -104,10 +104,15 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
             UpgradeType.CRYSTALLIZER, 1);
 
     private final HbmFluidTank oilTank;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_END - SLOT_UPGRADE_START + 1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -216,11 +221,14 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, MiningLaserBlockEntity laser) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         laser.clientBreakProgress = laser.breakProgress;
     }
 
     private void updateUpgrades() {
-        var upgrades = LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END,
+        var upgrades = upgradeSlotCache.get(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END,
                 VALID_UPGRADES);
         speedLevel = upgrades.getLevel(UpgradeType.SPEED);
         powerLevel = upgrades.getLevel(UpgradeType.POWER);
@@ -690,6 +698,7 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
         beam = tag.getBoolean(TAG_BEAM);
         breakProgress = tag.getDouble(TAG_BREAK_PROGRESS);
         clientBreakProgress = breakProgress;
+        upgradeSlotCache.invalidate();
         updateUpgrades();
     }
 

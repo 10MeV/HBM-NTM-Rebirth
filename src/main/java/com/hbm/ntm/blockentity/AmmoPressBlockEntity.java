@@ -105,6 +105,9 @@ public class AmmoPressBlockEntity extends BlockEntity implements MenuProvider, H
     public static void clientTick(Level level, BlockPos pos, BlockState state, AmmoPressBlockEntity press) {
         press.prevLift = press.lift;
         press.prevPress = press.press;
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (press.playAnimation <= 0 && press.lift <= 0.0F) {
             return;
         }

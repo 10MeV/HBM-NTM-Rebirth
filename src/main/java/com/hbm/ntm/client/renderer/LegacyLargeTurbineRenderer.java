@@ -8,7 +8,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -61,8 +61,8 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) LegacyTileRenderPlans.BIG_TURBINE_BASE_ROTATION_Y));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) LegacyTileRenderPlans.BIG_TURBINE_BASE_ROTATION_Y);
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y,
                 translation.z + LegacyTileRenderPlans.BIG_TURBINE_TRANSLATE_Z);
@@ -77,7 +77,7 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 poseStack.pushPose();
                 poseStack.translate(0.0D, LegacyTileRenderPlans.BIG_TURBINE_BLADE_PIVOT_Y, 0.0D);
-                poseStack.mulPose(Axis.ZP.rotationDegrees((float) bladeSpin));
+                LegacyPoseRotations.rotateZDegrees(poseStack, (float) bladeSpin);
                 poseStack.translate(0.0D, -LegacyTileRenderPlans.BIG_TURBINE_BLADE_PIVOT_Y, 0.0D);
                 MODEL.renderOnlyInCallOrder(
                         definition.partTextures().getOrDefault("Blades", definition.textureLocation()),

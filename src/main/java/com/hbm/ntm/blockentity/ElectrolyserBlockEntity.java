@@ -106,10 +106,18 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final HbmFluidTank outputTank1;
     private final HbmFluidTank outputTank2;
     private final HbmFluidTank nitricTank;
+    private final List<HbmFluidTank> receivingTanks;
+    private final List<HbmFluidTank> sendingTanks;
+    private final List<HbmFluidItemTransfer.TankSlotTransfer> fluidItemTransfers;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_2 - SLOT_UPGRADE_1 + 1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_1 && slot <= SLOT_UPGRADE_2) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -154,6 +162,14 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
         this.outputTank1 = outputTank1;
         this.outputTank2 = outputTank2;
         this.nitricTank = nitricTank;
+        this.receivingTanks = List.of(inputTank, nitricTank);
+        this.sendingTanks = List.of(outputTank1, outputTank2);
+        this.fluidItemTransfers = List.of(
+                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUT, inputTank),
+                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT1_CONTAINER, SLOT_OUTPUT1_CONTAINER_OUT,
+                        outputTank1),
+                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT2_CONTAINER, SLOT_OUTPUT2_CONTAINER_OUT,
+                        outputTank2));
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ElectrolyserBlockEntity electrolyser) {
@@ -180,18 +196,11 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
                 electrolyser.energy, electrolyser.energy.getReceiverSpeed());
         boolean changed = electrolyser.setFluidTankTypeFromIdentifierSlot(electrolyser.items,
                 SLOT_FLUID_ID_INPUT, SLOT_FLUID_ID_OUTPUT, electrolyser.inputTank);
-        changed |= electrolyser.processFluidItemTransfers(electrolyser.items, List.of(
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUT,
-                        electrolyser.inputTank),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT1_CONTAINER, SLOT_OUTPUT1_CONTAINER_OUT,
-                        electrolyser.outputTank1),
-                HbmFluidItemTransfer.TankSlotTransfer.unload(SLOT_OUTPUT2_CONTAINER, SLOT_OUTPUT2_CONTAINER_OUT,
-                        electrolyser.outputTank2)));
-        electrolyser.refreshTrackedTransceiverFluidPortsReport(electrolyser.getReceivingTanks(),
+        changed |= electrolyser.processFluidItemTransfers(electrolyser.items, electrolyser.fluidItemTransfers);
+        electrolyser.refreshTrackedTransceiverFluidPorts(electrolyser.getReceivingTanks(),
                 electrolyser.getSendingTanks(), electrolyser);
 
-        LegacyMachineUpgradeManager.Levels upgrades = LegacyMachineUpgradeManager.checkSlots(electrolyser.items,
-                SLOT_UPGRADE_1, SLOT_UPGRADE_2, VALID_UPGRADES);
+        LegacyMachineUpgradeManager.Levels upgrades = electrolyser.upgradeLevels();
         electrolyser.usageFluid = usageFor(USAGE_FLUID_BASE, upgrades);
         electrolyser.usageOre = usageFor(USAGE_ORE_BASE, upgrades);
         electrolyser.processFluidTime = electrolyser.getDurationFluid(upgrades);
@@ -243,6 +252,10 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
             electrolyser.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    private LegacyMachineUpgradeManager.Levels upgradeLevels() {
+        return upgradeSlotCache.get(items, SLOT_UPGRADE_1, SLOT_UPGRADE_2, VALID_UPGRADES);
     }
 
     private static int usageFor(int base, LegacyMachineUpgradeManager.Levels upgrades) {
@@ -593,12 +606,12 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
-        return List.of(inputTank, nitricTank);
+        return receivingTanks;
     }
 
     @Override
     public List<HbmFluidTank> getSendingTanks() {
-        return List.of(outputTank1, outputTank2);
+        return sendingTanks;
     }
 
     @Override
@@ -687,6 +700,7 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        upgradeSlotCache.invalidate();
         if (tag.contains(TAG_LEGACY_POWER)) {
             energy.setPower(tag.getLong(TAG_LEGACY_POWER));
         }

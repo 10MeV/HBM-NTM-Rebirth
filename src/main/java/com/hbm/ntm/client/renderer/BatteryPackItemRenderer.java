@@ -4,7 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -77,15 +77,15 @@ public class BatteryPackItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.5D, 0.5D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(-0.36F, 0.36F, -0.36F);
             poseStack.translate(0.0D, -1.0D, 0.0D);
             return;
         }
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.scale(0.32F, 0.32F, 0.32F);
         poseStack.translate(0.0D, -1.0D, 0.0D);
 

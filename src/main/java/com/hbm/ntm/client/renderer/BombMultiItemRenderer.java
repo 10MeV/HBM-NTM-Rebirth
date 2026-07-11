@@ -3,7 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.BombMultiBlock;
 import com.hbm.ntm.client.obj.ObjNukeModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -13,12 +13,15 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 public class BombMultiItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final float LEGACY_GUI_SLOT_PIXELS = 16.0F;
     private static final float LEGACY_GUI_MAX_OCCUPANCY = 0.86F;
     private static final float LEGACY_INVENTORY_SCALE = 4.0F;
+    private static final RenderSpec INVENTORY_SPEC =
+            renderSpec(transformedInventoryBounds(ObjNukeModels.BOMB_MULTI_LEGACY.boundsAll()), true);
+    private static final RenderSpec COMMON_SPEC =
+            renderSpec(transformedCommonBounds(ObjNukeModels.BOMB_MULTI_LEGACY.boundsAll()), false);
 
     public static final BombMultiItemRenderer INSTANCE = new BombMultiItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -37,13 +40,10 @@ public class BombMultiItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
 
         boolean gui = displayContext == ItemDisplayContext.GUI;
-        AABB bounds = gui ? transformedInventoryBounds(ObjNukeModels.BOMB_MULTI_LEGACY.boundsAll())
-                : transformedCommonBounds(ObjNukeModels.BOMB_MULTI_LEGACY.boundsAll());
-        Vec3 center = bounds.getCenter();
-        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+        RenderSpec spec = gui ? INVENTORY_SPEC : COMMON_SPEC;
 
         poseStack.pushPose();
-        applyBaseDisplay(displayContext, poseStack, center, maxSize, gui);
+        applyBaseDisplay(displayContext, poseStack, spec, gui);
         if (gui) {
             poseStack.translate(0.0D, -1.0D, 0.0D);
             poseStack.scale(LEGACY_INVENTORY_SCALE, LEGACY_INVENTORY_SCALE, LEGACY_INVENTORY_SCALE);
@@ -53,24 +53,21 @@ public class BombMultiItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.popPose();
     }
 
-    private static void applyBaseDisplay(ItemDisplayContext displayContext, PoseStack poseStack, Vec3 center,
-            double maxSize, boolean gui) {
-        float fitScale = (float) Math.max(0.035D, Math.min(0.32D,
-                targetDisplaySize(gui, maxSize) / Math.max(1.0D, maxSize)));
-
+    private static void applyBaseDisplay(ItemDisplayContext displayContext, PoseStack poseStack, RenderSpec spec,
+            boolean gui) {
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
-            poseStack.scale(fitScale, fitScale, fitScale);
-            poseStack.translate(-center.x, -center.y, -center.z);
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
+            poseStack.scale(spec.fitScale(), spec.fitScale(), spec.fitScale());
+            poseStack.translate(-spec.centerX(), -spec.centerY(), -spec.centerZ());
             return;
         }
 
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        float worldScale = fitScale * 0.82F;
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        float worldScale = spec.fitScale() * 0.82F;
         poseStack.scale(worldScale, worldScale, worldScale);
-        poseStack.translate(-center.x, -center.y, -center.z);
+        poseStack.translate(-spec.centerX(), -spec.centerY(), -spec.centerZ());
 
         if (displayContext == ItemDisplayContext.GROUND) {
             poseStack.translate(0.0D, -0.25D, 0.0D);
@@ -86,6 +83,16 @@ public class BombMultiItemRenderer extends BlockEntityWithoutLevelRenderer {
             return Math.min(LEGACY_GUI_MAX_OCCUPANCY, maxSize / LEGACY_GUI_SLOT_PIXELS);
         }
         return LEGACY_GUI_MAX_OCCUPANCY;
+    }
+
+    private static RenderSpec renderSpec(AABB bounds, boolean gui) {
+        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+        return new RenderSpec(
+                (bounds.minX + bounds.maxX) * 0.5D,
+                (bounds.minY + bounds.maxY) * 0.5D,
+                (bounds.minZ + bounds.maxZ) * 0.5D,
+                (float) Math.max(0.035D, Math.min(0.32D,
+                        targetDisplaySize(gui, maxSize) / Math.max(1.0D, maxSize))));
     }
 
     private static AABB transformedInventoryBounds(AABB bounds) {
@@ -121,5 +128,8 @@ public class BombMultiItemRenderer extends BlockEntityWithoutLevelRenderer {
                     (rotatedXy + 0.5D) * 3.0D,
                     rotatedXz * 3.0D);
         });
+    }
+
+    private record RenderSpec(double centerX, double centerY, double centerZ, float fitScale) {
     }
 }

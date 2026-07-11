@@ -20,7 +20,11 @@ public class HbmFluidTank {
     }
 
     public HbmFluidTank withPressure(int pressure) {
-        withPressureReport(pressure);
+        int clamped = clampPressure(pressure);
+        if (this.pressure != clamped) {
+            fill = 0;
+        }
+        this.pressure = clamped;
         return this;
     }
 
@@ -42,7 +46,9 @@ public class HbmFluidTank {
     }
 
     public void resetTank() {
-        resetTankReport();
+        type = HbmFluids.NONE;
+        fill = 0;
+        pressure = 0;
     }
 
     public TankMutationReport resetTankReport() {
@@ -61,7 +67,18 @@ public class HbmFluidTank {
     }
 
     public int fill(FluidType type, int amount, int pressure, boolean simulate) {
-        return fillReport(type, amount, pressure, simulate).movedMb();
+        FluidType incoming = type == null ? HbmFluids.NONE : type;
+        if (amount <= 0 || !canAccept(incoming, pressure)) {
+            return 0;
+        }
+        int accepted = Math.min(amount, Math.max(0, maxFill - fill));
+        if (!simulate && accepted > 0) {
+            if (this.type == HbmFluids.NONE) {
+                this.type = incoming;
+            }
+            this.fill += accepted;
+        }
+        return accepted;
     }
 
     public TankMutationReport fillReport(FluidType type, int amount, int pressure, boolean simulate) {
@@ -80,7 +97,14 @@ public class HbmFluidTank {
     }
 
     public int drain(int amount, boolean simulate) {
-        return drainReport(amount, simulate).movedMb();
+        if (amount <= 0 || fill <= 0) {
+            return 0;
+        }
+        int drained = Math.min(amount, fill);
+        if (!simulate) {
+            fill -= drained;
+        }
+        return drained;
     }
 
     public TankMutationReport drainReport(int amount, boolean simulate) {
@@ -134,7 +158,11 @@ public class HbmFluidTank {
     }
 
     public void setTankType(FluidType type) {
-        setTankTypeReport(type);
+        FluidType newType = type == null ? HbmFluids.NONE : type;
+        if (this.type != newType) {
+            this.type = newType;
+            fill = 0;
+        }
     }
 
     public TankMutationReport setTankTypeReport(FluidType type) {
@@ -149,7 +177,7 @@ public class HbmFluidTank {
     }
 
     public void setFill(int fill) {
-        setFillReport(fill);
+        this.fill = Mth.clamp(fill, 0, maxFill);
     }
 
     public TankMutationReport setFillReport(int fill) {
@@ -161,7 +189,13 @@ public class HbmFluidTank {
     }
 
     public int changeTankSize(int maxFill) {
-        return changeTankSizeReport(maxFill).overflowMb();
+        this.maxFill = Math.max(0, maxFill);
+        if (fill <= this.maxFill) {
+            return 0;
+        }
+        int overflow = fill - this.maxFill;
+        fill = this.maxFill;
+        return overflow;
     }
 
     public TankMutationReport changeTankSizeReport(int maxFill) {
@@ -176,7 +210,10 @@ public class HbmFluidTank {
     }
 
     public void writeToNbt(CompoundTag tag, String key) {
-        writeToNbtReport(tag, key);
+        tag.putInt(key, fill);
+        tag.putInt(key + "_max", maxFill);
+        tag.putInt(key + "_type", type.getId());
+        tag.putShort(key + "_p", (short) pressure);
     }
 
     public TankNbtWriteReport writeToNbtReport(CompoundTag tag, String key) {
@@ -188,7 +225,24 @@ public class HbmFluidTank {
     }
 
     public void readFromNbt(CompoundTag tag, String key) {
-        readFromNbtReport(tag, key);
+        fill = tag.getInt(key);
+        int savedMax = tag.getInt(key + "_max");
+        if (savedMax > 0) {
+            maxFill = savedMax;
+        }
+        fill = Mth.clamp(fill, 0, maxFill);
+        if (tag.contains(key + "_type", Tag.TAG_STRING)) {
+            type = HbmFluids.fromNameCompat(tag.getString(key + "_type"));
+        } else {
+            type = HbmFluids.NONE;
+        }
+        if (type == HbmFluids.NONE && tag.contains(key + "_type", Tag.TAG_INT)) {
+            type = HbmFluids.fromId(tag.getInt(key + "_type"));
+        }
+        if (type == HbmFluids.NONE && tag.contains(key + "_type_id", Tag.TAG_INT)) {
+            type = HbmFluids.fromId(tag.getInt(key + "_type_id"));
+        }
+        pressure = clampPressure(tag.getShort(key + "_p"));
     }
 
     public TankNbtReadReport readFromNbtReport(CompoundTag tag, String key) {

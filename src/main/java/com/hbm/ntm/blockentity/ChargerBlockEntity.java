@@ -85,7 +85,8 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity implements HbmEnerg
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ChargerBlockEntity charger) {
         charger.lastUsingTicks = charger.usingTicks;
-        if (charger.delay <= 0 || level.getRandom().nextInt(4) != 0) {
+        if (charger.delay <= 0 || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)
+                || level.getRandom().nextInt(4) != 0) {
             return;
         }
         Direction dir = charger.inputSide();

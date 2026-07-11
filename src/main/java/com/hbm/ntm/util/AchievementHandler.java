@@ -1,6 +1,8 @@
 package com.hbm.ntm.util;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,12 +34,21 @@ public final class AchievementHandler {
     public static final ResourceLocation DIGAMMA_KAUAI_MOHO =
             new ResourceLocation(HbmNtm.MOD_ID, "digamma_kauai_moho");
     public static final ResourceLocation HIDDEN = new ResourceLocation(HbmNtm.MOD_ID, "hidden");
+    public static final ResourceLocation BLAST_FURNACE = new ResourceLocation(HbmNtm.MOD_ID, "blast_furnace");
+    public static final ResourceLocation ASSEMBLY = new ResourceLocation(HbmNtm.MOD_ID, "assembly");
+    public static final ResourceLocation CHEMPLANT = new ResourceLocation(HbmNtm.MOD_ID, "chemplant");
+    public static final ResourceLocation DESH = new ResourceLocation(HbmNtm.MOD_ID, "desh");
+    public static final ResourceLocation TECHNETIUM = new ResourceLocation(HbmNtm.MOD_ID, "technetium");
 
     private AchievementHandler() {
     }
 
     public static void register() {
-        // Concrete legacy achievement mappings are registered by content slices when their advancements exist.
+        registerCraftingAchievement(ModBlocks.MACHINE_BLAST_FURNACE.get(), BLAST_FURNACE);
+        registerCraftingAchievement(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get(), ASSEMBLY);
+        registerCraftingAchievement(ModBlocks.MACHINE_CHEMICAL_PLANT.get(), CHEMPLANT);
+        registerCraftingAchievement(ModItems.legacyItem("ingot_desh").get(), DESH);
+        registerCraftingAchievement(ModItems.legacyItem("nugget_technetium").get(), TECHNETIUM);
     }
 
     public static void registerCraftingAchievement(ItemLike output, ResourceLocation advancementId) {
@@ -52,6 +63,11 @@ public final class AchievementHandler {
     public static boolean award(Player player, ResourceLocation advancementId) {
         return player instanceof ServerPlayer serverPlayer
                 && HbmCraftingAdvancementUtil.awardAdvancement(serverPlayer, advancementId);
+    }
+
+    public static boolean has(Player player, ResourceLocation advancementId) {
+        return advancementId == null || player instanceof ServerPlayer serverPlayer
+                && HbmCraftingAdvancementUtil.hasAdvancement(serverPlayer, advancementId);
     }
 
     public static void fireManhattan(Level level) {

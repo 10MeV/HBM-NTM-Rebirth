@@ -344,11 +344,7 @@ public final class HbmFluidItemTransfer {
             }
         }
         int totalFilled = 0;
-        ArmorModFluidTransferReport armorReport = fillArmorModsFromTankReport(working, tank, amount, false);
-        if (armorReport.moved()) {
-            working = armorReport.armorAfter();
-            totalFilled += armorReport.movedAmount();
-        }
+        totalFilled += fillArmorModsFromTankDirect(working, tank, amount, false);
         int remaining = Math.min(amount - totalFilled, tank.getFill());
         if (remaining > 0) {
             int filled = fillHbmItem(working, tank.getTankType(), remaining, false);
@@ -395,11 +391,7 @@ public final class HbmFluidItemTransfer {
             }
         }
         int totalDrained = 0;
-        ArmorModFluidTransferReport armorReport = drainArmorModsToTankReport(working, tank, maxAmount, false);
-        if (armorReport.moved()) {
-            working = armorReport.armorAfter();
-            totalDrained += armorReport.movedAmount();
-        }
+        totalDrained += drainArmorModsToTankDirect(working, tank, maxAmount, false);
         HbmFluidStack available = getHbmItemFluidForTank(working, tank);
         int drained = 0;
         if (totalDrained < maxAmount && !available.isEmpty() && tank.canAccept(available.type(), available.pressure())) {
@@ -440,11 +432,7 @@ public final class HbmFluidItemTransfer {
         }
         ItemStack working = stack.copy();
         int moved = 0;
-        ArmorModFluidTransferReport armorReport = drainArmorModsToTankReport(working, tank, maxAmount, false);
-        if (armorReport.moved()) {
-            working = armorReport.armorAfter();
-            moved += armorReport.movedAmount();
-        }
+        moved += drainArmorModsToTankDirect(working, tank, maxAmount, false);
         if (moved < maxAmount && working.getItem() instanceof IFillableItem) {
             HbmFluidStack available = getHbmItemFluidForTank(working, tank);
             if (!available.isEmpty() && tank.canAccept(available.type(), available.pressure()) && tank.getSpace() > 0) {
@@ -554,10 +542,16 @@ public final class HbmFluidItemTransfer {
 
     public static TransferResult fillArmorModsFromTank(ItemStack armor, HbmFluidTank tank, int maxAmount,
             boolean simulate) {
-        ArmorModFluidTransferReport report = fillArmorModsFromTankReport(armor, tank, maxAmount, simulate);
-        return report.moved()
-                ? new TransferResult(simulate ? safeStackCopy(armor) : report.armorAfter(), report.movedAmount())
+        ItemStack working = simulate ? safeStackCopy(armor) : armor;
+        int moved = fillArmorModsFromTankDirect(working, tank, maxAmount, simulate);
+        return moved > 0
+                ? new TransferResult(simulate ? safeStackCopy(armor) : working, moved)
                 : TransferResult.empty(safeStackCopy(armor));
+    }
+
+    public static int fillArmorModsFromTankDirect(ItemStack armor, HbmFluidTank tank, int maxAmount,
+            boolean simulate) {
+        return transferArmorModsDirect(armor, tank, maxAmount, simulate, TankSlotTransfer.Direction.TANK_TO_ITEM);
     }
 
     public static ArmorModFluidTransferReport fillArmorModsFromTankReport(ItemStack armor, HbmFluidTank tank,
@@ -567,10 +561,16 @@ public final class HbmFluidItemTransfer {
 
     public static TransferResult drainArmorModsToTank(ItemStack armor, HbmFluidTank tank, int maxAmount,
             boolean simulate) {
-        ArmorModFluidTransferReport report = drainArmorModsToTankReport(armor, tank, maxAmount, simulate);
-        return report.moved()
-                ? new TransferResult(simulate ? safeStackCopy(armor) : report.armorAfter(), report.movedAmount())
+        ItemStack working = simulate ? safeStackCopy(armor) : armor;
+        int moved = drainArmorModsToTankDirect(working, tank, maxAmount, simulate);
+        return moved > 0
+                ? new TransferResult(simulate ? safeStackCopy(armor) : working, moved)
                 : TransferResult.empty(safeStackCopy(armor));
+    }
+
+    public static int drainArmorModsToTankDirect(ItemStack armor, HbmFluidTank tank, int maxAmount,
+            boolean simulate) {
+        return transferArmorModsDirect(armor, tank, maxAmount, simulate, TankSlotTransfer.Direction.ITEM_TO_TANK);
     }
 
     public static ArmorModFluidTransferReport drainArmorModsToTankReport(ItemStack armor, HbmFluidTank tank,
@@ -643,6 +643,50 @@ public final class HbmFluidItemTransfer {
         }
         return new ArmorModFluidTransferReport(direction, simulate, validArmor, false, maxAmount, moved, movedModules,
                 armorBefore, workingArmor, tankBefore, workingTank.snapshot(), List.copyOf(entries));
+    }
+
+    private static int transferArmorModsDirect(ItemStack armor, HbmFluidTank tank, int maxAmount, boolean simulate,
+            TankSlotTransfer.Direction direction) {
+        if (!hasFillableArmorMods(armor) || tank == null || maxAmount <= 0
+                || (direction == TankSlotTransfer.Direction.TANK_TO_ITEM && tank.isEmpty())) {
+            return 0;
+        }
+        ItemStack workingArmor = simulate ? safeStackCopy(armor) : armor;
+        HbmFluidTank workingTank = simulate ? copyTank(tank) : tank;
+        int moved = 0;
+        ItemStack[] mods = ArmorModHandler.pryMods(workingArmor);
+        for (ItemStack mod : mods) {
+            if (!isFillableArmorMod(mod) || moved >= maxAmount) {
+                continue;
+            }
+            int movedThisMod = 0;
+            if (direction == TankSlotTransfer.Direction.TANK_TO_ITEM) {
+                FluidType type = workingTank.getTankType();
+                if (!workingTank.isEmpty() && ((IFillableItem) mod.getItem()).acceptsFluid(type, mod)) {
+                    int request = Math.min(maxAmount - moved, workingTank.getFill());
+                    movedThisMod = fillHbmItem(mod, type, request, false);
+                    if (movedThisMod > 0) {
+                        workingTank.drain(movedThisMod, false);
+                    }
+                }
+            } else {
+                HbmFluidStack available = getHbmItemFluidForTank(mod, workingTank);
+                if (!available.isEmpty()
+                        && workingTank.canAccept(available.type(), available.pressure())
+                        && workingTank.getSpace() > 0) {
+                    int request = Math.min(maxAmount - moved, Math.min(available.amount(), workingTank.getSpace()));
+                    movedThisMod = drainHbmItem(mod, available.type(), request, false);
+                    if (movedThisMod > 0) {
+                        workingTank.fill(available.type(), movedThisMod, available.pressure(), false);
+                    }
+                }
+            }
+            if (movedThisMod > 0) {
+                ArmorModHandler.applyMod(workingArmor, mod);
+                moved += movedThisMod;
+            }
+        }
+        return moved;
     }
 
     public static HbmFluidStack getArmorModFluid(ItemStack armor) {
@@ -960,7 +1004,221 @@ public final class HbmFluidItemTransfer {
     }
 
     public static boolean processTransfers(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers, boolean simulate) {
-        return processTransferReport(items, transfers, simulate).moved();
+        if (items == null || transfers == null) {
+            return false;
+        }
+        boolean moved = false;
+        for (TankSlotTransfer transfer : transfers) {
+            if (transfer != null && transfer.process(items, simulate)) {
+                moved = true;
+            }
+        }
+        return moved;
+    }
+
+    @SafeVarargs
+    public static boolean processTransferGroups(IItemHandlerModifiable items,
+            Iterable<TankSlotTransfer>... transferGroups) {
+        return processTransferGroups(items, false, transferGroups);
+    }
+
+    public static boolean processTransferGroups(IItemHandlerModifiable items,
+            Iterable<TankSlotTransfer> firstGroup, Iterable<TankSlotTransfer> secondGroup) {
+        return processTransferGroups(items, false, firstGroup, secondGroup);
+    }
+
+    public static boolean processTransferGroups(IItemHandlerModifiable items,
+            Iterable<TankSlotTransfer> firstGroup, Iterable<TankSlotTransfer> secondGroup,
+            Iterable<TankSlotTransfer> thirdGroup) {
+        return processTransferGroups(items, false, firstGroup, secondGroup, thirdGroup);
+    }
+
+    public static boolean processTransferGroups(IItemHandlerModifiable items, boolean simulate,
+            Iterable<TankSlotTransfer> firstGroup, Iterable<TankSlotTransfer> secondGroup) {
+        if (items == null) {
+            return false;
+        }
+        return processTransferGroup(items, firstGroup, simulate)
+                | processTransferGroup(items, secondGroup, simulate);
+    }
+
+    public static boolean processTransferGroups(IItemHandlerModifiable items, boolean simulate,
+            Iterable<TankSlotTransfer> firstGroup, Iterable<TankSlotTransfer> secondGroup,
+            Iterable<TankSlotTransfer> thirdGroup) {
+        if (items == null) {
+            return false;
+        }
+        return processTransferGroup(items, firstGroup, simulate)
+                | processTransferGroup(items, secondGroup, simulate)
+                | processTransferGroup(items, thirdGroup, simulate);
+    }
+
+    @SafeVarargs
+    public static boolean processTransferGroups(IItemHandlerModifiable items, boolean simulate,
+            Iterable<TankSlotTransfer>... transferGroups) {
+        if (items == null || transferGroups == null) {
+            return false;
+        }
+        boolean moved = false;
+        for (Iterable<TankSlotTransfer> group : transferGroups) {
+            moved |= processTransferGroup(items, group, simulate);
+        }
+        return moved;
+    }
+
+    private static boolean processTransferGroup(IItemHandlerModifiable items,
+            Iterable<TankSlotTransfer> group, boolean simulate) {
+        return group != null && processTransfers(items, group, simulate);
+    }
+
+    public static boolean processLoadTransfer(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank) {
+        return processLoadTransfer(items, inputSlot, outputSlot, tank, false);
+    }
+
+    public static boolean processLoadTransfer(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank, boolean simulate) {
+        return processSlotTransfer(items, inputSlot, outputSlot, TankSlotTransfer.Direction.ITEM_TO_TANK, tank,
+                Integer.MAX_VALUE, simulate);
+    }
+
+    public static boolean processUnloadTransfer(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank) {
+        return processUnloadTransfer(items, inputSlot, outputSlot, tank, false);
+    }
+
+    public static boolean processUnloadTransfer(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            HbmFluidTank tank, boolean simulate) {
+        return processSlotTransfer(items, inputSlot, outputSlot, TankSlotTransfer.Direction.TANK_TO_ITEM, tank,
+                Integer.MAX_VALUE, simulate);
+    }
+
+    public static boolean processLoadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            Iterable<HbmFluidTank> tanks) {
+        return processLoadTransfers(items, inputSlotStart, outputSlotStart, 1, tanks);
+    }
+
+    public static boolean processLoadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, Iterable<HbmFluidTank> tanks) {
+        return processSlotTransfers(items, inputSlotStart, outputSlotStart, slotStride,
+                TankSlotTransfer.Direction.ITEM_TO_TANK, tanks, false);
+    }
+
+    public static boolean processLoadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            HbmFluidTank... tanks) {
+        return processLoadTransfers(items, inputSlotStart, outputSlotStart, 1, tanks);
+    }
+
+    public static boolean processLoadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, HbmFluidTank... tanks) {
+        return processSlotTransfers(items, inputSlotStart, outputSlotStart, slotStride,
+                TankSlotTransfer.Direction.ITEM_TO_TANK, tanks, false);
+    }
+
+    public static boolean processUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            Iterable<HbmFluidTank> tanks) {
+        return processUnloadTransfers(items, inputSlotStart, outputSlotStart, 1, tanks);
+    }
+
+    public static boolean processUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, Iterable<HbmFluidTank> tanks) {
+        return processSlotTransfers(items, inputSlotStart, outputSlotStart, slotStride,
+                TankSlotTransfer.Direction.TANK_TO_ITEM, tanks, false);
+    }
+
+    public static boolean processUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            HbmFluidTank... tanks) {
+        return processUnloadTransfers(items, inputSlotStart, outputSlotStart, 1, tanks);
+    }
+
+    public static boolean processUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, HbmFluidTank... tanks) {
+        return processSlotTransfers(items, inputSlotStart, outputSlotStart, slotStride,
+                TankSlotTransfer.Direction.TANK_TO_ITEM, tanks, false);
+    }
+
+    public static boolean processLoadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, HbmFluidTank firstTank, HbmFluidTank secondTank) {
+        if (items == null) {
+            return false;
+        }
+        int stride = Math.max(1, slotStride);
+        return processLoadTransfer(items, inputSlotStart, outputSlotStart, firstTank)
+                | processLoadTransfer(items, inputSlotStart + stride, outputSlotStart + stride, secondTank);
+    }
+
+    public static boolean processUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, HbmFluidTank firstTank, HbmFluidTank secondTank) {
+        if (items == null) {
+            return false;
+        }
+        int stride = Math.max(1, slotStride);
+        return processUnloadTransfer(items, inputSlotStart, outputSlotStart, firstTank)
+                | processUnloadTransfer(items, inputSlotStart + stride, outputSlotStart + stride, secondTank);
+    }
+
+    public static boolean processUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, HbmFluidTank firstTank, HbmFluidTank secondTank, HbmFluidTank thirdTank) {
+        if (items == null) {
+            return false;
+        }
+        int stride = Math.max(1, slotStride);
+        return processUnloadTransfer(items, inputSlotStart, outputSlotStart, firstTank)
+                | processUnloadTransfer(items, inputSlotStart + stride, outputSlotStart + stride, secondTank)
+                | processUnloadTransfer(items, inputSlotStart + stride * 2, outputSlotStart + stride * 2, thirdTank);
+    }
+
+    public static boolean processUnloadTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, HbmFluidTank firstTank, HbmFluidTank secondTank, HbmFluidTank thirdTank,
+            HbmFluidTank fourthTank) {
+        if (items == null) {
+            return false;
+        }
+        int stride = Math.max(1, slotStride);
+        return processUnloadTransfer(items, inputSlotStart, outputSlotStart, firstTank)
+                | processUnloadTransfer(items, inputSlotStart + stride, outputSlotStart + stride, secondTank)
+                | processUnloadTransfer(items, inputSlotStart + stride * 2, outputSlotStart + stride * 2, thirdTank)
+                | processUnloadTransfer(items, inputSlotStart + stride * 3, outputSlotStart + stride * 3, fourthTank);
+    }
+
+    private static boolean processSlotTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, TankSlotTransfer.Direction direction, Iterable<HbmFluidTank> tanks, boolean simulate) {
+        if (items == null || tanks == null) {
+            return false;
+        }
+        int stride = Math.max(1, slotStride);
+        int index = 0;
+        boolean moved = false;
+        for (HbmFluidTank tank : tanks) {
+            moved |= processSlotTransfer(items, inputSlotStart + index * stride, outputSlotStart + index * stride,
+                    direction, tank, Integer.MAX_VALUE, simulate);
+            index++;
+        }
+        return moved;
+    }
+
+    private static boolean processSlotTransfers(IItemHandlerModifiable items, int inputSlotStart, int outputSlotStart,
+            int slotStride, TankSlotTransfer.Direction direction, HbmFluidTank[] tanks, boolean simulate) {
+        if (items == null || tanks == null) {
+            return false;
+        }
+        int stride = Math.max(1, slotStride);
+        boolean moved = false;
+        for (int index = 0; index < tanks.length; index++) {
+            moved |= processSlotTransfer(items, inputSlotStart + index * stride, outputSlotStart + index * stride,
+                    direction, tanks[index], Integer.MAX_VALUE, simulate);
+        }
+        return moved;
+    }
+
+    private static boolean processSlotTransfer(IItemHandlerModifiable items, int inputSlot, int outputSlot,
+            TankSlotTransfer.Direction direction, HbmFluidTank tank, int maxAmount, boolean simulate) {
+        if (tank == null || tank.getTankType() == HbmFluids.NONE) {
+            return false;
+        }
+        return direction == TankSlotTransfer.Direction.ITEM_TO_TANK
+                ? loadTankFromSlot(items, inputSlot, outputSlot, tank, maxAmount, simulate)
+                : unloadTankToSlot(items, inputSlot, outputSlot, tank, maxAmount, simulate);
     }
 
     public static TransferBatchReport processTransferReport(IItemHandlerModifiable items, Iterable<TankSlotTransfer> transfers) {

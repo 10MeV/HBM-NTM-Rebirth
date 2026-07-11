@@ -119,9 +119,6 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
         }
     }
 
-    public static void clientTick(Level level, BlockPos pos, BlockState state, RadiolysisBlockEntity radiolysis) {
-    }
-
     public ItemStackHandler getItems() {
         return items;
     }
@@ -317,7 +314,7 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
             }
         }
 
-        refreshTrackedTransceiverFluidPortsReport(getReceivingTanks(), getSendingTanks(), this);
+        refreshTrackedTransceiverFluidPorts(getReceivingTanks(), getSendingTanks(), this);
         if (outputTank1.getFill() > 0) {
             tryProvideFluidToPorts(outputTank1.getTankType(), outputTank1.getPressure(), this);
         }

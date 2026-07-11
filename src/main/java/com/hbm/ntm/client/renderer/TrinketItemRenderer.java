@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.TrinketVariant;
 import com.hbm.ntm.item.TrinketBlockItem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
@@ -71,8 +71,8 @@ public class TrinketItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void applyGuiDisplay(TrinketVariant.Kind kind, int variant, PoseStack poseStack) {
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.scale(-1.0F, 1.0F, -1.0F);
 
         switch (kind) {

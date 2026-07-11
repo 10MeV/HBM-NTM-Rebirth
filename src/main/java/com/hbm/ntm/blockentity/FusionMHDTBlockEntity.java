@@ -84,10 +84,12 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         mhdt.rotorSpeed = Math.max(0.0F,
                 Math.min(mhdt.hasMinimumPlasma() ? 15.0F : 10.0F, mhdt.rotorSpeed));
         mhdt.prevRotor = mhdt.rotor;
-        mhdt.rotor += mhdt.rotorSpeed;
-        if (mhdt.rotor >= 360.0F) {
-            mhdt.rotor -= 360.0F;
-            mhdt.prevRotor -= 360.0F;
+        if (!LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            mhdt.rotor += mhdt.rotorSpeed;
+            if (mhdt.rotor >= 360.0F) {
+                mhdt.rotor -= 360.0F;
+                mhdt.prevRotor -= 360.0F;
+            }
         }
         float speed = mhdt.rotorSpeed / 15.0F;
         mhdt.audio = LegacyMachineAudioBridge.updateLoop(mhdt.audio, mhdt, "TURBINE_LARGE_LOOP",
@@ -328,7 +330,7 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
         tryProvideEnergyToPorts();
         syncEnergyCapacityToCurrentPower();
         if (coldTank.getTankType() != HbmFluids.NONE) {
-            refreshTrackedReceiverFluidPortsReport(List.of(coldTank), this);
+            refreshTrackedReceiverFluidPorts(coldTank, this);
         }
         if (hotTank.getFill() > 0) {
             tryProvideFluidToPorts(hotTank.getTankType(), hotTank.getPressure(), this);

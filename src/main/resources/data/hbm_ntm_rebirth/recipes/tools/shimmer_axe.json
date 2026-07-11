@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "item": "hbm_ntm_rebirth:shimmer_handle"
+    },
+    "H": {
+      "item": "hbm_ntm_rebirth:shimmer_axe_head"
+    }
+  },
+  "pattern": [
+    "H",
+    "G",
+    "G"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:shimmer_axe"
+  },
+  "show_notification": true
+}

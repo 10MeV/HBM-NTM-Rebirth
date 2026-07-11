@@ -26,12 +26,15 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
     private static final int STEAM_CAPACITY = 8_000;
     private static final int OUTPUT_CAPACITY = 4_000;
     private static final int SPENT_STEAM_CAPACITY = 800;
+    private static final HbmFluidStack SPENT_STEAM_OUTPUT = new HbmFluidStack(HbmFluids.SPENTSTEAM, 2);
 
     private final HbmFluidTank inputTank;
     private final HbmFluidTank steamTank;
     private final HbmFluidTank leftOutputTank;
     private final HbmFluidTank rightOutputTank;
     private final HbmFluidTank spentSteamTank;
+    private final List<HbmFluidTank> receivingTanks;
+    private final List<HbmFluidTank> sendingTanks;
 
     public CatalyticCrackerBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state,
@@ -55,6 +58,8 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
         this.leftOutputTank = leftOutputTank;
         this.rightOutputTank = rightOutputTank;
         this.spentSteamTank = spentSteamTank;
+        this.receivingTanks = List.of(inputTank, steamTank);
+        this.sendingTanks = List.of(leftOutputTank, rightOutputTank, spentSteamTank);
     }
 
     @Override
@@ -74,9 +79,9 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
 
     @Override
     protected void refreshFluidPorts() {
-        refreshTrackedReceiverFluidPortsReport(List.of(inputTank, steamTank), this);
+        refreshTrackedReceiverFluidPorts(receivingTanks, this);
         if (level != null && level.getGameTime() % 10L == 0L) {
-            refreshTrackedProviderFluidPortsReport(List.of(leftOutputTank, rightOutputTank, spentSteamTank), this);
+            refreshTrackedProviderFluidPorts(sendingTanks, this);
         }
     }
 
@@ -107,30 +112,31 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
 
     private boolean setupTanks(PairRecipe recipe) {
         if (recipe == null) {
-            return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
-                    List.of(), List.of(), List.of(), List.of(leftOutputTank, rightOutputTank, spentSteamTank))
-                    .changed();
+            return HbmFluidRecipeIO.conformTankChanged(leftOutputTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(rightOutputTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(spentSteamTank, null, 0);
         }
-        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
-                List.of(new HbmFluidStack(HbmFluids.STEAM, 200, steamTank.getPressure())),
-                List.of(recipe.left(), recipe.right(), new HbmFluidStack(HbmFluids.SPENTSTEAM, 2)),
-                List.of(steamTank),
-                List.of(leftOutputTank, rightOutputTank, spentSteamTank)).changed();
+        return HbmFluidRecipeIO.conformTankChanged(steamTank, HbmFluids.STEAM, 200, steamTank.getPressure(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(leftOutputTank, recipe.left(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(rightOutputTank, recipe.right(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(spentSteamTank, SPENT_STEAM_OUTPUT, 0);
     }
 
     private boolean crack(PairRecipe recipe) {
         int ops = 0;
         for (int i = 0; i < 2; i++) {
-            HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
-                    List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, 100),
-                            HbmFluidRecipeIO.requirementFromTank(steamTank, 200)),
-                    List.of(recipe.left(), recipe.right(), new HbmFluidStack(HbmFluids.SPENTSTEAM, 2)),
-                    List.of(inputTank, steamTank),
-                    List.of(leftOutputTank, rightOutputTank, spentSteamTank),
-                    false);
-            if (!report.complete()) {
+            if (!HbmFluidRecipeIO.canConsumeInput(inputTank, 100)
+                    || !HbmFluidRecipeIO.canConsumeInput(steamTank, 200)
+                    || !HbmFluidRecipeIO.canProduceOutput(leftOutputTank, recipe.left())
+                    || !HbmFluidRecipeIO.canProduceOutput(rightOutputTank, recipe.right())
+                    || !HbmFluidRecipeIO.canProduceOutput(spentSteamTank, SPENT_STEAM_OUTPUT)) {
                 break;
             }
+            HbmFluidRecipeIO.consumeInput(inputTank, 100, false);
+            HbmFluidRecipeIO.consumeInput(steamTank, 200, false);
+            HbmFluidRecipeIO.produceOutput(leftOutputTank, recipe.left(), false);
+            HbmFluidRecipeIO.produceOutput(rightOutputTank, recipe.right(), false);
+            HbmFluidRecipeIO.produceOutput(spentSteamTank, SPENT_STEAM_OUTPUT, false);
             ops++;
         }
         if (ops > 0) {

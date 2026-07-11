@@ -5,7 +5,7 @@ import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.GeigerBlockEntity;
 import com.hbm.ntm.client.obj.ObjUtilityModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.core.Direction;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -36,7 +36,7 @@ public class GeigerRenderer implements BlockEntityRenderer<GeigerBlockEntity> {
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(geiger, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotation(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, rotation(facing));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(geiger)) {
             ObjUtilityModels.GEIGER_COUNTER.renderAll(ObjUtilityModels.GEIGER_TEXTURE,
                     poseStack, buffer, modelLight, packedOverlay);

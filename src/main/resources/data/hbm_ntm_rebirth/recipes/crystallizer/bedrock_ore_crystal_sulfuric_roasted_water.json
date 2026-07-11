@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 100,
+  "fluid": {
+    "amount": 250,
+    "fluid": "WATER"
+  },
+  "input": {
+    "count": 4,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"sulfuric_roasted\",type:\"crystal\"}"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:bedrock_ore",
+    "nbt": "{grade:\"sulfuric_washed\",type:\"crystal\"}"
+  },
+  "source_order": 325
+}

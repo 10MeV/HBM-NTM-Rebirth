@@ -141,6 +141,10 @@ public class SawmillBlockEntity extends BlockEntity
         if (!level.isClientSide) {
             return;
         }
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            sawmill.lastSpin = sawmill.spin;
+            return;
+        }
         float momentum = sawmill.heat * 25.0F / (float) MAX_HEAT;
         sawmill.lastSpin = sawmill.spin;
         sawmill.spin += momentum;

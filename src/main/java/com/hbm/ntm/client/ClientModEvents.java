@@ -65,6 +65,7 @@ import com.hbm.ntm.client.renderer.BalefireBombRenderer;
 import com.hbm.ntm.client.renderer.BedrockOreDepositRenderer;
 import com.hbm.ntm.client.renderer.BasicMachineRenderer;
 import com.hbm.ntm.client.renderer.BombMultiRenderer;
+import com.hbm.ntm.client.renderer.BobmazonDeliveryRenderer;
 import com.hbm.ntm.client.renderer.BreedingReactorRenderer;
 import com.hbm.ntm.client.renderer.BulletProjectileRenderer;
 import com.hbm.ntm.client.renderer.CableDiodeRenderer;
@@ -149,10 +150,12 @@ import com.hbm.ntm.client.renderer.MovingItemRenderer;
 import com.hbm.ntm.client.renderer.NuclearCreeperRenderer;
 import com.hbm.ntm.client.renderer.NuclearDeviceRenderer;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
+import com.hbm.ntm.client.renderer.NtmMinecartRenderer;
 import com.hbm.ntm.client.renderer.OilDrillRenderer;
 import com.hbm.ntm.client.renderer.OreSlopperRenderer;
 import com.hbm.ntm.client.renderer.ParticleAcceleratorRenderer;
 import com.hbm.ntm.client.renderer.PyroOvenRenderer;
+import com.hbm.ntm.client.renderer.GlyphidRenderer;
 import com.hbm.ntm.client.renderer.RADBeastRenderer;
 import com.hbm.ntm.client.renderer.RadarRenderer;
 import com.hbm.ntm.client.renderer.RadarScreenRenderer;
@@ -169,6 +172,7 @@ import com.hbm.ntm.client.renderer.RBMKDebrisRenderer;
 import com.hbm.ntm.client.renderer.RBMKPanelRenderer;
 import com.hbm.ntm.client.renderer.RedCableRenderer;
 import com.hbm.ntm.client.renderer.RefuelerRenderer;
+import com.hbm.ntm.client.renderer.RubberBoatRenderer;
 import com.hbm.ntm.client.renderer.RubbleRenderer;
 import com.hbm.ntm.client.renderer.RustedLaunchPadRenderer;
 import com.hbm.ntm.client.renderer.SawbladeRenderer;
@@ -217,6 +221,8 @@ import com.hbm.ntm.client.screen.AssemblyMachineScreen;
 import com.hbm.ntm.client.screen.ChemicalFactoryScreen;
 import com.hbm.ntm.client.screen.ChemicalPlantScreen;
 import com.hbm.ntm.client.screen.CasingBagScreen;
+import com.hbm.ntm.client.screen.CartCrateScreen;
+import com.hbm.ntm.client.screen.CartDestroyerScreen;
 import com.hbm.ntm.client.screen.CompactLauncherScreen;
 import com.hbm.ntm.client.screen.CompressorScreen;
 import com.hbm.ntm.client.screen.CombustionEngineScreen;
@@ -300,6 +306,7 @@ import com.hbm.ntm.client.screen.RBMKRodScreen;
 import com.hbm.ntm.client.screen.RBMKStorageScreen;
 import com.hbm.ntm.client.screen.RadarScreen;
 import com.hbm.ntm.client.screen.RadiolysisScreen;
+import com.hbm.ntm.client.screen.RebarPlacerScreen;
 import com.hbm.ntm.client.screen.RefineryScreen;
 import com.hbm.ntm.client.screen.RemoteFluidMachineScreen;
 import com.hbm.ntm.client.screen.RotaryFurnaceScreen;
@@ -499,6 +506,9 @@ public final class ClientModEvents {
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY.get(), MachineBatteryScreen::new);
             MenuScreens.register(ModMenuTypes.MACHINE_BATTERY_SOCKET.get(), MachineBatterySocketScreen::new);
             MenuScreens.register(ModMenuTypes.STORAGE_CRATE.get(), CrateScreen::new);
+            MenuScreens.register(ModMenuTypes.CART_CRATE.get(), CartCrateScreen::new);
+            MenuScreens.register(ModMenuTypes.CART_DESTROYER.get(), CartDestroyerScreen::new);
+            MenuScreens.register(ModMenuTypes.REBAR_PLACER.get(), RebarPlacerScreen::new);
             MenuScreens.register(ModMenuTypes.FILE_CABINET.get(), FileCabinetScreen::new);
             MenuScreens.register(ModMenuTypes.MASS_STORAGE.get(), MassStorageScreen::new);
             MenuScreens.register(ModMenuTypes.CRANE_LOGISTICS.get(), CraneLogisticsScreen::new);
@@ -537,6 +547,14 @@ public final class ClientModEvents {
                     (stack, level, entity, seed) -> MarshmallowItem.isRoasted(stack) ? 1.0F : 0.0F);
             ItemProperties.register(ModItems.TOOLBOX.get(), new ResourceLocation(HbmNtm.MOD_ID, "open"),
                     (stack, level, entity, seed) -> ToolboxItem.isOpen(stack) ? 1.0F : 0.0F);
+            ItemProperties.register(ModBlocks.BLOCK_COKE.get().asItem(), new ResourceLocation(HbmNtm.MOD_ID, "legacy_variant"),
+                    (stack, level, entity, seed) -> stack.getTag() == null
+                            ? 0.0F
+                            : stack.getTag().getInt(LegacyStateBlockItem.TAG_VARIANT));
+            ItemProperties.register(ModBlocks.CONCRETE_COLORED_EXT.get().asItem(), new ResourceLocation(HbmNtm.MOD_ID, "legacy_variant"),
+                    (stack, level, entity, seed) -> stack.getTag() == null
+                            ? 0.0F
+                            : stack.getTag().getInt(LegacyStateBlockItem.TAG_VARIANT));
             ModItems.HOT_ITEMS.stream()
                     .map(RegistryObject::get)
                     .forEach(item -> ItemProperties.register(item, new ResourceLocation(HbmNtm.MOD_ID, "hot"),
@@ -759,6 +777,12 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.TURRET_FRITZ.get(), TurretBlockEntityRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MOVING_ITEM.get(), MovingItemRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MOVING_PACKAGE.get(), MovingPackageRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.RUBBER_BOAT.get(), RubberBoatRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.NTM_CART_ORE.get(), NtmMinecartRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.NTM_CART_CRATE.get(), NtmMinecartRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.NTM_CART_POWDER.get(), NtmMinecartRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.NTM_CART_SEMTEX.get(), NtmMinecartRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.NTM_CART_DESTROYER.get(), NtmMinecartRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUCLEAR_CREEPER.get(), NuclearCreeperRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.TAINTED_CREEPER.get(), TaintedCreeperRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CYBER_CRAB.get(), CyberCrabRenderer::new);
@@ -766,6 +790,8 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.TAINT_CRAB.get(), TaintCrabRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.DUCK.get(), DuckRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.RAD_BEAST.get(), RADBeastRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.GLYPHID_SCOUT.get(), GlyphidRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.GLYPHID_DIGGER.get(), GlyphidRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK5.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.NUKE_EXPLOSION_MK3.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.TOM_BLAST.get(), NoopRenderer::new);
@@ -817,6 +843,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.MISSILE_ANTI_BALLISTIC.get(), AntiBallisticMissileRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MISSILE_CUSTOM.get(), CustomMissileRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MINER_ROCKET.get(), MinerRocketRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.BOBMAZON_DELIVERY.get(), BobmazonDeliveryRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SOYUZ.get(), SoyuzRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SOYUZ_CAPSULE.get(), SoyuzCapsuleRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.SHRAPNEL.get(), ShrapnelRenderer::new);

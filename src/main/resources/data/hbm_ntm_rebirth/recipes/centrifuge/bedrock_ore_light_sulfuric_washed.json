@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"sulfuric_washed\",type:\"light\"}"
+  },
+  "outputs": [
+    {
+      "count": 6,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:2200,name:\"Titanium\"}"
+    },
+    {
+      "count": 9,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:2902,name:\"Bauxite\"}"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:2903,name:\"Cryolite\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"light\"}"
+    }
+  ],
+  "source_order": 69
+}

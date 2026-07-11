@@ -20,9 +20,9 @@
     {
       "count": 2,
       "ingredient": {
-        "tag": "forge:ingots/big_mt"
+        "tag": "forge:ingots/saturnite"
       },
-      "legacy_ore": "ingotBigMt"
+      "legacy_ore": "ingotSaturnite"
     },
     {
       "count": 4,

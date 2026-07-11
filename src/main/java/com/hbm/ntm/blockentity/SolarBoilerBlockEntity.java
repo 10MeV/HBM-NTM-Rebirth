@@ -85,6 +85,11 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         if (!level.isClientSide) {
             return;
         }
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            boiler.secondaryBeamTargets.clear();
+            boiler.primaryBeamTargets.clear();
+            return;
+        }
         boiler.secondaryBeamTargets.clear();
         boiler.secondaryBeamTargets.addAll(boiler.primaryBeamTargets);
         boiler.primaryBeamTargets.clear();

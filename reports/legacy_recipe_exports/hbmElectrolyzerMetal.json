@@ -1,6 +1,468 @@
 {
   "recipes": [
     {
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"actinide\"}"
+      ],
+      "output1": [
+        "Uranium",
+        64
+      ],
+      "output2": [
+        "Thorium232",
+        64
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"actinide\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ],
+      "output1": [
+        "Uranium",
+        256
+      ],
+      "output2": [
+        "Thorium232",
+        128
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"actinide\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ],
+      "output1": [
+        "Uranium",
+        128
+      ],
+      "output2": [
+        "Thorium232",
+        256
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore_fragment",
+          8,
+          0,
+          "{mat:8001,name:\"Cinnabar\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"crystal\"}"
+      ],
+      "output1": [
+        "Redstone",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore_fragment",
+          16,
+          0,
+          "{mat:8001,name:\"Cinnabar\"}"
+        ],
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"crystal\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ],
+      "output1": [
+        "Redstone",
+        576
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore_fragment",
+          32,
+          0,
+          "{mat:8001,name:\"Cinnabar\"}"
+        ],
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"crystal\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ],
+      "output1": [
+        "Redstone",
+        288
+      ]
+    },
+    {
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"heavy\"}"
+      ],
+      "output1": [
+        "Tungsten",
+        144
+      ],
+      "output2": [
+        "Lead",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"heavy\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ],
+      "output1": [
+        "Tungsten",
+        576
+      ],
+      "output2": [
+        "Lead",
+        288
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"heavy\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ],
+      "output1": [
+        "Tungsten",
+        288
+      ],
+      "output2": [
+        "Lead",
+        576
+      ]
+    },
+    {
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"light\"}"
+      ],
+      "output1": [
+        "Iron",
+        144
+      ],
+      "output2": [
+        "Copper",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"light\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ],
+      "output1": [
+        "Iron",
+        576
+      ],
+      "output2": [
+        "Copper",
+        288
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"light\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ],
+      "output1": [
+        "Iron",
+        288
+      ],
+      "output2": [
+        "Copper",
+        576
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore_fragment",
+          18,
+          0,
+          "{mat:600,name:\"Coal\"}"
+        ],
+        [
+          "hbm:bedrock_ore_fragment",
+          18,
+          0,
+          "{mat:1600,name:\"Sulfur\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"nonmetal\"}"
+      ],
+      "output1": [
+        "Slag",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore_fragment",
+          64,
+          0,
+          "{mat:600,name:\"Coal\"}"
+        ],
+        [
+          "hbm:bedrock_ore_fragment",
+          36,
+          0,
+          "{mat:1600,name:\"Sulfur\"}"
+        ],
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"nonmetal\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"nonmetal\"}"
+      ],
+      "output1": [
+        "Slag",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore_fragment",
+          36,
+          0,
+          "{mat:600,name:\"Coal\"}"
+        ],
+        [
+          "hbm:bedrock_ore_fragment",
+          64,
+          0,
+          "{mat:1600,name:\"Sulfur\"}"
+        ],
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"nonmetal\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"nonmetal\"}"
+      ],
+      "output1": [
+        "Slag",
+        144
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore_fragment",
+          10,
+          0,
+          "{mat:20000,name:\"RareEarth\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"rare\"}"
+      ],
+      "output1": [
+        "Cobalt",
+        80
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore_fragment",
+          20,
+          0,
+          "{mat:20000,name:\"RareEarth\"}"
+        ],
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"rare\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ],
+      "output1": [
+        "Cobalt",
+        320
+      ]
+    },
+    {
+      "byproducts": [
+        [
+          "hbm:bedrock_ore_fragment",
+          40,
+          0,
+          "{mat:20000,name:\"RareEarth\"}"
+        ],
+        [
+          "hbm:bedrock_ore",
+          1,
+          0,
+          "{grade:\"crumbs\",type:\"rare\"}"
+        ]
+      ],
+      "duration": 600,
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ],
+      "output1": [
+        "Cobalt",
+        160
+      ]
+    },
+    {
       "byproducts": [
         [
           "hbm:chunk_ore",

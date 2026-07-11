@@ -115,7 +115,8 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, CombinationOvenBlockEntity oven) {
-        if (!level.isClientSide || !oven.wasOn || level.random.nextInt(15) != 0) {
+        if (!level.isClientSide || !oven.wasOn || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)
+                || level.random.nextInt(15) != 0) {
             return;
         }
         level.addParticle(ParticleTypes.LAVA,
@@ -248,9 +249,7 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
         if (level.getGameTime() % 20L == 0L) {
             sendOutputsToPorts(level, pos, state);
         }
-        boolean changed = processFluidItemTransfers(items,
-                List.of(com.hbm.ntm.fluid.HbmFluidItemTransfer.TankSlotTransfer.unload(
-                        SLOT_TANK_INPUT, SLOT_TANK_OUTPUT, tank)));
+        boolean changed = processFluidItemUnloadTransfer(items, SLOT_TANK_INPUT, SLOT_TANK_OUTPUT, tank);
 
         wasOn = false;
         CombinationOvenRecipe recipe = findRecipe(level, items.getStackInSlot(SLOT_INPUT));
@@ -322,7 +321,7 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
             }
         }
         if (tank.getFill() > 0) {
-            refreshTrackedProviderFluidPortsReport(List.of(tank), this);
+            refreshTrackedProviderFluidPorts(tank, this);
             tryProvideFluidToPorts(tank.getTankType(), tank.getPressure(), this);
         }
     }

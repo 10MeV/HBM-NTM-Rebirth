@@ -23,12 +23,12 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.hbm.ntm.client.obj.ObjWeaponModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.item.ChargeThrowerItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -193,8 +193,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         }
 
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) + 180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) + 180.0F);
         poseStack.scale(1.5F, 1.5F, 1.5F);
         if (renderLegacySpecialProjectile(trail, entity, partialTick, poseStack, buffer, packedLight)) {
             poseStack.popPose();
@@ -202,7 +202,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             return;
         }
         if (style != BulletStyle.BLADE) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(LegacyRenderRandom.seeded(entity.getId()).nextInt(90) - 45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, LegacyRenderRandom.seeded(entity.getId()).nextInt(90) - 45.0F);
         }
 
         switch (style) {
@@ -348,7 +348,9 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             PoseStack poseStack, MultiBufferSource buffer) {
         double widthScale = age / 2.0D + 0.5D;
         int colorInner = scaledColor(red, green, blue, age);
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, deltaX, deltaY, deltaZ, WaveType.RANDOM,
+        LegacyBeamRenderer.DirectSolidBeamBatch beamBatch =
+                LegacyBeamRenderer.directSolidBeamBatch(poseStack, buffer, false);
+        LegacyBeamRenderer.solidBeam(beamBatch, deltaX, deltaY, deltaZ, WaveType.RANDOM,
                 colorInner, colorInner, entity.tickCount / 3, legacyBeamSegments(length), 0.0F,
                 4, (float) (0.025F * widthScale));
     }
@@ -359,7 +361,9 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
                 poseStack, buffer);
         double widthScale = (1.0D - age) * 25.0D + 2.5D;
         int colorInner = scaledColor(0x20, 0x20, 0x20, age);
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, deltaX, deltaY, deltaZ, WaveType.RANDOM,
+        LegacyBeamRenderer.DirectSolidBeamBatch beamBatch =
+                LegacyBeamRenderer.directSolidBeamBatch(poseStack, buffer, false);
+        LegacyBeamRenderer.solidBeam(beamBatch, deltaX, deltaY, deltaZ, WaveType.RANDOM,
                 colorInner, colorInner, entity.tickCount / 3, legacyBeamSegments(length), 0.0F,
                 8, (float) (0.0625F * widthScale));
     }
@@ -372,9 +376,9 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
 
     private static void renderLegacyBeamBar(double deltaX, double deltaY, double deltaZ, double length,
             int dark, int light, double widthScale, PoseStack poseStack, MultiBufferSource buffer) {
-        LegacyBeamRenderer.solidBeam(poseStack, buffer, deltaX, deltaY, deltaZ, WaveType.RANDOM,
-                dark, light, 0, Math.max(1, (int) Math.ceil(length)), 0.0F,
-                2, (float) (0.03125D * widthScale));
+        LegacyBeamRenderer.DirectSolidBeamBatch beamBatch =
+                LegacyBeamRenderer.directSolidBeamBatch(poseStack, buffer, false);
+        renderLegacyBeamBar(beamBatch, deltaX, deltaY, deltaZ, length, dark, light, widthScale);
     }
 
     private static void renderLegacyBeamBar(LegacyBeamRenderer.DirectSolidBeamBatch beamBatch,
@@ -469,7 +473,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.scale(0.125F / 1.5F, 0.125F / 1.5F, 0.125F / 1.5F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
         poseStack.translate(0.0D, -1.0D, 1.0D);
         ObjWeaponModels.renderPart(FATMAN, "MiniNuke", texture, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
@@ -479,7 +483,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     private static void renderLegacyClusterBomb(PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.scale(0.0625F / 1.5F, 0.0625F / 1.5F, 0.0625F / 1.5F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
         poseStack.translate(0.0D, -1.0D, 1.0D);
         ObjWeaponModels.renderPart(FATMAN, "MiniNuke", FATMAN_SUBMUNITION, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
@@ -491,7 +495,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         renderLegacyFatmanNuke(FATMAN_BALEFIRE, poseStack, buffer, packedLight);
         poseStack.pushPose();
         poseStack.scale(0.125F / 1.5F, 0.125F / 1.5F, 0.125F / 1.5F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
         poseStack.translate(0.0D, -1.0D, 1.0D);
         float offset = entity.tickCount + partialTick;
         for (int layer = 0; layer < 3; layer++) {
@@ -506,7 +510,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     private static void renderLegacyHiveRocket(PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.scale(0.125F / 1.5F, 0.125F / 1.5F, 0.125F / 1.5F);
-        poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
         poseStack.translate(0.0D, 0.0D, 3.5D);
         ObjWeaponModels.renderPart(PANZERSCHRECK_MODEL_OBJ, "Rocket", PANZERSCHRECK, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
@@ -516,7 +520,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     private static void renderLegacyBigNukeMirv(PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.scale(0.5F / 1.5F, 0.5F / 1.5F, 0.5F / 1.5F);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
         PROJECTILES.renderOnlyInCallOrder(ROCKET_MIRV, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
                 PROJECTILE_MISSILE_MIRV);
         poseStack.popPose();
@@ -525,7 +529,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     private static void renderLegacySednaGrenade(PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.scale(0.25F / 1.5F, 0.25F / 1.5F, 0.25F / 1.5F);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
         PROJECTILES.renderOnlyInCallOrder(GRENADE, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
                 PROJECTILE_GRENADE);
         poseStack.popPose();
@@ -534,11 +538,11 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     private static void renderLegacyChargeHook(BulletProjectileEntity entity, float partialTick,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) + 180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) + 180.0F);
         poseStack.scale(0.125F, 0.125F, 0.125F);
-        poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, -6.0D);
         ObjWeaponModels.renderPart(CHARGE_THROWER, "Hook", CHARGE_THROWER_HOOK, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
@@ -634,8 +638,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             int packedLight) {
         poseStack.pushPose();
         poseStack.scale(0.125F / 1.5F, 0.125F / 1.5F, 0.125F / 1.5F);
-        poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, -6.0D);
         ObjWeaponModels.renderPart(CHARGE_THROWER, "Mortar", CHARGE_THROWER_MORTAR, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
@@ -754,8 +758,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.scale(scale, scale, scale);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         PROJECTILES.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, part);
         poseStack.popPose();
     }
@@ -874,11 +878,11 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             return;
         }
         poseStack.pushPose();
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
         poseStack.translate(0.0D, 0.5D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees((entity.tickCount + partialTick) * 18.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (entity.tickCount + partialTick) * 18.0F);
         poseStack.translate(0.0D, -0.5D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale(1.0F, 2.0F, 1.0F);
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED,
                 packedLight, OverlayTexture.NO_OVERLAY, poseStack, buffer, entity.level(), entity.getId());
@@ -888,12 +892,12 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     private static void renderLeadburster(BulletProjectileEntity entity, float partialTick,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.ZN.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, -90.0F);
         poseStack.scale(0.05F, 0.05F, 0.05F);
         LEADBURSTER.renderOnlyInCallOrder(LEADBURSTER_TEXTURE, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY, LEADBURSTER_BASE);
         if (entity.getStuckIn() != -1) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((entity.tickCount + partialTick) * -18.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (entity.tickCount + partialTick) * -18.0F);
         }
         LEADBURSTER.renderOnlyInCallOrder(LEADBURSTER_TEXTURE, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY, LEADBURSTER_SPINNER);

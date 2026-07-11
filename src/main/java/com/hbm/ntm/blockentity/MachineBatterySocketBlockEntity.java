@@ -152,6 +152,9 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, MachineBatterySocketBlockEntity blockEntity) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (level.getGameTime() % 20L == 0L) {
             blockEntity.frame = !level.getBlockState(pos.above(2)).isAir();
         }

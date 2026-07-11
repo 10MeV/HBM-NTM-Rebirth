@@ -7,7 +7,7 @@ import com.hbm.ntm.entity.effect.DigammaSpearEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -47,7 +47,7 @@ public class DigammaSpearRenderer extends EntityRenderer<DigammaSpearEntity> {
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.translate(0.0D, 15.0D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
         poseStack.scale(2.0F, 2.0F, 2.0F);
         ObjWeaponModels.renderLanceSpear(poseStack, buffer, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
 

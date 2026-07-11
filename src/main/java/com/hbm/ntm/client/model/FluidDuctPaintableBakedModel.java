@@ -44,6 +44,7 @@ public class FluidDuctPaintableBakedModel implements BakedModel {
     private final boolean exhaust;
     private final ItemTransforms transforms;
     private final Map<CubeKey, List<BakedQuad>> cubeCache = new ConcurrentHashMap<>();
+    private final Map<UnpaintedKey, List<BakedQuad>> unpaintedCache = new ConcurrentHashMap<>();
 
     public FluidDuctPaintableBakedModel(TextureAtlasSprite baseSprite, TextureAtlasSprite overlaySprite,
             TextureAtlasSprite colorOverlaySprite, TextureAtlasSprite particleSprite, boolean exhaust,
@@ -84,10 +85,23 @@ public class FluidDuctPaintableBakedModel implements BakedModel {
             return cubeQuads(baseSprite, -1, side, item);
         }
 
-        List<BakedQuad> quads = new ArrayList<>(item || side != null ? 12 : 0);
+        return unpaintedQuads(side, item);
+    }
+
+    private List<BakedQuad> unpaintedQuads(@Nullable Direction side, boolean item) {
+        if (side == null && !item) {
+            return List.of();
+        }
+        return unpaintedCache.computeIfAbsent(new UnpaintedKey(side, item), this::buildUnpaintedQuads);
+    }
+
+    private List<BakedQuad> buildUnpaintedQuads(UnpaintedKey key) {
+        List<BakedQuad> quads = new ArrayList<>(key.item() || key.side() != null ? 12 : 0);
+        Direction side = key.side();
+        boolean item = key.item();
         quads.addAll(cubeQuads(baseSprite, -1, side, item));
         quads.addAll(cubeQuads(colorOverlaySprite, FLUID_TINT_INDEX, side, item));
-        return quads;
+        return List.copyOf(quads);
     }
 
     private static boolean overlayEnabled(BlockState state) {
@@ -193,5 +207,8 @@ public class FluidDuctPaintableBakedModel implements BakedModel {
     }
 
     private record CubeKey(TextureAtlasSprite sprite, int tintIndex, @Nullable Direction side, boolean item) {
+    }
+
+    private record UnpaintedKey(@Nullable Direction side, boolean item) {
     }
 }

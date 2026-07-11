@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.render;
 
+import com.hbm.ntm.blockentity.TeslaBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyEmitterBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyLineRenderer;
@@ -9,6 +10,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyDangerDiamondRenderer;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.renderer.LegacyTileRenderPlans;
 import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
 import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling.MachineRendererSubmissionScope;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -183,6 +185,287 @@ public final class LegacyMachineEffectPresenter {
         }
     }
 
+    public static void enqueueTeslaTargetBeams(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            List<TeslaBlockEntity.TeslaTarget> targets, double sourceX, double sourceY, double sourceZ,
+            int start, int color, float size, int layers, float thickness) {
+        if (poseStack == null || buffer == null || targets == null || targets.isEmpty()) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initSolidBeamGroup(poseStack, buffer, false,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            for (TeslaBlockEntity.TeslaTarget target : targets) {
+                double dx = target.x() - sourceX;
+                double dy = target.y() - sourceY;
+                double dz = target.z() - sourceZ;
+                double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                task.add(-dx, dy, -dz, LegacyBeamRenderer.WaveType.RANDOM, color, color,
+                        start, (int) (length * 5.0D), size, layers, thickness);
+            }
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueSpiralSolidBeamFan(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            boolean depthWrite, double x, double y, double z, int color, double startBase, double phaseStep,
+            int count, int segments, float size, int layers, float thickness) {
+        if (poseStack == null || buffer == null || count <= 0) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initSolidBeamGroup(poseStack, buffer, depthWrite,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            for (int i = 0; i < count; i++) {
+                int start = (int) ((startBase + i * phaseStep) % 360.0D);
+                task.add(x, y, z, LegacyBeamRenderer.WaveType.SPIRAL, color, color,
+                        start, segments, size, layers, thickness);
+            }
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueOrbusBeams(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            float beamScale, int randomStartA, int randomStartB) {
+        if (poseStack == null || buffer == null || beamScale <= 0.0F) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initSolidBeamGroup(poseStack, buffer, false,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            task.add(0.0D, 3.0D, 0.0D,
+                    LegacyBeamRenderer.WaveType.SPIRAL, 0x101020, 0x101020, 0, 1, 0.0F, 6,
+                    beamScale * 0.5F);
+            task.add(0.0D, 3.0D, 0.0D,
+                    LegacyBeamRenderer.WaveType.RANDOM, 0x202060, 0x202060, randomStartA, 6, beamScale, 2,
+                    0.0625F * beamScale);
+            task.add(0.0D, 3.0D, 0.0D,
+                    LegacyBeamRenderer.WaveType.RANDOM, 0x202060, 0x202060, randomStartB, 6, beamScale, 2,
+                    0.0625F * beamScale);
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueCreativeBatteryBeams(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            int beamMask, int start) {
+        if (poseStack == null || buffer == null || beamMask == 0) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initSolidBeamGroup(poseStack, buffer, false,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            int bit = 1;
+            for (int i = -1; i <= 1; i += 2) {
+                for (int j = -1; j <= 1; j += 2) {
+                    if ((beamMask & bit) != 0) {
+                        double x = LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_XZ * i;
+                        double z = LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_XZ * j;
+                        addDualRandomSolidBeam(task, x, LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_Y, z,
+                                LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_OUTER_COLOR,
+                                LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_INNER_COLOR,
+                                start,
+                                LegacyTileRenderPlans.CREATIVE_BATTERY_LONG_BEAM_SEGMENTS,
+                                LegacyTileRenderPlans.CREATIVE_BATTERY_LONG_BEAM_SIZE,
+                                LegacyTileRenderPlans.CREATIVE_BATTERY_SHORT_BEAM_SEGMENTS,
+                                LegacyTileRenderPlans.CREATIVE_BATTERY_SHORT_BEAM_SIZE,
+                                LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_LAYERS,
+                                LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_THICKNESS);
+                    }
+                    bit <<= 1;
+                }
+            }
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueDualRandomSolidBeam(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            boolean depthWrite, double x, double y, double z, int outerColor, int innerColor, int start,
+            int longSegments, float longSize, int shortSegments, float shortSize, int layers, float thickness) {
+        if (poseStack == null || buffer == null) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initSolidBeamGroup(poseStack, buffer, depthWrite,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            addDualRandomSolidBeam(task, x, y, z, outerColor, innerColor, start,
+                    longSegments, longSize, shortSegments, shortSize, layers, thickness);
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueDfcEmitterBeams(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            int range, int randomStart) {
+        if (poseStack == null || buffer == null || range <= 0) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initSolidBeamGroup(poseStack, buffer, true,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            task.add(0.0D, 0.0D, range,
+                    LegacyBeamRenderer.WaveType.SPIRAL, LegacyTileRenderPlans.DFC_EMITTER_DEPTH_COLOR,
+                    LegacyTileRenderPlans.DFC_EMITTER_DEPTH_COLOR, 0, 1, 0.0F, 2, 0.0625F);
+            task.add(0.0D, 0.0D, range,
+                    LegacyBeamRenderer.WaveType.RANDOM, LegacyTileRenderPlans.DFC_EMITTER_RANDOM_COLOR,
+                    LegacyTileRenderPlans.DFC_EMITTER_RANDOM_COLOR, randomStart, range * 2, 0.125F, 4, 0.0625F);
+            task.add(0.0D, 0.0D, range,
+                    LegacyBeamRenderer.WaveType.RANDOM, LegacyTileRenderPlans.DFC_EMITTER_RANDOM_COLOR,
+                    LegacyTileRenderPlans.DFC_EMITTER_RANDOM_COLOR, randomStart + 1, range * 2, 0.125F, 4,
+                    0.0625F);
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueDfcInjectorBeams(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            int range, boolean renderTank0, int tank0Color, boolean renderTank1, int tank1Color, int randomStart) {
+        if (poseStack == null || buffer == null || range <= 0 || (!renderTank0 && !renderTank1)) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initLineBeamGroup(poseStack, buffer,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            if (renderTank0) {
+                task.add(0.0D, 0.0D, range,
+                        LegacyBeamRenderer.WaveType.RANDOM, tank0Color,
+                        LegacyTileRenderPlans.DFC_INJECTOR_INNER_COLOR, randomStart, range, 0.0625F);
+            }
+            if (renderTank1) {
+                task.add(0.0D, 0.0D, range,
+                        LegacyBeamRenderer.WaveType.RANDOM, tank1Color,
+                        LegacyTileRenderPlans.DFC_INJECTOR_INNER_COLOR, randomStart + 1, range, 0.0625F);
+            }
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueDfcStabilizerBeams(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            int range, int fastStart, int midStart, int slowStart) {
+        if (poseStack == null || buffer == null || range <= 0) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initLineBeamGroup(poseStack, buffer,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            int segments = range * 3;
+            task.add(0.0D, 0.0D, range,
+                    LegacyBeamRenderer.WaveType.SPIRAL, LegacyTileRenderPlans.DFC_STABILIZER_OUTER_COLOR,
+                    LegacyTileRenderPlans.DFC_STABILIZER_INNER_COLOR, fastStart, segments, 0.125F);
+            task.add(0.0D, 0.0D, range,
+                    LegacyBeamRenderer.WaveType.SPIRAL, LegacyTileRenderPlans.DFC_STABILIZER_OUTER_COLOR,
+                    LegacyTileRenderPlans.DFC_STABILIZER_INNER_COLOR, midStart, segments, 0.125F);
+            task.add(0.0D, 0.0D, range,
+                    LegacyBeamRenderer.WaveType.SPIRAL, LegacyTileRenderPlans.DFC_STABILIZER_OUTER_COLOR,
+                    LegacyTileRenderPlans.DFC_STABILIZER_INNER_COLOR, slowStart, segments, 0.125F);
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueFelBeams(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            int length, int color, int randomStart) {
+        if (poseStack == null || buffer == null || length <= 0) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initSolidBeamGroup(poseStack, buffer, true,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            double z = -length - 1.0D;
+            task.add(0.0D, 0.0D, z,
+                    LegacyBeamRenderer.WaveType.SPIRAL, color, color, 0, 1, 0.0F, 2, 0.0625F);
+            task.add(0.0D, 0.0D, z,
+                    LegacyBeamRenderer.WaveType.RANDOM, color, color, randomStart, length / 2 + 1, 0.0625F, 2,
+                    0.0625F);
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
     public static void enqueueEmitterBeamGroup(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
             int beam, float girth, int effect, int rawColor, long worldTime, float partialTick) {
         if (poseStack == null || buffer == null) {
@@ -194,6 +477,76 @@ public final class LegacyMachineEffectPresenter {
         boolean queued = false;
         try {
             LegacyEmitterBeamRenderer.emitBeamPlans(beam, girth, effect, rawColor, worldTime, partialTick, task);
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueLineBeam(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            double x, double y, double z, LegacyBeamRenderer.WaveType wave, int outerColor, int innerColor,
+            int start, int segments, float size) {
+        if (poseStack == null || buffer == null) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initLineBeamGroup(poseStack, buffer,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            task.add(x, y, z, wave, outerColor, innerColor, start, segments, size);
+            if (task.hasBeamSpecs()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueExposureChamberBeams(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            boolean randomTop, boolean randomRight, boolean randomLeft, int randomColor, int loopStart,
+            long currentMillis) {
+        if (poseStack == null || buffer == null) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initLineBeamGroup(poseStack, buffer,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            if (randomTop) {
+                task.add(0.0D, 3.675D, -7.5D, 0.0D, 0.0D, 5.0D,
+                        LegacyBeamRenderer.WaveType.RANDOM, randomColor, 0xFFFFFF, loopStart, 15, 0.125F);
+            }
+            if (randomRight) {
+                task.add(1.1875D, 2.5D, -7.5D, 0.0D, 0.0D, 5.0D,
+                        LegacyBeamRenderer.WaveType.RANDOM, randomColor, 0xFFFFFF, loopStart, 15, 0.125F);
+            }
+            if (randomLeft) {
+                task.add(-1.1875D, 2.5D, -7.5D, 0.0D, 0.0D, 5.0D,
+                        LegacyBeamRenderer.WaveType.RANDOM, randomColor, 0xFFFFFF, loopStart, 15, 0.125F);
+            }
+            task.add(0.0D, 1.75D, 0.0D, 0.0D, 1.5D, 0.0D,
+                    LegacyBeamRenderer.WaveType.RANDOM, 0x80D0FF, 0xFFFFFF, loopStart, 10, 0.125F);
+            task.add(0.0D, 1.75D, 0.0D, 0.0D, 1.5D, 0.0D,
+                    LegacyBeamRenderer.WaveType.RANDOM, 0x8080FF, 0xFFFFFF, (int) (currentMillis + 5L) / 50,
+                    10, 0.125F);
+            task.add(0.0D, 2.5D, 0.0D, 0.0D, 0.0D, -1.0D,
+                    LegacyBeamRenderer.WaveType.SPIRAL, 0xFFFF80, 0xFFFFFF, (int) (currentMillis % 360L),
+                    15, 0.125F);
+            task.add(0.0D, 2.5D, 0.0D, 0.0D, 0.0D, -1.0D,
+                    LegacyBeamRenderer.WaveType.SPIRAL, 0xFF8080, 0xFFFFFF, (int) (currentMillis % 360L) + 180,
+                    15, 0.125F);
             if (task.hasBeamSpecs()) {
                 QUEUES.get(resolvedStage).add(task);
                 queuedTasks++;
@@ -280,6 +633,33 @@ public final class LegacyMachineEffectPresenter {
         }
     }
 
+    public static void enqueueSolarBoilerBeams(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            LegacyTexturedRenderMode renderMode, int renderAlpha, double halfWidth, double startY,
+            int nearAlpha, int farAlpha, int[] offsets) {
+        if (poseStack == null || buffer == null || renderMode == null || offsets == null || offsets.length < 3) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initSolarBoilerBeamGroup(poseStack, buffer, renderMode, renderAlpha,
+                halfWidth, startY, nearAlpha, farAlpha,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            for (int i = 0; i + 2 < offsets.length; i += 3) {
+                task.add(offsets[i], offsets[i + 1], offsets[i + 2]);
+            }
+            if (task.hasSolarBoilerBeams()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
     public static void enqueueSolarBoilerBeamGroup(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
             LegacyTexturedRenderMode renderMode, int renderAlpha, double halfWidth, double startY,
             int nearAlpha, int farAlpha, Consumer<SolarBoilerBeamGroup> beams) {
@@ -303,6 +683,15 @@ public final class LegacyMachineEffectPresenter {
                 releaseTask(task);
             }
         }
+    }
+
+    private static void addDualRandomSolidBeam(SolidBeamGroup beams, double x, double y, double z,
+            int outerColor, int innerColor, int start, int longSegments, float longSize,
+            int shortSegments, float shortSize, int layers, float thickness) {
+        beams.add(x, y, z, LegacyBeamRenderer.WaveType.RANDOM,
+                outerColor, innerColor, start, longSegments, longSize, layers, thickness);
+        beams.add(x, y, z, LegacyBeamRenderer.WaveType.RANDOM,
+                outerColor, innerColor, start, shortSegments, shortSize, layers, thickness);
     }
 
     public static void enqueueTexturedQuadGroup(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
@@ -362,6 +751,30 @@ public final class LegacyMachineEffectPresenter {
         boolean queued = false;
         try {
             parts.accept(task);
+            if (task.hasUntexturedObjParts()) {
+                QUEUES.get(resolvedStage).add(task);
+                queuedTasks++;
+                queued = true;
+            }
+        } finally {
+            if (!queued) {
+                releaseTask(task);
+            }
+        }
+    }
+
+    public static void enqueueUntexturedObjPart(PresentStage stage, PoseStack poseStack, MultiBufferSource buffer,
+            LegacyWavefrontModel model, LegacyWavefrontModel.SelectionHandle selection,
+            int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
+        if (poseStack == null || buffer == null) {
+            return;
+        }
+        PresentStage resolvedStage = stage == null ? PresentStage.AFTER_BLOCK_ENTITIES : stage;
+        QueuedTask task = obtainTask().initUntexturedObjPartGroup(poseStack, buffer,
+                HbmRenderFrameCulling.currentMachineRendererSubmissionScope());
+        boolean queued = false;
+        try {
+            task.add(model, selection, red, green, blue, alpha, renderMode);
             if (task.hasUntexturedObjParts()) {
                 QUEUES.get(resolvedStage).add(task);
                 queuedTasks++;

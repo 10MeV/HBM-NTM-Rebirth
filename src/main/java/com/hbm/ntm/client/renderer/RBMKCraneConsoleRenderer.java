@@ -1,10 +1,10 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.RBMKCraneConsoleBlock;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.RBMKCraneConsoleBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -38,7 +38,7 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(console)) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, legacyYaw(facing));
             LegacyRbmkMachineRenderer.renderCraneConsole(poseStack, buffer, light, packedOverlay,
                     console.consoleRenderState(), partialTick,
                     System.currentTimeMillis(), LegacyMachineRenderShapes.renderChunkBakedStaticsInBer());
@@ -50,7 +50,7 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
                 BlockPos pos = console.getBlockPos();
                 poseStack.translate(center.getX() - pos.getX() + 0.5D, center.getY() - pos.getY(),
                         center.getZ() - pos.getZ() + 0.5D);
-                poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
+                LegacyPoseRotations.rotateYDegrees(poseStack, legacyYaw(facing));
                 LegacyRbmkMachineRenderer.renderCrane(poseStack, buffer, light, packedOverlay,
                         console.craneRenderState(), partialTick);
                 poseStack.popPose();

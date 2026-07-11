@@ -2,10 +2,9 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.NuclearDeviceBlock;
 import com.hbm.ntm.block.CustomNukeBlock;
-import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNukeModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -15,11 +14,16 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final float LEGACY_GUI_SLOT_PIXELS = 16.0F;
     private static final float LEGACY_GUI_MAX_OCCUPANCY = 0.86F;
+    private static final RenderSpec[] INVENTORY_SPECS = specs(true);
+    private static final RenderSpec[] COMMON_SPECS = specs(false);
+    private static final RenderSpec CUSTOM_NUKE_INVENTORY_SPEC =
+            renderSpec(customNukeBounds(ObjNukeModels.BOY.boundsAll(), true), true);
+    private static final RenderSpec CUSTOM_NUKE_COMMON_SPEC =
+            renderSpec(customNukeBounds(ObjNukeModels.BOY.boundsAll(), false), false);
 
     public static final NuclearDeviceItemRenderer INSTANCE = new NuclearDeviceItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -46,14 +50,11 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
 
         NuclearDeviceBlock.Kind kind = block.kind();
-        LegacyWavefrontModel model = NuclearDeviceRenderer.model(kind);
         boolean gui = displayContext == ItemDisplayContext.GUI;
-        AABB bounds = gui ? transformedInventoryBounds(kind, model.boundsAll()) : transformedCommonBounds(kind, model.boundsAll());
-        Vec3 center = bounds.getCenter();
-        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+        RenderSpec spec = spec(kind, gui);
 
         poseStack.pushPose();
-        applyBaseDisplay(displayContext, poseStack, center, maxSize, gui);
+        applyBaseDisplay(displayContext, poseStack, spec, gui);
         if (gui) {
             applyLegacyInventory(kind, poseStack);
         }
@@ -64,14 +65,11 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderCustomNuke(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        LegacyWavefrontModel model = ObjNukeModels.BOY;
         boolean gui = displayContext == ItemDisplayContext.GUI;
-        AABB bounds = customNukeBounds(model.boundsAll(), gui);
-        Vec3 center = bounds.getCenter();
-        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+        RenderSpec spec = gui ? CUSTOM_NUKE_INVENTORY_SPEC : CUSTOM_NUKE_COMMON_SPEC;
 
         poseStack.pushPose();
-        applyBaseDisplay(displayContext, poseStack, center, maxSize, gui);
+        applyBaseDisplay(displayContext, poseStack, spec, gui);
         if (gui) {
             poseStack.scale(5.0F, 5.0F, 5.0F);
         }
@@ -80,24 +78,21 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.popPose();
     }
 
-    private static void applyBaseDisplay(ItemDisplayContext displayContext, PoseStack poseStack, Vec3 center,
-            double maxSize, boolean gui) {
-        float fitScale = (float) Math.max(0.035D, Math.min(0.32D,
-                targetDisplaySize(gui, maxSize) / Math.max(1.0D, maxSize)));
-
+    private static void applyBaseDisplay(ItemDisplayContext displayContext, PoseStack poseStack, RenderSpec spec,
+            boolean gui) {
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
-            poseStack.scale(fitScale, fitScale, fitScale);
-            poseStack.translate(-center.x, -center.y, -center.z);
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
+            poseStack.scale(spec.fitScale(), spec.fitScale(), spec.fitScale());
+            poseStack.translate(-spec.centerX(), -spec.centerY(), -spec.centerZ());
             return;
         }
 
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        float worldScale = fitScale * 0.82F;
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        float worldScale = spec.fitScale() * 0.82F;
         poseStack.scale(worldScale, worldScale, worldScale);
-        poseStack.translate(-center.x, -center.y, -center.z);
+        poseStack.translate(-spec.centerX(), -spec.centerY(), -spec.centerZ());
 
         if (displayContext == ItemDisplayContext.GROUND) {
             poseStack.translate(0.0D, -0.25D, 0.0D);
@@ -115,25 +110,51 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
         return LEGACY_GUI_MAX_OCCUPANCY;
     }
 
+    private static RenderSpec spec(NuclearDeviceBlock.Kind kind, boolean gui) {
+        return (gui ? INVENTORY_SPECS : COMMON_SPECS)[kind.ordinal()];
+    }
+
+    private static RenderSpec[] specs(boolean gui) {
+        NuclearDeviceBlock.Kind[] kinds = NuclearDeviceBlock.Kind.values();
+        RenderSpec[] specs = new RenderSpec[kinds.length];
+        for (NuclearDeviceBlock.Kind kind : kinds) {
+            AABB bounds = gui
+                    ? transformedInventoryBounds(kind, NuclearDeviceRenderer.model(kind).boundsAll())
+                    : transformedCommonBounds(kind, NuclearDeviceRenderer.model(kind).boundsAll());
+            specs[kind.ordinal()] = renderSpec(bounds, gui);
+        }
+        return specs;
+    }
+
+    private static RenderSpec renderSpec(AABB bounds, boolean gui) {
+        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+        return new RenderSpec(
+                (bounds.minX + bounds.maxX) * 0.5D,
+                (bounds.minY + bounds.maxY) * 0.5D,
+                (bounds.minZ + bounds.maxZ) * 0.5D,
+                (float) Math.max(0.035D, Math.min(0.32D,
+                        targetDisplaySize(gui, maxSize) / Math.max(1.0D, maxSize))));
+    }
+
     private static void applyLegacyCommon(NuclearDeviceBlock.Kind kind, PoseStack poseStack) {
         switch (kind) {
-            case GADGET -> poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+            case GADGET -> LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
             case BOY -> poseStack.translate(-1.0D, 0.0D, 0.0D);
             case MAN -> {
-                poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
                 poseStack.translate(-0.75D, 0.0D, 0.0D);
             }
             case TSAR -> poseStack.translate(1.5D, 0.0D, 0.0D);
             case PROTOTYPE -> {
-                poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
                 poseStack.translate(0.0D, 0.125D, 0.0D);
             }
             case FLEIJA -> {
                 poseStack.translate(0.125D, 0.0D, 0.0D);
-                poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
             }
             case SOLINIUM -> {
-                poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
                 poseStack.translate(0.0D, -0.125D, 0.0D);
             }
             case MIKE, N2 -> {
@@ -224,5 +245,8 @@ public class NuclearDeviceItemRenderer extends BlockEntityWithoutLevelRenderer {
                     rotatedY * scale + translateY,
                     rotatedZ * scale + translateZ);
         });
+    }
+
+    private record RenderSpec(double centerX, double centerY, double centerZ, float fitScale) {
     }
 }

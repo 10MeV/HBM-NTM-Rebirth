@@ -8,8 +8,8 @@ import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -72,10 +72,10 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(drill)) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
             Vec3 translation = definition.modelTranslation(state);
             poseStack.translate(translation.x, translation.y, translation.z);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
             if (drill.getKind() == OilDrillBlockEntity.Kind.PUMPJACK) {
                 renderPumpjack(drill, partialTick, poseStack, buffer, modelLight, packedOverlay, definition, model);
@@ -137,13 +137,13 @@ public class OilDrillRenderer implements BlockEntityRenderer<OilDrillBlockEntity
         poseStack.pushPose();
         poseStack.translate(pivotX, pivotY, pivotZ);
         if (axisX != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (angleDegrees * axisX)));
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (angleDegrees * axisX));
         }
         if (axisY != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (angleDegrees * axisY)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) (angleDegrees * axisY));
         }
         if (axisZ != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (angleDegrees * axisZ)));
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (angleDegrees * axisZ));
         }
         poseStack.translate(-pivotX, -pivotY, -pivotZ);
         renderModelPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay);

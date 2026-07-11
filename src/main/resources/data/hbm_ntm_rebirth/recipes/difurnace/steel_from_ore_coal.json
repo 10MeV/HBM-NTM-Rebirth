@@ -13,12 +13,6 @@
     {
       "ingredient": [
         {
-          "tag": "forge:ingots/coal"
-        },
-        {
-          "tag": "forge:plates/coal"
-        },
-        {
           "tag": "forge:gems/coal"
         },
         {

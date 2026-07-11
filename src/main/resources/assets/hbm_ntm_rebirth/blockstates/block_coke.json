@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "variant=0": { "model": "hbm_ntm_rebirth:block/block_coke_coal" },
+    "variant=1": { "model": "hbm_ntm_rebirth:block/block_coke_lignite" },
+    "variant=2": { "model": "hbm_ntm_rebirth:block/block_coke_petroleum" }
+  }
+}

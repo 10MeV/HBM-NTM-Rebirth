@@ -6,6 +6,7 @@ import com.hbm.ntm.block.BlastFurnaceBlock;
 import com.hbm.ntm.block.CableDiodeBlock;
 import com.hbm.ntm.block.CapacitorBlock;
 import com.hbm.ntm.block.CargoElevatorBlock;
+import com.hbm.ntm.block.ConcreteColoredExtBlock;
 import com.hbm.ntm.block.DfcMachineBlock;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidDuctGaugeBlock;
@@ -26,6 +27,7 @@ import com.hbm.ntm.block.LegacyFrameRenderState;
 import com.hbm.ntm.block.LegacyGlyphidSpawnerBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacyBasaltOreBlock;
+import com.hbm.ntm.block.LegacyCokeBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
@@ -583,6 +585,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         pribrisDebrisWithItem(ModBlocks.PRIBRIS_BURNING, "rbmk/rbmk_debris_burning");
         pribrisDebrisAllStatesWithItem(ModBlocks.PRIBRIS_RADIATING, "rbmk/rbmk_debris_radiating");
         pribrisDebrisWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk/rbmk_debris_digamma");
+        cokeBlockWithItem();
+        concreteColoredExtWithItem();
         basaltOreWithItem();
         liquidBlockOnly(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still", "volcanic_lava_flowing");
         liquidBlockOnly(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still", "rad_lava_flowing");
@@ -1824,6 +1828,57 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                     .modelForState().modelFile(model).addModel();
         }
         simpleBlockItem(ModBlocks.ORE_BASALT.get(), models().getExistingFile(modLoc("block/ore_basalt_sulfur")));
+    }
+
+    private void cokeBlockWithItem() {
+        getVariantBuilder(ModBlocks.BLOCK_COKE.get());
+        for (LegacyCokeBlock.Variant variant : LegacyCokeBlock.Variant.values()) {
+            ModelFile model = models().cubeAll(variant.modelName(), modLoc("block/" + variant.textureName()));
+            getVariantBuilder(ModBlocks.BLOCK_COKE.get())
+                    .partialState().with(LegacyCokeBlock.VARIANT, variant.legacyMeta())
+                    .modelForState().modelFile(model).addModel();
+        }
+        var itemModel = itemModels().withExistingParent("block_coke", modLoc("block/block_coke_coal"));
+        itemModel.override()
+                .predicate(modLoc("legacy_variant"), 1)
+                .model(itemModels().getExistingFile(modLoc("block/block_coke_lignite")))
+                .end();
+        itemModel.override()
+                .predicate(modLoc("legacy_variant"), 2)
+                .model(itemModels().getExistingFile(modLoc("block/block_coke_petroleum")))
+                .end();
+    }
+
+    private void concreteColoredExtWithItem() {
+        getVariantBuilder(ModBlocks.CONCRETE_COLORED_EXT.get());
+        for (ConcreteColoredExtBlock.Variant variant : ConcreteColoredExtBlock.Variant.values()) {
+            ModelFile model = concreteColoredExtModel(variant);
+            getVariantBuilder(ModBlocks.CONCRETE_COLORED_EXT.get())
+                    .partialState().with(ConcreteColoredExtBlock.VARIANT, variant.legacyMeta())
+                    .modelForState().modelFile(model).addModel();
+        }
+
+        var itemModel = itemModels().withExistingParent("concrete_colored_ext",
+                modLoc("block/concrete_colored_ext_machine"));
+        for (ConcreteColoredExtBlock.Variant variant : ConcreteColoredExtBlock.Variant.values()) {
+            if (variant.legacyMeta() == 0) {
+                continue;
+            }
+            itemModel.override()
+                    .predicate(modLoc("legacy_variant"), variant.legacyMeta())
+                    .model(itemModels().getExistingFile(modLoc("block/" + variant.modelName())))
+                    .end();
+        }
+    }
+
+    private ModelFile concreteColoredExtModel(ConcreteColoredExtBlock.Variant variant) {
+        if (variant == ConcreteColoredExtBlock.Variant.MACHINE_STRIPE) {
+            ResourceLocation machine = modLoc("block/concrete_colored_ext.machine");
+            ResourceLocation stripe = modLoc("block/" + variant.textureName());
+            return models().cube(variant.modelName(), machine, machine, stripe, stripe, stripe, stripe)
+                    .texture("particle", stripe);
+        }
+        return models().cubeAll(variant.modelName(), modLoc("block/" + variant.textureName()));
     }
 
     private ModelFile basaltOreModel(String textureName) {

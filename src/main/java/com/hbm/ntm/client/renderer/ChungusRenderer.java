@@ -5,8 +5,8 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChungusBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -60,22 +60,22 @@ public class ChungusRenderer implements BlockEntityRenderer<ChungusBlockEntity> 
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
             Vec3 translation = definition.modelTranslation(state);
             poseStack.translate(translation.x, translation.y, translation.z);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 0.0D, 4.5D);
-                poseStack.mulPose(Axis.XP.rotationDegrees(blockEntity.getLeverAngle()));
+                LegacyPoseRotations.rotateXDegrees(poseStack, blockEntity.getLeverAngle());
                 poseStack.translate(0.0D, 0.0D, -4.5D);
                 renderPart(LEVER, poseStack, buffer, modelLight, packedOverlay);
                 poseStack.popPose();
 
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 2.5D, 0.0D);
-                poseStack.mulPose(Axis.ZN.rotationDegrees(blockEntity.getRotor(partialTick)));
+                LegacyPoseRotations.rotateZDegrees(poseStack, -blockEntity.getRotor(partialTick));
                 poseStack.translate(0.0D, -2.5D, 0.0D);
                 renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
                 poseStack.popPose();

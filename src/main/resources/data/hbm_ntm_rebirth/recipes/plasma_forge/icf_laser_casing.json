@@ -14,9 +14,9 @@
     {
       "count": 4,
       "ingredient": {
-        "tag": "forge:cast_plates/big_mt"
+        "tag": "forge:cast_plates/saturnite"
       },
-      "legacy_ore": "plateCastBigMt"
+      "legacy_ore": "plateCastSaturnite"
     },
     {
       "count": 16,

@@ -105,7 +105,7 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         condenser.lastSpin = condenser.spin;
-        if (condenser.waterTimer <= 0) {
+        if (condenser.waterTimer <= 0 || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         condenser.spin += 30.0F;

@@ -4,8 +4,8 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.MachineLpw2BlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
 import com.hbm.ntm.client.obj.ObjReactorModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -74,7 +74,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yRotation(facing));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             ObjReactorModels.renderLpw2Part("Frame", ObjReactorModels.LPW2_TEXTURE,
@@ -160,21 +160,21 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.translate(0.0D, 3.5D, 0.0D);
 
         poseStack.pushPose();
-        poseStack.mulPose(Axis.ZN.rotationDegrees((float) (rotor * 360.0D)));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (-rotor * 360.0D));
         poseStack.translate(0.0D, -3.5D, 0.0D);
         ObjReactorModels.renderLpw2Part("Rotor", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.pushPose();
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) (turbine * 360.0D)));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (turbine * 360.0D));
         poseStack.translate(0.0D, -3.5D, 0.0D);
         ObjReactorModels.renderLpw2Part("TurbineFront", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.pushPose();
-        poseStack.mulPose(Axis.ZN.rotationDegrees((float) (turbine * 360.0D)));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (-turbine * 360.0D));
         poseStack.translate(0.0D, -3.5D, 0.0D);
         ObjReactorModels.renderLpw2Part("TurbineBack", ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
@@ -197,10 +197,10 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
         poseStack.pushPose();
         poseStack.translate(0.0D, LegacyTileRenderPlans.LPW2_ENGINE_PIVOT_Y,
                 LegacyTileRenderPlans.LPW2_ENGINE_PIVOT_Z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(
-                (float) (vertical * LegacyTileRenderPlans.LPW2_ENGINE_ROTATION_MAGNITUDE)));
-        poseStack.mulPose(Axis.XP.rotationDegrees(
-                (float) (horizontal * LegacyTileRenderPlans.LPW2_ENGINE_ROTATION_MAGNITUDE)));
+        LegacyPoseRotations.rotateYDegrees(poseStack,
+                (float) (vertical * LegacyTileRenderPlans.LPW2_ENGINE_ROTATION_MAGNITUDE));
+        LegacyPoseRotations.rotateXDegrees(poseStack,
+                (float) (horizontal * LegacyTileRenderPlans.LPW2_ENGINE_ROTATION_MAGNITUDE));
         poseStack.translate(0.0D, -LegacyTileRenderPlans.LPW2_ENGINE_PIVOT_Y,
                 -LegacyTileRenderPlans.LPW2_ENGINE_PIVOT_Z);
         ObjReactorModels.renderLpw2Part("Engine", ObjReactorModels.LPW2_TEXTURE,
@@ -298,11 +298,11 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
             int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.0D, 3.5D, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) position));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) position);
         poseStack.translate(0.0D, -3.5D, 0.0D);
         poseStack.translate(0.0D, LegacyTileRenderPlans.LPW2_FLAP_PIVOT_Y,
                 LegacyTileRenderPlans.LPW2_FLAP_PIVOT_Z);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) rotation));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) rotation);
         poseStack.translate(0.0D, -LegacyTileRenderPlans.LPW2_FLAP_PIVOT_Y,
                 -LegacyTileRenderPlans.LPW2_FLAP_PIVOT_Z);
         ObjReactorModels.renderLpw2Part("Flap", ObjReactorModels.LPW2_TEXTURE,
@@ -323,7 +323,7 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(pivotX, 0.0D, pivotZ);
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) angleDegrees));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) angleDegrees);
         poseStack.translate(-pivotX, 0.0D, -pivotZ);
         ObjReactorModels.renderLpw2Part(partName, ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);

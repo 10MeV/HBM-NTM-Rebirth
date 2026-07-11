@@ -48,12 +48,12 @@ import com.hbm.ntm.client.obj.ObjRbmkModels;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.obj.ObjParticleAcceleratorModels;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.neutron.RBMKStructureDimensions;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -89,6 +89,70 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static final Vec3 FUSION_INV_LOW_TRANSLATION = new Vec3(0.0D, -3.0D, 0.0D);
     private static final Vec3 FUSION_INV_COLLECTOR_TRANSLATION = new Vec3(0.0D, -2.0D, 0.0D);
     private static final Vec3 FUSION_INV_BOILER_TRANSLATION = new Vec3(0.0D, -1.0D, 0.0D);
+    private static final BaseInventorySpec MISSILE_PAD_INVENTORY_SPEC =
+            baseInventorySpec(scaleBounds(ObjLaunchModels.MISSILE_PAD.boundsAll(), 3.0D));
+    private static final DisplaySpec LARGE_LAUNCH_PAD_DISPLAY_SPEC = displaySpec(
+            ObjLaunchModels.MISSILE_ERECTOR.boundsOnly("Pad", "Atlas_Pad", "Atlas_Erector", "Atlas_Pivot"),
+            0.58F, 0.0F);
+    private static final BaseInventorySpec MISSILE_ASSEMBLY_INVENTORY_SPEC = baseInventorySpec(
+            scaleTranslateBounds(ObjLaunchModels.MISSILE_ASSEMBLY.boundsAll(), 10.0D, 0.0D, -2.5D, 0.0D));
+    private static final DisplaySpec COMPACT_LAUNCHER_DISPLAY_SPEC =
+            displaySpec(ObjLaunchModels.COMPACT_LAUNCHER.boundsAll(), 0.68F, 0.0F);
+    private static final DisplaySpec LAUNCH_TABLE_DISPLAY_SPEC = displaySpec(
+            union(ObjLaunchModels.LAUNCH_TABLE_BASE_LEGACY.boundsAll(),
+                    ObjLaunchModels.LAUNCH_TABLE_SMALL_PAD_LEGACY.boundsAll()),
+            0.84F, 0.0F);
+    private static final DisplaySpec ASSEMBLY_MACHINE_DISPLAY_SPEC = displaySpec(
+            rotateYBounds(AssemblyMachineRenderer.MODEL.boundsAll(), 90.0F, 0.75D,
+                    0.0D, 0.0D, 0.0D, 0.5D, 0.0D, 0.5D),
+            0.58F, 4.5F);
+    private static final DisplaySpec BATTERY_SOCKET_DISPLAY_SPEC =
+            displaySpec(MachineBatterySocketRenderer.MODEL.boundsOnly("Socket"), 0.58F, 5.0F);
+    private static final DisplaySpec CHARGER_DISPLAY_SPEC = displaySpec(
+            scaleTranslateBounds(ObjMachineModels.CHARGER.boundsOnly("Base", "Slide"), 2.0D, 1.0D, 0.0D, 0.0D),
+            0.58F, 0.0F);
+    private static final DisplaySpec ELECTRIC_PRESS_DISPLAY_SPEC = displaySpec(
+            union(ObjMachineModels.EPRESS_BODY.boundsAll(),
+                    translateBounds(ObjMachineModels.EPRESS_HEAD.boundsAll(), 0.0D, 1.5D, 0.0D)),
+            0.58F, 4.5F);
+    private static final DisplaySpec AUTOSAW_DISPLAY_SPEC = displaySpec(
+            rotateYBounds(ObjMachineModels.AUTOSAW.boundsAll(), -90.0F, 0.5D,
+                    0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D),
+            0.58F, 5.0F);
+    private static final DisplaySpec THRESHER_DISPLAY_SPEC = displaySpec(
+            rotateYBounds(ObjMachineModels.THRESHER.boundsAll(), -90.0F, 0.5D,
+                    0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D),
+            0.58F, 4.5F);
+    private static final DisplaySpec RBMK_AUTOLOADER_DISPLAY_SPEC =
+            displaySpec(translateBounds(ObjRbmkModels.AUTOLOADER.boundsAll(), 0.5D, 0.0D, 0.5D), 0.58F, 0.0F);
+    private static final DisplaySpec RBMK_CONSOLE_DISPLAY_SPEC = displaySpec(
+            rotateYBounds(ObjRbmkModels.CONSOLE.boundsAll(), 270.0F, 1.0D,
+                    0.5D, 0.0D, 0.0D, 0.5D, 0.0D, 0.5D),
+            0.58F, 0.0F);
+    private static final DisplaySpec RBMK_CRANE_CONSOLE_DISPLAY_SPEC = displaySpec(
+            rotateYBounds(ObjRbmkModels.CRANE_CONSOLE.boundsOnly("Console_Coonsole", "Joystick",
+                    "Meter1", "Meter2", "Lamp1", "Lamp2"), 270.0F, 1.0D,
+                    0.0D, 0.0D, 0.0D, 0.5D, 0.0D, 0.5D),
+            0.58F, 0.0F);
+    private static final DisplaySpec LPW2_DISPLAY_SPEC =
+            displaySpec(com.hbm.ntm.client.obj.ObjReactorModels.LPW2.boundsAll(), 0.58F, 0.0F);
+    private static final DisplaySpec CARGO_ELEVATOR_DISPLAY_SPEC = displaySpec(cargoElevatorBounds(), 0.58F, 3.25F);
+    private static final DisplaySpec VENDING_SODA_DISPLAY_SPEC =
+            displaySpec(VendingMachineRenderer.MODEL.boundsOnly("Soda"), 0.58F, 6.25F);
+    private static final DisplaySpec VENDING_OBAMNA_DISPLAY_SPEC =
+            displaySpec(VendingMachineRenderer.MODEL.boundsOnly("Obamna"), 0.58F, 6.25F);
+    private static final DisplaySpec CONNECTOR_DISPLAY_SPEC =
+            displaySpec(scaleBounds(ObjNetworkModels.CONNECTOR_LEGACY.boundsAll(), 2.0D), 0.58F, 7.0F);
+    private static final DisplaySpec CONNECTOR_SUPER_DISPLAY_SPEC =
+            displaySpec(scaleBounds(ObjNetworkModels.CONNECTOR_SUPER_LEGACY.boundsAll(), 2.0D), 0.58F, 7.0F);
+    private static final DisplaySpec LARGE_PYLON_DISPLAY_SPEC =
+            displaySpec(scaleBounds(ObjNetworkModels.PYLON_LARGE_LEGACY.boundsAll(), 0.5D), 0.58F, 2.25F);
+    private static final DisplaySpec SUBSTATION_DISPLAY_SPEC =
+            displaySpec(scaleBounds(ObjNetworkModels.SUBSTATION_LEGACY.boundsAll(), 0.5D), 0.58F, 4.5F);
+    private static final DisplaySpec AUTOCAL_DISPLAY_SPEC =
+            displaySpec(RadioAutocalRenderer.MODEL.boundsAll(), 0.58F, 6.25F);
+    private static final DisplaySpec TELEX_DISPLAY_SPEC =
+            displaySpec(translateBounds(RadioTelexRenderer.MODEL.boundsAll(), 0.0D, 0.0D, -0.5D), 0.58F, 6.0F);
 
     public static final LegacyVisibleMachineItemRenderer INSTANCE = new LegacyVisibleMachineItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -217,16 +281,14 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderRustedLaunchPadItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = scaleBounds(ObjLaunchModels.MISSILE_PAD.boundsAll(), 3.0D);
-
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
-            applyLegacyItemBaseInventoryTransform(poseStack, bounds);
+            applyLegacyItemBaseInventoryTransform(poseStack, MISSILE_PAD_INVENTORY_SPEC);
             poseStack.translate(0.0D, -1.0D, 0.0D);
             poseStack.scale(3.0F, 3.0F, 3.0F);
         } else {
             poseStack.translate(0.5D, 0.5D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             poseStack.scale(0.35F, 0.35F, 0.35F);
         }
         ObjLaunchModels.MISSILE_PAD.renderAll(ObjLaunchModels.MISSILE_PAD_RUSTED_TEXTURE,
@@ -236,16 +298,14 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderLaunchPadItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = scaleBounds(ObjLaunchModels.MISSILE_PAD.boundsAll(), 3.0D);
-
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
-            applyLegacyItemBaseInventoryTransform(poseStack, bounds);
+            applyLegacyItemBaseInventoryTransform(poseStack, MISSILE_PAD_INVENTORY_SPEC);
             poseStack.translate(0.0D, -1.0D, 0.0D);
             poseStack.scale(3.0F, 3.0F, 3.0F);
         } else {
             poseStack.translate(0.5D, 0.5D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             poseStack.scale(0.35F, 0.35F, 0.35F);
         }
         ObjLaunchModels.MISSILE_PAD.renderAll(ObjLaunchModels.MISSILE_PAD_TEXTURE,
@@ -255,18 +315,15 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderLargeLaunchPadItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = ObjLaunchModels.MISSILE_ERECTOR.boundsOnly(
-                "Pad", "Atlas_Pad", "Atlas_Erector", "Atlas_Pivot");
-
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
             applyLegacyInventoryObjTransform(poseStack, 0.0D, -3.75D, 0.0D, 1.625D);
             poseStack.scale(0.5F, 0.5F, 0.5F);
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         } else {
-            applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 0.0F);
+            applyDisplayTransform(displayContext, poseStack, LARGE_LAUNCH_PAD_DISPLAY_SPEC);
             poseStack.scale(0.5F, 0.5F, 0.5F);
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
         ObjLaunchModels.renderMissileErectorPart("Pad", ObjLaunchModels.MISSILE_ERECTOR_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
@@ -281,17 +338,14 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderMissileAssemblyItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = scaleTranslateBounds(ObjLaunchModels.MISSILE_ASSEMBLY.boundsAll(), 10.0D,
-                0.0D, -2.5D, 0.0D);
-
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
-            applyLegacyItemBaseInventoryTransform(poseStack, bounds);
+            applyLegacyItemBaseInventoryTransform(poseStack, MISSILE_ASSEMBLY_INVENTORY_SPEC);
             poseStack.translate(0.0D, -2.5D, 0.0D);
             poseStack.scale(10.0F, 10.0F, 10.0F);
         } else {
             poseStack.translate(0.5D, 0.5D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             poseStack.scale(0.25F, 0.25F, 0.25F);
         }
         ObjLaunchModels.MISSILE_ASSEMBLY.renderAll(ObjLaunchModels.MISSILE_ASSEMBLY_TEXTURE,
@@ -302,14 +356,11 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static void renderCustomMissileLauncherItem(CustomMissileLauncherBlock.Kind kind,
             ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay) {
-        AABB bounds = kind == CustomMissileLauncherBlock.Kind.COMPACT_LAUNCHER
-                ? ObjLaunchModels.COMPACT_LAUNCHER.boundsAll()
-                : union(ObjLaunchModels.LAUNCH_TABLE_BASE_LEGACY.boundsAll(),
-                        ObjLaunchModels.LAUNCH_TABLE_SMALL_PAD_LEGACY.boundsAll());
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds,
-                kind == CustomMissileLauncherBlock.Kind.COMPACT_LAUNCHER ? 0.68F : 0.84F, 0.0F);
+        applyDisplayTransform(displayContext, poseStack,
+                kind == CustomMissileLauncherBlock.Kind.COMPACT_LAUNCHER
+                        ? COMPACT_LAUNCHER_DISPLAY_SPEC
+                        : LAUNCH_TABLE_DISPLAY_SPEC);
         if (kind == CustomMissileLauncherBlock.Kind.COMPACT_LAUNCHER) {
             ObjLaunchModels.COMPACT_LAUNCHER.renderAll(ObjLaunchModels.COMPACT_LAUNCHER_TEXTURE,
                     poseStack, buffer, packedLight, packedOverlay);
@@ -359,16 +410,16 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             applyLegacyInventoryObjTransform(poseStack, translation.x, translation.y, translation.z,
                     fusionInventoryScale(kind));
             if (fusionInventoryRotates(kind)) {
-                poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
             }
             poseStack.scale(0.5F, 0.5F, 0.5F);
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         } else {
             AABB bounds = rotateYBounds(fusionItemBounds(kind, model), 90.0F, 1.0D,
                     0.0D, 0.0D, 0.0D, 0.5D, 0.0D, 0.5D);
             applyDisplayTransform(displayContext, poseStack, bounds, definition.itemFitSize(), fusionLegacyItemScale(kind));
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
         renderFusionItemParts(kind, definition, model, poseStack, buffer, packedLight, packedOverlay,
                 System.currentTimeMillis());
@@ -430,7 +481,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 ObjFusionModels.renderTorusPart(model, definition.textureLocation(), poseStack, buffer, packedLight,
                         packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Torus");
                 poseStack.pushPose();
-                poseStack.mulPose(Axis.YP.rotationDegrees((float) (currentMillis / 5.0D % 360.0D)));
+                LegacyPoseRotations.rotateYDegrees(poseStack, (float) (currentMillis / 5.0D % 360.0D));
                 ObjFusionModels.renderTorusPart(model, definition.textureLocation(), poseStack, buffer, packedLight,
                         packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Magnet");
                 poseStack.popPose();
@@ -440,7 +491,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                         packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Klystron");
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 2.5D, 0.0D);
-                poseStack.mulPose(Axis.XP.rotationDegrees((float) (currentMillis / 10.0D % 360.0D)));
+                LegacyPoseRotations.rotateXDegrees(poseStack, (float) (currentMillis / 10.0D % 360.0D));
                 poseStack.translate(0.0D, -2.5D, 0.0D);
                 ObjFusionModels.renderKlystronPart(model, definition.textureLocation(), poseStack, buffer, packedLight,
                         packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Rotor");
@@ -456,7 +507,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 double rotor = currentMillis / 5.0D % 30.0D - 15.0D;
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 1.5D, 0.0D);
-                poseStack.mulPose(Axis.XP.rotationDegrees((float) rotor));
+                LegacyPoseRotations.rotateXDegrees(poseStack, (float) rotor);
                 poseStack.translate(0.0D, -1.5D, 0.0D);
                 ObjFusionModels.renderMhdtPart(model, definition.textureLocation(), poseStack, buffer, packedLight,
                         packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Coils");
@@ -484,7 +535,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             poseStack.scale((float) profile.commonScale(), (float) profile.commonScale(), (float) profile.commonScale());
         }
         if (profile.commonYRotationDegrees() != 0.0D) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) profile.commonYRotationDegrees()));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) profile.commonYRotationDegrees());
         }
 
         if (isLegacyFluidTankModel(definition)) {
@@ -546,13 +597,10 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderAssemblyMachineItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = rotateYBounds(AssemblyMachineRenderer.MODEL.boundsAll(), 90.0F, 0.75D,
-                0.0D, 0.0D, 0.0D, 0.5D, 0.0D, 0.5D);
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 4.5F);
+        applyDisplayTransform(displayContext, poseStack, ASSEMBLY_MACHINE_DISPLAY_SPEC);
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale(0.75F, 0.75F, 0.75F);
         AssemblyMachineRenderer.MODEL.renderAll(poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
@@ -560,10 +608,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderBatterySocketItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = MachineBatterySocketRenderer.MODEL.boundsOnly("Socket");
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 5.0F);
+        applyDisplayTransform(displayContext, poseStack, BATTERY_SOCKET_DISPLAY_SPEC);
         MachineBatterySocketRenderer.renderModelPart("Socket", MachineBatterySocketRenderer.SOCKET_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
@@ -571,14 +617,11 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderChargerItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = scaleTranslateBounds(ObjMachineModels.CHARGER.boundsOnly("Base", "Slide"), 2.0D,
-                1.0D, 0.0D, 0.0D);
-
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
             applyLegacyInventoryObjTransform(poseStack, -7.0D, 10.0D);
         } else {
-            applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 0.0F);
+            applyDisplayTransform(displayContext, poseStack, CHARGER_DISPLAY_SPEC);
         }
         poseStack.scale(2.0F, 2.0F, 2.0F);
         poseStack.translate(0.5D, 0.0D, 0.0D);
@@ -589,12 +632,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderElectricPressItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bodyBounds = ObjMachineModels.EPRESS_BODY.boundsAll();
-        AABB headBounds = translateBounds(ObjMachineModels.EPRESS_HEAD.boundsAll(), 0.0D, 1.5D, 0.0D);
-        AABB bounds = union(bodyBounds, headBounds);
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 4.5F);
+        applyDisplayTransform(displayContext, poseStack, ELECTRIC_PRESS_DISPLAY_SPEC);
         ObjMachineModels.EPRESS_BODY.renderAll(ObjMachineModels.EPRESS_BODY_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.translate(0.0D, 1.5D, 0.0D);
@@ -605,17 +644,15 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderAutosawItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = rotateYBounds(ObjMachineModels.AUTOSAW.boundsAll(), -90.0F, 0.5D,
-                0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
         LegacyTileRenderPlans.AutosawPlan plan =
                 LegacyTileRenderPlans.autosawItemPlan(System.currentTimeMillis());
 
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 5.0F);
+        applyDisplayTransform(displayContext, poseStack, AUTOSAW_DISPLAY_SPEC);
         poseStack.scale(0.5F, 0.5F, 0.5F);
-        poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -(90.0F));
         AutosawRenderer.renderModelPart("Base", poseStack, buffer, packedLight, packedOverlay);
-        poseStack.mulPose(Axis.YN.rotationDegrees((float) plan.turnDegrees()));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -((float) plan.turnDegrees()));
         AutosawRenderer.renderModelPart("Main", poseStack, buffer, packedLight, packedOverlay);
         AutosawRenderer.renderModelPart("Engine", poseStack, buffer, packedLight, packedOverlay);
         renderAutosawPivotedPart(plan.armUpper(), poseStack, buffer, packedLight, packedOverlay);
@@ -627,15 +664,13 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderThresherItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = rotateYBounds(ObjMachineModels.THRESHER.boundsAll(), -90.0F, 0.5D,
-                0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
         LegacyTileRenderPlans.ThresherPlan plan =
                 LegacyTileRenderPlans.thresherItemPlan(System.currentTimeMillis());
 
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 4.5F);
+        applyDisplayTransform(displayContext, poseStack, THRESHER_DISPLAY_SPEC);
         poseStack.scale(0.5F, 0.5F, 0.5F);
-        poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -(90.0F));
         ThresherRenderer.renderModelPart("Base", poseStack, buffer, packedLight, packedOverlay);
         ThresherRenderer.renderModelPart("Engine", poseStack, buffer, packedLight, packedOverlay);
         renderThresherPivotedPart(plan.armUpper(), poseStack, buffer, packedLight, packedOverlay);
@@ -675,11 +710,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderRbmkAutoloaderItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = translateBounds(ObjRbmkModels.AUTOLOADER.boundsAll(), 0.5D, 0.0D, 0.5D);
-        BlockState state = com.hbm.ntm.registry.ModBlocks.RBMK_AUTOLOADER.get().defaultBlockState();
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 0.0F);
+        applyDisplayTransform(displayContext, poseStack, RBMK_AUTOLOADER_DISPLAY_SPEC);
         poseStack.translate(0.5D, 0.0D, 0.5D);
         ObjRbmkModels.renderAutoloaderPart("Base", poseStack, buffer, packedLight, packedOverlay,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL);
@@ -691,15 +723,11 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static void renderRbmkConsoleItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         float yaw = 270.0F;
-        AABB bounds = rotateYBounds(ObjRbmkModels.CONSOLE.boundsAll(), yaw, 1.0D,
-                0.5D, 0.0D, 0.0D, 0.5D, 0.0D, 0.5D);
-        BlockState state = com.hbm.ntm.registry.ModBlocks.RBMK_CONSOLE.get().defaultBlockState()
-                .setValue(RBMKConsoleBlock.FACING, Direction.SOUTH);
 
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 0.0F);
+        applyDisplayTransform(displayContext, poseStack, RBMK_CONSOLE_DISPLAY_SPEC);
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yaw);
         poseStack.translate(0.5D, 0.0D, 0.0D);
         ObjRbmkModels.CONSOLE.renderAll(ObjRbmkModels.CONSOLE_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
@@ -709,14 +737,11 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static void renderRbmkCraneConsoleItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         float yaw = 270.0F;
-        AABB bounds = rotateYBounds(ObjRbmkModels.CRANE_CONSOLE.boundsOnly("Console_Coonsole", "Joystick",
-                "Meter1", "Meter2", "Lamp1", "Lamp2"), yaw, 1.0D,
-                0.0D, 0.0D, 0.0D, 0.5D, 0.0D, 0.5D);
 
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 0.0F);
+        applyDisplayTransform(displayContext, poseStack, RBMK_CRANE_CONSOLE_DISPLAY_SPEC);
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yaw);
         LegacyRbmkMachineRenderer.renderCraneConsole(poseStack, buffer, packedLight, packedOverlay,
                 LegacyRbmkMachineRenderer.CraneConsoleState.EMPTY, 0.0F, System.currentTimeMillis());
         poseStack.popPose();
@@ -724,10 +749,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderLpw2Item(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = com.hbm.ntm.client.obj.ObjReactorModels.LPW2.boundsAll();
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 0.0F);
+        applyDisplayTransform(displayContext, poseStack, LPW2_DISPLAY_SPEC);
         com.hbm.ntm.client.obj.ObjReactorModels.LPW2.renderAll(com.hbm.ntm.client.obj.ObjReactorModels.LPW2_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
@@ -750,7 +773,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             poseStack.scale((float) commonScale, (float) commonScale, (float) commonScale);
         }
         if (variant != ParticleAcceleratorBlock.Variant.DIPOLE) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
 
         if (variant == ParticleAcceleratorBlock.Variant.BEAMLINE) {
@@ -773,7 +796,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.scale(0.25F, 0.25F, 0.25F);
         if (displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
                 && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
     }
 
@@ -825,15 +848,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderCargoElevatorItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB rawBounds = ObjMachineModels.ELEVATOR_LEGACY.boundsOnly("Base", "Piston", "Guides", "Platform");
-        AABB piston2 = translateBounds(ObjMachineModels.ELEVATOR_LEGACY.boundsOnly("Piston", "Guides", "Platform"),
-                0.0D, 1.0D, 0.0D);
-        AABB guides3 = translateBounds(ObjMachineModels.ELEVATOR_LEGACY.boundsOnly("Guides"),
-                0.0D, 2.0D, 0.0D);
-        AABB bounds = union(union(rawBounds, piston2), guides3);
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 3.25F);
+        applyDisplayTransform(displayContext, poseStack, CARGO_ELEVATOR_DISPLAY_SPEC);
         CargoElevatorRenderer.renderModelPart("Base", poseStack, buffer, packedLight, packedOverlay);
         CargoElevatorRenderer.renderModelPart("Piston", poseStack, buffer, packedLight, packedOverlay);
         CargoElevatorRenderer.renderModelPart("Guides", poseStack, buffer, packedLight, packedOverlay);
@@ -858,11 +874,10 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         BlockState state = block.defaultBlockState()
                 .setValue(HorizontalMachineBlock.FACING, Direction.SOUTH)
                 .setValue(VendingMachineBlock.VARIANT, variant);
-        String part = variant == 0 ? "Soda" : "Obamna";
-        AABB bounds = VendingMachineRenderer.MODEL.boundsOnly(part);
 
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 6.25F);
+        applyDisplayTransform(displayContext, poseStack,
+                variant == 0 ? VENDING_SODA_DISPLAY_SPEC : VENDING_OBAMNA_DISPLAY_SPEC);
         VendingMachineRenderer.render(state, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
@@ -878,7 +893,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.pushPose();
         applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 4.5F);
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale(0.5F, 0.5F, 0.5F);
         poseStack.translate(0.75D, 0.0D, 0.0D);
         ResourceLocation texture = kind.steel()
@@ -902,17 +917,15 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderConnectorItem(LegacyConnectorBlock.Kind kind, ItemDisplayContext displayContext,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB rawBounds = (kind == LegacyConnectorBlock.Kind.SUPER
-                ? ObjNetworkModels.CONNECTOR_SUPER_LEGACY
-                : ObjNetworkModels.CONNECTOR_LEGACY).boundsAll();
-        AABB bounds = scaleBounds(rawBounds, 2.0D);
-
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
             applyLegacyInventoryObjTransform(poseStack,
                     kind == LegacyConnectorBlock.Kind.SUPER ? -5.0D : -3.5D, 7.0D);
         } else {
-            applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 7.0F);
+            applyDisplayTransform(displayContext, poseStack,
+                    kind == LegacyConnectorBlock.Kind.SUPER
+                            ? CONNECTOR_SUPER_DISPLAY_SPEC
+                            : CONNECTOR_DISPLAY_SPEC);
         }
         poseStack.scale(2.0F, 2.0F, 2.0F);
         if (kind == LegacyConnectorBlock.Kind.SUPER) {
@@ -927,13 +940,11 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderLargePylonItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = scaleBounds(ObjNetworkModels.PYLON_LARGE_LEGACY.boundsAll(), 0.5D);
-
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
             applyLegacyInventoryObjTransform(poseStack, -5.0D, 2.25D);
         } else {
-            applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 2.25F);
+            applyDisplayTransform(displayContext, poseStack, LARGE_PYLON_DISPLAY_SPEC);
         }
         poseStack.scale(0.5F, 0.5F, 0.5F);
         ObjNetworkModels.PYLON_LARGE_LEGACY.renderAll(LegacyPylonRenderer.PYLON_LARGE_TEXTURE,
@@ -943,10 +954,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void renderSubstationItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = scaleBounds(ObjNetworkModels.SUBSTATION_LEGACY.boundsAll(), 0.5D);
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 4.5F);
+        applyDisplayTransform(displayContext, poseStack, SUBSTATION_DISPLAY_SPEC);
         poseStack.scale(0.5F, 0.5F, 0.5F);
         ObjNetworkModels.SUBSTATION_LEGACY.renderAll(LegacyPylonRenderer.SUBSTATION_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay);
@@ -956,17 +965,15 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static void renderAutocalItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, RadioAutocalRenderer.MODEL.boundsAll(), 0.58F, 6.25F);
+        applyDisplayTransform(displayContext, poseStack, AUTOCAL_DISPLAY_SPEC);
         RadioAutocalRenderer.MODEL.renderAll(RadioAutocalRenderer.TEXTURE, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
     private static void renderTelexItem(ItemDisplayContext displayContext, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        AABB bounds = translateBounds(RadioTelexRenderer.MODEL.boundsAll(), 0.0D, 0.0D, -0.5D);
-
         poseStack.pushPose();
-        applyDisplayTransform(displayContext, poseStack, bounds, 0.58F, 6.0F);
+        applyDisplayTransform(displayContext, poseStack, TELEX_DISPLAY_SPEC);
         poseStack.translate(0.0D, 0.0D, -0.5D);
         RadioTelexRenderer.MODEL.renderAll(RadioTelexRenderer.TEXTURE, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
@@ -993,18 +1000,44 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.5D, 0.5D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(fitScale, fitScale, fitScale);
             poseStack.translate(-center.x, -center.y, -center.z);
             return;
         }
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         float worldScale = fitScale * 0.82F;
         poseStack.scale(worldScale, worldScale, worldScale);
         poseStack.translate(-center.x, -center.y, -center.z);
+
+        if (displayContext == ItemDisplayContext.GROUND) {
+            poseStack.translate(0.0D, -0.25D, 0.0D);
+            poseStack.scale(0.8F, 0.8F, 0.8F);
+        } else if (displayContext.firstPerson()) {
+            poseStack.translate(0.0D, 0.1D, 0.0D);
+            poseStack.scale(0.85F, 0.85F, 0.85F);
+        }
+    }
+
+    private static void applyDisplayTransform(ItemDisplayContext displayContext, PoseStack poseStack,
+            DisplaySpec spec) {
+        if (displayContext == ItemDisplayContext.GUI) {
+            poseStack.translate(0.5D, 0.5D, 0.5D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
+            poseStack.scale(spec.fitScale(), spec.fitScale(), spec.fitScale());
+            poseStack.translate(-spec.centerX(), -spec.centerY(), -spec.centerZ());
+            return;
+        }
+
+        poseStack.translate(0.5D, 0.5D, 0.5D);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        float worldScale = spec.fitScale() * 0.82F;
+        poseStack.scale(worldScale, worldScale, worldScale);
+        poseStack.translate(-spec.centerX(), -spec.centerY(), -spec.centerZ());
 
         if (displayContext == ItemDisplayContext.GROUND) {
             poseStack.translate(0.0D, -0.25D, 0.0D);
@@ -1022,10 +1055,18 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 Math.min(0.32D, LEGACY_GUI_MAX_OCCUPANCY / Math.max(1.0D, maxSize)));
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.scale(fitScale, fitScale, fitScale);
         poseStack.translate(-center.x, -center.y, -center.z);
+    }
+
+    private static void applyLegacyItemBaseInventoryTransform(PoseStack poseStack, BaseInventorySpec spec) {
+        poseStack.translate(0.5D, 0.5D, 0.5D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
+        poseStack.scale(spec.fitScale(), spec.fitScale(), spec.fitScale());
+        poseStack.translate(-spec.centerX(), -spec.centerY(), -spec.centerZ());
     }
 
     private static void applyLegacyInventoryObjTransform(PoseStack poseStack, double yOffsetPixels,
@@ -1036,8 +1077,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static void applyLegacyInventoryObjTransform(PoseStack poseStack, double xOffsetPixels,
             double yOffsetPixels, double zOffsetPixels, double inventoryScale) {
         poseStack.translate(0.5D, 0.625D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.scale(0.0625F, 0.0625F, 0.0625F);
         poseStack.translate(xOffsetPixels, yOffsetPixels, zOffsetPixels);
         poseStack.scale((float) inventoryScale, (float) inventoryScale, (float) inventoryScale);
@@ -1073,6 +1114,40 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 accumulator.include(cornerX * scale + x, cornerY * scale + y, cornerZ * scale + z));
     }
 
+    private static AABB cargoElevatorBounds() {
+        AABB rawBounds = ObjMachineModels.ELEVATOR_LEGACY.boundsOnly("Base", "Piston", "Guides", "Platform");
+        AABB piston2 = translateBounds(ObjMachineModels.ELEVATOR_LEGACY.boundsOnly("Piston", "Guides", "Platform"),
+                0.0D, 1.0D, 0.0D);
+        AABB guides3 = translateBounds(ObjMachineModels.ELEVATOR_LEGACY.boundsOnly("Guides"),
+                0.0D, 2.0D, 0.0D);
+        return union(union(rawBounds, piston2), guides3);
+    }
+
+    private static DisplaySpec displaySpec(AABB bounds, float targetSize, float legacyItemScale) {
+        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+        float resolvedTargetSize = targetSize;
+        if (legacyItemScale > 0.0F) {
+            resolvedTargetSize = (float) Math.min(LEGACY_GUI_MAX_OCCUPANCY,
+                    maxSize * legacyItemScale / LEGACY_GUI_SLOT_PIXELS);
+        }
+        return new DisplaySpec(
+                (bounds.minX + bounds.maxX) * 0.5D,
+                (bounds.minY + bounds.maxY) * 0.5D,
+                (bounds.minZ + bounds.maxZ) * 0.5D,
+                (float) Math.max(0.035D,
+                        Math.min(0.32D, resolvedTargetSize / Math.max(1.0D, maxSize))));
+    }
+
+    private static BaseInventorySpec baseInventorySpec(AABB bounds) {
+        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+        return new BaseInventorySpec(
+                (bounds.minX + bounds.maxX) * 0.5D,
+                (bounds.minY + bounds.maxY) * 0.5D,
+                (bounds.minZ + bounds.maxZ) * 0.5D,
+                (float) Math.max(0.025D,
+                        Math.min(0.32D, LEGACY_GUI_MAX_OCCUPANCY / Math.max(1.0D, maxSize))));
+    }
+
     private static AABB rotateYBounds(AABB bounds, float degrees, double scale,
             double preX, double preY, double preZ, double postX, double postY, double postZ) {
         double sin = LegacyTransformedBounds.sinDeg(degrees);
@@ -1097,14 +1172,20 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 Math.max(first.maxZ, second.maxZ));
     }
 
+    private record DisplaySpec(double centerX, double centerY, double centerZ, float fitScale) {
+    }
+
+    private record BaseInventorySpec(double centerX, double centerY, double centerZ, float fitScale) {
+    }
+
     private static void renderMachine(LegacyMachineDefinition definition, BlockState state, LegacyWavefrontModel model,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
         if (definition.renderProfile() == LegacyMachineRenderProfile.DEFAULT) {
             if (definition.itemRenderAll()) {
@@ -1249,7 +1330,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         for (int i = 0; i < 4; i++) {
             renderPrecassArm(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
                     45.0D, -30.0D, 45.0D, 0.0D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
     }
 
@@ -1259,19 +1340,19 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             double striker) {
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.625D, 0.9375D);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) lowerAngle));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lowerAngle);
         poseStack.translate(0.0D, -1.625D, -0.9375D);
         AssemblyMachineRenderer.renderModelPart(model, "ArmLower1", definition.textureLocation(), poseStack, buffer,
                 packedLight, packedOverlay, renderMode);
 
         poseStack.translate(0.0D, 2.375D, 0.9375D);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) upperAngle));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) upperAngle);
         poseStack.translate(0.0D, -2.375D, -0.9375D);
         AssemblyMachineRenderer.renderModelPart(model, "ArmUpper1", definition.textureLocation(), poseStack, buffer,
                 packedLight, packedOverlay, renderMode);
 
         poseStack.translate(0.0D, 2.375D, 0.4375D);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) headAngle));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) headAngle);
         poseStack.translate(0.0D, -2.375D, -0.4375D);
         AssemblyMachineRenderer.renderModelPart(model, "Head1", definition.textureLocation(), poseStack, buffer,
                 packedLight, packedOverlay, renderMode);
@@ -1302,7 +1383,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 poseStack, buffer, packedLight, packedOverlay, renderMode);
         poseStack.pushPose();
         poseStack.translate(0.0D, -1.0D, 0.75D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
         MiningLaserRenderer.renderModelPart(model, "Laser", ObjMachineModels.MINING_LASER_LASER_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay, renderMode);
         poseStack.popPose();
@@ -1371,13 +1452,13 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static void rotate(PoseStack poseStack, float axisX, float axisY, float axisZ, double degrees) {
         if (axisX != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (degrees * axisX)));
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (degrees * axisX));
         }
         if (axisY != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (degrees * axisY)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) (degrees * axisY));
         }
         if (axisZ != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (degrees * axisZ)));
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (degrees * axisZ));
         }
     }
 

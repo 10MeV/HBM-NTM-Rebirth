@@ -1,11 +1,11 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.blockentity.BasicMachineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -91,8 +91,8 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
         poseStack.translate(LegacyTileRenderPlans.BASIC_PRESS_ITEM_TRANSLATE_X,
                 LegacyTileRenderPlans.BASIC_PRESS_ITEM_TRANSLATE_Y,
                 LegacyTileRenderPlans.BASIC_PRESS_ITEM_TRANSLATE_Z);
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) LegacyTileRenderPlans.BASIC_PRESS_ITEM_ROTATION_Y));
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) LegacyTileRenderPlans.BASIC_PRESS_ITEM_ROTATION_X));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) LegacyTileRenderPlans.BASIC_PRESS_ITEM_ROTATION_Y);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) LegacyTileRenderPlans.BASIC_PRESS_ITEM_ROTATION_X);
         float scale = (float) LegacyTileRenderPlans.BASIC_PRESS_ITEM_SCALE;
         poseStack.scale(scale, scale, scale);
     }

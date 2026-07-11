@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"sulfuric_washed\",type:\"actinide\"}"
+  },
+  "outputs": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:8826,name:\"Radium226\"}"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:8826,name:\"Radium226\"}"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:8410,name:\"Polonium210\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"actinide\"}"
+    }
+  ],
+  "source_order": 117
+}

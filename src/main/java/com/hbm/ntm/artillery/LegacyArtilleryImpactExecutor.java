@@ -219,7 +219,7 @@ public final class LegacyArtilleryImpactExecutor {
                 sample.add(entry.getKey(), amount);
             }
         }
-        PollutionManager.applyPollutionDelta(level, impactBlockPos, sample);
+        PollutionManager.incrementPollution(level, impactBlockPos, sample);
     }
 
     private static void applyNuke(Level level, Vec3 hit, Vec3 center, ImpactKind kind, NukeEffect effect) {

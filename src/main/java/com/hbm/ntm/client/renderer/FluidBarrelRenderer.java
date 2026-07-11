@@ -10,7 +10,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -88,7 +88,7 @@ public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlock
         }
 
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(yawDegrees));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yawDegrees);
         poseStack.translate(0.0D, -0.5D, 0.0D);
         LegacyBarrelObjRenderer.renderConnector(barrelTexture, poseStack, buffer, packedLight, packedOverlay,
                 0.0F, 0.0F, 0.0F);

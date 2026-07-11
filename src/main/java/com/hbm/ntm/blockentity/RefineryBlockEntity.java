@@ -554,12 +554,9 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
         boolean oldOn = isOn;
         isOn = false;
         changed |= setInputTypeFromIdentifier();
-        changed |= processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
-                HbmFluidItemTransfer.loadTransfers(
-                        SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank()),
-                HbmFluidItemTransfer.unloadTransfers(
-                        SLOT_HEAVY_CONTAINER, SLOT_HEAVY_CONTAINER_OUTPUT, 2,
-                        outputTank(0), outputTank(1), outputTank(2), outputTank(3))));
+        changed |= processFluidItemLoadTransfer(items, SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank())
+                | processFluidItemUnloadTransfers(items, SLOT_HEAVY_CONTAINER, SLOT_HEAVY_CONTAINER_OUTPUT, 2,
+                        outputTank(0), outputTank(1), outputTank(2), outputTank(3));
         long oldPower = energy.getPower();
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
         changed |= oldPower != energy.getPower();
@@ -593,24 +590,31 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean refine() {
-        RefineryRecipe recipe = LegacyOilFluidRecipes.getRefinery(level, inputTank().getTankType());
+        HbmFluidTank input = inputTank();
+        HbmFluidTank heavyOil = outputTank(0);
+        HbmFluidTank naphtha = outputTank(1);
+        HbmFluidTank lightOil = outputTank(2);
+        HbmFluidTank petroleum = outputTank(3);
+        RefineryRecipe recipe = LegacyOilFluidRecipes.getRefinery(level, input.getTankType());
         boolean changed = setupRecipeTanks(recipe);
         if (recipe == null) {
             return changed;
         }
-        HbmFluidStack[] outputs = recipe.outputs();
-        if (energy.getPower() < POWER_PER_OPERATION || inputTank().getFill() < INPUT_PER_OPERATION) {
+        if (energy.getPower() < POWER_PER_OPERATION || input.getFill() < INPUT_PER_OPERATION) {
             return changed;
         }
-        HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
-                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank(), INPUT_PER_OPERATION)),
-                List.of(outputs),
-                List.of(inputTank()),
-                getAllTanks().subList(1, 5),
-                false);
-        if (!report.complete()) {
+        if (!HbmFluidRecipeIO.canConsumeInput(input, INPUT_PER_OPERATION)
+                || !HbmFluidRecipeIO.canProduceOutput(heavyOil, recipe.heavyOil())
+                || !HbmFluidRecipeIO.canProduceOutput(naphtha, recipe.naphtha())
+                || !HbmFluidRecipeIO.canProduceOutput(lightOil, recipe.lightOil())
+                || !HbmFluidRecipeIO.canProduceOutput(petroleum, recipe.petroleum())) {
             return changed;
         }
+        HbmFluidRecipeIO.consumeInput(input, INPUT_PER_OPERATION, false);
+        HbmFluidRecipeIO.produceOutput(heavyOil, recipe.heavyOil(), false);
+        HbmFluidRecipeIO.produceOutput(naphtha, recipe.naphtha(), false);
+        HbmFluidRecipeIO.produceOutput(lightOil, recipe.lightOil(), false);
+        HbmFluidRecipeIO.produceOutput(petroleum, recipe.petroleum(), false);
         energy.setPower(energy.getPower() - POWER_PER_OPERATION);
         sulfur++;
         if (sulfur >= MAX_SULFUR) {
@@ -627,9 +631,20 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean setupRecipeTanks(@Nullable RefineryRecipe recipe) {
-        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
-                List.of(), recipe == null ? List.of() : List.of(recipe.outputs()),
-                List.of(), getAllTanks().subList(1, 5)).changed();
+        HbmFluidTank heavyOil = outputTank(0);
+        HbmFluidTank naphtha = outputTank(1);
+        HbmFluidTank lightOil = outputTank(2);
+        HbmFluidTank petroleum = outputTank(3);
+        if (recipe == null) {
+            return HbmFluidRecipeIO.conformTankChanged(heavyOil, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(naphtha, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(lightOil, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(petroleum, null, 0);
+        }
+        return HbmFluidRecipeIO.conformTankChanged(heavyOil, recipe.heavyOil(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(naphtha, recipe.naphtha(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(lightOil, recipe.lightOil(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(petroleum, recipe.petroleum(), 0);
     }
 
     private boolean provideOutputTanksToPorts() {

@@ -8,7 +8,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -60,16 +60,16 @@ public class TurbofanRenderer implements BlockEntityRenderer<TurbofanBlockEntity
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 poseStack.pushPose();
                 poseStack.translate(0.0D, LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
-                poseStack.mulPose(Axis.ZN.rotationDegrees(blockEntity.getBladeSpin(partialTick)));
+                LegacyPoseRotations.rotateZDegrees(poseStack, -(blockEntity.getBladeSpin(partialTick)));
                 poseStack.translate(0.0D, -LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
                 renderPart(BLADES, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
                 poseStack.popPose();

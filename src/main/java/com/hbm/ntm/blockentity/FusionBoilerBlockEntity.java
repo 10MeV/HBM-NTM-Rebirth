@@ -60,7 +60,7 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, boiler);
         boiler.ensureNode(level);
         if (boiler.waterTank.getTankType() != HbmFluids.NONE) {
-            boiler.refreshTrackedReceiverFluidPortsReport(List.of(boiler.waterTank), boiler);
+            boiler.refreshTrackedReceiverFluidPorts(boiler.waterTank, boiler);
         }
         if (boiler.steamTank.getFill() > 0) {
             boiler.tryProvideFluidToPorts(boiler.steamTank.getTankType(), boiler.steamTank.getPressure(), boiler);

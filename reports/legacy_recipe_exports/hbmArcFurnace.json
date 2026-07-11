@@ -187,6 +187,1131 @@
       ]
     },
     {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"light\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"light\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"light\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"light\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"light\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"solvent_arc\",type:\"light\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"light\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"light\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"light\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"rad_arc\",type:\"light\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"light\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"light\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Iron",
+          360
+        ],
+        [
+          "Copper",
+          144
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Iron",
+          144
+        ],
+        [
+          "Copper",
+          360
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Iron",
+          72
+        ],
+        [
+          "Copper",
+          72
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"light\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Titanium",
+          144
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"light\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Lithium",
+          120
+        ],
+        [
+          "Sodium",
+          72
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"light\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Lithium",
+          144
+        ],
+        [
+          "Sodium",
+          144
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"light\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"heavy\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"heavy\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"heavy\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"solvent_arc\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"heavy\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"heavy\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"rad_arc\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"heavy\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Tungsten",
+          360
+        ],
+        [
+          "Lead",
+          144
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Tungsten",
+          144
+        ],
+        [
+          "Lead",
+          360
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Tungsten",
+          72
+        ],
+        [
+          "Lead",
+          72
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Gold",
+          48
+        ],
+        [
+          "Gold",
+          48
+        ],
+        [
+          "Beryllium",
+          72
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Tungsten",
+          216
+        ],
+        [
+          "Lead",
+          216
+        ],
+        [
+          "Gold",
+          120
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Bismuth",
+          48
+        ],
+        [
+          "Tantalium",
+          48
+        ],
+        [
+          "Gold",
+          144
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"rare\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"rare\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"rare\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"rare\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"rare\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"solvent_arc\",type:\"rare\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"rare\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"rare\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"rare\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"rad_arc\",type:\"rare\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"rare\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"rare\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Cobalt",
+          200
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Cobalt",
+          80
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Cobalt",
+          40
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"rare\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Boron",
+          120
+        ],
+        [
+          "Lanthanum",
+          72
+        ],
+        [
+          "Niobium",
+          96
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"rare\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Neodymium",
+          72
+        ],
+        [
+          "Strontium",
+          72
+        ],
+        [
+          "Zirconium",
+          72
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"rare\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Niobium",
+          120
+        ],
+        [
+          "Neodymium",
+          120
+        ],
+        [
+          "Strontium",
+          72
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"rare\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"actinide\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"actinide\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"actinide\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"solvent_arc\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"actinide\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"actinide\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"rad_arc\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"actinide\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Uranium",
+          160
+        ],
+        [
+          "Thorium232",
+          64
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Uranium",
+          64
+        ],
+        [
+          "Thorium232",
+          160
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Uranium",
+          32
+        ],
+        [
+          "Thorium232",
+          32
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Radium226",
+          48
+        ],
+        [
+          "Radium226",
+          48
+        ],
+        [
+          "Polonium210",
+          48
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Radium226",
+          48
+        ],
+        [
+          "Radium226",
+          48
+        ],
+        [
+          "Polonium210",
+          48
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Tc99",
+          24
+        ],
+        [
+          "Tc99",
+          24
+        ],
+        [
+          "Uranium238",
+          24
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"nonmetal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"nonmetal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"nonmetal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"solvent_arc\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"nonmetal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"nonmetal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"rad_arc\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"nonmetal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Silicon",
+          48
+        ],
+        [
+          "Silicon",
+          48
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"crystal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"crystal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"crystal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"solvent_arc\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"crystal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"crystal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        2,
+        0,
+        "{grade:\"rad_arc\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"crystal\"}"
+      ],
+      "solid": [
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Redstone",
+          360
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Redstone",
+          144
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Redstone",
+          72
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"crumbs\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Asbestos",
+          144
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Asbestos",
+          120
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "fluid": [
+        [
+          "Borax",
+          72
+        ]
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"crystal\"}"
+      ]
+    },
+    {
       "fluid": [
         [
           "Stone",
@@ -16025,6 +17150,62 @@
       "solid": [
         "minecraft:gold_ingot",
         2
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "minecraft:deepslate_iron_ore"
+      ],
+      "solid": [
+        "minecraft:iron_ingot"
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "minecraft:deepslate_gold_ore"
+      ],
+      "solid": [
+        "minecraft:gold_ingot"
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "minecraft:deepslate_diamond_ore"
+      ],
+      "solid": [
+        "minecraft:diamond"
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "minecraft:deepslate_emerald_ore"
+      ],
+      "solid": [
+        "minecraft:emerald"
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "minecraft:deepslate_redstone_ore"
+      ],
+      "solid": [
+        "minecraft:redstone"
+      ]
+    },
+    {
+      "input": [
+        "item",
+        "minecraft:deepslate_lapis_ore"
+      ],
+      "solid": [
+        "minecraft:dye",
+        1,
+        4
       ]
     }
   ]

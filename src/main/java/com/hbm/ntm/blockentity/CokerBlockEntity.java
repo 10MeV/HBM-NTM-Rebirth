@@ -268,13 +268,11 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
         if (recipe == null) {
             return false;
         }
+        if (!HbmFluidRecipeIO.canConsumeInput(inputTank, recipe.inputAmount())) {
+            return false;
+        }
         HbmFluidStack byproduct = recipe.byproduct();
-        HbmFluidRecipeIO.RecipeFluidIoCheckReport fluidCheck = HbmFluidRecipeIO.inspectRecipeIo(
-                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, recipe.inputAmount())),
-                byproduct == null ? List.of() : List.of(byproduct),
-                List.of(inputTank),
-                byproduct == null ? List.of() : List.of(outputTank));
-        if (!fluidCheck.complete()) {
+        if (byproduct != null && !HbmFluidRecipeIO.canProduceOutput(outputTank, byproduct)) {
             return false;
         }
         return canFitOutput(recipe.outputStack());
@@ -284,7 +282,7 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
         if (recipe == null || recipe.byproduct() == null) {
             return false;
         }
-        return HbmFluidRecipeIO.conformTankReport(outputTank, recipe.byproduct(), 0).changed();
+        return HbmFluidRecipeIO.conformTankChanged(outputTank, recipe.byproduct(), 0);
     }
 
     private void finishProcess(CokerRecipe recipe) {
@@ -293,12 +291,10 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
             addOutput(output);
         }
         HbmFluidStack byproduct = recipe.byproduct();
-        HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
-                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, recipe.inputAmount())),
-                byproduct == null ? List.of() : List.of(byproduct),
-                List.of(inputTank),
-                byproduct == null ? List.of() : List.of(outputTank),
-                false);
+        HbmFluidRecipeIO.consumeInput(inputTank, recipe.inputAmount(), false);
+        if (byproduct != null) {
+            HbmFluidRecipeIO.produceOutput(outputTank, byproduct, false);
+        }
         onFluidContentsChanged();
         setChanged();
         if (level != null) {

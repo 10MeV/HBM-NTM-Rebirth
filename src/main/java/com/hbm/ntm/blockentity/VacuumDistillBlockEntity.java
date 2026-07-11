@@ -135,12 +135,11 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
 
     private boolean processFluidContainers() {
         ItemStackHandler items = getItems();
-        return items != null && processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
-                HbmFluidItemTransfer.loadTransfers(
-                        SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank),
-                HbmFluidItemTransfer.unloadTransfers(
-                        SLOT_OUTPUT_HEAVY_CONTAINER, SLOT_OUTPUT_HEAVY_CONTAINER_OUTPUT, 2,
-                        heavyOilTank, reformateTank, lightOilTank, sourGasTank)));
+        return items != null
+                && (processFluidItemLoadTransfer(items, SLOT_INPUT_CONTAINER, SLOT_INPUT_CONTAINER_OUTPUT, inputTank)
+                | processFluidItemUnloadTransfers(items, SLOT_OUTPUT_HEAVY_CONTAINER,
+                        SLOT_OUTPUT_HEAVY_CONTAINER_OUTPUT, 2,
+                        heavyOilTank, reformateTank, lightOilTank, sourGasTank));
     }
 
     private boolean refine() {
@@ -152,15 +151,18 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
         if (energy.getPower() < POWER_PER_OPERATION) {
             return changed;
         }
-        HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
-                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, 100)),
-                List.of(recipe.outputs()),
-                List.of(inputTank),
-                List.of(heavyOilTank, reformateTank, lightOilTank, sourGasTank),
-                false);
-        if (!report.complete()) {
+        if (!HbmFluidRecipeIO.canConsumeInput(inputTank, 100)
+                || !HbmFluidRecipeIO.canProduceOutput(heavyOilTank, recipe.heavyOil())
+                || !HbmFluidRecipeIO.canProduceOutput(reformateTank, recipe.reformate())
+                || !HbmFluidRecipeIO.canProduceOutput(lightOilTank, recipe.lightOil())
+                || !HbmFluidRecipeIO.canProduceOutput(sourGasTank, recipe.gas())) {
             return changed;
         }
+        HbmFluidRecipeIO.consumeInput(inputTank, 100, false);
+        HbmFluidRecipeIO.produceOutput(heavyOilTank, recipe.heavyOil(), false);
+        HbmFluidRecipeIO.produceOutput(reformateTank, recipe.reformate(), false);
+        HbmFluidRecipeIO.produceOutput(lightOilTank, recipe.lightOil(), false);
+        HbmFluidRecipeIO.produceOutput(sourGasTank, recipe.gas(), false);
         consumePower(POWER_PER_OPERATION);
         isOn = true;
         onFluidContentsChanged();
@@ -168,10 +170,16 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
     }
 
     private boolean setupRecipeTanks(VacuumRecipe recipe) {
-        List<HbmFluidStack> outputs = recipe == null ? List.of() : List.of(recipe.outputs());
-        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
-                List.of(), outputs, List.of(), List.of(heavyOilTank, reformateTank, lightOilTank, sourGasTank))
-                .changed();
+        if (recipe == null) {
+            return HbmFluidRecipeIO.conformTankChanged(heavyOilTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(reformateTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(lightOilTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(sourGasTank, null, 0);
+        }
+        return HbmFluidRecipeIO.conformTankChanged(heavyOilTank, recipe.heavyOil(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(reformateTank, recipe.reformate(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(lightOilTank, recipe.lightOil(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(sourGasTank, recipe.gas(), 0);
     }
 
     private void updateAudioLoop() {

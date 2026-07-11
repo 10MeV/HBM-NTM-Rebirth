@@ -66,9 +66,6 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
         emitter.tickServer(level, pos, state);
     }
 
-    public static void clientTick(Level level, BlockPos pos, BlockState state, DfcEmitterBlockEntity emitter) {
-    }
-
     private void tickServer(Level level, BlockPos pos, BlockState state) {
         for (Direction direction : Direction.values()) {
             HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, direction, energy);

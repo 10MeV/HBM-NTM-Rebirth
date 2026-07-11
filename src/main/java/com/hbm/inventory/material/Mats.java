@@ -1,6 +1,7 @@
 package com.hbm.inventory.material;
 
 import com.hbm.inventory.material.NTMMaterial.SmeltingBehavior;
+import com.hbm.ntm.item.BedrockOreFragmentItem;
 import com.hbm.ntm.item.FoundryScrapsItem;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +34,10 @@ public class Mats {
 
     public static final NTMMaterial MAT_STONE = makeSmeltable(_VS, "Stone", 0x7F7F7F, 0x353535, 0x4D2F23).n();
     public static final NTMMaterial MAT_CARBON = makeAdditive(699, "Carbon", 0x363636, 0x030303, 0x404040).n();
+    public static final NTMMaterial MAT_COAL = makeNonSmeltable(600, "Coal", 0x363636, 0x030303, 0x404040).setConversion(MAT_CARBON, 2, 1).n();
+    public static final NTMMaterial MAT_LIGNITE = makeNonSmeltable(601, "Lignite", 0x542D0F, 0x261508, 0x472913).setConversion(MAT_CARBON, 3, 1).n();
     public static final NTMMaterial MAT_GRAPHITE = make(620, "Graphite").setConversion(MAT_CARBON, 1, 1).n();
+    public static final NTMMaterial MAT_DIAMOND = makeNonSmeltable(1430, "Diamond", 0xFFFFFF, 0x1B7B6B, 0x8CF4E2).setConversion(MAT_CARBON, 1, 1).n();
     public static final NTMMaterial MAT_IRON = makeSmeltable(2600, "Iron", 0xFFFFFF, 0x353535, 0xFFA259).m();
     public static final NTMMaterial MAT_GOLD = makeSmeltable(7900, "Gold", 0xFFFF8B, 0xC26E00, 0xE8D754).m();
     public static final NTMMaterial MAT_REDSTONE = makeSmeltable(_VS + 1, "Redstone", 0xE3260C, 0x700E06, 0xFF1000).n();
@@ -44,6 +48,8 @@ public class Mats {
     public static final NTMMaterial MAT_TITANIUM = makeSmeltable(2200, "Titanium", "Ti", 0xF7F3F2, 0x4F4C4B, 0xA99E79).m();
     public static final NTMMaterial MAT_COPPER = makeSmeltable(2900, "Copper", "Cu", 0xFDCA88, 0x601E0D, 0xC18336).m();
     public static final NTMMaterial MAT_MALACHITE = makeAdditive(2901, "Malachite", 0xA2F0C8, 0x227048, 0x61AF87).m();
+    public static final NTMMaterial MAT_BAUXITE = makeNonSmeltable(2902, "Bauxite", 0xF4BA30, 0xAA320A, 0xE2560F).n();
+    public static final NTMMaterial MAT_CRYOLITE = makeNonSmeltable(2903, "Cryolite", 0xCBC2A4, 0x8B711F, 0x8B701A).n();
     public static final NTMMaterial MAT_TUNGSTEN = makeSmeltable(7400, "Tungsten", "W", 0x868686, 0x000000, 0x977474).m();
     public static final NTMMaterial MAT_ALUMINIUM = makeSmeltable(1300, "Aluminium", "Aluminum", "Al", 0xFFFFFF, 0x344550, 0xD0B8EB).m();
     public static final NTMMaterial MAT_LEAD = makeSmeltable(8200, "Lead", "Pb", 0xA6A6B2, 0x03030F, 0x646470).m();
@@ -52,10 +58,21 @@ public class Mats {
     public static final NTMMaterial MAT_NEODYMIUM = makeSmeltable(6000, "Neodymium", "Nd", 0xE6E6B6, 0x1C1C00, 0x8F8F5F).m();
     public static final NTMMaterial MAT_NIOBIUM = makeSmeltable(4100, "Niobium", "Nb", 0xB76EC9, 0x2F2D42, 0xD576B1).m();
     public static final NTMMaterial MAT_BERYLLIUM = makeSmeltable(400, "Beryllium", "Be", 0xB2B2A6, 0x0F0F03, 0xAE9572).m();
+    public static final NTMMaterial MAT_EMERALD = makeNonSmeltable(401, "Emerald", 0xBAFFD4, 0x003900, 0x17DD62).setConversion(MAT_BERYLLIUM, 4, 3).n();
     public static final NTMMaterial MAT_COBALT = makeSmeltable(2700, "Cobalt", "Co", 0xC2D1EE, 0x353554, 0x8F72AE).m();
     public static final NTMMaterial MAT_BORON = makeSmeltable(500, "Boron", "B", 0xBDC8D2, 0x29343E, 0xAD72AE).m();
+    public static final NTMMaterial MAT_BORAX = makeSmeltable(501, "Borax", 0xFFFFFF, 0x946E23, 0xFFECC6).n();
+    public static final NTMMaterial MAT_LANTHANIUM = makeSmeltable(5700, "Lanthanum", "Lanthanium", "La", 0xC8E0E0, 0x3B5353, 0xA1B9B9).m();
     public static final NTMMaterial MAT_ZIRCONIUM = makeSmeltable(4000, "Zirconium", "Zr", 0xE3DCBE, 0x3E3719, 0xADA688).m();
+    public static final NTMMaterial MAT_SODALITE = makeNonSmeltable(1101, "Sodalite", 0xDCE5F6, 0x4927B4, 0x96A7E6).n();
     public static final NTMMaterial MAT_LITHIUM = makeSmeltable(300, "Lithium", "Li", 0xFFFFFF, 0x818181, 0xD6D6D6).m();
+    public static final NTMMaterial MAT_SULFUR = makeNonSmeltable(1600, "Sulfur", "Sulphur", 0xFCEE80, 0xBDA022, 0xF1DF68).n();
+    public static final NTMMaterial MAT_KNO = makeNonSmeltable(700, "Saltpeter", "Niter", "KNO", 0xD4D4D4, 0x969696, 0xC9C9C9).n();
+    public static final NTMMaterial MAT_FLUORITE = makeNonSmeltable(900, "Fluorite", 0xFFFFFF, 0xB0A192, 0xE1DBD4).n();
+    public static final NTMMaterial MAT_PHOSPHORUS = makeNonSmeltable(1500, "RedPhosphorus", "RedPhosphorus", "P", 0xCB0213, 0x600006, 0xBA0615).n();
+    public static final NTMMaterial MAT_CHLOROCALCITE = makeNonSmeltable(1701, "Chlorocalcite", 0xF7E761, 0x475B46, 0xB8B963).n();
+    public static final NTMMaterial MAT_MOLYSITE = makeNonSmeltable(1702, "Molysite", 0xF9E97B, 0x216E00, 0xD0D264).n();
+    public static final NTMMaterial MAT_CINNABAR = makeNonSmeltable(8001, "Cinnabar", 0xD87070, 0x993030, 0xBF4E4E).n();
     public static final NTMMaterial MAT_ASBESTOS = makeSmeltable(1401, "Asbestos", 0xD8D9CF, 0x616258, 0xB0B3A8).n();
     public static final NTMMaterial MAT_SILICON = makeSmeltable(1400, "Silicon", "Si", 0xD1D7DF, 0x1A1A3D, 0x878B9E).m();
     public static final NTMMaterial MAT_URANIUM = makeSmeltable(9200, "Uranium", "U", 0xC1C7BD, 0x2B3227, 0x9AA196).m();
@@ -91,6 +108,7 @@ public class Mats {
     public static final NTMMaterial MAT_GUNMETAL = makeSmeltable(_AS + 19, "Gunmetal", 0xFFEF3F, 0xAD3600, 0xF9C62C).n();
     public static final NTMMaterial MAT_WEAPONSTEEL = makeSmeltable(_AS + 20, "WeaponSteel", 0xA0A0A0, 0x000000, 0x808080).n();
     public static final NTMMaterial MAT_SATURN = makeSmeltable(_AS + 4, "Saturnite", "BigMT", 0x3AC4DA, 0x09282C, 0x30A4B7).m();
+    public static final NTMMaterial MAT_RAREEARTH = makeNonSmeltable(_ES, "RareEarth", "RareEarth", 0xC1BDBD, 0x384646, 0x7B7F7F).n();
 
     static {
         registerModernPrefix("ingot_", INGOT);
@@ -119,13 +137,18 @@ public class Mats {
         registerModernPrefix("block_", BLOCK);
 
         registerModernMaterial(MAT_IRON, "iron");
+        registerModernMaterial(MAT_COAL, "coal");
+        registerModernMaterial(MAT_LIGNITE, "lignite");
         registerModernMaterial(MAT_GRAPHITE, "graphite");
+        registerModernMaterial(MAT_DIAMOND, "diamond");
         registerModernMaterial(MAT_GOLD, "gold");
         registerModernMaterial(MAT_REDSTONE, "redstone");
         registerModernMaterial(MAT_OBSIDIAN, "obsidian");
         registerModernMaterial(MAT_HEMATITE, "hematite");
         registerModernMaterial(MAT_COPPER, "copper");
         registerModernMaterial(MAT_MALACHITE, "malachite");
+        registerModernMaterial(MAT_BAUXITE, "bauxite");
+        registerModernMaterial(MAT_CRYOLITE, "cryolite");
         registerModernMaterial(MAT_TITANIUM, "titanium");
         registerModernMaterial(MAT_TUNGSTEN, "tungsten");
         registerModernMaterial(MAT_ALUMINIUM, "aluminium", "aluminum");
@@ -135,10 +158,21 @@ public class Mats {
         registerModernMaterial(MAT_NEODYMIUM, "neodymium");
         registerModernMaterial(MAT_NIOBIUM, "niobium");
         registerModernMaterial(MAT_BERYLLIUM, "beryllium");
+        registerModernMaterial(MAT_EMERALD, "emerald");
         registerModernMaterial(MAT_COBALT, "cobalt");
         registerModernMaterial(MAT_BORON, "boron");
+        registerModernMaterial(MAT_BORAX, "borax");
+        registerModernMaterial(MAT_LANTHANIUM, "lanthanum", "lanthanium");
         registerModernMaterial(MAT_ZIRCONIUM, "zirconium");
+        registerModernMaterial(MAT_SODALITE, "sodalite");
         registerModernMaterial(MAT_LITHIUM, "lithium");
+        registerModernMaterial(MAT_SULFUR, "sulfur", "sulphur");
+        registerModernMaterial(MAT_KNO, "saltpeter", "niter", "kno");
+        registerModernMaterial(MAT_FLUORITE, "fluorite");
+        registerModernMaterial(MAT_PHOSPHORUS, "red_phosphorus", "redphosphorus", "phosphorus");
+        registerModernMaterial(MAT_CHLOROCALCITE, "chlorocalcite");
+        registerModernMaterial(MAT_MOLYSITE, "molysite");
+        registerModernMaterial(MAT_CINNABAR, "cinnabar");
         registerModernMaterial(MAT_ASBESTOS, "asbestos");
         registerModernMaterial(MAT_SILICON, "silicon");
         registerModernMaterial(MAT_URANIUM, "uranium");
@@ -174,6 +208,7 @@ public class Mats {
         registerModernMaterial(MAT_GUNMETAL, "gunmetal");
         registerModernMaterial(MAT_WEAPONSTEEL, "weaponsteel", "weapon_steel");
         registerModernMaterial(MAT_SATURN, "saturn", "saturnite", "bigmt");
+        registerModernMaterial(MAT_RAREEARTH, "rareearth", "rare_earth");
     }
 
     public static NTMMaterial make(int id, String... names) {
@@ -200,6 +235,22 @@ public class Mats {
         return make(id, names).smeltable(SmeltingBehavior.SMELTABLE)
                 .setSolidColor(solidColorLight, solidColorDark)
                 .setMoltenColor(moltenColor);
+    }
+
+    public static NTMMaterial makeNonSmeltable(int id, String name, int solidColorLight, int solidColorDark, int moltenColor) {
+        return makeNonSmeltable(id, new String[] { name }, solidColorLight, solidColorDark, moltenColor);
+    }
+
+    public static NTMMaterial makeNonSmeltable(int id, String name, String alias, int solidColorLight, int solidColorDark, int moltenColor) {
+        return makeNonSmeltable(id, new String[] { name, alias }, solidColorLight, solidColorDark, moltenColor);
+    }
+
+    public static NTMMaterial makeNonSmeltable(int id, String name, String aliasA, String aliasB, int solidColorLight, int solidColorDark, int moltenColor) {
+        return makeNonSmeltable(id, new String[] { name, aliasA, aliasB }, solidColorLight, solidColorDark, moltenColor);
+    }
+
+    public static NTMMaterial makeNonSmeltable(int id, String[] names, int solidColorLight, int solidColorDark, int moltenColor) {
+        return make(id, names).setSolidColor(solidColorLight, solidColorDark).setMoltenColor(moltenColor);
     }
 
     public static NTMMaterial makeAdditive(int id, String name, int solidColorLight, int solidColorDark, int moltenColor) {
@@ -257,6 +308,11 @@ public class Mats {
         MaterialStack scrap = FoundryScrapsItem.getMaterial(stack);
         if (scrap != null && !scrap.isEmpty()) {
             materials.add(scrap);
+            return materials;
+        }
+        MaterialStack bedrockFragment = BedrockOreFragmentItem.getMaterialStack(stack);
+        if (bedrockFragment != null && !bedrockFragment.isEmpty()) {
+            materials.add(bedrockFragment);
             return materials;
         }
         ResourceLocation key = ForgeRegistries.ITEMS.getKey(stack.getItem());

@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:bedrock_ore"
+      },
+      "partial_nbt": "{grade:\"sulfuric_byproduct\",type:\"actinide\"}"
+    }
+  ],
+  "internal_name": "arc.bedrock_ore.actinide_sulfuric_byproduct",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"sulfuric_arc\",type:\"actinide\"}"
+    }
+  ],
+  "pools": [],
+  "power": 1000,
+  "source_order": 48
+}

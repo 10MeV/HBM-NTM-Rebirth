@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.ForceFieldBlockEntity;
 import com.hbm.ntm.client.obj.LegacyLineRenderer;
@@ -8,7 +9,6 @@ import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.ObjUtilityModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -35,7 +35,7 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(forceField, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
             try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(forceField)) {
                 ObjModelLibrary.MACHINE_RADAR_BODY_LEGACY.renderAll(ObjUtilityModels.FORCEFIELD_BASE_TEXTURE,
@@ -49,7 +49,7 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
             int segments = (int) (16 + forceField.getRadius() * 0.125F);
             renderSphere(poseStack, buffer, segments, segments * 2, forceField.getRadius(), forceField.getColor());
             double rotation = (System.currentTimeMillis() / 10.0D) % 360.0D;
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) -rotation));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) -rotation);
         }
 
         poseStack.translate(0.0D, 0.5D, 0.0D);

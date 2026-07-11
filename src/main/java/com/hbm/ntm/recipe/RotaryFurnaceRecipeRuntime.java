@@ -6,6 +6,7 @@ import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.item.BedrockOreFragmentItem;
 import com.hbm.ntm.registry.ModItems;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -69,12 +70,19 @@ public final class RotaryFurnaceRecipeRuntime {
                 HbmIngredient.legacyOre("ingotIron", 1), HbmIngredient.legacyOre("gemAnyCoke", 1));
         add(recipes, "steel_fragments_from_coal", Mats.MAT_STEEL, MaterialShapes.INGOT.q(2), 200, 25,
                 null, 2, HbmIngredient.legacyOre("bedrockorefragmentIron", 9), HbmIngredient.of(Items.COAL, 1));
+        add(recipes, "steel_bedrock_ore_fragment_from_coal", Mats.MAT_STEEL, MaterialShapes.INGOT.q(2), 200, 25,
+                null, 2, bedrockOreFragment(Mats.MAT_IRON, 9), HbmIngredient.of(Items.COAL, 1));
         add(recipes, "steel_fragments_from_coke", Mats.MAT_STEEL, MaterialShapes.INGOT.q(3), 200, 25,
                 null, 3, HbmIngredient.legacyOre("bedrockorefragmentIron", 9),
                 HbmIngredient.legacyOre("gemAnyCoke", 1));
+        add(recipes, "steel_bedrock_ore_fragment_from_coke", Mats.MAT_STEEL, MaterialShapes.INGOT.q(3), 200, 25,
+                null, 3, bedrockOreFragment(Mats.MAT_IRON, 9), HbmIngredient.legacyOre("gemAnyCoke", 1));
         add(recipes, "steel_fragments_from_coke_flux", Mats.MAT_STEEL, MaterialShapes.INGOT.q(4), 400, 25,
                 null, 4, HbmIngredient.legacyOre("bedrockorefragmentIron", 9),
                 HbmIngredient.legacyOre("gemAnyCoke", 1), ingredient("powder_flux", 1));
+        add(recipes, "steel_bedrock_ore_fragment_from_coke_flux", Mats.MAT_STEEL, MaterialShapes.INGOT.q(4), 400,
+                25, null, 4, bedrockOreFragment(Mats.MAT_IRON, 9), HbmIngredient.legacyOre("gemAnyCoke", 1),
+                ingredient("powder_flux", 1));
         add(recipes, "desh_from_lightoil", Mats.MAT_DESH, MaterialShapes.INGOT.q(1), 100, 200,
                 new HbmFluidStack(HbmFluids.LIGHTOIL, 100), 5, ingredient("powder_desh_ready", 1));
         add(recipes, "gunmetal", Mats.MAT_GUNMETAL, MaterialShapes.INGOT.q(4), 200, 100, null, 6,
@@ -105,6 +113,10 @@ public final class RotaryFurnaceRecipeRuntime {
 
     private static HbmIngredient ingredient(String legacyName, int count) {
         return HbmIngredient.of(item(legacyName), count);
+    }
+
+    private static HbmIngredient bedrockOreFragment(com.hbm.inventory.material.NTMMaterial material, int count) {
+        return HbmIngredient.partialNbt(BedrockOreFragmentItem.make(material, count));
     }
 
     private static ItemLike item(String legacyName) {

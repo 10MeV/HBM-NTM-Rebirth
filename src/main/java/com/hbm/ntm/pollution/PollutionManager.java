@@ -1,5 +1,7 @@
 package com.hbm.ntm.pollution;
 
+import com.hbm.entity.mob.glyphid.EntityGlyphidDigger;
+import com.hbm.entity.mob.glyphid.EntityGlyphidScout;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.pollution.PollutionSavedData.PollutionGridPos;
 import com.hbm.ntm.pollution.PollutionSavedData.PollutionSample;
@@ -603,6 +605,32 @@ public final class PollutionManager {
                 && serverLevel.canSeeSky(pos)
                 && getPollution(serverLevel, pos, PollutionType.SOOT) >= RadiationConfig.rampantScoutSpawnThreshold()
                 && serverLevel.random.nextInt(RadiationConfig.rampantScoutSpawnChance()) == 0;
+    }
+
+    public static boolean trySpawnRampantScout(ServerLevel level, BlockPos pos) {
+        if (!canTryRampantScoutSpawn(level, pos)) {
+            return false;
+        }
+
+        EntityGlyphidScout scout = new EntityGlyphidScout(level);
+        float scoutYaw = level.random.nextFloat() * 360.0F;
+        scout.moveTo(pos.getX(), pos.getY(), pos.getZ(), scoutYaw, 0.0F);
+        if (!scout.isValidLightLevel()) {
+            return false;
+        }
+
+        EntityGlyphidDigger digger = new EntityGlyphidDigger(level);
+        float diggerYaw = level.random.nextFloat() * 360.0F;
+        digger.moveTo(pos.getX(), pos.getY(), pos.getZ(), diggerYaw, 0.0F);
+
+        boolean spawned = false;
+        if (scout.getCanSpawnHere()) {
+            spawned |= level.addFreshEntity(scout);
+        }
+        if (digger.getCanSpawnHere()) {
+            spawned |= level.addFreshEntity(digger);
+        }
+        return spawned;
     }
 
     private static void applyPoisonEffect(LivingEntity entity, PollutionSample sample) {

@@ -1,7 +1,7 @@
 package com.hbm.ntm.client.anim;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 
 import java.util.Arrays;
 
@@ -29,11 +29,11 @@ public final class LegacyBusAnimationTransforms {
             int axis = (int) transform[12 + i];
             float degrees = (float) transform[3 + axis];
             if (axis == 0) {
-                poseStack.mulPose(Axis.XP.rotationDegrees(degrees));
+                LegacyPoseRotations.rotateXDegrees(poseStack, degrees);
             } else if (axis == 1) {
-                poseStack.mulPose(Axis.YP.rotationDegrees(degrees));
+                LegacyPoseRotations.rotateYDegrees(poseStack, degrees);
             } else if (axis == 2) {
-                poseStack.mulPose(Axis.ZP.rotationDegrees(degrees));
+                LegacyPoseRotations.rotateZDegrees(poseStack, degrees);
             }
         }
         poseStack.translate(-transform[9], -transform[10], -transform[11]);

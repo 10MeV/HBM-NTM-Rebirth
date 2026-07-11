@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.render.LegacyRenderRandom;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -41,10 +41,10 @@ public class MovingItemRenderer extends EntityRenderer<MovingItemEntity> {
         Random random = LegacyRenderRandom.seeded(entity.getId());
         poseStack.translate(0.0D, random.nextDouble() * 0.0625D, 0.0D);
         if (!isLegacy3dBlockItem(stack)) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
             poseStack.translate(0.0D, -0.1875D, 0.0D);
             if (!fancyGraphics()) {
-                poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             }
         }
         poseStack.scale(0.75F, 0.75F, 0.75F);

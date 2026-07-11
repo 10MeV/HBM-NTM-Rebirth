@@ -14,6 +14,8 @@ import com.hbm.ntm.entity.mob.EntityDuck;
 import com.hbm.ntm.entity.mob.EntityRADBeast;
 import com.hbm.ntm.entity.mob.EntityTaintCrab;
 import com.hbm.ntm.entity.mob.EntityTeslaCrab;
+import com.hbm.entity.mob.glyphid.EntityGlyphidDigger;
+import com.hbm.entity.mob.glyphid.EntityGlyphidScout;
 import com.hbm.ntm.fluid.HbmCompatFluidRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerRegistry;
 import com.hbm.ntm.fluid.HbmFluidContainerConfig;
@@ -36,6 +38,7 @@ import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.neutron.RBMKDialRuntime;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
+import com.hbm.ntm.util.AchievementHandler;
 import com.hbm.ntm.radiation.HazmatResistanceConfig;
 import com.hbm.ntm.radiation.ItemRadiationRegistry;
 import com.hbm.ntm.radiation.LegacyFalloutConversions;
@@ -117,6 +120,7 @@ public class HbmNtm {
             ModMessages.logProtocolAudit();
             HbmBatteryTransfer.setCreativeBatteryPredicate(stack -> stack.is(ModItems.BATTERY_CREATIVE.get()));
             ModItems.registerToolStacks();
+            AchievementHandler.register();
         });
         if (HbmCommonConfig.startupLoggingEnabled()) {
             LOGGER.info("HBM NTM migration scaffold loaded. Source semantics: 1.7.10 first, 1.20.1 reference second.");
@@ -131,5 +135,7 @@ public class HbmNtm {
         event.put(ModEntityTypes.TAINT_CRAB.get(), EntityTaintCrab.createAttributes().build());
         event.put(ModEntityTypes.DUCK.get(), EntityDuck.createAttributes().build());
         event.put(ModEntityTypes.RAD_BEAST.get(), EntityRADBeast.createAttributes().build());
+        event.put(ModEntityTypes.GLYPHID_SCOUT.get(), EntityGlyphidScout.createAttributes().build());
+        event.put(ModEntityTypes.GLYPHID_DIGGER.get(), EntityGlyphidDigger.createAttributes().build());
     }
 }

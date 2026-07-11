@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_machine"
+    },
+    "variant=1": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_machine_stripe"
+    },
+    "variant=2": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_indigo"
+    },
+    "variant=3": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_purple"
+    },
+    "variant=4": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_pink"
+    },
+    "variant=5": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_hazard"
+    },
+    "variant=6": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_sand"
+    },
+    "variant=7": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_bronze"
+    }
+  }
+}

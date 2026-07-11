@@ -16,6 +16,11 @@ import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.entity.item.LegacyFallingBlockEntity;
 import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
+import com.hbm.ntm.entity.cart.NtmCrateMinecartEntity;
+import com.hbm.ntm.entity.cart.NtmDestroyerMinecartEntity;
+import com.hbm.ntm.entity.cart.NtmEmptyMinecartEntity;
+import com.hbm.ntm.entity.cart.NtmPowderMinecartEntity;
+import com.hbm.ntm.entity.cart.NtmSemtexMinecartEntity;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.entity.logic.DeathBlastEntity;
 import com.hbm.ntm.entity.logic.EmpLogicEntity;
@@ -24,6 +29,7 @@ import com.hbm.ntm.entity.logic.NukeExplosionMk5Entity;
 import com.hbm.ntm.entity.logic.TomBlastEntity;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
+import com.hbm.ntm.entity.item.RubberBoatEntity;
 import com.hbm.ntm.entity.mob.EntityCyberCrab;
 import com.hbm.ntm.entity.mob.EntityCreeperNuclear;
 import com.hbm.ntm.entity.mob.EntityCreeperTainted;
@@ -32,6 +38,7 @@ import com.hbm.ntm.entity.mob.EntityRADBeast;
 import com.hbm.ntm.entity.mob.EntityTaintCrab;
 import com.hbm.ntm.entity.mob.EntityTeslaCrab;
 import com.hbm.ntm.entity.missile.AntiBallisticMissileEntity;
+import com.hbm.ntm.entity.missile.BobmazonDeliveryEntity;
 import com.hbm.ntm.entity.missile.CustomMissileEntity;
 import com.hbm.ntm.entity.missile.MinerRocketEntity;
 import com.hbm.ntm.entity.missile.MissileEntity;
@@ -51,6 +58,8 @@ import com.hbm.ntm.entity.projectile.SawbladeEntity;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
 import com.hbm.ntm.entity.projectile.WastePearlEntity;
 import com.hbm.ntm.entity.projectile.ZirnoxDebrisEntity;
+import com.hbm.entity.mob.glyphid.EntityGlyphidDigger;
+import com.hbm.entity.mob.glyphid.EntityGlyphidScout;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -77,6 +86,54 @@ public final class ModEntityTypes {
                     .clientTrackingRange(64)
                     .updateInterval(3)
                     .build("entity_c_package"));
+
+    public static final RegistryObject<EntityType<RubberBoatEntity>> RUBBER_BOAT =
+            ENTITY_TYPES.register("entity_rubber_boat", () -> EntityType.Builder
+                    .<RubberBoatEntity>of(RubberBoatEntity::new, MobCategory.MISC)
+                    .sized(1.5F, 0.6F)
+                    .clientTrackingRange(250)
+                    .updateInterval(3)
+                    .build("entity_rubber_boat"));
+
+    public static final RegistryObject<EntityType<NtmEmptyMinecartEntity>> NTM_CART_ORE =
+            ENTITY_TYPES.register("entity_ntm_cart_ore", () -> EntityType.Builder
+                    .<NtmEmptyMinecartEntity>of(NtmEmptyMinecartEntity::new, MobCategory.MISC)
+                    .sized(0.98F, 0.7F)
+                    .clientTrackingRange(250)
+                    .updateInterval(3)
+                    .build("entity_ntm_cart_ore"));
+
+    public static final RegistryObject<EntityType<NtmCrateMinecartEntity>> NTM_CART_CRATE =
+            ENTITY_TYPES.register("entity_ntm_cart_crate", () -> EntityType.Builder
+                    .<NtmCrateMinecartEntity>of(NtmCrateMinecartEntity::new, MobCategory.MISC)
+                    .sized(0.98F, 0.7F)
+                    .clientTrackingRange(250)
+                    .updateInterval(3)
+                    .build("entity_ntm_cart_crate"));
+
+    public static final RegistryObject<EntityType<NtmPowderMinecartEntity>> NTM_CART_POWDER =
+            ENTITY_TYPES.register("entity_ntm_cart_powder", () -> EntityType.Builder
+                    .<NtmPowderMinecartEntity>of(NtmPowderMinecartEntity::new, MobCategory.MISC)
+                    .sized(0.98F, 0.7F)
+                    .clientTrackingRange(250)
+                    .updateInterval(3)
+                    .build("entity_ntm_cart_powder"));
+
+    public static final RegistryObject<EntityType<NtmSemtexMinecartEntity>> NTM_CART_SEMTEX =
+            ENTITY_TYPES.register("entity_ntm_cart_semtex", () -> EntityType.Builder
+                    .<NtmSemtexMinecartEntity>of(NtmSemtexMinecartEntity::new, MobCategory.MISC)
+                    .sized(0.98F, 0.7F)
+                    .clientTrackingRange(250)
+                    .updateInterval(3)
+                    .build("entity_ntm_cart_semtex"));
+
+    public static final RegistryObject<EntityType<NtmDestroyerMinecartEntity>> NTM_CART_DESTROYER =
+            ENTITY_TYPES.register("entity_ntm_cart_destroyer", () -> EntityType.Builder
+                    .<NtmDestroyerMinecartEntity>of(NtmDestroyerMinecartEntity::new, MobCategory.MISC)
+                    .sized(0.98F, 0.7F)
+                    .clientTrackingRange(250)
+                    .updateInterval(3)
+                    .build("entity_ntm_cart_destroyer"));
 
     public static final RegistryObject<EntityType<EntityCreeperNuclear>> NUCLEAR_CREEPER =
             ENTITY_TYPES.register("entity_mob_nuclear_creeper", () -> EntityType.Builder
@@ -134,6 +191,22 @@ public final class ModEntityTypes {
                     .updateInterval(3)
                     .fireImmune()
                     .build("entity_ntm_radiation_blaze"));
+
+    public static final RegistryObject<EntityType<EntityGlyphidScout>> GLYPHID_SCOUT =
+            ENTITY_TYPES.register("entity_glyphid_scout", () -> EntityType.Builder
+                    .<EntityGlyphidScout>of(EntityGlyphidScout::new, MobCategory.MONSTER)
+                    .sized(1.25F, 0.75F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_glyphid_scout"));
+
+    public static final RegistryObject<EntityType<EntityGlyphidDigger>> GLYPHID_DIGGER =
+            ENTITY_TYPES.register("entity_glyphid_digger", () -> EntityType.Builder
+                    .<EntityGlyphidDigger>of(EntityGlyphidDigger::new, MobCategory.MONSTER)
+                    .sized(1.75F, 1.0F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_glyphid_digger"));
 
     public static final RegistryObject<EntityType<NukeExplosionMk5Entity>> NUKE_EXPLOSION_MK5 =
             ENTITY_TYPES.register("entity_nuke_explosion_mk5", () -> EntityType.Builder
@@ -593,6 +666,14 @@ public final class ModEntityTypes {
                     .clientTrackingRange(1000)
                     .updateInterval(1)
                     .build("entity_miner_lander"));
+
+    public static final RegistryObject<EntityType<BobmazonDeliveryEntity>> BOBMAZON_DELIVERY =
+            ENTITY_TYPES.register("entity_bobmazon_delivery", () -> EntityType.Builder
+                    .<BobmazonDeliveryEntity>of(BobmazonDeliveryEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 3.0F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .build("entity_bobmazon_delivery"));
 
     public static final RegistryObject<EntityType<SoyuzEntity>> SOYUZ =
             ENTITY_TYPES.register("entity_soyuz", () -> EntityType.Builder

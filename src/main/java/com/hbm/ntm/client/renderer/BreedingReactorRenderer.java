@@ -6,7 +6,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -57,7 +57,7 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
                 : Direction.SOUTH;
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yRotation(facing));
         enqueueLegacySparks(blockEntity, poseStack, buffer);
         poseStack.popPose();
     }

@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
@@ -9,7 +10,6 @@ import com.hbm.ntm.entity.projectile.ChemicalProjectileEntity;
 import com.hbm.ntm.entity.projectile.ChemicalProjectileEntity.ChemicalStyle;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -80,8 +80,8 @@ public class ChemicalProjectileRenderer extends EntityRenderer<ChemicalProjectil
         float alpha = 0.2F;
 
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-pitch - 90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yaw);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -pitch - 90.0F);
         int nearAlpha = LegacyUntexturedQuadRenderer.alpha(alpha);
         VertexConsumer consumer = LegacyUntexturedQuadRenderer.consumer(buffer,
                 LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 0);

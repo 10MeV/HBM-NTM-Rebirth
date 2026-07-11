@@ -10,10 +10,10 @@ import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.TexturedObjPartGroup;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.TexturedQuadGroup;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.UntexturedQuadGroup;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -53,8 +53,8 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, FusionBreederRenderer.rotation(state));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             if (blockEntity.isConnected()) {
                 poseStack.pushPose();
@@ -70,16 +70,19 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
             }
             renderLegacyActivePlasma(blockEntity, poseStack, buffer, packedOverlay);
         }
-        GenericMachineRecipe recipe = blockEntity.getSelectedRecipeDefinition();
-        if (LegacyRecipeIconRenderer.shouldRenderWithin(blockEntity, 35.0D)) {
-            LegacyRecipeIconRenderer.renderPlasmaForgeIcon(recipe, blockEntity.getLevel(), poseStack, buffer,
-                    packedLight, partialTick);
-        }
-        if (recipe != null && LegacyRecipeIconRenderer.shouldRenderWithin(blockEntity, 50.0D)) {
-            double stellarFluxOffset = stellarFluxOffset(partialTick);
-            LegacyMachineEffectPresenter.enqueueTexturedQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                    HbmFluids.STELLAR_FLUX.getTexture(), LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
-                    group -> renderLegacyStellarFluxBeam(group, packedOverlay, stellarFluxOffset));
+        double iconDistanceSq = LegacyRecipeIconRenderer.playerDistanceSq(blockEntity);
+        if (LegacyRecipeIconRenderer.shouldRenderWithinDistance(iconDistanceSq, 50.0D)) {
+            GenericMachineRecipe recipe = blockEntity.getSelectedRecipeDefinition();
+            if (LegacyRecipeIconRenderer.shouldRenderAtDistance(iconDistanceSq)) {
+                LegacyRecipeIconRenderer.renderPlasmaForgeIcon(recipe, blockEntity.getLevel(), poseStack, buffer,
+                        packedLight, partialTick);
+            }
+            if (recipe != null) {
+                double stellarFluxOffset = stellarFluxOffset(partialTick);
+                LegacyMachineEffectPresenter.enqueueTexturedQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                        buffer, HbmFluids.STELLAR_FLUX.getTexture(), LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                        group -> renderLegacyStellarFluxBeam(group, packedOverlay, stellarFluxOffset));
+            }
         }
         renderArticulatedEffects(blockEntity, poseStack, buffer, partialTick);
         poseStack.popPose();
@@ -129,7 +132,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         double[] jet = blockEntity.getJetPositions(partialTick);
         double rotor = blockEntity.getRotor(partialTick);
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) rotor));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) rotor);
         poseStack.pushPose();
         renderForgePart(poseStack, buffer, packedLight, packedOverlay, "SliderStriker");
         rotateAtZ(poseStack, -2.75D, 2.5D, 0.0D, -striker[0]);
@@ -178,7 +181,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
         double[] jet = blockEntity.getJetPositions(partialTick);
         double rotor = blockEntity.getRotor(partialTick);
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) rotor));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) rotor);
         rotateAtZ(poseStack, 2.75D, 2.5D, 0.0D, jet[0]);
         rotateAtZ(poseStack, 2.75D, 3.75D, 0.0D, jet[1]);
         rotateAtZ(poseStack, 1.5D, 3.75D, 0.0D, jet[2]);
@@ -194,7 +197,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
 
     private static void rotateAtZ(PoseStack poseStack, double x, double y, double z, double degrees) {
         poseStack.translate(x, y, z);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) degrees));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) degrees);
         poseStack.translate(-x, -y, -z);
     }
 
@@ -224,7 +227,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
 
     private static void rotateAtX(PoseStack poseStack, double x, double y, double z, double degrees) {
         poseStack.translate(x, y, z);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) degrees));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) degrees);
         poseStack.translate(-x, -y, -z);
     }
 

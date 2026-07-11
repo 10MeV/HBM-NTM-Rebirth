@@ -78,10 +78,15 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
             UpgradeType.EFFECT, 3);
 
     private final HbmEnergyStorage energy = new HbmEnergyStorage(MAX_POWER, MAX_POWER, 0L);
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_1 - SLOT_UPGRADE_0 + 1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_0 && slot <= SLOT_UPGRADE_1) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -159,10 +164,13 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
             HbmEnergyUtil.subscribeReceiverToPorts(level, pos, cyclotron.energyPorts(), cyclotron);
         }
 
-        if (cyclotron.canProcess()) {
-            cyclotron.progress += cyclotron.getSpeed();
-            cyclotron.energy.setPower(cyclotron.energy.getPower() - cyclotron.getConsumption());
-            int coolant = cyclotron.getCoolantConsumption();
+        LegacyMachineUpgradeManager.Levels upgrades = cyclotron.upgradeLevels();
+        if (cyclotron.canProcess(upgrades)) {
+            int speed = cyclotron.getSpeed(upgrades);
+            int consumption = cyclotron.getConsumption(upgrades);
+            int coolant = cyclotron.getCoolantConsumption(upgrades);
+            cyclotron.progress += speed;
+            cyclotron.energy.setPower(cyclotron.energy.getPower() - consumption);
             cyclotron.water().drain(coolant, false);
             cyclotron.spentSteam().fill(HbmFluids.SPENTSTEAM, coolant, 0, false);
             if (cyclotron.progress >= DURATION) {
@@ -186,11 +194,11 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
         cyclotron.networkPackNT(25);
     }
 
-    private boolean canProcess() {
-        if (energy.getPower() < getConsumption()) {
+    private boolean canProcess(LegacyMachineUpgradeManager.Levels upgrades) {
+        if (energy.getPower() < getConsumption(upgrades)) {
             return false;
         }
-        int coolant = getCoolantConsumption();
+        int coolant = getCoolantConsumption(upgrades);
         if (water().getFill() < coolant || spentSteam().getFill() + coolant > spentSteam().getMaxFill()) {
             return false;
         }
@@ -251,19 +259,31 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
     }
 
     public int getSpeed() {
-        return upgradeLevels().getLevel(UpgradeType.SPEED) + 1;
+        return getSpeed(upgradeLevels());
     }
 
     public int getConsumption() {
-        return BASE_CONSUMPTION - 100_000 * upgradeLevels().getLevel(UpgradeType.POWER);
+        return getConsumption(upgradeLevels());
     }
 
     public int getCoolantConsumption() {
-        return 500 / (upgradeLevels().getLevel(UpgradeType.EFFECT) + 1) * getSpeed();
+        return getCoolantConsumption(upgradeLevels());
+    }
+
+    private int getSpeed(LegacyMachineUpgradeManager.Levels upgrades) {
+        return upgrades.getLevel(UpgradeType.SPEED) + 1;
+    }
+
+    private int getConsumption(LegacyMachineUpgradeManager.Levels upgrades) {
+        return BASE_CONSUMPTION - 100_000 * upgrades.getLevel(UpgradeType.POWER);
+    }
+
+    private int getCoolantConsumption(LegacyMachineUpgradeManager.Levels upgrades) {
+        return 500 / (upgrades.getLevel(UpgradeType.EFFECT) + 1) * getSpeed(upgrades);
     }
 
     private LegacyMachineUpgradeManager.Levels upgradeLevels() {
-        return LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_0, SLOT_UPGRADE_1, VALID_UPGRADES);
+        return upgradeSlotCache.get(items, SLOT_UPGRADE_0, SLOT_UPGRADE_1, VALID_UPGRADES);
     }
 
     public void setPlug(int index) {
@@ -527,6 +547,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
     public void load(CompoundTag tag) {
         super.load(tag);
         loadItems(tag);
+        upgradeSlotCache.invalidate();
         energy.setPower(tag.getLong(TAG_POWER));
         progress = tag.getInt(TAG_PROGRESS);
         plugs = tag.getByte(TAG_PLUGS);

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 public class FluidPipeBakedModel implements BakedModel {
     public static final int FLUID_TINT_INDEX = 1;
 
-    private static final long RANDOM_SEED = 42L;
     private static final int ITEM_KEY = HbmFluidDuctVariants.STANDARD_STYLE_COUNT * 64;
     private static final String[] ITEM_PARTS = {"pX", "nX", "pZ", "nZ"};
 
@@ -75,23 +74,21 @@ public class FluidPipeBakedModel implements BakedModel {
         String[] parts = key == ITEM_KEY ? ITEM_PARTS : partsForMask(key & 63);
         LayerModels layer = styles[FluidPipeBlock.clampLegacyStyle(style)];
         List<BakedQuad> quads = new ArrayList<>(parts.length * 64);
-        RandomSource random = RandomSource.create(RANDOM_SEED);
         for (String part : parts) {
-            addPartQuads(quads, layer.base(part), random, false);
-            addPartQuads(quads, layer.overlay(part), random, true);
+            addPartQuads(quads, layer.base(part), false);
+            addPartQuads(quads, layer.overlay(part), true);
         }
         return List.copyOf(quads);
     }
 
-    private static void addPartQuads(List<BakedQuad> quads, @Nullable BakedModel model, RandomSource random,
-            boolean tint) {
+    private static void addPartQuads(List<BakedQuad> quads, @Nullable BakedModel model, boolean tint) {
         if (model == null) {
             return;
         }
-        random.setSeed(RANDOM_SEED);
+        RandomSource random = BakedModelQuadRandom.seeded();
         List<BakedQuad> partQuads = model.getQuads(null, null, random, ModelData.EMPTY, RenderType.cutout());
         if (partQuads.isEmpty()) {
-            random.setSeed(RANDOM_SEED);
+            random = BakedModelQuadRandom.seeded();
             partQuads = model.getQuads(null, null, random, ModelData.EMPTY, null);
         }
         if (!tint) {

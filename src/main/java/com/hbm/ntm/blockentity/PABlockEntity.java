@@ -141,9 +141,6 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
         }
     }
 
-    public void clientTick() {
-    }
-
     protected void coolMachine() {
         temperature = Math.min(KELVIN + 20.0F, temperature + PASSIVE_HEATING);
         if (temperature <= TARGET_TEMPERATURE) {

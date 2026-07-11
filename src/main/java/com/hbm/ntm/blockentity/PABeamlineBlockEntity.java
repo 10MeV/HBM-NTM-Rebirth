@@ -33,8 +33,12 @@ public class PABeamlineBlockEntity extends PABlockEntity implements PAParticleUs
         }
     }
 
-    @Override
     public void clientTick() {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, worldPosition)) {
+            prevLight = 0.0F;
+            light = 0.0F;
+            return;
+        }
         prevLight = light;
         if (light > 0.0F) {
             light -= 0.25F;

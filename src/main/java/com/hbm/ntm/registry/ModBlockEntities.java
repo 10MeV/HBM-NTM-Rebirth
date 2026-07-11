@@ -193,6 +193,7 @@ import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
 import com.hbm.ntm.blockentity.RBMKSteamInletBlockEntity;
 import com.hbm.ntm.blockentity.RBMKSteamOutletBlockEntity;
 import com.hbm.ntm.blockentity.ReactorControlBlockEntity;
+import com.hbm.ntm.blockentity.RebarBlockEntity;
 import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import com.hbm.ntm.blockentity.RedCableGaugeBlockEntity;
 import com.hbm.ntm.blockentity.RefineryBlockEntity;
@@ -1464,6 +1465,11 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(BedrockOreDepositBlockEntity::new,
                             ModBlocks.ORE_BEDROCK.get(),
                             ModBlocks.ORE_BEDROCK_COLTAN.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RebarBlockEntity>> REBAR =
+            BLOCK_ENTITIES.register("rebar", () ->
+                    BlockEntityType.Builder.of(RebarBlockEntity::new,
+                            ModBlocks.legacyBlock("rebar").get()).build(null));
 
     public static final RegistryObject<BlockEntityType<VendingMachineBlockEntity>> VENDING_MACHINE =
             BLOCK_ENTITIES.register("vending_machine", () ->

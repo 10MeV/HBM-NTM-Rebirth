@@ -5,8 +5,8 @@ import com.hbm.ntm.blockentity.LegacyEmitterBlockEntity;
 import com.hbm.ntm.client.obj.LegacyEmitterBeamRenderer;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -14,7 +14,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
 
 public class LegacyEmitterBlockEntityRenderer implements BlockEntityRenderer<LegacyEmitterBlockEntity> {
     public LegacyEmitterBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
@@ -61,7 +60,7 @@ public class LegacyEmitterBlockEntityRenderer implements BlockEntityRenderer<Leg
             poseStack.pushPose();
             poseStack.translate(LegacyEmitterBeamRenderer.MODEL_CENTER_X, 0.0D,
                     LegacyEmitterBeamRenderer.MODEL_CENTER_Z);
-            poseStack.mulPose(Axis.YP.rotationDegrees(LegacyEmitterBeamRenderer.BASE_YAW_DEGREES));
+            LegacyPoseRotations.rotateYDegrees(poseStack, LegacyEmitterBeamRenderer.BASE_YAW_DEGREES);
             applyLegacyFacingTransform(poseStack, state.getValue(LegacyEmitterBlock.FACING));
             poseStack.translate(0.0D, LegacyEmitterBeamRenderer.FINAL_BEAM_OFFSET_Y,
                     LegacyEmitterBeamRenderer.FINAL_BEAM_OFFSET_Z);
@@ -83,17 +82,20 @@ public class LegacyEmitterBlockEntityRenderer implements BlockEntityRenderer<Leg
                 LegacyEmitterBeamRenderer.transformForMetadata(direction.get3DDataValue());
         poseStack.translate(transform.translateX(), transform.translateY(), transform.translateZ());
         if (transform.hasRotation()) {
-            poseStack.mulPose(rotation(transform));
+            rotateLegacyTransform(poseStack, transform);
         }
     }
 
-    private static Quaternionf rotation(LegacyEmitterBeamRenderer.EmitterTransform transform) {
+    private static void rotateLegacyTransform(PoseStack poseStack, LegacyEmitterBeamRenderer.EmitterTransform transform) {
+        float angle = transform.angleDegrees();
         if (transform.axisX() != 0.0F) {
-            return (transform.axisX() > 0.0F ? Axis.XP : Axis.XN).rotationDegrees(transform.angleDegrees());
+            LegacyPoseRotations.rotateXDegrees(poseStack, transform.axisX() > 0.0F ? angle : -angle);
+            return;
         }
         if (transform.axisY() != 0.0F) {
-            return (transform.axisY() > 0.0F ? Axis.YP : Axis.YN).rotationDegrees(transform.angleDegrees());
+            LegacyPoseRotations.rotateYDegrees(poseStack, transform.axisY() > 0.0F ? angle : -angle);
+            return;
         }
-        return (transform.axisZ() > 0.0F ? Axis.ZP : Axis.ZN).rotationDegrees(transform.angleDegrees());
+        LegacyPoseRotations.rotateZDegrees(poseStack, transform.axisZ() > 0.0F ? angle : -angle);
     }
 }

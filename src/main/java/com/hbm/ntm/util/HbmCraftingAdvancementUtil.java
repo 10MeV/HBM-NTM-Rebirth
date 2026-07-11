@@ -57,4 +57,19 @@ public final class HbmCraftingAdvancementUtil {
         }
         return awarded;
     }
+
+    public static boolean hasAdvancement(ServerPlayer player, ResourceLocation advancementId) {
+        if (player == null || advancementId == null) {
+            return false;
+        }
+        MinecraftServer server = player.getServer();
+        if (server == null) {
+            return false;
+        }
+        Advancement advancement = server.getAdvancements().getAdvancement(advancementId);
+        if (advancement == null) {
+            return false;
+        }
+        return player.getAdvancements().getOrStartProgress(advancement).isDone();
+    }
 }

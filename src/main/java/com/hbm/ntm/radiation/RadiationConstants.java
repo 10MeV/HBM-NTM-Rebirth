@@ -33,6 +33,8 @@ public final class RadiationConstants {
     public static final float SA326 = 15.0F;
     public static final float SA327 = 17.5F;
     public static final float SAS3 = 5.0F;
+    public static final float GH336 = 5.0F;
+    public static final float SCHRABIDATE = SA326 * 0.1F;
     public static final float SCHRARANIUM = SA326 * 0.1F;
     public static final float RADSOURCE_MULTIPLIER = 3.0F;
     public static final float PO210_BE = PO210 * RADSOURCE_MULTIPLIER;

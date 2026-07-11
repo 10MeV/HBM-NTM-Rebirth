@@ -17,7 +17,7 @@ import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.item.StingerGunItem;
 import com.hbm.ntm.util.RayTraceUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -466,7 +466,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     packedOverlay);
             if (i < 4) {
                 poseStack.translate(0.0D, -1.625D, 0.0D);
-                poseStack.mulPose(Axis.ZP.rotationDegrees(-22.5F));
+                LegacyPoseRotations.rotateZDegrees(poseStack, -22.5F);
                 poseStack.translate(0.0D, 1.625D, 0.0D);
             } else {
                 if (firstPerson && i == 4) {
@@ -489,15 +489,15 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         double recoilZ = legacyBusActive() ? LegacyHbmAnimations.getRelevantTransformation("RECOIL")[2]
                 : teslaFallbackRecoilZ(stack);
         poseStack.translate(0.0D, -2.0D, -2.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) equipX));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equipX);
         poseStack.translate(0.0D, 2.0D, 2.0D);
         poseStack.translate(0.0D, 0.0D, recoilZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) (recoilZ * 2.0D)));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoilZ * 2.0D));
     }
 
     private static void rotateTeslaCog(PoseStack poseStack, double angle) {
         poseStack.translate(0.0D, -1.625D, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) angle));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) angle);
         poseStack.translate(0.0D, 1.625D, 0.0D);
     }
 
@@ -570,7 +570,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         double squeezeZ = teslaYomiSqueezeZ(millis);
         poseStack.pushPose();
         poseStack.translate(position[0], position[1], position[2]);
-        poseStack.mulPose(Axis.YP.rotationDegrees(135.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 135.0F);
         poseStack.scale(1.0F, 1.0F, (float) squeezeZ);
         ObjTrinketModels.YOMI_LEGACY.renderAll(ObjTrinketModels.YOMI_TEXTURE, poseStack, buffer,
                 packedLight, packedOverlay);
@@ -824,7 +824,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate((font.width(msg) / 2.0D) * crosshairSize + 2.0D,
                     1.0D + font.lineHeight * crosshairSize / 2.0D, -2.75D);
             poseStack.scale(crosshairSize, -crosshairSize, crosshairSize);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             renderLegacyModelText(font, msg, color, poseStack, buffer);
             poseStack.popPose();
         }
@@ -841,7 +841,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate((font.width(splash) / 2.0D) * splashSize + 2.0D,
                     1.0D + font.lineHeight * splashSize / 2.0D, -2.75D);
             poseStack.scale(splashSize, -splashSize, splashSize);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             renderLegacyModelText(font, splash, color, poseStack, buffer);
             poseStack.popPose();
         }
@@ -851,7 +851,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             float fontSize = 0.005F;
             poseStack.translate(2.5D, 1.375D, -2.75D);
             poseStack.scale(fontSize, -fontSize, fontSize);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             renderFollyTtyLines(font, player, elapsed, color, poseStack, buffer);
             poseStack.popPose();
         }
@@ -975,9 +975,9 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void renderSpas12(ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (displayContext.firstPerson()) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         } else if (displayContext != ItemDisplayContext.GUI) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         }
         ObjWeaponModels.renderPart(model, "MainBody", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
@@ -1055,7 +1055,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.pushPose();
         if (displayContext.firstPerson()) {
             poseStack.translate(0.0D, 0.0D, 1.5D);
-            poseStack.mulPose(Axis.YN.rotationDegrees((float) (primaryMagazineAmount(stack) / 59.0D * 360.0D)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, -((float) (primaryMagazineAmount(stack) / 59.0D * 360.0D)));
             poseStack.translate(0.0D, 0.0D, -1.5D);
         }
         ObjWeaponModels.renderPart(model, "Mag", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1133,7 +1133,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.pushPose();
         poseStack.translate(0.0D, -0.875D, -3.5D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(-30.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, -30.0F);
         poseStack.translate(0.0D, 0.875D, 3.5D);
         ObjWeaponModels.renderPart(model, "Selector", texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
@@ -1232,7 +1232,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(x, y, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) rot));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) rot);
         ObjWeaponModels.renderPart(model, "Belt", texture, poseStack, buffer, packedLight, packedOverlay);
         if (shell) {
             ObjWeaponModels.renderPart(model, "Grenade", texture, poseStack, buffer, packedLight, packedOverlay);
@@ -1279,7 +1279,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(x, 0.375D + y, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) rot));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) rot);
         poseStack.translate(0.0D, -0.375D, 0.0D);
         ObjWeaponModels.renderPart(model, "Belt", texture, poseStack, buffer, packedLight, packedOverlay);
         if (shell) {
@@ -1315,7 +1315,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderBolter(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         if (displayContext.firstPerson()) {
             ObjWeaponModels.renderPart(model, "Body", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
@@ -1336,7 +1336,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.pushPose();
         poseStack.translate(0.025D - (font.width(text) / 2.0D) * scale, 2.11D, 2.91D);
         poseStack.scale(scale, -scale, scale);
-        poseStack.mulPose(Axis.XP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 45.0F);
         renderLegacyModelText(font, text, 0xFFFF0000, poseStack, buffer);
         poseStack.popPose();
     }
@@ -1401,7 +1401,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 return;
             }
             poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
             poseStack.popPose();
 
@@ -1423,8 +1423,8 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.pushPose();
         poseStack.translate(0.025D, -0.5D, (font.width(text) / 2.0D) * scale - 3.0D);
         poseStack.scale(scale, -scale, scale);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.XN.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -45.0F);
         renderLegacyModelText(font, text, 0xFFFF0000, poseStack, buffer);
         poseStack.popPose();
     }
@@ -1507,7 +1507,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderLag(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         ObjWeaponModels.renderPart(model, "Grip", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         ObjWeaponModels.renderPart(model, "Slide", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1526,13 +1526,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderM2(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
     }
 
     private static void renderCoilgun(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
         model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
     }
 
@@ -1587,7 +1587,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void renderHeavyRevolver(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean scoped = isHeavyRevolverScoped(stack);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         ObjWeaponModels.renderPart(model, "Cylinder", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1617,7 +1617,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (displayContext.firstPerson()) {
             double fill = primaryMagazineFill(stack);
             poseStack.translate(1.25D, 1.25D, 0.0D);
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (-135.0D + fill * 270.0D)));
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (-135.0D + fill * 270.0D));
             poseStack.translate(-1.25D, -1.25D, 0.0D);
         }
         ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1634,7 +1634,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         if (!displayContext.firstPerson()) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
@@ -1647,7 +1647,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (displayContext.firstPerson()) {
             double fill = magazineFillByOwner(stack, "gun_chemthrower");
             poseStack.translate(0.0D, 0.875D, 1.75D);
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (135.0D - fill * 270.0D)));
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (135.0D - fill * 270.0D));
             poseStack.translate(0.0D, -0.875D, -1.75D);
         }
         ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1664,9 +1664,9 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (displayContext.firstPerson()) {
             double fill = magazineFillByOwner(stack, "gun_drill");
             poseStack.translate(1.0D, 2.0625D, -1.75D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(45.0F));
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (-135.0D + fill * 270.0D)));
-            poseStack.mulPose(Axis.XP.rotationDegrees(-45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 45.0F);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (-135.0D + fill * 270.0D));
+            LegacyPoseRotations.rotateXDegrees(poseStack, -45.0F);
             poseStack.translate(-1.0D, -2.0625D, 1.75D);
         }
         ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -2054,26 +2054,26 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     }
 
     private static void applyLegacyAkimboLeftInventoryRotations(PoseStack poseStack) {
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
     }
 
     private static void applyLegacyMinigunDualLeftInventoryRotations(PoseStack poseStack) {
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
     }
 
     private static void applyLegacyAkimboRightInventoryRotations(PoseStack poseStack, boolean includePitch) {
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
         if (includePitch) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
         }
-        poseStack.mulPose(Axis.YP.rotationDegrees(-45.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -45.0F);
     }
 
     private static void renderAkimboFirstPerson(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
@@ -2220,7 +2220,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         float fitScale = (float) (0.82D / Math.max(1.0D, maxSize));
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) (180.0D + spec.modelYawDegrees())));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) (180.0D + spec.modelYawDegrees()));
         poseStack.scale(fitScale, fitScale, fitScale);
         poseStack.translate(-center.x, -center.y, -center.z);
 
@@ -2233,14 +2233,14 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         InventoryPose inventory = spec.inventory();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale((float) inventory.scale(), (float) inventory.scale(), (float) inventory.scale());
-        poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) inventory.yRot()));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) inventory.yRot());
         poseStack.translate(inventory.x(), inventory.y(), inventory.z());
         if (spec.inventoryRenderYawDegrees() != 0.0D) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) spec.inventoryRenderYawDegrees()));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) spec.inventoryRenderYawDegrees());
         }
     }
 
@@ -2265,17 +2265,17 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void applyLegacyCarbineInventoryDisplay(ItemStack stack, PoseStack poseStack) {
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         if (hasUpgrade(stack, SednaWeaponModEvaluator.ID_CARBINE_BAYONET)) {
             poseStack.scale(1.1875F, 1.1875F, 1.1875F);
-            poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.translate(1.5D, 0.0D, 0.0D);
         } else {
             poseStack.scale(1.375F, 1.375F, 1.375F);
-            poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.translate(-0.5D, 0.0D, 0.0D);
         }
     }
@@ -2286,11 +2286,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 || hasUpgrade(stack, SednaWeaponModEvaluator.ID_SILENCER);
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale(stock ? 0.875F : 1.125F, stock ? 0.875F : 1.125F, stock ? 0.875F : 1.125F);
-        poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(silenced ? (stock ? 50.0F : 55.0F) : 45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, silenced ? (stock ? 50.0F : 55.0F) : 45.0F);
         poseStack.translate(stock ? (silenced ? 0.75D : -0.5D) : 2.5D, 0.5D, 0.0D);
     }
 
@@ -2298,12 +2298,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         boolean silenced = isAmatSilenced(stack);
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale(silenced ? 0.8175F : 0.9375F, silenced ? 0.8175F : 0.9375F,
                 silenced ? 0.8175F : 0.9375F);
-        poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.translate(-0.5D, 0.5D, silenced ? -1.0D : 0.0D);
     }
 
@@ -2311,8 +2311,8 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
         poseStack.translate(2.0D, 14.0D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-135.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -135.0F);
         poseStack.scale((float) spec.inventory().scale(), (float) spec.inventory().scale(),
                 (float) -spec.inventory().scale());
     }
@@ -2321,11 +2321,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         InventoryPose inventory = spec.inventory();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale((float) inventory.scale(), (float) inventory.scale(), (float) inventory.scale());
-        poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.translate(inventory.x(), inventory.y(), inventory.z());
     }
 
@@ -2333,11 +2333,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         InventoryPose inventory = spec.inventory();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale((float) inventory.scale(), (float) inventory.scale(), (float) inventory.scale());
-        poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.translate(inventory.x(), inventory.y(), inventory.z());
     }
 
@@ -2366,11 +2366,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         InventoryPose inventory = spec.inventory();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale((float) inventory.scale(), (float) inventory.scale(), (float) inventory.scale());
-        poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.translate(inventory.x(), inventory.y(), inventory.z());
     }
 
@@ -2378,11 +2378,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         InventoryPose inventory = spec.inventory();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale((float) inventory.scale(), (float) inventory.scale(), (float) inventory.scale());
-        poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.translate(inventory.x(), inventory.y(), inventory.z());
     }
 
@@ -2390,11 +2390,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         InventoryPose inventory = spec.inventory();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         poseStack.scale((float) LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT, (float) -LEGACY_GUI_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(225.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale((float) inventory.scale(), (float) inventory.scale(), (float) inventory.scale());
-        poseStack.mulPose(Axis.XP.rotationDegrees(25.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 25.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.translate(inventory.x(), inventory.y(), inventory.z());
     }
 
@@ -2407,13 +2407,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         poseStack.scale((float) FIRST_PERSON_SCREEN_UNIT, (float) FIRST_PERSON_SCREEN_UNIT,
                 (float) FIRST_PERSON_SCREEN_UNIT);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
         poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
                 (float) firstPerson.renderScale());
         if (spec.firstPersonYawDegrees() != 0.0D) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) spec.firstPersonYawDegrees()));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) spec.firstPersonYawDegrees());
         }
     }
 
@@ -2425,7 +2425,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         poseStack.scale((float) FIRST_PERSON_SCREEN_UNIT, (float) FIRST_PERSON_SCREEN_UNIT,
                 (float) FIRST_PERSON_SCREEN_UNIT);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, spec.firstPerson().setupZ());
     }
 
@@ -2437,9 +2437,9 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         poseStack.scale((float) FIRST_PERSON_SCREEN_UNIT, (float) FIRST_PERSON_SCREEN_UNIT,
                 (float) FIRST_PERSON_SCREEN_UNIT);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(25.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 25.0F);
         poseStack.translate(spec.firstPerson().aimX(), spec.firstPerson().aimY(), spec.firstPerson().aimZ());
-        poseStack.mulPose(Axis.YP.rotationDegrees(80.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 80.0F);
         poseStack.scale((float) spec.firstPerson().renderScale(), (float) spec.firstPerson().renderScale(),
                 (float) spec.firstPerson().renderScale());
     }
@@ -2453,7 +2453,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         poseStack.scale((float) FIRST_PERSON_SCREEN_UNIT, (float) FIRST_PERSON_SCREEN_UNIT,
                 (float) FIRST_PERSON_SCREEN_UNIT);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
         poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
@@ -2469,7 +2469,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         poseStack.scale((float) FIRST_PERSON_SCREEN_UNIT, (float) FIRST_PERSON_SCREEN_UNIT,
                 (float) FIRST_PERSON_SCREEN_UNIT);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
         poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
@@ -2485,12 +2485,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         poseStack.scale((float) FIRST_PERSON_SCREEN_UNIT, (float) FIRST_PERSON_SCREEN_UNIT,
                 (float) FIRST_PERSON_SCREEN_UNIT);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
         poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
                 (float) firstPerson.renderScale());
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
     }
 
     private static void applyLegacyDrillFirstPersonDisplay(ItemDisplayContext displayContext,
@@ -2502,13 +2502,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         poseStack.scale((float) FIRST_PERSON_SCREEN_UNIT, (float) FIRST_PERSON_SCREEN_UNIT,
                 (float) FIRST_PERSON_SCREEN_UNIT);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
         poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
                 (float) firstPerson.renderScale());
-        poseStack.mulPose(Axis.YP.rotationDegrees(15.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-10.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 15.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -10.0F);
     }
 
     private static Map.Entry<String, RenderSpec> spec(String legacyName, String modelName, String textureName,

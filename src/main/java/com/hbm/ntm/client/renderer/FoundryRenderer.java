@@ -17,7 +17,7 @@ import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.registry.ModBlocks;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -231,7 +231,7 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
             int packedLight, BlockEntity blockEntity) {
         poseStack.pushPose();
         poseStack.translate(0.5D, height + 0.015D, 0.5D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
         poseStack.scale(0.375F, 0.375F, 0.375F);
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED,
                 Math.max(packedLight, LightTexture.FULL_BRIGHT), OverlayTexture.NO_OVERLAY, poseStack, buffer,

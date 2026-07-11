@@ -168,6 +168,13 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, FusionPlasmaForgeBlockEntity forge) {
         forge.prevArm = forge.arm;
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
+        if (skipAnimation) {
+            forge.prevRing = forge.ring;
+            forge.armStriker.freeze();
+            forge.armJet.freeze();
+            return;
+        }
         forge.armSpeed += forge.didProcess ? ARM_ACCELERATION : -ARM_ACCELERATION;
         forge.armSpeed = Math.max(0.0F, Math.min(1.0F, forge.armSpeed));
         forge.arm += forge.armSpeed;
@@ -522,7 +529,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         updateMaxPower(recipe);
         HbmBatteryTransfer.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, getMaxPower());
         if (inputTank.getTankType() != HbmFluids.NONE) {
-            refreshTrackedReceiverFluidPortsReport(List.of(inputTank), this);
+            refreshTrackedReceiverFluidPorts(inputTank, this);
         }
         boolean ignition = recipe == null || recipe.getExtraData().plasmaForge()
                 .map(extra -> extra.ignitionTemp() <= plasmaEnergySync)
@@ -811,6 +818,10 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
                 return;
             }
             type.update(this, forge, level);
+        }
+
+        private void freeze() {
+            System.arraycopy(angles, 0, prevAngles, 0, angles.length);
         }
 
         private boolean move() {

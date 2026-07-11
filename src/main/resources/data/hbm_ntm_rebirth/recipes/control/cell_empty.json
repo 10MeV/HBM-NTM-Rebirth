@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " S ",
+    "G G",
+    " S "
+  ],
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:plate_steel"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:cell_empty",
+    "count": 6
+  }
+}

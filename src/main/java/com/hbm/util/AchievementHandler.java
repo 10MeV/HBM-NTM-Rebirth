@@ -23,6 +23,12 @@ public final class AchievementHandler {
     public static final ResourceLocation DIGAMMA_FEEL = com.hbm.ntm.util.AchievementHandler.DIGAMMA_FEEL;
     public static final ResourceLocation DIGAMMA_KNOW = com.hbm.ntm.util.AchievementHandler.DIGAMMA_KNOW;
     public static final ResourceLocation DIGAMMA_KAUAI_MOHO = com.hbm.ntm.util.AchievementHandler.DIGAMMA_KAUAI_MOHO;
+    public static final ResourceLocation HIDDEN = com.hbm.ntm.util.AchievementHandler.HIDDEN;
+    public static final ResourceLocation BLAST_FURNACE = com.hbm.ntm.util.AchievementHandler.BLAST_FURNACE;
+    public static final ResourceLocation ASSEMBLY = com.hbm.ntm.util.AchievementHandler.ASSEMBLY;
+    public static final ResourceLocation CHEMPLANT = com.hbm.ntm.util.AchievementHandler.CHEMPLANT;
+    public static final ResourceLocation DESH = com.hbm.ntm.util.AchievementHandler.DESH;
+    public static final ResourceLocation TECHNETIUM = com.hbm.ntm.util.AchievementHandler.TECHNETIUM;
 
     private AchievementHandler() {
     }
@@ -41,5 +47,9 @@ public final class AchievementHandler {
 
     public static boolean award(Player player, ResourceLocation advancementId) {
         return com.hbm.ntm.util.AchievementHandler.award(player, advancementId);
+    }
+
+    public static boolean has(Player player, ResourceLocation advancementId) {
+        return com.hbm.ntm.util.AchievementHandler.has(player, advancementId);
     }
 }

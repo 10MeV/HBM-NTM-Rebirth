@@ -216,6 +216,29 @@ public final class ChunkRadiationManager {
         PrismChunkRadiationHandler.updateAll(server);
     }
 
+    public static void updateNow(MinecraftServer server) {
+        if (!RadiationConfig.chunkRadiationEnabled() || server == null) {
+            return;
+        }
+        if (RadiationConfig.prismRadiationEnabled()) {
+            PrismChunkRadiationHandler.updateAll(server);
+            return;
+        }
+        for (ServerLevel level : server.getAllLevels()) {
+            List<ChunkPos> fogCandidates = getData(level).updateDiffusion(level, RadiationConfig.radiationFogThreshold());
+            spawnRadiationFog(level, fogCandidates);
+        }
+    }
+
+    public static void handleWorldEffectsNow(MinecraftServer server) {
+        if (!RadiationConfig.chunkRadiationEnabled() || server == null || RadiationConfig.prismRadiationEnabled()) {
+            return;
+        }
+        for (ServerLevel level : server.getAllLevels()) {
+            handleWorldEffects(level);
+        }
+    }
+
     public static int prismCycles() {
         return PrismChunkRadiationHandler.cycles();
     }

@@ -1,12 +1,12 @@
 package com.hbm.ntm.client.particle;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.GameRenderer;
@@ -134,8 +134,8 @@ public final class HbmDeferredParticleRenderer {
         PoseStack modelView = RenderSystem.getModelViewStack();
         modelView.pushPose();
         modelView.setIdentity();
-        modelView.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
-        modelView.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
+        LegacyPoseRotations.rotateXDegrees(modelView, camera.getXRot());
+        LegacyPoseRotations.rotateYDegrees(modelView, camera.getYRot() + 180.0F);
         RenderSystem.applyModelViewMatrix();
         beginRenderPassBillboardBasis(camera);
         beginRenderPassParticleSheetConsumers(buffer);

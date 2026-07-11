@@ -9,15 +9,14 @@ import com.hbm.ntm.blockentity.Bat9000BlockEntity;
 import com.hbm.ntm.blockentity.BigAssTankBlockEntity;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
 import com.hbm.ntm.blockentity.OrbusBlockEntity;
-import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -69,14 +68,14 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
         boolean bigAssTankTilted = isBigAssTankTilted(blockEntity, state);
         if (bigAssTankTilted) {
             poseStack.translate(0.0D, -1.0D, 0.0D);
-            poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
+            LegacyPoseRotations.rotateZDegrees(poseStack, 10.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 5.0F);
         }
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
+        LegacyPoseRotations.rotateYDegrees(poseStack, rotation);
         if (definition != null) {
             Vec3 translation = definition.modelTranslation(state);
             poseStack.translate(translation.x, translation.y, translation.z);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
         }
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
@@ -194,18 +193,8 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
         int randomStartB = (int) (gameTime / 4L % 1000L);
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.0D, 0.0D);
-        LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                false, beams -> {
-            beams.add(0.0D, 3.0D, 0.0D,
-                    LegacyBeamRenderer.WaveType.SPIRAL, 0x101020, 0x101020, 0, 1, 0.0F, 6,
-                    beamScale * 0.5F);
-            beams.add(0.0D, 3.0D, 0.0D,
-                    LegacyBeamRenderer.WaveType.RANDOM, 0x202060, 0x202060, randomStartA, 6, beamScale, 2,
-                    0.0625F * beamScale);
-            beams.add(0.0D, 3.0D, 0.0D,
-                    LegacyBeamRenderer.WaveType.RANDOM, 0x202060, 0x202060, randomStartB, 6, beamScale, 2,
-                    0.0625F * beamScale);
-        });
+        LegacyMachineEffectPresenter.enqueueOrbusBeams(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                beamScale, randomStartA, randomStartB);
         poseStack.popPose();
     }
 }

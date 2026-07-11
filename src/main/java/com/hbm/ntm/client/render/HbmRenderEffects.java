@@ -15,7 +15,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexSorting;
-import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -158,8 +157,8 @@ public final class HbmRenderEffects {
         PoseStack modelView = RenderSystem.getModelViewStack();
         modelView.pushPose();
         modelView.setIdentity();
-        modelView.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
-        modelView.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
+        LegacyPoseRotations.rotateXDegrees(modelView, camera.getXRot());
+        LegacyPoseRotations.rotateYDegrees(modelView, camera.getYRot() + 180.0F);
         RenderSystem.applyModelViewMatrix();
 
         RenderSystem.enableDepthTest();

@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.item.missile.MissilePartItem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -49,16 +49,16 @@ public class MissilePartItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees(135.0F));
-            poseStack.mulPose(Axis.XP.rotationDegrees(145.0F));
+            LegacyPoseRotations.rotateZDegrees(poseStack, 135.0F);
+            LegacyPoseRotations.rotateXDegrees(poseStack, 145.0F);
             if (spec.part().kind() == ObjMissilePartModels.PartKind.WARHEAD) {
                 poseStack.translate(0.0D, 0.08D, 0.0D);
             } else if (spec.part().kind() == ObjMissilePartModels.PartKind.FUSELAGE) {
                 poseStack.translate(0.0D, 0.14D, 0.0D);
             }
-            poseStack.mulPose(Axis.YN.rotationDegrees((System.currentTimeMillis() / 25L) % 360L));
+            LegacyPoseRotations.rotateYDegrees(poseStack, -((System.currentTimeMillis() / 25L) % 360L));
         } else {
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             if (displayContext == ItemDisplayContext.GROUND) {
                 poseStack.scale(0.8F, 0.8F, 0.8F);
             } else if (displayContext.firstPerson()) {

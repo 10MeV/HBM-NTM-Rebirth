@@ -78,10 +78,15 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     public static final int SLOT_UPGRADE_POWER = 3;
 
     private final HbmFluidTank tank;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_POWER - SLOT_UPGRADE_SPEED + 1);
     private final ItemStackHandler items = new ItemStackHandler(4) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_SPEED && slot <= SLOT_UPGRADE_POWER) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -279,6 +284,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     public void load(CompoundTag tag) {
         super.load(tag);
         loadInventory(tag);
+        upgradeSlotCache.invalidate();
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         readRuntimeSyncTag(tag);
         if (hasTankTag(tag, TAG_LEGACY_TANK)) {
@@ -382,7 +388,7 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
         int oldUsage = usage;
         int oldProcessTime = processTime;
         LegacyMachineUpgradeManager.Levels levels =
-                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_SPEED, SLOT_UPGRADE_POWER, VALID_UPGRADES);
+                upgradeSlotCache.get(items, SLOT_UPGRADE_SPEED, SLOT_UPGRADE_POWER, VALID_UPGRADES);
         int speed = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
         int power = Math.min(levels.getLevel(UpgradeType.POWER), 3);
         processTime = PROCESS_TIME_BASE - (PROCESS_TIME_BASE / 4) * speed;

@@ -87,10 +87,15 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             EnergyPort.of(0, 0, -2, Direction.NORTH));
 
     private final HbmFluidTank tank;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_EFFECT - SLOT_UPGRADE_SPEED + 1);
     private final ItemStackHandler items = new ItemStackHandler(6) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_SPEED && slot <= SLOT_UPGRADE_EFFECT) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -144,8 +149,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         blockEntity.lastOutput = 0;
         changed |= blockEntity.updateUpgrades();
         changed |= blockEntity.setTankTypeFromIdentifierSlot();
-        changed |= blockEntity.processFluidItemTransfers(blockEntity.items,
-                HbmFluidItemTransfer.loadTransfers(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, blockEntity.tank));
+        changed |= blockEntity.processFluidItemLoadTransfer(
+                blockEntity.items, SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, blockEntity.tank);
         changed |= blockEntity.consumeFluid(level, pos);
         HbmEnergyUtil.chargeItemFromStorage(blockEntity.items.getStackInSlot(SLOT_ENERGY_OUTPUT),
                 blockEntity.energy, blockEntity.energy.getProviderSpeed());
@@ -167,7 +172,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, GasFlareBlockEntity blockEntity) {
-        if (!level.isClientSide || !blockEntity.on || blockEntity.tank.isEmpty()) {
+        if (!level.isClientSide || !blockEntity.on || blockEntity.tank.isEmpty()
+                || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         FluidType type = blockEntity.tank.getTankType();
@@ -453,7 +459,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldSpeed = speedLevel;
         int oldEffect = effectLevel;
         LegacyMachineUpgradeManager.Levels levels =
-                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_SPEED, SLOT_UPGRADE_EFFECT, VALID_UPGRADES);
+                upgradeSlotCache.get(items, SLOT_UPGRADE_SPEED, SLOT_UPGRADE_EFFECT, VALID_UPGRADES);
         speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
         effectLevel = Math.min(levels.getLevel(UpgradeType.EFFECT), 3);
         return oldSpeed != speedLevel || oldEffect != effectLevel;
@@ -498,6 +504,7 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             tank.readFromNbt(tag, "gas");
         }
         loadInventory(tag);
+        upgradeSlotCache.invalidate();
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         on = tag.getBoolean("isOn");
         burn = tag.getBoolean("doesBurn");

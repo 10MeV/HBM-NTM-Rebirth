@@ -1,8 +1,8 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -206,7 +206,7 @@ public final class ObjLaunchModels {
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.0D, spec.pivotY(), spec.pivotZ());
-        poseStack.mulPose((spec.negativeXAxis() ? Axis.XN : Axis.XP).rotationDegrees(rotation));
+        LegacyPoseRotations.rotateXDegrees(poseStack, spec.negativeXAxis() ? -rotation : rotation);
         poseStack.translate(0.0D, -spec.pivotY(), -spec.pivotZ());
         renderLauncherPart(spec, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();

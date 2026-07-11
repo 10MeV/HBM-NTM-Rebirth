@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.entity.projectile.MachinePartProjectileEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -20,10 +20,10 @@ public abstract class MachinePartProjectileRenderer<T extends MachinePartProject
     public void render(T entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(entity.getOrientation())));
+        LegacyPoseRotations.rotateYDegrees(poseStack, legacyYaw(entity.getOrientation()));
         poseStack.translate(0.0D, 0.0D, -1.0D);
         if (entity.getOrientation() < 6) {
-            poseStack.mulPose(Axis.ZN.rotationDegrees(spinDegrees()));
+            LegacyPoseRotations.rotateZDegrees(poseStack, -(spinDegrees()));
         }
         poseStack.translate(0.0D, -1.375D, 0.0D);
         model().renderPart(partName(), texture(entity), poseStack, buffer, packedLight, 0);

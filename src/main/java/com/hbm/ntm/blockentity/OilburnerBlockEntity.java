@@ -114,8 +114,8 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
         burner.lastBurned = 0;
         burner.lastHeatProduced = 0;
         boolean changed = burner.setFluidTankTypeFromIdentifierSlot(burner.items, SLOT_IDENTIFIER, burner.tank);
-        changed |= burner.processFluidItemTransfers(burner.items,
-                HbmFluidItemTransfer.loadTransfers(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, burner.tank));
+        changed |= burner.processFluidItemLoadTransfer(
+                burner.items, SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, burner.tank);
 
         for (FluidPort port : FLUID_PORTS) {
             BlockPos connector = pos.offset(port.offset());

@@ -3,8 +3,8 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyDirectionalShapeBlock;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjLightModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -44,7 +44,7 @@ public class LegacyFloodlightItemRenderer extends BlockEntityWithoutLevelRendere
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.5D, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(-30.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, -30.0F);
         poseStack.translate(0.0D, -0.5D, 0.0D);
         renderPart(LIGHTS, poseStack, buffer, packedLight, packedOverlay);
         renderPart(LAMPS, poseStack, buffer, packedLight, packedOverlay);
@@ -61,8 +61,8 @@ public class LegacyFloodlightItemRenderer extends BlockEntityWithoutLevelRendere
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.625D, 0.0D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(0.0625F, 0.0625F, 0.0625F);
             poseStack.translate(0.0D, -1.5D, 0.0D);
             poseStack.scale(6.5F, 6.5F, 6.5F);
@@ -72,7 +72,7 @@ public class LegacyFloodlightItemRenderer extends BlockEntityWithoutLevelRendere
         poseStack.translate(0.5D, 0.25D, 0.5D);
         if (displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
                 && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
         float scale = displayContext == ItemDisplayContext.GROUND ? 0.375F : 0.25F;
         if (displayContext.firstPerson()) {

@@ -4,7 +4,7 @@ import com.hbm.ntm.block.LegacyLanternBlock;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -51,8 +51,8 @@ public class LegacyLanternItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.5D, 0.5D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(-0.19F, 0.19F, -0.19F);
             poseStack.translate(0.0D, -2.625D, 0.0D);
             return;
@@ -60,7 +60,7 @@ public class LegacyLanternItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext != ItemDisplayContext.FIXED) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
         float scale = displayContext == ItemDisplayContext.GROUND ? 0.12F : 0.18F;
         if (displayContext.firstPerson()) {

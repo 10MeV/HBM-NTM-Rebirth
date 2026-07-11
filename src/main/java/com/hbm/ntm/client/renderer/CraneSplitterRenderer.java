@@ -7,7 +7,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -96,7 +96,7 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.5D, 0.5D);
             poseStack.scale(0.625F, 0.625F, 0.625F);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
             poseStack.translate(0.0D, -0.5D, 0.5D);
             renderInventoryHalf(true, poseStack, buffer, packedLight, packedOverlay);
             poseStack.translate(0.0D, 0.0D, -1.0D);
@@ -104,7 +104,7 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
         } else {
             poseStack.translate(0.5D, 0.35D, 0.5D);
             poseStack.scale(0.35F, 0.35F, 0.35F);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
             poseStack.translate(0.0D, -0.5D, 0.5D);
             renderInventoryHalf(true, poseStack, buffer, packedLight, packedOverlay);
             poseStack.translate(0.0D, 0.0D, -1.0D);
@@ -117,7 +117,7 @@ public class CraneSplitterRenderer implements BlockEntityRenderer<CraneSplitterB
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(offsetX + 0.5D, 0.0D, offsetZ + 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(CraneSplitterBlock.legacyRenderRotationDegrees(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, CraneSplitterBlock.legacyRenderRotationDegrees(state));
         drawSplitter(left, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }

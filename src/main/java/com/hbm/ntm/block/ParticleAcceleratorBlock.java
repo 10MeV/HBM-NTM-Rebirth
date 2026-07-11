@@ -6,6 +6,7 @@ import com.hbm.ntm.blockentity.PABlockEntity;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.multiblock.MultiblockHelper;
+import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -90,17 +91,25 @@ public class ParticleAcceleratorBlock extends LegacyXrMultiblockBlock implements
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
-        return level.isClientSide
-                ? (tickLevel, tickPos, tickState, blockEntity) -> {
-                    if (blockEntity instanceof PABlockEntity pa) {
-                        pa.clientTick();
-                    }
-                }
-                : (tickLevel, tickPos, tickState, blockEntity) -> {
-                    if (blockEntity instanceof PABlockEntity pa) {
-                        pa.serverTick();
-                    }
-                };
+        if (level.isClientSide) {
+            if (variant == Variant.BEAMLINE && type == ModBlockEntities.PA_BEAMLINE.get()) {
+                return beamlineClientTicker();
+            }
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) -> {
+            if (blockEntity instanceof PABlockEntity pa) {
+                pa.serverTick();
+            }
+        };
+    }
+
+    private static <T extends BlockEntity> BlockEntityTicker<T> beamlineClientTicker() {
+        return (tickLevel, tickPos, tickState, blockEntity) -> {
+            if (blockEntity instanceof PABeamlineBlockEntity beamline) {
+                beamline.clientTick();
+            }
+        };
     }
 
     @Override

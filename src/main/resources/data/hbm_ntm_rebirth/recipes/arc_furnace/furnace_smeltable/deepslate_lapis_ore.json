@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "minecraft:deepslate_lapis_ore"
+      }
+    }
+  ],
+  "internal_name": "arc.furnace.deepslate_lapis_ore",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "minecraft:lapis_lazuli"
+    }
+  ],
+  "pools": [],
+  "power": 1000,
+  "source_order": 2372
+}

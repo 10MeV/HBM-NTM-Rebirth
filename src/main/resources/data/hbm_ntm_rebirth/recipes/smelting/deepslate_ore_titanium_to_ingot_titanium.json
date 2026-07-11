@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 3.0,
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:deepslate_ore_titanium"
+  },
+  "result": "hbm_ntm_rebirth:ingot_titanium"
+}

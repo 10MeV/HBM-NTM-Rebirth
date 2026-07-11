@@ -48,10 +48,10 @@ public class ShredderBlock extends HorizontalMachineBlock implements EntityBlock
         if (type != ModBlockEntities.MACHINE_SHREDDER.get()) {
             return null;
         }
-        return level.isClientSide
-                ? (tickLevel, tickPos, tickState, blockEntity) ->
-                ShredderBlockEntity.clientTick(tickLevel, tickPos, tickState, (ShredderBlockEntity) blockEntity)
-                : (tickLevel, tickPos, tickState, blockEntity) ->
+        if (level.isClientSide) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) ->
                 ShredderBlockEntity.serverTick(tickLevel, tickPos, tickState, (ShredderBlockEntity) blockEntity);
     }
 

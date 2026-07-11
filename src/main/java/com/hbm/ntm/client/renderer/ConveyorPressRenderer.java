@@ -7,7 +7,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -64,7 +64,7 @@ public class ConveyorPressRenderer implements BlockEntityRenderer<ConveyorPressB
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 poseStack.pushPose();
                 poseStack.translate(0.5D, 0.0D, 0.5D);
-                poseStack.mulPose(Axis.YP.rotationDegrees(yRotation));
+                LegacyPoseRotations.rotateYDegrees(poseStack, yRotation);
                 if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
                     ObjMachineModels.CONVEYOR_PRESS.renderOnlyInCallOrder(ObjMachineModels.CONVEYOR_PRESS_TEXTURE,
                             poseStack, buffer, modelLight, OverlayTexture.NO_OVERLAY, PRESS,

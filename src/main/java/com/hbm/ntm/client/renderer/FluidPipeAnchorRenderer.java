@@ -5,9 +5,9 @@ import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.FluidPipeAnchorBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.util.ColorUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -82,21 +82,21 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
 
     private static void rotateToFacing(PoseStack poseStack, Direction facing) {
         switch (facing) {
-            case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+            case DOWN -> LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
             case UP -> {
             }
             case NORTH -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
             }
-            case SOUTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+            case SOUTH -> LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
             case WEST -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
             }
             case EAST -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(270.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 270.0F);
             }
         }
     }
@@ -155,8 +155,8 @@ public class FluidPipeAnchorRenderer implements BlockEntityRenderer<FluidPipeAnc
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) yaw));
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) (90.0D - pitch)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) yaw);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (90.0D - pitch));
 
         poseStack.pushPose();
         poseStack.scale(1.0F, (float) length, 1.0F);

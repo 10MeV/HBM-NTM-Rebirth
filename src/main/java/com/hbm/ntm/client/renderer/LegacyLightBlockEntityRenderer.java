@@ -8,8 +8,8 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjLightModels;
 import com.hbm.ntm.client.obj.ObjModelPart;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.core.Direction;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -75,8 +75,8 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
                 0.5D - face.getStepX() * 0.5D,
                 0.5D - face.getStepY() * 0.5D,
                 0.5D - face.getStepZ() * 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(LegacyObjTransforms.yawDegrees(face)));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(-LegacyObjTransforms.pitchDegrees(face)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, LegacyObjTransforms.yawDegrees(face));
+        LegacyPoseRotations.rotateZDegrees(poseStack, -LegacyObjTransforms.pitchDegrees(face));
         if (state.getBlock() instanceof LegacySpotlightBlock spotlight && !spotlight.isActive()) {
             model.render(poseStack, buffer, state, packedLight, packedOverlay, 0x404040);
         } else {
@@ -93,7 +93,7 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         poseStack.translate(0.0D, -0.5D, 0.0D);
         boolean topBottomRotated = state.getValue(LegacyDirectionalShapeBlock.TOP_BOTTOM_ROTATED);
         if ((face != Direction.DOWN && face != Direction.UP) || topBottomRotated) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
 
         renderFloodlightPart(FLOODLIGHT_BASE, poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF);
@@ -108,7 +108,7 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.5D, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
+        LegacyPoseRotations.rotateZDegrees(poseStack, rotation);
         poseStack.translate(0.0D, -0.5D, 0.0D);
         renderFloodlightPart(FLOODLIGHT_LIGHTS, poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF);
         renderFloodlightPart(FLOODLIGHT_LAMPS, poseStack, buffer,
@@ -129,19 +129,19 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
 
     private static void applyFloodlightBaseRotation(PoseStack poseStack, Direction face) {
         switch (face) {
-            case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+            case DOWN -> LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
             case NORTH -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
             }
-            case SOUTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+            case SOUTH -> LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
             case WEST -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
             }
             case EAST -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(270.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 270.0F);
             }
             default -> {
             }

@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.entity.projectile.FallingNukeEntity;
 import com.hbm.ntm.client.obj.ObjNukeModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -21,13 +21,13 @@ public class FallingNukeRenderer extends EntityRenderer<FallingNukeEntity> {
     public void render(FallingNukeEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(entity.legacyFacingMeta())));
+        LegacyPoseRotations.rotateYDegrees(poseStack, legacyYaw(entity.legacyFacingMeta()));
         poseStack.translate(-2.0D, 0.0D, 0.0D);
         float pitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
         if (pitch < -80.0F) {
             pitch = 0.0F;
         }
-        poseStack.mulPose(Axis.ZP.rotationDegrees(pitch));
+        LegacyPoseRotations.rotateZDegrees(poseStack, pitch);
         NuclearDeviceRenderer.renderCustomNuke(poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);

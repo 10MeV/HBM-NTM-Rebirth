@@ -1,7 +1,7 @@
 package com.hbm.ntm.client.obj;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.core.Direction;
 import org.joml.Vector3f;
 
@@ -55,9 +55,15 @@ public final class LegacyObjTransforms {
     }
 
     public static void applyObjUtilRotation(PoseStack poseStack, float yawRadians, float pitchRadians, float rollRadians) {
-        poseStack.mulPose(Axis.XP.rotation(rollRadians));
-        poseStack.mulPose(Axis.ZP.rotation(pitchRadians));
-        poseStack.mulPose(Axis.YP.rotation(yawRadians));
+        if (rollRadians != 0.0F) {
+            LegacyPoseRotations.rotateXRadians(poseStack, rollRadians);
+        }
+        if (pitchRadians != 0.0F) {
+            LegacyPoseRotations.rotateZRadians(poseStack, pitchRadians);
+        }
+        if (yawRadians != 0.0F) {
+            LegacyPoseRotations.rotateYRadians(poseStack, yawRadians);
+        }
     }
 
     public static void applyObjUtilRotation(PoseStack poseStack, Direction direction) {
@@ -116,19 +122,19 @@ public final class LegacyObjTransforms {
 
     public static void rotateAroundY(PoseStack poseStack, double pivotX, double pivotY, double pivotZ, float degrees) {
         poseStack.translate(pivotX, pivotY, pivotZ);
-        poseStack.mulPose(Axis.YP.rotationDegrees(degrees));
+        LegacyPoseRotations.rotateYDegrees(poseStack, degrees);
         poseStack.translate(-pivotX, -pivotY, -pivotZ);
     }
 
     public static void rotateAroundX(PoseStack poseStack, double pivotX, double pivotY, double pivotZ, float degrees) {
         poseStack.translate(pivotX, pivotY, pivotZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees(degrees));
+        LegacyPoseRotations.rotateXDegrees(poseStack, degrees);
         poseStack.translate(-pivotX, -pivotY, -pivotZ);
     }
 
     public static void rotateAroundZ(PoseStack poseStack, double pivotX, double pivotY, double pivotZ, float degrees) {
         poseStack.translate(pivotX, pivotY, pivotZ);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(degrees));
+        LegacyPoseRotations.rotateZDegrees(poseStack, degrees);
         poseStack.translate(-pivotX, -pivotY, -pivotZ);
     }
 
@@ -138,19 +144,19 @@ public final class LegacyObjTransforms {
 
     public static void applySixFaceAttachmentRotation(PoseStack poseStack, Direction face) {
         switch (face) {
-            case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+            case DOWN -> LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
             case NORTH -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
             }
-            case SOUTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+            case SOUTH -> LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
             case WEST -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
             }
             case EAST -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(270.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 270.0F);
             }
             default -> {
             }

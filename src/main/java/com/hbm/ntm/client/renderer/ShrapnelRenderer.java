@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
@@ -40,10 +40,10 @@ public class ShrapnelRenderer extends EntityRenderer<ShrapnelEntity> {
     public void render(ShrapnelEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees((entity.tickCount + partialTick) * 10.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees((entity.tickCount + partialTick) * 10.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees((entity.tickCount + partialTick) * 10.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (entity.tickCount + partialTick) * 10.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, (entity.tickCount + partialTick) * 10.0F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (entity.tickCount + partialTick) * 10.0F);
         float scale = entity.isLargeRenderMode() ? 0.1875F : 0.0625F;
         poseStack.scale(scale, scale, scale);
         cube.render(poseStack, buffer.getBuffer(RenderType.entityCutout(TEXTURE)), packedLight, OverlayTexture.NO_OVERLAY);

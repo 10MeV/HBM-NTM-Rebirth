@@ -27,6 +27,8 @@ import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.menu.CombustionEngineMenu;
 import com.hbm.ntm.menu.CombinationOvenMenu;
 import com.hbm.ntm.menu.ContainmentBoxMenu;
+import com.hbm.ntm.menu.CartCrateMenu;
+import com.hbm.ntm.menu.CartDestroyerMenu;
 import com.hbm.ntm.menu.CraneLogisticsMenu;
 import com.hbm.ntm.menu.CrucibleMenu;
 import com.hbm.ntm.menu.CrateMenu;
@@ -105,6 +107,7 @@ import com.hbm.ntm.menu.RBMKRodMenu;
 import com.hbm.ntm.menu.RBMKStorageMenu;
 import com.hbm.ntm.menu.RadarMenu;
 import com.hbm.ntm.menu.RadiolysisMenu;
+import com.hbm.ntm.menu.RebarPlacerMenu;
 import com.hbm.ntm.menu.RemoteFluidMachineMenu;
 import com.hbm.ntm.menu.RefineryMenu;
 import com.hbm.ntm.menu.RotaryFurnaceMenu;
@@ -437,6 +440,15 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<CrateMenu>> STORAGE_CRATE =
             MENUS.register("storage_crate", () -> IForgeMenuType.create(CrateMenu::new));
+
+    public static final RegistryObject<MenuType<CartCrateMenu>> CART_CRATE =
+            MENUS.register("cart_crate", () -> IForgeMenuType.create(CartCrateMenu::new));
+
+    public static final RegistryObject<MenuType<CartDestroyerMenu>> CART_DESTROYER =
+            MENUS.register("cart_destroyer", () -> IForgeMenuType.create(CartDestroyerMenu::new));
+
+    public static final RegistryObject<MenuType<RebarPlacerMenu>> REBAR_PLACER =
+            MENUS.register("rebar_placer", () -> IForgeMenuType.create(RebarPlacerMenu::new));
 
     public static final RegistryObject<MenuType<FileCabinetMenu>> FILE_CABINET =
             MENUS.register("file_cabinet", () -> IForgeMenuType.create(FileCabinetMenu::new));

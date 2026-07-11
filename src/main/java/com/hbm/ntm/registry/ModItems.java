@@ -12,6 +12,8 @@ import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmCreativeBatteryItem;
 import com.hbm.ntm.energy.HbmLegacyEnergyCoreItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
+import com.hbm.ntm.entity.cart.NtmMinecartBase;
+import com.hbm.ntm.entity.cart.NtmMinecartType;
 import com.hbm.ntm.item.AmmoBagItem;
 import com.hbm.ntm.item.AnalysisToolItem;
 import com.hbm.ntm.item.ArcElectrodeItem;
@@ -24,6 +26,7 @@ import com.hbm.ntm.item.BedrockOreBaseItem;
 import com.hbm.ntm.item.BedrockOreFragmentItem;
 import com.hbm.ntm.item.BedrockOreItem;
 import com.hbm.ntm.item.BjJetpackArmorItem;
+import com.hbm.ntm.item.BobmazonCatalogItem;
 import com.hbm.ntm.item.BlueprintFolderItem;
 import com.hbm.ntm.item.ChargeThrowerItem;
 import com.hbm.ntm.item.ConveyorWandItem;
@@ -107,6 +110,7 @@ import com.hbm.ntm.item.LegacyPeasItem;
 import com.hbm.ntm.item.LegacyPipeLeadItem;
 import com.hbm.ntm.item.LegacyRadiationFoodItem;
 import com.hbm.ntm.item.LegacySyringeItem;
+import com.hbm.ntm.item.LegacyShimmerWeaponItem;
 import com.hbm.ntm.item.LegacyTemFlakesItem;
 import com.hbm.ntm.item.LegacyUllapoolCaberItem;
 import com.hbm.ntm.item.LegacyWiringItem;
@@ -117,10 +121,13 @@ import com.hbm.ntm.item.MatchstickItem;
 import com.hbm.ntm.item.MeteoriteSwordItem;
 import com.hbm.ntm.item.MirrorToolItem;
 import com.hbm.ntm.item.MufflerItem;
+import com.hbm.ntm.item.NtmMinecartItem;
 import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.item.MissileLauncherGunItem;
 import com.hbm.ntm.item.MissileDesignatorItem;
 import com.hbm.ntm.item.RangefinderItem;
+import com.hbm.ntm.item.RebarPlacerItem;
+import com.hbm.ntm.item.RubberBoatItem;
 import com.hbm.ntm.item.Ni4NiGunItem;
 import com.hbm.ntm.item.NcrpaArmorItem;
 import com.hbm.ntm.item.No9ArmorItem;
@@ -164,6 +171,7 @@ import com.hbm.items.machine.ItemPWRFuel;
 import com.hbm.items.machine.ItemRBMKPellet;
 import com.hbm.items.machine.ItemRBMKRod;
 import com.hbm.items.machine.ItemRTGPellet;
+import com.hbm.items.machine.ItemRTGPelletDepleted;
 import com.hbm.items.machine.ItemZirnoxRod;
 import com.hbm.items.machine.ItemZirnoxRod.EnumZirnoxType;
 import com.hbm.items.special.ItemHolotapeImage;
@@ -242,6 +250,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public final class ModItems {
@@ -1667,6 +1676,12 @@ public final class ModItems {
     public static final RegistryObject<Item> SCHRABIDIUM_HOE = hoe("schrabidium_hoe", HbmToolTiers.SCHRABIDIUM);
     public static final RegistryObject<Item> SCHRABIDIUM_HAMMER = registerLegacy("schrabidium_hammer",
             () -> new SchrabidiumHammerItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+    public static final RegistryObject<Item> SHIMMER_SLEDGE = registerLegacy("shimmer_sledge",
+            () -> new LegacyShimmerWeaponItem(LegacyShimmerWeaponItem.Kind.SLEDGE,
+                    new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+    public static final RegistryObject<Item> SHIMMER_AXE = registerLegacy("shimmer_axe",
+            () -> new LegacyShimmerWeaponItem(LegacyShimmerWeaponItem.Kind.AXE,
+                    new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
     public static final RegistryObject<Item> TITANIUM_SWORD = abilitySword("titanium_sword", HbmToolTiers.TITANIUM, 6.5F, 0.0D, false, item -> { });
     public static final RegistryObject<Item> TITANIUM_PICKAXE = abilityPickaxe("titanium_pickaxe", 4.5F, 0.0D, HbmToolTiers.TITANIUM, false, item -> { });
     public static final RegistryObject<Item> TITANIUM_AXE = abilityAxe("titanium_axe", 5.5F, 0.0D, HbmToolTiers.TITANIUM, false,
@@ -1853,6 +1868,36 @@ public final class ModItems {
             () -> new LegacyPipeLeadItem(new Item.Properties().stacksTo(1).durability(250)));
     public static final RegistryObject<Item> ULLAPOOL_CABER = registerLegacy("ullapool_caber",
             () -> new LegacyUllapoolCaberItem(toolProperties(HbmToolTiers.STEEL, false).rarity(Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> BOBMAZON = registerLegacy("bobmazon",
+            () -> new BobmazonCatalogItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> BOAT_RUBBER = registerLegacy("boat_rubber",
+            () -> new RubberBoatItem(new Item.Properties()));
+    public static final RegistryObject<Item> REBAR_PLACER = registerLegacy("rebar_placer",
+            () -> new RebarPlacerItem(new Item.Properties()));
+    public static final RegistryObject<Item> CART_EMPTY_WOOD = registerLegacy("cart_empty_wood",
+            () -> new NtmMinecartItem(NtmMinecartBase.WOOD, new Item.Properties()));
+    public static final RegistryObject<Item> CART_EMPTY_STEEL = registerLegacy("cart_empty_steel",
+            () -> new NtmMinecartItem(NtmMinecartBase.STEEL, new Item.Properties()));
+    public static final RegistryObject<Item> CART_EMPTY_PAINTED = registerLegacy("cart_empty_painted",
+            () -> new NtmMinecartItem(NtmMinecartBase.PAINTED, new Item.Properties()));
+    public static final RegistryObject<Item> CART_CRATE = registerLegacy("cart_crate",
+            () -> new NtmMinecartItem(NtmMinecartBase.VANILLA, NtmMinecartType.CRATE, new Item.Properties()));
+    public static final RegistryObject<Item> CART_POWDER_WOOD = registerLegacy("cart_powder_wood",
+            () -> new NtmMinecartItem(NtmMinecartBase.WOOD, NtmMinecartType.POWDER, new Item.Properties()));
+    public static final RegistryObject<Item> CART_POWDER_STEEL = registerLegacy("cart_powder_steel",
+            () -> new NtmMinecartItem(NtmMinecartBase.STEEL, NtmMinecartType.POWDER, new Item.Properties()));
+    public static final RegistryObject<Item> CART_POWDER_PAINTED = registerLegacy("cart_powder_painted",
+            () -> new NtmMinecartItem(NtmMinecartBase.PAINTED, NtmMinecartType.POWDER, new Item.Properties()));
+    public static final RegistryObject<Item> CART_SEMTEX_WOOD = registerLegacy("cart_semtex_wood",
+            () -> new NtmMinecartItem(NtmMinecartBase.WOOD, NtmMinecartType.SEMTEX, new Item.Properties()));
+    public static final RegistryObject<Item> CART_SEMTEX_STEEL = registerLegacy("cart_semtex_steel",
+            () -> new NtmMinecartItem(NtmMinecartBase.STEEL, NtmMinecartType.SEMTEX, new Item.Properties()));
+    public static final RegistryObject<Item> CART_SEMTEX_PAINTED = registerLegacy("cart_semtex_painted",
+            () -> new NtmMinecartItem(NtmMinecartBase.PAINTED, NtmMinecartType.SEMTEX, new Item.Properties()));
+    public static final RegistryObject<Item> CART_DESTROYER_STEEL = registerLegacy("cart_destroyer_steel",
+            () -> new NtmMinecartItem(NtmMinecartBase.STEEL, NtmMinecartType.DESTROYER, new Item.Properties()));
+    public static final RegistryObject<Item> CART_DESTROYER_PAINTED = registerLegacy("cart_destroyer_painted",
+            () -> new NtmMinecartItem(NtmMinecartBase.PAINTED, NtmMinecartType.DESTROYER, new Item.Properties()));
     public static final RegistryObject<Item> CHAINSAW = fueledAbilityAxe("chainsaw", 25.0F, -0.05D, HbmToolTiers.ELEC,
             5_000, 1, 250, item -> item.addAbility(ToolAreaAbilities.RECURSION, 2)
                     .addAbility(ToolHarvestAbilities.SILK, 0)
@@ -1966,15 +2011,20 @@ public final class ModItems {
     public static final RegistryObject<Item> RADAR_LINKER = registerLegacy("radar_linker",
             () -> new RadarLinkerItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> SINGULARITY = registerLegacy("singularity",
-            () -> new SingularityItem(new Item.Properties().stacksTo(1)));
+            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity", 3,
+                    legacyItemSupplier("nuclear_waste")));
     public static final RegistryObject<Item> SINGULARITY_COUNTER_RESONANT = registerLegacy("singularity_counter_resonant",
-            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_counter_resonant", 3));
+            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_counter_resonant", 3,
+                    legacyItemSupplier("nuclear_waste")));
     public static final RegistryObject<Item> SINGULARITY_SUPER_HEATED = registerLegacy("singularity_super_heated",
-            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_super_heated", 3));
+            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_super_heated", 3,
+                    legacyItemSupplier("nuclear_waste")));
     public static final RegistryObject<Item> SINGULARITY_SPARK = registerLegacy("singularity_spark",
-            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_spark", 3));
+            () -> new SingularityItem(new Item.Properties().stacksTo(1), "singularity_spark", 3,
+                    legacyItemSupplier("nuclear_waste")));
     public static final RegistryObject<Item> BLACK_HOLE = registerLegacy("black_hole",
-            () -> new SingularityItem(new Item.Properties().stacksTo(1), "black_hole", 3));
+            () -> new SingularityItem(new Item.Properties().stacksTo(1), "black_hole", 3,
+                    legacyItemSupplier("nuclear_waste")));
     public static final RegistryObject<Item> PARTICLE_EMPTY = simpleItem("particle_empty");
     public static final RegistryObject<Item> PARTICLE_HYDROGEN = particleCapsule("particle_hydrogen");
     public static final RegistryObject<Item> PARTICLE_COPPER = particleCapsule("particle_copper");
@@ -1999,7 +2049,7 @@ public final class ModItems {
             () -> new AntimatterCellItem(new Item.Properties().craftRemainder(CELL_EMPTY.get()),
                     "item.hbm_ntm_rebirth.cell_anti_schrabidium"));
     public static final RegistryObject<Item> PELLET_ANTIMATTER = registerLegacy("pellet_antimatter",
-            () -> new AntimatterClusterItem(new Item.Properties()));
+            () -> new AntimatterClusterItem(new Item.Properties().craftRemainder(CELL_EMPTY.get())));
     public static final RegistryObject<Item> CUSTOM_TNT = simpleItem("custom_tnt");
     public static final RegistryObject<Item> CUSTOM_NUKE = simpleItem("custom_nuke");
     public static final RegistryObject<Item> CUSTOM_HYDRO = simpleItem("custom_hydro");
@@ -2677,6 +2727,8 @@ public final class ModItems {
             "powder_dura_steel",
             "plate_gold",
             "plate_paa",
+            "shimmer_head",
+            "shimmer_axe_head",
             "shimmer_handle",
             "plate_euphemium",
             "lithium",
@@ -3339,6 +3391,8 @@ public final class ModItems {
             SCHRABIDIUM_SHOVEL,
             SCHRABIDIUM_HOE,
             SCHRABIDIUM_HAMMER,
+            SHIMMER_SLEDGE,
+            SHIMMER_AXE,
             TITANIUM_SWORD,
             TITANIUM_PICKAXE,
             TITANIUM_AXE,
@@ -3621,7 +3675,10 @@ public final class ModItems {
             "rod_quad_empty"
     ), breedingRodItems(RodFamily.DUAL), breedingRodItems(RodFamily.QUAD), simpleParts(
             "rod_zirnox_empty",
+            "cell_deuterium",
             "cell_tritium",
+            "cell_uf6",
+            "cell_puf6",
             "cell_balefire",
             "debris_graphite",
             "debris_metal",
@@ -3652,7 +3709,7 @@ public final class ModItems {
             "pellet_rtg_americium",
             "pellet_rtg_gold",
             "pellet_rtg_lead"
-    ), simpleParts(
+    ), rtgDepletedPelletItems(
             "pellet_rtg_depleted_bismuth",
             "pellet_rtg_depleted_mercury",
             "pellet_rtg_depleted_neptunium",
@@ -4000,6 +4057,21 @@ public final class ModItems {
             POWER_NET_TOOL,
             ANALYSIS_TOOL,
             MATCHSTICK,
+            BOBMAZON,
+            BOAT_RUBBER,
+            REBAR_PLACER,
+            CART_EMPTY_WOOD,
+            CART_EMPTY_STEEL,
+            CART_EMPTY_PAINTED,
+            CART_CRATE,
+            CART_POWDER_WOOD,
+            CART_POWDER_STEEL,
+            CART_POWDER_PAINTED,
+            CART_SEMTEX_WOOD,
+            CART_SEMTEX_STEEL,
+            CART_SEMTEX_PAINTED,
+            CART_DESTROYER_STEEL,
+            CART_DESTROYER_PAINTED,
             NUKE_ELECTRIC_KIT,
             LINKER,
             AMMO_BAG,
@@ -4429,6 +4501,10 @@ public final class ModItems {
         return item;
     }
 
+    private static Supplier<Item> legacyItemSupplier(String name) {
+        return () -> requireRegisteredLegacyItem(name).get();
+    }
+
     static RegistryObject<Item> registerBlockItem(String name, java.util.function.Supplier<Item> supplier) {
         RegistryObject<Item> item = ITEMS.register(name, supplier);
         ITEMS_BY_LEGACY_NAME.put(name, item);
@@ -4519,6 +4595,12 @@ public final class ModItems {
     private static List<RegistryObject<Item>> rtgPelletItems(String... names) {
         return Stream.of(names)
                 .map(name -> registerLegacy(name, () -> new ItemRTGPellet(new Item.Properties())))
+                .toList();
+    }
+
+    private static List<RegistryObject<Item>> rtgDepletedPelletItems(String... names) {
+        return Stream.of(names)
+                .map(name -> registerLegacy(name, () -> new ItemRTGPelletDepleted(new Item.Properties())))
                 .toList();
     }
 
@@ -5313,6 +5395,12 @@ public final class ModItems {
         if (isLegacyUncommonLorePart(name)) {
             return new ItemCustomLore(new Item.Properties()).setRarity(Rarity.UNCOMMON);
         }
+        if (hasCellEmptyCraftingRemainder(name)) {
+            return new Item(new Item.Properties().craftRemainder(CELL_EMPTY.get()));
+        }
+        if ("mike_deut".equals(name)) {
+            return new Item(new Item.Properties().stacksTo(1).craftRemainder(requireRegisteredLegacyItem("tank_steel").get()));
+        }
         if (isLegacyDepletedFuel(name)) {
             return new ItemDepletedFuel(new Item.Properties());
         }
@@ -5326,6 +5414,14 @@ public final class ModItems {
             return new ItemNuclearWaste(new Item.Properties());
         }
         return new Item(new Item.Properties());
+    }
+
+    private static boolean hasCellEmptyCraftingRemainder(String name) {
+        return "cell_deuterium".equals(name)
+                || "cell_tritium".equals(name)
+                || "cell_uf6".equals(name)
+                || "cell_puf6".equals(name)
+                || "cell_balefire".equals(name);
     }
 
     private static Item createSimpleStackSizeItem(String name, int maxStackSize) {

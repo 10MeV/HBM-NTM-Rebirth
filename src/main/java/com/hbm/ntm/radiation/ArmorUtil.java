@@ -516,7 +516,9 @@ public final class ArmorUtil {
 
     public static ItemStack getWornGasMaskFilter(LivingEntity entity) {
         WornGasMask wornMask = getWornGasMask(entity);
-        return wornMask.isPresent() ? wornMask.mask().getFilter(wornMask.maskStack(), entity) : ItemStack.EMPTY;
+        return wornMask.isPresent()
+                ? emptyIfNull(wornMask.mask().getFilter(wornMask.maskStack(), entity))
+                : ItemStack.EMPTY;
     }
 
     public static boolean hasWornGasMask(LivingEntity entity) {
@@ -628,13 +630,13 @@ public final class ArmorUtil {
 
     public static ItemStack getGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
         ItemStack filter = getGasMaskFilter(mask);
-        if (filter.isEmpty() && ArmorModHandler.hasMods(mask)) {
+        if (filter.isEmpty() && mask != null && !mask.isEmpty() && ArmorModHandler.hasMods(mask)) {
             ItemStack mod = ArmorModHandler.pryMod(mask, ArmorModHandler.helmet_only);
             if (!mod.isEmpty() && mod.getItem() instanceof GasMask gasMask) {
-                filter = gasMask.getFilter(mod, entity);
+                filter = emptyIfNull(gasMask.getFilter(mod, entity));
             }
         }
-        return filter;
+        return emptyIfNull(filter);
     }
 
     public static boolean hasGasMaskFilter(ItemStack mask) {
@@ -772,6 +774,10 @@ public final class ArmorUtil {
         int remaining = Math.max(0, filter.getMaxDamage() - filter.getDamageValue());
         int percent = remaining * 100 / filter.getMaxDamage();
         return Component.literal(" (" + percent + "%)");
+    }
+
+    private static ItemStack emptyIfNull(ItemStack stack) {
+        return stack == null ? ItemStack.EMPTY : stack;
     }
 
     public static boolean checkForMkuProtection(LivingEntity entity) {

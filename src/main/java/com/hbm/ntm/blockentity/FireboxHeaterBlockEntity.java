@@ -150,6 +150,9 @@ public class FireboxHeaterBlockEntity extends BlockEntity
             return;
         }
         firebox.prevDoorAngle = firebox.doorAngle;
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         float swingSpeed = firebox.doorAngle / 10.0F + 3.0F;
         firebox.doorAngle += firebox.playersUsing > 0 ? swingSpeed : -swingSpeed;
         firebox.doorAngle = Mth.clamp(firebox.doorAngle, 0.0F, 135.0F);

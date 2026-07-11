@@ -34,13 +34,41 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
     @Override
     protected void addTags(HolderLookup.Provider provider) {
         copy(HbmBlockTagsProvider.forgeBlockTag("ores"), forgeItemTag("ores"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/iron"), forgeItemTag("ores/iron"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/gold"), forgeItemTag("ores/gold"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/copper"), forgeItemTag("ores/copper"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/redstone"), forgeItemTag("ores/redstone"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/lapis"), forgeItemTag("ores/lapis"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/quartz"), forgeItemTag("ores/quartz"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/nether/quartz"), forgeItemTag("ores/nether/quartz"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/diamond"), forgeItemTag("ores/diamond"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/emerald"), forgeItemTag("ores/emerald"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/uranium"), forgeItemTag("ores/uranium"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/thorium"), forgeItemTag("ores/thorium"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/thorium232"), forgeItemTag("ores/thorium232"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/th232"), forgeItemTag("ores/th232"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/plutonium"), forgeItemTag("ores/plutonium"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/nether/plutonium"), forgeItemTag("ores/nether/plutonium"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/lithium"), forgeItemTag("ores/lithium"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/titanium"), forgeItemTag("ores/titanium"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/sulfur"), forgeItemTag("ores/sulfur"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/aluminium"), forgeItemTag("ores/aluminium"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/fluorite"), forgeItemTag("ores/fluorite"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/niter"), forgeItemTag("ores/niter"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/tungsten"), forgeItemTag("ores/tungsten"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/lead"), forgeItemTag("ores/lead"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/beryllium"), forgeItemTag("ores/beryllium"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/rare_earth"), forgeItemTag("ores/rare_earth"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/schrabidium"), forgeItemTag("ores/schrabidium"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/lignite"), forgeItemTag("ores/lignite"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/asbestos"), forgeItemTag("ores/asbestos"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/cinnabar"), forgeItemTag("ores/cinnabar"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/cinnebar"), forgeItemTag("ores/cinnebar"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/coltan"), forgeItemTag("ores/coltan"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/cobalt"), forgeItemTag("ores/cobalt"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/alexandrite"), forgeItemTag("ores/alexandrite"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/coal"), forgeItemTag("ores/coal"));
+        copy(HbmBlockTagsProvider.forgeBlockTag("ores/bauxite"), forgeItemTag("ores/bauxite"));
         copy(HbmBlockTagsProvider.forgeBlockTag("ores/limestone"), forgeItemTag("ores/limestone"));
         copy(HbmBlockTagsProvider.forgeBlockTag("glass"), forgeItemTag("glass"));
 
@@ -229,20 +257,8 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
     }
 
     private void addLegacyCrucibleSmeltingOreTags() {
-        addLegacyForgeTag("ores/copper",
-                Items.COPPER_ORE,
-                Items.DEEPSLATE_COPPER_ORE,
-                ModBlocks.legacyBlock("ore_copper").get().asItem(),
-                ModBlocks.legacyBlock("ore_gneiss_copper").get().asItem());
         addLegacyForgeTag("ores/hematite", ModBlocks.legacyBlock("stone_resource_hematite").get().asItem());
         addLegacyForgeTag("ores/malachite", ModBlocks.legacyBlock("stone_resource_malachite").get().asItem());
-        addLegacyForgeTag("ores/thorium", ModBlocks.legacyBlock("deepslate_ore_thorium").get().asItem());
-        addLegacyForgeTag("ores/thorium232",
-                ModBlocks.legacyBlock("ore_thorium").get().asItem(),
-                ModBlocks.legacyBlock("deepslate_ore_thorium").get().asItem());
-        addLegacyForgeTag("ores/th232",
-                ModBlocks.legacyBlock("ore_thorium").get().asItem(),
-                ModBlocks.legacyBlock("deepslate_ore_thorium").get().asItem());
     }
 
     private void addLegacyMaterialTags() {
@@ -263,7 +279,15 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("ingot", "ingots", "ingot_neptunium", "Neptunium237", "Np237", "Neptunium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_polonium", "Polonium210", "Po210", "Polonium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_technetium", "Technetium99", "Tc99");
+        addLegacyBareIngotAliases("ingot_am241", "Americium241", "Am241");
+        addLegacyBareIngotAliases("ingot_am242", "Americium242", "Am242");
+        addLegacyBareIngotAliases("ingot_am_mix", "AmericiumRG");
+        addLegacyBareIngotAliases("ingot_neptunium", "Neptunium237", "Np237", "Neptunium");
+        addLegacyBareIngotAliases("ingot_polonium", "Polonium210", "Po210", "Polonium");
+        addLegacyBareIngotAliases("ingot_technetium", "Technetium99", "Tc99");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_sr90", "Strontium90", "Sr90");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_ra226", "Radium226", "Ra226");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_actinium", "Actinium227", "Ac227");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_co60", "Cobalt60", "Co60");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_au198", "Gold198", "Au198");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_pb209", "Lead209", "Pb209");
@@ -271,9 +295,11 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("ingot", "ingots", "ingot_osmiridium", "Osmiridium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_mercury", "Mercury");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_gh336", "Ghiorsium336", "Gh336");
+        addLegacyBareIngotAliases("ingot_gh336", "Ghiorsium336", "Gh336");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_starmetal", "Starmetal");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_schrabidium", "Schrabidium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_solinium", "Solinium");
+        addLegacyBareIngotAliases("ingot_solinium", "Solinium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_mud", "WatzMud");
 
         addLegacyMaterialAliases("ingot", "ingots", "ingot_titanium", "Titanium");
@@ -448,9 +474,10 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_lead", "Lead");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_gh336", "Ghiorsium336", "Gh336");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_ra226", "Radium226", "Ra226");
+        addLegacyMaterialAliases("nugget", "nuggets", "nugget_actinium", "Actinium227", "Ac227");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_solinium", "Solinium");
         addLegacyMaterialAliases("nugget", "nuggets", "nugget_bismuth", "Bismuth", "AnyBismoid");
-        addLegacyMaterialAliases("nugget", "nuggets", "nugget_arsenic", "Arsenic");
+        addLegacyMaterialAliases("nugget", "nuggets", "nugget_arsenic", "Arsenic", "AnyBismoid");
 
         addLegacyMaterialAliases("billet", "billets", "billet_uranium", "Uranium");
         addLegacyMaterialAliases("billet", "billets", "billet_u233", "Uranium233", "U233");
@@ -651,6 +678,35 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("ingots/chainsteel", "ingot_chainsteel");
         tag(forgeItemTag("storage_blocks/fiberglass")).add(ModBlocks.legacyBlock("block_fiberglass").get().asItem());
         tag(forgeItemTag("storage_blocks/asbestos")).add(ModBlocks.legacyBlock("block_asbestos").get().asItem());
+        tag(forgeItemTag("storage_blocks/uranium")).add(ModBlocks.legacyBlock("block_uranium").get().asItem());
+        tag(forgeItemTag("storage_blocks/uranium233")).add(ModBlocks.legacyBlock("block_u233").get().asItem());
+        tag(forgeItemTag("storage_blocks/u233")).add(ModBlocks.legacyBlock("block_u233").get().asItem());
+        tag(forgeItemTag("storage_blocks/uranium235")).add(ModBlocks.legacyBlock("block_u235").get().asItem());
+        tag(forgeItemTag("storage_blocks/u235")).add(ModBlocks.legacyBlock("block_u235").get().asItem());
+        tag(forgeItemTag("storage_blocks/uranium238")).add(ModBlocks.legacyBlock("block_u238").get().asItem());
+        tag(forgeItemTag("storage_blocks/u238")).add(ModBlocks.legacyBlock("block_u238").get().asItem());
+        tag(forgeItemTag("storage_blocks/thorium232")).add(ModBlocks.legacyBlock("block_thorium").get().asItem());
+        tag(forgeItemTag("storage_blocks/th232")).add(ModBlocks.legacyBlock("block_thorium").get().asItem());
+        tag(forgeItemTag("storage_blocks/thorium")).add(ModBlocks.legacyBlock("block_thorium").get().asItem());
+        tag(forgeItemTag("storage_blocks/plutonium")).add(ModBlocks.legacyBlock("block_plutonium").get().asItem());
+        tag(forgeItemTag("storage_blocks/plutonium238")).add(ModBlocks.legacyBlock("block_pu238").get().asItem());
+        tag(forgeItemTag("storage_blocks/pu238")).add(ModBlocks.legacyBlock("block_pu238").get().asItem());
+        tag(forgeItemTag("storage_blocks/plutonium239")).add(ModBlocks.legacyBlock("block_pu239").get().asItem());
+        tag(forgeItemTag("storage_blocks/pu239")).add(ModBlocks.legacyBlock("block_pu239").get().asItem());
+        tag(forgeItemTag("storage_blocks/plutonium240")).add(ModBlocks.legacyBlock("block_pu240").get().asItem());
+        tag(forgeItemTag("storage_blocks/pu240")).add(ModBlocks.legacyBlock("block_pu240").get().asItem());
+        tag(forgeItemTag("storage_blocks/plutonium_rg")).add(ModBlocks.legacyBlock("block_pu_mix").get().asItem());
+        tag(forgeItemTag("storage_blocks/neptunium237")).add(ModBlocks.legacyBlock("block_neptunium").get().asItem());
+        tag(forgeItemTag("storage_blocks/np237")).add(ModBlocks.legacyBlock("block_neptunium").get().asItem());
+        tag(forgeItemTag("storage_blocks/neptunium")).add(ModBlocks.legacyBlock("block_neptunium").get().asItem());
+        tag(forgeItemTag("storage_blocks/polonium210")).add(ModBlocks.legacyBlock("block_polonium").get().asItem());
+        tag(forgeItemTag("storage_blocks/po210")).add(ModBlocks.legacyBlock("block_polonium").get().asItem());
+        tag(forgeItemTag("storage_blocks/polonium")).add(ModBlocks.legacyBlock("block_polonium").get().asItem());
+        tag(forgeItemTag("storage_blocks/radium226")).add(ModBlocks.legacyBlock("block_ra226").get().asItem());
+        tag(forgeItemTag("storage_blocks/ra226")).add(ModBlocks.legacyBlock("block_ra226").get().asItem());
+        tag(forgeItemTag("storage_blocks/actinium227")).add(ModBlocks.legacyBlock("block_actinium").get().asItem());
+        tag(forgeItemTag("storage_blocks/ac227")).add(ModBlocks.legacyBlock("block_actinium").get().asItem());
+        tag(forgeItemTag("storage_blocks/solinium")).add(ModBlocks.legacyBlock("block_solinium").get().asItem());
         addLegacyForgeTag("any/concrete", net.minecraft.world.item.Items.COBBLESTONE);
         tag(forgeItemTag("any/concrete")).add(ModBlocks.legacyBlock("concrete_smooth").get().asItem());
     }
@@ -660,6 +716,12 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
             addLegacyForgeTag(LegacyOreDictionaryMappings.itemTagPath(legacyPrefix + legacyMaterial), itemName);
         }
         addLegacyForgeTag(aggregatePath, itemName);
+    }
+
+    private void addLegacyBareIngotAliases(String itemName, String... legacyMaterials) {
+        for (String legacyMaterial : legacyMaterials) {
+            addLegacyForgeTag(LegacyOreDictionaryMappings.itemTagPath(legacyMaterial), itemName);
+        }
     }
 
     private void addLegacyFluidContainerTags() {

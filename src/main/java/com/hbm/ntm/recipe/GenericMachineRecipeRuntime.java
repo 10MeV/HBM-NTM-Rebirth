@@ -179,7 +179,10 @@ public final class GenericMachineRecipeRuntime {
 
     public static void setupTanks(@Nullable GenericMachineRecipe recipe, List<HbmFluidTank> inputTanks,
             List<HbmFluidTank> outputTanks, int defaultCapacity) {
-        setupTanksReport(recipe, inputTanks, outputTanks, defaultCapacity);
+        if (recipe != null) {
+            HbmFluidRecipeIO.setupRecipeTanksChanged(
+                    recipe.getFluidInputs(), recipe.getFluidOutputs(), inputTanks, outputTanks, defaultCapacity);
+        }
     }
 
     public static HbmFluidRecipeIO.RecipeTankSetupReport setupTanksReport(@Nullable GenericMachineRecipe recipe,
@@ -241,9 +244,7 @@ public final class GenericMachineRecipeRuntime {
             List<HbmFluidTank> inputTanks) {
         consumeItemInputs(recipe, items, inputSlots);
         List<HbmFluidStack> fluidInputs = recipe.getFluidInputs();
-        HbmFluidRecipeIO.FluidStackSetTransferReport fluidReport =
-                HbmFluidRecipeIO.consumeInputsReport(fluidInputs, inputTanks, false);
-        if (!fluidReport.complete()) {
+        if (!HbmFluidRecipeIO.consumeInputs(fluidInputs, inputTanks, false)) {
             throw new IllegalStateException("Generic machine fluid inputs no longer match after canProcess: " + recipe.getId());
         }
     }
@@ -253,9 +254,7 @@ public final class GenericMachineRecipeRuntime {
         produceItemOutputs(recipe, items, outputSlots);
 
         List<HbmFluidStack> fluidOutputs = recipe.getFluidOutputs();
-        HbmFluidRecipeIO.FluidStackSetTransferReport fluidReport =
-                HbmFluidRecipeIO.produceOutputsReport(fluidOutputs, outputTanks, false);
-        if (!fluidReport.complete()) {
+        if (!HbmFluidRecipeIO.produceOutputs(fluidOutputs, outputTanks, false)) {
             throw new IllegalStateException("Generic machine fluid output no longer fits after canProcess: " + recipe.getId());
         }
     }
@@ -275,18 +274,16 @@ public final class GenericMachineRecipeRuntime {
 
     private static void processRecipeFluidIoOrThrow(GenericMachineRecipe recipe, List<HbmFluidTank> inputTanks,
             List<HbmFluidTank> outputTanks) {
-        HbmFluidRecipeIO.RecipeFluidIoProcessReport fluidReport = HbmFluidRecipeIO.processRecipeIoReport(
-                recipe.getFluidInputs(), recipe.getFluidOutputs(), inputTanks, outputTanks, false);
-        if (!fluidReport.complete()) {
+        if (!HbmFluidRecipeIO.processRecipeIo(recipe.getFluidInputs(), recipe.getFluidOutputs(),
+                inputTanks, outputTanks, false)) {
             throw new IllegalStateException("Generic machine fluid IO no longer matches after canProcess: " + recipe.getId());
         }
     }
 
     private static void previewRecipeFluidIoOrThrow(GenericMachineRecipe recipe, List<HbmFluidTank> inputTanks,
             List<HbmFluidTank> outputTanks) {
-        HbmFluidRecipeIO.RecipeFluidIoProcessReport fluidReport = HbmFluidRecipeIO.previewRecipeIo(
-                recipe.getFluidInputs(), recipe.getFluidOutputs(), inputTanks, outputTanks);
-        if (!fluidReport.complete()) {
+        if (!HbmFluidRecipeIO.canProcessRecipeIo(recipe.getFluidInputs(), recipe.getFluidOutputs(),
+                inputTanks, outputTanks)) {
             throw new IllegalStateException("Generic machine fluid IO no longer matches before completion: " + recipe.getId());
         }
     }
@@ -379,7 +376,7 @@ public final class GenericMachineRecipeRuntime {
     }
 
     private static boolean hasFluidInputs(GenericMachineRecipe recipe, List<HbmFluidTank> inputTanks) {
-        return HbmFluidRecipeIO.inspectInputs(recipe.getFluidInputs(), inputTanks).complete();
+        return HbmFluidRecipeIO.canConsumeInputs(recipe.getFluidInputs(), inputTanks);
     }
 
     private static boolean canFitItemOutputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] outputSlots) {
@@ -415,7 +412,7 @@ public final class GenericMachineRecipeRuntime {
     }
 
     private static boolean canFitFluidOutputs(GenericMachineRecipe recipe, List<HbmFluidTank> outputTanks) {
-        return HbmFluidRecipeIO.inspectOutputs(recipe.getFluidOutputs(), outputTanks).complete();
+        return HbmFluidRecipeIO.canProduceOutputs(recipe.getFluidOutputs(), outputTanks);
     }
 
     public record Index(List<GenericMachineRecipe> recipes,

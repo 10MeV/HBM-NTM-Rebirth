@@ -1,8 +1,8 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
-import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyHorseRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -13,7 +13,6 @@ import com.hbm.ntm.energy.HbmBatteryPackItem;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.registry.ModItems;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import java.util.Random;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -124,7 +123,7 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
         poseStack.scale((float) LegacyTileRenderPlans.CREATIVE_BATTERY_HORSE_SCALE,
                 (float) LegacyTileRenderPlans.CREATIVE_BATTERY_HORSE_SCALE,
                 (float) LegacyTileRenderPlans.CREATIVE_BATTERY_HORSE_SCALE);
-        poseStack.mulPose(Axis.YN.rotationDegrees((float) horseYaw));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -((float) horseYaw));
         CREATIVE_HORSE.reset();
         CREATIVE_HORSE.enableHorn();
         CREATIVE_HORSE.render(poseStack, buffer, LegacyHorseRenderer.SUNBURST_TEXTURE, packedLight, packedOverlay);
@@ -137,37 +136,8 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
                     / LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_START_DIVISOR;
             poseStack.pushPose();
             poseStack.translate(0.0D, LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_TRANSLATE_Y, 0.0D);
-            LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                    false, beams -> {
-                int bit = 1;
-                for (int i = -1; i <= 1; i += 2) {
-                    for (int j = -1; j <= 1; j += 2) {
-                        if ((beamMask & bit) != 0) {
-                            double x = LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_XZ * i;
-                            double z = LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_XZ * j;
-                            beams.add(
-                                    x, LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_Y, z,
-                                    LegacyBeamRenderer.WaveType.RANDOM,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_OUTER_COLOR,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_INNER_COLOR,
-                                    start, LegacyTileRenderPlans.CREATIVE_BATTERY_LONG_BEAM_SEGMENTS,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_LONG_BEAM_SIZE,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_LAYERS,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_THICKNESS);
-                            beams.add(
-                                    x, LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_Y, z,
-                                    LegacyBeamRenderer.WaveType.RANDOM,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_OUTER_COLOR,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_INNER_COLOR,
-                                    start, LegacyTileRenderPlans.CREATIVE_BATTERY_SHORT_BEAM_SEGMENTS,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_SHORT_BEAM_SIZE,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_LAYERS,
-                                    LegacyTileRenderPlans.CREATIVE_BATTERY_BEAM_THICKNESS);
-                        }
-                        bit <<= 1;
-                    }
-                }
-            });
+            LegacyMachineEffectPresenter.enqueueCreativeBatteryBeams(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                    buffer, beamMask, start);
             poseStack.popPose();
         }
     }
@@ -194,7 +164,7 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
                 ? state.getValue(MachineBatterySocketBlock.FACING)
                 : Direction.SOUTH;
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(270.0F - facing.toYRot()));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 270.0F - facing.toYRot());
         poseStack.translate(-0.5D, 0.0D, 0.5D);
     }
 

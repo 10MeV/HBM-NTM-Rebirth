@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:electrolyzer_metal",
+  "byproducts": [
+    {
+      "count": 40,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:20000,name:\"RareEarth\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"rare\"}"
+    }
+  ],
+  "duration": 600,
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary_second\",type:\"rare\"}"
+  },
+  "output1": {
+    "amount": 160,
+    "material": "Cobalt"
+  }
+}

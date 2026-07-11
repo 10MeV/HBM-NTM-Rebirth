@@ -6,7 +6,7 @@ import com.hbm.ntm.blockentity.RBMKConsoleBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -42,7 +42,7 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, legacyYaw(facing));
         poseStack.translate(0.5D, 0.0D, 0.0D);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(console)) {
             ObjRbmkModels.CONSOLE.renderAll(ObjRbmkModels.CONSOLE_TEXTURE, poseStack, buffer, light, packedOverlay,

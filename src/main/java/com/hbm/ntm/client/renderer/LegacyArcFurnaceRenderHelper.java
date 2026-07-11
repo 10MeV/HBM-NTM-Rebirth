@@ -4,8 +4,8 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUvAnimation;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 
@@ -182,7 +182,7 @@ public final class LegacyArcFurnaceRenderHelper {
         };
         poseStack.pushPose();
         poseStack.translate(0.0D, LegacyTileRenderPlans.ARC_FURNACE_CABLE_PIVOT_Y, pivotZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) angleDegrees);
         poseStack.translate(0.0D, -LegacyTileRenderPlans.ARC_FURNACE_CABLE_PIVOT_Y, -pivotZ);
         renderPart(model, "Cable" + (index + 1), poseStack, buffer, packedLight, packedOverlay, renderMode);
         poseStack.popPose();
@@ -257,13 +257,13 @@ public final class LegacyArcFurnaceRenderHelper {
 
     private static void rotate(PoseStack poseStack, float axisX, float axisY, float axisZ, double degrees) {
         if (axisX != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (degrees * axisX)));
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (degrees * axisX));
         }
         if (axisY != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (degrees * axisY)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) (degrees * axisY));
         }
         if (axisZ != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (degrees * axisZ)));
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (degrees * axisZ));
         }
     }
 

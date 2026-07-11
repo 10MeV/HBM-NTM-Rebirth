@@ -6,8 +6,8 @@ import com.hbm.ntm.blockentity.RadarBlockEntity;
 import com.hbm.ntm.blockentity.RadarLargeBlockEntity;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -61,11 +61,11 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(radar)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(radar)) {
                 poseStack.pushPose();
-                poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
+                LegacyPoseRotations.rotateYDegrees(poseStack, -interpolatedRotation(radar, partialTick));
                 poseStack.translate(-0.125D, 0.0D, 0.0D);
                 SMALL_MODEL.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, SMALL_DISH);
                 poseStack.popPose();
@@ -87,15 +87,15 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(radar)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(radar)) {
                 poseStack.pushPose();
-                poseStack.mulPose(Axis.YN.rotationDegrees(interpolatedRotation(radar, partialTick)));
+                LegacyPoseRotations.rotateYDegrees(poseStack, -interpolatedRotation(radar, partialTick));
                 LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight,
                         packedOverlay, LARGE_DISH);
                 poseStack.popPose();

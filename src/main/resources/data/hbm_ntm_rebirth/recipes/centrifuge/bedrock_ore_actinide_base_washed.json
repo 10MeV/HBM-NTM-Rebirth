@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"base_washed\",type:\"actinide\"}"
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"primary\",type:\"actinide\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"primary\",type:\"actinide\"}"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 106
+}

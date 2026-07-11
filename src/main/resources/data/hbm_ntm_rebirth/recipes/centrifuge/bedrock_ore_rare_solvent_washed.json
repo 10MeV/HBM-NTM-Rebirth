@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"solvent_washed\",type:\"rare\"}"
+  },
+  "outputs": [
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:6000,name:\"Neodymium\"}"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:3800,name:\"Strontium\"}"
+    },
+    {
+      "count": 3,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:4000,name:\"Zirconium\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"rare\"}"
+    }
+  ],
+  "source_order": 102
+}

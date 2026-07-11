@@ -5,8 +5,8 @@ import com.hbm.ntm.blockentity.LegacyFanBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -53,7 +53,7 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
             poseStack.translate(0.5D, 0.0D, 0.5D);
             applyLegacyFacingTransform(poseStack, state.getValue(LegacyFanBlock.FACING));
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
-                poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.spin(partialTick)));
+                LegacyPoseRotations.rotateYDegrees(poseStack, -blockEntity.spin(partialTick));
                 renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
             }
             poseStack.popPose();
@@ -69,11 +69,11 @@ public class LegacyFanRenderer implements BlockEntityRenderer<LegacyFanBlockEnti
     private static void applyLegacyFacingTransform(PoseStack poseStack, Direction direction) {
         poseStack.translate(0.0D, 0.5D, 0.0D);
         switch (direction) {
-            case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
-            case NORTH -> poseStack.mulPose(Axis.XN.rotationDegrees(90.0F));
-            case WEST -> poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-            case SOUTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-            case EAST -> poseStack.mulPose(Axis.ZN.rotationDegrees(90.0F));
+            case DOWN -> LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
+            case NORTH -> LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
+            case WEST -> LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
+            case SOUTH -> LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+            case EAST -> LegacyPoseRotations.rotateZDegrees(poseStack, -90.0F);
             default -> {
             }
         }

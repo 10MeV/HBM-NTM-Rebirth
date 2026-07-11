@@ -7,7 +7,7 @@ import com.hbm.ntm.blockentity.AssemblyFactoryBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -105,10 +105,10 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
             Vec3 translation = definition.modelTranslation(state);
             poseStack.translate(translation.x, translation.y, translation.z);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
             ResourceLocation texture = definition.textureLocation();
 
             double slide1 = blockEntity.getAnimation(0).getSlider(partialTick);
@@ -140,7 +140,8 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
                 }
             }
 
-            if (LegacyRecipeIconRenderer.shouldRender(blockEntity)) {
+            double iconDistanceSq = LegacyRecipeIconRenderer.playerDistanceSq(blockEntity);
+            if (LegacyRecipeIconRenderer.shouldRenderAtDistance(iconDistanceSq)) {
                 renderRecipeIcons(blockEntity, poseStack, buffer, packedLight);
                 renderSparks(blockEntity, partialTick, poseStack, buffer, packedLight, packedOverlay,
                         slide1, slide2, arm2, arm4);
@@ -194,7 +195,7 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
             MultiBufferSource buffer, int packedLight, int packedOverlay, double pivotY, double pivotZ,
             double angleDegrees) {
         poseStack.translate(0.0D, pivotY, pivotZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) angleDegrees);
         poseStack.translate(0.0D, -pivotY, -pivotZ);
         renderModelPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
     }

@@ -3,7 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.NuclearDeviceBlock;
 import com.hbm.ntm.blockentity.CustomNukeBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -34,7 +34,7 @@ public class CustomNukeRenderer implements BlockEntityRenderer<CustomNukeBlockEn
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(NuclearDeviceBlock.legacyRenderYaw(NuclearDeviceBlock.Kind.BOY, facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, NuclearDeviceBlock.legacyRenderYaw(NuclearDeviceBlock.Kind.BOY, facing));
         NuclearDeviceRenderer.applyCustomNukeLegacyWorldTranslation(poseStack);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             NuclearDeviceRenderer.renderCustomNuke(poseStack, buffer, packedLight, packedOverlay);

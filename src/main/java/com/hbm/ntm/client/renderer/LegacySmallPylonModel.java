@@ -2,7 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
@@ -27,7 +27,7 @@ public final class LegacySmallPylonModel {
     public static void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.5D, 1.5D - 14.0D / 16.0D, 0.5D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
         ROOT.render(poseStack, buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), packedLight, packedOverlay);
         poseStack.popPose();
     }

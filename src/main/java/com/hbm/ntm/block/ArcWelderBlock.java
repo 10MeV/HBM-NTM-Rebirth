@@ -52,10 +52,10 @@ public class ArcWelderBlock extends LegacyVisibleMultiblockMachineBlock {
         if (type != ModBlockEntities.ARC_WELDER.get()) {
             return null;
         }
-        return level.isClientSide
-                ? (tickLevel, tickPos, tickState, blockEntity) ->
-                ArcWelderBlockEntity.clientTick(tickLevel, tickPos, tickState, (ArcWelderBlockEntity) blockEntity)
-                : (tickLevel, tickPos, tickState, blockEntity) ->
+        if (level.isClientSide) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) ->
                 ArcWelderBlockEntity.serverTick(tickLevel, tickPos, tickState, (ArcWelderBlockEntity) blockEntity);
     }
 

@@ -14,6 +14,7 @@ public enum HbmToolTiers implements Tier {
     ALLOY(3, 2_000, 15.0F, 5.0F, 5, () -> Ingredient.EMPTY),
     CMB(3, 8_500, 40.0F, 55.0F, 100, () -> Ingredient.of(ModItems.legacyItem("ingot_combine_steel").get())),
     ELEC(3, 0, 30.0F, 12.0F, 2, () -> Ingredient.EMPTY),
+    SHIMMER_SLEDGE(1, 0, 25.0F, 26.0F, 200, () -> Ingredient.EMPTY),
     DESH(2, 0, 7.5F, 2.0F, 10, () -> Ingredient.of(ModItems.legacyItem("ingot_desh").get())),
     COBALT(3, 750, 9.0F, 2.5F, 60, () -> Ingredient.of(ModItems.COBALT_INGOT.get())),
     COBALT_DECORATED(3, 2_500, 15.0F, 2.5F, 75, () -> Ingredient.of(ModItems.COBALT_INGOT.get())),

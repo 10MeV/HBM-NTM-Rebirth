@@ -4,10 +4,10 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.item.missile.CustomMissileItem;
 import com.hbm.ntm.item.missile.MissilePartItem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -56,11 +56,11 @@ public class CustomMissileItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees(135.0F));
-            poseStack.mulPose(Axis.XP.rotationDegrees(215.0F));
-            poseStack.mulPose(Axis.YN.rotationDegrees((System.currentTimeMillis() / 25L) % 360L));
+            LegacyPoseRotations.rotateZDegrees(poseStack, 135.0F);
+            LegacyPoseRotations.rotateXDegrees(poseStack, 215.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, -((System.currentTimeMillis() / 25L) % 360L));
         } else {
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             if (displayContext == ItemDisplayContext.GROUND) {
                 poseStack.scale(0.8F, 0.8F, 0.8F);
             } else if (displayContext.firstPerson()) {
@@ -83,7 +83,7 @@ public class CustomMissileItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(0.0D, 0.0D, 0.5D);
         } else {
             poseStack.translate(0.5D, 0.5D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             poseStack.scale(0.75F, 0.75F, 0.75F);
             poseStack.translate(-0.5D, -0.5D, 0.0D);
         }

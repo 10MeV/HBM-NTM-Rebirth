@@ -5,7 +5,7 @@ import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -46,7 +46,7 @@ public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollec
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(FusionBreederRenderer.rotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, FusionBreederRenderer.rotation(state));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             ObjFusionModels.COLLECTOR_LEGACY.renderAll(ObjFusionModels.COLLECTOR_TEXTURE,
                     poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);

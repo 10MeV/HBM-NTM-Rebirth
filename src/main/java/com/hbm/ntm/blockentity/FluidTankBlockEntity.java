@@ -176,9 +176,8 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     protected boolean handleItemTransfer() {
         boolean changed = false;
         changed |= setTankTypeFromIdentifierSlot();
-        changed |= processFluidItemTransfers(items, HbmFluidItemTransfer.combineTransfers(
-                HbmFluidItemTransfer.loadTransfers(SLOT_LOAD_INPUT, SLOT_LOAD_OUTPUT, tank),
-                HbmFluidItemTransfer.unloadTransfers(SLOT_UNLOAD_INPUT, SLOT_UNLOAD_OUTPUT, tank)));
+        changed |= processFluidItemLoadTransfer(items, SLOT_LOAD_INPUT, SLOT_LOAD_OUTPUT, tank)
+                | processFluidItemUnloadTransfer(items, SLOT_UNLOAD_INPUT, SLOT_UNLOAD_OUTPUT, tank);
         return changed;
     }
 

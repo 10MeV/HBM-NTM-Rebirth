@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
@@ -9,7 +10,6 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -55,10 +55,10 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
             Vec3 translation = definition.modelTranslation(state);
             poseStack.translate(translation.x, translation.y, translation.z);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
             LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
             if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {

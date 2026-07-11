@@ -101,9 +101,6 @@ public class DiFurnaceBlockEntity extends HbmFluidBlockEntity
         }
     }
 
-    public static void clientTick(Level level, BlockPos pos, BlockState state, DiFurnaceBlockEntity furnace) {
-    }
-
     public ItemStackHandler getItems() {
         return items;
     }

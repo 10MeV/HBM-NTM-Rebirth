@@ -324,7 +324,7 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
         neutronEnergySync = neutronEnergy;
         ensureNode(level);
         if (inputTank.getTankType() != HbmFluids.NONE) {
-            refreshTrackedReceiverFluidPortsReport(List.of(inputTank), this);
+            refreshTrackedReceiverFluidPorts(inputTank, this);
         }
         if (outputTank.getFill() > 0) {
             tryProvideFluidToPorts(outputTank.getTankType(), outputTank.getPressure(), this);

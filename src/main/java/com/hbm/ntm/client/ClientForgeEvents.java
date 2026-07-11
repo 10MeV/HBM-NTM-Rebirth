@@ -20,6 +20,7 @@ import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.render.HbmRenderFrameLight;
 import com.hbm.ntm.client.render.HbmRenderFrameFlags;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
@@ -59,7 +60,6 @@ import com.hbm.ntm.radiation.ArmorUtil;
 import com.hbm.ntm.radiation.CraterBiomeUtil;
 import com.hbm.ntm.radiation.HazardTooltipUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ParticleStatus;
@@ -383,8 +383,8 @@ public final class ClientForgeEvents {
             HbmDeferredParticleRenderer.renderAfterLevel(event.getCamera(), event.getPartialTick(),
                     minecraft.renderBuffers().bufferSource());
             PoseStack torexPoseStack = resetTorexCloudletPose();
-            torexPoseStack.mulPose(Axis.XP.rotationDegrees(event.getCamera().getXRot()));
-            torexPoseStack.mulPose(Axis.YP.rotationDegrees(event.getCamera().getYRot() + 180.0F));
+            LegacyPoseRotations.rotateXDegrees(torexPoseStack, event.getCamera().getXRot());
+            LegacyPoseRotations.rotateYDegrees(torexPoseStack, event.getCamera().getYRot() + 180.0F);
             NukeTorexRenderer.renderCloudletsAfterLevel(minecraft.level, event.getCamera(), event.getPartialTick(),
                     torexPoseStack, minecraft.renderBuffers().bufferSource());
         }
@@ -854,21 +854,21 @@ public final class ClientForgeEvents {
     private static void renderLeftWing(Player player, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                                        double rot, double rot2) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(-10.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -10.0F);
         poseStack.translate(1.0D, 5.0D, 3.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) (rot * 0.5D)));
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) (rot + 5.0D)));
-        poseStack.mulPose(Axis.XP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) (rot * 0.5D));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (rot + 5.0D));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 45.0F);
         poseStack.translate(-1.0D, -5.0D, -3.0D);
         poseStack.translate(1.0D, 5.0D, 3.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) rot));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) rot);
         poseStack.translate(-1.0D, -5.0D, -3.0D);
         ObjArmorModels.renderPart(ObjArmorModels.WINGS, "LeftBase", ObjArmorModels.WINGS_MURK_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
 
         poseStack.translate(16.0D, 5.0D, 2.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) rot2));
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) (rot2 * 0.25D + 5.0D)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) rot2);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (rot2 * 0.25D + 5.0D));
         poseStack.translate(-16.0D, -5.0D, -2.0D);
         ObjArmorModels.renderPart(ObjArmorModels.WINGS, "LeftTip", ObjArmorModels.WINGS_MURK_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
@@ -878,21 +878,21 @@ public final class ClientForgeEvents {
     private static void renderRightWing(Player player, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                                         double rot, double rot2) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(10.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 10.0F);
         poseStack.translate(-1.0D, 5.0D, 3.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) (-rot * 0.5D)));
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) (-rot - 5.0D)));
-        poseStack.mulPose(Axis.XP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) (-rot * 0.5D));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (-rot - 5.0D));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 45.0F);
         poseStack.translate(1.0D, -5.0D, -3.0D);
         poseStack.translate(-1.0D, 5.0D, 3.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) -rot));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) -rot);
         poseStack.translate(1.0D, -5.0D, -3.0D);
         ObjArmorModels.renderPart(ObjArmorModels.WINGS, "RightBase", ObjArmorModels.WINGS_MURK_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
 
         poseStack.translate(-16.0D, 5.0D, 2.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) -rot2));
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) (-rot2 * 0.25D - 5.0D)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) -rot2);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (-rot2 * 0.25D - 5.0D));
         poseStack.translate(16.0D, -5.0D, -2.0D);
         ObjArmorModels.renderPart(ObjArmorModels.WINGS, "RightTip", ObjArmorModels.WINGS_MURK_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);

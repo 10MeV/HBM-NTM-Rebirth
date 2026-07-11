@@ -135,6 +135,9 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
         if (!level.isClientSide) {
             return;
         }
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (level.getEntitiesOfClass(CustomMissileEntity.class,
                         new net.minecraft.world.phys.AABB(pos.getX() - 0.5D, pos.getY(), pos.getZ() - 0.5D,
                                 pos.getX() + 1.5D, pos.getY() + 10.0D, pos.getZ() + 1.5D)).isEmpty()) {
@@ -150,8 +153,7 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
         int oldOxidizer = oxidizerTank().getFill();
         boolean oldRedstone = redstonePowered;
 
-        processFluidItemTransfers(items, HbmFluidItemTransfer.loadTransfers(
-                SLOT_FUEL_INPUT, SLOT_FUEL_OUTPUT, 2, fuelTank(), oxidizerTank()));
+        processFluidItemLoadTransfers(items, SLOT_FUEL_INPUT, SLOT_FUEL_OUTPUT, 2, fuelTank(), oxidizerTank());
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
         loadSolidFuel();
         updateTankTypes();

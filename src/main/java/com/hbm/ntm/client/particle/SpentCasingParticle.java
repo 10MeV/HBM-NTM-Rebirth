@@ -3,13 +3,13 @@ package com.hbm.ntm.client.particle;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -263,8 +263,10 @@ public class SpentCasingParticle extends Particle {
         poseStack.translate(renderX - cameraPos.x(), renderY - cameraPos.y() - this.bbHeight / 4.0F + this.definition.scaleY() * 0.01F,
                 renderZ - cameraPos.z());
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - Mth.lerp(partialTick, this.prevRotationYaw, this.rotationYaw)));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-Mth.lerp(partialTick, this.prevRotationPitch, this.rotationPitch)));
+        LegacyPoseRotations.rotateYDegrees(poseStack,
+                180.0F - Mth.lerp(partialTick, this.prevRotationYaw, this.rotationYaw));
+        LegacyPoseRotations.rotateXDegrees(poseStack,
+                -Mth.lerp(partialTick, this.prevRotationPitch, this.rotationPitch));
         poseStack.scale(this.definition.scaleX(), this.definition.scaleY(), this.definition.scaleZ());
 
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();

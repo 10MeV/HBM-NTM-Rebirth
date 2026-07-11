@@ -62,7 +62,6 @@ import com.hbm.ntm.blockentity.StrandCasterBlockEntity;
 import com.hbm.ntm.blockentity.StirlingBlockEntity;
 import com.hbm.ntm.blockentity.WaterPumpBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
-import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
@@ -71,6 +70,7 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.TexturedObjPartGroup;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.UntexturedQuadGroup;
@@ -84,7 +84,6 @@ import com.hbm.ntm.item.LaserWavelength;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.util.BobMathUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -362,10 +361,10 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 LegacyRenderLighting.pushModelViewSampling(blockEntity, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
             Vec3 translation = definition.modelTranslation(state);
             poseStack.translate(translation.x, translation.y, translation.z);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
             LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
             if (definition.renderProfile() == LegacyMachineRenderProfile.DEFAULT) {
@@ -448,14 +447,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.5D, -1.5D);
         int randomStart = (int) (gameTime % 1_000L / 2L);
-        LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                true, beams -> {
-            beams.add(0.0D, 0.0D, -length - 1.0D,
-                    LegacyBeamRenderer.WaveType.SPIRAL, color, color, 0, 1, 0.0F, 2, 0.0625F);
-            beams.add(0.0D, 0.0D, -length - 1.0D,
-                    LegacyBeamRenderer.WaveType.RANDOM, color, color, randomStart, length / 2 + 1, 0.0625F, 2,
-                    0.0625F);
-        });
+        LegacyMachineEffectPresenter.enqueueFelBeams(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer, length,
+                color, randomStart);
         poseStack.popPose();
     }
 
@@ -488,16 +481,9 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         double startY = LegacyTileRenderPlans.SOLAR_BOILER_BEAM_START_Y;
         int nearAlpha = colorByte(LegacyTileRenderPlans.SOLAR_BOILER_BEAM_MAX_ALPHA);
         int farAlpha = colorByte(LegacyTileRenderPlans.SOLAR_BOILER_BEAM_MIN_ALPHA);
-        LegacyMachineEffectPresenter.enqueueSolarBoilerBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+        LegacyMachineEffectPresenter.enqueueSolarBoilerBeams(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
                 LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, farAlpha, halfWidth, startY, nearAlpha, farAlpha,
-                beams -> {
-            for (int i = 0; i < offsets.length; i += 3) {
-                int dx = offsets[i];
-                int dy = offsets[i + 1];
-                int dz = offsets[i + 2];
-                beams.add(dx, dy, dz);
-            }
-        });
+                offsets);
     }
 
     private static int[] solarBeamOffsets(SolarBoilerBlockEntity boiler, int limit) {
@@ -1054,7 +1040,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             return;
         }
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(yawDegrees));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yawDegrees);
         renderRtgPart(model, "Connector", definition.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay, renderMode);
         poseStack.popPose();
@@ -1157,18 +1143,18 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         Font font = Minecraft.getInstance().font;
         double spin = System.currentTimeMillis() * 0.025D % 360.0D;
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) spin));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) spin);
         poseStack.translate(0.0D, 2.0D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
 
         float rotation = 0.0F;
         for (int index = 0; index < CYCLOTRON_GLYPH_MESSAGE.length(); index++) {
             String glyph = CYCLOTRON_GLYPH_MESSAGE.substring(index, index + 1);
             poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees(rotation));
+            LegacyPoseRotations.rotateYDegrees(poseStack, rotation);
             rotation -= font.width(glyph) * 2.0F;
             poseStack.translate(2.75D, 0.0D, 0.0D);
-            poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, -(90.0F));
             poseStack.scale(0.1F, 0.1F, 0.1F);
             font.drawInBatch(Component.literal(glyph)
                             .withStyle(style -> style.withFont(STANDARD_GALACTIC_FONT))
@@ -1614,7 +1600,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         float speed = battery != null ? battery.getSpeed() : 0.0F;
         poseStack.pushPose();
         poseStack.translate(0.0D, 5.5D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(rotation));
+        LegacyPoseRotations.rotateXDegrees(poseStack, rotation);
         poseStack.translate(0.0D, -5.5D, 0.0D);
         renderBatteryReddPart(model, "Wheel", definition.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay, 255, 255, 255, 255, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
@@ -1785,23 +1771,13 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         }
         poseStack.pushPose();
         poseStack.translate(translateX, translateY, translateZ);
-        LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                false, beams -> {
-            beams.add(x, y, z, LegacyBeamRenderer.WaveType.RANDOM,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_OUTER_COLOR,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_INNER_COLOR, start,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_LONG_SEGMENTS,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_LONG_SIZE,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_LAYERS,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_THICKNESS);
-            beams.add(x, y, z, LegacyBeamRenderer.WaveType.RANDOM,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_OUTER_COLOR,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_INNER_COLOR, start,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_SHORT_SEGMENTS,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_SHORT_SIZE,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_LAYERS,
-                    LegacyTileRenderPlans.BATTERY_REDD_ZAP_THICKNESS);
-        });
+        LegacyMachineEffectPresenter.enqueueDualRandomSolidBeam(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                false, x, y, z, LegacyTileRenderPlans.BATTERY_REDD_ZAP_OUTER_COLOR,
+                LegacyTileRenderPlans.BATTERY_REDD_ZAP_INNER_COLOR, start,
+                LegacyTileRenderPlans.BATTERY_REDD_ZAP_LONG_SEGMENTS, LegacyTileRenderPlans.BATTERY_REDD_ZAP_LONG_SIZE,
+                LegacyTileRenderPlans.BATTERY_REDD_ZAP_SHORT_SEGMENTS,
+                LegacyTileRenderPlans.BATTERY_REDD_ZAP_SHORT_SIZE, LegacyTileRenderPlans.BATTERY_REDD_ZAP_LAYERS,
+                LegacyTileRenderPlans.BATTERY_REDD_ZAP_THICKNESS);
         poseStack.popPose();
     }
 
@@ -2096,11 +2072,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         boolean active = blockEntity instanceof HephaestusBlockEntity hephaestus && hephaestus.isActive();
         withAnimatedModelFade(blockEntity, () -> {
             poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees(rotor));
+            LegacyPoseRotations.rotateYDegrees(poseStack, rotor);
             for (int i = 0; i < 3; i++) {
                 renderHephaestusPart(model, "Rotor", definition.textureLocation(), poseStack, buffer, packedLight,
                         packedOverlay, 255, 255, 255, 255, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
-                poseStack.mulPose(Axis.YP.rotationDegrees(120.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 120.0F);
             }
             poseStack.popPose();
         });
@@ -2318,8 +2294,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private static void applyLegacyTilt(PoseStack poseStack) {
         poseStack.translate(0.0D, LEGACY_TILTED_TRANSLATE_Y, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(LEGACY_TILTED_ROTATION_Z));
-        poseStack.mulPose(Axis.YP.rotationDegrees(LEGACY_TILTED_ROTATION_Y));
+        LegacyPoseRotations.rotateZDegrees(poseStack, LEGACY_TILTED_ROTATION_Z);
+        LegacyPoseRotations.rotateYDegrees(poseStack, LEGACY_TILTED_ROTATION_Y);
     }
 
     private static void renderAshpitDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
@@ -2350,8 +2326,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         stack.setCount(1);
         poseStack.pushPose();
         poseStack.translate(0.0625D * 2.5D, 1.125D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
         poseStack.scale(1.5F, 1.5F, 1.5F);
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED,
                 packedLight, OverlayTexture.NO_OVERLAY, poseStack, buffer, blockEntity.getLevel(), 0);
@@ -2496,7 +2472,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.75D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-yRot));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -yRot);
         LegacyMachineEffectPresenter.enqueueTexturedQuad(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
                 COMBINATION_FIRE_TEXTURE, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
                 LightTexture.FULL_BRIGHT, packedOverlay, 0.0F, 1.0F, 0.0F,
@@ -2734,7 +2710,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
         withAnimatedModelFade(blockEntity, () -> {
             poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) ring));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) ring);
             AssemblyMachineRenderer.renderModelPart(model, "Ring", definition.textureLocation(), poseStack, buffer,
                     packedLight, packedOverlay, renderMode);
             AssemblyMachineRenderer.renderModelPart(model, "Ring2", definition.textureLocation(), poseStack, buffer,
@@ -2745,15 +2721,17 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                         : 0.0D;
                 renderPrecassArmDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
                         arm, striker);
-                poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
             }
             poseStack.popPose();
         });
 
-        if (blockEntity instanceof LegacyGenericSelectorMachineBlockEntity machine
-                && LegacyRecipeIconRenderer.shouldRender(machine)) {
-            LegacyRecipeIconRenderer.renderInLegacyMachineSpace(machine.getSelectedRecipeDefinition(),
-                    machine.getLevel(), poseStack, buffer, packedLight);
+        if (blockEntity instanceof LegacyGenericSelectorMachineBlockEntity machine) {
+            double iconDistanceSq = LegacyRecipeIconRenderer.playerDistanceSq(machine);
+            if (LegacyRecipeIconRenderer.shouldRenderAtDistance(iconDistanceSq)) {
+                LegacyRecipeIconRenderer.renderInLegacyMachineSpace(machine.getSelectedRecipeDefinition(),
+                        machine.getLevel(), poseStack, buffer, packedLight);
+            }
         }
     }
 
@@ -2762,19 +2740,19 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             LegacyTexturedRenderMode renderMode, double[] arm, double striker) {
         poseStack.pushPose();
         poseStack.translate(0.0D, 1.625D, 0.9375D);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) arm[0]));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) arm[0]);
         poseStack.translate(0.0D, -1.625D, -0.9375D);
         AssemblyMachineRenderer.renderModelPart(model, "ArmLower1", definition.textureLocation(), poseStack,
                 buffer, packedLight, packedOverlay, renderMode);
 
         poseStack.translate(0.0D, 2.375D, 0.9375D);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) arm[1]));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) arm[1]);
         poseStack.translate(0.0D, -2.375D, -0.9375D);
         AssemblyMachineRenderer.renderModelPart(model, "ArmUpper1", definition.textureLocation(), poseStack,
                 buffer, packedLight, packedOverlay, renderMode);
 
         poseStack.translate(0.0D, 2.375D, 0.4375D);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) arm[2]));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) arm[2]);
         poseStack.translate(0.0D, -2.375D, -0.4375D);
         AssemblyMachineRenderer.renderModelPart(model, "Head1", definition.textureLocation(), poseStack, buffer,
                 packedLight, packedOverlay, renderMode);
@@ -2891,7 +2869,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
         poseStack.pushPose();
         poseStack.translate(1.375D, 0.0D, 0.375D);
-        poseStack.mulPose(Axis.YN.rotationDegrees(door));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -(door));
         poseStack.translate(-1.375D, 0.0D, -0.375D);
         renderFireboxHeaterPart(model, "Door", definition.textureLocation(), poseStack, buffer,
                 packedOverlay, partRenderState(definition, "Door", packedLight, renderMode, false));
@@ -3160,13 +3138,13 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private static void rotate(PoseStack poseStack, float axisX, float axisY, float axisZ, double degrees) {
         if (axisX != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (degrees * axisX)));
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (degrees * axisX));
         }
         if (axisY != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (degrees * axisY)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) (degrees * axisY));
         }
         if (axisZ != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (degrees * axisZ)));
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (degrees * axisZ));
         }
     }
 

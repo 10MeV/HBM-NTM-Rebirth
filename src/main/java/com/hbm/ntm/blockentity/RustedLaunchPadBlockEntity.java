@@ -102,6 +102,9 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
         if (!level.isClientSide) {
             return;
         }
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (level.getEntitiesOfClass(MissileEntity.class,
                         new net.minecraft.world.phys.AABB(pos.getX() - 0.5D, pos.getY(), pos.getZ() - 0.5D,
                                 pos.getX() + 1.5D, pos.getY() + 10.0D, pos.getZ() + 1.5D)).isEmpty()) {

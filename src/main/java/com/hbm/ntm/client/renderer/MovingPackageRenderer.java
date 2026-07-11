@@ -6,7 +6,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -26,7 +26,7 @@ public class MovingPackageRenderer extends EntityRenderer<MovingPackageEntity> {
                        MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.translate(0.0D, -0.0125D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.scale(0.5F, 0.5F, 0.5F);
         renderCrateCube(poseStack, buffer, packedLight);
         poseStack.popPose();

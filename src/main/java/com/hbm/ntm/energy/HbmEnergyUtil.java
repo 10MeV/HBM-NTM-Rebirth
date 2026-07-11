@@ -486,6 +486,15 @@ public final class HbmEnergyUtil {
         return touched;
     }
 
+    public static boolean tryProvideToPort(Level level, BlockPos origin, EnergyPort port, HbmEnergyProvider provider) {
+        if (level == null || origin == null || port == null || provider == null) {
+            return false;
+        }
+        boolean subscribed = subscribeProviderToPort(level, origin, port, provider);
+        long transferred = provideDirectlyToPort(level, origin, port, provider);
+        return subscribed || transferred > 0L;
+    }
+
     public static int tryProvideToDirPosPorts(Level level, Iterable<DirPos> ports, HbmEnergyProvider provider) {
         if (ports == null) {
             return 0;
@@ -575,6 +584,21 @@ public final class HbmEnergyUtil {
         }
         return new PortSetSnapshot(total, connectable, withNetwork, links, providers, receivers,
                 providerPower, receiverDemand);
+    }
+
+    public static PortSetSnapshot inspectPortSet(Level level, BlockPos origin, EnergyPort port) {
+        if (level == null || origin == null || port == null) {
+            return new PortSetSnapshot(0, 0, 0, 0, 0, 0, 0L, 0L);
+        }
+        PortSnapshot snapshot = inspectPort(level, origin, port);
+        return new PortSetSnapshot(1,
+                snapshot.connectable() ? 1 : 0,
+                snapshot.networkPresent() ? 1 : 0,
+                snapshot.links(),
+                snapshot.providers(),
+                snapshot.receivers(),
+                snapshot.providerPower(),
+                snapshot.receiverDemand());
     }
 
     public static PortSnapshot inspectPort(Level level, BlockPos origin, EnergyPort port) {

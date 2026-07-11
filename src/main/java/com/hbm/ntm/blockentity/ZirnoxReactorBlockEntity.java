@@ -100,6 +100,10 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
     private final HbmFluidTank steamTank;
     private final HbmFluidTank carbonDioxideTank;
     private final HbmFluidTank waterTank;
+    private final List<HbmFluidTank> receivingTanks;
+    private final List<HbmFluidTank> allTanks;
+    private final List<HbmFluidTank> sendingTanks;
+    private final List<HbmFluidItemTransfer.TankSlotTransfer> fluidItemTransfers;
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -147,6 +151,12 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         this.steamTank = steamTank;
         this.carbonDioxideTank = carbonDioxideTank;
         this.waterTank = waterTank;
+        this.receivingTanks = List.of(waterTank, carbonDioxideTank);
+        this.allTanks = List.of(waterTank, steamTank, carbonDioxideTank);
+        this.sendingTanks = List.of(steamTank);
+        this.fluidItemTransfers = List.of(
+                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_CO2_INPUT, SLOT_CO2_OUTPUT, carbonDioxideTank),
+                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_WATER_INPUT, SLOT_WATER_OUTPUT, waterTank));
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ZirnoxReactorBlockEntity reactor) {
@@ -265,17 +275,17 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
-        return List.of(waterTank, carbonDioxideTank);
+        return receivingTanks;
     }
 
     @Override
     public List<HbmFluidTank> getAllTanks() {
-        return List.of(waterTank, steamTank, carbonDioxideTank);
+        return allTanks;
     }
 
     @Override
     public List<HbmFluidTank> getSendingTanks() {
-        return List.of(steamTank);
+        return sendingTanks;
     }
 
     @Override
@@ -332,12 +342,12 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
-        return List.of(waterTank, carbonDioxideTank);
+        return receivingTanks;
     }
 
     @Override
     protected List<HbmFluidTank> getOutputTanks(@Nullable Direction side) {
-        return List.of(steamTank);
+        return sendingTanks;
     }
 
     @Override
@@ -496,9 +506,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
             on = true;
         }
         output = 0;
-        processFluidItemTransfers(items, List.of(
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_CO2_INPUT, SLOT_CO2_OUTPUT, carbonDioxideTank),
-                HbmFluidItemTransfer.TankSlotTransfer.load(SLOT_WATER_INPUT, SLOT_WATER_OUTPUT, waterTank)));
+        processFluidItemTransfers(items, fluidItemTransfers);
 
         if (on) {
             for (int slot = 0; slot < ROD_SLOT_COUNT; slot++) {

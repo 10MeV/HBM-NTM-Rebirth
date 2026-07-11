@@ -77,7 +77,7 @@ public class HephaestusBlockEntity extends HbmFluidBlockEntity implements HbmSta
 
         boolean changed = hephaestus.setupTanks();
         if (level.getGameTime() % 20L == 0L) {
-            hephaestus.refreshTrackedTransceiverFluidPortsReport(
+            hephaestus.refreshTrackedTransceiverFluidPorts(
                     hephaestus.getReceivingTanks(), hephaestus.getSendingTanks(), hephaestus);
         }
 
@@ -111,7 +111,7 @@ public class HephaestusBlockEntity extends HbmFluidBlockEntity implements HbmSta
     public static void clientTick(Level level, BlockPos pos, BlockState state, HephaestusBlockEntity hephaestus) {
         hephaestus.prevRot = hephaestus.rot;
         boolean active = hephaestus.bufferedHeat > 0;
-        if (active) {
+        if (active && !LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             hephaestus.rot += 0.5F;
             if (level.random.nextInt(7) == 0) {
                 double x = level.random.nextGaussian() * 2.0D;

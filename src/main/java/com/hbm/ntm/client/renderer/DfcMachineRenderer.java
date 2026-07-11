@@ -6,14 +6,13 @@ import com.hbm.ntm.blockentity.DfcEmitterBlockEntity;
 import com.hbm.ntm.blockentity.DfcInjectorBlockEntity;
 import com.hbm.ntm.blockentity.DfcReceiverBlockEntity;
 import com.hbm.ntm.blockentity.DfcStabilizerBlockEntity;
-import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -109,18 +108,8 @@ public class DfcMachineRenderer<T extends BlockEntity> implements BlockEntityRen
         int randomStart = (int) (worldTime % 1000L);
         poseStack.pushPose();
         poseStack.translate(0.0D, LegacyTileRenderPlans.DFC_BEAM_TRANSLATE_Y, 0.0D);
-        LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                true, beams -> {
-            beams.add(0.0D, 0.0D, range,
-                    LegacyBeamRenderer.WaveType.SPIRAL, LegacyTileRenderPlans.DFC_EMITTER_DEPTH_COLOR,
-                    LegacyTileRenderPlans.DFC_EMITTER_DEPTH_COLOR, 0, 1, 0.0F, 2, 0.0625F);
-            beams.add(0.0D, 0.0D, range,
-                    LegacyBeamRenderer.WaveType.RANDOM, LegacyTileRenderPlans.DFC_EMITTER_RANDOM_COLOR,
-                    LegacyTileRenderPlans.DFC_EMITTER_RANDOM_COLOR, randomStart, range * 2, 0.125F, 4, 0.0625F);
-            beams.add(0.0D, 0.0D, range,
-                    LegacyBeamRenderer.WaveType.RANDOM, LegacyTileRenderPlans.DFC_EMITTER_RANDOM_COLOR,
-                    LegacyTileRenderPlans.DFC_EMITTER_RANDOM_COLOR, randomStart + 1, range * 2, 0.125F, 4, 0.0625F);
-        });
+        LegacyMachineEffectPresenter.enqueueDfcEmitterBeams(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                range, randomStart);
         poseStack.popPose();
     }
 
@@ -134,19 +123,8 @@ public class DfcMachineRenderer<T extends BlockEntity> implements BlockEntityRen
         int randomStart = (int) (worldTime % 1000L);
         poseStack.pushPose();
         poseStack.translate(0.0D, LegacyTileRenderPlans.DFC_BEAM_TRANSLATE_Y, 0.0D);
-        LegacyMachineEffectPresenter.enqueueLineBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                beams -> {
-            if (renderTank0) {
-                beams.add(0.0D, 0.0D, range,
-                        LegacyBeamRenderer.WaveType.RANDOM, tank0Color,
-                        LegacyTileRenderPlans.DFC_INJECTOR_INNER_COLOR, randomStart, range, 0.0625F);
-            }
-            if (renderTank1) {
-                beams.add(0.0D, 0.0D, range,
-                        LegacyBeamRenderer.WaveType.RANDOM, tank1Color,
-                        LegacyTileRenderPlans.DFC_INJECTOR_INNER_COLOR, randomStart + 1, range, 0.0625F);
-            }
-        });
+        LegacyMachineEffectPresenter.enqueueDfcInjectorBeams(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                range, renderTank0, tank0Color, renderTank1, tank1Color, randomStart);
         poseStack.popPose();
     }
 
@@ -158,21 +136,10 @@ public class DfcMachineRenderer<T extends BlockEntity> implements BlockEntityRen
         int fastStart = (int) (worldTime * -25L % 360L);
         int midStart = (int) (worldTime * -15L % 360L) + 180;
         int slowStart = (int) (worldTime * -5L % 360L) + 180;
-        int segments = range * 3;
         poseStack.pushPose();
         poseStack.translate(0.0D, LegacyTileRenderPlans.DFC_BEAM_TRANSLATE_Y, 0.0D);
-        LegacyMachineEffectPresenter.enqueueLineBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                beams -> {
-            beams.add(0.0D, 0.0D, range,
-                    LegacyBeamRenderer.WaveType.SPIRAL, LegacyTileRenderPlans.DFC_STABILIZER_OUTER_COLOR,
-                    LegacyTileRenderPlans.DFC_STABILIZER_INNER_COLOR, fastStart, segments, 0.125F);
-            beams.add(0.0D, 0.0D, range,
-                    LegacyBeamRenderer.WaveType.SPIRAL, LegacyTileRenderPlans.DFC_STABILIZER_OUTER_COLOR,
-                    LegacyTileRenderPlans.DFC_STABILIZER_INNER_COLOR, midStart, segments, 0.125F);
-            beams.add(0.0D, 0.0D, range,
-                    LegacyBeamRenderer.WaveType.SPIRAL, LegacyTileRenderPlans.DFC_STABILIZER_OUTER_COLOR,
-                    LegacyTileRenderPlans.DFC_STABILIZER_INNER_COLOR, slowStart, segments, 0.125F);
-        });
+        LegacyMachineEffectPresenter.enqueueDfcStabilizerBeams(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                range, fastStart, midStart, slowStart);
         poseStack.popPose();
     }
 
@@ -197,19 +164,19 @@ public class DfcMachineRenderer<T extends BlockEntity> implements BlockEntityRen
     }
 
     private static void applyLegacyDfcFacing(PoseStack poseStack, Direction facing) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         switch (facing) {
             case DOWN -> {
                 poseStack.translate(0.0D, 0.5D, -0.5D);
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
             }
             case UP -> {
                 poseStack.translate(0.0D, 0.5D, 0.5D);
-                poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
             }
-            case NORTH -> poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-            case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            case SOUTH -> poseStack.mulPose(Axis.YP.rotationDegrees(270.0F));
+            case NORTH -> LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+            case WEST -> LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+            case SOUTH -> LegacyPoseRotations.rotateYDegrees(poseStack, 270.0F);
             case EAST -> {
             }
         }

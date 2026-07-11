@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "arc_material_outputs": [
+    {
+      "amount": 120,
+      "material": "Lithium"
+    },
+    {
+      "amount": 72,
+      "material": "Sodium"
+    }
+  ],
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:bedrock_ore"
+      },
+      "partial_nbt": "{grade:\"solvent_washed\",type:\"light\"}"
+    }
+  ],
+  "internal_name": "arc.bedrock_ore.light_solvent_washed",
+  "output_fluids": [],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 22
+}

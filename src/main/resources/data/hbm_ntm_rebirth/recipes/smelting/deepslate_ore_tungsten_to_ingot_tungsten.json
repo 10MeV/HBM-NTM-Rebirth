@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 6.0,
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:deepslate_ore_tungsten"
+  },
+  "result": "hbm_ntm_rebirth:ingot_tungsten"
+}

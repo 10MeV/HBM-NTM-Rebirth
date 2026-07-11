@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary_roasted\",type:\"rare\"}"
+  },
+  "outputs": [
+    {
+      "count": 5,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:2700,name:\"Cobalt\"}"
+    },
+    {
+      "count": 5,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:20000,name:\"RareEarth\"}"
+    }
+  ],
+  "source_order": 95
+}

@@ -5,7 +5,7 @@ import com.hbm.ntm.blockentity.MassStorageBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
@@ -70,7 +70,7 @@ public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlock
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.NORTH;
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(frontYaw(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, frontYaw(facing));
         poseStack.translate(0.0D, 0.0D, -0.505D);
         poseStack.translate(-0.5D, 0.5D, 0.0D);
         poseStack.scale(1.0F / 16.0F, -1.0F / 16.0F, 1.0F);

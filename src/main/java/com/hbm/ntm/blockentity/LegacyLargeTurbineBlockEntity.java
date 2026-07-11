@@ -98,10 +98,12 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, LegacyLargeTurbineBlockEntity turbine) {
         turbine.lastRotor = turbine.rotor;
-        turbine.rotor += turbine.fanAcceleration;
-        if (turbine.rotor >= 360.0F) {
-            turbine.rotor -= 360.0F;
-            turbine.lastRotor -= 360.0F;
+        if (!LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            turbine.rotor += turbine.fanAcceleration;
+            if (turbine.rotor >= 360.0F) {
+                turbine.rotor -= 360.0F;
+                turbine.lastRotor -= 360.0F;
+            }
         }
         if (turbine.isOperational()) {
             turbine.fanAcceleration = Math.max(0.0F, Math.min(15.0F,

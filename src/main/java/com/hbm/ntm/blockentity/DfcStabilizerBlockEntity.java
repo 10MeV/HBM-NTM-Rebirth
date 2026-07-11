@@ -67,9 +67,6 @@ public class DfcStabilizerBlockEntity extends HbmEnergyBlockEntity
         stabilizer.tickServer(level, pos, state);
     }
 
-    public static void clientTick(Level level, BlockPos pos, BlockState state, DfcStabilizerBlockEntity stabilizer) {
-    }
-
     private void tickServer(Level level, BlockPos pos, BlockState state) {
         watts = Mth.clamp(watts, 1, 100);
         long demand = (long) Math.pow(watts, 4);

@@ -125,8 +125,8 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldFill = engine.tank.getFill();
         boolean oldWasOn = engine.wasOn;
 
-        changed |= engine.processFluidItemTransfers(engine.items,
-                HbmFluidItemTransfer.loadTransfers(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, engine.tank));
+        changed |= engine.processFluidItemLoadTransfer(
+                engine.items, SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, engine.tank);
         if (engine.setFluidTankTypeFromIdentifierSlot(engine.items, SLOT_IDENTIFIER, engine.tank)) {
             engine.tenth = 0;
             changed = true;
@@ -144,7 +144,7 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
             engine.energy.setPower(MAX_POWER);
         }
         if (engine.tank.getTankType() != HbmFluids.NONE) {
-            engine.refreshTrackedReceiverFluidPortsReport(List.of(engine.tank), engine);
+            engine.refreshTrackedReceiverFluidPorts(engine.tank, engine);
         }
 
         changed |= oldPower != engine.energy.getPower()
@@ -162,6 +162,11 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         engine.prevDoorAngle = engine.doorAngle;
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            engine.audioLoop = LegacyMachineAudioBridge.updateLoop(engine.audioLoop, engine,
+                    "hbm:block.igeneratorOperate", engine.wasOn, 10.0D, 20.0F);
+            return;
+        }
         float swingSpeed = engine.doorAngle / 10.0F + 3.0F;
         engine.doorAngle += engine.playersUsing > 0 ? swingSpeed : -swingSpeed;
         engine.doorAngle = Mth.clamp(engine.doorAngle, 0.0F, 135.0F);

@@ -1,0 +1,221 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:concrete_colored_ext",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:0}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:concrete_colored_ext",
+          "properties": {
+            "variant": "0"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:concrete_colored_ext",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:1}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:concrete_colored_ext",
+          "properties": {
+            "variant": "1"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:concrete_colored_ext",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:2}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:concrete_colored_ext",
+          "properties": {
+            "variant": "2"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:concrete_colored_ext",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:3}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:concrete_colored_ext",
+          "properties": {
+            "variant": "3"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:concrete_colored_ext",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:4}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:concrete_colored_ext",
+          "properties": {
+            "variant": "4"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:concrete_colored_ext",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:5}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:concrete_colored_ext",
+          "properties": {
+            "variant": "5"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:concrete_colored_ext",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:6}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:concrete_colored_ext",
+          "properties": {
+            "variant": "6"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:concrete_colored_ext",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:7}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:concrete_colored_ext",
+          "properties": {
+            "variant": "7"
+          }
+        }
+      ]
+    }
+  ]
+}

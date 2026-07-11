@@ -84,24 +84,23 @@ public class FractionTowerBlockEntity extends LegacyRemoteFluidMachineBlockEntit
 
     private boolean setupTanks(PairRecipe recipe) {
         if (recipe == null) {
-            return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
-                    List.of(), List.of(), List.of(inputTank), List.of(leftOutputTank, rightOutputTank)).changed();
+            return HbmFluidRecipeIO.conformTankChanged(inputTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(leftOutputTank, null, 0)
+                    | HbmFluidRecipeIO.conformTankChanged(rightOutputTank, null, 0);
         }
-        return HbmFluidRecipeIO.setupLegacyFixedRecipeTanks(
-                List.of(), List.of(recipe.left(), recipe.right()),
-                List.of(), List.of(leftOutputTank, rightOutputTank)).changed();
+        return HbmFluidRecipeIO.conformTankChanged(leftOutputTank, recipe.left(), 0)
+                | HbmFluidRecipeIO.conformTankChanged(rightOutputTank, recipe.right(), 0);
     }
 
     private boolean fractionate(PairRecipe recipe) {
-        HbmFluidRecipeIO.RecipeFluidIoProcessReport report = HbmFluidRecipeIO.processLegacyFixedRecipeIoReport(
-                List.of(HbmFluidRecipeIO.requirementFromTank(inputTank, 100)),
-                List.of(recipe.left(), recipe.right()),
-                List.of(inputTank),
-                List.of(leftOutputTank, rightOutputTank),
-                false);
-        if (!report.complete()) {
+        if (!HbmFluidRecipeIO.canConsumeInput(inputTank, 100)
+                || !HbmFluidRecipeIO.canProduceOutput(leftOutputTank, recipe.left())
+                || !HbmFluidRecipeIO.canProduceOutput(rightOutputTank, recipe.right())) {
             return false;
         }
+        HbmFluidRecipeIO.consumeInput(inputTank, 100, false);
+        HbmFluidRecipeIO.produceOutput(leftOutputTank, recipe.left(), false);
+        HbmFluidRecipeIO.produceOutput(rightOutputTank, recipe.right(), false);
         onFluidContentsChanged();
         return true;
     }

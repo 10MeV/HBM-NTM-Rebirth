@@ -1333,6 +1333,4668 @@
       "productivity": 0.0
     },
     {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_roasted\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_byproduct\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_roasted\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SLOP",
+        1000
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        64,
+        0,
+        "{grade:\"crumbs\",type:\"light\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"light\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_roasted\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_byproduct\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_roasted\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SLOP",
+        1000
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        64,
+        0,
+        "{grade:\"crumbs\",type:\"heavy\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"heavy\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_roasted\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_byproduct\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_roasted\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SLOP",
+        1000
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        64,
+        0,
+        "{grade:\"crumbs\",type:\"rare\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"rare\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_roasted\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_byproduct\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_roasted\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SLOP",
+        1000
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        64,
+        0,
+        "{grade:\"crumbs\",type:\"actinide\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"actinide\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_roasted\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_byproduct\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_roasted\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SLOP",
+        1000
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        64,
+        0,
+        "{grade:\"crumbs\",type:\"nonmetal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"nonmetal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SULFURIC_ACID",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "RADIOSOLVENT",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"sulfuric_arc\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_roasted\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"solvent_arc\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_byproduct\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_roasted\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 100,
+      "fluid": [
+        "WATER",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        4,
+        0,
+        "{grade:\"rad_arc\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_washed\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "HYDROGEN",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_first\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_sulfuric\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosulfuric\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_solvent\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_nosolvent\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_rad\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "CHLORINE",
+        250
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_norad\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_second\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
+      "duration": 200,
+      "fluid": [
+        "SLOP",
+        1000
+      ],
+      "input": [
+        "nbt",
+        "hbm:bedrock_ore",
+        64,
+        0,
+        "{grade:\"crumbs\",type:\"crystal\"}"
+      ],
+      "output": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"crystal\"}"
+      ],
+      "productivity": 0.0
+    },
+    {
       "duration": 20,
       "fluid": [
         "WOODOIL",

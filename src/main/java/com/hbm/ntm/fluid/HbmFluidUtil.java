@@ -349,7 +349,31 @@ public final class HbmFluidUtil {
 
     public static int tryProvideToPorts(Level level, BlockPos origin, Iterable<FluidPort> ports, FluidType type,
             int pressure, HbmFluidProvider provider) {
-        return tryProvideToPortsReport(level, origin, ports, type, pressure, provider).touchedPorts();
+        if (ports == null) {
+            return 0;
+        }
+        int touched = 0;
+        for (FluidPort port : ports) {
+            HbmMachinePerformanceCounters.fluidPortCheck();
+            boolean added = subscribeProviderToPort(level, origin, port, type, provider);
+            HbmMachinePerformanceCounters.fluidPortSubscription(added);
+            long moved = provideDirectlyToPort(level, origin, port, type, pressure, provider);
+            HbmMachinePerformanceCounters.fluidPortTransfer(moved);
+            if (added || moved > 0L) {
+                touched++;
+            }
+        }
+        return touched;
+    }
+
+    public static boolean tryProvideToPort(Level level, BlockPos origin, FluidPort port, FluidType type,
+            int pressure, HbmFluidProvider provider) {
+        HbmMachinePerformanceCounters.fluidPortCheck();
+        boolean added = subscribeProviderToPort(level, origin, port, type, provider);
+        HbmMachinePerformanceCounters.fluidPortSubscription(added);
+        long moved = provideDirectlyToPort(level, origin, port, type, pressure, provider);
+        HbmMachinePerformanceCounters.fluidPortTransfer(moved);
+        return added || moved > 0L;
     }
 
     public static PortTransferReport tryProvideToPortsReport(Level level, BlockPos origin, Iterable<FluidPort> ports,
@@ -664,6 +688,28 @@ public final class HbmFluidUtil {
                 providerAvailable, providerSpeed, receiverDemand, receiverSpeed, accepted);
     }
 
+    private static long tryProvideToReceiver(FluidType type, int pressure,
+            HbmFluidProvider provider, HbmFluidReceiver receiver) {
+        FluidType normalizedType = type == null ? HbmFluids.NONE : type;
+        if (normalizedType == HbmFluids.NONE || provider == null || receiver == null || receiver == provider) {
+            return 0L;
+        }
+        long providerAvailable = Math.max(0L, provider.getFluidAvailable(normalizedType, pressure));
+        long providerSpeed = Math.max(0L, provider.getProviderSpeed(normalizedType, pressure));
+        long receiverDemand = Math.max(0L, receiver.getDemand(normalizedType, pressure));
+        long receiverSpeed = Math.max(0L, receiver.getReceiverSpeed(normalizedType, pressure));
+        long offered = Math.min(providerAvailable, providerSpeed);
+        long requested = Math.min(offered, Math.min(receiverDemand, receiverSpeed));
+        if (requested <= 0L) {
+            return 0L;
+        }
+        long accepted = requested - Math.max(0L, receiver.transferFluid(normalizedType, pressure, requested));
+        if (accepted > 0L) {
+            provider.useUpFluid(normalizedType, pressure, accepted);
+        }
+        return accepted;
+    }
+
     private static PortSubscribeDetail subscribeProviderToPortDetailedReport(Level level, BlockPos origin,
             FluidPort port, FluidType type, HbmFluidProvider provider) {
         FluidType normalizedType = type == null ? HbmFluids.NONE : type;
@@ -802,9 +848,9 @@ public final class HbmFluidUtil {
             if (receiver == provider || (!(target instanceof HbmFluidConnector) && targetSide == null)) {
                 return 0L;
             }
-            return tryProvideToReceiverReport(normalizedType, pressure, provider, receiver).acceptedMb();
+            return tryProvideToReceiver(normalizedType, pressure, provider, receiver);
         }
-        return tryProvideToForgeHandlerReport(target, targetSide, normalizedType, pressure, provider).acceptedMb();
+        return tryProvideToForgeHandler(target, targetSide, normalizedType, pressure, provider);
     }
 
     private static ForgeFluidTransferReport provideToForgeHandlerReport(BlockEntity target, Direction targetSide,
@@ -847,6 +893,35 @@ public final class HbmFluidUtil {
             provider.useUpFluid(reportType, reportPressure, report.acceptedMb());
         }
         return report;
+    }
+
+    private static long tryProvideToForgeHandler(BlockEntity target, Direction targetSide,
+            FluidType type, int pressure, HbmFluidProvider provider) {
+        FluidType normalizedType = type == null ? HbmFluids.NONE : type;
+        if (target == null || provider == null || normalizedType == HbmFluids.NONE
+                || !HbmForgeFluidInterop.isStandardPressure(pressure)
+                || !HbmFluidForgeMappings.canExport(normalizedType)) {
+            return 0L;
+        }
+        int amount = (int) Math.min(Integer.MAX_VALUE, Math.min(
+                Math.max(0L, provider.getFluidAvailable(normalizedType, pressure)),
+                Math.max(0L, provider.getProviderSpeed(normalizedType, pressure))));
+        if (amount <= 0) {
+            return 0L;
+        }
+        FluidStack stack = HbmFluidForgeMappings.toForge(normalizedType, amount);
+        if (stack.isEmpty()) {
+            return 0L;
+        }
+        IFluidHandler handler = target.getCapability(ForgeCapabilities.FLUID_HANDLER, targetSide).orElse(null);
+        if (handler == null) {
+            return 0L;
+        }
+        int accepted = handler.fill(stack, IFluidHandler.FluidAction.EXECUTE);
+        if (accepted > 0) {
+            provider.useUpFluid(normalizedType, pressure, accepted);
+        }
+        return accepted;
     }
 
     public static boolean isLoadedPort(Level level, BlockPos origin, FluidPort port) {

@@ -56,10 +56,15 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
             UpgradeType.SPEED, 3,
             UpgradeType.POWER, 3);
 
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot == SLOT_UPGRADE) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -134,9 +139,6 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
             furnace.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
-    }
-
-    public static void clientTick(Level level, BlockPos pos, BlockState state, ElectricFurnaceBlockEntity furnace) {
     }
 
     public ItemStackHandler getItems() {
@@ -227,6 +229,7 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
         }
         progress = tag.getInt(TAG_PROGRESS);
         active = tag.getBoolean(TAG_ACTIVE);
+        upgradeSlotCache.invalidate();
     }
 
     @Override
@@ -267,7 +270,7 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
     private void recalculateUpgrades() {
         consumption = 50;
         maxProgress = 100;
-        LegacyMachineUpgradeManager.Levels upgrades = LegacyMachineUpgradeManager.checkSlots(items,
+        LegacyMachineUpgradeManager.Levels upgrades = upgradeSlotCache.get(items,
                 SLOT_UPGRADE, SLOT_UPGRADE, VALID_UPGRADES);
         int speedLevel = upgrades.getLevel(UpgradeType.SPEED);
         int powerLevel = upgrades.getLevel(UpgradeType.POWER);

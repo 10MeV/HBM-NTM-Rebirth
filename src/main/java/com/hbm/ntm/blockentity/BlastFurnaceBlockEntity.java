@@ -129,7 +129,8 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, BlastFurnaceBlockEntity furnace) {
-        if (!level.isClientSide || !furnace.progressing) {
+        if (!level.isClientSide || !furnace.progressing
+                || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         if (level.getGameTime() % 2L == 0L && level.getBlockState(pos.above(7)).isAir()) {
@@ -309,7 +310,7 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         int oldAirblast = airblastTank.getFill();
         int oldFlue = flueTank.getFill();
 
-        refreshTrackedTransceiverFluidPortsReport(getReceivingTanks(), getSendingTanks(), this);
+        refreshTrackedTransceiverFluidPorts(getReceivingTanks(), getSendingTanks(), this);
         if (flueTank.getFill() > 0) {
             tryProvideFluidToPorts(flueTank.getTankType(), flueTank.getPressure(), this);
         }

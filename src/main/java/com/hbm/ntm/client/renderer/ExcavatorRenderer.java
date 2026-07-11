@@ -7,9 +7,9 @@ import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -55,7 +55,7 @@ public class ExcavatorRenderer implements BlockEntityRenderer<ExcavatorBlockEnti
         int light = LegacyRenderLighting.resolveBoundsLight(excavator, excavator.getRenderBoundingBox(), packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING).toYRot()));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F + state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING).toYRot());
         poseStack.translate(0.0D, -3.0D, 0.0D);
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(excavator)) {
@@ -74,14 +74,14 @@ public class ExcavatorRenderer implements BlockEntityRenderer<ExcavatorBlockEnti
         float crusher = excavator.getCrusherRotation(partialTick);
         poseStack.pushPose();
         poseStack.translate(0.0F, 2.0F, 2.8125F);
-        poseStack.mulPose(Axis.XP.rotationDegrees(-crusher));
+        LegacyPoseRotations.rotateXDegrees(poseStack, -crusher);
         poseStack.translate(0.0F, -2.0F, -2.8125F);
         MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, packedLight, packedOverlay, CRUSHER_1);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.0F, 2.0F, 2.1875F);
-        poseStack.mulPose(Axis.XP.rotationDegrees(crusher));
+        LegacyPoseRotations.rotateXDegrees(poseStack, crusher);
         poseStack.translate(0.0F, -2.0F, -2.1875F);
         MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, packedLight, packedOverlay, CRUSHER_2);
         poseStack.popPose();
@@ -90,7 +90,7 @@ public class ExcavatorRenderer implements BlockEntityRenderer<ExcavatorBlockEnti
     private static void renderDrill(ExcavatorBlockEntity excavator, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YN.rotationDegrees(excavator.getDrillRotation(partialTick)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -excavator.getDrillRotation(partialTick));
         float extension = excavator.getDrillExtension(partialTick);
         poseStack.translate(0.0D, -extension, 0.0D);
         MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, packedLight, packedOverlay, DRILLBIT);

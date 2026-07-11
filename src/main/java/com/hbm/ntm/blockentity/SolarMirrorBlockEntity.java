@@ -45,6 +45,9 @@ public class SolarMirrorBlockEntity extends BlockEntity {
     }
 
     private void clientTick(Level level, BlockPos pos) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         BlockEntity targetEntity = level.getBlockEntity(target.below());
         if (on && targetEntity instanceof SolarBoilerBlockEntity boiler) {
             boiler.registerSolarMirrorBeam(pos);

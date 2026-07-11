@@ -1,6 +1,7 @@
 package com.hbm.items.machine;
 
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -14,7 +15,21 @@ import net.minecraft.world.item.ItemStack;
 @Deprecated(forRemoval = false)
 public class ItemRTGPelletDepleted extends Item {
     public ItemRTGPelletDepleted() {
-        super(new Item.Properties());
+        this(new Item.Properties());
+    }
+
+    public ItemRTGPelletDepleted(Item.Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    public boolean hasCraftingRemainingItem(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public ItemStack getCraftingRemainingItem(ItemStack stack) {
+        return new ItemStack(ModItems.IRON_PLATE.get());
     }
 
     public ItemStack stackFromEnum(int count, Enum<?> material) {

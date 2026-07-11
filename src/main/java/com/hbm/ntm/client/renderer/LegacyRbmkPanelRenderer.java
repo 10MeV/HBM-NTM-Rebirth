@@ -6,11 +6,11 @@ import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.util.HbmMathUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
@@ -168,7 +168,7 @@ public final class LegacyRbmkPanelRenderer {
         double angle = gaugeNeedleAngle(unit, partialTick);
         poseStack.pushPose();
         poseStack.translate(0.0D, GAUGE_PIVOT_Y, GAUGE_PIVOT_Z);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) -angle));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) -angle);
         poseStack.translate(0.0D, -GAUGE_PIVOT_Y, -GAUGE_PIVOT_Z);
         renderPreparedTexturedSelection(ObjRbmkModels.GAUGE, ObjRbmkModels.GAUGE_TEXTURE,
                 poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay, color, GAUGE_NEEDLE);
@@ -249,7 +249,7 @@ public final class LegacyRbmkPanelRenderer {
                 poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, LEVER_BASE);
         poseStack.pushPose();
         poseStack.translate(LEVER_PIVOT_X, LEVER_PIVOT_Y, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(leverAngle(unit, partialTick)));
+        LegacyPoseRotations.rotateZDegrees(poseStack, leverAngle(unit, partialTick));
         poseStack.translate(-LEVER_PIVOT_X, -LEVER_PIVOT_Y, 0.0D);
         renderPreparedTexturedSelection(ObjRbmkModels.LEVER, ObjRbmkModels.LEVER_TEXTURE,
                 poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, LEVER_HANDLE);
@@ -526,8 +526,8 @@ public final class LegacyRbmkPanelRenderer {
         for (int i = 0; i < 2; i++) {
             poseStack.pushPose();
             poseStack.translate(0.0D, GAUGE_PIVOT_Y, GAUGE_PIVOT_Z);
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) -(GAUGE_MIN_MARK_ANGLE
-                    + i * (GAUGE_MAX_MARK_ANGLE - GAUGE_MIN_MARK_ANGLE))));
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) -(GAUGE_MIN_MARK_ANGLE
+                    + i * (GAUGE_MAX_MARK_ANGLE - GAUGE_MIN_MARK_ANGLE)));
             poseStack.translate(0.0D, -GAUGE_PIVOT_Y, -GAUGE_PIVOT_Z);
             poseStack.translate(GAUGE_LIMIT_LABEL_X, GAUGE_LIMIT_LABEL_Y, GAUGE_LIMIT_LABEL_Z);
             drawLegacyText(poseStack, buffer, i == 0 ? lower : upper, 0.0F, -font().lineHeight / 2.0F,
@@ -587,7 +587,7 @@ public final class LegacyRbmkPanelRenderer {
         }
         poseStack.pushPose();
         poseStack.scale((float) scale, (float) -scale, (float) scale);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         font().drawInBatch(text, x, y, color, false,
                 poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, packedLight);
         poseStack.popPose();

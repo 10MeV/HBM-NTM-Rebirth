@@ -36,7 +36,7 @@ public class MachineFluidTankBakedModel implements BakedModel {
 
     private final Map<String, BakedModel> parts;
     private final ItemTransforms transforms;
-    private final Map<TankCacheKey, List<BakedQuad>> tankQuadCache = new ConcurrentHashMap<>();
+    private final Map<TankModelCacheKey, List<BakedQuad>> quadCache = new ConcurrentHashMap<>();
     private TextureAtlasSprite particleIcon;
 
     public MachineFluidTankBakedModel(Map<String, BakedModel> parts, ItemTransforms transforms) {
@@ -65,23 +65,30 @@ public class MachineFluidTankBakedModel implements BakedModel {
             tankSprite = DEFAULT_TANK_SPRITE;
         }
 
+        TankModelCacheKey cacheKey = new TankModelCacheKey(exploded, tankSprite, state, side, renderType);
+        return quadCache.computeIfAbsent(cacheKey, this::buildQuads);
+    }
+
+    private List<BakedQuad> buildQuads(TankModelCacheKey cacheKey) {
         List<BakedQuad> quads = new ArrayList<>();
-        if (exploded) {
-            addPart(quads, EXPLODED_FRAME, state, side, random, modelData, renderType);
-            addPart(quads, EXPLODED_TANK_INNER, state, side, random, modelData, renderType);
-            addTankPart(quads, EXPLODED_TANK, tankSprite, state, side, renderType);
+        if (cacheKey.exploded()) {
+            addPart(quads, EXPLODED_FRAME, cacheKey.state(), cacheKey.side(), cacheKey.renderType());
+            addPart(quads, EXPLODED_TANK_INNER, cacheKey.state(), cacheKey.side(), cacheKey.renderType());
+            addTankPart(quads, EXPLODED_TANK, cacheKey.tankSprite(), cacheKey.state(), cacheKey.side(),
+                    cacheKey.renderType());
         } else {
-            addPart(quads, NORMAL_FRAME, state, side, random, modelData, renderType);
-            addTankPart(quads, NORMAL_TANK, tankSprite, state, side, renderType);
+            addPart(quads, NORMAL_FRAME, cacheKey.state(), cacheKey.side(), cacheKey.renderType());
+            addTankPart(quads, NORMAL_TANK, cacheKey.tankSprite(), cacheKey.state(), cacheKey.side(),
+                    cacheKey.renderType());
         }
-        return quads;
+        return List.copyOf(quads);
     }
 
     private void addPart(List<BakedQuad> quads, String key, @Nullable BlockState state, @Nullable Direction side,
-            RandomSource random, ModelData modelData, @Nullable RenderType renderType) {
+            @Nullable RenderType renderType) {
         BakedModel part = parts.get(key);
         if (part != null) {
-            quads.addAll(part.getQuads(state, side, random, modelData, renderType));
+            quads.addAll(part.getQuads(state, side, BakedModelQuadRandom.seeded(), ModelData.EMPTY, renderType));
         }
     }
 
@@ -91,10 +98,8 @@ public class MachineFluidTankBakedModel implements BakedModel {
         if (part == null) {
             return;
         }
-        TankCacheKey cacheKey = new TankCacheKey(key, tankSprite, side, renderType);
-        quads.addAll(tankQuadCache.computeIfAbsent(cacheKey,
-                ignored -> retextureTankQuads(part.getQuads(state, side, RandomSource.create(42L),
-                        ModelData.EMPTY, renderType), tankSprite)));
+        quads.addAll(retextureTankQuads(part.getQuads(state, side, BakedModelQuadRandom.seeded(),
+                ModelData.EMPTY, renderType), tankSprite));
     }
 
     private static List<BakedQuad> retextureTankQuads(List<BakedQuad> originalQuads, ResourceLocation tankSprite) {
@@ -197,7 +202,7 @@ public class MachineFluidTankBakedModel implements BakedModel {
         return ChunkRenderTypeSet.of(RenderType.cutout());
     }
 
-    private record TankCacheKey(String partKey, ResourceLocation tankSprite, @Nullable Direction side,
-            @Nullable RenderType renderType) {
+    private record TankModelCacheKey(boolean exploded, ResourceLocation tankSprite, @Nullable BlockState state,
+            @Nullable Direction side, @Nullable RenderType renderType) {
     }
 }

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "L": {
+      "tag": "forge:ingots/any_rubber"
+    }
+  },
+  "pattern": [
+    "L L",
+    "LLL"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:boat_rubber"
+  },
+  "show_notification": true
+}

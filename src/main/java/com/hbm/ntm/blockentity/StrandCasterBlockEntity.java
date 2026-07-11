@@ -85,6 +85,8 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
     private final IFluidHandler steamHandler;
     private final ICapabilityProvider waterDelegate;
     private final ICapabilityProvider steamDelegate;
+    private final List<HbmFluidTank> receivingTanks;
+    private final List<HbmFluidTank> sendingTanks;
     private NTMMaterial type;
     private int amount;
     private long lastProgressTick;
@@ -99,6 +101,8 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         super(ModBlockEntities.STRAND_CASTER.get(), pos, state, List.of(waterTank, steamTank));
         this.waterTank = waterTank;
         this.steamTank = steamTank;
+        this.receivingTanks = List.of(waterTank);
+        this.sendingTanks = List.of(steamTank);
         this.waterTank.setTankType(HbmFluids.WATER);
         this.steamTank.setTankType(HbmFluids.SPENTSTEAM);
         waterHandler = new ForgeFluidHandlerAdapter(List.of(waterTank), List.of(), 0, true, false,
@@ -225,22 +229,22 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
 
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
-        return List.of(waterTank);
+        return receivingTanks;
     }
 
     @Override
     public List<HbmFluidTank> getSendingTanks() {
-        return List.of(steamTank);
+        return sendingTanks;
     }
 
     @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
-        return List.of(waterTank);
+        return receivingTanks;
     }
 
     @Override
     protected List<HbmFluidTank> getOutputTanks(@Nullable Direction side) {
-        return List.of(steamTank);
+        return sendingTanks;
     }
 
     @Override
@@ -379,7 +383,7 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         int oldAmount = amount;
         NTMMaterial oldType = type;
 
-        refreshTrackedTransceiverFluidPortsReport(getReceivingTanks(), getSendingTanks(), this);
+        refreshTrackedTransceiverFluidPorts(getReceivingTanks(), getSendingTanks(), this);
         if (steamTank.getFill() > 0) {
             tryProvideFluidToPorts(steamTank.getTankType(), steamTank.getPressure(), this);
         }

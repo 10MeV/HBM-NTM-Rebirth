@@ -3,8 +3,8 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.ElectricPressBlockEntity;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -57,7 +57,7 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
                         + (1.0D - progress) * LegacyTileRenderPlans.ELECTRIC_PRESS_HEAD_TRAVEL;
                 poseStack.pushPose();
                 poseStack.translate(0.5D, headTranslateY, 0.5D);
-                poseStack.mulPose(Axis.YP.rotationDegrees(yRotation));
+                LegacyPoseRotations.rotateYDegrees(poseStack, yRotation);
                 ObjMachineModels.EPRESS_HEAD.renderAll(ObjMachineModels.EPRESS_HEAD_TEXTURE,
                         poseStack, buffer, modelLight, packedOverlay);
                 poseStack.popPose();
@@ -83,9 +83,9 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 1.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yRotation));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yRotation);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
         poseStack.translate(1.0D, 1.0D - 0.0625D * 165.0D / 100.0D, 0.0D);
         poseStack.translate(-1.0D, -1.15D, 0.0D);
         Minecraft.getInstance().getItemRenderer().renderStatic(

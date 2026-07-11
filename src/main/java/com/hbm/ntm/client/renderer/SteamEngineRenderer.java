@@ -5,8 +5,8 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SteamEngineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -64,10 +64,10 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
@@ -140,7 +140,7 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
         poseStack.translate(translateX, translateY, 0.0D);
         poseStack.translate(LegacyTileRenderPlans.STEAM_ENGINE_TRANSMISSION_PIVOT_X,
                 LegacyTileRenderPlans.STEAM_ENGINE_TRANSMISSION_PIVOT_Y, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) -angleDegrees));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) -angleDegrees);
         poseStack.translate(-LegacyTileRenderPlans.STEAM_ENGINE_TRANSMISSION_PIVOT_X,
                 -LegacyTileRenderPlans.STEAM_ENGINE_TRANSMISSION_PIVOT_Y, 0.0D);
         model.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, TRANSMISSION);
@@ -168,13 +168,13 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
 
     private static void rotate(PoseStack poseStack, float axisX, float axisY, float axisZ, double degrees) {
         if (axisX != 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees((float) (degrees * axisX)));
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (degrees * axisX));
         }
         if (axisY != 0.0F) {
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (degrees * axisY)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) (degrees * axisY));
         }
         if (axisZ != 0.0F) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees((float) (degrees * axisZ)));
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (degrees * axisZ));
         }
     }
 

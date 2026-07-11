@@ -1,6 +1,6 @@
 {
   "export_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports",
-  "exported_recipe_count": 286,
+  "exported_recipe_count": 334,
   "handlers": [
     {
       "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmRefinery.json",
@@ -125,7 +125,7 @@
     },
     {
       "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmElectrolyzerMetal.json",
-      "exported_recipe_count": 18,
+      "exported_recipe_count": 36,
       "failures": [],
       "legacy_class": "ElectrolyserMetalRecipes",
       "legacy_file": "hbmElectrolyzerMetal.json",
@@ -136,7 +136,7 @@
     },
     {
       "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmPyrolysis.json",
-      "exported_recipe_count": 40,
+      "exported_recipe_count": 70,
       "failures": [],
       "legacy_class": "PyroOvenRecipes",
       "legacy_file": "hbmPyrolysis.json",

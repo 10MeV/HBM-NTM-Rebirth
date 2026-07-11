@@ -466,6 +466,606 @@
       "outputItem": [
         "hbm:ingot_graphite"
       ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"light\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"light\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"light\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"light\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"light\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"light\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"light\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"light\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"light\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"light\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"heavy\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"heavy\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"heavy\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"heavy\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"heavy\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"heavy\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"rare\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"rare\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"rare\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"rare\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"rare\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"rare\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"rare\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"rare\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"rare\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"rare\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"actinide\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"actinide\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"actinide\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"actinide\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"actinide\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"actinide\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"nonmetal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"nonmetal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"nonmetal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"nonmetal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"nonmetal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"nonmetal\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base\",type:\"crystal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"base_roasted\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary\",type:\"crystal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"primary_roasted\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_byproduct\",type:\"crystal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"sulfuric_roasted\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_byproduct\",type:\"crystal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"solvent_roasted\",type:\"crystal\"}"
+      ]
+    },
+    {
+      "duration": 10,
+      "inputItem": [
+        "nbt",
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_byproduct\",type:\"crystal\"}"
+      ],
+      "outputFluid": [
+        "VITRIOL",
+        50
+      ],
+      "outputItem": [
+        "hbm:bedrock_ore",
+        1,
+        0,
+        "{grade:\"rad_roasted\",type:\"crystal\"}"
+      ]
     }
   ]
 }

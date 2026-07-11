@@ -102,9 +102,14 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     private final HbmStandardFluidTransceiver coolingFluidNetwork = new CoolingFluidNetwork();
     private final HbmFluidPortSubscriptionTracker recipeFluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     private final HbmFluidPortSubscriptionTracker coolingFluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_END - SLOT_UPGRADE_START + 1);
     private final ItemStackHandler items = new ItemStackHandler(60) {
         @Override
         protected void onContentsChanged(int slot) {
+            if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
+                invalidateUpgradeFactors();
+            }
             setChanged();
         }
 
@@ -123,7 +128,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
             if (module >= 0 && slot >= inputStart(module) && slot <= inputEnd(module)) {
                 GenericMachineRecipe recipe = getSelectedRecipeDefinition(module);
                 return level != null && GenericMachineRecipeRuntime.isItemValidForCurrentRecipe(
-                        recipe, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, level, slot, stack, inputSlots(module));
+                        recipe, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, level, slot, stack, inputSlotsFor(module));
             }
             return false;
         }
@@ -143,6 +148,13 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     private final List<HbmFluidTank> receivingTankList;
     private final List<HbmFluidTank> sendingTankList;
     private final List<HbmFluidTank> allTankList;
+    private final int[][] moduleInputSlots = new int[MODULES][];
+    private final int[][] moduleOutputSlots = new int[MODULES][];
+    private final List<HbmFluidTank>[] moduleInputTankLists;
+    private final List<HbmFluidTank>[] moduleOutputTankLists;
+    private final List<HbmFluidTank> coolingReceivingTankList = List.of(water);
+    private final List<HbmFluidTank> coolingSendingTankList = List.of(spentSteam);
+    private final List<HbmFluidTank> coolingAllTankList = List.of(water, spentSteam);
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new MappedItemHandler(allExternalSlots()));
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler;
@@ -161,22 +173,32 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
             new TragicYuri(1)
     };
     private Object audioLoop;
+    @Nullable
+    private ProcessingFactors cachedUpgradeFactors;
+    private long appliedMaxPower = Long.MIN_VALUE;
 
+    @SuppressWarnings("unchecked")
     public AssemblyFactoryBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ASSEMBLY_FACTORY.get(), pos, state);
+        moduleInputTankLists = (List<HbmFluidTank>[]) new List<?>[MODULES];
+        moduleOutputTankLists = (List<HbmFluidTank>[]) new List<?>[MODULES];
         for (int i = 0; i < MODULES; i++) {
             inputTanks[i] = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
             outputTanks[i] = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
+            moduleInputSlots[i] = inputSlots(i);
+            moduleOutputSlots[i] = new int[] { outputSlot(i) };
+            moduleInputTankLists[i] = List.of(inputTanks[i]);
+            moduleOutputTankLists[i] = List.of(outputTanks[i]);
         }
         inputTankList = Arrays.asList(inputTanks);
         outputTankList = Arrays.asList(outputTanks);
         receivingTankList = inputTankList;
         sendingTankList = outputTankList;
-        allTankList = join(join(inputTankList, outputTankList), List.of(water, spentSteam));
+        allTankList = join(join(inputTankList, outputTankList), coolingAllTankList);
         IFluidHandler recipeFluidHandler = ForgeRecipeFluidHandlerAdapter.create(receivingTankList, sendingTankList, 0,
                 this::onFluidContentsChanged);
         fluidHandler = LazyOptional.of(() -> recipeFluidHandler);
-        coolingDelegate = new CapabilityDelegate(null, new ForgeFluidHandlerAdapter(List.of(water), List.of(spentSteam), 0,
+        coolingDelegate = new CapabilityDelegate(null, new ForgeFluidHandlerAdapter(coolingReceivingTankList, coolingSendingTankList, 0,
                 true, true, this::onFluidContentsChanged));
         for (int i = 0; i < MODULES; i++) {
             moduleDelegates[i] = new CapabilityDelegate(new MappedItemHandler(moduleExternalSlots(i)),
@@ -214,8 +236,10 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         for (boolean processing : blockEntity.didProcess) {
             working |= processing;
         }
-        for (TragicYuri animation : blockEntity.animations) {
-            animation.update(blockEntity, working);
+        if (!LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            for (TragicYuri animation : blockEntity.animations) {
+                animation.update(blockEntity, working);
+            }
         }
         blockEntity.updateAudioLoop();
     }
@@ -270,8 +294,8 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         GenericMachineRecipe recipe = getSelectedRecipeDefinition(module);
         return recipe != null && canCool()
                 && energy.getPower() >= recipe.getPower()
-                && GenericMachineRecipeRuntime.canProcess(recipe, items, inputSlots(module), new int[] {outputSlot(module)},
-                List.of(inputTanks[module]), List.of(outputTanks[module]));
+                && GenericMachineRecipeRuntime.canProcess(recipe, items, inputSlotsFor(module), outputSlotsFor(module),
+                inputTankListFor(module), outputTankListFor(module));
     }
 
     public boolean selectRecipe(int module, String selectedRecipe) {
@@ -288,7 +312,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         }
         setSelectedRecipe(module, selectedRecipe);
         GenericMachineRecipe recipe = getSelectedRecipeDefinition(module);
-        GenericMachineRecipeRuntime.setupTanksReport(recipe, List.of(inputTanks[module]), List.of(outputTanks[module]),
+        GenericMachineRecipeRuntime.setupTanks(recipe, inputTankListFor(module), outputTankListFor(module),
                 TANK_CAPACITY);
         updateDynamicCapacity();
         if (!level.isClientSide) {
@@ -398,6 +422,8 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         }
         water.setTankType(HbmFluids.WATER);
         spentSteam.setTankType(HbmFluids.SPENTSTEAM);
+        invalidateUpgradeFactors();
+        appliedMaxPower = Long.MIN_VALUE;
         updateDynamicCapacity();
     }
 
@@ -559,7 +585,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
             didProcess[i] = false;
             ProcessingResult result = GenericMachineRecipeRuntime.update(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
                     selectedRecipes[i], progress[i], items.getStackInSlot(blueprintSlot(i)), energy, items,
-                    inputSlots(i), new int[] {outputSlot(i)}, List.of(inputTanks[i]), List.of(outputTanks[i]),
+                    inputSlotsFor(i), outputSlotsFor(i), inputTankListFor(i), outputTankListFor(i),
                     upgradeFactors(), canCool(), TANK_CAPACITY, worldPosition);
             selectedRecipes[i] = result.selectedRecipe();
             progress[i] = result.progress();
@@ -575,8 +601,11 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private ProcessingFactors upgradeFactors() {
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(
-                items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
+        if (cachedUpgradeFactors != null) {
+            return cachedUpgradeFactors;
+        }
+        LegacyMachineUpgradeManager.Levels levels =
+                upgradeSlotCache.get(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
         double speed = 1.0D;
         double pow = 1.0D;
         int speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
@@ -587,7 +616,13 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         pow -= powerLevel * 0.25D;
         pow += speedLevel;
         pow += overdriveLevel * 10.0D / 3.0D;
-        return new ProcessingFactors(speed * 2.0D, pow * 2.0D);
+        cachedUpgradeFactors = new ProcessingFactors(speed * 2.0D, pow * 2.0D);
+        return cachedUpgradeFactors;
+    }
+
+    private void invalidateUpgradeFactors() {
+        cachedUpgradeFactors = null;
+        upgradeSlotCache.invalidate();
     }
 
     private boolean canCool() {
@@ -604,9 +639,18 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
                 }
             }
         }
-        targetMax = Math.max(Math.max(targetMax, DEFAULT_MAX_POWER), energy.getPower());
+        applyDynamicCapacity(targetMax);
+    }
+
+    private void applyDynamicCapacity(long targetBase) {
+        long targetMax = Math.max(Math.max(targetBase, DEFAULT_MAX_POWER), energy.getPower());
+        if (appliedMaxPower == targetMax && energy.getMaxPower() == targetMax
+                && energy.getReceiverSpeed() == targetMax && energy.getProviderSpeed() == 0L) {
+            return;
+        }
         energy.setMaxPower(targetMax);
         energy.setTransferRates(targetMax, 0L);
+        appliedMaxPower = targetMax;
     }
 
     private int subscribeEnergyReceiverToPorts() {
@@ -619,7 +663,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         recipeFluidPortSubscriptions.refreshTransceiver(level, worldPosition, recipeFluidPorts(),
                 receivingTankList, sendingTankList, this);
         coolingFluidPortSubscriptions.refreshTransceiver(level, worldPosition, coolingFluidPorts(),
-                List.of(water), List.of(spentSteam), coolingFluidNetwork);
+                coolingReceivingTankList, coolingSendingTankList, coolingFluidNetwork);
     }
 
     private void onFluidContentsChanged() {
@@ -655,7 +699,23 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
             return false;
         }
         return GenericMachineRecipeRuntime.isSlotClogged(getSelectedRecipeDefinition(module),
-                GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, level, items, slot, inputSlots(module));
+                GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, level, items, slot, inputSlotsFor(module));
+    }
+
+    private int[] inputSlotsFor(int module) {
+        return moduleInputSlots[module];
+    }
+
+    private int[] outputSlotsFor(int module) {
+        return moduleOutputSlots[module];
+    }
+
+    private List<HbmFluidTank> inputTankListFor(int module) {
+        return moduleInputTankLists[module];
+    }
+
+    private List<HbmFluidTank> outputTankListFor(int module) {
+        return moduleOutputTankLists[module];
     }
 
     public static int blueprintSlot(int module) {
@@ -796,17 +856,17 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     private class CoolingFluidNetwork implements HbmStandardFluidTransceiver {
         @Override
         public List<HbmFluidTank> getAllTanks() {
-            return List.of(water, spentSteam);
+            return coolingAllTankList;
         }
 
         @Override
         public List<HbmFluidTank> getReceivingTanks() {
-            return List.of(water);
+            return coolingReceivingTankList;
         }
 
         @Override
         public List<HbmFluidTank> getSendingTanks() {
-            return List.of(spentSteam);
+            return coolingSendingTankList;
         }
 
         @Override

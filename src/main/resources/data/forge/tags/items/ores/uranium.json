@@ -1,7 +1,7 @@
 {
-  "replace": false,
   "values": [
     "hbm_ntm_rebirth:ore_uranium",
+    "hbm_ntm_rebirth:deepslate_ore_uranium",
     "hbm_ntm_rebirth:ore_uranium_scorched",
     "hbm_ntm_rebirth:ore_nether_uranium",
     "hbm_ntm_rebirth:ore_nether_uranium_scorched",

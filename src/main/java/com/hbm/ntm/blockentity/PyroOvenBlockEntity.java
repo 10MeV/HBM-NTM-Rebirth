@@ -88,10 +88,15 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final HbmFluidTank inputTank;
     private final HbmFluidTank outputTank;
     private final HbmFluidTank smokeTank;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_2 - SLOT_UPGRADE_1 + 1);
     private final ItemStackHandler items = new ItemStackHandler(ITEM_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_1 && slot <= SLOT_UPGRADE_2) {
+                upgradeSlotCache.invalidate();
+            }
             LegacyUpgradeSlotSound.playIfUpgrade(PyroOvenBlockEntity.this, slot, getStackInSlot(slot),
                     SLOT_UPGRADE_1, SLOT_UPGRADE_2, 0.5D, 1.0F, 1.0F);
         }
@@ -329,6 +334,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         loadInventory(tag);
+        upgradeSlotCache.invalidate();
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains(TAG_LEGACY_POWER)) {
             setPower(tag.getLong(TAG_LEGACY_POWER));
@@ -478,18 +484,21 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private void tickClient(Level level, BlockPos pos, BlockState state) {
         prevAnim = anim;
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
         Direction dir = legacyFacing(state);
         Direction rot = dir.getClockWise();
         if (progressing) {
-            anim++;
+            if (!skipAnimation) {
+                anim++;
+                spawnOperatingClouds(level, pos, dir, rot);
+            }
             audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.pyroOperate",
                     true, 50.0D, 15.0F, 1.0F, 1.0F);
-            spawnOperatingClouds(level, pos, dir, rot);
         } else {
             audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.pyroOperate",
                     false, 50.0D, 15.0F, 1.0F, 1.0F);
         }
-        if (venting && level.getGameTime() % 2L == 0L) {
+        if (venting && !skipAnimation && level.getGameTime() % 2L == 0L) {
             ParticleUtil.spawnPyroOvenVentSmoke(level, pos, rot);
         }
     }
@@ -514,7 +523,7 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldPower = powerLevel;
         int oldOverdrive = overdriveLevel;
         LegacyMachineUpgradeManager.Levels levels =
-                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_1, SLOT_UPGRADE_2, VALID_UPGRADES);
+                upgradeSlotCache.get(items, SLOT_UPGRADE_1, SLOT_UPGRADE_2, VALID_UPGRADES);
         speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
         powerLevel = Math.min(levels.getLevel(UpgradeType.POWER), 3);
         overdriveLevel = Math.min(levels.getLevel(UpgradeType.OVERDRIVE), 3);

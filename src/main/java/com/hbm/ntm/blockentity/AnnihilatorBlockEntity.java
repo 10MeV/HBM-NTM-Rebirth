@@ -116,7 +116,7 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
 
         if (isLegacyPoolName(annihilator.pool) && level instanceof ServerLevel serverLevel) {
             if (annihilator.tank.getTankType() != HbmFluids.NONE) {
-                annihilator.refreshTrackedReceiverFluidPortsReport(List.of(annihilator.tank), annihilator);
+                annihilator.refreshTrackedReceiverFluidPorts(annihilator.tank, annihilator);
             }
             AnnihilatorSavedData data = AnnihilatorSavedData.getData(serverLevel);
             boolean didSomething = false;

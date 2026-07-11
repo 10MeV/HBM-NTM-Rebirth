@@ -5,6 +5,7 @@ import com.hbm.ntm.registry.ModItems;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.RegistryObject;
@@ -51,6 +52,14 @@ public final class ResearchReactorFuelRuntime {
 
     public static int getLife(ItemStack stack) {
         return stack.hasTag() ? stack.getTag().getInt(TAG_LIFE) : 0;
+    }
+
+    public static OptionalDouble durabilityForDisplay(ItemStack stack) {
+        FuelSpec spec = fuelFor(stack);
+        if (spec == null || spec.lifetime() <= 0) {
+            return OptionalDouble.empty();
+        }
+        return OptionalDouble.of((double) getLife(stack) / (double) spec.lifetime());
     }
 
     public static void setLife(ItemStack stack, int life) {

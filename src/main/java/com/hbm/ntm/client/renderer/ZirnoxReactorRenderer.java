@@ -6,7 +6,7 @@ import com.hbm.ntm.block.ZirnoxReactorBlock;
 import com.hbm.ntm.blockentity.ZirnoxReactorBlockEntity;
 import com.hbm.ntm.client.obj.ObjReactorModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
@@ -51,10 +51,10 @@ public class ZirnoxReactorRenderer implements BlockEntityRenderer<ZirnoxReactorB
         poseStack.translate(0.5D, 0.0D, 0.5D);
         if (tilted) {
             poseStack.translate(0.0D, -0.5D, 0.0D);
-            poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
+            LegacyPoseRotations.rotateZDegrees(poseStack, 10.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 5.0F);
         }
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, rotation(state));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             ObjReactorModels.ZIRNOX.renderAll(ObjReactorModels.ZIRNOX_TEXTURE,
                     poseStack, buffer, light, packedOverlay);

@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary_sulfuric\",type:\"nonmetal\"}"
+  },
+  "outputs": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"primary_nosulfuric\",type:\"nonmetal\"}"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"sulfuric_byproduct\",type:\"nonmetal\"}"
+    }
+  ],
+  "source_order": 123
+}

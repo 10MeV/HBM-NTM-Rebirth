@@ -26,6 +26,9 @@ public class FensuBlockEntity extends MachineBatteryBlockEntity {
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, FensuBlockEntity blockEntity) {
         blockEntity.previousRotation = blockEntity.rotation;
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         blockEntity.rotation += blockEntity.getSpinSpeed();
         if (blockEntity.rotation >= 360.0F) {
             blockEntity.rotation -= 360.0F;

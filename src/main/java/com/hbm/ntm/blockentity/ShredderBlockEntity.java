@@ -132,9 +132,6 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
         }
     }
 
-    public static void clientTick(Level level, BlockPos pos, BlockState state, ShredderBlockEntity shredder) {
-    }
-
     public ItemStackHandler getItems() {
         return items;
     }

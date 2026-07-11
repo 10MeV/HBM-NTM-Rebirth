@@ -46,6 +46,10 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
     private int bufferSize = DEFAULT_BUFFER_SIZE;
     private HbmEnergyReceiver.ConnectionPriority priority = HbmEnergyReceiver.ConnectionPriority.NORMAL;
     private boolean redstone;
+    private Direction cachedInputSide;
+    private FluidPort cachedInputPort;
+    private Direction cachedOutputSide;
+    private FluidPort cachedOutputPort;
 
     public FluidPumpBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.NONE, DEFAULT_BUFFER_SIZE));
@@ -306,11 +310,10 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
         if (level == null || level.isClientSide) {
             return;
         }
-        inputPortSubscriptions.refreshReceiver(level, worldPosition, List.of(port(inputSide())),
-                getReceivingTanks(), this);
-        Iterable<HbmFluidTank> activeSendingTanks = !redstone && tank.getFill() > 0 ? getSendingTanks() : List.of();
-        outputPortSubscriptions.refreshProvider(level, worldPosition, List.of(port(outputSide())),
-                activeSendingTanks, this);
+        HbmFluidTank activeReceivingTank = bufferSize < tank.getFill() ? null : tank;
+        inputPortSubscriptions.refreshReceiver(level, worldPosition, inputPort(), activeReceivingTank, this);
+        HbmFluidTank activeSendingTank = !redstone && tank.getFill() > 0 ? tank : null;
+        outputPortSubscriptions.refreshProvider(level, worldPosition, outputPort(), activeSendingTank, this);
     }
 
     @Override
@@ -329,8 +332,8 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
         if (level == null || level.isClientSide) {
             return;
         }
-        inputPortSubscriptions.detachAllDetailed(level, worldPosition, List.of(port(inputSide())), this, null);
-        outputPortSubscriptions.detachAllDetailed(level, worldPosition, List.of(port(outputSide())), null, this);
+        inputPortSubscriptions.detachAll(level, worldPosition, inputPort(), this, null);
+        outputPortSubscriptions.detachAll(level, worldPosition, outputPort(), null, this);
     }
 
     private boolean normalizeBuffer() {
@@ -344,6 +347,24 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
 
     private FluidPort port(Direction direction) {
         return new FluidPort(new BlockPos(direction.getStepX(), direction.getStepY(), direction.getStepZ()), direction);
+    }
+
+    private FluidPort inputPort() {
+        Direction side = inputSide();
+        if (cachedInputPort == null || cachedInputSide != side) {
+            cachedInputSide = side;
+            cachedInputPort = port(side);
+        }
+        return cachedInputPort;
+    }
+
+    private FluidPort outputPort() {
+        Direction side = outputSide();
+        if (cachedOutputPort == null || cachedOutputSide != side) {
+            cachedOutputSide = side;
+            cachedOutputPort = port(side);
+        }
+        return cachedOutputPort;
     }
 
     private Direction inputSide() {

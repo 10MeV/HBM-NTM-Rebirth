@@ -5,7 +5,7 @@ import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.ZirnoxDestroyedBlockEntity;
 import com.hbm.ntm.client.obj.ObjReactorModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -46,7 +46,7 @@ public class ZirnoxDestroyedRenderer implements BlockEntityRenderer<ZirnoxDestro
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotation(blockEntity.getBlockState())));
+        LegacyPoseRotations.rotateYDegrees(poseStack, rotation(blockEntity.getBlockState()));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             ObjReactorModels.ZIRNOX_DESTROYED.renderAll(ObjReactorModels.ZIRNOX_DESTROYED_TEXTURE,
                     poseStack, buffer, light, packedOverlay);

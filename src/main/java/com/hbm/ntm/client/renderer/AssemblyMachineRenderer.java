@@ -7,7 +7,7 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -76,13 +76,13 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(assembler)) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F + blockstateModelYRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F + blockstateModelYRotation(state));
 
             renderStaticBaseFrame(assembler.shouldRenderFrame(), poseStack, buffer, modelLight, packedOverlay);
 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(assembler)) {
                 poseStack.pushPose();
-                poseStack.mulPose(Axis.YP.rotationDegrees((float) assembler.getRing(partialTick)));
+                LegacyPoseRotations.rotateYDegrees(poseStack, (float) assembler.getRing(partialTick));
                 renderModelPart("Ring", poseStack, buffer, modelLight, packedOverlay);
                 renderAssemblyMachineArm(poseStack, buffer, modelLight, packedOverlay,
                         1, 1.0D, 1.0D, assembler.getArm(0).getPositions(partialTick));
@@ -91,7 +91,8 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
                 poseStack.popPose();
             }
 
-            if (LegacyRecipeIconRenderer.shouldRender(assembler)) {
+            double iconDistanceSq = LegacyRecipeIconRenderer.playerDistanceSq(assembler);
+            if (LegacyRecipeIconRenderer.shouldRenderAtDistance(iconDistanceSq)) {
                 LegacyRecipeIconRenderer.renderInLegacyMachineSpace(assembler.getSelectedRecipeDefinition(),
                         assembler.getLevel(), poseStack, buffer, packedLight);
             }
@@ -123,7 +124,7 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
     private static void renderPivotedPart(String partName, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, double pivotY, double pivotZ, double angleDegrees) {
         poseStack.translate(0.0D, pivotY, pivotZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) angleDegrees);
         poseStack.translate(0.0D, -pivotY, -pivotZ);
         renderModelPart(partName, poseStack, buffer, packedLight, packedOverlay);
     }

@@ -99,10 +99,15 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final HbmFluidTank gasTank;
     @Nullable
     private final HbmFluidTank frackingTank;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_END - SLOT_UPGRADE_START + 1);
     private final ItemStackHandler items = new ItemStackHandler(ITEM_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
+                upgradeSlotCache.invalidate();
+            }
             LegacyUpgradeSlotSound.playIfUpgrade(OilDrillBlockEntity.this, slot, getStackInSlot(slot),
                     SLOT_UPGRADE_START, SLOT_UPGRADE_END, 1.5D, 1.0F, 1.0F);
         }
@@ -176,7 +181,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (!level.isClientSide) {
             return;
         }
-        drill.tickClient();
+        drill.tickClient(LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos));
     }
 
     public ItemStackHandler getItems() {
@@ -359,6 +364,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         super.load(tag);
         normalizeConfigState();
         loadInventory(tag);
+        upgradeSlotCache.invalidate();
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains("power")) {
             setPower(tag.getLong("power"));
@@ -428,8 +434,11 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
     }
 
-    private void tickClient() {
+    private void tickClient(boolean skipAnimation) {
         previousPumpjackRotation = pumpjackRotation;
+        if (skipAnimation) {
+            return;
+        }
         if (indicator == INDICATOR_OK) {
             pumpjackRotation += pumpjackSpeed;
         }
@@ -510,8 +519,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         changed |= runAfterburner();
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
         changed |= oldPower != energy.getPower();
-        changed |= processFluidItemTransfers(items, HbmFluidItemTransfer.unloadTransfers(
-                SLOT_OIL_CONTAINER, SLOT_OIL_CONTAINER_OUTPUT, 2, oilTank, gasTank));
+        changed |= processFluidItemUnloadTransfers(items, SLOT_OIL_CONTAINER, SLOT_OIL_CONTAINER_OUTPUT, 2,
+                oilTank, gasTank);
         if (oilTank.getFill() > 0) {
             tryProvideFluidToPorts(oilTank.getTankType(), oilTank.getPressure(), this);
         }
@@ -552,7 +561,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         int oldOver = overLevel;
         int oldAfterburn = afterburnLevel;
         LegacyMachineUpgradeManager.Levels levels =
-                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
+                upgradeSlotCache.get(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
         speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
         energyLevel = Math.min(levels.getLevel(UpgradeType.POWER), 3);
         overLevel = Math.min(levels.getLevel(UpgradeType.OVERDRIVE), 3) + 1;

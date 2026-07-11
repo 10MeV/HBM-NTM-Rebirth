@@ -3,9 +3,9 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.artillery.LegacyArtilleryAmmoCatalog;
 import com.hbm.ntm.client.obj.ObjProjectileModels;
 import com.hbm.ntm.client.obj.ObjTurretModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.entity.projectile.ArtilleryRocketEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -26,10 +26,10 @@ public class ArtilleryRocketRenderer extends EntityRenderer<ArtilleryRocketEntit
         ResourceLocation texture = himarsRocketTexture(rocket);
 
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) - 90.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) - 90.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
         ObjTurretModels.renderHimarsRocket(rocket.modelType(), texture, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
         poseStack.popPose();

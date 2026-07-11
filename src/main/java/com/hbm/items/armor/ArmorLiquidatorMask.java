@@ -2,7 +2,7 @@ package com.hbm.items.armor;
 
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.item.LiquidatorMaskArmorItem;
-import com.hbm.ntm.radiation.ArmorUtil;
+import com.hbm.util.ArmorUtil;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -64,7 +64,7 @@ public class ArmorLiquidatorMask extends LiquidatorMaskArmorItem {
         ItemStack stack = player.getItemInHand(hand);
         if (player.isShiftKeyDown()) {
             ItemStack filter = getFilter(stack, player);
-            if (!filter.isEmpty()) {
+            if (filter != null && !filter.isEmpty()) {
                 if (!level.isClientSide) {
                     ArmorUtil.removeGasMaskFilterToInventory(stack, player);
                 }

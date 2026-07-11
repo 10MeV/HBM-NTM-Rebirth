@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"rad_washed\",type:\"heavy\"}"
+  },
+  "outputs": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:8300,name:\"Bismuth\"}"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:7300,name:\"Tantalium\"}"
+    },
+    {
+      "count": 6,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:7900,name:\"Gold\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"heavy\"}"
+    }
+  ],
+  "source_order": 87
+}

@@ -1,0 +1,17 @@
+{
+  "parent": "hbm_ntm_rebirth:block/block_coke_coal",
+  "overrides": [
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 1
+      },
+      "model": "hbm_ntm_rebirth:block/block_coke_lignite"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 2
+      },
+      "model": "hbm_ntm_rebirth:block/block_coke_petroleum"
+    }
+  ]
+}

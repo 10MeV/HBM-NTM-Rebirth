@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:crystallizer",
+  "duration": 200,
+  "fluid": {
+    "amount": 250,
+    "fluid": "SULFURIC_ACID"
+  },
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary\",type:\"rare\"}"
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:bedrock_ore",
+    "nbt": "{grade:\"primary_sulfuric\",type:\"rare\"}"
+  },
+  "source_order": 204
+}

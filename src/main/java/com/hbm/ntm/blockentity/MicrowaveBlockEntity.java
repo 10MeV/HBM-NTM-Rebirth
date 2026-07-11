@@ -126,9 +126,6 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
         }
     }
 
-    public static void clientTick(Level level, BlockPos pos, BlockState state, MicrowaveBlockEntity microwave) {
-    }
-
     public ItemStackHandler getItems() {
         return items;
     }

@@ -78,10 +78,15 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private final HbmFluidTank inputTank;
     private final HbmFluidTank outputTank;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_POWER - SLOT_BATTERY + 1);
     private final ItemStackHandler items = new ItemStackHandler(ITEM_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_BATTERY && slot <= SLOT_UPGRADE_POWER) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -172,7 +177,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         compressor.prevFanSpin = compressor.fanSpin;
         compressor.prevPiston = compressor.piston;
-        if (!compressor.on) {
+        if (!compressor.on || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         if (compressor.isCompact()) {
@@ -334,7 +339,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private void updateUpgradeAdjustedRecipeState() {
         LegacyMachineUpgradeManager.Levels levels =
-                LegacyMachineUpgradeManager.checkSlots(items, SLOT_BATTERY, SLOT_UPGRADE_POWER, VALID_UPGRADES);
+                upgradeSlotCache.get(items, SLOT_BATTERY, SLOT_UPGRADE_POWER, VALID_UPGRADES);
         int speedLevel = levels.getLevel(UpgradeType.SPEED);
         int powerLevel = levels.getLevel(UpgradeType.POWER);
         int overLevel = levels.getLevel(UpgradeType.OVERDRIVE);
@@ -369,7 +374,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void refreshFluidPorts() {
-        refreshTrackedTransceiverFluidPortsReport(List.of(inputTank), List.of(outputTank), this);
+        refreshTrackedTransceiverFluidPorts(inputTank, outputTank, this);
     }
 
     @Override
@@ -541,6 +546,7 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (tag.contains(TAG_INPUT_PRESSURE)) {
             inputTank.withPressure(tag.getInt(TAG_INPUT_PRESSURE));
         }
+        upgradeSlotCache.invalidate();
         setupOutputTank();
     }
 

@@ -110,9 +110,14 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
             UpgradeType.POWER, 3,
             UpgradeType.OVERDRIVE, 3);
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_END - SLOT_UPGRADE_START + 1);
     private final ItemStackHandler items = new ItemStackHandler(ITEM_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
+            if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
+                invalidateUpgradeFactors();
+            }
             setChanged();
         }
 
@@ -181,6 +186,9 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     private Object audioLoop;
     @Nullable
     private String customName;
+    @Nullable
+    private ProcessingFactors cachedUpgradeFactors;
+    private long appliedMaxPower = Long.MIN_VALUE;
 
     public ChemicalPlantBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CHEMICAL_PLANT.get(), pos, state);
@@ -215,7 +223,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ChemicalPlantBlockEntity blockEntity) {
         blockEntity.prevAnim = blockEntity.anim;
-        if (blockEntity.didProcess) {
+        if (blockEntity.didProcess && !LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             blockEntity.anim++;
         }
         blockEntity.updateAudioLoop();
@@ -404,6 +412,8 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         if (selectedRecipe.isBlank()) {
             selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
         }
+        invalidateUpgradeFactors();
+        appliedMaxPower = Long.MIN_VALUE;
         updateDynamicCapacity(getSelectedRecipeDefinition());
     }
 
@@ -560,8 +570,11 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private ProcessingFactors upgradeFactors() {
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(
-                items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
+        if (cachedUpgradeFactors != null) {
+            return cachedUpgradeFactors;
+        }
+        LegacyMachineUpgradeManager.Levels levels =
+                upgradeSlotCache.get(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
         double speed = 1.0D;
         double pow = 1.0D;
         int speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
@@ -572,7 +585,13 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         pow -= powerLevel * 0.25D;
         pow += speedLevel;
         pow += overdriveLevel * 10.0D / 3.0D;
-        return new ProcessingFactors(speed, pow);
+        cachedUpgradeFactors = new ProcessingFactors(speed, pow);
+        return cachedUpgradeFactors;
+    }
+
+    private void invalidateUpgradeFactors() {
+        cachedUpgradeFactors = null;
+        upgradeSlotCache.invalidate();
     }
 
     private void processMeteoriteSword() {
@@ -583,14 +602,22 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private void setupTanks(@Nullable GenericMachineRecipe recipe) {
-        GenericMachineRecipeRuntime.setupTanksReport(recipe, inputTankList, outputTankList, TANK_CAPACITY);
+        GenericMachineRecipeRuntime.setupTanks(recipe, inputTankList, outputTankList, TANK_CAPACITY);
     }
 
     private void updateDynamicCapacity(@Nullable GenericMachineRecipe recipe) {
-        long targetMax = recipe == null ? DEFAULT_MAX_POWER : Math.max(DEFAULT_MAX_POWER, recipe.getPower() * 100L);
-        targetMax = Math.max(targetMax, energy.getPower());
+        applyDynamicCapacity(recipe == null ? DEFAULT_MAX_POWER : recipe.getPower() * 100L);
+    }
+
+    private void applyDynamicCapacity(long targetBase) {
+        long targetMax = Math.max(Math.max(targetBase, DEFAULT_MAX_POWER), energy.getPower());
+        if (appliedMaxPower == targetMax && energy.getMaxPower() == targetMax
+                && energy.getReceiverSpeed() == targetMax && energy.getProviderSpeed() == 0L) {
+            return;
+        }
         energy.setMaxPower(targetMax);
         energy.setTransferRates(targetMax, 0L);
+        appliedMaxPower = targetMax;
     }
 
     private int subscribeEnergyReceiverToPorts() {
@@ -638,11 +665,14 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private boolean processFluidContainers() {
-        return HbmFluidItemTransfer.processTransfers(items, HbmFluidItemTransfer.combineTransfers(
-                HbmFluidItemTransfer.loadTransfers(
-                        SLOT_FLUID_INPUT_START, SLOT_FLUID_INPUT_RETURN_START, inputTanks),
-                HbmFluidItemTransfer.unloadTransfers(
-                        SLOT_FLUID_OUTPUT_START, SLOT_FLUID_OUTPUT_RETURN_START, outputTanks)));
+        boolean moved = HbmFluidItemTransfer.processLoadTransfers(
+                items, SLOT_FLUID_INPUT_START, SLOT_FLUID_INPUT_RETURN_START, inputTanks)
+                | HbmFluidItemTransfer.processUnloadTransfers(
+                        items, SLOT_FLUID_OUTPUT_START, SLOT_FLUID_OUTPUT_RETURN_START, outputTanks);
+        if (moved) {
+            onFluidContentsChanged();
+        }
+        return moved;
     }
 
     private boolean isFluidInputContainerSlotActive(int slot) {

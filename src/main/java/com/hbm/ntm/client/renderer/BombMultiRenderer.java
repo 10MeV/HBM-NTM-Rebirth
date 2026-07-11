@@ -6,8 +6,8 @@ import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.BombMultiBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjNukeModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -46,8 +46,8 @@ public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEnti
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(state)));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, legacyYaw(state));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             renderModel(poseStack, buffer, modelLight, packedOverlay);
         }
@@ -63,8 +63,8 @@ public class BombMultiRenderer implements BlockEntityRenderer<BombMultiBlockEnti
         poseStack.translate(0.75D, 0.0D, 0.0D);
         poseStack.scale(3.0F, 3.0F, 3.0F);
         poseStack.translate(0.0D, 0.5D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
     }
 
     private static float legacyYaw(BlockState state) {

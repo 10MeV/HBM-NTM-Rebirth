@@ -5,6 +5,7 @@ import com.hbm.hazard.transformer.HazardTransformerBase;
 import com.hbm.inventory.RecipesCommon.ComparableStack;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
@@ -135,6 +136,10 @@ public final class HazardSystem {
     }
 
     public static List<HazardEntry> getHazardsFromStack(ItemStack stack) {
+        if (isItemBlacklisted(stack)) {
+            return new ArrayList<>();
+        }
+
         List<HazardEntry> entries = new ArrayList<>();
         for (com.hbm.ntm.radiation.HazardEntry entry : com.hbm.ntm.radiation.HazardRegistry.getHazards(stack)) {
             entries.add(HazardEntry.fromModern(entry));
@@ -143,27 +148,58 @@ public final class HazardSystem {
     }
 
     public static float getHazardLevelFromStack(ItemStack stack, com.hbm.hazard.type.HazardTypeBase hazard) {
-        return com.hbm.ntm.radiation.HazardRegistry.getHazardLevel(stack, hazard.modernType());
+        for (HazardEntry entry : getHazardsFromStack(stack)) {
+            if (entry.type == hazard) {
+                return entry.modifiedLevel(stack, null);
+            }
+        }
+        return 0.0F;
     }
 
     public static void applyHazards(ItemStack stack, LivingEntity entity) {
-        com.hbm.ntm.radiation.HazardExposureUtil.applyHazards(entity, stack);
+        for (HazardEntry hazard : getHazardsFromStack(stack)) {
+            hazard.applyHazard(stack, entity);
+        }
     }
 
     public static void updatePlayerInventory(Player player) {
-        com.hbm.ntm.radiation.HazardExposureUtil.updatePlayerInventory(player);
+        for (int i = 0; i < player.getInventory().items.size(); i++) {
+            ItemStack stack = player.getInventory().items.get(i);
+            applyHazards(stack, player);
+            if (stack.isEmpty()) {
+                player.getInventory().items.set(i, ItemStack.EMPTY);
+            }
+        }
+        for (ItemStack stack : player.getInventory().armor) {
+            applyHazards(stack, player);
+        }
+        for (ItemStack stack : player.getInventory().offhand) {
+            applyHazards(stack, player);
+        }
     }
 
     public static void updateLivingInventory(LivingEntity entity) {
-        com.hbm.ntm.radiation.HazardExposureUtil.updateLivingInventory(entity);
+        applyHazards(entity.getItemBySlot(EquipmentSlot.MAINHAND), entity);
+        applyHazards(entity.getItemBySlot(EquipmentSlot.FEET), entity);
+        applyHazards(entity.getItemBySlot(EquipmentSlot.LEGS), entity);
+        applyHazards(entity.getItemBySlot(EquipmentSlot.CHEST), entity);
+        applyHazards(entity.getItemBySlot(EquipmentSlot.HEAD), entity);
     }
 
     public static void updateDroppedItem(ItemEntity entity) {
-        com.hbm.ntm.radiation.HazardExposureUtil.updateDroppedItem(entity);
+        ItemStack stack = entity.getItem();
+        if (entity.isRemoved() || stack.isEmpty()) {
+            return;
+        }
+        for (HazardEntry entry : getHazardsFromStack(stack)) {
+            entry.type.updateEntity(entity, entry.modifiedLevel(stack, null));
+        }
     }
 
     public static void addFullTooltip(ItemStack stack, Player player, List<Component> list) {
-        com.hbm.ntm.radiation.HazardTooltipUtil.addHazardInformation(stack, list, player);
+        for (HazardEntry hazard : getHazardsFromStack(stack)) {
+            hazard.type.addHazardInformation(player, list, hazard.baseLevel, stack, hazard.mods);
+        }
     }
 
     public static void clearLegacyMirrors() {

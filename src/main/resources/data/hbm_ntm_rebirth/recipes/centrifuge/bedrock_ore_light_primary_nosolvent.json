@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary_nosolvent\",type:\"light\"}"
+  },
+  "outputs": [
+    {
+      "count": 9,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:2600,name:\"Iron\"}"
+    },
+    {
+      "count": 9,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:2900,name:\"Copper\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"light\"}"
+    }
+  ],
+  "source_order": 65
+}

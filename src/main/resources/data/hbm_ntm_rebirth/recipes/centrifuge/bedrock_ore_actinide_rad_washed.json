@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"rad_washed\",type:\"actinide\"}"
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:4399,name:\"Tc99\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:4399,name:\"Tc99\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:9238,name:\"Uranium238\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"actinide\"}"
+    }
+  ],
+  "source_order": 119
+}

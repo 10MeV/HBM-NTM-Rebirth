@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:combination_oven",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"rad_byproduct\",type:\"actinide\"}"
+  },
+  "output_fluid": {
+    "amount": 50,
+    "fluid": "VITRIOL"
+  },
+  "output_item": {
+    "item": "hbm_ntm_rebirth:bedrock_ore",
+    "nbt": "{grade:\"rad_roasted\",type:\"actinide\"}"
+  }
+}

@@ -443,6 +443,7 @@
                    "hbm_ntm_rebirth:reinforced_glass_pane",
                    "hbm_ntm_rebirth:reinforced_laminate",
                    "hbm_ntm_rebirth:reinforced_laminate_pane",
+                   "hbm_ntm_rebirth:block_coke",
                    "hbm_ntm_rebirth:deco_toaster"
                ]
 }

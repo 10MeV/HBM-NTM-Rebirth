@@ -4,7 +4,7 @@ import com.hbm.ntm.block.LegacyDemonLampBlock;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjLightModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -41,8 +41,8 @@ public class LegacyDemonLampItemRenderer extends BlockEntityWithoutLevelRenderer
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.625D, 0.0D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(0.0625F, 0.0625F, 0.0625F);
             poseStack.translate(0.0D, -3.0D, 0.0D);
             poseStack.scale(8.0F, 8.0F, 8.0F);
@@ -52,7 +52,7 @@ public class LegacyDemonLampItemRenderer extends BlockEntityWithoutLevelRenderer
         poseStack.translate(0.5D, 0.25D, 0.0D);
         if (displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
                 && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
         float scale = displayContext == ItemDisplayContext.GROUND ? 0.375F : 0.25F;
         if (displayContext.firstPerson()) {

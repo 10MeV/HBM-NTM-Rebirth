@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary\",type:\"crystal\"}"
+  },
+  "outputs": [
+    {
+      "count": 9,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:1,name:\"Redstone\"}"
+    },
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:8001,name:\"Cinnabar\"}"
+    }
+  ],
+  "source_order": 142
+}

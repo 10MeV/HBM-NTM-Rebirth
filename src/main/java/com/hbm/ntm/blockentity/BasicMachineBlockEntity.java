@@ -173,6 +173,12 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, BasicMachineBlockEntity blockEntity) {
         blockEntity.ticksExisted++;
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            blockEntity.renderPress = blockEntity.syncPress;
+            blockEntity.lastPress = blockEntity.renderPress;
+            blockEntity.turnProgress = 0;
+            return;
+        }
         blockEntity.lastPress = blockEntity.renderPress;
         if (blockEntity.turnProgress > 0) {
             blockEntity.renderPress = blockEntity.renderPress

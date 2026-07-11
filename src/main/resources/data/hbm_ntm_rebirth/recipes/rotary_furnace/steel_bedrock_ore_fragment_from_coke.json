@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:rotary_furnace",
+  "duration": 200,
+  "inputs": [
+    {
+      "count": 9,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:bedrock_ore_fragment"
+      },
+      "partial_nbt": "{mat:2600,name:\"Iron\"}"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:gems/any_coke"
+      },
+      "legacy_ore": "gemAnyCoke"
+    }
+  ],
+  "output": {
+    "amount": 216,
+    "material": "Steel"
+  },
+  "source_order": 3,
+  "steam": 25
+}

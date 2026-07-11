@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "arc_material_outputs": [
+    {
+      "amount": 144,
+      "material": "Titanium"
+    }
+  ],
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:bedrock_ore"
+      },
+      "partial_nbt": "{grade:\"sulfuric_washed\",type:\"light\"}"
+    }
+  ],
+  "internal_name": "arc.bedrock_ore.light_sulfuric_washed",
+  "output_fluids": [],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 21
+}

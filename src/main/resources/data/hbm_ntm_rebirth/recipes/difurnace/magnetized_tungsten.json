@@ -9,12 +9,6 @@
           "tag": "forge:ingots/tungsten"
         },
         {
-          "tag": "forge:plates/tungsten"
-        },
-        {
-          "tag": "forge:gems/tungsten"
-        },
-        {
           "tag": "forge:dusts/tungsten"
         }
       ],

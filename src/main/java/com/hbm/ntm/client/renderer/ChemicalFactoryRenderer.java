@@ -7,7 +7,7 @@ import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -73,10 +73,10 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
                 LegacyRenderLighting.pushModelViewSampling(chemicalFactory, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
             Vec3 translation = definition.modelTranslation(state);
             poseStack.translate(translation.x, translation.y, translation.z);
-            poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
             ResourceLocation texture = definition.textureLocation();
 
             renderStaticBaseFrame(model, chemicalFactory.shouldRenderFrame(), texture, poseStack, buffer,
@@ -99,7 +99,7 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(pivotX, pivotY, pivotZ);
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) angleDegrees));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) angleDegrees);
         poseStack.translate(-pivotX, -pivotY, -pivotZ);
         renderModelPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();

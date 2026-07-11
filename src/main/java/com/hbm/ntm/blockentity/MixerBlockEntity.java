@@ -70,10 +70,15 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final HbmFluidTank inputTank1;
     private final HbmFluidTank inputTank2;
     private final HbmFluidTank outputTank;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_2 - SLOT_UPGRADE_1 + 1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_1 && slot <= SLOT_UPGRADE_2) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -131,7 +136,7 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmEnergyUtil.chargeStorageFromItem(mixer.items.getStackInSlot(SLOT_BATTERY),
                 mixer.energy, mixer.energy.getReceiverSpeed());
         mixer.setFluidTankTypeFromIdentifierSlot(mixer.items, SLOT_FLUID_ID, mixer.outputTank);
-        mixer.refreshTrackedTransceiverFluidPortsReport(mixer.getReceivingTanks(), mixer.getSendingTanks(), mixer);
+        mixer.refreshTrackedTransceiverFluidPorts(mixer.getReceivingTanks(), mixer.getSendingTanks(), mixer);
 
         boolean changed = mixer.tickRecipe(level);
         changed |= oldPower != mixer.energy.getPower()
@@ -153,6 +158,9 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, MixerBlockEntity mixer) {
         mixer.prevRotation = mixer.rotation;
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (mixer.wasOn) {
             mixer.rotation += 20.0F;
         }
@@ -165,8 +173,7 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
     private boolean tickRecipe(Level level) {
         MixerRecipe recipe = getSelectedRecipe(level);
         setupInputTankTypes(recipe);
-        LegacyMachineUpgradeManager.Levels upgrades =
-                LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_1, SLOT_UPGRADE_2, VALID_UPGRADES);
+        LegacyMachineUpgradeManager.Levels upgrades = upgradeLevels();
         consumption = calculateConsumption(upgrades);
         wasOn = canProcess(recipe);
         if (!wasOn) {
@@ -454,6 +461,7 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_INVENTORY, items);
+        upgradeSlotCache.invalidate();
         if (tag.contains(TAG_LEGACY_POWER)) {
             energy.setPower(tag.getLong(TAG_LEGACY_POWER));
         }
@@ -466,6 +474,10 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
         inputTank1.readFromNbt(tag, "0");
         inputTank2.readFromNbt(tag, "1");
         outputTank.readFromNbt(tag, "2");
+    }
+
+    private LegacyMachineUpgradeManager.Levels upgradeLevels() {
+        return upgradeSlotCache.get(items, SLOT_UPGRADE_1, SLOT_UPGRADE_2, VALID_UPGRADES);
     }
 
     @Override

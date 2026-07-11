@@ -76,7 +76,7 @@ public class IntakeBlockEntity extends HbmEnergyAndFluidBlockEntity implements H
         }
         intake.previousFan = intake.fan;
         boolean active = intake.getPower() >= POWER_PER_TICK;
-        if (active) {
+        if (active && !LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             intake.fan += 45.0F;
             if (intake.fan >= 360.0F) {
                 intake.fan -= 360.0F;

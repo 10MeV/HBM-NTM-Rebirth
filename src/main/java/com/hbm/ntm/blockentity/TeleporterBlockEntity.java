@@ -76,7 +76,8 @@ public class TeleporterBlockEntity extends HbmEnergyBlockEntity implements Legac
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, TeleporterBlockEntity teleporter) {
-        if (!teleporter.hasTarget() || teleporter.energy.getPower() < CONSUMPTION) {
+        if (!teleporter.hasTarget() || teleporter.energy.getPower() < CONSUMPTION
+                || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         double x = pos.getX() + 0.5D + level.random.nextGaussian() * 0.25D;

@@ -62,10 +62,15 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
             UpgradeType.OVERDRIVE, 3);
     private static final String TAG_ITEMS = "items";
 
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_1 - SLOT_UPGRADE_0 + 1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_0 && slot <= SLOT_UPGRADE_1) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -136,7 +141,7 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ExposureChamberBlockEntity chamber) {
         chamber.prevRotation = chamber.rotation;
-        if (chamber.isOn) {
+        if (chamber.isOn && !LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             chamber.rotation += 10.0F;
             if (chamber.rotation >= 720.0F) {
                 chamber.rotation -= 720.0F;
@@ -146,7 +151,7 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
     }
 
     private void updateUpgradeFactors() {
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(items,
+        LegacyMachineUpgradeManager.Levels levels = upgradeSlotCache.get(items,
                 SLOT_UPGRADE_0, SLOT_UPGRADE_1, VALID_UPGRADES);
         int speedLevel = levels.getLevel(UpgradeType.SPEED);
         int powerLevel = levels.getLevel(UpgradeType.POWER);
@@ -398,6 +403,7 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
         }
         progress = tag.getInt("progress");
         savedParticles = tag.getInt("savedParticles");
+        upgradeSlotCache.invalidate();
     }
 
     @Override

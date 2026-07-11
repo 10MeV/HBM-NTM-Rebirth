@@ -137,33 +137,32 @@ public class DfcMachineBlock extends DirectionalBlock implements EntityBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
+        if (level.isClientSide) {
+            return null;
+        }
         if (kind == Kind.CORE && type == ModBlockEntities.DFC_CORE.get()) {
-            return ticker(level, DfcCoreBlockEntity::serverTick, DfcCoreBlockEntity::clientTick);
+            return ticker(DfcCoreBlockEntity.class, DfcCoreBlockEntity::serverTick);
         }
         if (kind == Kind.EMITTER && type == ModBlockEntities.DFC_EMITTER.get()) {
-            return ticker(level, DfcEmitterBlockEntity::serverTick, DfcEmitterBlockEntity::clientTick);
+            return ticker(DfcEmitterBlockEntity.class, DfcEmitterBlockEntity::serverTick);
         }
         if (kind == Kind.RECEIVER && type == ModBlockEntities.DFC_RECEIVER.get()) {
-            return ticker(level, DfcReceiverBlockEntity::serverTick, DfcReceiverBlockEntity::clientTick);
+            return ticker(DfcReceiverBlockEntity.class, DfcReceiverBlockEntity::serverTick);
         }
         if (kind == Kind.INJECTOR && type == ModBlockEntities.DFC_INJECTOR.get()) {
-            return ticker(level, DfcInjectorBlockEntity::serverTick, DfcInjectorBlockEntity::clientTick);
+            return ticker(DfcInjectorBlockEntity.class, DfcInjectorBlockEntity::serverTick);
         }
         if (kind == Kind.STABILIZER && type == ModBlockEntities.DFC_STABILIZER.get()) {
-            return ticker(level, DfcStabilizerBlockEntity::serverTick, DfcStabilizerBlockEntity::clientTick);
+            return ticker(DfcStabilizerBlockEntity.class, DfcStabilizerBlockEntity::serverTick);
         }
         return null;
     }
 
-    private static <E extends BlockEntity, T extends BlockEntity> BlockEntityTicker<T> ticker(Level level,
-            BlockEntityTicker<E> serverTicker, BlockEntityTicker<E> clientTicker) {
+    private static <E extends BlockEntity, T extends BlockEntity> BlockEntityTicker<T> ticker(
+            Class<E> expectedType, BlockEntityTicker<E> serverTicker) {
         return (tickLevel, tickPos, tickState, blockEntity) -> {
-            @SuppressWarnings("unchecked")
-            E cast = (E) blockEntity;
-            if (level.isClientSide) {
-                clientTicker.tick(tickLevel, tickPos, tickState, cast);
-            } else {
-                serverTicker.tick(tickLevel, tickPos, tickState, cast);
+            if (expectedType.isInstance(blockEntity)) {
+                serverTicker.tick(tickLevel, tickPos, tickState, expectedType.cast(blockEntity));
             }
         };
     }

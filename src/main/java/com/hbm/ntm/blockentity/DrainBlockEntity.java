@@ -72,7 +72,9 @@ public class DrainBlockEntity extends HbmFluidNetworkBlockEntity implements HbmS
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, DrainBlockEntity drain) {
-        if (!level.isClientSide || drain.tank.getFill() <= 0 || level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 100.0D, false) == null) {
+        if (!level.isClientSide || drain.tank.getFill() <= 0
+                || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)
+                || level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 100.0D, false) == null) {
             return;
         }
         Direction facing = drain.facing();

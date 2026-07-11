@@ -3,12 +3,12 @@ package com.hbm.ntm.client.particle;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -157,9 +157,9 @@ public class SkeletonParticle extends Particle {
         PoseStack poseStack = this.renderPose;
         poseStack.setIdentity();
         poseStack.translate(renderX - cameraPos.x(), renderY - cameraPos.y(), renderZ - cameraPos.z());
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, this.prevRotationYaw, this.rotationYaw)));
-        poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTick, this.prevRotationPitch, this.rotationPitch)));
-        poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, Mth.lerp(partialTick, this.prevRotationYaw, this.rotationYaw));
+        LegacyPoseRotations.rotateXDegrees(poseStack, Mth.lerp(partialTick, this.prevRotationPitch, this.rotationPitch));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
 
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
         renderSkeletonPart(this.type.partName, textureLocation(), poseStack, buffer, getLightColor(partialTick),

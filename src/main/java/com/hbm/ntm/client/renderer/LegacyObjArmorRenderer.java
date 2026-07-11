@@ -3,10 +3,10 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjArmorModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.item.FsbArmorItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import java.util.Locale;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
@@ -184,7 +184,7 @@ public final class LegacyObjArmorRenderer {
                     LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE);
             if (extra.rotatingZ()) {
                 poseStack.translate(extra.pivotX(), extra.pivotY(), extra.pivotZ());
-                poseStack.mulPose(Axis.ZP.rotationDegrees((float) extra.rotationDegrees()));
+                LegacyPoseRotations.rotateZDegrees(poseStack, (float) extra.rotationDegrees());
                 poseStack.translate(-extra.pivotX(), -extra.pivotY(), -extra.pivotZ());
             }
             renderExtra(spec, extra, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
@@ -413,8 +413,8 @@ public final class LegacyObjArmorRenderer {
         private static void applyLegacyItemBaseTransform(ItemDisplayContext displayContext, PoseStack poseStack) {
             if (displayContext == ItemDisplayContext.GUI) {
                 poseStack.translate(0.5D, 0.625D, 0.0D);
-                poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-                poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+                LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
                 poseStack.scale(-0.0625F, -0.0625F, -0.0625F);
                 return;
             }
@@ -428,7 +428,7 @@ public final class LegacyObjArmorRenderer {
             poseStack.scale(0.25F, 0.25F, 0.25F);
             if (displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
                     && displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
-                poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
             }
         }
 
@@ -438,15 +438,15 @@ public final class LegacyObjArmorRenderer {
                 applyLegacyArmorSpecialInventoryTransform(stack, slot, poseStack);
                 poseStack.translate(0.0D, -1.5D, 0.0D);
                 poseStack.scale(3.25F, 3.25F, 3.25F);
-                poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
-                poseStack.mulPose(Axis.YP.rotationDegrees(-135.0F));
-                poseStack.mulPose(Axis.XP.rotationDegrees(-20.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
+                LegacyPoseRotations.rotateYDegrees(poseStack, -135.0F);
+                LegacyPoseRotations.rotateXDegrees(poseStack, -20.0F);
                 return;
             }
 
-            poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
             poseStack.scale(0.75F, 0.75F, 0.75F);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
         }
 
         private static void applyLegacyArmorSpecialInventoryTransform(ItemStack stack, EquipmentSlot slot,

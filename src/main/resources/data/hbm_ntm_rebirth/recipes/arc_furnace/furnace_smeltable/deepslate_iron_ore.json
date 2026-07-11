@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "minecraft:deepslate_iron_ore"
+      }
+    }
+  ],
+  "internal_name": "arc.furnace.deepslate_iron_ore",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "minecraft:iron_ingot"
+    }
+  ],
+  "pools": [],
+  "power": 1000,
+  "source_order": 2367
+}

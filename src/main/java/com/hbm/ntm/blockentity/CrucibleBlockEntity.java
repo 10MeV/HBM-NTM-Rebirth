@@ -10,6 +10,8 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.item.FoundryScrapsItem;
 import com.hbm.ntm.menu.CrucibleMenu;
 import com.hbm.ntm.network.HbmTileSyncable;
+import com.hbm.ntm.pollution.PollutionManager;
+import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.recipe.CrucibleRecipeRuntime;
 import com.hbm.ntm.recipe.CrucibleSmeltingRecipeRuntime;
 import com.hbm.ntm.recipe.GenericMachineRecipeSelector;
@@ -112,7 +114,8 @@ public class CrucibleBlockEntity extends BlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, CrucibleBlockEntity crucible) {
-        if (!level.isClientSide || crucible.getTotalMaterialAmount() <= 0 || level.getGameTime() % 10L != 0L) {
+        if (!level.isClientSide || crucible.getTotalMaterialAmount() <= 0 || level.getGameTime() % 10L != 0L
+                || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         level.addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE,
@@ -451,6 +454,7 @@ public class CrucibleBlockEntity extends BlockEntity
         Direction facing = facing(state);
         if (!wasteStack.isEmpty()) {
             pourStackList(level, pos, facing.getOpposite(), wasteStack);
+            pollutePouringSoot(level, pos);
         }
         if (!recipeStack.isEmpty()) {
             CrucibleRecipeRuntime.Recipe loadedRecipe = getSelectedRecipeDefinition();
@@ -462,7 +466,13 @@ public class CrucibleBlockEntity extends BlockEntity
                     pourStackList(level, pos, facing, outputStacks);
                 }
             }
+            pollutePouringSoot(level, pos);
         }
+    }
+
+    private static void pollutePouringSoot(Level level, BlockPos pos) {
+        PollutionManager.incrementPollution(level, pos, PollutionType.SOOT,
+                PollutionManager.SOOT_PER_SECOND / 20.0F);
     }
 
     private void pourStackList(Level level, BlockPos pos, Direction direction, List<MaterialStack> stacks) {

@@ -3,7 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.RBMKPanelBlock;
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -37,7 +37,7 @@ public class RBMKPanelRenderer implements BlockEntityRenderer<RBMKPanelBlockEnti
 
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(facing)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, legacyYaw(facing));
             switch (panel.panelType()) {
                 case GAUGE -> LegacyRbmkPanelRenderer.renderGauges(poseStack, buffer, light, packedOverlay,
                         panel.gauges(), partialTick);

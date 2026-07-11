@@ -4,8 +4,8 @@ import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.AutosawBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -62,7 +62,7 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
                 LegacyRenderLighting.pushModelViewSampling(autosaw, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, rotation(state));
             double turn = autosaw.getYaw(partialTick);
             double angle = LegacyTileRenderPlans.AUTOSAW_DEFAULT_ANGLE - autosaw.getPitch(partialTick);
             double bladeSpin = autosaw.getSpin(partialTick);
@@ -71,7 +71,7 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
                     : 0.0D;
             double engineTranslateY = engine * LegacyTileRenderPlans.AUTOSAW_ENGINE_BOB;
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(autosaw)) {
-                poseStack.mulPose(Axis.YN.rotationDegrees((float) turn));
+                LegacyPoseRotations.rotateYDegrees(poseStack, (float) -turn);
                 renderPart(MAIN, poseStack, buffer, modelLight, packedOverlay);
                 poseStack.translate(0.0D, engineTranslateY, 0.0D);
                 renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
@@ -99,7 +99,7 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
         poseStack.pushPose();
         poseStack.translate(translateX, 0.0D, 0.0D);
         poseStack.translate(0.0D, pivotY, pivotZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) angleDegrees);
         poseStack.translate(0.0D, -pivotY, -pivotZ);
         renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
@@ -110,7 +110,7 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
             int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.0D, pivotY, pivotZ);
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) angleDegrees));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) angleDegrees);
         poseStack.translate(0.0D, -pivotY, -pivotZ);
         renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();

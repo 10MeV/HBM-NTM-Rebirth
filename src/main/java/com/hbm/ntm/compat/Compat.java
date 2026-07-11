@@ -1,11 +1,9 @@
 package com.hbm.ntm.compat;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.radiation.RadiationConstants;
-import com.hbm.ntm.radiation.HazmatRegistry;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,16 +58,6 @@ public final class Compat {
     public static final String MOD_OPENCOMPUTERS = "opencomputers";
     public static final String MOD_OC = MOD_OPENCOMPUTERS;
 
-    private static final HazardClass[] LEGACY_FULL_PACKAGE = new HazardClass[] {
-            HazardClass.PARTICLE_COARSE,
-            HazardClass.PARTICLE_FINE,
-            HazardClass.GAS_LUNG,
-            HazardClass.BACTERIA,
-            HazardClass.GAS_BLISTERING,
-            HazardClass.GAS_MONOXIDE,
-            HazardClass.LIGHT,
-            HazardClass.SAND
-    };
     private static final float REIKA_GEN_S = 10_000.0F;
     private static final float REIKA_GEN_H = 2_000.0F;
     private static final float REIKA_GEN_10D = 100.0F;
@@ -452,41 +440,7 @@ public final class Compat {
     }
 
     public static CompatHazmatReport registerCompatHazmat() {
-        double p90 = 1.0D;
-        double p99 = 2.0D;
-        int resistanceEntries = 0;
-        int protectionEntries = 0;
-
-        resistanceEntries += tryRegisterHazmatSet(MOD_GT6,
-                "gt.armor.hazmat.radiation.head",
-                "gt.armor.hazmat.radiation.chest",
-                "gt.armor.hazmat.radiation.legs",
-                "gt.armor.hazmat.radiation.boots",
-                p90);
-        resistanceEntries += tryRegisterHazmatSet(MOD_GT6,
-                "gt.armor.hazmat.universal.head",
-                "gt.armor.hazmat.universal.chest",
-                "gt.armor.hazmat.universal.legs",
-                "gt.armor.hazmat.universal.boots",
-                p99);
-        resistanceEntries += tryRegisterHazmatSet(MOD_REACTORCRAFT,
-                "reactorcraft_item_hazhelmet",
-                "reactorcraft_item_hazchest",
-                "reactorcraft_item_hazlegs",
-                "reactorcraft_item_hazboots",
-                p99);
-        resistanceEntries += tryRegisterHazmatSet(MOD_ET_FUTURUM,
-                "netherite_helmet",
-                "netherite_chestplate",
-                "netherite_leggings",
-                "netherite_boots",
-                p90);
-
-        protectionEntries += tryRegisterProtection(MOD_GT6, "gt.armor.hazmat.universal.head", LEGACY_FULL_PACKAGE);
-        protectionEntries += tryRegisterProtection(MOD_GT6, "gt.armor.hazmat.biochemgas.head", LEGACY_FULL_PACKAGE);
-        protectionEntries += tryRegisterProtection(MOD_GT6, "gt.armor.hazmat.radiation.head", LEGACY_FULL_PACKAGE);
-
-        return new CompatHazmatReport(resistanceEntries, protectionEntries);
+        return new CompatHazmatReport(0, 0);
     }
 
     // Old optional-mod hooks stay callable, but their integration behavior is intentionally frozen.
@@ -515,25 +469,6 @@ public final class Compat {
     }
 
     public static void blacklistAccelerator(Class<?> clazz) {
-    }
-
-    private static int tryRegisterHazmatSet(String namespace, String helmet, String chest, String legs, String boots,
-                                            double materialResistance) {
-        return HazmatRegistry.registerExternalArmorSet(
-                resource(namespace, helmet),
-                resource(namespace, chest),
-                resource(namespace, legs),
-                resource(namespace, boots),
-                materialResistance);
-    }
-
-    private static int tryRegisterProtection(String namespace, String path, HazardClass... protections) {
-        Item item = tryLoadItem(namespace, path);
-        if (item == null) {
-            return 0;
-        }
-        HazmatRegistry.registerExternalProtection(item, protections);
-        return 1;
     }
 
     @Nullable

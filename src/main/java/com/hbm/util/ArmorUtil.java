@@ -428,19 +428,21 @@ public final class ArmorUtil {
     }
 
     public static ItemStack getGasMaskFilter(ItemStack mask) {
-        return com.hbm.ntm.radiation.ArmorUtil.getGasMaskFilter(mask);
+        return emptyToLegacyNull(com.hbm.ntm.radiation.ArmorUtil.getGasMaskFilter(mask));
     }
 
     public static ItemStack getGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.getGasMaskFilterRecursively(mask, entity);
+        return emptyToLegacyNull(com.hbm.ntm.radiation.ArmorUtil.getGasMaskFilterRecursively(mask, entity));
     }
 
     public static boolean hasGasMaskFilter(ItemStack mask) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasGasMaskFilter(mask);
+        ItemStack filter = getGasMaskFilter(mask);
+        return filter != null && !filter.isEmpty();
     }
 
     public static boolean hasGasMaskFilterRecursively(ItemStack mask, LivingEntity entity) {
-        return com.hbm.ntm.radiation.ArmorUtil.hasGasMaskFilterRecursively(mask, entity);
+        ItemStack filter = getGasMaskFilterRecursively(mask, entity);
+        return filter != null && !filter.isEmpty();
     }
 
     public static boolean canInstallGasMaskFilter(ItemStack maskStack, LivingEntity entity, ItemStack filter) {
@@ -509,6 +511,10 @@ public final class ArmorUtil {
             }
         }
         return set;
+    }
+
+    private static ItemStack emptyToLegacyNull(ItemStack stack) {
+        return stack == null || stack.isEmpty() ? null : stack;
     }
 
     private static final class LegacyExternalProtectionList extends AbstractList<Tuple.Pair<Item, HazardClass[]>> {

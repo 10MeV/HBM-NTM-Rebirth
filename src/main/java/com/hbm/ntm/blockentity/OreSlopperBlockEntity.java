@@ -82,10 +82,15 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final HbmFluidTank waterTank;
     private final HbmFluidTank slopTank;
     private final double[] ores = new double[BedrockOreType.values().length];
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_2 - SLOT_UPGRADE_1 + 1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_1 && slot <= SLOT_UPGRADE_2) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -148,11 +153,10 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmEnergyUtil.chargeStorageFromItem(slopper.items.getStackInSlot(SLOT_BATTERY),
                 slopper.energy, slopper.energy.getReceiverSpeed());
         slopper.updateWaterTypeFromIdentifier();
-        slopper.refreshTrackedTransceiverFluidPortsReport(slopper.getReceivingTanks(),
+        slopper.refreshTrackedTransceiverFluidPorts(slopper.getReceivingTanks(),
                 slopper.getSendingTanks(), slopper);
 
-        LegacyMachineUpgradeManager.Levels upgrades =
-                LegacyMachineUpgradeManager.checkSlots(slopper.items, SLOT_UPGRADE_1, SLOT_UPGRADE_2, VALID_UPGRADES);
+        LegacyMachineUpgradeManager.Levels upgrades = slopper.upgradeLevels();
         int speed = upgrades.getLevel(UpgradeType.SPEED);
         int effect = upgrades.getLevel(UpgradeType.EFFECT);
         slopper.consumption = BASE_CONSUMPTION + BASE_CONSUMPTION * speed / 2L + BASE_CONSUMPTION * effect;
@@ -190,6 +194,9 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
         slopper.prevBlades = slopper.blades;
         slopper.prevFan = slopper.fan;
         if (!slopper.processing) {
+            return;
+        }
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         slopper.blades += 15.0F;
@@ -522,6 +529,7 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         loadInventory(tag);
+        upgradeSlotCache.invalidate();
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
@@ -545,6 +553,10 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
         fan = tag.getFloat("fan");
         prevFan = fan;
         delay = tag.getInt("delay");
+    }
+
+    private LegacyMachineUpgradeManager.Levels upgradeLevels() {
+        return upgradeSlotCache.get(items, SLOT_UPGRADE_1, SLOT_UPGRADE_2, VALID_UPGRADES);
     }
 
     private void loadInventory(CompoundTag tag) {

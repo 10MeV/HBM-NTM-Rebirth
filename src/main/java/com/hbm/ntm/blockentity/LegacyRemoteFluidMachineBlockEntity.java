@@ -193,7 +193,7 @@ public abstract class LegacyRemoteFluidMachineBlockEntity extends HbmEnergyAndFl
     }
 
     protected void refreshFluidPorts() {
-        refreshTrackedTransceiverFluidPortsReport(receivingTanks, sendingTanks, this);
+        refreshTrackedTransceiverFluidPorts(receivingTanks, sendingTanks, this);
     }
 
     @Override

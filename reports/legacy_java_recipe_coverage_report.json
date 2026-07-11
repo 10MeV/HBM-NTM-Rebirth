@@ -74,7 +74,7 @@
       "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/handler/nei/FluidRecipeHandler.java",
       "machine": "fluid_containers",
       "missing_count": 0,
-      "modern_count_current": 658,
+      "modern_count_current": 661,
       "modern_source": "HbmFluidContainerRegistry.getAllContainers()",
       "status": "dynamic_display_surface_tracked"
     },
@@ -87,7 +87,7 @@
       "legacy_source": "E:/游戏/我的世界/源码包/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/handler/nei/CrucibleCastingHandler.java",
       "machine": "crucible_casting",
       "missing_count": 0,
-      "modern_count_current": 48,
+      "modern_count_current": 49,
       "modern_source": "CrucibleCastingRecipeCategory.recipes()",
       "status": "dynamic_display_surface_tracked"
     }
@@ -4576,7 +4576,7 @@
       "machine": "combination_oven",
       "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/combination_oven",
       "missing_count": 0,
-      "modern_count": 23,
+      "modern_count": 53,
       "modern_recipe_type": "combination_oven",
       "present_count": 23,
       "status": "main_resources_aligned"
@@ -4591,7 +4591,7 @@
       "machine": "centrifuge",
       "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/centrifuge",
       "missing_count": 0,
-      "modern_count": 56,
+      "modern_count": 152,
       "modern_recipe_type": "centrifuge",
       "present_count": 56,
       "status": "main_resources_aligned"
@@ -4606,7 +4606,7 @@
       "machine": "crystallizer",
       "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/crystallizer",
       "missing_count": 0,
-      "modern_count": 107,
+      "modern_count": 329,
       "modern_recipe_type": "crystallizer",
       "present_count": 107,
       "status": "main_resources_aligned"
@@ -4756,7 +4756,7 @@
       "machine": "pyro_oven",
       "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/pyro_oven",
       "missing_count": 0,
-      "modern_count": 40,
+      "modern_count": 70,
       "modern_recipe_type": "pyro_oven",
       "present_count": 40,
       "status": "main_resources_aligned"
@@ -4876,7 +4876,7 @@
       "machine": "electrolyzer_metal",
       "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/electrolyzer_metal",
       "missing_count": 0,
-      "modern_count": 18,
+      "modern_count": 36,
       "modern_recipe_type": "electrolyzer_metal",
       "present_count": 18,
       "status": "main_resources_aligned"
@@ -5159,7 +5159,7 @@
       "machine": "arc_furnace",
       "main_resource_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/arc_furnace",
       "missing_count": 0,
-      "modern_count": 1326,
+      "modern_count": 1399,
       "modern_recipe_type": "arc_furnace",
       "present_count": 12,
       "status": "main_resources_aligned"

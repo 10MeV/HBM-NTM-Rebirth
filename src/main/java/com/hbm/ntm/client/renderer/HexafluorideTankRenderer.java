@@ -4,7 +4,7 @@ import com.hbm.ntm.block.HexafluorideTankBlock;
 import com.hbm.ntm.blockentity.HexafluorideTankBlockEntity;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -33,7 +33,7 @@ public class HexafluorideTankRenderer implements BlockEntityRenderer<Hexafluorid
 
     static void renderItemModel(HexafluorideTankBlock.Kind kind, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        poseStack.mulPose(Axis.YN.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
         ObjMachineModels.TANK.renderAll(texture(kind), poseStack, buffer, packedLight, packedOverlay);
     }
 

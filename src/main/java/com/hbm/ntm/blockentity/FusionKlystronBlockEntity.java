@@ -105,10 +105,12 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
         klystron.prevFan = klystron.fan;
         klystron.fanSpeed += klystron.output > 0 ? FAN_ACCELERATION * (float) mult : -FAN_ACCELERATION;
         klystron.fanSpeed = Math.max(0.0F, Math.min(5.0F * (float) mult, klystron.fanSpeed));
-        klystron.fan += klystron.fanSpeed;
-        if (klystron.fan >= 360.0F) {
-            klystron.fan -= 360.0F;
-            klystron.prevFan -= 360.0F;
+        if (!LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            klystron.fan += klystron.fanSpeed;
+            if (klystron.fan >= 360.0F) {
+                klystron.fan -= 360.0F;
+                klystron.prevFan -= 360.0F;
+            }
         }
         float speed = klystron.fanSpeed / 5.0F;
         klystron.audio = LegacyMachineAudioBridge.updateLoop(klystron.audio, klystron, "FEL_LOOP",

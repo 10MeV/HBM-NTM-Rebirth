@@ -1,6 +1,6 @@
 {
   "replace": false,
   "values": [
-    "hbm_ntm_rebirth:ingot_uranium_fuel"
+    "hbm_ntm_rebirth:ingot_u238"
   ]
 }

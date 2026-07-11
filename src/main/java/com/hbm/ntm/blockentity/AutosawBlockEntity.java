@@ -121,30 +121,40 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, AutosawBlockEntity autosaw) {
-        autosaw.lastYaw = autosaw.yaw;
-        autosaw.lastPitch = autosaw.pitch;
-        autosaw.lastSpin = autosaw.spin;
-        if (autosaw.turnProgress > 0) {
-            autosaw.yaw += Mth.wrapDegrees(autosaw.targetYaw - autosaw.yaw) / autosaw.turnProgress;
-            autosaw.pitch += Mth.wrapDegrees(autosaw.targetPitch - autosaw.pitch) / autosaw.turnProgress;
-            autosaw.turnProgress--;
-        } else {
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
+        if (skipAnimation) {
             autosaw.yaw = autosaw.targetYaw;
             autosaw.pitch = autosaw.targetPitch;
-        }
-        if (autosaw.on) {
-            autosaw.spin += 15.0F;
-            if (autosaw.spin >= 360.0F) {
-                autosaw.spin -= 360.0F;
-                autosaw.lastSpin -= 360.0F;
+            autosaw.turnProgress = 0;
+            autosaw.lastYaw = autosaw.yaw;
+            autosaw.lastPitch = autosaw.pitch;
+            autosaw.lastSpin = autosaw.spin;
+        } else {
+            autosaw.lastYaw = autosaw.yaw;
+            autosaw.lastPitch = autosaw.pitch;
+            autosaw.lastSpin = autosaw.spin;
+            if (autosaw.turnProgress > 0) {
+                autosaw.yaw += Mth.wrapDegrees(autosaw.targetYaw - autosaw.yaw) / autosaw.turnProgress;
+                autosaw.pitch += Mth.wrapDegrees(autosaw.targetPitch - autosaw.pitch) / autosaw.turnProgress;
+                autosaw.turnProgress--;
+            } else {
+                autosaw.yaw = autosaw.targetYaw;
+                autosaw.pitch = autosaw.targetPitch;
             }
-            if (level.getGameTime() % 4L == 0L) {
-                Vec3 exhaust = new Vec3(0.625D, 0.0D, 1.625D).yRot(-autosaw.yaw * Mth.DEG_TO_RAD);
-                level.addParticle(ParticleTypes.SMOKE,
-                        pos.getX() + 0.5D + exhaust.x,
-                        pos.getY() + 2.0625D,
-                        pos.getZ() + 0.5D + exhaust.z,
-                        0.0D, 0.05D, 0.0D);
+            if (autosaw.on) {
+                autosaw.spin += 15.0F;
+                if (autosaw.spin >= 360.0F) {
+                    autosaw.spin -= 360.0F;
+                    autosaw.lastSpin -= 360.0F;
+                }
+                if (level.getGameTime() % 4L == 0L) {
+                    Vec3 exhaust = new Vec3(0.625D, 0.0D, 1.625D).yRot(-autosaw.yaw * Mth.DEG_TO_RAD);
+                    level.addParticle(ParticleTypes.SMOKE,
+                            pos.getX() + 0.5D + exhaust.x,
+                            pos.getY() + 2.0625D,
+                            pos.getZ() + 0.5D + exhaust.z,
+                            0.0D, 0.05D, 0.0D);
+                }
             }
         }
         autosaw.audioLoop = LegacyMachineAudioBridge.updateLoop(autosaw.audioLoop, autosaw,

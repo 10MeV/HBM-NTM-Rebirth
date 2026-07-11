@@ -3,8 +3,8 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LegacyMachineDefinition;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SolderingStationBlockEntity;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -54,10 +54,10 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.yRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
-        poseStack.mulPose(Axis.YP.rotationDegrees(definition.postModelYRotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
         renderOutputItem(blockEntity, poseStack, buffer, packedLight);
 
         poseStack.popPose();
@@ -72,8 +72,8 @@ public class SolderingStationRenderer implements BlockEntityRenderer<SolderingSt
 
         poseStack.pushPose();
         poseStack.translate(0.0625D * 2.5D, 1.125D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
         poseStack.scale(1.5F, 1.5F, 1.5F);
         Minecraft.getInstance().getItemRenderer().renderStatic(
                 stack,

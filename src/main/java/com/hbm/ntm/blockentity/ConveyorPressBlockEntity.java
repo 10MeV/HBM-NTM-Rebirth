@@ -115,6 +115,12 @@ public class ConveyorPressBlockEntity extends HbmEnergyBlockEntity implements Le
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ConveyorPressBlockEntity press) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            press.renderPress = press.syncPress;
+            press.lastPress = press.renderPress;
+            press.turnProgress = 0;
+            return;
+        }
         press.lastPress = press.renderPress;
         if (press.turnProgress > 0) {
             press.renderPress += (press.syncPress - press.renderPress) / press.turnProgress;

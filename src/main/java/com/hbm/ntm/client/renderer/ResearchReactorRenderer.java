@@ -10,7 +10,7 @@ import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.UntexturedQuadGroup;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -52,7 +52,7 @@ public class ResearchReactorRenderer implements BlockEntityRenderer<ResearchReac
         int light = LegacyRenderLighting.resolveBoundsLight(blockEntity, blockEntity.getRenderBoundingBox(), packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
                 ObjReactorModels.SMALL_BASE.renderAll(ObjReactorModels.SMALL_BASE_TEXTURE, poseStack, buffer,

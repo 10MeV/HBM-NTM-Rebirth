@@ -1,6 +1,15 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": {
+        "type": "forge:tag_empty",
+        "tag": "forge:ingots/naquadah_enriched"
+      }
+    }
+  ],
   "pattern": [ " I ", "IGI", " I " ],
   "key": {
     "G": { "tag": "forge:ingots/graphite" },

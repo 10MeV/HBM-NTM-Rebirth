@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:block_desh"
+    },
+    "I": {
+      "tag": "forge:ingots/tungsten"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "PII",
+    "PBB",
+    "PII"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:shimmer_axe_head"
+  },
+  "show_notification": true
+}

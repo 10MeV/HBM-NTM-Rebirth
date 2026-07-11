@@ -53,10 +53,10 @@ public class MicrowaveBlock extends HorizontalMachineBlock implements EntityBloc
         if (type != ModBlockEntities.MICROWAVE.get()) {
             return null;
         }
-        return level.isClientSide
-                ? (tickLevel, tickPos, tickState, blockEntity) ->
-                MicrowaveBlockEntity.clientTick(tickLevel, tickPos, tickState, (MicrowaveBlockEntity) blockEntity)
-                : (tickLevel, tickPos, tickState, blockEntity) ->
+        if (level.isClientSide) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) ->
                 MicrowaveBlockEntity.serverTick(tickLevel, tickPos, tickState, (MicrowaveBlockEntity) blockEntity);
     }
 

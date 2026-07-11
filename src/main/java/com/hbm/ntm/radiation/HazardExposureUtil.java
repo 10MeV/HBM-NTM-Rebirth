@@ -19,7 +19,7 @@ import net.minecraftforge.registries.RegistryObject;
 public final class HazardExposureUtil {
     public static void updatePlayerInventory(Player player) {
         HazardExposureContext context = HazardExposureContext.of(player);
-        applyInventoryHazards(player, player.getInventory().items, context);
+        applyMainInventoryHazards(player, context);
         applyInventoryHazards(player, player.getInventory().armor, context);
         applyInventoryHazards(player, player.getInventory().offhand, context);
     }
@@ -57,6 +57,16 @@ public final class HazardExposureUtil {
     private static void applyInventoryHazards(LivingEntity entity, Iterable<ItemStack> stacks, HazardExposureContext context) {
         for (ItemStack stack : stacks) {
             applyEquippedHazards(entity, stack, context);
+        }
+    }
+
+    private static void applyMainInventoryHazards(Player player, HazardExposureContext context) {
+        for (int i = 0; i < player.getInventory().items.size(); i++) {
+            ItemStack stack = player.getInventory().items.get(i);
+            applyEquippedHazards(player, stack, context);
+            if (stack.isEmpty()) {
+                player.getInventory().items.set(i, ItemStack.EMPTY);
+            }
         }
     }
 

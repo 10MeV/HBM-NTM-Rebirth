@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "arc_material_outputs": [
+    {
+      "amount": 40,
+      "material": "Cobalt"
+    }
+  ],
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:bedrock_ore"
+      },
+      "partial_nbt": "{grade:\"crumbs\",type:\"rare\"}"
+    }
+  ],
+  "internal_name": "arc.bedrock_ore.rare_crumbs",
+  "output_fluids": [],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 44
+}

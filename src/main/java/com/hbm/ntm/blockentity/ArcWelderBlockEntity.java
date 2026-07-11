@@ -93,11 +93,17 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
             UpgradeType.SPEED, 3,
             UpgradeType.POWER, 3,
             UpgradeType.OVERDRIVE, 3);
+    private static final List<HbmFluidTank> NO_TANKS = List.of();
 
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_1 - SLOT_UPGRADE_0 + 1);
     private final ItemStackHandler items = new ItemStackHandler(8) {
         @Override
         protected void onContentsChanged(int slot) {
+            if (slot >= SLOT_UPGRADE_0 && slot <= SLOT_UPGRADE_1) {
+                invalidateUpgradeLevels();
+            }
             setChanged();
             LegacyUpgradeSlotSound.playIfUpgrade(ArcWelderBlockEntity.this, slot, getStackInSlot(slot),
                     SLOT_UPGRADE_0, SLOT_UPGRADE_1, 0.5D, 1.0F, 1.0F);
@@ -120,11 +126,12 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     };
     private final HbmEnergyStorage energy = new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_MAX_POWER, 0L);
     private final HbmFluidTank inputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
+    private final List<HbmFluidTank> inputTankList = List.of(inputTank);
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() ->
             new ArcWelderAccessibleItemHandler(SLOT_INPUT_1, SLOT_OUTPUT));
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
-            ForgeRecipeFluidHandlerAdapter.create(List.of(inputTank), List.of(), 0, this::onFluidContentsChanged));
+            ForgeRecipeFluidHandlerAdapter.create(inputTankList, NO_TANKS, 0, this::onFluidContentsChanged));
     private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     private final ICapabilityProvider redProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_0);
     private final ICapabilityProvider yellowProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_1);
@@ -136,6 +143,11 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     private boolean didProcess;
     private String selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
     private String customName;
+    private boolean upgradeLevelsDirty = true;
+    private int cachedSpeedLevel;
+    private int cachedPowerLevel;
+    private int cachedOverdriveLevel;
+    private long appliedMaxPower = Long.MIN_VALUE;
 
     public ArcWelderBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ARC_WELDER.get(), pos, state);
@@ -162,7 +174,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         if (level.getGameTime() % 20L == 0L) {
             HbmEnergyUtil.subscribeReceiverToPorts(level, pos, arcWelder.connectionEnergyPorts(state), arcWelder);
             arcWelder.fluidPortSubscriptions.refreshReceiver(level, pos, arcWelder.connectionFluidPorts(state),
-                    List.of(arcWelder.inputTank), arcWelder);
+                    arcWelder.inputTank, arcWelder);
         }
 
         boolean changed = arcWelder.tickRecipe(level);
@@ -184,9 +196,6 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         if (changed) {
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
-    }
-
-    public static void clientTick(Level level, BlockPos pos, BlockState state, ArcWelderBlockEntity arcWelder) {
     }
 
     public ItemStackHandler getItems() {
@@ -301,7 +310,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
 
         ProcessingResult result = GenericMachineRecipeRuntime.update(level, GenericMachineRecipe.Machine.ARC_WELDER,
                 selectedRecipe, progress / (double) Math.max(processTime, 1), ItemStack.EMPTY, energy, items,
-                INPUT_SLOTS, OUTPUT_SLOTS, inputTanksFor(recipe), List.of(),
+                INPUT_SLOTS, OUTPUT_SLOTS, inputTanksFor(recipe), NO_TANKS,
                 new ProcessingFactors(factors.progressPerTick(), factors.powerMultiplier()), true, TANK_CAPACITY,
                 worldPosition);
         selectedRecipe = result.selectedRecipe();
@@ -329,7 +338,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     private GenericMachineRecipe selectCurrentRecipe(Level level) {
         for (GenericMachineRecipe recipe : GenericMachineRecipeRuntime.recipes(level, GenericMachineRecipe.Machine.ARC_WELDER)) {
             if (GenericMachineRecipeRuntime.canProcess(recipe, items, INPUT_SLOTS, OUTPUT_SLOTS,
-                    inputTanksFor(recipe), List.of())) {
+                    inputTanksFor(recipe), NO_TANKS)) {
                 return recipe;
             }
         }
@@ -337,15 +346,14 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     }
 
     private List<HbmFluidTank> inputTanksFor(GenericMachineRecipe recipe) {
-        return recipe.getFluidInputs().isEmpty() ? List.of() : List.of(inputTank);
+        return recipe.getFluidInputs().isEmpty() ? NO_TANKS : inputTankList;
     }
 
     private UpgradeFactors upgradeFactors(GenericMachineRecipe recipe) {
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(
-                items, SLOT_UPGRADE_0, SLOT_UPGRADE_1, VALID_UPGRADES);
-        int redLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
-        int blueLevel = Math.min(levels.getLevel(UpgradeType.POWER), 3);
-        int blackLevel = Math.min(levels.getLevel(UpgradeType.OVERDRIVE), 3);
+        refreshUpgradeLevels();
+        int redLevel = cachedSpeedLevel;
+        int blueLevel = cachedPowerLevel;
+        int blackLevel = cachedOverdriveLevel;
 
         int legacyProcessTime = recipe.getDuration()
                 - (recipe.getDuration() * redLevel / 6)
@@ -361,11 +369,36 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         return new UpgradeFactors(legacyProcessTime, legacyConsumption, speed, power);
     }
 
+    private void refreshUpgradeLevels() {
+        if (!upgradeLevelsDirty) {
+            return;
+        }
+        LegacyMachineUpgradeManager.Levels levels =
+                upgradeSlotCache.get(items, SLOT_UPGRADE_0, SLOT_UPGRADE_1, VALID_UPGRADES);
+        cachedSpeedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
+        cachedPowerLevel = Math.min(levels.getLevel(UpgradeType.POWER), 3);
+        cachedOverdriveLevel = Math.min(levels.getLevel(UpgradeType.OVERDRIVE), 3);
+        upgradeLevelsDirty = false;
+    }
+
+    private void invalidateUpgradeLevels() {
+        upgradeLevelsDirty = true;
+        upgradeSlotCache.invalidate();
+    }
+
     private void updateDynamicCapacity(@Nullable GenericMachineRecipe recipe) {
-        long targetMax = recipe == null ? DEFAULT_MAX_POWER : Math.max(DEFAULT_MAX_POWER, consumption * 20L);
-        targetMax = Math.max(targetMax, energy.getPower());
+        applyDynamicCapacity(recipe == null ? DEFAULT_MAX_POWER : consumption * 20L);
+    }
+
+    private void applyDynamicCapacity(long targetBase) {
+        long targetMax = Math.max(Math.max(targetBase, DEFAULT_MAX_POWER), energy.getPower());
+        if (appliedMaxPower == targetMax && energy.getMaxPower() == targetMax
+                && energy.getReceiverSpeed() == targetMax && energy.getProviderSpeed() == 0L) {
+            return;
+        }
         energy.setMaxPower(targetMax);
         energy.setTransferRates(targetMax, 0L);
+        appliedMaxPower = targetMax;
     }
 
     private List<EnergyPort> connectionEnergyPorts(BlockState state) {
@@ -451,6 +484,8 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         if (tag.contains(TAG_TANK)) {
             inputTank.readFromNbt(tag, TAG_TANK);
         }
+        invalidateUpgradeLevels();
+        appliedMaxPower = Long.MIN_VALUE;
     }
 
     @Override
@@ -569,12 +604,12 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
 
     @Override
     public List<HbmFluidTank> getReceivingTanks() {
-        return List.of(inputTank);
+        return inputTankList;
     }
 
     @Override
     public List<HbmFluidTank> getAllTanks() {
-        return List.of(inputTank);
+        return inputTankList;
     }
 
     @Override

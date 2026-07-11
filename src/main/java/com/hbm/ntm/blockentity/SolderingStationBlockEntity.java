@@ -78,10 +78,15 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
             UpgradeType.OVERDRIVE, 3);
 
     private final HbmFluidTank tank;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_1 - SLOT_UPGRADE_0 + 1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot >= SLOT_UPGRADE_0 && slot <= SLOT_UPGRADE_1) {
+                upgradeSlotCache.invalidate();
+            }
             LegacyUpgradeSlotSound.playIfUpgrade(SolderingStationBlockEntity.this, slot, getStackInSlot(slot),
                     SLOT_UPGRADE_0, SLOT_UPGRADE_1, 0.5D, 1.0F, 1.0F);
         }
@@ -167,7 +172,7 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
 
         if (station.tank.getTankType() != HbmFluids.NONE) {
-            station.refreshTrackedReceiverFluidPortsReport(List.of(station.tank), station);
+            station.refreshTrackedReceiverFluidPorts(station.tank, station);
         }
 
         boolean changed = oldPower != station.energy.getPower()
@@ -226,7 +231,7 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private LegacyMachineUpgradeManager.Levels upgradeLevels() {
-        return LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE_0, SLOT_UPGRADE_1, VALID_UPGRADES);
+        return upgradeSlotCache.get(items, SLOT_UPGRADE_0, SLOT_UPGRADE_1, VALID_UPGRADES);
     }
 
     private boolean canProcess(SolderingStationRecipe recipe) {
@@ -478,6 +483,7 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        upgradeSlotCache.invalidate();
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
         }

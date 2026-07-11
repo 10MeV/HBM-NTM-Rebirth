@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary_roasted\",type:\"heavy\"}"
+  },
+  "outputs": [
+    {
+      "count": 9,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:7400,name:\"Tungsten\"}"
+    },
+    {
+      "count": 9,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:8200,name:\"Lead\"}"
+    }
+  ],
+  "source_order": 79
+}

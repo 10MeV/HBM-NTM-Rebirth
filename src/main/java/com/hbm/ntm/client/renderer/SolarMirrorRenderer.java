@@ -1,10 +1,10 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.SolarMirrorBlockEntity;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.core.BlockPos;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -65,8 +65,8 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
         double pitch = -Math.asin(dy / distance) + Math.PI / 2.0D;
         double yaw = -Math.atan2(dz, dx) - Math.PI / 2.0D;
         poseStack.translate(0.0D, 1.0D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotation((float) yaw));
-        poseStack.mulPose(Axis.XP.rotation((float) pitch));
+        LegacyPoseRotations.rotateYRadians(poseStack, (float) yaw);
+        LegacyPoseRotations.rotateXRadians(poseStack, (float) pitch);
         poseStack.translate(0.0D, -1.0D, 0.0D);
     }
 }

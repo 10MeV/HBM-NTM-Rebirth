@@ -2,7 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HexafluorideTankBlock;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -37,8 +37,8 @@ public class HexafluorideTankItemRenderer extends BlockEntityWithoutLevelRendere
     private static void applyLegacyItemTransform(ItemDisplayContext displayContext, PoseStack poseStack) {
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.625D, 0.0D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(0.0625F, 0.0625F, 0.0625F);
             poseStack.translate(0.0D, -4.0D, 0.0D);
             poseStack.scale(6.0F, 6.0F, 6.0F);
@@ -53,7 +53,7 @@ public class HexafluorideTankItemRenderer extends BlockEntityWithoutLevelRendere
         poseStack.scale(0.25F, 0.25F, 0.25F);
         if (displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
                 && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
     }
 }

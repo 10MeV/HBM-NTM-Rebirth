@@ -148,6 +148,9 @@ public class RBMKPanelBlockEntity extends BlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, RBMKPanelBlockEntity panel) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (panel.panelType() == RBMKPanelPlanner.PanelType.GAUGE) {
             for (int i = 0; i < panel.gauges.length; i++) {
                 panel.gauges[i] = RBMKPanelPlanner.tickGaugeClient(panel.gauges[i]);

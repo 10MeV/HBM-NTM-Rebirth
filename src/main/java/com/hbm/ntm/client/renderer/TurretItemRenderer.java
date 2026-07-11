@@ -4,7 +4,7 @@ import com.hbm.ntm.block.SingleTurretBlock;
 import com.hbm.ntm.block.TurretBaseBlock;
 import com.hbm.ntm.client.obj.ObjTurretModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -15,11 +15,11 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final float LEGACY_GUI_MODEL_SCALE = 1.0F / 16.0F;
     private static final float WORLD_TARGET_SIZE = 0.86F;
+    private static final RenderSpec[] COMMON_SPECS = commonSpecs();
 
     public static final TurretItemRenderer INSTANCE = new TurretItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -46,10 +46,7 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
             applyLegacyGuiDisplayTransform(poseStack);
             applyLegacyInventoryTransform(model, poseStack);
         } else {
-            AABB bounds = legacyCommonBounds(model);
-            Vec3 center = bounds.getCenter();
-            double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
-            applyNonGuiDisplayTransform(displayContext, poseStack, center, maxSize);
+            applyNonGuiDisplayTransform(displayContext, poseStack, COMMON_SPECS[model.ordinal()]);
         }
         TurretBlockEntityRenderer.renderLegacyItemModel(model, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
@@ -57,21 +54,18 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void applyLegacyGuiDisplayTransform(PoseStack poseStack) {
         poseStack.translate(0.5D, 0.625D, 0.5D);
-        poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
         poseStack.scale(LEGACY_GUI_MODEL_SCALE, LEGACY_GUI_MODEL_SCALE, LEGACY_GUI_MODEL_SCALE);
     }
 
     private static void applyNonGuiDisplayTransform(ItemDisplayContext displayContext, PoseStack poseStack,
-            Vec3 center, double maxSize) {
-        float fitScale = (float) Math.max(0.035D, Math.min(0.32D,
-                WORLD_TARGET_SIZE / Math.max(1.0D, maxSize)));
-
+            RenderSpec spec) {
         poseStack.translate(0.5D, 0.5D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-        float worldScale = fitScale * 0.82F;
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        float worldScale = spec.fitScale() * 0.82F;
         poseStack.scale(worldScale, worldScale, worldScale);
-        poseStack.translate(-center.x, -center.y, -center.z);
+        poseStack.translate(-spec.centerX(), -spec.centerY(), -spec.centerZ());
 
         if (displayContext == ItemDisplayContext.GROUND) {
             poseStack.translate(0.0D, -0.25D, 0.0D);
@@ -80,6 +74,26 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(0.0D, 0.1D, 0.0D);
             poseStack.scale(0.85F, 0.85F, 0.85F);
         }
+    }
+
+    private static RenderSpec[] commonSpecs() {
+        TurretBlockEntityRenderer.StaticTurretModel[] models =
+                TurretBlockEntityRenderer.StaticTurretModel.values();
+        RenderSpec[] specs = new RenderSpec[models.length];
+        for (TurretBlockEntityRenderer.StaticTurretModel model : models) {
+            specs[model.ordinal()] = renderSpec(legacyCommonBounds(model));
+        }
+        return specs;
+    }
+
+    private static RenderSpec renderSpec(AABB bounds) {
+        double maxSize = Math.max(bounds.getXsize(), Math.max(bounds.getYsize(), bounds.getZsize()));
+        return new RenderSpec(
+                (bounds.minX + bounds.maxX) * 0.5D,
+                (bounds.minY + bounds.maxY) * 0.5D,
+                (bounds.minZ + bounds.maxZ) * 0.5D,
+                (float) Math.max(0.035D, Math.min(0.32D,
+                        WORLD_TARGET_SIZE / Math.max(1.0D, maxSize))));
     }
 
     private static AABB legacyCommonBounds(TurretBlockEntityRenderer.StaticTurretModel model) {
@@ -198,5 +212,8 @@ public class TurretItemRenderer extends BlockEntityWithoutLevelRenderer {
             double scaledZ = rotatedZ * 0.5D;
             LegacyTransformedBounds.includeRotatedY(accumulator, scaledX, scaledY, scaledZ, sinY, cosY);
         });
+    }
+
+    private record RenderSpec(double centerX, double centerY, double centerZ, float fitScale) {
     }
 }

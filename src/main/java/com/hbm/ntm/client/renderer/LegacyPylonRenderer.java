@@ -10,10 +10,10 @@ import com.hbm.ntm.blockentity.HbmLegacyWireNodeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedLineRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.energy.HbmLegacyWireNode;
 import com.hbm.ntm.energy.HbmLegacyWireRenderMath;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -113,7 +113,7 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
         ResourceLocation texture = kind.steel() ? PYLON_MEDIUM_STEEL_TEXTURE : PYLON_MEDIUM_TEXTURE;
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(mediumRotation(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, mediumRotation(facing));
         ObjNetworkModels.PYLON_MEDIUM_LEGACY.renderOnlyInCallOrder(texture, poseStack, buffer,
                 packedLight, packedOverlay, MEDIUM_PYLON);
         if (kind.transformer()) {
@@ -139,7 +139,7 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(largeRotation(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, largeRotation(facing));
         ObjNetworkModels.PYLON_LARGE_LEGACY.renderAll(PYLON_LARGE_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
@@ -163,7 +163,7 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         if (facing.getAxis() == Direction.Axis.Z) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
         ObjNetworkModels.SUBSTATION_LEGACY.renderAll(SUBSTATION_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
@@ -242,19 +242,19 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
 
     private static void applyConnectorRotation(Direction facing, PoseStack poseStack) {
         switch (facing) {
-            case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+            case DOWN -> LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
             case NORTH -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 180.0F);
             }
-            case SOUTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+            case SOUTH -> LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
             case WEST -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
             }
             case EAST -> {
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(270.0F));
+                LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
+                LegacyPoseRotations.rotateZDegrees(poseStack, 270.0F);
             }
             default -> {
             }

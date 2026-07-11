@@ -1,10 +1,10 @@
 {
   "export_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports",
-  "exported_recipe_count": 172,
+  "exported_recipe_count": 424,
   "handlers": [
     {
       "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmCombination.json",
-      "exported_recipe_count": 23,
+      "exported_recipe_count": 53,
       "failures": [],
       "legacy_class": "CombinationRecipes",
       "legacy_file": "hbmCombination.json",
@@ -15,7 +15,7 @@
     },
     {
       "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmCrystallizer.json",
-      "exported_recipe_count": 107,
+      "exported_recipe_count": 329,
       "failures": [],
       "legacy_class": "CrystallizerRecipes",
       "legacy_file": "hbmCrystallizer.json",

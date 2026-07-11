@@ -36,6 +36,8 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
     private int checkDelay;
     private boolean screm;
     private boolean beamShotPacket;
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_AMMO_END - SLOT_AMMO_START + 1);
 
     public TurretMaxwellBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.TURRET_MAXWELL.get(), pos, state, 10_000_000L, 10_000_000L);
@@ -77,7 +79,7 @@ public class TurretMaxwellBlockEntity extends TurretBlockEntityBase implements L
     protected void updateServerTick() {
         if (checkDelay <= 0) {
             checkDelay = 20;
-            LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(
+            LegacyMachineUpgradeManager.Levels levels = upgradeSlotCache.get(
                     getItems(), SLOT_AMMO_START, SLOT_AMMO_END, VALID_UPGRADES);
             speedLevel = levels.getLevel(UpgradeType.SPEED);
             effectLevel = levels.getLevel(UpgradeType.EFFECT);

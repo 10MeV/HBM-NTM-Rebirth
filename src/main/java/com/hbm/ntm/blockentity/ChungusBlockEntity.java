@@ -46,17 +46,22 @@ public class ChungusBlockEntity extends LegacySteamTurbineBlockEntity implements
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ChungusBlockEntity chungus) {
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
         chungus.lastRotor = chungus.rotor;
-        chungus.rotor += chungus.fanAcceleration;
-        if (chungus.rotor >= 360.0F) {
-            chungus.rotor -= 360.0F;
-            chungus.lastRotor -= 360.0F;
+        if (!skipAnimation) {
+            chungus.rotor += chungus.fanAcceleration;
+            if (chungus.rotor >= 360.0F) {
+                chungus.rotor -= 360.0F;
+                chungus.lastRotor -= 360.0F;
+            }
         }
 
         if (chungus.turnTimer > 0) {
             chungus.fanAcceleration = Math.max(0.0F,
                     Math.min(25.0F, chungus.fanAcceleration + 0.075F + chungus.audioDesync));
-            chungus.spawnClouds(level, pos, state);
+            if (!skipAnimation) {
+                chungus.spawnClouds(level, pos, state);
+            }
         } else {
             chungus.fanAcceleration = Math.max(0.0F, Math.min(25.0F, chungus.fanAcceleration - 0.1F));
         }

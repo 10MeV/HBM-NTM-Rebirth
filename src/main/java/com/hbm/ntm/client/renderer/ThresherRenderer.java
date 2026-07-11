@@ -1,11 +1,11 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.ThresherBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -57,7 +57,7 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(thresher, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(rotation(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, rotation(state));
         double armAngle = LegacyTileRenderPlans.THRESHER_DEFAULT_ANGLE
                 - (thresher.getPreviousAngle()
                 + (thresher.getAngle() - thresher.getPreviousAngle()) * partialTick);
@@ -97,7 +97,7 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
         poseStack.pushPose();
         poseStack.translate(translateX, 0.0D, 0.0D);
         poseStack.translate(0.0D, pivotY, pivotZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) angleDegrees);
         poseStack.translate(0.0D, -pivotY, -pivotZ);
         renderPart(handle, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();

@@ -11,7 +11,7 @@ import com.hbm.ntm.client.obj.ObjMissilePartModels.LegacyMissilePart;
 import com.hbm.ntm.item.missile.CustomMissilePartProfile;
 import com.hbm.ntm.item.missile.CustomMissilePartProfile.PartSize;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -58,7 +58,7 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(facing.toYRot()));
+        LegacyPoseRotations.rotateYDegrees(poseStack, facing.toYRot());
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             if (state.getBlock() instanceof CustomMissileLauncherBlock launcher
                     && launcher.kind() == CustomMissileLauncherBlock.Kind.LAUNCH_TABLE) {

@@ -5,8 +5,8 @@ import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.ChargerBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -88,7 +88,7 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
 
     private static void applySlideFrame(PoseStack poseStack, double extend) {
         poseStack.translate(-0.34375D, 0.25D, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
+        LegacyPoseRotations.rotateZDegrees(poseStack, 10.0F);
         poseStack.translate(0.34375D, -0.25D, 0.0D);
         poseStack.translate(0.0D, -0.25D * extend, 0.0D);
     }
@@ -97,7 +97,7 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
             LegacyWavefrontModel.SelectionHandle part, double angle) {
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.28D, 0.0D);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) angle));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) angle);
         poseStack.translate(0.0D, -0.28D, 0.0D);
         renderPart(part, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
@@ -113,9 +113,9 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
         switch (facing) {
             case EAST -> {
             }
-            case SOUTH -> poseStack.mulPose(Axis.YP.rotationDegrees(270.0F));
-            case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            default -> poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            case SOUTH -> LegacyPoseRotations.rotateYDegrees(poseStack, 270.0F);
+            case WEST -> LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+            default -> LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
     }
 }

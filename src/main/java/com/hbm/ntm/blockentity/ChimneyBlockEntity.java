@@ -53,7 +53,8 @@ public class ChimneyBlockEntity extends BlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ChimneyBlockEntity chimney) {
-        if (!level.isClientSide || chimney.onTicks <= 0 || level.getGameTime() % 2L != 0L) {
+        if (!level.isClientSide || chimney.onTicks <= 0 || level.getGameTime() % 2L != 0L
+                || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         if (state.is(ModBlocks.CHIMNEY_INDUSTRIAL.get())) {

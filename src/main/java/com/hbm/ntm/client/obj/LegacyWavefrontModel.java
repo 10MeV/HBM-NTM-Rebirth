@@ -827,7 +827,15 @@ public final class LegacyWavefrontModel {
         if (groups == null) {
             return;
         }
+        if (groups.isEmpty()) {
+            warnMissingNamedGroups(selection.rawNames());
+            return;
+        }
         PreparedBatch batch = PreparedBatch.clippedFrom(groups, "clipped-selection", clipX, clipY, clipZ, clipD);
+        if (batch.empty()) {
+            warnMissingNamedGroups(selection.rawNames());
+            return;
+        }
         RENDER_BACKEND.renderUntexturedTransient(batch, poseStack, buffer, red, green, blue, alpha, renderMode,
                 RenderBackendFallbackReason.UNTEXTURED_CLIPPED);
         warnMissingNamedGroups(selection.rawNames());
@@ -1180,6 +1188,9 @@ public final class LegacyWavefrontModel {
     private static void renderPreparedBatch(PreparedBatch batch, ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             boolean legacyShadow, boolean smoothing, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+        if (batch == null || batch.empty()) {
+            return;
+        }
         RENDER_BACKEND.renderTextured(batch, textureLocation, poseStack, buffer, packedLight, packedOverlay,
                 red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
     }
@@ -1227,6 +1238,9 @@ public final class LegacyWavefrontModel {
     private static void renderPreparedBatchWithSprite(PreparedBatch batch, TextureAtlasSprite sprite, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             boolean legacyShadow, boolean partBrightness, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
+        if (batch == null || batch.empty()) {
+            return;
+        }
         RENDER_BACKEND.renderSprite(batch, sprite, poseStack, buffer, packedLight, packedOverlay,
                 red, green, blue, alpha, legacyShadow, partBrightness, renderMode, uvTransform);
     }
@@ -1266,6 +1280,9 @@ public final class LegacyWavefrontModel {
 
     private static void renderPreparedBatchUntextured(PreparedBatch batch, PoseStack poseStack, MultiBufferSource buffer,
             int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
+        if (batch == null || batch.empty()) {
+            return;
+        }
         RENDER_BACKEND.renderUntextured(batch, poseStack, buffer, red, green, blue, alpha, renderMode);
     }
 
@@ -12323,11 +12340,18 @@ public final class LegacyWavefrontModel {
         }
 
         private PreparedBatch batch() {
+            if (groups.isEmpty()) {
+                return null;
+            }
             if (batch == null) {
                 batch = PreparedBatch.from(groups, stableBatchKey);
-                CACHE_METRICS.recordSelectionCachePreparedBatchBuild();
+                if (batch.empty()) {
+                    CACHE_METRICS.recordSelectionCacheEmptyBuild();
+                } else {
+                    CACHE_METRICS.recordSelectionCachePreparedBatchBuild();
+                }
             }
-            return batch;
+            return batch.empty() ? null : batch;
         }
     }
 
@@ -12339,7 +12363,7 @@ public final class LegacyWavefrontModel {
         private LegacyWavefrontModel model;
         private int generation = Integer.MIN_VALUE;
         private List<Group> groups = List.of();
-        private PreparedBatch batch = PreparedBatch.EMPTY;
+        private PreparedBatch batch;
 
         private SelectionHandle(SelectionCacheMode mode, List<String> requestedNames, List<String> normalizedNames,
                 String[] rawNames) {
@@ -12353,12 +12377,19 @@ public final class LegacyWavefrontModel {
             if (this.model != model || generation != model.selectionGeneration) {
                 SelectionCacheKey key = new SelectionCacheKey(mode, normalizedNames);
                 groups = model.createSelectedGroups(key);
-                batch = PreparedBatch.from(groups, model.stableSelectionBatchKey(key, groups));
                 CACHE_METRICS.recordSelectionHandleRefresh();
                 if (groups.isEmpty()) {
+                    batch = PreparedBatch.EMPTY;
                     CACHE_METRICS.recordSelectionHandleEmptyBuild();
+                } else {
+                    batch = PreparedBatch.from(groups, model.stableSelectionBatchKey(key, groups));
+                    if (batch.empty()) {
+                        CACHE_METRICS.recordSelectionHandleEmptyBuild();
+                        batch = PreparedBatch.EMPTY;
+                    } else {
+                        CACHE_METRICS.recordSelectionHandlePreparedBatchBuild();
+                    }
                 }
-                CACHE_METRICS.recordSelectionHandlePreparedBatchBuild();
                 this.model = model;
                 generation = model.selectionGeneration;
             }

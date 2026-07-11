@@ -3,9 +3,9 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.client.obj.LegacyRenderColor;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -222,8 +222,8 @@ public final class LegacyRbmkMachineRenderer {
             int packedOverlay, double tiltFrontDegrees, double tiltLeftDegrees) {
         poseStack.pushPose();
         poseStack.translate(CRANE_JOYSTICK_PIVOT_X, CRANE_JOYSTICK_PIVOT_Y, 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) tiltFrontDegrees));
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) tiltLeftDegrees));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) tiltFrontDegrees);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) tiltLeftDegrees);
         poseStack.translate(-CRANE_JOYSTICK_PIVOT_X, CRANE_JOYSTICK_RETURN_Y, 0.0D);
         ObjRbmkModels.renderCraneConsolePart("Joystick", poseStack, buffer, packedLight, packedOverlay,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL);
@@ -237,8 +237,8 @@ public final class LegacyRbmkMachineRenderer {
         }
         poseStack.pushPose();
         poseStack.translate(plan.pivotX(), plan.pivotY(), 0.0D);
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) plan.tiltFrontDegrees()));
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.tiltLeftDegrees()));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) plan.tiltFrontDegrees());
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) plan.tiltLeftDegrees());
         poseStack.translate(-plan.pivotX(), plan.restoreY(), 0.0D);
         ObjRbmkModels.renderCraneConsolePart("Joystick", poseStack, buffer, packedLight, packedOverlay,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL);
@@ -249,7 +249,7 @@ public final class LegacyRbmkMachineRenderer {
             int packedOverlay, String partName, double pivotZ, double angleDegrees) {
         poseStack.pushPose();
         poseStack.translate(0.0D, CRANE_METER_PIVOT_Y, pivotZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) angleDegrees));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) angleDegrees);
         poseStack.translate(0.0D, -CRANE_METER_PIVOT_Y, -pivotZ);
         ObjRbmkModels.renderCraneConsolePart(partName, poseStack, buffer, packedLight, packedOverlay,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL);
@@ -263,7 +263,7 @@ public final class LegacyRbmkMachineRenderer {
         }
         poseStack.pushPose();
         poseStack.translate(0.0D, plan.pivotY(), plan.pivotZ());
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) plan.angleDegrees()));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) plan.angleDegrees());
         poseStack.translate(0.0D, -plan.pivotY(), -plan.pivotZ());
         ObjRbmkModels.renderCraneConsolePart(plan.partName(), poseStack, buffer, packedLight, packedOverlay,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL);
@@ -313,7 +313,7 @@ public final class LegacyRbmkMachineRenderer {
 
         poseStack.pushPose();
         poseStack.translate(-posFront, 0.0D, posLeft);
-        poseStack.mulPose(Axis.YP.rotationDegrees(normalizedCraneRotation(state.craneRotationOffset())));
+        LegacyPoseRotations.rotateYDegrees(poseStack, normalizedCraneRotation(state.craneRotationOffset()));
         renderCraneGirder(poseStack, buffer, packedLight, packedOverlay, state.spans(), posFront, posLeft,
                 state.craneRotationOffset());
         ObjRbmkModels.renderCranePart("Main", poseStack, buffer, packedLight, packedOverlay,
@@ -330,9 +330,9 @@ public final class LegacyRbmkMachineRenderer {
         CraneSpans safe = spans == null ? CraneSpans.ZERO : spans;
         GirderPlan plan = girderPlan(safe, posFront, posLeft, craneRotationOffset);
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(-normalizedCraneRotation(craneRotationOffset)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -normalizedCraneRotation(craneRotationOffset));
         poseStack.translate(plan.translateX(), 0.0D, plan.translateZ());
-        poseStack.mulPose(Axis.YP.rotationDegrees(normalizedCraneRotation(craneRotationOffset)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, normalizedCraneRotation(craneRotationOffset));
         for (int i = 0; i < plan.span(); i++) {
             ObjRbmkModels.renderCranePart("Girder", poseStack, buffer, packedLight, packedOverlay,
                     LegacyTexturedRenderMode.CUTOUT_NO_CULL);
@@ -436,7 +436,7 @@ public final class LegacyRbmkMachineRenderer {
         }
         poseStack.pushPose();
         poseStack.scale(TERMINAL_TEXT_SCALE, -TERMINAL_TEXT_SCALE, TERMINAL_TEXT_SCALE);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         font.drawInBatch(text, 0.0F, -font.lineHeight / 2.0F, color, false,
                 poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
         poseStack.popPose();

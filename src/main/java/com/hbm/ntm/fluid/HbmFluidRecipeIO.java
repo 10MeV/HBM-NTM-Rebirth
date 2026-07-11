@@ -37,6 +37,25 @@ public final class HbmFluidRecipeIO {
         return setupRecipeTanks(inputStacks, outputStacks, inputTanks, outputTanks, 0);
     }
 
+    public static boolean setupRecipeTanksChanged(
+            @Nullable List<HbmFluidStack> inputStacks, @Nullable List<HbmFluidStack> outputStacks,
+            @Nullable List<HbmFluidTank> inputTanks, @Nullable List<HbmFluidTank> outputTanks, int defaultCapacity) {
+        return setupRecipeTankGroupChanged(inputStacks, inputTanks, defaultCapacity)
+                | setupRecipeTankGroupChanged(outputStacks, outputTanks, defaultCapacity);
+    }
+
+    public static boolean setupLegacyFixedRecipeTanksChanged(
+            @Nullable List<HbmFluidStack> inputStacks, @Nullable List<HbmFluidStack> outputStacks,
+            @Nullable List<HbmFluidTank> inputTanks, @Nullable List<HbmFluidTank> outputTanks) {
+        return setupRecipeTanksChanged(inputStacks, outputStacks, inputTanks, outputTanks, 0);
+    }
+
+    public static boolean processLegacyFixedRecipeIo(
+            List<HbmFluidStack> inputStacks, List<HbmFluidStack> outputStacks,
+            List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks, boolean simulate) {
+        return processRecipeIo(inputStacks, outputStacks, inputTanks, outputTanks, simulate);
+    }
+
     public static RecipeFluidIoProcessReport processLegacyFixedRecipeIoReport(
             List<HbmFluidStack> inputStacks, List<HbmFluidStack> outputStacks,
             List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks, boolean simulate) {
@@ -120,6 +139,12 @@ public final class HbmFluidRecipeIO {
         return new FluidStackSetTransferReport(check, transfers, simulate);
     }
 
+    public static boolean consumeInputs(List<HbmFluidStack> requiredStacks, List<HbmFluidTank> inputTanks,
+            boolean simulate) {
+        return canConsumeInputs(requiredStacks, inputTanks)
+                && (simulate || consumeInputsUnchecked(requiredStacks, inputTanks));
+    }
+
     public static FluidStackSetTransferReport produceOutputsReport(List<HbmFluidStack> outputStacks,
             List<HbmFluidTank> outputTanks, boolean simulate) {
         FluidStackSetCheckReport check = inspectOutputs(outputStacks, outputTanks);
@@ -143,6 +168,12 @@ public final class HbmFluidRecipeIO {
         return new FluidStackSetTransferReport(check, transfers, simulate);
     }
 
+    public static boolean produceOutputs(List<HbmFluidStack> outputStacks, List<HbmFluidTank> outputTanks,
+            boolean simulate) {
+        return canProduceOutputs(outputStacks, outputTanks)
+                && (simulate || produceOutputsUnchecked(outputStacks, outputTanks));
+    }
+
     public static RecipeFluidIoCheckReport inspectRecipeIo(List<HbmFluidStack> inputStacks,
             List<HbmFluidStack> outputStacks, List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks) {
         return new RecipeFluidIoCheckReport(
@@ -153,6 +184,25 @@ public final class HbmFluidRecipeIO {
     public static RecipeFluidIoProcessReport previewRecipeIo(List<HbmFluidStack> inputStacks,
             List<HbmFluidStack> outputStacks, List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks) {
         return processRecipeIoReport(inputStacks, outputStacks, inputTanks, outputTanks, true);
+    }
+
+    public static boolean canProcessRecipeIo(List<HbmFluidStack> inputStacks,
+            List<HbmFluidStack> outputStacks, List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks) {
+        return canConsumeInputs(inputStacks, inputTanks)
+                && canProduceOutputs(outputStacks, outputTanks);
+    }
+
+    public static boolean processRecipeIo(List<HbmFluidStack> inputStacks,
+            List<HbmFluidStack> outputStacks, List<HbmFluidTank> inputTanks, List<HbmFluidTank> outputTanks,
+            boolean simulate) {
+        if (!canProcessRecipeIo(inputStacks, outputStacks, inputTanks, outputTanks)) {
+            return false;
+        }
+        if (simulate) {
+            return true;
+        }
+        return consumeInputsUnchecked(inputStacks, inputTanks)
+                && produceOutputsUnchecked(outputStacks, outputTanks);
     }
 
     public static RecipeFluidIoProcessReport processRecipeIoReport(List<HbmFluidStack> inputStacks,
@@ -167,8 +217,192 @@ public final class HbmFluidRecipeIO {
         return new RecipeFluidIoProcessReport(check, inputs, outputs, simulate, false);
     }
 
+    public static boolean canConsumeInputs(List<HbmFluidStack> requiredStacks, List<HbmFluidTank> inputTanks) {
+        int checked = Math.min(size(requiredStacks), size(inputTanks));
+        for (int i = 0; i < checked; i++) {
+            HbmFluidStack stack = stackAt(requiredStacks, i);
+            if (stack == null || stack.isEmpty()) {
+                continue;
+            }
+            HbmFluidTank tank = tankAt(inputTanks, i);
+            if (tank == null
+                    || tank.getTankType() != stack.type()
+                    || tank.getPressure() != HbmFluidTank.clampPressure(stack.pressure())
+                    || tank.getFill() < stack.amount()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean canProduceOutputs(List<HbmFluidStack> outputStacks, List<HbmFluidTank> outputTanks) {
+        int checked = Math.min(size(outputStacks), size(outputTanks));
+        for (int i = 0; i < checked; i++) {
+            HbmFluidStack stack = stackAt(outputStacks, i);
+            if (stack == null || stack.isEmpty()) {
+                continue;
+            }
+            HbmFluidTank tank = tankAt(outputTanks, i);
+            if (tank == null || !tank.canAccept(stack.type(), stack.pressure()) || tank.getSpace() < stack.amount()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static HbmFluidTank.TankState snapshot(@Nullable HbmFluidTank tank) {
         return tank == null ? new HbmFluidTank.TankState(HbmFluids.NONE, 0, 0, 0) : tank.snapshot();
+    }
+
+    private static boolean setupRecipeTankGroupChanged(@Nullable List<HbmFluidStack> stacks,
+            @Nullable List<HbmFluidTank> tanks, int defaultCapacity) {
+        if (tanks == null || tanks.isEmpty()) {
+            return false;
+        }
+        boolean changed = false;
+        for (int i = 0; i < tanks.size(); i++) {
+            changed |= conformTankChanged(tanks.get(i), stackAt(stacks, i), defaultCapacity);
+        }
+        return changed;
+    }
+
+    public static boolean conformTankChanged(@Nullable HbmFluidTank tank, @Nullable HbmFluidStack stack,
+            int defaultCapacity) {
+        if (stack == null || stack.isEmpty()) {
+            return conformTankChanged(tank, HbmFluids.NONE, 0, 0, defaultCapacity);
+        }
+        return conformTankChanged(tank, stack.type(), stack.amount(), stack.pressure(), defaultCapacity);
+    }
+
+    public static boolean conformTankChanged(@Nullable HbmFluidTank tank, @Nullable FluidType type, int amount,
+            int pressure, int defaultCapacity) {
+        if (tank == null) {
+            return false;
+        }
+        FluidType beforeType = tank.getTankType();
+        int beforeFill = tank.getFill();
+        int beforeCapacity = tank.getMaxFill();
+        int beforePressure = tank.getPressure();
+        FluidType targetType = type == null ? HbmFluids.NONE : type;
+        if (targetType == HbmFluids.NONE || amount <= 0) {
+            tank.resetTank();
+        } else {
+            tank.setTankType(targetType);
+            tank.withPressure(pressure);
+            if (defaultCapacity > 0) {
+                long recipeCapacity = (long) amount * 2L;
+                long target = Math.max(Math.max((long) tank.getFill(), recipeCapacity), defaultCapacity);
+                tank.changeTankSize((int) Math.min(Integer.MAX_VALUE, target));
+            }
+        }
+        return beforeType != tank.getTankType()
+                || beforeFill != tank.getFill()
+                || beforeCapacity != tank.getMaxFill()
+                || beforePressure != tank.getPressure();
+    }
+
+    public static boolean canConsumeInput(@Nullable HbmFluidTank tank, @Nullable HbmFluidStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return true;
+        }
+        return tank != null
+                && tank.getTankType() == stack.type()
+                && tank.getPressure() == HbmFluidTank.clampPressure(stack.pressure())
+                && tank.getFill() >= stack.amount();
+    }
+
+    public static boolean canConsumeInput(@Nullable HbmFluidTank tank, int amount) {
+        return amount <= 0 || (tank != null && tank.getFill() >= amount);
+    }
+
+    public static boolean consumeInput(@Nullable HbmFluidTank tank, @Nullable HbmFluidStack stack, boolean simulate) {
+        if (!canConsumeInput(tank, stack)) {
+            return false;
+        }
+        return stack == null || stack.isEmpty() || simulate || tank.drain(stack.amount(), false) == stack.amount();
+    }
+
+    public static boolean consumeInput(@Nullable HbmFluidTank tank, int amount, boolean simulate) {
+        if (!canConsumeInput(tank, amount)) {
+            return false;
+        }
+        return amount <= 0 || simulate || tank.drain(amount, false) == amount;
+    }
+
+    public static boolean canProduceOutput(@Nullable HbmFluidTank tank, @Nullable HbmFluidStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return true;
+        }
+        return canProduceOutput(tank, stack.type(), stack.amount(), stack.pressure());
+    }
+
+    public static boolean canProduceOutput(@Nullable HbmFluidTank tank, @Nullable FluidType type, int amount,
+            int pressure) {
+        FluidType outputType = type == null ? HbmFluids.NONE : type;
+        return outputType == HbmFluids.NONE || amount <= 0
+                || (tank != null && tank.canAccept(outputType, pressure) && tank.getSpace() >= amount);
+    }
+
+    public static boolean produceOutput(@Nullable HbmFluidTank tank, @Nullable HbmFluidStack stack, boolean simulate) {
+        if (!canProduceOutput(tank, stack)) {
+            return false;
+        }
+        return stack == null || stack.isEmpty() || simulate
+                || tank.fill(stack.type(), stack.amount(), stack.pressure(), false) == stack.amount();
+    }
+
+    public static boolean produceOutput(@Nullable HbmFluidTank tank, @Nullable FluidType type, int amount,
+            int pressure, boolean simulate) {
+        if (!canProduceOutput(tank, type, amount, pressure)) {
+            return false;
+        }
+        FluidType outputType = type == null ? HbmFluids.NONE : type;
+        return outputType == HbmFluids.NONE || amount <= 0 || simulate
+                || tank.fill(outputType, amount, pressure, false) == amount;
+    }
+
+    private static boolean consumeInputsUnchecked(List<HbmFluidStack> requiredStacks, List<HbmFluidTank> inputTanks) {
+        int checked = Math.min(size(requiredStacks), size(inputTanks));
+        for (int i = 0; i < checked; i++) {
+            HbmFluidStack stack = stackAt(requiredStacks, i);
+            if (stack == null || stack.isEmpty()) {
+                continue;
+            }
+            HbmFluidTank tank = tankAt(inputTanks, i);
+            if (tank == null || tank.drain(stack.amount(), false) != stack.amount()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean produceOutputsUnchecked(List<HbmFluidStack> outputStacks, List<HbmFluidTank> outputTanks) {
+        int checked = Math.min(size(outputStacks), size(outputTanks));
+        for (int i = 0; i < checked; i++) {
+            HbmFluidStack stack = stackAt(outputStacks, i);
+            if (stack == null || stack.isEmpty()) {
+                continue;
+            }
+            HbmFluidTank tank = tankAt(outputTanks, i);
+            if (tank == null || tank.fill(stack.type(), stack.amount(), stack.pressure(), false) != stack.amount()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int size(@Nullable List<?> list) {
+        return list == null ? 0 : list.size();
+    }
+
+    @Nullable
+    private static HbmFluidStack stackAt(@Nullable List<HbmFluidStack> stacks, int index) {
+        return stacks == null || index < 0 || index >= stacks.size() ? null : stacks.get(index);
+    }
+
+    @Nullable
+    private static HbmFluidTank tankAt(@Nullable List<HbmFluidTank> tanks, int index) {
+        return tanks == null || index < 0 || index >= tanks.size() ? null : tanks.get(index);
     }
 
     private static List<HbmFluidStack> safeStacks(@Nullable List<HbmFluidStack> stacks) {

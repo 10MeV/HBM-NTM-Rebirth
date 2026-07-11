@@ -1,10 +1,10 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.SoyuzCapsuleBlockEntity;
 import com.hbm.ntm.client.obj.ObjSoyuzModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -39,8 +39,8 @@ public class SoyuzCapsuleBlockEntityRenderer implements BlockEntityRenderer<Soyu
         int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, -0.25D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-25.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(15.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, -25.0F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, 15.0F);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             ObjSoyuzModels.renderLanderCapsule(false, poseStack, buffer, modelLight, OverlayTexture.NO_OVERLAY);
         }

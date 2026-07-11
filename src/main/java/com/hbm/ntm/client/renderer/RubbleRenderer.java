@@ -1,8 +1,8 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.entity.projectile.RubbleEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -25,10 +25,10 @@ public class RubbleRenderer extends EntityRenderer<RubbleEntity> {
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.scale(0.45F, 0.45F, 0.45F);
-        poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees((entity.tickCount + partialTick) * 10.0F));
-        poseStack.mulPose(Axis.YP.rotationDegrees((entity.tickCount + partialTick) * 10.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees((entity.tickCount + partialTick) * 10.0F));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (entity.tickCount + partialTick) * 10.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, (entity.tickCount + partialTick) * 10.0F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (entity.tickCount + partialTick) * 10.0F);
         poseStack.translate(-0.5D, -0.5D, -0.5D);
         HbmClientRenderUtil.renderSingleBlock(blockRenderer, entity.blockState(), poseStack, buffer, packedLight);
         poseStack.popPose();

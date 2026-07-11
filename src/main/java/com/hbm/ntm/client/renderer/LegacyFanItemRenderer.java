@@ -1,8 +1,8 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyFanBlock;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -40,8 +40,8 @@ public class LegacyFanItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.625D, 0.0D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(0.0625F, 0.0625F, 0.0625F);
             poseStack.translate(0.0D, -2.5D, 0.0D);
             poseStack.scale(5.0F, 5.0F, 5.0F);
@@ -51,7 +51,7 @@ public class LegacyFanItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (displayContext == ItemDisplayContext.GROUND) {
             poseStack.translate(0.5D, 0.25D, 0.5D);
             poseStack.scale(0.375F, 0.375F, 0.375F);
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
             return;
         }
 
@@ -59,7 +59,7 @@ public class LegacyFanItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.scale(0.25F, 0.25F, 0.25F);
         if (displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
                 && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
     }
 }

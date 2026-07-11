@@ -90,6 +90,8 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     private final Kind kind;
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(SLOT_UPGRADE_END - SLOT_UPGRADE_START + 1);
     private final ItemStackHandler items;
     private final HbmEnergyStorage energy;
     private final HbmFluidTank[] inputTanks;
@@ -108,6 +110,9 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     private boolean frame;
     private Object audioLoop;
     private boolean wasClientProcessing;
+    @Nullable
+    private ProcessingFactors cachedUpgradeFactors;
+    private long appliedMaxPower = Long.MIN_VALUE;
     private int prevAnim;
     private int anim;
     private double prevRing;
@@ -164,6 +169,9 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
         return new ItemStackHandler(kind.slotCount) {
             @Override
             protected void onContentsChanged(int slot) {
+                if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
+                    invalidateUpgradeFactors();
+                }
                 setChanged();
             }
 
@@ -223,7 +231,11 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
 
     public static void clientTick(Level level, BlockPos pos, BlockState state,
             LegacyGenericSelectorMachineBlockEntity blockEntity) {
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
         if (blockEntity.kind == Kind.PUREX) {
+            if (skipAnimation) {
+                return;
+            }
             blockEntity.prevAnim = blockEntity.anim;
             if (blockEntity.didProcess) {
                 blockEntity.anim++;
@@ -234,10 +246,13 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
             return;
         }
 
-        if (level.getGameTime() % 20L == 0L) {
+        if (!skipAnimation && level.getGameTime() % 20L == 0L) {
             blockEntity.frame = !level.getBlockState(pos.above(3)).isAir();
         }
         blockEntity.updatePrecassAudio();
+        if (skipAnimation) {
+            return;
+        }
         for (int i = 0; i < 3; i++) {
             blockEntity.prevArmAngles[i] = blockEntity.armAngles[i];
         }
@@ -385,8 +400,11 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     }
 
     private ProcessingFactors upgradeFactors() {
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(
-                items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
+        if (cachedUpgradeFactors != null) {
+            return cachedUpgradeFactors;
+        }
+        LegacyMachineUpgradeManager.Levels levels =
+                upgradeSlotCache.get(items, SLOT_UPGRADE_START, SLOT_UPGRADE_END, VALID_UPGRADES);
         double speed = 1.0D;
         double pow = 1.0D;
         int speedLevel = Math.min(levels.getLevel(UpgradeType.SPEED), 3);
@@ -397,14 +415,28 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
         pow -= powerLevel * 0.25D;
         pow += speedLevel;
         pow += overdriveLevel * 10.0D / 3.0D;
-        return new ProcessingFactors(speed, pow);
+        cachedUpgradeFactors = new ProcessingFactors(speed, pow);
+        return cachedUpgradeFactors;
+    }
+
+    private void invalidateUpgradeFactors() {
+        cachedUpgradeFactors = null;
+        upgradeSlotCache.invalidate();
     }
 
     private void updateDynamicCapacity(@Nullable GenericMachineRecipe recipe) {
-        long targetMax = recipe == null ? kind.defaultMaxPower : Math.max(kind.defaultMaxPower, recipe.getPower() * 100L);
-        targetMax = Math.max(targetMax, energy.getPower());
+        applyDynamicCapacity(recipe == null ? kind.defaultMaxPower : recipe.getPower() * 100L);
+    }
+
+    private void applyDynamicCapacity(long targetBase) {
+        long targetMax = Math.max(Math.max(targetBase, kind.defaultMaxPower), energy.getPower());
+        if (appliedMaxPower == targetMax && energy.getMaxPower() == targetMax
+                && energy.getReceiverSpeed() == targetMax && energy.getProviderSpeed() == 0L) {
+            return;
+        }
         energy.setMaxPower(targetMax);
         energy.setTransferRates(targetMax, 0L);
+        appliedMaxPower = targetMax;
     }
 
     private void subscribeEnergyReceiverToPorts() {
@@ -664,6 +696,8 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
         readTanks(tag);
         progress = tag.getDouble(TAG_PROGRESS);
         selectedRecipe = GenericMachineRecipeSelector.normalize(tag.getString(TAG_RECIPE));
+        invalidateUpgradeFactors();
+        appliedMaxPower = Long.MIN_VALUE;
         updateDynamicCapacity(getSelectedRecipeDefinition());
     }
 

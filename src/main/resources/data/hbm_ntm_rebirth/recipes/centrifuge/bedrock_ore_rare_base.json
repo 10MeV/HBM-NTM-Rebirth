@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"base\",type:\"rare\"}"
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"primary\",type:\"rare\"}"
+    },
+    {
+      "item": "minecraft:gravel"
+    }
+  ],
+  "source_order": 88
+}

@@ -12,9 +12,6 @@
           "tag": "forge:plates/iron"
         },
         {
-          "tag": "forge:gems/iron"
-        },
-        {
           "tag": "forge:dusts/iron"
         }
       ],
@@ -24,16 +21,7 @@
     {
       "ingredient": [
         {
-          "tag": "forge:ingots/any_coke"
-        },
-        {
-          "tag": "forge:plates/any_coke"
-        },
-        {
           "tag": "forge:gems/any_coke"
-        },
-        {
-          "tag": "forge:dusts/any_coke"
         }
       ],
       "count": 1,

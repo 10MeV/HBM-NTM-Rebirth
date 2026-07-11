@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.item.LegacyFileCabinetBlockItem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -39,11 +39,11 @@ public class LegacyFileCabinetItemRenderer extends BlockEntityWithoutLevelRender
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {
         if (displayContext == ItemDisplayContext.GUI) {
             poseStack.translate(0.5D, 0.625D, 0.0D);
-            poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
-            poseStack.mulPose(Axis.YP.rotationDegrees(45.0F));
+            LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(0.0625F, 0.0625F, 0.0625F);
             poseStack.translate(-1.0D, 0.5D, -1.0D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             poseStack.scale(4.0F, 4.0F, 4.0F);
             poseStack.translate(0.0D, -1.25D, 0.0D);
             poseStack.scale(2.75F, 2.75F, 2.75F);
@@ -54,7 +54,7 @@ public class LegacyFileCabinetItemRenderer extends BlockEntityWithoutLevelRender
         poseStack.scale(0.5F, 0.5F, 0.5F);
         if (displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
                 && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         }
     }
 }

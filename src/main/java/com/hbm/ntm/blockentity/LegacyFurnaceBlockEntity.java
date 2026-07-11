@@ -60,10 +60,15 @@ public class LegacyFurnaceBlockEntity extends BlockEntity implements MenuProvide
 
     private final Kind kind;
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
+    private final LegacyMachineUpgradeManager.SlotCache ironUpgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(1);
     private final ItemStackHandler items = new ItemStackHandler(6) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot == 4) {
+                ironUpgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -136,7 +141,7 @@ public class LegacyFurnaceBlockEntity extends BlockEntity implements MenuProvide
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, LegacyFurnaceBlockEntity furnace) {
-        if (!furnace.wasOn) {
+        if (!furnace.wasOn || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         Direction dir = state.hasProperty(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
@@ -186,8 +191,7 @@ public class LegacyFurnaceBlockEntity extends BlockEntity implements MenuProvide
         int oldBurn = burnTime;
         int oldProgress = ironProgress;
         boolean oldOn = wasOn;
-        LegacyMachineUpgradeManager.Levels levels = LegacyMachineUpgradeManager.checkSlots(items, 4, 4,
-                IRON_UPGRADES);
+        LegacyMachineUpgradeManager.Levels levels = ironUpgradeSlotCache.get(items, 4, 4, IRON_UPGRADES);
         ironProcessingTime = IRON_BASE_TIME - ((IRON_BASE_TIME / 2)
                 * Math.min(levels.getLevel(UpgradeType.SPEED), 3) / 3);
         wasOn = false;
@@ -448,6 +452,7 @@ public class LegacyFurnaceBlockEntity extends BlockEntity implements MenuProvide
         heat = tag.getInt("heat");
         steelProgress = normalizedIntArray(tag.getIntArray(tag.contains("steelProgress") ? "steelProgress" : "progress"));
         steelBonus = normalizedIntArray(tag.getIntArray("bonus"));
+        ironUpgradeSlotCache.invalidate();
         lastItems = new ItemStack[] {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY};
         ListTag list = tag.getList("lastItems", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {

@@ -8,7 +8,7 @@ import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.TexturedObjPartGroup;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.Util;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -54,14 +54,14 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
             poseStack.translate(0.5D, 0.0D, 0.5D);
             if (blockEntity.isTilted()) {
                 poseStack.translate(0.0D, -1.0D, 0.0D);
-                poseStack.mulPose(Axis.ZP.rotationDegrees(10.0F));
-                poseStack.mulPose(Axis.YP.rotationDegrees(5.0F));
+                LegacyPoseRotations.rotateZDegrees(poseStack, 10.0F);
+                LegacyPoseRotations.rotateYDegrees(poseStack, 5.0F);
             }
             ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
                     poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Torus");
 
             poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees(blockEntity.getMagnet(partialTick)));
+            LegacyPoseRotations.rotateYDegrees(poseStack, blockEntity.getMagnet(partialTick));
             ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
                     poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Magnet");
             poseStack.popPose();

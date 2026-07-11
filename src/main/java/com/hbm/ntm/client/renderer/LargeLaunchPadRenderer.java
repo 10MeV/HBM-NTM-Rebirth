@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.LargeLaunchPadBlock;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.LargeLaunchPadBlockEntity;
@@ -8,7 +9,6 @@ import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.hbm.ntm.item.missile.MissileItem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -53,7 +53,7 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yRotation(facing));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(launchPad)) {
             if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
@@ -83,7 +83,7 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         float erectorAngle = launchPad.getErector(partialTick);
         float lift = launchPad.getLift(partialTick);
         poseStack.translate(0.0D, parts.pivotY(), -parts.pivotZ());
-        poseStack.mulPose(Axis.XN.rotationDegrees(erectorAngle));
+        LegacyPoseRotations.rotateXDegrees(poseStack, -(erectorAngle));
         poseStack.translate(0.0D, -parts.pivotY(), parts.pivotZ());
         ObjLaunchModels.renderMissileErectorPart(parts.pivot(), parts.texture(), poseStack, buffer, packedLight,
                 packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);

@@ -1,0 +1,32 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary_second\",type:\"actinide\"}"
+  },
+  "outputs": [
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:9200,name:\"Uranium\"}"
+    },
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:9032,name:\"Thorium232\"}"
+    },
+    {
+      "count": 4,
+      "item": "hbm_ntm_rebirth:bedrock_ore_fragment",
+      "nbt": "{mat:9032,name:\"Thorium232\"}"
+    },
+    {
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"crumbs\",type:\"actinide\"}"
+    }
+  ],
+  "source_order": 116
+}

@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
 import com.hbm.ntm.entity.missile.AntiBallisticMissileEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -21,8 +21,8 @@ public class AntiBallisticMissileRenderer extends EntityRenderer<AntiBallisticMi
     public void render(AntiBallisticMissileEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot())));
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F - Mth.lerp(partialTick, entity.xRotO, entity.getXRot())));
+        LegacyPoseRotations.rotateYDegrees(poseStack, Mth.lerp(partialTick, entity.yRotO, entity.getYRot()));
+        LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F - Mth.lerp(partialTick, entity.xRotO, entity.getXRot()));
         ObjMissilePartModels.MISSILE_ABM.renderAll(ObjMissilePartModels.MISSILE_ABM_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();

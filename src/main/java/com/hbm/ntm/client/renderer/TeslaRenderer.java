@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.TeslaBlockEntity;
-import com.hbm.ntm.client.obj.LegacyBeamRenderer;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -56,21 +55,10 @@ public class TeslaRenderer implements BlockEntityRenderer<TeslaBlockEntity> {
 
         poseStack.pushPose();
         poseStack.translate(0.5D, TeslaBlockEntity.OFFSET, 0.5D);
-        LegacyMachineEffectPresenter.enqueueSolidBeamGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                false, beams -> {
-            for (TeslaBlockEntity.TeslaTarget target : targetSnapshot) {
-                double dx = target.x() - sourceX;
-                double dy = target.y() - sourceY;
-                double dz = target.z() - sourceZ;
-                double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                beams.add(-dx, dy, -dz,
-                        LegacyBeamRenderer.WaveType.RANDOM,
-                        LegacyTileRenderPlans.TESLA_BEAM_COLOR, LegacyTileRenderPlans.TESLA_BEAM_COLOR,
-                        start, (int) (length * 5.0D),
-                        LegacyTileRenderPlans.TESLA_BEAM_SIZE, LegacyTileRenderPlans.TESLA_BEAM_LAYERS,
-                        LegacyTileRenderPlans.TESLA_BEAM_THICKNESS);
-            }
-        });
+        LegacyMachineEffectPresenter.enqueueTeslaTargetBeams(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
+                targetSnapshot, sourceX, sourceY, sourceZ, start, LegacyTileRenderPlans.TESLA_BEAM_COLOR,
+                LegacyTileRenderPlans.TESLA_BEAM_SIZE, LegacyTileRenderPlans.TESLA_BEAM_LAYERS,
+                LegacyTileRenderPlans.TESLA_BEAM_THICKNESS);
         poseStack.popPose();
     }
 }

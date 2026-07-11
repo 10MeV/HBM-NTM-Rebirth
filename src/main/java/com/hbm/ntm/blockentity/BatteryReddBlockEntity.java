@@ -152,14 +152,16 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
     public static void clientTick(Level level, BlockPos pos, BlockState state, BatteryReddBlockEntity battery) {
         battery.previousRotation = battery.rotation;
         float speed = battery.getSpeed();
-        battery.rotation += speed;
-        if (battery.rotation >= 360.0F) {
-            battery.rotation -= 360.0F;
-            battery.previousRotation -= 360.0F;
+        if (!LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            battery.rotation += speed;
+            if (battery.rotation >= 360.0F) {
+                battery.rotation -= 360.0F;
+                battery.previousRotation -= 360.0F;
+            }
         }
         float pitch = 0.5F + speed / 15.0F * 1.5F;
         battery.audioLoop = LegacyMachineAudioBridge.updateLoop(battery.audioLoop, battery,
-                "hbm:block.fensuHum", battery.previousRotation != battery.rotation, 30.0D, 25.0F,
+                "hbm:block.fensuHum", speed > 0.0F, 30.0D, 25.0F,
                 battery.getVolume(1.5F), pitch);
     }
 

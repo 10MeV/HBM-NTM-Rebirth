@@ -5,7 +5,7 @@ import com.hbm.ntm.client.obj.ObjProjectileModels;
 import com.hbm.ntm.entity.projectile.ZirnoxDebrisEntity;
 import com.hbm.ntm.neutron.RBMKDebrisPlanner.ZirnoxDebrisType;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -29,7 +29,7 @@ public class ZirnoxDebrisRenderer extends EntityRenderer<ZirnoxDebrisEntity> {
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.125D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(entity.getId() % 360));
+        LegacyPoseRotations.rotateYDegrees(poseStack, entity.getId() % 360);
         float rotation = entity.debrisRotationO + (entity.debrisRotation - entity.debrisRotationO) * partialTick;
         poseStack.mulPose(legacyRotation(rotation));
         model(entity.getDebrisType()).renderAll(texture(entity.getDebrisType()), poseStack, buffer,

@@ -107,6 +107,12 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (!level.isClientSide) {
             return;
         }
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            engine.rotor = engine.syncRotor;
+            engine.lastRotor = engine.rotor;
+            engine.turnProgress = 0;
+            return;
+        }
         engine.lastRotor = engine.rotor;
         if (engine.turnProgress > 0) {
             float delta = Mth.wrapDegrees(engine.syncRotor - engine.rotor);

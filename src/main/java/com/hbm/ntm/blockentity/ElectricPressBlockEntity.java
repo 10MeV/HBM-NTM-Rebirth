@@ -63,10 +63,15 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
 
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(UpgradeType.SPEED, 3);
 
+    private final LegacyMachineUpgradeManager.SlotCache upgradeSlotCache =
+            new LegacyMachineUpgradeManager.SlotCache(1);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (slot == SLOT_UPGRADE) {
+                upgradeSlotCache.invalidate();
+            }
         }
 
         @Override
@@ -161,6 +166,12 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ElectricPressBlockEntity press) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            press.renderPress = press.syncPress;
+            press.lastPress = press.renderPress;
+            press.turnProgress = 0;
+            return;
+        }
         press.lastPress = press.renderPress;
         if (press.turnProgress > 0) {
             press.renderPress += (press.syncPress - press.renderPress) / (double) press.turnProgress;
@@ -255,6 +266,7 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
+        upgradeSlotCache.invalidate();
         press = tag.getInt(TAG_PRESS);
         if (tag.contains(TAG_POWER)) {
             energy.setPower(tag.getLong(TAG_POWER));
@@ -328,7 +340,7 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
     }
 
     private LegacyMachineUpgradeManager.Levels upgradeLevels() {
-        return LegacyMachineUpgradeManager.checkSlots(items, SLOT_UPGRADE, SLOT_UPGRADE, VALID_UPGRADES);
+        return upgradeSlotCache.get(items, SLOT_UPGRADE, SLOT_UPGRADE, VALID_UPGRADES);
     }
 
     private void finishPressRecipe(PressRecipe recipe) {

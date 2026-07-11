@@ -21,6 +21,9 @@ public class SmallCoolingTowerBlockEntity extends CoolingTowerBlockEntity {
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, SmallCoolingTowerBlockEntity tower) {
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         tickSmallTowerClient(level, pos, tower);
     }
 

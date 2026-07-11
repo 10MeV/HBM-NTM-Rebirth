@@ -172,13 +172,16 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, FusionTorusBlockEntity torus) {
         double powerFactor = getSpeedScaled(torus.getMaxPower(), torus.getPower());
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
         torus.prevMagnet = torus.magnet;
         torus.magnetSpeed += torus.didProcess ? MAGNET_ACCELERATION : -MAGNET_ACCELERATION;
         torus.magnetSpeed = Math.max(0.0F, Math.min(30.0F * (float) powerFactor, torus.magnetSpeed));
-        torus.magnet += torus.magnetSpeed;
-        if (torus.magnet >= 360.0F) {
-            torus.magnet -= 360.0F;
-            torus.prevMagnet -= 360.0F;
+        if (!skipAnimation) {
+            torus.magnet += torus.magnetSpeed;
+            if (torus.magnet >= 360.0F) {
+                torus.magnet -= 360.0F;
+                torus.prevMagnet -= 360.0F;
+            }
         }
         float speed = torus.magnetSpeed / 30.0F;
         torus.audio = LegacyMachineAudioBridge.updateLoop(torus.audio, torus, "FUSION_REACTOR_LOOP",

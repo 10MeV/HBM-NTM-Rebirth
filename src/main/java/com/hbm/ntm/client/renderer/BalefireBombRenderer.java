@@ -8,7 +8,7 @@ import com.hbm.ntm.client.obj.LegacyObjGlintRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjBombModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
@@ -50,7 +50,7 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(legacyYaw(state)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, legacyYaw(state));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             if (renderStaticBody) {
                 renderModel(poseStack, buffer, modelLight, packedOverlay);
@@ -77,7 +77,7 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
 
     public static void applyLegacyItemCommon(PoseStack poseStack) {
         poseStack.translate(1.0D, 0.0D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
     }
 
     private static void renderTimer(BalefireBombBlockEntity blockEntity, PoseStack poseStack, MultiBufferSource buffer) {
@@ -87,7 +87,7 @@ public class BalefireBombRenderer implements BlockEntityRenderer<BalefireBombBlo
         poseStack.pushPose();
         poseStack.translate(0.815F, 0.9275F, 0.5F);
         poseStack.scale(0.04F, -0.04F, 0.04F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.translate(0.0F, 1.0F, 0.0F);
         font.drawInBatch(text, 0.0F, 0.0F, 0xFF0000, false, poseStack.last().pose(), buffer,
                 Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);

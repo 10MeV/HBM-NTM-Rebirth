@@ -57,6 +57,12 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
     private boolean energyReceiverSubscribed;
     private boolean restoringAssembly;
     private int lastEnergyPortSignature = Integer.MIN_VALUE;
+    private long cachedMaxPower = Long.MIN_VALUE;
+    private int cachedMaxPowerCapacitorCount = Integer.MIN_VALUE;
+    private int cachedMaxPowerTurbochargerCount = Integer.MIN_VALUE;
+    private int cachedMaxPowerCapacitorConfig = Integer.MIN_VALUE;
+    private int cachedMaxPowerTurboConfig = Integer.MIN_VALUE;
+    private long appliedMaxPower = Long.MIN_VALUE;
 
     public ICFControllerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ICF_CONTROLLER.get(), pos, state, new LegacyICFEnergyStorage());
@@ -64,8 +70,7 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ICFControllerBlockEntity controller) {
-        controller.energy.setMaxPower(controller.getMaxPower());
-        controller.energy.setTransferRates(controller.getMaxPower(), 0L);
+        controller.applyDynamicEnergyCapacity();
         controller.ensureAssemblyPartsKnown(level);
         controller.refreshEnergyPortSubscription(level, pos);
         if (controller.assembled) {
@@ -83,7 +88,9 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ICFControllerBlockEntity controller) {
-        if (controller.laserLength <= 0 || level.random.nextInt(5) != 0) {
+        if (controller.laserLength <= 0
+                || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)
+                || level.random.nextInt(5) != 0) {
             return;
         }
         Direction dir = state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING);
@@ -192,8 +199,22 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public long getMaxPower() {
-        return (long) (Math.sqrt(capacitorCount) * HbmCommonConfig.icfLaserCapacitorPower()
-                + Math.sqrt(Math.min(turbochargerCount, capacitorCount)) * HbmCommonConfig.icfLaserTurboPower());
+        int capacitorConfig = HbmCommonConfig.icfLaserCapacitorPower();
+        int turboConfig = HbmCommonConfig.icfLaserTurboPower();
+        if (cachedMaxPower != Long.MIN_VALUE
+                && cachedMaxPowerCapacitorCount == capacitorCount
+                && cachedMaxPowerTurbochargerCount == turbochargerCount
+                && cachedMaxPowerCapacitorConfig == capacitorConfig
+                && cachedMaxPowerTurboConfig == turboConfig) {
+            return cachedMaxPower;
+        }
+        cachedMaxPower = (long) (Math.sqrt(capacitorCount) * capacitorConfig
+                + Math.sqrt(Math.min(turbochargerCount, capacitorCount)) * turboConfig);
+        cachedMaxPowerCapacitorCount = capacitorCount;
+        cachedMaxPowerTurbochargerCount = turbochargerCount;
+        cachedMaxPowerCapacitorConfig = capacitorConfig;
+        cachedMaxPowerTurboConfig = turboConfig;
+        return cachedMaxPower;
     }
 
     @Override
@@ -301,6 +322,19 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
                 || energyReceiverSubscribed != receiverActive
                 || portSignature != lastEnergyPortSignature
                 || Math.floorMod(level.getGameTime() + worldPosition.hashCode(), ENERGY_SUBSCRIPTION_KEEPALIVE_TICKS) == 0L;
+    }
+
+    private void applyDynamicEnergyCapacity() {
+        long targetMax = getMaxPower();
+        if (appliedMaxPower == targetMax
+                && energy.getReceiverSpeed() == targetMax
+                && energy.getProviderSpeed() == 0L) {
+            return;
+        }
+        energy.setMaxPower(targetMax);
+        energy.setTransferRates(targetMax, 0L);
+        appliedMaxPower = targetMax;
+        markEnergySubscriptionDirty();
     }
 
     private void markEnergySubscriptionDirty() {

@@ -1,11 +1,11 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.TrinketVariant;
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
 import com.hbm.ntm.client.obj.ObjModelPart;
 import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
@@ -77,7 +77,7 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
 
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            poseStack.mulPose(Axis.YN.rotationDegrees(blockEntity.yawDegrees() + 90.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, -(blockEntity.yawDegrees() + 90.0F));
 
             renderTrinket(kind, variant, blockEntity.squishTimer(), partialTick, poseStack, buffer,
                     blockEntity.getBlockState(), modelLight, packedOverlay);
@@ -140,7 +140,7 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
         poseStack.translate(4.025D, 0.5D, 0.0D);
         poseStack.scale(0.05F, -0.05F, 0.05F);
         poseStack.translate(0.0D, -font.lineHeight / 2.0D, font.width(label) * 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.translate(0.0D, 1.0D, 0.0D);
         font.drawInBatch(label, 0.0F, 0.0F, 0xFFFFFF, false, poseStack.last().pose(),
                 buffer, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);

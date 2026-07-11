@@ -82,6 +82,15 @@ public class RefuelerBlockEntity extends HbmFluidNetworkBlockEntity implements H
         if (!level.isClientSide) {
             return;
         }
+        refueler.prevFillLevel = refueler.fillLevel;
+        double targetFill = refueler.tank.getMaxFill() <= 0
+                ? 0.0D
+                : refueler.tank.getFill() / (double) refueler.tank.getMaxFill();
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            refueler.fillLevel = targetFill;
+            refueler.prevFillLevel = refueler.fillLevel;
+            return;
+        }
         Direction dir = refueler.inputSide();
         Direction rot = dir.getClockWise();
         if (refueler.isOperating) {
@@ -96,10 +105,6 @@ public class RefuelerBlockEntity extends HbmFluidNetworkBlockEntity implements H
                     color);
         }
 
-        refueler.prevFillLevel = refueler.fillLevel;
-        double targetFill = refueler.tank.getMaxFill() <= 0
-                ? 0.0D
-                : refueler.tank.getFill() / (double) refueler.tank.getMaxFill();
         double factor = targetFill > refueler.fillLevel || !refueler.isOperating ? 0.1D : 0.01D;
         refueler.fillLevel += (targetFill - refueler.fillLevel) * factor;
     }
@@ -147,9 +152,7 @@ public class RefuelerBlockEntity extends HbmFluidNetworkBlockEntity implements H
             return false;
         }
         boolean moved = fillDirectHbmItem(stack);
-        HbmFluidItemTransfer.ArmorModFluidTransferReport armorReport =
-                HbmFluidItemTransfer.fillArmorModsFromTankReport(stack, tank, tank.getFill(), false);
-        return moved || armorReport.moved();
+        return moved || HbmFluidItemTransfer.fillArmorModsFromTankDirect(stack, tank, tank.getFill(), false) > 0;
     }
 
     private boolean fillDirectHbmItem(ItemStack stack) {

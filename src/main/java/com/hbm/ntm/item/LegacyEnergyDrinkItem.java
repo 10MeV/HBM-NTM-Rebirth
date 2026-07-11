@@ -53,6 +53,16 @@ public class LegacyEnergyDrinkItem extends Item {
     }
 
     @Override
+    public boolean hasCraftingRemainingItem(ItemStack stack) {
+        return container != null;
+    }
+
+    @Override
+    public ItemStack getCraftingRemainingItem(ItemStack stack) {
+        return container == null ? ItemStack.EMPTY : new ItemStack(container.get());
+    }
+
+    @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.DRINK;
     }

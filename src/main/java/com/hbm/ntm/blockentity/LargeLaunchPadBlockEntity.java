@@ -76,6 +76,9 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
         if (!level.isClientSide) {
             return;
         }
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (launchPad.erected && launchPad.isLargeVaporFormFactor() && launchPad.oxidizerTank().getFill() > 0) {
             ParticleUtil.spawnLaunchPadFuelVapor(level, pos);
         }
@@ -105,8 +108,7 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
         prevLift = lift;
         prevErector = erector;
 
-        processFluidItemTransfers(getItems(), HbmFluidItemTransfer.loadTransfers(
-                SLOT_FUEL_INPUT, SLOT_FUEL_OUTPUT, 2, fuelTank(), oxidizerTank()));
+        processFluidItemLoadTransfers(getItems(), SLOT_FUEL_INPUT, SLOT_FUEL_OUTPUT, 2, fuelTank(), oxidizerTank());
         HbmEnergyUtil.chargeStorageFromItem(getItems().getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
         updateFuelTankTypes();
         updateFormFactor();

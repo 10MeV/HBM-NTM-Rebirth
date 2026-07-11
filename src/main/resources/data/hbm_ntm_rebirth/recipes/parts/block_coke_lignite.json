@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "building",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "hbm_ntm_rebirth:coke_lignite"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:block_coke",
+    "count": 1,
+    "nbt": "{hbmLegacyVariant:1}"
+  },
+  "show_notification": true
+}

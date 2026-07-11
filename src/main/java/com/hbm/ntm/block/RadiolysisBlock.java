@@ -53,11 +53,10 @@ public class RadiolysisBlock extends LegacyVisibleMultiblockMachineBlock {
         if (type != ModBlockEntities.RADIOLYSIS.get()) {
             return null;
         }
-        return level.isClientSide
-                ? (tickLevel, tickPos, tickState, blockEntity) ->
-                RadiolysisBlockEntity.clientTick(tickLevel, tickPos, tickState,
-                        (RadiolysisBlockEntity) blockEntity)
-                : (tickLevel, tickPos, tickState, blockEntity) ->
+        if (level.isClientSide) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) ->
                 RadiolysisBlockEntity.serverTick(tickLevel, tickPos, tickState,
                         (RadiolysisBlockEntity) blockEntity);
     }

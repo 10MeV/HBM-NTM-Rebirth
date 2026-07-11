@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:crate_steel"
+    },
+    "S": {
+      "item": "minecraft:minecart"
+    }
+  },
+  "pattern": [
+    "C",
+    "S"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cart_crate"
+  },
+  "show_notification": true
+}

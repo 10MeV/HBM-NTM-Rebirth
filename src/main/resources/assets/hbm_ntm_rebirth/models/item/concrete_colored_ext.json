@@ -1,0 +1,47 @@
+{
+  "parent": "hbm_ntm_rebirth:block/concrete_colored_ext_machine",
+  "overrides": [
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 1
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_machine_stripe"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 2
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_indigo"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 3
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_purple"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 4
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_pink"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 5
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_hazard"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 6
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_sand"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 7
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_ext_bronze"
+    }
+  ]
+}

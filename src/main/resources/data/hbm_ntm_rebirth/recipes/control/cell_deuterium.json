@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "DDD",
+    "DTD",
+    "DDD"
+  ],
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:cell_empty"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:mike_deut"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:cell_deuterium",
+    "count": 8
+  }
+}

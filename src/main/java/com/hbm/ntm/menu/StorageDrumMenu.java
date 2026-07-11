@@ -15,7 +15,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class StorageDrumMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = StorageDrumBlockEntity.SLOT_COUNT;
@@ -37,7 +36,8 @@ public class StorageDrumMenu extends AbstractContainerMenu {
         for (int j = 0; j < 6; j++) {
             for (int i = 0; i < 6; i++) {
                 if (i + j > 1 && i + j < 9 && 5 - i + j > 1 && i + 5 - j > 1) {
-                    addSlot(new SlotItemHandler(blockEntity.getItems(), index++, 35 + i * 18, 24 + j * 18));
+                    addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), index++, 35 + i * 18,
+                            24 + j * 18));
                 }
             }
         }

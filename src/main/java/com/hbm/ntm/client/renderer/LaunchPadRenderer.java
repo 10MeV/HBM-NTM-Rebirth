@@ -3,7 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.block.LaunchPadBlock;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -47,7 +47,7 @@ public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEnti
 
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(yRotation(facing)));
+        LegacyPoseRotations.rotateYDegrees(poseStack, yRotation(facing));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(launchPad)) {
             poseStack.pushPose();
             poseStack.translate(0.0D, 1.0D, 0.0D);

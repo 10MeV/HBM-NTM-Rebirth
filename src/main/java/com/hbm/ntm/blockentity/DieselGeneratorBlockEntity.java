@@ -139,8 +139,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
                 SLOT_IDENTIFIER, SLOT_IDENTIFIER_OUTPUT, diesel.tank, level, pos)) {
             oldType = HbmFluids.NONE;
         }
-        diesel.processFluidItemTransfers(diesel.items,
-                HbmFluidItemTransfer.loadTransfers(SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, diesel.tank));
+        diesel.processFluidItemLoadTransfer(diesel.items, SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, diesel.tank);
         if (oldType != diesel.tank.getTankType()) {
             diesel.refreshFluidNodeState();
         }
@@ -155,7 +154,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         diesel.tryProvideEnergyToPorts();
         diesel.sendSmokeToPorts(level, pos);
         if (diesel.tank.getTankType() != HbmFluids.NONE) {
-            diesel.refreshTrackedReceiverFluidPortsReport(List.of(diesel.tank), diesel);
+            diesel.refreshTrackedReceiverFluidPorts(diesel.tank, diesel);
         }
         diesel.networkPackNT(50);
 

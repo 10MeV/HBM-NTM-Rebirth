@@ -1,0 +1,28 @@
+{
+  "type": "hbm_ntm_rebirth:centrifuge",
+  "input": {
+    "count": 1,
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    },
+    "partial_nbt": "{grade:\"primary_solvent\",type:\"crystal\"}"
+  },
+  "outputs": [
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"primary_nosolvent\",type:\"crystal\"}"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"sulfuric_byproduct\",type:\"crystal\"}"
+    },
+    {
+      "count": 2,
+      "item": "hbm_ntm_rebirth:bedrock_ore",
+      "nbt": "{grade:\"solvent_byproduct\",type:\"crystal\"}"
+    }
+  ],
+  "source_order": 140
+}

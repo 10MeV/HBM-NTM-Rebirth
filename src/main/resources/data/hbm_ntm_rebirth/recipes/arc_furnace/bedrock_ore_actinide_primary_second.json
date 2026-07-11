@@ -1,0 +1,30 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "arc_material_outputs": [
+    {
+      "amount": 64,
+      "material": "Uranium"
+    },
+    {
+      "amount": 160,
+      "material": "Thorium232"
+    }
+  ],
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:bedrock_ore"
+      },
+      "partial_nbt": "{grade:\"primary_second\",type:\"actinide\"}"
+    }
+  ],
+  "internal_name": "arc.bedrock_ore.actinide_primary_second",
+  "output_fluids": [],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 55
+}

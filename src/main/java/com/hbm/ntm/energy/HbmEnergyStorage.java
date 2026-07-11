@@ -42,13 +42,22 @@ public class HbmEnergyStorage implements HbmEnergyProvider, HbmEnergyReceiver, H
     }
 
     public void setMaxPower(long maxPower) {
-        this.maxPower = Math.max(0L, maxPower);
+        long targetMaxPower = Math.max(0L, maxPower);
+        if (this.maxPower == targetMaxPower) {
+            return;
+        }
+        this.maxPower = targetMaxPower;
         setPower(power);
     }
 
     public void setTransferRates(long maxReceive, long maxExtract) {
-        this.maxReceive = Math.max(0L, maxReceive);
-        this.maxExtract = Math.max(0L, maxExtract);
+        long targetMaxReceive = Math.max(0L, maxReceive);
+        long targetMaxExtract = Math.max(0L, maxExtract);
+        if (this.maxReceive == targetMaxReceive && this.maxExtract == targetMaxExtract) {
+            return;
+        }
+        this.maxReceive = targetMaxReceive;
+        this.maxExtract = targetMaxExtract;
     }
 
     public HbmEnergyStorage setLoadedCheck(BooleanSupplier loadedCheck) {
