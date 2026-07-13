@@ -252,14 +252,15 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity implements HbmEnerg
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityCharger deliberately omits TileEntityLoadedBase from its runtime packet.
+        data.writeLong(energy.getMaxPower());
+        data.writeBoolean(delay > 0);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        // Legacy charge is the current nearby-equipment demand, represented by this receiver's max power.
+        energy.setMaxPower(Math.max(0L, data.readLong()));
+        delay = data.readBoolean() ? PARTICLE_TICKS : 0;
     }
 }

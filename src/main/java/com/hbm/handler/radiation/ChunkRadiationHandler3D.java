@@ -28,7 +28,7 @@ public class ChunkRadiationHandler3D extends ChunkRadiationHandler {
 
         if (radWorld != null) {
             ChunkCoordIntPair coords = new ChunkCoordIntPair(x >> 4, z >> 4);
-            int yReg = legacyYRegion(y);
+            int yReg = legacyYRegion(level, y);
 
             Float rad = radWorld.radiation.get(coords)[yReg];
             return rad == null ? 0.0F : rad;
@@ -44,7 +44,7 @@ public class ChunkRadiationHandler3D extends ChunkRadiationHandler {
         if (radWorld != null) {
             if (level != null && level.hasChunk(x >> 4, z >> 4)) {
                 ChunkCoordIntPair coords = new ChunkCoordIntPair(x >> 4, z >> 4);
-                int yReg = legacyYRegion(y);
+                int yReg = legacyYRegion(level, y);
 
                 if (radWorld.radiation.containsKey(coords)) {
                     radWorld.radiation.get(coords)[yReg] = rad;
@@ -173,8 +173,9 @@ public class ChunkRadiationHandler3D extends ChunkRadiationHandler {
         }
     }
 
-    private static int legacyYRegion(int y) {
-        return Mth.clamp(y >> 4, 0, 15);
+    private static int legacyYRegion(Level level, int y) {
+        int minBuildHeight = level == null ? 0 : level.getMinBuildHeight();
+        return Mth.clamp((y - minBuildHeight) >> 4, 0, 15);
     }
 
     private static ChunkCoordIntPair legacyPos(ChunkPos pos) {

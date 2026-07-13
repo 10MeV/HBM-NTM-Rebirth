@@ -12,6 +12,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
@@ -380,15 +381,25 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachinePyroOven#serialize: MachinePolluting inherits MachineBase/LoadedBase.
+        writeLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank);
+        data.writeLong(energy.getPower());
+        data.writeBoolean(venting);
+        data.writeBoolean(progressing);
+        data.writeFloat(progress);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank);
+        energy.setPower(data.readLong());
+        venting = data.readBoolean();
+        progressing = data.readBoolean();
+        progress = data.readFloat();
     }
 
     @Nullable

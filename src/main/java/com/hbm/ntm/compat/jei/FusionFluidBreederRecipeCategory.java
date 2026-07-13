@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class FusionFluidBreederRecipeCategory implements IRecipeCategory<FusionFluidBreederRecipe> {
+public final class FusionFluidBreederRecipeCategory implements HbmJeiRecipeCategory<FusionFluidBreederRecipe> {
     private final RecipeType<FusionFluidBreederRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -57,7 +57,7 @@ public final class FusionFluidBreederRecipeCategory implements IRecipeCategory<F
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

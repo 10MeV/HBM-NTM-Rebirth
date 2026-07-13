@@ -19,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.registries.RegistryObject;
 
-public final class RBMKWasteDecayRecipeCategory implements IRecipeCategory<RBMKWasteDecayRecipeCategory.DisplayRecipe> {
+public final class RBMKWasteDecayRecipeCategory implements HbmJeiRecipeCategory<RBMKWasteDecayRecipeCategory.DisplayRecipe> {
     private final RecipeType<DisplayRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -62,7 +62,7 @@ public final class RBMKWasteDecayRecipeCategory implements IRecipeCategory<RBMKW
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

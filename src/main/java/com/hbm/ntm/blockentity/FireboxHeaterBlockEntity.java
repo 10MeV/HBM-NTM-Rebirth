@@ -303,15 +303,25 @@ public class FireboxHeaterBlockEntity extends BlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // 1.7.10 TileEntityLoadedBase#serialize followed by TileEntityFireboxBase#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeInt(maxBurnTime);
+        data.writeInt(burnTime);
+        data.writeInt(burnHeat);
+        data.writeInt(heatEnergy);
+        data.writeInt(playersUsing);
+        data.writeBoolean(wasOn);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        maxBurnTime = Math.max(0, data.readInt());
+        burnTime = Math.max(0, data.readInt());
+        burnHeat = Math.max(0, data.readInt());
+        heatEnergy = Math.max(0, data.readInt());
+        playersUsing = Math.max(0, data.readInt());
+        wasOn = data.readBoolean();
     }
 
     @Override

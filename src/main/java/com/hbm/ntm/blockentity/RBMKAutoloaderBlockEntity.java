@@ -237,7 +237,12 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
 
     private void tickClient() {
         lastPiston = renderPiston;
-        if (turnProgress > 0) {
+        boolean skipAnimation = LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, worldPosition);
+        if (skipAnimation) {
+            renderPiston = syncPiston;
+            lastPiston = renderPiston;
+            turnProgress = 0;
+        } else if (turnProgress > 0) {
             renderPiston += (syncPiston - renderPiston) / turnProgress;
             turnProgress--;
         } else {
@@ -250,7 +255,7 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
             LegacyMachineAudioBridge.playLocal(this, "hbm:door.wgh_stop", 2.0F, 1.0F, 25.0D);
         }
         clientWasMoving = moving;
-        if (level != null && renderPiston > 0.99D) {
+        if (!skipAnimation && level != null && renderPiston > 0.99D) {
             for (int i = 0; i < 3; i++) {
                 ParticleUtil.spawnCoolingTower(level,
                         worldPosition.getX() + 0.5D + level.random.nextGaussian() * 0.125D,

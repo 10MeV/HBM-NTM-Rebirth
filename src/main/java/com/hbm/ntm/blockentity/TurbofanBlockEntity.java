@@ -16,6 +16,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
@@ -32,6 +33,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundSource;
@@ -380,6 +382,29 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineTurbofan#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeByte(afterburner);
+        data.writeBoolean(wasOn);
+        data.writeBoolean(showBlood);
+        LegacyFluidTankPacket.write(data, fuelTank);
+        LegacyFluidTankPacket.write(data, bloodTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        afterburner = data.readByte();
+        wasOn = data.readBoolean();
+        showBlood = data.readBoolean();
+        LegacyFluidTankPacket.read(data, fuelTank);
+        LegacyFluidTankPacket.read(data, bloodTank);
     }
 
     @Override

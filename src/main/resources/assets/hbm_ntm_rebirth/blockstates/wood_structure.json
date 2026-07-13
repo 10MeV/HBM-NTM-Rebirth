@@ -1,5 +1,13 @@
 {
-  "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/wood_structure" }
-  }
+  "multipart": [
+    { "when": { "variant": "0" }, "apply": { "model": "hbm_ntm_rebirth:block/wood_structure_roof" } },
+    { "when": { "variant": "2" }, "apply": { "model": "hbm_ntm_rebirth:block/wood_structure_ceiling" } },
+    { "when": { "variant": "1", "up": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/wood_structure_scaffold_posts_short" } },
+    { "when": { "variant": "1", "up": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/wood_structure_scaffold_posts_tall" } },
+    { "when": { "variant": "1", "north": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/wood_structure_scaffold_north" } },
+    { "when": { "variant": "1", "east": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/wood_structure_scaffold_east" } },
+    { "when": { "variant": "1", "south": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/wood_structure_scaffold_south" } },
+    { "when": { "variant": "1", "west": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/wood_structure_scaffold_west" } },
+    { "when": { "variant": "1", "up": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/wood_structure_scaffold_top" } }
+  ]
 }

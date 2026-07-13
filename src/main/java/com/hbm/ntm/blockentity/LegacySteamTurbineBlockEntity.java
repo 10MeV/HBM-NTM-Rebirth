@@ -153,6 +153,15 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
         return operational;
     }
 
+    /**
+     * Applies the 1.7.10 large-turbine runtime flag received by the client.
+     * Rotor position and acceleration remain client-local, just like the
+     * legacy TileEntityMachineLargeTurbine packet.
+     */
+    protected final void setOperationalFromLegacyPacket(boolean operational) {
+        this.operational = operational;
+    }
+
     @Override
     public void provideExtraInfo(CompoundTag data) {
         super.provideExtraInfo(data);

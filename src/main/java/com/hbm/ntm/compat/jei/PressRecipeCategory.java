@@ -21,7 +21,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class PressRecipeCategory implements IRecipeCategory<PressRecipe> {
+public final class PressRecipeCategory implements HbmJeiRecipeCategory<PressRecipe> {
     private static final int WIDTH = 166;
     private static final int HEIGHT = 65;
     private static final ResourceLocation LEGACY_NEI_TEXTURE =
@@ -66,7 +66,7 @@ public final class PressRecipeCategory implements IRecipeCategory<PressRecipe> {
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -88,6 +88,7 @@ public final class PressRecipeCategory implements IRecipeCategory<PressRecipe> {
     @Override
     public void draw(PressRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         progress.draw(guiGraphics, 47, 24);
     }
 

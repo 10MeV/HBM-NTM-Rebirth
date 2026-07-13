@@ -48,7 +48,7 @@ public abstract class LegacyGasBlock extends Block {
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
-        if (!level.isClientSide) {
+        if (!level.isClientSide && schedulesOnNeighborUpdates()) {
             level.scheduleTick(pos, this, 10);
         }
     }
@@ -83,6 +83,14 @@ public abstract class LegacyGasBlock extends Block {
         return 2;
     }
 
+    /**
+     * Most legacy gases re-check their movement after every neighbor update. Flammable gas
+     * has its own legacy ignition-only neighbor contract instead.
+     */
+    protected boolean schedulesOnNeighborUpdates() {
+        return true;
+    }
+
     protected Direction randomHorizontal(RandomSource random) {
         return Direction.Plane.HORIZONTAL.getRandomDirection(random);
     }
@@ -94,7 +102,7 @@ public abstract class LegacyGasBlock extends Block {
 
     @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
-        if (!level.isClientSide()) {
+        if (!level.isClientSide() && schedulesOnNeighborUpdates()) {
             level.scheduleTick(pos, this, 10);
         }
         return super.updateShape(state, direction, neighborState, level, pos, neighborPos);

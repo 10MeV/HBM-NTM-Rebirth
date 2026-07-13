@@ -3,6 +3,7 @@ package com.hbm.ntm.item;
 import com.hbm.ntm.armor.FsbPoweredArmor;
 import com.hbm.ntm.energy.HbmBatteryItemCapabilityProvider;
 import com.hbm.ntm.util.HbmTextUtil;
+import com.hbm.items.armor.ArmorFSB;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -16,7 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import org.jetbrains.annotations.Nullable;
 
-public class FsbPoweredArmorItem extends FsbArmorItem implements FsbPoweredArmor {
+public class FsbPoweredArmorItem extends ArmorFSB implements FsbPoweredArmor {
     private final long baseMaxCharge;
     private final long chargeRate;
     private final long consumption;

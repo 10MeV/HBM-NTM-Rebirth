@@ -15,9 +15,12 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.menu.OilburnerMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.text.NumberFormat;
@@ -28,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,7 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
         implements MenuProvider, HbmStandardFluidReceiver, HeatSource, HbmLegacyButtonReceiver,
-        RORValueProvider, RORInteractive {
+        RORValueProvider, RORInteractive, HbmLegacyLoadedTile {
     public static final int SLOT_FLUID_INPUT = 0;
     public static final int SLOT_FLUID_OUTPUT = 1;
     public static final int SLOT_IDENTIFIER = 2;
@@ -90,6 +94,7 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
     private int heatEnergy;
     private int lastBurned;
     private int lastHeatProduced;
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
 
     public OilburnerBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.HEATINGOIL, 16_000));
@@ -391,6 +396,7 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
         tank.writeToNbt(tag, TAG_TANK);
         pollution.writeLegacyNbt(tag);
@@ -402,6 +408,7 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         loadItems(tag);
         if (hasLegacyTankTag(tag, TAG_TANK)) {
             tank.readFromNbt(tag, TAG_TANK);
@@ -415,6 +422,7 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
+        writeLegacyLoadedTileClientTag(tag);
         tag.putInt("lastBurned", lastBurned);
         tag.putInt("lastHeatProduced", lastHeatProduced);
         return tag;
@@ -423,8 +431,33 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
+        readLegacyLoadedTileClientTag(tag);
         lastBurned = Math.max(0, tag.getInt("lastBurned"));
         lastHeatProduced = Math.max(0, tag.getInt("lastHeatProduced"));
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityLoadedBase#serialize followed by TileEntityHeaterOilburner#serialize.
+        writeLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.write(data, tank);
+        data.writeBoolean(on);
+        data.writeInt(heatEnergy);
+        data.writeByte(setting);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.read(data, tank);
+        on = data.readBoolean();
+        heatEnergy = Math.max(0, data.readInt());
+        setting = Math.max(1, Math.min(10, data.readByte()));
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     @Override

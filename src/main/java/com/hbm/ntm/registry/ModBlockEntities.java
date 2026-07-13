@@ -128,6 +128,10 @@ import com.hbm.ntm.blockentity.LegacyLargeTurbineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
 import com.hbm.ntm.blockentity.LegacyPedestalBlockEntity;
 import com.hbm.ntm.blockentity.LegacyVolcanoCoreBlockEntity;
+import com.hbm.ntm.blockentity.LegacyVentBlockEntity;
+import com.hbm.ntm.blockentity.LegacyChlorineSealBlockEntity;
+import com.hbm.ntm.blockentity.PinkCloudBroadcasterBlockEntity;
+import com.hbm.ntm.blockentity.LegacyGeysirBlockEntity;
 import com.hbm.ntm.blockentity.LargeLaunchPadBlockEntity;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
 import com.hbm.ntm.blockentity.LauncherStructCoreBlockEntity;
@@ -145,6 +149,7 @@ import com.hbm.ntm.blockentity.MiningLaserBlockEntity;
 import com.hbm.ntm.blockentity.MixerBlockEntity;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.blockentity.NavalMineBlockEntity;
+import com.hbm.ntm.blockentity.LandmineBlockEntity;
 import com.hbm.ntm.blockentity.NuclearDeviceBlockEntity;
 import com.hbm.ntm.blockentity.OilburnerBlockEntity;
 import com.hbm.ntm.blockentity.OilDrillBlockEntity;
@@ -1182,6 +1187,17 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(RadioReceiverBlockEntity::new,
                             ModBlocks.RADIOREC.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<LegacyVentBlockEntity>> LEGACY_VENT =
+            BLOCK_ENTITIES.register("legacy_vent", () -> BlockEntityType.Builder.of(LegacyVentBlockEntity::new,
+                    ModBlocks.VENT_CHLORINE.get(), ModBlocks.VENT_CLOUD.get(), ModBlocks.VENT_PINK_CLOUD.get()).build(null));
+    public static final RegistryObject<BlockEntityType<LegacyChlorineSealBlockEntity>> CHLORINE_SEAL =
+            BLOCK_ENTITIES.register("vent_chlorine_seal", () -> BlockEntityType.Builder.of(LegacyChlorineSealBlockEntity::new,
+                    ModBlocks.VENT_CHLORINE_SEAL.get()).build(null));
+    public static final RegistryObject<BlockEntityType<PinkCloudBroadcasterBlockEntity>> BROADCASTER_PC =
+            BLOCK_ENTITIES.register("broadcaster_pc", () -> BlockEntityType.Builder.of(PinkCloudBroadcasterBlockEntity::new,
+                    ModBlocks.BROADCASTER_PC.get()).build(null));
+    public static final RegistryObject<BlockEntityType<LegacyGeysirBlockEntity>> GEYSIR = BLOCK_ENTITIES.register("geysir", () -> BlockEntityType.Builder.of(LegacyGeysirBlockEntity::new, ModBlocks.GEYSIR_CHLORINE.get(),ModBlocks.GEYSIR_NETHER.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<MicrowaveBlockEntity>> MICROWAVE =
             BLOCK_ENTITIES.register("microwave", () ->
                     BlockEntityType.Builder.of(MicrowaveBlockEntity::new,
@@ -1573,6 +1589,14 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<NavalMineBlockEntity>> NAVAL_MINE =
             BLOCK_ENTITIES.register("naval_mine", () ->
                     BlockEntityType.Builder.of(NavalMineBlockEntity::new, ModBlocks.MINE_NAVAL.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<LandmineBlockEntity>> LANDMINE =
+            BLOCK_ENTITIES.register("landmine", () ->
+                    BlockEntityType.Builder.of(LandmineBlockEntity::new,
+                            ModBlocks.MINE_AP.get(),
+                            ModBlocks.MINE_HE.get(),
+                            ModBlocks.MINE_SHRAP.get(),
+                            ModBlocks.MINE_FAT.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<LegacyChargeBlockEntity>> LEGACY_CHARGE =
             BLOCK_ENTITIES.register("legacy_charge", () ->

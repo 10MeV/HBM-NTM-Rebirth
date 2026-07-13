@@ -7,6 +7,7 @@ import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -78,6 +79,16 @@ public class RadioTorchLogicBlockEntity extends RadioTorchBlockEntity implements
             }
         }
         return lines;
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        radio.writeLegacyWire(data);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        radio.readLegacyWire(data);
     }
 
     @Override

@@ -1369,6 +1369,10 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
     }
 
     private Path defaultLegacyRoot() {
+        Path workspaceSource = Path.of("E:", "mchbm", "rawcode", "Hbm-s-Nuclear-Tech-GIT-master");
+        if (Files.isDirectory(workspaceSource)) {
+            return workspaceSource;
+        }
         return Path.of("E:", "游戏", "我的世界", "源码包", "Hbm-s-Nuclear-Tech-GIT-master");
     }
 

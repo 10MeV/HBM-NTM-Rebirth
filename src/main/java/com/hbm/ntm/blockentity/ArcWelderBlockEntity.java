@@ -15,6 +15,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.ArcWelderMenu;
@@ -33,6 +34,7 @@ import com.hbm.ntm.util.LegacyUpgradeSlotSound;
 import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -142,6 +144,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     private long consumption = 100L;
     private boolean didProcess;
     private String selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
+    private ItemStack displayStack = ItemStack.EMPTY;
     private String customName;
     private boolean upgradeLevelsDirty = true;
     private int cachedSpeedLevel;
@@ -235,6 +238,10 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     }
 
     public ItemStack getDisplayOutput() {
+        return displayStack;
+    }
+
+    private ItemStack computeDisplayOutput() {
         GenericMachineRecipe recipe = getDisplayRecipeDefinition();
         if (recipe == null || recipe.getItemOutputs().isEmpty()) {
             return ItemStack.EMPTY;
@@ -505,14 +512,38 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        // TileEntityMachineArcWelder#serialize. The legacy display stack is recipe-derived
+        // server state, not an inventory snapshot, and is consumed by the renderer and GUI.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeLong(energy.getMaxPower());
+        data.writeLong(consumption);
+        data.writeInt(progress);
+        data.writeInt(processTime);
+        LegacyFluidTankPacket.write(data, inputTank);
+        ItemStack display = computeDisplayOutput();
+        data.writeBoolean(!display.isEmpty());
+        if (!display.isEmpty()) {
+            data.writeInt(BuiltInRegistries.ITEM.getId(display.getItem()));
+            data.writeInt(display.getDamageValue());
+        }
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            load(tag);
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        energy.setMaxPower(Math.max(DEFAULT_MAX_POWER, data.readLong()));
+        consumption = data.readLong();
+        progress = data.readInt();
+        processTime = Math.max(1, data.readInt());
+        LegacyFluidTankPacket.read(data, inputTank);
+        if (data.readBoolean()) {
+            ItemStack display = new ItemStack(BuiltInRegistries.ITEM.byId(data.readInt()));
+            display.setDamageValue(data.readInt());
+            displayStack = display;
+        } else {
+            displayStack = ItemStack.EMPTY;
         }
     }
 

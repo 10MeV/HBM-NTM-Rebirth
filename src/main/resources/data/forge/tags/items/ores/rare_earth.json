@@ -1,6 +1,7 @@
 {
   "values": [
     "hbm_ntm_rebirth:ore_rare",
-    "hbm_ntm_rebirth:deepslate_ore_rare"
+    "hbm_ntm_rebirth:deepslate_ore_rare",
+    "hbm_ntm_rebirth:ore_gneiss_rare"
   ]
 }

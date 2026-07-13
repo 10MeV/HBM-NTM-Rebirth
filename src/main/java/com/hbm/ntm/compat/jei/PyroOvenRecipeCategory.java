@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class PyroOvenRecipeCategory implements IRecipeCategory<PyroOvenRecipe> {
+public final class PyroOvenRecipeCategory implements HbmJeiRecipeCategory<PyroOvenRecipe> {
     private final RecipeType<PyroOvenRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -57,7 +57,7 @@ public final class PyroOvenRecipeCategory implements IRecipeCategory<PyroOvenRec
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

@@ -10,6 +10,7 @@ import com.hbm.ntm.fluid.HbmFluidThermalExchange;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingType;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -22,6 +23,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -299,6 +301,22 @@ public class HephaestusBlockEntity extends HbmFluidBlockEntity implements HbmSta
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         readHephaestusState(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineHephaestus sends its server-prepared tank/heat snapshot
+        // directly, without a TileEntityLoadedBase prefix.
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank);
+        data.writeInt(bufferedHeat);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank);
+        bufferedHeat = Math.max(0, data.readInt());
     }
 
     private void writeHephaestusState(CompoundTag tag) {

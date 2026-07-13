@@ -19,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 
-public final class HbmOilRecipeCategory implements IRecipeCategory<HbmOilRecipe> {
+public final class HbmOilRecipeCategory implements HbmJeiRecipeCategory<HbmOilRecipe> {
     private static final int REFINERY_WIDTH = 176;
     private static final int REFINERY_HEIGHT = 85;
     private static final ResourceLocation REFINERY_NEI_TEXTURE =
@@ -98,7 +98,7 @@ public final class HbmOilRecipeCategory implements IRecipeCategory<HbmOilRecipe>
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -114,6 +114,7 @@ public final class HbmOilRecipeCategory implements IRecipeCategory<HbmOilRecipe>
     @Override
     public void draw(HbmOilRecipe recipe, mezz.jei.api.gui.ingredient.IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         if (!legacyUniversal) {
             refineryPower.draw(guiGraphics, 3, 6);
             refineryProgress.draw(guiGraphics, 78, 24);

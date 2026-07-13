@@ -23,6 +23,7 @@ import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.util.CrucibleUtil;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -130,10 +132,16 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     private int upgrade;
     private float lid = 1.0F;
     private float previousLid = 1.0F;
+    // The legacy packet sends the lid separately and approaches intermediate values over two client ticks.
+    private float syncLid = 1.0F;
+    private int lidApproachTicks;
     private boolean progressing;
     private boolean hasMaterial;
     private boolean liquidMode;
     private final List<MaterialStack> liquids = new ArrayList<>();
+    private final byte[] syncedElectrodeStates = new byte[3];
+    private Object lidAudioLoop;
+    private Object progressAudioLoop;
 
     public ArcFurnaceBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ARC_FURNACE.get(), pos, state,
@@ -213,12 +221,27 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, ArcFurnaceBlockEntity furnace) {
-        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
-            furnace.previousLid = furnace.lid;
+        if (!level.isClientSide) {
             return;
+        }
+        furnace.previousLid = furnace.lid;
+        if (furnace.lidApproachTicks > 0) {
+            furnace.lid += (furnace.syncLid - furnace.lid) / furnace.lidApproachTicks;
+            furnace.lidApproachTicks--;
+        } else {
+            furnace.lid = furnace.syncLid;
         }
         float oldLid = furnace.previousLid;
         float currentLid = furnace.lid;
+        boolean lidMoved = currentLid != oldLid;
+        furnace.updateAudioLoops(lidMoved);
+        if ((currentLid == 0.0F || currentLid == 1.0F) && lidMoved
+                && !(oldLid == 0.0F && currentLid == 1.0F)) {
+            LegacyMachineAudioBridge.playLocal(furnace, "hbm:door.wgh_stop", 1.0F, 1.0F, 15.0D);
+        }
+        if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
         if (currentLid != oldLid && level.getNearestPlayer(pos.getX() + 0.5D, pos.getY() + 4.0D,
                 pos.getZ() + 0.5D, 50.0D, false) != null) {
             if (currentLid > oldLid && !(oldLid == 0.0F && currentLid == 1.0F)) {
@@ -239,7 +262,14 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
                 }
             }
         }
-        furnace.previousLid = currentLid;
+    }
+
+    private void updateAudioLoops(boolean lidMoved) {
+        // 1.7.10 TileEntityMachineArcFurnaceLarge#updateEntity client branch.
+        lidAudioLoop = LegacyMachineAudioBridge.updateLoop(lidAudioLoop, this, "hbm:door.wgh_start",
+                lidMoved, 15.0D, 15.0F, 0.75F, 1.0F, 0.0D, 0.0D, 0.0D);
+        progressAudioLoop = LegacyMachineAudioBridge.updateLoop(progressAudioLoop, this, "ELECTRIC_HUM_LOOP",
+                progressing, 15.0D, 15.0F, 1.5F, 0.75F, 0.0D, 0.0D, 0.0D);
     }
 
     private void loadIngredients(Level level) {
@@ -605,7 +635,7 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     public List<Byte> electrodeStates() {
         List<Byte> states = new ArrayList<>(3);
         for (int slot = SLOT_ELECTRODE_0; slot <= SLOT_ELECTRODE_2; slot++) {
-            states.add(electrodeState(items.getStackInSlot(slot)));
+            states.add(electrodeStateInSlot(slot));
         }
         return states;
     }
@@ -613,6 +643,9 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     public byte electrodeStateInSlot(int slot) {
         if (slot < SLOT_ELECTRODE_0 || slot > SLOT_ELECTRODE_2) {
             return 0;
+        }
+        if (level != null && level.isClientSide) {
+            return syncedElectrodeStates[slot];
         }
         return electrodeState(items.getStackInSlot(slot));
     }
@@ -663,6 +696,46 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineArcFurnaceLarge#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeFloat(processTime() <= 0 ? 0.0F : (float) progress / processTime());
+        data.writeFloat(lid);
+        data.writeBoolean(progressing);
+        data.writeBoolean(liquidMode);
+        data.writeBoolean(hasMaterial);
+        for (int slot = SLOT_ELECTRODE_0; slot <= SLOT_ELECTRODE_2; slot++) {
+            data.writeByte(electrodeState(items.getStackInSlot(slot)));
+        }
+        data.writeShort(liquids.size());
+        for (MaterialStack stack : liquids) {
+            data.writeInt(stack.material.id);
+            data.writeInt(stack.amount);
+        }
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        // Keep the legacy field order while translating its normalized float progress into the modern tick counter.
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        progress = Math.round(data.readFloat() * processTime());
+        receiveLidSync(data.readFloat());
+        progressing = data.readBoolean();
+        liquidMode = data.readBoolean();
+        hasMaterial = data.readBoolean();
+        for (int slot = SLOT_ELECTRODE_0; slot <= SLOT_ELECTRODE_2; slot++) {
+            syncedElectrodeStates[slot] = data.readByte();
+        }
+        int materialCount = data.readShort();
+        liquids.clear();
+        for (int i = 0; i < materialCount; i++) {
+            liquids.add(new MaterialStack(Mats.matById.get(data.readInt()), data.readInt()));
+        }
+    }
+
+    @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
@@ -681,16 +754,35 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
         progress = tag.getInt(TAG_PROGRESS);
         delay = tag.getInt(TAG_DELAY);
-        float oldLid = lid;
-        lid = tag.contains(TAG_LID) ? tag.getFloat(TAG_LID) : 1.0F;
-        previousLid = level != null && level.isClientSide ? oldLid : lid;
         liquidMode = tag.getBoolean(TAG_LIQUID_MODE);
         progressing = tag.getBoolean(TAG_IS_PROGRESSING);
         hasMaterial = tag.getBoolean(TAG_HAS_MATERIAL);
+        float loadedLid = tag.contains(TAG_LID) ? tag.getFloat(TAG_LID) : 1.0F;
+        if (level != null && level.isClientSide) {
+            receiveLidSync(loadedLid);
+            for (int slot = SLOT_ELECTRODE_0; slot <= SLOT_ELECTRODE_2; slot++) {
+                syncedElectrodeStates[slot] = electrodeState(items.getStackInSlot(slot));
+            }
+        } else {
+            lid = loadedLid;
+            previousLid = lid;
+            syncLid = lid;
+            lidApproachTicks = 0;
+        }
         liquids.clear();
         liquids.addAll(Mats.readList(tag.getList(TAG_LIQUIDS, net.minecraft.nbt.Tag.TAG_COMPOUND)));
         upgradeSlotCache.invalidate();
         upgrade = upgradeLevels().getLevel(UpgradeType.SPEED);
+    }
+
+    private void receiveLidSync(float targetLid) {
+        syncLid = targetLid;
+        if (targetLid != 0.0F && targetLid != 1.0F) {
+            lidApproachTicks = 2;
+        } else {
+            lid = targetLid;
+            lidApproachTicks = 0;
+        }
     }
 
     private LegacyMachineUpgradeManager.Levels upgradeLevels() {

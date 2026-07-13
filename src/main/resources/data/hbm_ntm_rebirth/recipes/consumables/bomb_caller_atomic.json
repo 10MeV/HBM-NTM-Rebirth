@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "T": { "item": "hbm_ntm_rebirth:ammo_standard_nuke_high" },
+    "R": { "item": "hbm_ntm_rebirth:rangefinder" },
+    "C": { "item": "hbm_ntm_rebirth:circuit_controller" }
+  },
+  "pattern": ["TRC"],
+  "result": { "item": "hbm_ntm_rebirth:bomb_caller_atomic" }
+}

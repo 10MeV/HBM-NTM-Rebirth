@@ -1,6 +1,5 @@
 package com.hbm.ntm.entity.mob;
 
-import com.hbm.ntm.blockentity.TeslaBlockEntity;
 import com.hbm.ntm.bullet.BulletKinematicsUtil;
 import com.hbm.ntm.bullet.BulletLaunchUtil;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
@@ -41,7 +40,7 @@ public class EntityTaintCrab extends EntityCyberCrab {
     @Override
     public void aiStep() {
         if (!level().isClientSide()) {
-            setTeslaTargets(TeslaBlockEntity.zap(level(), new Vec3(getX(), getY() + 1.25D, getZ()), 10.0D, this));
+            rebuildTeslaTargets(getX(), getY() + 1.25D, getZ(), 10.0D);
             for (LivingEntity living : level().getEntitiesOfClass(LivingEntity.class,
                     new AABB(getX() - 5.0D, getY() - 5.0D, getZ() - 5.0D,
                             getX() + 5.0D, getY() + 5.0D, getZ() + 5.0D))) {

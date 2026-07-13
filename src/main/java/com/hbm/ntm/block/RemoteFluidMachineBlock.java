@@ -125,6 +125,15 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
                     VacuumDistillBlockEntity.serverTick(tickLevel, tickPos, tickState,
                             (VacuumDistillBlockEntity) blockEntity);
         }
+        if (kind == Kind.COKER && type == ModBlockEntities.COKER.get()) {
+            return level.isClientSide
+                    ? (tickLevel, tickPos, tickState, blockEntity) ->
+                    CokerBlockEntity.clientTick(tickLevel, tickPos, tickState,
+                            (CokerBlockEntity) blockEntity)
+                    : (tickLevel, tickPos, tickState, blockEntity) ->
+                    CokerBlockEntity.serverTick(tickLevel, tickPos, tickState,
+                            (CokerBlockEntity) blockEntity);
+        }
         if (level.isClientSide) {
             return null;
         }
@@ -147,11 +156,6 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
             return (tickLevel, tickPos, tickState, blockEntity) ->
                     HydrotreaterBlockEntity.serverTick(tickLevel, tickPos, tickState,
                             (HydrotreaterBlockEntity) blockEntity);
-        }
-        if (kind == Kind.COKER && type == ModBlockEntities.COKER.get()) {
-            return (tickLevel, tickPos, tickState, blockEntity) ->
-                    CokerBlockEntity.serverTick(tickLevel, tickPos, tickState,
-                            (CokerBlockEntity) blockEntity);
         }
         return null;
     }

@@ -17,6 +17,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingStep;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingType;
@@ -409,14 +410,45 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // The two 1.7.10 boiler tiles deliberately have different hand-written packets.
+        // Neither calls TileEntityLoadedBase#serialize, so there is no loaded-tile prefix here.
+        if (profile.industrial) {
+            // TileEntityHeatBoilerIndustrial#serialize: heat, water, steam, isOn, muffled.
+            data.writeInt(heat);
+            LegacyFluidTankPacket.write(data, feedTank);
+            LegacyFluidTankPacket.write(data, steamTank);
+            data.writeBoolean(active);
+            data.writeBoolean(isMuffled());
+            return;
+        }
+        // TileEntityHeatBoiler#serialize: exploded guard; normal state then heat, water, steam, muffled, isOn.
+        data.writeBoolean(hasExploded);
+        if (!hasExploded) {
+            data.writeInt(heat);
+            LegacyFluidTankPacket.write(data, feedTank);
+            LegacyFluidTankPacket.write(data, steamTank);
+            data.writeBoolean(isMuffled());
+            data.writeBoolean(active);
+        }
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
+        if (profile.industrial) {
+            heat = Math.max(0, data.readInt());
+            LegacyFluidTankPacket.read(data, feedTank);
+            LegacyFluidTankPacket.read(data, steamTank);
+            active = data.readBoolean();
+            setMuffled(data.readBoolean());
+            return;
+        }
+        hasExploded = data.readBoolean();
+        if (!hasExploded) {
+            heat = Math.max(0, data.readInt());
+            LegacyFluidTankPacket.read(data, feedTank);
+            LegacyFluidTankPacket.read(data, steamTank);
+            setMuffled(data.readBoolean());
+            active = data.readBoolean();
         }
     }
 

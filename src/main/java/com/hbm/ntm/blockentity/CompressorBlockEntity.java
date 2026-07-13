@@ -15,6 +15,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.CompressorMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
@@ -33,6 +34,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -199,6 +201,32 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
             }
         }
         compressor.piston = Mth.clamp(compressor.piston, 0.0F, 1.0F);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineCompressorBase#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeInt(progress);
+        data.writeInt(processTime);
+        data.writeInt(powerRequirement);
+        data.writeLong(energy.getPower());
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank);
+        data.writeBoolean(on);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        // Fan and piston animation consume the old isOn snapshot, never a client recipe guess.
+        readLegacyLoadedTileBinary(data);
+        progress = data.readInt();
+        processTime = data.readInt();
+        powerRequirement = data.readInt();
+        energy.setPower(data.readLong());
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank);
+        on = data.readBoolean();
     }
 
     private void advanceFan(float step) {

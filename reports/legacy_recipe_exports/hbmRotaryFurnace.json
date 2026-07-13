@@ -40,6 +40,27 @@
       "duration": 200,
       "inputs": [
         [
+          "nbt",
+          "hbm:bedrock_ore_fragment",
+          9,
+          0,
+          "{mat:2600,name:\"Iron\"}"
+        ],
+        [
+          "dict",
+          "gemCoal"
+        ]
+      ],
+      "output": [
+        "Steel",
+        144
+      ],
+      "steam": 25
+    },
+    {
+      "duration": 200,
+      "inputs": [
+        [
           "dict",
           "bedrockorefragmentIron",
           9
@@ -59,6 +80,27 @@
       "duration": 200,
       "inputs": [
         [
+          "nbt",
+          "hbm:bedrock_ore_fragment",
+          9,
+          0,
+          "{mat:2600,name:\"Iron\"}"
+        ],
+        [
+          "dict",
+          "gemAnyCoke"
+        ]
+      ],
+      "output": [
+        "Steel",
+        216
+      ],
+      "steam": 25
+    },
+    {
+      "duration": 200,
+      "inputs": [
+        [
           "dict",
           "bedrockorefragmentIron",
           9
@@ -71,6 +113,31 @@
       "output": [
         "Steel",
         432
+      ],
+      "steam": 25
+    },
+    {
+      "duration": 400,
+      "inputs": [
+        [
+          "nbt",
+          "hbm:bedrock_ore_fragment",
+          9,
+          0,
+          "{mat:2600,name:\"Iron\"}"
+        ],
+        [
+          "dict",
+          "gemAnyCoke"
+        ],
+        [
+          "item",
+          "hbm:powder_flux"
+        ]
+      ],
+      "output": [
+        "Steel",
+        288
       ],
       "steam": 25
     },

@@ -210,7 +210,9 @@ public class StorageCrateBlockEntity extends BlockEntity
         }
         if (level.isClientSide) {
             if (heatTimer > 0) {
-                spawnHeatParticles();
+                if (!LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, worldPosition)) {
+                    spawnHeatParticles();
+                }
                 heatTimer--;
             }
             return;

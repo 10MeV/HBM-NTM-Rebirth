@@ -9,6 +9,8 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -72,6 +74,23 @@ public class FoundryCastingBlock extends Block implements EntityBlock, ICrucible
         return level.isClientSide ? null
                 : (tickLevel, tickPos, tickState, blockEntity) ->
                 FoundryCastingBlockEntity.serverTick(tickLevel, tickPos, tickState, (FoundryCastingBlockEntity) blockEntity);
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (!(level.getBlockEntity(pos) instanceof FoundryCastingBlockEntity casting)) {
+            return;
+        }
+        int capacity = casting.getCapacity();
+        if (casting.getAmount() <= 0 || casting.getAmount() < capacity) {
+            return;
+        }
+        double rimHeight = moldSize == 0 ? 0.5D : 0.999D;
+        level.addParticle(ParticleTypes.SMOKE,
+                pos.getX() + 0.25D + random.nextDouble() * 0.5D,
+                pos.getY() + rimHeight,
+                pos.getZ() + 0.25D + random.nextDouble() * 0.5D,
+                0.0D, 0.0D, 0.0D);
     }
 
     @Override

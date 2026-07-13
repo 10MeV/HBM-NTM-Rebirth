@@ -15,6 +15,7 @@ import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.entity.cart.NtmMinecartBase;
 import com.hbm.ntm.entity.cart.NtmMinecartType;
 import com.hbm.ntm.item.AmmoBagItem;
+import com.hbm.ntm.item.AnchorRemoteItem;
 import com.hbm.ntm.item.AnalysisToolItem;
 import com.hbm.ntm.item.ArcElectrodeItem;
 import com.hbm.ntm.item.AmsCatalystItem;
@@ -52,6 +53,7 @@ import com.hbm.ntm.item.EnvSuitArmorItem;
 import com.hbm.ntm.item.EuphemiumArmorItem;
 import com.hbm.ntm.item.FabulousHatArmorItem;
 import com.hbm.ntm.item.FiveHtpItem;
+import com.hbm.ntm.item.FertilizerItem;
 import com.hbm.ntm.item.FlaskInfusionItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidPipetteItem;
@@ -71,7 +73,6 @@ import com.hbm.ntm.item.GunRepairKitItem;
 import com.hbm.ntm.item.GuideBookItem;
 import com.hbm.ntm.item.HbmAbilitySwordItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
-import com.hbm.ntm.item.HazmatArmorItem;
 import com.hbm.ntm.item.HazmatMaskArmorItem;
 import com.hbm.ntm.item.HbmArmorMaterials;
 import com.hbm.ntm.item.HbmFueledAbilityToolItem;
@@ -119,6 +120,7 @@ import com.hbm.ntm.item.LiquidatorMaskArmorItem;
 import com.hbm.ntm.item.MarshmallowItem;
 import com.hbm.ntm.item.MatchstickItem;
 import com.hbm.ntm.item.MeteoriteSwordItem;
+import com.hbm.ntm.item.MeltdownToolItem;
 import com.hbm.ntm.item.MirrorToolItem;
 import com.hbm.ntm.item.MufflerItem;
 import com.hbm.ntm.item.NtmMinecartItem;
@@ -126,6 +128,7 @@ import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.item.MissileLauncherGunItem;
 import com.hbm.ntm.item.MissileDesignatorItem;
 import com.hbm.ntm.item.RangefinderItem;
+import com.hbm.ntm.item.BombCallerItem;
 import com.hbm.ntm.item.RebarPlacerItem;
 import com.hbm.ntm.item.RubberBoatItem;
 import com.hbm.ntm.item.Ni4NiGunItem;
@@ -147,8 +150,15 @@ import com.hbm.ntm.item.PistonSetItem;
 import com.hbm.ntm.item.RedPillItem;
 import com.hbm.ntm.item.ReactorSensorItem;
 import com.hbm.items.ItemCustomLore;
+import com.hbm.items.armor.ArmorFSB;
+import com.hbm.items.armor.ArmorFSBFueled;
+import com.hbm.items.armor.ArmorFSBPowered;
+import com.hbm.items.armor.ArmorDesh;
+import com.hbm.items.armor.ArmorDiesel;
 import com.hbm.items.armor.ArmorGasMask;
+import com.hbm.items.armor.ArmorHazmat;
 import com.hbm.items.armor.ArmorHazmatMask;
+import com.hbm.items.armor.ArmorLiquidator;
 import com.hbm.items.armor.ArmorLiquidatorMask;
 import com.hbm.items.armor.ItemModCladding;
 import com.hbm.items.armor.ItemModCard;
@@ -279,6 +289,7 @@ public final class ModItems {
     public static final RegistryObject<Item> ALUMINIUM_INGOT = ingot("ingot_aluminium");
     public static final RegistryObject<Item> BERYLLIUM_INGOT = ingot("ingot_beryllium");
     public static final RegistryObject<Item> SCHRABIDIUM_INGOT = ingot("ingot_schrabidium");
+    public static final RegistryObject<Item> MERCURY_TINY_DROP = part("nugget_mercury_tiny");
     public static final RegistryObject<Item> MERCURY_DROP = part("nugget_mercury");
     public static final RegistryObject<Item> STEEL_PLATE = part("plate_steel");
     public static final RegistryObject<Item> IRON_PLATE = part("plate_iron");
@@ -299,6 +310,12 @@ public final class ModItems {
     public static final RegistryObject<Item> LEAD_POWDER = part("powder_lead");
     public static final RegistryObject<Item> POWDER_POWER = part("powder_power");
     public static final RegistryObject<Item> POWDER_SAWDUST = part("powder_sawdust");
+    public static final RegistryObject<Item> POWDER_FERTILIZER = registerLegacy("powder_fertilizer",
+            () -> new FertilizerItem(new Item.Properties()));
+    public static final RegistryObject<Item> POWDER_THERMITE = registerLegacy("powder_thermite",
+            () -> new ItemCustomLore(new Item.Properties()));
+    public static final RegistryObject<Item> PELLET_GAS = registerLegacy("pellet_gas",
+            () -> new ItemCustomLore(new Item.Properties()));
     public static final RegistryObject<Item> SCRAP = part("scrap");
     public static final RegistryObject<Item> BEDROCK_ORE_BASE = registerLegacy("bedrock_ore_base",
             () -> new BedrockOreBaseItem(new Item.Properties()));
@@ -1307,11 +1324,11 @@ public final class ModItems {
             ArmorItem.Type.BOOTS);
     public static final RegistryObject<Item> HAZMAT_PAA_HELMET = fullHoodGasMaskArmor("hazmat_paa_helmet",
             HbmArmorMaterials.HAZMAT_PAA);
-    public static final RegistryObject<Item> HAZMAT_PAA_PLATE = armor("hazmat_paa_plate",
+    public static final RegistryObject<Item> HAZMAT_PAA_PLATE = hazmatArmor("hazmat_paa_plate",
             HbmArmorMaterials.HAZMAT_PAA, ArmorItem.Type.CHESTPLATE);
-    public static final RegistryObject<Item> HAZMAT_PAA_LEGS = armor("hazmat_paa_legs",
+    public static final RegistryObject<Item> HAZMAT_PAA_LEGS = hazmatArmor("hazmat_paa_legs",
             HbmArmorMaterials.HAZMAT_PAA, ArmorItem.Type.LEGGINGS);
-    public static final RegistryObject<Item> HAZMAT_PAA_BOOTS = armor("hazmat_paa_boots",
+    public static final RegistryObject<Item> HAZMAT_PAA_BOOTS = hazmatArmor("hazmat_paa_boots",
             HbmArmorMaterials.HAZMAT_PAA, ArmorItem.Type.BOOTS);
     public static final RegistryObject<Item> LIQUIDATOR_HELMET = liquidatorMaskArmor("liquidator_helmet");
     public static final RegistryObject<Item> LIQUIDATOR_PLATE = liquidatorArmor("liquidator_plate",
@@ -2254,6 +2271,22 @@ public final class ModItems {
             () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> RANGEFINDER = registerLegacy("rangefinder",
             () -> new RangefinderItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> BOMB_CALLER = registerLegacy("bomb_caller",
+            () -> new BombCallerItem(new Item.Properties(), 0));
+    public static final RegistryObject<Item> BOMB_CALLER_NAPALM = registerLegacy("bomb_caller_napalm",
+            () -> new BombCallerItem(new Item.Properties(), 1));
+    public static final RegistryObject<Item> BOMB_CALLER_CHLORINE = registerLegacy("bomb_caller_chlorine",
+            () -> new BombCallerItem(new Item.Properties(), 2));
+    public static final RegistryObject<Item> BOMB_CALLER_ORANGE = registerLegacy("bomb_caller_orange",
+            () -> new BombCallerItem(new Item.Properties(), 3));
+    public static final RegistryObject<Item> BOMB_CALLER_ATOMIC = registerLegacy("bomb_caller_atomic",
+            () -> new BombCallerItem(new Item.Properties(), 4));
+    public static final RegistryObject<Item> ANCHOR_REMOTE = registerLegacy("anchor_remote",
+            () -> new AnchorRemoteItem(new Item.Properties()));
+    public static final RegistryObject<Item> BISMUTH_TOOL = registerLegacy("bismuth_tool",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> MELTDOWN_TOOL = registerLegacy("meltdown_tool",
+            () -> new MeltdownToolItem(new Item.Properties()));
     public static final RegistryObject<Item> SURVEY_SCANNER = registerLegacy("survey_scanner",
             () -> new SurveyScannerItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> ORE_DENSITY_SCANNER = registerLegacy("ore_density_scanner",
@@ -2658,6 +2691,7 @@ public final class ModItems {
             "ingot_gh336",
             "ingot_starmetal",
             "ingot_dineutronium",
+            "nugget_dineutronium",
             "ingot_electronium",
             "ingot_osmiridium",
             "ingot_graphite",
@@ -2701,6 +2735,7 @@ public final class ModItems {
             "ingot_arsenic_bronze",
             "ingot_bscco",
             "ingot_bismuth",
+            "ingot_arsenic",
             "nugget_bismuth",
             "nugget_arsenic",
             "nugget_lead",
@@ -2708,6 +2743,7 @@ public final class ModItems {
             "nugget_osmiridium",
             "nugget_gh336",
             "ingot_niobium",
+            "nugget_niobium",
             "ingot_tantalium",
             "ingot_silicon",
             "ingot_ferrouranium",
@@ -2821,6 +2857,7 @@ public final class ModItems {
             "plate_cast_zirconium",
             "plate_cast_starmetal",
             "plate_cast_osmiridium",
+            "plate_cast_schrabidium",
             "plate_welded_iron",
             "plate_welded_steel",
             "plate_welded_copper",
@@ -2884,6 +2921,7 @@ public final class ModItems {
             "plate_dineutronium",
             "plate_desh",
             "ingot_desh",
+            "nugget_desh",
             "ingot_solinium",
             "nugget_solinium",
             "photo_panel",
@@ -2987,6 +3025,7 @@ public final class ModItems {
             "billet_les",
             "billet_schrabidium_fuel",
             "billet_hes",
+            "billet_australium",
             "billet_australium_lesser",
             "billet_australium_greater",
             "billet_po210be",
@@ -3729,7 +3768,7 @@ public final class ModItems {
             "rod_zirnox_les_fuel_depleted",
             "rod_zirnox_zfb_mox_depleted",
             "crystal_xen"
-    ), ZIRNOX_ROD_ITEMS, PWR_FUEL_ITEMS, PWR_FUEL_HOT_ITEMS, PWR_FUEL_DEPLETED_ITEMS, List.of(PWR_PRINTER), WATZ_PELLET_ITEMS, WATZ_PELLET_DEPLETED_ITEMS, List.of(ICF_PELLET_EMPTY, ICF_PELLET, ICF_PELLET_DEPLETED, PARTICLE_MUON), List.of(RBMK_LID, RBMK_LID_GLASS, RBMK_FUEL_EMPTY), RBMK_FUEL_ROD_ITEMS, RBMK_PELLET_ITEMS, AMS_CATALYST_ITEMS, List.of(AMS_LENS, AMS_CORE_SING, AMS_CORE_WORMHOLE, AMS_CORE_EYEOFHARMONY), MACHINE_UPGRADE_ITEMS, LEGACY_TOOL_ITEMS, DRILLBIT_ITEMS, PISTON_SET_ITEMS, ARC_ELECTRODE_ITEMS, PA_COIL_ITEMS, ABILITY_TOOL_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER, SHREDDER_BLADES_STEEL, SHREDDER_BLADES_TITANIUM, SHREDDER_BLADES_DESH, SIREN_TRACK), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS)
+    ), ZIRNOX_ROD_ITEMS, PWR_FUEL_ITEMS, PWR_FUEL_HOT_ITEMS, PWR_FUEL_DEPLETED_ITEMS, List.of(PWR_PRINTER), WATZ_PELLET_ITEMS, WATZ_PELLET_DEPLETED_ITEMS, List.of(ICF_PELLET_EMPTY, ICF_PELLET, ICF_PELLET_DEPLETED, PARTICLE_MUON), List.of(RBMK_LID, RBMK_LID_GLASS, RBMK_FUEL_EMPTY), RBMK_FUEL_ROD_ITEMS, RBMK_PELLET_ITEMS, AMS_CATALYST_ITEMS, List.of(AMS_LENS, AMS_CORE_SING, AMS_CORE_WORMHOLE, AMS_CORE_EYEOFHARMONY), MACHINE_UPGRADE_ITEMS, LEGACY_TOOL_ITEMS, DRILLBIT_ITEMS, PISTON_SET_ITEMS, ARC_ELECTRODE_ITEMS, PA_COIL_ITEMS, ABILITY_TOOL_ITEMS, List.<RegistryObject<Item>>of(CATALYTIC_CONVERTER, SHREDDER_BLADES_STEEL, SHREDDER_BLADES_TITANIUM, SHREDDER_BLADES_DESH, SIREN_TRACK), SINGULARITY_FAMILY_ITEMS, CONTROL_BATTERY_ITEMS, List.of(MELTDOWN_TOOL))
             .flatMap(List::stream)
             .toList();
 
@@ -3759,6 +3798,7 @@ public final class ModItems {
             ALUMINIUM_INGOT,
             BERYLLIUM_INGOT,
             SCHRABIDIUM_INGOT,
+            MERCURY_TINY_DROP,
             MERCURY_DROP,
             STEEL_PLATE,
             IRON_PLATE,
@@ -3781,6 +3821,9 @@ public final class ModItems {
             LEAD_POWDER,
             POWDER_POWER,
             POWDER_SAWDUST,
+            POWDER_FERTILIZER,
+            POWDER_THERMITE,
+            PELLET_GAS,
             SCRAP,
             BEDROCK_ORE_BASE,
             BEDROCK_ORE,
@@ -4056,6 +4099,12 @@ public final class ModItems {
             MIRROR_TOOL,
             POWER_NET_TOOL,
             ANALYSIS_TOOL,
+            BOMB_CALLER,
+            BOMB_CALLER_NAPALM,
+            BOMB_CALLER_CHLORINE,
+            BOMB_CALLER_ORANGE,
+            BOMB_CALLER_ATOMIC,
+            ANCHOR_REMOTE,
             MATCHSTICK,
             BOBMAZON,
             BOAT_RUBBER,
@@ -4737,7 +4786,7 @@ public final class ModItems {
     private static RegistryObject<Item> hazmatArmor(String name, HbmArmorMaterials material, ArmorItem.Type type) {
         return registerLegacy(name, () -> type == ArmorItem.Type.HELMET
                 ? new ArmorHazmatMask(material)
-                : new HazmatArmorItem(material, type, new Item.Properties()));
+                : new ArmorHazmat(material, type, new Item.Properties()));
     }
 
     private static RegistryObject<Item> asbestosArmor(String name, ArmorItem.Type type) {
@@ -4769,7 +4818,7 @@ public final class ModItems {
     private static RegistryObject<Item> fsbArmor(String name, HbmArmorMaterials material, ArmorItem.Type type,
             List<FsbArmorItem.FullSetEffect> effects, boolean noHelmet, int dashCount,
             FsbArmorItem.FullSetTraits traits) {
-        return registerLegacy(name, () -> new FsbArmorItem(material, type, new Item.Properties(), effects,
+        return registerLegacy(name, () -> new ArmorFSB(material, type, new Item.Properties(), effects,
                 noHelmet, dashCount, traits));
     }
 
@@ -4782,7 +4831,7 @@ public final class ModItems {
     private static RegistryObject<Item> fsbPoweredArmor(String name, HbmArmorMaterials material, ArmorItem.Type type,
             List<FsbArmorItem.FullSetEffect> effects, long maxCharge, long chargeRate, long consumption, long drain,
             FsbArmorItem.FullSetTraits traits) {
-        return registerLegacy(name, () -> new FsbPoweredArmorItem(material, type, new Item.Properties(), effects,
+        return registerLegacy(name, () -> new ArmorFSBPowered(material, type, new Item.Properties(), effects,
                 maxCharge, chargeRate, consumption, drain, traits));
     }
 
@@ -4843,26 +4892,26 @@ public final class ModItems {
     private static RegistryObject<Item> fsbFueledArmor(String name, HbmArmorMaterials material, ArmorItem.Type type,
             List<FsbArmorItem.FullSetEffect> effects, FluidType fuel, int maxFuel, int fillRate, int consumption,
             int drain, FsbArmorItem.FullSetTraits traits) {
-        return registerLegacy(name, () -> new FsbFueledArmorItem(material, type, new Item.Properties(), effects,
+        return registerLegacy(name, () -> new ArmorFSBFueled(material, type, new Item.Properties(), effects,
                 fuel, maxFuel, fillRate, consumption, drain, traits));
     }
 
     private static RegistryObject<Item> steamsuitArmor(String name, HbmArmorMaterials material, ArmorItem.Type type,
             List<FsbArmorItem.FullSetEffect> effects, FluidType fuel, int maxFuel, int fillRate, int consumption,
             int drain, FsbArmorItem.FullSetTraits traits) {
-        return registerLegacy(name, () -> new SteamsuitArmorItem(material, type, new Item.Properties(), effects,
+        return registerLegacy(name, () -> new ArmorDesh(material, type, new Item.Properties(), effects,
                 fuel, maxFuel, fillRate, consumption, drain, traits));
     }
 
     private static RegistryObject<Item> fsbFueledArmor(String name, HbmArmorMaterials material, ArmorItem.Type type,
             List<FsbArmorItem.FullSetEffect> effects, int maxFuel, int fillRate, int consumption, int drain,
             FluidType... fuels) {
-        return registerLegacy(name, () -> new FsbFueledArmorItem(material, type, new Item.Properties(), effects,
+        return registerLegacy(name, () -> new ArmorFSBFueled(material, type, new Item.Properties(), effects,
                 maxFuel, fillRate, consumption, drain, fuels));
     }
 
     private static RegistryObject<Item> dieselSuitArmor(String name, ArmorItem.Type type) {
-        return registerLegacy(name, () -> new DieselSuitArmorItem(HbmArmorMaterials.DIESEL, type, new Item.Properties(),
+        return registerLegacy(name, () -> new ArmorDiesel(HbmArmorMaterials.DIESEL, type, new Item.Properties(),
                 dieselEffects(), 64_000, 500, 50, 1, dieselTraits(), HbmFluids.DIESEL, HbmFluids.DIESEL_CRACK));
     }
 
@@ -5053,7 +5102,7 @@ public final class ModItems {
     }
 
     private static RegistryObject<Item> liquidatorArmor(String name, ArmorItem.Type type) {
-        return registerLegacy(name, () -> new LiquidatorArmorItem(type, new Item.Properties()));
+        return registerLegacy(name, () -> new ArmorLiquidator(type, new Item.Properties()));
     }
 
     private static RegistryObject<Item> gasMaskArmor(String name, boolean mono) {
@@ -5392,6 +5441,9 @@ public final class ModItems {
     }
 
     private static Item createSimpleItem(String name) {
+        if ("ingot_arsenic".equals(name)) {
+            return new ItemCustomLore(new Item.Properties());
+        }
         if (isLegacyUncommonLorePart(name)) {
             return new ItemCustomLore(new Item.Properties()).setRarity(Rarity.UNCOMMON);
         }
@@ -5436,7 +5488,10 @@ public final class ModItems {
     }
 
     private static boolean isLegacyUncommonLorePart(String name) {
-        return "billet_balefire_gold".equals(name)
+        return "billet_australium".equals(name)
+                || "billet_australium_lesser".equals(name)
+                || "billet_australium_greater".equals(name)
+                || "billet_balefire_gold".equals(name)
                 || "billet_flashlead".equals(name);
     }
 

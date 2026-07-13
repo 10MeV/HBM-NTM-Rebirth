@@ -30,11 +30,6 @@ public final class RadiationHud {
                 return true;
             }
         }
-        for (ItemStack stack : player.getInventory().offhand) {
-            if (stack.is(ModItems.GEIGER_COUNTER.get())) {
-                return true;
-            }
-        }
         return false;
     }
 

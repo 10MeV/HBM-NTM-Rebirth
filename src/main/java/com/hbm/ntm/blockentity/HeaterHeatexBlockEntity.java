@@ -15,6 +15,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidThermalExchange;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait;
@@ -29,6 +30,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -438,6 +440,25 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
         super.handleClientSyncTag(tag);
         lastInputUsed = Math.max(0, tag.getInt("lastInputUsed"));
         lastOutputProduced = Math.max(0, tag.getInt("lastOutputProduced"));
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityHeaterHeatex#serialize: its temporary server buffer contains only the two tanks.
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank);
+        data.writeInt(heatEnergy);
+        data.writeInt(amountToCool);
+        data.writeInt(tickDelay);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank);
+        heatEnergy = Math.max(0, data.readInt());
+        amountToCool = Mth.clamp(data.readInt(), 1, inputTank.getMaxFill());
+        tickDelay = Math.max(1, data.readInt());
     }
 
     @Override

@@ -1,3 +1,7 @@
 {
-  "parent": "hbm_ntm_rebirth:block/wood_structure"
+  "parent": "hbm_ntm_rebirth:block/wood_structure_roof",
+  "overrides": [
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 1 }, "model": "hbm_ntm_rebirth:block/wood_structure_scaffold_inventory" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 2 }, "model": "hbm_ntm_rebirth:block/wood_structure_ceiling" }
+  ]
 }

@@ -141,11 +141,11 @@ public final class HbmDeferredParticleRenderer {
         beginRenderPassParticleSheetConsumers(buffer);
         try {
             DRAIN.sort(DISTANCE_DESCENDING);
-            for (Entry entry : DRAIN) {
-                entry.particle.renderDeferred(buffer, camera, partialTick);
+            for (int index = 0; index < DRAIN.size(); index++) {
+                DRAIN.get(index).particle.renderDeferred(buffer, camera, partialTick);
             }
             lastRenderSubmittedParticles = DRAIN.size();
-            endDeferredBatches(buffer);
+            endDeferredBatches(buffer, RENDER_PASS_PARTICLE_SHEET_CONSUMERS.get());
         } finally {
             endRenderPassParticleSheetConsumers();
             endRenderPassBillboardBasis();
@@ -472,18 +472,11 @@ public final class HbmDeferredParticleRenderer {
         entries.clear();
     }
 
-    private static void endDeferredBatches(MultiBufferSource.BufferSource buffer) {
+    private static void endDeferredBatches(MultiBufferSource.BufferSource buffer,
+            RenderPassParticleSheetConsumers consumers) {
         buffer.endBatch(PARTICLE_SHEET_DEPTH_WRITE);
         buffer.endBatch(PARTICLE_SHEET_ADDITIVE_NO_DEPTH_WRITE);
-        for (RenderType renderType : TEXTURED_DEPTH_WRITE.values()) {
-            buffer.endBatch(renderType);
-        }
-        for (RenderType renderType : TEXTURED_NO_DEPTH_WRITE.values()) {
-            buffer.endBatch(renderType);
-        }
-        for (RenderType renderType : TEXTURED_ADDITIVE_NO_DEPTH_WRITE.values()) {
-            buffer.endBatch(renderType);
-        }
+        consumers.endUsedTexturedBatches(buffer);
     }
 
     private static void emitParticleSheetVertex(VertexConsumer consumer, int packedLight,
@@ -594,6 +587,23 @@ public final class HbmDeferredParticleRenderer {
             this.texturedNoDepthWriteConsumers.clear();
             this.texturedAdditiveNoDepthWriteConsumers.clear();
             this.valid = false;
+        }
+
+        private void endUsedTexturedBatches(MultiBufferSource.BufferSource buffer) {
+            endUsedTexturedBatches(buffer, this.texturedDepthWriteConsumers, TEXTURED_DEPTH_WRITE);
+            endUsedTexturedBatches(buffer, this.texturedNoDepthWriteConsumers, TEXTURED_NO_DEPTH_WRITE);
+            endUsedTexturedBatches(buffer, this.texturedAdditiveNoDepthWriteConsumers,
+                    TEXTURED_ADDITIVE_NO_DEPTH_WRITE);
+        }
+
+        private static void endUsedTexturedBatches(MultiBufferSource.BufferSource buffer,
+                Map<ResourceLocation, VertexConsumer> consumers, Map<ResourceLocation, RenderType> renderTypes) {
+            for (ResourceLocation texture : consumers.keySet()) {
+                RenderType renderType = renderTypes.get(texture);
+                if (renderType != null) {
+                    buffer.endBatch(renderType);
+                }
+            }
         }
 
         private VertexConsumer depthWriteConsumer(MultiBufferSource buffer) {

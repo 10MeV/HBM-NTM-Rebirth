@@ -31,6 +31,7 @@ import com.hbm.ntm.block.LegacyCokeBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
+import com.hbm.ntm.block.LegacyWoodStructureBlock;
 import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
 import com.hbm.ntm.block.LegacyNtmFlowerBlock;
 import com.hbm.ntm.block.MassStorageBlock;
@@ -535,6 +536,15 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem(ModBlocks.GAS_ASBESTOS, "gas_asbestos");
         simpleCubeWithItem(ModBlocks.GAS_COAL, "gas_coal");
         simpleCubeWithItem(ModBlocks.CHLORINE_GAS, "chlorine_gas");
+        simpleCubeWithItem(ModBlocks.GAS_FLAMMABLE, "gas_flammable");
+        simpleCubeWithItem(ModBlocks.GAS_EXPLOSIVE, "gas_explosive");
+        ventWithItem(ModBlocks.VENT_CHLORINE, "vent_chlorine");
+        ventWithItem(ModBlocks.VENT_CLOUD, "vent_cloud");
+        ventWithItem(ModBlocks.VENT_PINK_CLOUD, "vent_pink_cloud");
+        cubeTopWithItem(ModBlocks.VENT_CHLORINE_SEAL, "vent_chlorine_seal_side", "vent_chlorine_seal_top");
+        simpleCubeWithItem(ModBlocks.BROADCASTER_PC, "broadcaster_pc");
+        geysirWithItem(ModBlocks.GEYSIR_CHLORINE, "minecraft:block/stone", "geysir_stone");
+        geysirWithItem(ModBlocks.GEYSIR_NETHER, "minecraft:block/netherrack", "geysir_nether");
         simpleCubeWithItem("dirt_dead", "dirt_dead");
         simpleCubeWithItem("dirt_oily", "dirt_oily");
         simpleCubeWithItem("sand_dirty", "sand_dirty");
@@ -587,6 +597,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         pribrisDebrisWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk/rbmk_debris_digamma");
         cokeBlockWithItem();
         concreteColoredExtWithItem();
+        woodStructureWithItem();
         basaltOreWithItem();
         liquidBlockOnly(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still", "volcanic_lava_flowing");
         liquidBlockOnly(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still", "rad_lava_flowing");
@@ -622,6 +633,10 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         floatBombWithItem();
         thermoBombWithItem(ModBlocks.THERM_ENDO, "therm_endo");
         thermoBombWithItem(ModBlocks.THERM_EXO, "therm_exo");
+        landmineWithItem(ModBlocks.MINE_AP, "models/bombs/ap_mine.obj", "models/bombs/mine_ap_grass");
+        landmineWithItem(ModBlocks.MINE_HE, "models/bombs/marelet.obj", "models/bombs/mine_marelet");
+        landmineWithItem(ModBlocks.MINE_SHRAP, "models/bombs/ap_mine.obj", "models/bombs/mine_shrapnel");
+        landmineWithItem(ModBlocks.MINE_FAT, "models/mine_fat.obj", "models/mine_fat");
         navalMineWithItem();
         tntBaseWithItem(ModBlocks.DYNAMITE, "dynamite");
         tntBaseWithItem(ModBlocks.TNT_NTM, "tnt");
@@ -706,6 +721,20 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .texture("texture0", texture);
         simpleBlock(ModBlocks.MINE_NAVAL.get(), model);
         simpleBlockItem(ModBlocks.MINE_NAVAL.get(), model);
+    }
+
+    private void landmineWithItem(RegistryObject<Block> block, String objModel, String textureName) {
+        ModelFile empty = new ModelFile.UncheckedModelFile(modLoc("block/empty"));
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(empty).build());
+        itemModels().getBuilder(block.getId().getPath())
+                .customLoader(net.minecraftforge.client.model.generators.loaders.ObjModelBuilder::begin)
+                .modelLocation(modLoc(objModel))
+                .flipV(true)
+                .end()
+                .texture("particle", modLoc(textureName))
+                .texture("default", modLoc(textureName))
+                .texture("texture0", modLoc(textureName));
     }
 
     private void barrelWithItem(RegistryObject<Block> block, String textureName) {
@@ -1753,6 +1782,36 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void ventWithItem(RegistryObject<Block> block, String sideTexture) {
+        String name = block.getId().getPath();
+        ModelFile model = models().cubeBottomTop(name,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + sideTexture),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/vent_blank"),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/vent_blank"));
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void cubeTopWithItem(RegistryObject<Block> block, String sideTexture, String topTexture) {
+        String name = block.getId().getPath();
+        ModelFile model = models().cubeBottomTop(name,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + sideTexture),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + sideTexture),
+                new ResourceLocation(HbmNtm.MOD_ID, "block/" + topTexture));
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void geysirWithItem(RegistryObject<Block> block, String sideTexture, String topTexture) {
+        String name = block.getId().getPath();
+        ModelFile model = models().cubeBottomTop(name,
+                new ResourceLocation(sideTexture),
+                new ResourceLocation(sideTexture),
+                modLoc("block/" + topTexture));
+        simpleBlock(block.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
     private void powerDetectorWithItem() {
         ModelFile off = models().cubeAll("machine_detector_off",
                 new ResourceLocation(HbmNtm.MOD_ID, "block/machine_detector_off"));
@@ -1879,6 +1938,52 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                     .texture("particle", stripe);
         }
         return models().cubeAll(variant.modelName(), modLoc("block/" + variant.textureName()));
+    }
+
+    private void woodStructureWithItem() {
+        ModelFile roof = models().getExistingFile(modLoc("block/wood_structure_roof"));
+        ModelFile ceiling = models().getExistingFile(modLoc("block/wood_structure_ceiling"));
+        ModelFile postsShort = models().getExistingFile(modLoc("block/wood_structure_scaffold_posts_short"));
+        ModelFile postsTall = models().getExistingFile(modLoc("block/wood_structure_scaffold_posts_tall"));
+        ModelFile scaffoldInventory = models().getExistingFile(modLoc("block/wood_structure_scaffold_inventory"));
+        ModelFile northBrace = models().getExistingFile(modLoc("block/wood_structure_scaffold_north"));
+        ModelFile eastBrace = models().getExistingFile(modLoc("block/wood_structure_scaffold_east"));
+        ModelFile southBrace = models().getExistingFile(modLoc("block/wood_structure_scaffold_south"));
+        ModelFile westBrace = models().getExistingFile(modLoc("block/wood_structure_scaffold_west"));
+        ModelFile top = models().getExistingFile(modLoc("block/wood_structure_scaffold_top"));
+
+        var builder = getMultipartBuilder(ModBlocks.WOOD_STRUCTURE.get());
+        builder.part().modelFile(roof).addModel()
+                .condition(LegacyWoodStructureBlock.VARIANT, LegacyWoodStructureBlock.Variant.ROOF.legacyMeta()).end();
+        builder.part().modelFile(ceiling).addModel()
+                .condition(LegacyWoodStructureBlock.VARIANT, LegacyWoodStructureBlock.Variant.CEILING.legacyMeta()).end();
+        builder.part().modelFile(postsShort).addModel()
+                .condition(LegacyWoodStructureBlock.VARIANT, LegacyWoodStructureBlock.Variant.SCAFFOLD.legacyMeta())
+                .condition(LegacyWoodStructureBlock.UP, false).end();
+        builder.part().modelFile(postsTall).addModel()
+                .condition(LegacyWoodStructureBlock.VARIANT, LegacyWoodStructureBlock.Variant.SCAFFOLD.legacyMeta())
+                .condition(LegacyWoodStructureBlock.UP, true).end();
+        builder.part().modelFile(northBrace).addModel()
+                .condition(LegacyWoodStructureBlock.VARIANT, LegacyWoodStructureBlock.Variant.SCAFFOLD.legacyMeta())
+                .condition(LegacyWoodStructureBlock.NORTH, false).end();
+        builder.part().modelFile(eastBrace).addModel()
+                .condition(LegacyWoodStructureBlock.VARIANT, LegacyWoodStructureBlock.Variant.SCAFFOLD.legacyMeta())
+                .condition(LegacyWoodStructureBlock.EAST, false).end();
+        builder.part().modelFile(southBrace).addModel()
+                .condition(LegacyWoodStructureBlock.VARIANT, LegacyWoodStructureBlock.Variant.SCAFFOLD.legacyMeta())
+                .condition(LegacyWoodStructureBlock.SOUTH, false).end();
+        builder.part().modelFile(westBrace).addModel()
+                .condition(LegacyWoodStructureBlock.VARIANT, LegacyWoodStructureBlock.Variant.SCAFFOLD.legacyMeta())
+                .condition(LegacyWoodStructureBlock.WEST, false).end();
+        builder.part().modelFile(top).addModel()
+                .condition(LegacyWoodStructureBlock.VARIANT, LegacyWoodStructureBlock.Variant.SCAFFOLD.legacyMeta())
+                .condition(LegacyWoodStructureBlock.UP, false).end();
+
+        var itemModel = itemModels().withExistingParent("wood_structure", modLoc("block/wood_structure_roof"));
+        itemModel.override().predicate(modLoc("legacy_variant"), LegacyWoodStructureBlock.Variant.SCAFFOLD.legacyMeta())
+                .model(scaffoldInventory).end();
+        itemModel.override().predicate(modLoc("legacy_variant"), LegacyWoodStructureBlock.Variant.CEILING.legacyMeta())
+                .model(ceiling).end();
     }
 
     private ModelFile basaltOreModel(String textureName) {

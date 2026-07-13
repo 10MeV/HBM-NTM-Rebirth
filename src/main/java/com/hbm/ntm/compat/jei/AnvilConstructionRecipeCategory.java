@@ -28,7 +28,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.RegistryObject;
 
-public final class AnvilConstructionRecipeCategory implements IRecipeCategory<AnvilConstructionRecipe> {
+public final class AnvilConstructionRecipeCategory implements HbmJeiRecipeCategory<AnvilConstructionRecipe> {
     private static final int WIDTH = 176;
     private static final int HEIGHT = 86;
     private static final int TEXTURE_SIZE = 256;
@@ -67,7 +67,7 @@ public final class AnvilConstructionRecipeCategory implements IRecipeCategory<An
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -108,6 +108,7 @@ public final class AnvilConstructionRecipeCategory implements IRecipeCategory<An
     @Override
     public void draw(AnvilConstructionRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         switch (layout(recipe).shape()) {
             case NONE -> {
                 blit(guiGraphics, 2, 5, 5, 87, 72, 54);

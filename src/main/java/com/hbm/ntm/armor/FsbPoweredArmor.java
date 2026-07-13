@@ -2,6 +2,7 @@ package com.hbm.ntm.armor;
 
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.energy.IBatteryItem;
+import com.hbm.ntm.item.FsbArmorItem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
@@ -109,8 +110,7 @@ public interface FsbPoweredArmor extends IBatteryItem {
             return false;
         }
 
-        ResourceLocation material = chestplate.fsbMaterialId(chest);
-        if (material == null) {
+        if (!(chest.getItem() instanceof FsbArmorItem chestFsb)) {
             return false;
         }
 
@@ -120,13 +120,13 @@ public interface FsbPoweredArmor extends IBatteryItem {
 
         for (EquipmentSlot slot : slots) {
             ItemStack armor = player.getItemBySlot(slot);
-            if (!(armor.getItem() instanceof FsbPoweredArmor powered)) {
+            if (!(armor.getItem() instanceof FsbArmorItem fsb)) {
                 return false;
             }
-            if (!material.equals(powered.fsbMaterialId(armor))) {
+            if (!FsbArmorItem.hasSameFsbMaterial(chestFsb, fsb)) {
                 return false;
             }
-            if (!ignoreCharge && !powered.isArmorEnabled(armor)) {
+            if (!ignoreCharge && !fsb.isArmorEnabled(armor)) {
                 return false;
             }
         }

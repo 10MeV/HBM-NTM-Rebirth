@@ -483,14 +483,65 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachineRadarNT#serialize. The scan dish rotation is
+        // client-local; only its source state belongs in this packet.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeBoolean(scanMissiles);
+        data.writeBoolean(scanShells);
+        data.writeBoolean(scanPlayers);
+        data.writeBoolean(smartMode);
+        data.writeBoolean(redMode);
+        data.writeBoolean(showMap);
+        data.writeBoolean(jammed);
+        data.writeInt(entries.size());
+        for (RadarEntry entry : entries) {
+            entry.writeLegacyWire(data);
+        }
+        if (clearFlag) {
+            data.writeBoolean(true);
+            return;
+        }
+        data.writeBoolean(false);
+        if (!showMap) {
+            data.writeBoolean(false);
+            return;
+        }
+        data.writeBoolean(true);
+        short slice = (short) ((level == null ? 0L : level.getGameTime()) % MAP_SLICE_COUNT);
+        data.writeShort(slice);
+        normalizeMap();
+        int start = slice * MAP_SLICE_SIZE;
+        for (int index = start; index < start + MAP_SLICE_SIZE; index++) {
+            data.writeByte(map[index]);
+        }
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        scanMissiles = data.readBoolean();
+        scanShells = data.readBoolean();
+        scanPlayers = data.readBoolean();
+        smartMode = data.readBoolean();
+        redMode = data.readBoolean();
+        showMap = data.readBoolean();
+        jammed = data.readBoolean();
+        int count = data.readInt();
+        entries.clear();
+        for (int index = 0; index < count; index++) {
+            entries.add(RadarEntry.readLegacyWire(data));
+        }
+        if (data.readBoolean()) {
+            map = new byte[MAP_SIZE];
+        } else if (data.readBoolean()) {
+            int slice = Math.floorMod(data.readShort(), MAP_SLICE_COUNT);
+            normalizeMap();
+            int start = slice * MAP_SLICE_SIZE;
+            for (int index = start; index < start + MAP_SLICE_SIZE; index++) {
+                map[index] = data.readByte();
+            }
         }
     }
 

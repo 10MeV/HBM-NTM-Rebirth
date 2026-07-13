@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:billet_australium" },
+    { "item": "hbm_ntm_rebirth:billet_australium" },
+    { "item": "hbm_ntm_rebirth:billet_australium" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:ingot_australium", "count": 2 }
+}

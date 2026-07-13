@@ -24,6 +24,7 @@ import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.RefineryRecipe;
 import com.hbm.ntm.menu.RefineryMenu;
@@ -326,14 +327,30 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachineRefinery#serialize: MachineBase/LoadedBase state, power, five tanks, then damage/run flags.
+        // The renderer consumes the damage flags while the 20-tick loop keepalive consumes isOn.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        for (HbmFluidTank tank : getAllTanks()) {
+            LegacyFluidTankPacket.write(data, tank);
+        }
+        data.writeBoolean(exploded);
+        data.writeBoolean(onFire);
+        data.writeBoolean(isOn);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        for (HbmFluidTank tank : getAllTanks()) {
+            LegacyFluidTankPacket.read(data, tank);
+        }
+        exploded = data.readBoolean();
+        onFire = data.readBoolean();
+        isOn = data.readBoolean();
+        if (isOn) {
+            audioTime = 20;
         }
     }
 

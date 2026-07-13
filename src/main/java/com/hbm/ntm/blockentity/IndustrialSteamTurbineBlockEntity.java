@@ -10,6 +10,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.HbmTurbineConversion;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait;
 import com.hbm.ntm.fluid.trait.CoolableFluidTrait.CoolingType;
@@ -20,6 +21,7 @@ import java.util.Random;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -144,6 +146,25 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
 
     public long getMaxPowerTarget() {
         return maxPowerTarget;
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityTurbineBase#serialize, then TileEntityMachineIndustrialTurbine#serialize.
+        writeLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank);
+        data.writeLong(energy.getPower());
+        data.writeDouble(spin);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank);
+        energy.setPower(data.readLong());
+        spin = Math.max(0.0D, data.readDouble());
     }
 
     @Override

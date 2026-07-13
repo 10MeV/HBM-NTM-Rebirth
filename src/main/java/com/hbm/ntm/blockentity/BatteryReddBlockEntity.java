@@ -23,6 +23,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -468,9 +469,50 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
         }
     }
 
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityBatteryREDD -> TileEntityBatteryBase -> TileEntityMachineBase.
+        writeLegacyLoadedTileBinary(data);
+        data.writeShort(redLow);
+        data.writeShort(redHigh);
+        data.writeByte(priority.ordinal());
+        writeLegacyBigInteger(data, power);
+        writeLegacyBigInteger(data, delta);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        redLow = clampMode(data.readShort());
+        redHigh = clampMode(data.readShort());
+        priority = legacyPriority(data.readByte());
+        power = readLegacyBigInteger(data);
+        delta = readLegacyBigInteger(data);
+    }
+
     private static BigInteger readBigInteger(CompoundTag tag, String key) {
         byte[] bytes = tag.getByteArray(key);
         return bytes.length == 0 ? BigInteger.ZERO : new BigInteger(bytes);
+    }
+
+    private static void writeLegacyBigInteger(FriendlyByteBuf data, BigInteger value) {
+        byte[] bytes = (value == null ? BigInteger.ZERO : value).toByteArray();
+        data.writeInt(bytes.length);
+        data.writeBytes(bytes);
+    }
+
+    private static BigInteger readLegacyBigInteger(FriendlyByteBuf data) {
+        int length = data.readInt();
+        byte[] bytes = new byte[length];
+        data.readBytes(bytes);
+        return new BigInteger(bytes);
+    }
+
+    private static HbmEnergyReceiver.ConnectionPriority legacyPriority(byte ordinal) {
+        HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
+        return ordinal >= 0 && ordinal < values.length
+                ? sanitizePriority(values[ordinal])
+                : HbmEnergyReceiver.ConnectionPriority.LOW;
     }
 
     @Override

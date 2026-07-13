@@ -17,6 +17,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.block.LegacyFrameRenderState;
 import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
@@ -33,6 +34,7 @@ import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.AssemblyMachineMenu;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.BufferUtil;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -450,15 +452,27 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachineAssemblyMachine#serialize, including its single ModuleMachineAssembler state.
+        writeLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank);
+        data.writeLong(energy.getPower());
+        data.writeLong(energy.getMaxPower());
+        data.writeBoolean(didProcess);
+        data.writeDouble(progress);
+        BufferUtil.writeString(data, selectedRecipe);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank);
+        energy.setPower(data.readLong());
+        energy.setMaxPower(Math.max(DEFAULT_MAX_POWER, data.readLong()));
+        didProcess = data.readBoolean();
+        progress = data.readDouble();
+        selectedRecipe = GenericMachineRecipeSelector.normalize(BufferUtil.readString(data));
     }
 
     private void writeClientSyncFields(CompoundTag tag) {

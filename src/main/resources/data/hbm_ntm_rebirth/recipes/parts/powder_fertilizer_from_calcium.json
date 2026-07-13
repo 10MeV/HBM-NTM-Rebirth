@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "tag": "forge:dusts/calcium" }, { "tag": "forge:dusts/red_phosphorus" }, { "tag": "forge:dusts/saltpeter" }, { "tag": "forge:dusts/sulfur" }],
+  "result": { "item": "hbm_ntm_rebirth:powder_fertilizer", "count": 4 }
+}

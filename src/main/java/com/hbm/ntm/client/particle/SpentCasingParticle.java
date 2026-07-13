@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.particle;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
@@ -10,6 +11,7 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -45,15 +47,18 @@ public class SpentCasingParticle extends Particle {
             MODEL.prepareRenderOnlyInCallOrder("Shotgun");
     private static final LegacyWavefrontModel.SelectionHandle SHOTGUN_CASE =
             MODEL.prepareRenderOnlyInCallOrder("ShotgunCase");
+    private static boolean casingModelBatchActive;
     private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
         @Override
         public void begin(BufferBuilder builder, TextureManager textureManager) {
+            casingModelBatchActive = false;
             RenderSystem.depthMask(true);
             RenderSystem.disableBlend();
         }
 
         @Override
         public void end(Tesselator tesselator) {
+            flushCasingModelBatch(Minecraft.getInstance().renderBuffers().bufferSource());
         }
 
         @Override
@@ -270,14 +275,22 @@ public class SpentCasingParticle extends Particle {
         poseStack.scale(this.definition.scaleX(), this.definition.scaleY(), this.definition.scaleZ());
 
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        boolean hasSmokeTrail = this.smokeNodeCount > 0;
+        if (hasSmokeTrail) {
+            // Legacy rendering presents the casing before its own ribbon.  Close an earlier
+            // non-smoking casing run before preserving that ordering boundary.
+            flushCasingModelBatch(buffer);
+        }
         String[] parts = this.definition.type().partNames();
+        int packedLight = getLightColor(partialTick);
         for (int i = 0; i < parts.length; i++) {
             int color = this.definition.color(i);
-            renderCasingPart(parts[i], color, poseStack, buffer, getLightColor(partialTick));
+            renderCasingPart(parts[i], color, poseStack, buffer, packedLight);
         }
-        buffer.endBatch();
+        casingModelBatchActive = true;
 
-        if (this.smokeNodeCount > 0) {
+        if (hasSmokeTrail) {
+            flushCasingModelBatch(buffer);
             renderSmokeTrail(camera, partialTick);
         }
     }
@@ -367,6 +380,16 @@ public class SpentCasingParticle extends Particle {
             case "ShotgunCase" -> SHOTGUN_CASE;
             default -> null;
         };
+    }
+
+    private static void flushCasingModelBatch(MultiBufferSource.BufferSource buffer) {
+        if (!casingModelBatchActive) {
+            return;
+        }
+        buffer.endBatch(LegacyTexturedRenderMode.CUTOUT_NO_CULL.renderType(TEXTURE_LOCATION));
+        buffer.endBatch(LegacyTexturedRenderMode.CUTOUT_NO_CULL.renderType(TEXTURE_LOCATION,
+                VertexFormat.Mode.TRIANGLES));
+        casingModelBatchActive = false;
     }
 
     @Override

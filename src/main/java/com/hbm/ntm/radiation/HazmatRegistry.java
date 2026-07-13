@@ -66,9 +66,6 @@ public final class HazmatRegistry {
 
         double iron = 0.0225D;
         double gold = 0.0225D;
-        double diamond = 0.07D;
-        double netherite = 0.125D;
-        double chainmail = 0.0225D;
         double steel = 0.045D;
         double titanium = 0.045D;
         double alloy = 0.07D;
@@ -86,9 +83,6 @@ public final class HazmatRegistry {
 
         registerArmorSet(Items.IRON_HELMET, Items.IRON_CHESTPLATE, Items.IRON_LEGGINGS, Items.IRON_BOOTS, iron);
         registerArmorSet(Items.GOLDEN_HELMET, Items.GOLDEN_CHESTPLATE, Items.GOLDEN_LEGGINGS, Items.GOLDEN_BOOTS, gold);
-        registerArmorSet(Items.CHAINMAIL_HELMET, Items.CHAINMAIL_CHESTPLATE, Items.CHAINMAIL_LEGGINGS, Items.CHAINMAIL_BOOTS, chainmail);
-        registerArmorSet(Items.DIAMOND_HELMET, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_LEGGINGS, Items.DIAMOND_BOOTS, diamond);
-        registerArmorSet(Items.NETHERITE_HELMET, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_LEGGINGS, Items.NETHERITE_BOOTS, netherite);
 
         registerLegacyArmorSet("steel", steel);
         registerLegacyArmorSet("titanium", titanium);

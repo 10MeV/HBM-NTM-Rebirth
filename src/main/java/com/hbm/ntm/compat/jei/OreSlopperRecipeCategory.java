@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class OreSlopperRecipeCategory implements IRecipeCategory<OreSlopperRecipeRuntime.DisplayRecipe> {
+public final class OreSlopperRecipeCategory implements HbmJeiRecipeCategory<OreSlopperRecipeRuntime.DisplayRecipe> {
     private final RecipeType<OreSlopperRecipeRuntime.DisplayRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -59,7 +59,7 @@ public final class OreSlopperRecipeCategory implements IRecipeCategory<OreSloppe
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

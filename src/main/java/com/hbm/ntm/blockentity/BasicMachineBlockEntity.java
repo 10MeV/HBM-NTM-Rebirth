@@ -8,6 +8,7 @@ import com.hbm.ntm.recipe.PressRecipe;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.BufferUtil;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
@@ -100,6 +101,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     private double renderPress;
     private double lastPress;
     private int syncPress;
+    private ItemStack syncStack = ItemStack.EMPTY;
     private int turnProgress;
     private boolean clientRenderInitialized;
 
@@ -251,7 +253,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     }
 
     public ItemStack getRenderStack() {
-        return items.getStackInSlot(SLOT_INPUT);
+        return syncStack;
     }
 
     public List<ItemStack> getDrops() {
@@ -294,6 +296,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
         }
         retracting = tag.getBoolean(TAG_RETRACTING);
         delay = tag.getInt(TAG_DELAY);
+        syncStack = items.getStackInSlot(SLOT_INPUT).copy();
     }
 
     @Override
@@ -313,14 +316,27 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        // TileEntityMachinePress#serialize: the moving head uses a separate target press
+        // and render stack, while the inventory remains NBT/menu state.
+        writeLegacyLoadedTileBinary(data);
+        data.writeInt(speed);
+        data.writeInt(burnTime);
+        data.writeInt(press);
+        BufferUtil.writeItemStack(data, items.getStackInSlot(SLOT_INPUT));
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            load(tag);
+        readLegacyLoadedTileBinary(data);
+        speed = data.readInt();
+        burnTime = data.readInt();
+        syncPress = data.readInt();
+        syncStack = BufferUtil.readItemStack(data);
+        turnProgress = 2;
+        if (!clientRenderInitialized) {
+            renderPress = syncPress;
+            lastPress = syncPress;
+            clientRenderInitialized = true;
         }
     }
 

@@ -89,7 +89,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.MushroomCow;
@@ -119,6 +118,7 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkDataEvent;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -146,7 +146,6 @@ public final class CommonForgeEvents {
             EquipmentSlot.FEET
     };
 
-    private static final String HAZARD_ENTITY_TICK_KEY = "hbmHazardTick";
     private static final String CONTAGION_ITEM_TAG = "ntmContagion";
     private static final int CRATER_MELT_INTERVAL_TICKS = 4;
     private static final int CRATER_MELT_RADIUS = 64;
@@ -376,7 +375,13 @@ public final class CommonForgeEvents {
         DnsArmorItem.reconcileSprintBoost(player);
         NcrpaArmorItem.reconcileSprintBoost(player);
         FsbArmorItem.reconcileStepHeight(player);
-        HazardExposureUtil.updatePlayerInventory(player);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerHazardTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START && !event.player.level().isClientSide) {
+            HazardExposureUtil.updatePlayerInventory(event.player);
+        }
     }
 
     @SubscribeEvent
@@ -411,6 +416,14 @@ public final class CommonForgeEvents {
     public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
         if (event.getEntity() instanceof ServerPlayer serverPlayer) {
             HbmCraftingAdvancementUtil.fireCraftingAdvancement(serverPlayer, event.getCrafting());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemToss(ItemTossEvent event) {
+        ItemEntity itemEntity = event.getEntity();
+        if (!itemEntity.level().isClientSide && itemEntity.getItem().is(ModItems.BISMUTH_TOOL.get())) {
+            itemEntity.setInvulnerable(true);
         }
     }
 
@@ -463,16 +476,18 @@ public final class CommonForgeEvents {
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();
-        if (entity.level().isClientSide || entity.isDeadOrDying()) {
+        if (entity.level().isClientSide) {
             return;
         }
 
         boolean radiationSyncTick = entity.tickCount % 20 == 0;
         if (radiationSyncTick) {
             HbmLivingProperties.flushEnvironmentBuffer(entity);
-            if (entity instanceof ServerPlayer serverPlayer) {
-                syncRadiationThreaded(serverPlayer);
-            }
+        }
+        if (entity instanceof ServerPlayer serverPlayer) {
+            // 1.7.10 sent ExtPropPacket from every LivingUpdateEvent. Only the
+            // radEnv-to-radBuf flush was gated to the twenty-tick boundary.
+            syncRadiationThreaded(serverPlayer);
         }
 
         handleBombTimer(entity);
@@ -564,10 +579,13 @@ public final class CommonForgeEvents {
 
     @SubscribeEvent
     public static void onMobFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
-        Mob mob = event.getEntity();
-        PollutionManager.decorateMob(mob);
-        if (event.getSpawnType() == MobSpawnType.NATURAL && mob.level() instanceof ServerLevel level) {
-            PollutionManager.trySpawnRampantScout(level, mob.blockPosition());
+        PollutionManager.decorateMob(event.getEntity());
+    }
+
+    @SubscribeEvent
+    public static void onPotentialSpawns(LevelEvent.PotentialSpawns event) {
+        if (!event.isCanceled() && event.getLevel() instanceof ServerLevel level) {
+            PollutionManager.trySpawnRampantScout(level, event.getPos());
         }
     }
 
@@ -585,10 +603,6 @@ public final class CommonForgeEvents {
             return;
         }
         TRACKED_ITEM_ENTITIES.computeIfAbsent(event.getLevel().dimension(), key -> new HashSet<>()).add(itemEntity.getId());
-        if (event.getLevel() instanceof ServerLevel level) {
-            itemEntity.getPersistentData().putLong(HAZARD_ENTITY_TICK_KEY, level.getGameTime());
-        }
-        applyDroppedItemHazards(itemEntity);
     }
 
     @SubscribeEvent
@@ -600,20 +614,21 @@ public final class CommonForgeEvents {
         if (tracked == null || tracked.isEmpty()) {
             return;
         }
-        if (level.getGameTime() % ServerConfig.droppedItemHazardTickRate() != 0L) {
-            return;
-        }
+        boolean updateHazards = level.getGameTime() % ServerConfig.droppedItemHazardTickRate() == 0L;
         for (Integer entityId : new ArrayList<>(tracked)) {
             Entity trackedEntity = level.getEntity(entityId);
             if (!(trackedEntity instanceof ItemEntity itemEntity) || itemEntity.isRemoved()) {
                 tracked.remove(entityId);
                 continue;
             }
-            long lastTick = itemEntity.getPersistentData().getLong(HAZARD_ENTITY_TICK_KEY);
-            if (level.getGameTime() == lastTick) {
+            applyDroppedItemSpecialBehavior(itemEntity);
+            if (itemEntity.isRemoved()) {
+                tracked.remove(entityId);
                 continue;
             }
-            itemEntity.getPersistentData().putLong(HAZARD_ENTITY_TICK_KEY, level.getGameTime());
+            if (!updateHazards) {
+                continue;
+            }
             applyDroppedItemHazards(itemEntity);
         }
         if (tracked.isEmpty()) {
@@ -626,65 +641,99 @@ public final class CommonForgeEvents {
         if (stack.isEmpty() || itemEntity.isRemoved()) {
             return;
         }
-        if (HazardExposureUtil.updateDroppedItem(itemEntity)) {
+
+        HazardExposureUtil.updateDroppedItem(itemEntity);
+    }
+
+    private static void applyDroppedItemSpecialBehavior(ItemEntity itemEntity) {
+        if (!itemEntity.onGround() || !(itemEntity.level() instanceof ServerLevel level)) {
             return;
         }
 
-        if (itemEntity.onGround() && WeaponConfig.droppedSingularitiesEnabled() && itemEntity.level() instanceof ServerLevel level) {
-            if (stack.is(ModItems.SINGULARITY.get())) {
+        ItemStack stack = itemEntity.getItem();
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        if (stack.is(ModItems.SINGULARITY.get())) {
+            if (WeaponConfig.droppedSingularitiesEnabled()) {
                 spawnDroppedVortex(itemEntity, level, 1.5F);
-            } else if (stack.is(ModItems.SINGULARITY_COUNTER_RESONANT.get())
-                    || stack.is(ModItems.SINGULARITY_SUPER_HEATED.get())) {
-                spawnDroppedVortex(itemEntity, level, 2.5F);
-            } else if (stack.is(ModItems.SINGULARITY_SPARK.get())) {
+            } else {
                 itemEntity.discard();
+            }
+            return;
+        }
+        if (stack.is(ModItems.SINGULARITY_COUNTER_RESONANT.get())
+                || stack.is(ModItems.SINGULARITY_SUPER_HEATED.get())) {
+            if (WeaponConfig.droppedSingularitiesEnabled()) {
+                spawnDroppedVortex(itemEntity, level, 2.5F);
+            } else {
+                itemEntity.discard();
+            }
+            return;
+        }
+        if (stack.is(ModItems.SINGULARITY_SPARK.get())) {
+            itemEntity.discard();
+            if (WeaponConfig.droppedSingularitiesEnabled()) {
                 RagingVortexEntity vortex = new RagingVortexEntity(level, 3.5F);
                 vortex.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
                 level.addFreshEntity(vortex);
-            } else if (stack.is(ModItems.BLACK_HOLE.get())) {
-                itemEntity.discard();
+            }
+            return;
+        }
+        if (stack.is(ModItems.BLACK_HOLE.get())) {
+            itemEntity.discard();
+            if (WeaponConfig.droppedSingularitiesEnabled()) {
                 BlackHoleEntity blackHole = new BlackHoleEntity(level, 1.5F);
                 blackHole.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
                 level.addFreshEntity(blackHole);
-            } else if (stack.is(ModItems.PARTICLE_DIGAMMA.get())) {
-                itemEntity.discard();
+            }
+            return;
+        }
+        if (stack.is(ModItems.PARTICLE_DIGAMMA.get())) {
+            itemEntity.discard();
+            if (WeaponConfig.droppedSingularitiesEnabled()) {
                 QuasarEntity quasar = new QuasarEntity(level, 5.0F);
                 quasar.moveTo(itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 0.0F, 0.0F);
                 level.addFreshEntity(quasar);
             }
+            return;
         }
 
-        if (stack.is(ModItems.CELL_ANTIMATTER.get()) && itemEntity.onGround()
-                && WeaponConfig.droppedAntimatterCellsEnabled() && itemEntity.level() instanceof ServerLevel level) {
+        if (stack.is(ModItems.CELL_ANTIMATTER.get())) {
             itemEntity.discard();
-            WeaponExplosionUtil.antimatter(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
-                    3.0F, itemEntity, 50.0F).explode();
+            if (WeaponConfig.droppedAntimatterCellsEnabled()) {
+                WeaponExplosionUtil.antimatter(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
+                        3.0F, itemEntity, 50.0F).explode();
+            }
+            return;
         }
-
-        if (stack.is(ModItems.PELLET_ANTIMATTER.get()) && itemEntity.onGround()
-                && WeaponConfig.droppedAntimatterCellsEnabled() && itemEntity.level() instanceof ServerLevel level) {
+        if (stack.is(ModItems.PELLET_ANTIMATTER.get())) {
             itemEntity.discard();
-            WeaponExplosionUtil.antimatter(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
-                    20.0F, itemEntity, 50.0F).explode();
+            if (WeaponConfig.droppedAntimatterCellsEnabled()) {
+                WeaponExplosionUtil.antimatter(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
+                        20.0F, itemEntity, 50.0F).explode();
+            }
+            return;
         }
-
-        if (stack.is(ModItems.CELL_ANTI_SCHRABIDIUM.get()) && itemEntity.onGround()
-                && WeaponConfig.droppedAntimatterCellsEnabled() && itemEntity.level() instanceof ServerLevel level) {
+        if (stack.is(ModItems.CELL_ANTI_SCHRABIDIUM.get())) {
             itemEntity.discard();
-            if (NuclearExplosionUtil.spawnAntiSchrabidium(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ())) {
+            if (WeaponConfig.droppedAntimatterCellsEnabled()
+                    && NuclearExplosionUtil.spawnAntiSchrabidium(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ())) {
                 LegacySoundPlayer.playSoundEffect(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
                         "random.explode", 100.0F, level.random.nextFloat() * 0.1F + 0.9F);
             }
+            return;
         }
-
-        if (itemEntity.onGround() && WeaponConfig.droppedXenCrystalsEnabled()
-                && itemEntity.level() instanceof ServerLevel level && isLegacyItem(stack, "crystal_xen")) {
+        if (isLegacyItem(stack, "crystal_xen")) {
             itemEntity.discard();
-            int x = Mth.floor(itemEntity.getX());
-            int y = Mth.floor(itemEntity.getY());
-            int z = Mth.floor(itemEntity.getZ());
-            ExplosionChaos.floater(level, x, y, z, 25, 75);
-            ExplosionChaos.move(level, x, y, z, 25, 0, 75, 0);
+            if (WeaponConfig.droppedXenCrystalsEnabled()) {
+                int x = Mth.floor(itemEntity.getX());
+                int y = Mth.floor(itemEntity.getY());
+                int z = Mth.floor(itemEntity.getZ());
+                ExplosionChaos.floater(level, x, y, z, 25, 75);
+                ExplosionChaos.move(level, x, y, z, 25, 0, 75, 0);
+            }
         }
     }
 

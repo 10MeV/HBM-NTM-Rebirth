@@ -173,9 +173,6 @@ public final class HazardSystem {
         for (ItemStack stack : player.getInventory().armor) {
             applyHazards(stack, player);
         }
-        for (ItemStack stack : player.getInventory().offhand) {
-            applyHazards(stack, player);
-        }
     }
 
     public static void updateLivingInventory(LivingEntity entity) {

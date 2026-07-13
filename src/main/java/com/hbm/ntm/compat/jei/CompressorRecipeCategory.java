@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class CompressorRecipeCategory implements IRecipeCategory<HbmFluidCompressorRecipes.RecipeEntry> {
+public final class CompressorRecipeCategory implements HbmJeiRecipeCategory<HbmFluidCompressorRecipes.RecipeEntry> {
     private final RecipeType<HbmFluidCompressorRecipes.RecipeEntry> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -59,7 +59,7 @@ public final class CompressorRecipeCategory implements IRecipeCategory<HbmFluidC
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

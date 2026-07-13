@@ -12,6 +12,7 @@ import com.hbm.ntm.block.LegacyFileCabinetBlock;
 import com.hbm.ntm.block.LegacyBasaltOreBlock;
 import com.hbm.ntm.block.LegacyCokeBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
+import com.hbm.ntm.block.LegacyWoodStructureBlock;
 import com.hbm.ntm.block.RedCableBoxBlock;
 import com.hbm.ntm.fluid.HbmFluidDuctVariants;
 import com.hbm.ntm.item.LegacyStateBlockItem;
@@ -30,6 +31,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.storage.loot.entries.AlternativesEntry;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.functions.SetNbtFunction;
@@ -196,9 +198,12 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .filter(block -> !"glyphid_spawner".equals(block.getId().getPath()))
                 .filter(block -> block != ModBlocks.CONCRETE_COLORED_EXT)
                 .filter(block -> block != ModBlocks.BLOCK_COKE)
+                .filter(block -> block != ModBlocks.WOOD_STRUCTURE)
                 .forEach(block -> dropSelf(block.get()));
         add(ModBlocks.BLOCK_COKE.get(),
                 legacyStateVariantDrop(ModBlocks.BLOCK_COKE.get(), LegacyCokeBlock.VARIANT, 3));
+        add(ModBlocks.WOOD_STRUCTURE.get(),
+                legacyStateVariantDrop(ModBlocks.WOOD_STRUCTURE.get(), LegacyWoodStructureBlock.VARIANT, 3));
         addNoDrop(ModBlocks.legacyBlock("glyphid_base").get());
         add(ModBlocks.legacyBlock("glyphid_spawner").get(), this::glyphidSpawnerDrop);
         addLegacyOreDrops();
@@ -233,9 +238,17 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                         && block != ModBlocks.CHARGE_SEMTEX
                         && block != ModBlocks.VOLCANO_CORE
                         && block != ModBlocks.VOLCANO_RAD_CORE
-                        && block != ModBlocks.MINE_NAVAL)
+                        && block != ModBlocks.MINE_NAVAL
+                        && block != ModBlocks.MINE_AP
+                        && block != ModBlocks.MINE_HE
+                        && block != ModBlocks.MINE_SHRAP
+                        && block != ModBlocks.MINE_FAT)
                 .forEach(block -> dropSelf(block.get()));
         addNoDrop(ModBlocks.MINE_NAVAL.get());
+        addNoDrop(ModBlocks.MINE_AP.get());
+        addNoDrop(ModBlocks.MINE_HE.get());
+        addNoDrop(ModBlocks.MINE_SHRAP.get());
+        addNoDrop(ModBlocks.MINE_FAT.get());
         addNoDrop(ModBlocks.VOLCANO_CORE.get());
         addNoDrop(ModBlocks.VOLCANO_RAD_CORE.get());
         addNoDrop(ModBlocks.CHARGE_DYNAMITE.get());
@@ -250,6 +263,15 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addNoDrop(ModBlocks.GAS_ASBESTOS.get());
         addNoDrop(ModBlocks.GAS_COAL.get());
         addNoDrop(ModBlocks.CHLORINE_GAS.get());
+        addNoDrop(ModBlocks.GAS_FLAMMABLE.get());
+        addNoDrop(ModBlocks.GAS_EXPLOSIVE.get());
+        addNoDrop(ModBlocks.VENT_CHLORINE.get());
+        addNoDrop(ModBlocks.VENT_CLOUD.get());
+        addNoDrop(ModBlocks.VENT_PINK_CLOUD.get());
+        dropSelf(ModBlocks.VENT_CHLORINE_SEAL.get());
+        dropSelf(ModBlocks.BROADCASTER_PC.get());
+        addNoDrop(ModBlocks.GEYSIR_CHLORINE.get());
+        addNoDrop(ModBlocks.GEYSIR_NETHER.get());
         addNoDrop(ModBlocks.TOXIC_BLOCK.get());
         addNoDrop(ModBlocks.DUMMY_BLOCK.get());
         addNoDrop(ModBlocks.ICF_BLOCK.get());
@@ -281,10 +303,13 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         add(ModBlocks.WASTE_TRINITITE.get(), block -> singleItemDrop(ModItems.legacyItem("trinitite").get()));
         add(ModBlocks.WASTE_TRINITITE_RED.get(), block -> singleItemDrop(ModItems.legacyItem("trinitite").get()));
         add(ModBlocks.TEKTITE.get(), block -> createSingleItemTable(ModBlocks.TEKTITE.get()));
-        add(ModBlocks.ORE_TEKTITE_OSMIRIDIUM.get(), block -> singleItemDrop(ModItems.legacyItem("powder_tektite").get()));
-        add(ModBlocks.ORE_SELLAFIELD_DIAMOND.get(), block -> singleItemDrop(Items.DIAMOND));
-        add(ModBlocks.ORE_SELLAFIELD_EMERALD.get(), block -> singleItemDrop(Items.EMERALD));
-        add(ModBlocks.ORE_SELLAFIELD_RADGEM.get(), block -> singleItemDrop(ModItems.legacyItem("gem_rad").get()));
+        dropSelf(ModBlocks.ORE_TEKTITE_OSMIRIDIUM.get());
+        add(ModBlocks.ORE_SELLAFIELD_DIAMOND.get(), block -> createSilkTouchDispatchTable(block,
+                LootItem.lootTableItem(Items.DIAMOND)));
+        add(ModBlocks.ORE_SELLAFIELD_EMERALD.get(), block -> createSilkTouchDispatchTable(block,
+                LootItem.lootTableItem(Items.EMERALD)));
+        add(ModBlocks.ORE_SELLAFIELD_RADGEM.get(), block -> createSilkTouchDispatchTable(block,
+                LootItem.lootTableItem(ModItems.legacyItem("gem_rad").get())));
         add(ModBlocks.ORE_BASALT.get(), block -> basaltOreDrop(block));
     }
 
@@ -325,18 +350,34 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addLegacySingleOreDrop("ore_lignite", "lignite");
         addLegacySingleOreDrop("deepslate_ore_lignite", "lignite");
         addLegacySingleOreDrop("ore_nether_coal", "coal_infernal");
+        addLegacySingleOreDrop("ore_nether_smoldering", "powder_fire");
         addLegacySingleOreDrop("ore_cinnebar", "cinnebar");
         addLegacySingleOreDrop("deepslate_ore_cinnebar", "cinnebar");
+        addLegacyFortuneOreDrop("ore_depth_cinnebar", "cinnebar", 2.0F, 4.0F);
+        addLegacyFortuneOreDrop("ore_depth_borax", "powder_borax", 1.0F, 1.0F);
+        addLegacyFortuneOreDrop("ore_depth_zirconium", "nugget_zirconium", 2.0F, 3.0F);
+        addLegacyFortuneOreDrop("ore_depth_nether_neodymium", "fragment_neodymium", 2.0F, 3.0F);
         addLegacySingleOreDrop("ore_coltan", "fragment_coltan");
         addLegacySingleOreDrop("deepslate_ore_coltan", "fragment_coltan");
         addLegacyFortuneOreDrop("ore_cobalt", "fragment_cobalt", 4.0F, 9.0F);
         addLegacyFortuneOreDrop("deepslate_ore_cobalt", "fragment_cobalt", 4.0F, 9.0F);
         addLegacyFortuneOreDrop("ore_nether_cobalt", "fragment_cobalt", 5.0F, 12.0F);
         addLegacyFortuneOreDrop("stone_resource_malachite", "chunk_ore_malachite", 3.0F, 4.0F);
-        add(ModBlocks.STALACTITE_SULFUR.get(), block -> singleItemDrop(ModItems.legacyItem("sulfur").get()));
-        add(ModBlocks.STALAGMITE_SULFUR.get(), block -> singleItemDrop(ModItems.legacyItem("sulfur").get()));
-        add(ModBlocks.STALACTITE_ASBESTOS.get(), block -> singleItemDrop(ModItems.legacyItem("powder_asbestos").get()));
-        add(ModBlocks.STALAGMITE_ASBESTOS.get(), block -> singleItemDrop(ModItems.legacyItem("powder_asbestos").get()));
+        addLegacyNoFortuneOreDrop("cluster_iron", "crystal_iron");
+        addLegacyNoFortuneOreDrop("cluster_titanium", "crystal_titanium");
+        addLegacyNoFortuneOreDrop("cluster_aluminium", "crystal_aluminium");
+        addLegacyNoFortuneOreDrop("cluster_copper", "crystal_copper");
+        addLegacyFortuneOreDrop("cluster_depth_iron", "crystal_iron", 1.0F, 1.0F);
+        addLegacyFortuneOreDrop("cluster_depth_titanium", "crystal_titanium", 1.0F, 1.0F);
+        addLegacyFortuneOreDrop("cluster_depth_tungsten", "crystal_tungsten", 1.0F, 1.0F);
+        add(ModBlocks.STALACTITE_SULFUR.get(), block -> createSilkTouchDispatchTable(block,
+                LootItem.lootTableItem(ModItems.legacyItem("sulfur").get())));
+        add(ModBlocks.STALAGMITE_SULFUR.get(), block -> createSilkTouchDispatchTable(block,
+                LootItem.lootTableItem(ModItems.legacyItem("sulfur").get())));
+        add(ModBlocks.STALACTITE_ASBESTOS.get(), block -> createSilkTouchDispatchTable(block,
+                LootItem.lootTableItem(ModItems.legacyItem("powder_asbestos").get())));
+        add(ModBlocks.STALAGMITE_ASBESTOS.get(), block -> createSilkTouchDispatchTable(block,
+                LootItem.lootTableItem(ModItems.legacyItem("powder_asbestos").get())));
         addLegacyNetherFireOreDrop();
         addLegacyNoSilkFortuneDrop("ore_oil", "oil_tar_crude");
         addLegacyNoFortuneOreDrop("block_meteor_cobble", "fragment_meteorite");
@@ -561,7 +602,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
     private LootTable.Builder basaltOreDrop(Block block) {
         LootTable.Builder table = LootTable.lootTable();
         for (LegacyBasaltOreBlock.Variant variant : LegacyBasaltOreBlock.Variant.values()) {
-            LootItem.Builder<?> item = basaltOreDropEntry(block, variant);
+            LootPoolEntryContainer.Builder<?> item = basaltOreDropEntry(block, variant);
             table.withPool(LootPool.lootPool()
                     .setRolls(ConstantValue.exactly(1.0F))
                     .add(item)
@@ -573,13 +614,16 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         return table;
     }
 
-    private LootItem.Builder<?> basaltOreDropEntry(Block block, LegacyBasaltOreBlock.Variant variant) {
-        Item item = variant.droppedItem();
-        if (item != null) {
-            return LootItem.lootTableItem(item);
-        }
+    private LootPoolEntryContainer.Builder<?> basaltOreDropEntry(Block block, LegacyBasaltOreBlock.Variant variant) {
         CompoundTag tag = new CompoundTag();
         tag.putInt(LegacyStateBlockItem.TAG_VARIANT, variant.legacyMeta());
+        LootItem.Builder<?> silkTouchBlock = LootItem.lootTableItem(block)
+                .apply(SetNbtFunction.setTag(tag))
+                .when(HAS_SILK_TOUCH);
+        Item item = variant.droppedItem();
+        if (item != null) {
+            return AlternativesEntry.alternatives(silkTouchBlock, LootItem.lootTableItem(item));
+        }
         return LootItem.lootTableItem(block).apply(SetNbtFunction.setTag(tag));
     }
 

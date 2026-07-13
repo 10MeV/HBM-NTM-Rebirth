@@ -9,12 +9,14 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
@@ -41,9 +43,13 @@ public class SkeletonParticle extends Particle {
             MODEL.prepareRenderOnlyInCallOrder("Limb");
     private static final LegacyWavefrontModel.SelectionHandle SKULL_VILLAGER =
             MODEL.prepareRenderOnlyInCallOrder("SkullVillager");
+    private static RenderType activeSkeletonRenderType;
+    private static ResourceLocation activeSkeletonTexture;
     private static final ParticleRenderType RENDER_TYPE = new ParticleRenderType() {
         @Override
         public void begin(BufferBuilder builder, TextureManager textureManager) {
+            activeSkeletonRenderType = null;
+            activeSkeletonTexture = null;
             RenderSystem.depthMask(true);
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
@@ -51,6 +57,7 @@ public class SkeletonParticle extends Particle {
 
         @Override
         public void end(Tesselator tesselator) {
+            flushSkeletonBatch(Minecraft.getInstance().renderBuffers().bufferSource());
         }
 
         @Override
@@ -162,9 +169,16 @@ public class SkeletonParticle extends Particle {
         LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
 
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
-        renderSkeletonPart(this.type.partName, textureLocation(), poseStack, buffer, getLightColor(partialTick),
+        ResourceLocation texture = textureLocation();
+        RenderType renderType = LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE.renderType(texture);
+        if (activeSkeletonRenderType != null && activeSkeletonRenderType != renderType) {
+            // Preserve the particle list order across texture changes; only same-texture runs batch.
+            flushSkeletonBatch(buffer);
+        }
+        renderSkeletonPart(this.type.partName, texture, poseStack, buffer, getLightColor(partialTick),
                 color(this.rCol), color(this.gCol), color(this.bCol), color(this.alpha));
-        buffer.endBatch();
+        activeSkeletonRenderType = renderType;
+        activeSkeletonTexture = texture;
     }
 
     private static void renderSkeletonPart(String partName, ResourceLocation texture, PoseStack poseStack,
@@ -188,6 +202,17 @@ public class SkeletonParticle extends Particle {
             case "SkullVillager" -> SKULL_VILLAGER;
             default -> null;
         };
+    }
+
+    private static void flushSkeletonBatch(MultiBufferSource.BufferSource buffer) {
+        if (activeSkeletonRenderType == null) {
+            return;
+        }
+        buffer.endBatch(activeSkeletonRenderType);
+        buffer.endBatch(LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE.renderType(activeSkeletonTexture,
+                VertexFormat.Mode.TRIANGLES));
+        activeSkeletonRenderType = null;
+        activeSkeletonTexture = null;
     }
 
     @Override

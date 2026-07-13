@@ -1,0 +1,6 @@
+{
+  "textures": { "particle": "hbm_ntm_rebirth:block/wood_barrier", "block": "hbm_ntm_rebirth:block/wood_barrier" },
+  "elements": [
+    { "from": [0, 8, 15], "to": [16, 12, 16], "faces": { "down": { "texture": "#block" }, "up": { "texture": "#block" }, "north": { "texture": "#block" }, "south": { "texture": "#block" }, "west": { "texture": "#block" }, "east": { "texture": "#block" } } }
+  ]
+}

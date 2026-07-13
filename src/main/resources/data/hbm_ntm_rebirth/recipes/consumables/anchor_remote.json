@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:shapeless_nbt",
+  "category": "redstone",
+  "ingredients": [
+    { "item": "minecraft:diamond" },
+    { "item": "hbm_ntm_rebirth:ducttape" },
+    { "item": "hbm_ntm_rebirth:circuit_basic" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:anchor_remote",
+    "nbt": "{charge:0L}"
+  }
+}

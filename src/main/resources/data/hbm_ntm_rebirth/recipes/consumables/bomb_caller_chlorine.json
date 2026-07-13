@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": { "T": { "item": "hbm_ntm_rebirth:pellet_gas" }, "R": { "item": "hbm_ntm_rebirth:rangefinder" } },
+  "pattern": ["TTT", "TRT", "TTT"],
+  "result": { "item": "hbm_ntm_rebirth:bomb_caller_chlorine" }
+}

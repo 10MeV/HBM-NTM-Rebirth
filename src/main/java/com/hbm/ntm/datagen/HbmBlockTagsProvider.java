@@ -146,7 +146,8 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 "ore_nether_uranium", "ore_nether_tungsten", "ore_nether_sulfur", "ore_nether_fire",
                 "ore_nether_coal", "ore_nether_cobalt", "ore_nether_plutonium", "ore_tikite",
                 "block_meteor", "block_meteor_cobble", "block_meteor_broken");
-        tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.FROZEN_LOG.get(), ModBlocks.FROZEN_PLANKS.get());
+        tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.FROZEN_LOG.get(), ModBlocks.FROZEN_PLANKS.get(),
+                ModBlocks.WOOD_STRUCTURE.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CONCRETE_COLORED_EXT.get());
@@ -267,16 +268,21 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         addLegacyForgeOreTag("tungsten", "ore_tungsten", "deepslate_ore_tungsten", "ore_nether_tungsten");
         addLegacyForgeOreTag("lead", "ore_lead", "deepslate_ore_lead");
         addLegacyForgeOreTag("beryllium", "ore_beryllium", "deepslate_ore_beryllium");
-        addLegacyForgeOreTag("rare_earth", "ore_rare", "deepslate_ore_rare");
+        addLegacyForgeOreTag("rare_earth", "ore_rare", "deepslate_ore_rare", "ore_gneiss_rare");
         addLegacyForgeOreTag("schrabidium", "ore_schrabidium", "ore_nether_schrabidium", "ore_gneiss_schrabidium",
                 "ore_sellafield_schrabidium");
         addLegacyForgeOreTag("lignite", "ore_lignite");
         addLegacyForgeOreTag("asbestos", "ore_asbestos", "deepslate_ore_asbestos", "ore_gneiss_asbestos", "stone_resource_asbestos");
-        addLegacyForgeOreTag("cinnabar", "ore_cinnebar", "deepslate_ore_cinnebar");
-        addLegacyForgeOreTag("cinnebar", "ore_cinnebar", "deepslate_ore_cinnebar");
+        addLegacyForgeOreTag("cinnabar", "ore_cinnebar", "deepslate_ore_cinnebar", "ore_depth_cinnebar");
+        addLegacyForgeOreTag("cinnebar", "ore_cinnebar", "deepslate_ore_cinnebar", "ore_depth_cinnebar");
+        addLegacyForgeOreTag("borax", "ore_depth_borax");
+        addLegacyForgeOreTag("zirconium", "ore_depth_zirconium");
+        addLegacyForgeOreTag("neodymium", "ore_depth_nether_neodymium");
+        addLegacyForgeOreAliasTag("nether/neodymium", "ore_depth_nether_neodymium");
         addLegacyForgeOreTag("coltan", "ore_coltan", "deepslate_ore_coltan");
         addLegacyForgeOreTag("cobalt", "ore_cobalt", "deepslate_ore_cobalt", "ore_nether_cobalt");
         addLegacyForgeOreTag("alexandrite", "ore_alexandrite", "deepslate_ore_alexandrite");
+        addLegacyForgeOreTag("australium", "ore_australium");
         addLegacyForgeOreTag("hematite", "stone_resource_hematite");
         addLegacyForgeOreTag("malachite", "stone_resource_malachite");
         addLegacyForgeOreTag("limestone", "stone_resource_limestone");

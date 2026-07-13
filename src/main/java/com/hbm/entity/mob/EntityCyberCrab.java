@@ -11,6 +11,7 @@ import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModSounds;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import net.minecraft.nbt.CompoundTag;
@@ -32,6 +33,7 @@ import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Legacy 1.7.10 package bridge and shared runtime for the cyber crab family.
@@ -47,6 +49,8 @@ public class EntityCyberCrab extends Monster implements net.minecraft.world.enti
             target -> !(target instanceof EntityCyberCrab) && !(target instanceof Creeper);
 
     private final List<TeslaBlockEntity.TeslaTarget> targets = new ArrayList<>();
+    private final List<TeslaBlockEntity.TeslaTarget> targetsView = Collections.unmodifiableList(targets);
+    private final List<TeslaBlockEntity.TeslaTarget> targetScratch = new ArrayList<>();
     private boolean exploded;
 
     public EntityCyberCrab(EntityType<? extends EntityCyberCrab> type, Level level) {
@@ -148,7 +152,13 @@ public class EntityCyberCrab extends Monster implements net.minecraft.world.enti
     }
 
     public List<TeslaBlockEntity.TeslaTarget> getTeslaTargets() {
-        return List.copyOf(targets);
+        return targetsView;
+    }
+
+    protected final void rebuildTeslaTargets(double sourceX, double sourceY, double sourceZ, double radius) {
+        targetScratch.clear();
+        TeslaBlockEntity.zapInto(level(), new Vec3(sourceX, sourceY, sourceZ), radius, this, targetScratch);
+        setTeslaTargets(targetScratch);
     }
 
     protected void setTeslaTargets(List<TeslaBlockEntity.TeslaTarget> nextTargets) {

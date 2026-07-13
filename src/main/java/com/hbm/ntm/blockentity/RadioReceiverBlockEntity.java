@@ -6,6 +6,7 @@ import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.BufferUtil;
 import com.hbm.ntm.util.NoteBuilder;
 import com.hbm.ntm.util.Tuple;
 import net.minecraft.core.BlockPos;
@@ -142,15 +143,15 @@ public class RadioReceiverBlockEntity extends BlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityRadioRec deliberately omits its TileEntityLoadedBase parent state.
+        BufferUtil.writeString(data, channel);
+        data.writeBoolean(on);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        channel = cleanChannel(BufferUtil.readString(data));
+        on = data.readBoolean();
     }
 
     @Override

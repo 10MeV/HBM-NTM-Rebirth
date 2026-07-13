@@ -3,6 +3,7 @@ package com.hbm.ntm.item;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.items.armor.ArmorFSB;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -17,7 +18,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import org.jetbrains.annotations.Nullable;
 
-public class TrenchmasterArmorItem extends FsbArmorItem {
+public class TrenchmasterArmorItem extends ArmorFSB {
     public TrenchmasterArmorItem(HbmArmorMaterials material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, boolean noHelmet, int dashCount, FullSetTraits fullSetTraits) {
         super(material, type, properties, fullSetEffects, noHelmet, dashCount, fullSetTraits);

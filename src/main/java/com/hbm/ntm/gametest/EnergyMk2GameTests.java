@@ -1175,7 +1175,11 @@ public final class EnergyMk2GameTests {
             for (int variant = 0; variant < 5; variant++) {
                 BlockPos supportPos = helper.absolutePos(new BlockPos(2 + variant * 2, 1, 2));
                 BlockPos placedPos = supportPos.above();
+                level.removeBlock(placedPos, false);
                 level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+                player.setPos(supportPos.getX() + 0.5D, supportPos.getY() + 1.0D, supportPos.getZ() + 3.5D);
+                player.setYRot(180.0F);
+                player.setXRot(0.0F);
                 ItemStack stack = RedCableBoxBlockItem.createStack(boxItem, variant);
                 player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 
@@ -1430,6 +1434,7 @@ public final class EnergyMk2GameTests {
         try {
             BlockPos corePos = helper.absolutePos(new BlockPos(4, 2, 4));
             BlockPos supportPos = corePos.below();
+            clearBox(level, corePos.offset(-3, -1, -3), corePos.offset(3, 3, 3));
             level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
 
             var player = FakePlayerFactory.getMinecraft(level);
@@ -1442,9 +1447,10 @@ public final class EnergyMk2GameTests {
 
             var placeResult = socketStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
                     blockHit(supportPos)));
-            assertTrue(placeResult.consumesAction(), "player useOn placement consumes the socket block item action");
             assertTrue(level.getBlockState(corePos).is(ModBlocks.MACHINE_BATTERY_SOCKET.get()),
-                    "player useOn places the battery_socket core at the clicked support top");
+                    "player useOn placement returned " + placeResult
+                            + " without placing the battery_socket core at the clicked support top");
+            assertTrue(placeResult.consumesAction(), "player useOn placement consumes the socket block item action");
 
             BlockState socketState = level.getBlockState(corePos);
             Direction facing = socketState.getValue(MachineBatterySocketBlock.FACING);

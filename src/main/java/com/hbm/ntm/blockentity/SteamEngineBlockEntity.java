@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.fluid.HbmTurbineConversion;
@@ -332,15 +333,20 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // 1.7.10 TileEntitySteamEngine writes these runtime fields directly, without a loaded-tile prefix.
+        LegacyFluidTankPacket.write(data, steamTank);
+        data.writeLong(energy.getPower());
+        data.writeFloat(rotor);
+        LegacyFluidTankPacket.write(data, spentSteamTank);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        LegacyFluidTankPacket.read(data, steamTank);
+        energy.setPower(data.readLong());
+        syncRotor = data.readFloat();
+        LegacyFluidTankPacket.read(data, spentSteamTank);
+        turnProgress = 3;
     }
 
     @Override

@@ -26,7 +26,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class HbmMachineRecipeCategory implements IRecipeCategory<GenericMachineRecipe> {
+public final class HbmMachineRecipeCategory implements HbmJeiRecipeCategory<GenericMachineRecipe> {
     private enum DisplayMode {
         DEFAULT,
         LEGACY_UNIVERSAL,
@@ -120,7 +120,7 @@ public final class HbmMachineRecipeCategory implements IRecipeCategory<GenericMa
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -336,6 +336,7 @@ public final class HbmMachineRecipeCategory implements IRecipeCategory<GenericMa
     @Override
     public void draw(GenericMachineRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         if (displayMode == DisplayMode.LEGACY_UNIVERSAL) {
             var font = Minecraft.getInstance().font;
             String duration = BobMathUtil.getShortNumber(recipe.getDuration()) + " ticks";

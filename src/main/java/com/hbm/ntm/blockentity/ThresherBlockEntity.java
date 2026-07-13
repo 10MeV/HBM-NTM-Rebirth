@@ -12,6 +12,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
@@ -24,6 +25,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -164,6 +166,24 @@ public class ThresherBlockEntity extends HbmFluidNetworkBlockEntity
 
     public float getPreviousAngle() {
         return previousAngle;
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineThresher#serialize deliberately has no inherited loaded-tile prefix.
+        data.writeBoolean(on);
+        data.writeBoolean(suspended);
+        data.writeFloat(angle);
+        LegacyFluidTankPacket.write(data, tank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        on = data.readBoolean();
+        suspended = data.readBoolean();
+        targetAngle = data.readFloat();
+        turnProgress = 3;
+        LegacyFluidTankPacket.read(data, tank);
     }
 
     public float getSpin() {

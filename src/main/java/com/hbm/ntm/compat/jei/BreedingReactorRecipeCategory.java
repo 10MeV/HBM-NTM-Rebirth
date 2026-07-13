@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class BreedingReactorRecipeCategory
-        implements IRecipeCategory<BreedingReactorRecipeRuntime.DisplayRecipe> {
+        implements HbmJeiRecipeCategory<BreedingReactorRecipeRuntime.DisplayRecipe> {
     private static final int WIDTH = 166;
     private static final int HEIGHT = 65;
     private static final ResourceLocation LEGACY_GUI_TEXTURE =
@@ -67,7 +67,7 @@ public final class BreedingReactorRecipeCategory
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -83,6 +83,7 @@ public final class BreedingReactorRecipeCategory
     @Override
     public void draw(BreedingReactorRecipeRuntime.DisplayRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         progress.draw(guiGraphics, 48, 21);
         String flux = Integer.toString(recipe.recipe().flux());
         var font = Minecraft.getInstance().font;

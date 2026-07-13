@@ -1,48 +1,10 @@
 {
   "type": "minecraft:block",
   "pools": [
-    {
-      "rolls": 1,
-      "conditions": [
-        { "condition": "minecraft:survives_explosion" }
-      ],
-      "entries": [
-        {
-          "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:sulfur",
-          "conditions": [
-            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "0" } }
-          ]
-        },
-        {
-          "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:fluorite",
-          "conditions": [
-            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "1" } }
-          ]
-        },
-        {
-          "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:ingot_asbestos",
-          "conditions": [
-            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "2" } }
-          ]
-        },
-        {
-          "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:gem_volcanic",
-          "conditions": [
-            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "3" } }
-          ]
-        },
-        {
-          "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:powder_molysite",
-          "conditions": [
-            { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "4" } }
-          ]
-        }
-      ]
-    }
+    { "rolls": 1, "conditions": [ { "condition": "minecraft:survives_explosion" }, { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "0" } } ], "entries": [ { "type": "minecraft:alternatives", "children": [ { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ore_basalt", "functions": [ { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:0}" } ], "conditions": [ { "condition": "minecraft:match_tool", "predicate": { "enchantments": [ { "enchantment": "minecraft:silk_touch", "levels": { "min": 1 } } ] } } ] }, { "type": "minecraft:item", "name": "hbm_ntm_rebirth:sulfur" } ] } ] },
+    { "rolls": 1, "conditions": [ { "condition": "minecraft:survives_explosion" }, { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "1" } } ], "entries": [ { "type": "minecraft:alternatives", "children": [ { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ore_basalt", "functions": [ { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:1}" } ], "conditions": [ { "condition": "minecraft:match_tool", "predicate": { "enchantments": [ { "enchantment": "minecraft:silk_touch", "levels": { "min": 1 } } ] } } ] }, { "type": "minecraft:item", "name": "hbm_ntm_rebirth:fluorite" } ] } ] },
+    { "rolls": 1, "conditions": [ { "condition": "minecraft:survives_explosion" }, { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "2" } } ], "entries": [ { "type": "minecraft:alternatives", "children": [ { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ore_basalt", "functions": [ { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:2}" } ], "conditions": [ { "condition": "minecraft:match_tool", "predicate": { "enchantments": [ { "enchantment": "minecraft:silk_touch", "levels": { "min": 1 } } ] } } ] }, { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ingot_asbestos" } ] } ] },
+    { "rolls": 1, "conditions": [ { "condition": "minecraft:survives_explosion" }, { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "3" } } ], "entries": [ { "type": "minecraft:alternatives", "children": [ { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ore_basalt", "functions": [ { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:3}" } ], "conditions": [ { "condition": "minecraft:match_tool", "predicate": { "enchantments": [ { "enchantment": "minecraft:silk_touch", "levels": { "min": 1 } } ] } } ] }, { "type": "minecraft:item", "name": "hbm_ntm_rebirth:gem_volcanic" } ] } ] },
+    { "rolls": 1, "conditions": [ { "condition": "minecraft:survives_explosion" }, { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:ore_basalt", "properties": { "variant": "4" } } ], "entries": [ { "type": "minecraft:alternatives", "children": [ { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ore_basalt", "functions": [ { "function": "minecraft:set_nbt", "tag": "{hbmLegacyVariant:4}" } ], "conditions": [ { "condition": "minecraft:match_tool", "predicate": { "enchantments": [ { "enchantment": "minecraft:silk_touch", "levels": { "min": 1 } } ] } } ] }, { "type": "minecraft:item", "name": "hbm_ntm_rebirth:powder_molysite" } ] } ] }
   ]
 }

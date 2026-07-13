@@ -36,9 +36,9 @@ public class ICFReactorRenderer implements BlockEntityRenderer<ICFReactorBlockEn
     @Override
     public void render(ICFReactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
-            return;
-        }
+        // The dispatcher already admitted this renderer through shouldRender(...).  Keeping the
+        // static ICF body on the shared GPU/instancing route must not repeat its per-BE culling
+        // query for every visible reactor each frame.
         int light = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity);
                 LegacyRenderLighting.ModelViewSamplingScope ignored =

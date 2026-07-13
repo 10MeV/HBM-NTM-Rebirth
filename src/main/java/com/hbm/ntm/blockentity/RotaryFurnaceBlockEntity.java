@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fuel.LegacyBurnTimeModule;
 import com.hbm.ntm.menu.RotaryFurnaceMenu;
 import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
@@ -32,6 +33,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -268,6 +270,43 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
 
     public String getOutputMaterialName() {
         return output == null || output.material == null ? "" : output.material.names[0];
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineRotaryFurnace#serialize.
+        writeLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, steamTank);
+        LegacyFluidTankPacket.write(data, spentSteamTank);
+        data.writeBoolean(isVenting);
+        data.writeBoolean(isProgressing);
+        data.writeFloat(progress);
+        data.writeInt(burnTime);
+        data.writeInt(maxBurnTime);
+        boolean hasOutput = output != null && !output.isEmpty() && output.material != null;
+        data.writeBoolean(hasOutput);
+        if (hasOutput) {
+            data.writeInt(output.material.id);
+            data.writeInt(output.amount);
+        }
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, steamTank);
+        LegacyFluidTankPacket.read(data, spentSteamTank);
+        isVenting = data.readBoolean();
+        isProgressing = data.readBoolean();
+        progress = data.readFloat();
+        burnTime = data.readInt();
+        maxBurnTime = data.readInt();
+        output = data.readBoolean() ? new MaterialStack(Mats.matById.get(data.readInt()), data.readInt()) : null;
+        if (output != null && output.isEmpty()) {
+            output = null;
+        }
     }
 
     public boolean isProgressing() {

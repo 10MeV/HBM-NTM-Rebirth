@@ -10,6 +10,11 @@ import com.hbm.ntm.entity.effect.FalloutRainEntity;
 import com.hbm.ntm.entity.effect.FireLingeringEntity;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.MistEntity;
+import com.hbm.entity.particle.EntityChlorineFX;
+import com.hbm.entity.particle.EntityCloudFX;
+import com.hbm.entity.particle.EntityPinkCloudFX;
+import com.hbm.entity.particle.EntityOrangeFX;
+import com.hbm.entity.particle.EntityFogFX;
 import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
@@ -22,6 +27,7 @@ import com.hbm.ntm.entity.cart.NtmEmptyMinecartEntity;
 import com.hbm.ntm.entity.cart.NtmPowderMinecartEntity;
 import com.hbm.ntm.entity.cart.NtmSemtexMinecartEntity;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
+import com.hbm.ntm.entity.logic.AirstrikeBomberEntity;
 import com.hbm.ntm.entity.logic.DeathBlastEntity;
 import com.hbm.ntm.entity.logic.EmpLogicEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
@@ -46,6 +52,7 @@ import com.hbm.ntm.entity.missile.SoyuzCapsuleEntity;
 import com.hbm.ntm.entity.missile.SoyuzEntity;
 import com.hbm.ntm.entity.projectile.ArtilleryRocketEntity;
 import com.hbm.ntm.entity.projectile.ArtilleryShellEntity;
+import com.hbm.ntm.entity.projectile.AirstrikeBombletEntity;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.entity.projectile.ChemicalProjectileEntity;
 import com.hbm.ntm.entity.projectile.CoinEntity;
@@ -304,6 +311,24 @@ public final class ModEntityTypes {
                     .updateInterval(1)
                     .noSummon()
                     .build("entity_mist"));
+
+    public static final RegistryObject<EntityType<EntityChlorineFX>> CHLORINE_FX =
+            ENTITY_TYPES.register("entity_chlorine_fx", () -> EntityType.Builder
+                    .<EntityChlorineFX>of(EntityChlorineFX::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F).clientTrackingRange(1000).updateInterval(1).noSummon()
+                    .build("entity_chlorine_fx"));
+    public static final RegistryObject<EntityType<EntityCloudFX>> CLOUD_FX =
+            ENTITY_TYPES.register("entity_cloud_fx", () -> EntityType.Builder
+                    .<EntityCloudFX>of(EntityCloudFX::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F).clientTrackingRange(1000).updateInterval(1).noSummon()
+                    .build("entity_cloud_fx"));
+    public static final RegistryObject<EntityType<EntityPinkCloudFX>> PINK_CLOUD_FX =
+            ENTITY_TYPES.register("entity_pink_cloud_fx", () -> EntityType.Builder
+                    .<EntityPinkCloudFX>of(EntityPinkCloudFX::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F).clientTrackingRange(1000).updateInterval(1).noSummon()
+                    .build("entity_pink_cloud_fx"));
+    public static final RegistryObject<EntityType<EntityOrangeFX>> ORANGE_FX = ENTITY_TYPES.register("entity_agent_orange", () -> EntityType.Builder.<EntityOrangeFX>of(EntityOrangeFX::new, MobCategory.MISC).sized(.1F,.1F).clientTrackingRange(1000).updateInterval(1).noSummon().build("entity_agent_orange"));
+    public static final RegistryObject<EntityType<EntityFogFX>> NUCLEAR_FOG = ENTITY_TYPES.register("entity_nuclear_fog", () -> EntityType.Builder.<EntityFogFX>of(EntityFogFX::new, MobCategory.MISC).sized(.1F,.1F).clientTrackingRange(1000).updateInterval(1).noSummon().build("entity_nuclear_fog"));
 
     public static final RegistryObject<EntityType<EmpLogicEntity>> EMP_LOGIC =
             ENTITY_TYPES.register("entity_emp_logic", () -> EntityType.Builder
@@ -766,6 +791,22 @@ public final class ModEntityTypes {
                     .clientTrackingRange(1000)
                     .updateInterval(1)
                     .build("entity_himars"));
+
+    public static final RegistryObject<EntityType<AirstrikeBomberEntity>> AIRSTRIKE_BOMBER =
+            ENTITY_TYPES.register("entity_bomber", () -> EntityType.Builder
+                    .<AirstrikeBomberEntity>of(AirstrikeBomberEntity::new, MobCategory.MISC)
+                    .sized(8.0F, 4.0F)
+                    .clientTrackingRange(256)
+                    .updateInterval(1)
+                    .build("entity_bomber"));
+
+    public static final RegistryObject<EntityType<AirstrikeBombletEntity>> AIRSTRIKE_BOMBLET =
+            ENTITY_TYPES.register("entity_bomblet_zeta", () -> EntityType.Builder
+                    .<AirstrikeBombletEntity>of(AirstrikeBombletEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .build("entity_bomblet_zeta"));
 
     public static final RegistryObject<EntityType<ChemicalProjectileEntity>> CHEMICAL_PROJECTILE =
             ENTITY_TYPES.register("entity_chemthrower_splash", () -> EntityType.Builder

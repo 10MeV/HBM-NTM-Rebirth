@@ -2,6 +2,8 @@ package com.hbm.ntm.api.redstoneoverradio;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import com.hbm.ntm.util.BufferUtil;
 
 public class RTTYControllerState {
     private static final String TAG_POLLING = "p";
@@ -84,6 +86,18 @@ public class RTTYControllerState {
             channel = value;
         }
         return changed;
+    }
+
+    /** 1.7.10 TileEntityRadioTorchController runtime packet, without LoadedBase. */
+    public void writeLegacyWire(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(polling);
+        BufferUtil.writeString(buffer, channel);
+    }
+
+    /** 1.7.10 TileEntityRadioTorchController runtime packet, without LoadedBase. */
+    public void readLegacyWire(FriendlyByteBuf buffer) {
+        polling = buffer.readBoolean();
+        channel = BufferUtil.readString(buffer);
     }
 
     public record ControllerRunResult(boolean ran, boolean selfDestruct, String command, String result,

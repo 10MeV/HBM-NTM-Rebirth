@@ -8,7 +8,6 @@ import com.hbm.ntm.world.saveddata.WorldSavedDataHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
@@ -17,7 +16,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +23,11 @@ public final class ChunkRadiationManager {
     private static final int LEGACY_WORLD_EFFECT_CHUNKS = 5;
     private static final int LEGACY_WORLD_EFFECT_OPERATIONS = 10;
     private static final int LEGACY_WORLD_EFFECT_THRESHOLD = 10;
-    private static final Map<ResourceKey<Level>, Integer> DIFFUSION_TIMERS = new HashMap<>();
+    // 1.7.10 ChunkRadiationManager used one server-wide eggTimer, so Simple
+    // diffusion must update every loaded dimension on the same twentieth tick.
+    private static MinecraftServer diffusionServer;
+    private static long lastDiffusionServerTick = Long.MIN_VALUE;
+    private static int diffusionTimer;
     public static final String LEGACY_CHUNK_NBT_KEY = "hfr_simple_radiation";
 
     public static float getRadiation(Level level, BlockPos pos) {
@@ -195,14 +197,7 @@ public final class ChunkRadiationManager {
             return;
         }
 
-        ResourceKey<Level> dimension = level.dimension();
-        int timer = DIFFUSION_TIMERS.getOrDefault(dimension, 0) + 1;
-        if (timer >= 20) {
-            List<ChunkPos> fogCandidates = getData(level).updateDiffusion(level, RadiationConfig.radiationFogThreshold());
-            spawnRadiationFog(level, fogCandidates);
-            timer = 0;
-        }
-        DIFFUSION_TIMERS.put(dimension, timer);
+        tickSimpleDiffusion(level.getServer());
 
         if (RadiationConfig.worldRadiationEffectsEnabled()) {
             handleWorldEffects(level);
@@ -272,9 +267,8 @@ public final class ChunkRadiationManager {
                         BlockState state = level.getBlockState(surface);
                         if (state.is(Blocks.GRASS_BLOCK)) {
                             level.setBlock(surface, ModBlocks.WASTE_EARTH.get().defaultBlockState(), 2);
-                        } else if (state.is(Blocks.FARMLAND)) {
-                            level.setBlock(surface, Blocks.DIRT.defaultBlockState(), 2);
-                        } else if (state.is(Blocks.GRASS) || state.is(Blocks.TALL_GRASS) || state.is(Blocks.FERN) || state.is(Blocks.LARGE_FERN)) {
+                        } else if (state.is(Blocks.GRASS) || state.is(Blocks.TALL_GRASS) || state.is(Blocks.FERN)
+                                || state.is(Blocks.LARGE_FERN) || state.is(Blocks.DEAD_BUSH)) {
                             level.setBlock(surface, Blocks.AIR.defaultBlockState(), 2);
                         } else if (state.is(BlockTags.LEAVES) && !state.is(ModBlocks.WASTE_LEAVES.get())) {
                             if (level.random.nextInt(7) <= 5) {
@@ -328,7 +322,6 @@ public final class ChunkRadiationManager {
 
     public static void unloadLevel(Level level) {
         if (level instanceof ServerLevel serverLevel) {
-            DIFFUSION_TIMERS.remove(serverLevel.dimension());
             PrismChunkRadiationHandler.unloadLevel(serverLevel);
         }
     }
@@ -342,6 +335,34 @@ public final class ChunkRadiationManager {
     private static RadiationSavedData getData(ServerLevel level) {
         return WorldSavedDataHelper.get(level, RadiationSavedData.DATA_NAME, RadiationSavedData::load,
                 RadiationSavedData::new);
+    }
+
+    private static void tickSimpleDiffusion(MinecraftServer server) {
+        if (server == null) {
+            return;
+        }
+        if (diffusionServer != server) {
+            diffusionServer = server;
+            lastDiffusionServerTick = Long.MIN_VALUE;
+            diffusionTimer = 0;
+        }
+
+        long serverTick = server.overworld().getGameTime();
+        if (lastDiffusionServerTick == serverTick) {
+            return;
+        }
+        lastDiffusionServerTick = serverTick;
+        diffusionTimer++;
+        if (diffusionTimer < 20) {
+            return;
+        }
+
+        for (ServerLevel loadedLevel : server.getAllLevels()) {
+            List<ChunkPos> fogCandidates = getData(loadedLevel).updateDiffusion(loadedLevel,
+                    RadiationConfig.radiationFogThreshold());
+            spawnRadiationFog(loadedLevel, fogCandidates);
+        }
+        diffusionTimer = 0;
     }
 
     private static void markChunkUnsaved(ServerLevel level, ChunkPos chunkPos) {

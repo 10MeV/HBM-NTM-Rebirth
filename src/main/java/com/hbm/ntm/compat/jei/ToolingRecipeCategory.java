@@ -21,7 +21,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class ToolingRecipeCategory implements IRecipeCategory<ToolingRecipeCategory.DisplayRecipe> {
+public final class ToolingRecipeCategory implements HbmJeiRecipeCategory<ToolingRecipeCategory.DisplayRecipe> {
     private static final TagKey<Item> DURA_BOLTS =
             ItemTags.create(new ResourceLocation("forge", "bolts/dura_steel"));
     private static final TagKey<Item> STEEL_CAST_PLATES =
@@ -69,7 +69,7 @@ public final class ToolingRecipeCategory implements IRecipeCategory<ToolingRecip
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

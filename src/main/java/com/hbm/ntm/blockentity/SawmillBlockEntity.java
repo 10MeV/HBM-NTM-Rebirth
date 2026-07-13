@@ -13,6 +13,7 @@ import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.BufferUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -479,14 +480,23 @@ public class SawmillBlockEntity extends BlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        // 1.7.10 TileEntitySawmill#serialize: heat, progress, blade state, then all three slots.
+        // BufferUtil keeps the old call boundary while using the modern registry-aware ItemStack encoding.
+        data.writeInt(heat);
+        data.writeInt(progress);
+        data.writeBoolean(hasBlade);
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            BufferUtil.writeItemStack(data, items.getStackInSlot(slot));
+        }
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            load(tag);
+        heat = Math.max(0, data.readInt());
+        progress = Math.max(0, data.readInt());
+        hasBlade = data.readBoolean();
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            items.setStackInSlot(slot, BufferUtil.readItemStack(data));
         }
     }
 

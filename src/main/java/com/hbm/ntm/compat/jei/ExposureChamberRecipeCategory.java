@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class ExposureChamberRecipeCategory implements IRecipeCategory<ExposureChamberRecipe> {
+public final class ExposureChamberRecipeCategory implements HbmJeiRecipeCategory<ExposureChamberRecipe> {
     private final RecipeType<ExposureChamberRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -58,7 +58,7 @@ public final class ExposureChamberRecipeCategory implements IRecipeCategory<Expo
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

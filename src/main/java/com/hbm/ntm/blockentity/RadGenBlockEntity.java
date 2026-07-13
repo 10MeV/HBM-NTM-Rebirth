@@ -13,6 +13,7 @@ import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.recipe.RadGenRecipeRuntime;
 import com.hbm.ntm.recipe.RadGenRecipeRuntime.FuelSpec;
+import com.hbm.ntm.util.BufferUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -347,15 +348,24 @@ public class RadGenBlockEntity extends BlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        // TileEntityMachineRadGen#serialize: LoadedBase then the three GUI arrays,
+        // energy buffer, and the renderer's rotor/light state.
+        writeLegacyLoadedTileBinary(data);
+        BufferUtil.writeIntArray(data, progress);
+        BufferUtil.writeIntArray(data, maxProgress);
+        BufferUtil.writeIntArray(data, production);
+        data.writeLong(energy.getPower());
+        data.writeBoolean(isOn);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            load(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        copyArray(BufferUtil.readIntArray(data), progress);
+        copyArray(BufferUtil.readIntArray(data), maxProgress);
+        copyArray(BufferUtil.readIntArray(data), production);
+        energy.setPower(data.readLong());
+        isOn = data.readBoolean();
     }
 
     @Nullable

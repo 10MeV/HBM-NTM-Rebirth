@@ -11,6 +11,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.BufferUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmRegistryUtil;
 import java.util.List;
@@ -19,6 +20,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
@@ -106,6 +108,9 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
         fel.mode = fel.on ? wavelengthFor(fel.items.getStackInSlot(SLOT_CRYSTAL)) : LaserWavelength.NULL;
         fel.missingValidSilex = true;
         fel.scanBeam(level, state);
+        // TileEntityFEL broadcasts its renderer/audio state through networkPackNT(250) every tick.
+        // The packet layer suppresses unchanged snapshots except for the legacy keepalive cadence.
+        fel.networkPackNT(250);
         if (oldPower != fel.energy.getPower() || oldMode != fel.mode || oldValid != fel.missingValidSilex
                 || oldDistance != fel.distance) {
             fel.setChanged();
@@ -307,6 +312,29 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     @Override
     public CompoundTag getUpdateTag() {
         return saveWithoutMetadata();
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityFEL#serialize: TileEntityMachineBase inherits the two LoadedBase flags, then FEL state.
+        // Its inventory is NBT-only and deliberately does not belong in this runtime visual/audio packet.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        BufferUtil.writeString(data, mode.name());
+        data.writeBoolean(on);
+        data.writeBoolean(missingValidSilex);
+        data.writeInt(distance);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        String modeName = BufferUtil.readString(data);
+        mode = safeWavelength(modeName == null ? LaserWavelength.NULL.name() : modeName);
+        on = data.readBoolean();
+        missingValidSilex = data.readBoolean();
+        distance = Math.max(0, data.readInt());
     }
 
     private static LaserWavelength safeWavelength(String name) {

@@ -23,10 +23,12 @@ import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.world.saveddata.AnnihilatorSavedData;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -419,6 +421,38 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         monitorBigInt = parseBigInteger(tag.getString(TAG_MONITOR));
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineAnnihilator#serialize: MachineBase/LoadedBase, then
+        // FML ByteBufUtils UTF-8 pool text and BigInteger's int-length raw bytes.
+        writeLegacyLoadedTileBinary(data);
+        writeLegacyByteBufUtilsString(data, pool);
+        byte[] monitor = monitorBigInt.toByteArray();
+        data.writeInt(monitor.length);
+        data.writeBytes(monitor);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        pool = readLegacyByteBufUtilsString(data);
+        byte[] monitor = new byte[data.readInt()];
+        data.readBytes(monitor);
+        monitorBigInt = new BigInteger(monitor);
+    }
+
+    private static void writeLegacyByteBufUtilsString(FriendlyByteBuf data, String value) {
+        byte[] bytes = (value == null ? "" : value).getBytes(StandardCharsets.UTF_8);
+        data.writeVarInt(bytes.length);
+        data.writeBytes(bytes);
+    }
+
+    private static String readLegacyByteBufUtilsString(FriendlyByteBuf data) {
+        byte[] bytes = new byte[data.readVarInt()];
+        data.readBytes(bytes);
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static boolean isLegacyPoolName(String value) {

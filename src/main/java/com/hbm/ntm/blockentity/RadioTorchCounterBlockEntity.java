@@ -9,6 +9,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -158,6 +159,24 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity {
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {
         return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityRadioTorchCounter#serialize: TileEntityMachineBase's
+        // LoadedBase flags, then counter state, matcher modes and channels.
+        writeLegacyLoadedTileBinary(data);
+        radio.writeLegacyWireHead(data);
+        matcher.writeLegacyWire(data);
+        radio.writeLegacyWireChannels(data);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        radio.readLegacyWireHead(data);
+        matcher.readLegacyWire(data);
+        radio.readLegacyWireChannels(data);
     }
 
     private static int countItems(IItemHandler handler, ItemStack pattern, int filterSlot, RTTYPatternMatcher matcher) {

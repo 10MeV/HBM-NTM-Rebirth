@@ -152,7 +152,7 @@ public final class ModRecipes {
     }
 
     private static <T extends Recipe<Container>> RecipeHolder<T> register(String name, java.util.function.Supplier<RecipeSerializer<T>> serializer) {
-        RegistryObject<RecipeType<T>> type = RECIPE_TYPES.register(name, () -> new RecipeType<>() {
+        RegistryObject<RecipeType<T>> type = RECIPE_TYPES.register(name, () -> new RecipeType<T>() {
             @Override
             public String toString() {
                 return HbmNtm.MOD_ID + ":" + name;

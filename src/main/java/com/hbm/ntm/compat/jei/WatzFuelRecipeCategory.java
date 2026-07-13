@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class WatzFuelRecipeCategory implements IRecipeCategory<WatzFuelRuntime.DisplayPellet> {
+public final class WatzFuelRecipeCategory implements HbmJeiRecipeCategory<WatzFuelRuntime.DisplayPellet> {
     private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
     private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
@@ -60,7 +60,7 @@ public final class WatzFuelRecipeCategory implements IRecipeCategory<WatzFuelRun
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

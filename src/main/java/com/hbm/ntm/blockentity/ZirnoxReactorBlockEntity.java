@@ -226,6 +226,12 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         return heat;
     }
 
+    /** Source-backed 1.7.10 Dyatlov tool heat assignment. */
+    public void setLegacyMeltdownHeat() {
+        heat = 200_000;
+        setChanged();
+    }
+
     public int getPressure() {
         return pressure;
     }

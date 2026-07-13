@@ -137,6 +137,13 @@ public class PollutionHandler {
     }
 
     @SubscribeEvent
+    public void rampantScoutPopulator(LevelEvent.PotentialSpawns event) {
+        if (!event.isCanceled() && event.getLevel() instanceof net.minecraft.server.level.ServerLevel level) {
+            PollutionManager.trySpawnRampantScout(level, event.getPos());
+        }
+    }
+
+    @SubscribeEvent
     public void rampantTargetSetter(PlayerSleepInBedEvent event) {
         if (!MobConfig.rampantGlyphidGuidance() || event.getEntity().level().isClientSide) {
             return;

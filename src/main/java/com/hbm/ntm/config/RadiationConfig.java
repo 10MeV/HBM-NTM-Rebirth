@@ -171,7 +171,7 @@ public final class RadiationConfig {
         DISABLE_HOT = builder.define("disableHot", false);
         DISABLE_HYDROACTIVE = builder.define("disableHydroactive", false);
         DISABLE_FIBROSIS = builder
-                .comment("Legacy HAZ_06_disableFibrosis mirror. No modern HazardType.FIBROSIS exists yet; wire this when the old fibrosis hazard is migrated.")
+                .comment("Legacy HAZ_06_disableFibrosis mirror. The 1.7.10 source declares this setting but no hazard or event consumes it.")
                 .define("disableFibrosis", false);
         builder.pop();
     }

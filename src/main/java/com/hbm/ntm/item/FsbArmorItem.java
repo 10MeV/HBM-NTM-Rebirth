@@ -26,6 +26,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
@@ -38,25 +39,28 @@ import org.jetbrains.annotations.Nullable;
 public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
     private static final String TAG_NEXT_STEP_SOUND_DISTANCE = "hbm_fsb_next_step_sound_distance";
     private static final UUID STEP_HEIGHT_UUID = UUID.fromString("81746137-8b5a-44f9-a89b-ad48dcc7dc11");
+    private final ArmorMaterial fsbMaterial;
     private final ResourceLocation fsbMaterialId;
     private final List<FullSetEffect> fullSetEffects;
     private final boolean noHelmet;
     private final int dashCount;
     private final FullSetTraits fullSetTraits;
 
-    public FsbArmorItem(HbmArmorMaterials material, Type type, Properties properties, List<FullSetEffect> fullSetEffects) {
+    public FsbArmorItem(ArmorMaterial material, Type type, Properties properties, List<FullSetEffect> fullSetEffects) {
         this(material, type, properties, fullSetEffects, false, 0, FullSetTraits.NONE);
     }
 
-    public FsbArmorItem(HbmArmorMaterials material, Type type, Properties properties, List<FullSetEffect> fullSetEffects,
+    public FsbArmorItem(ArmorMaterial material, Type type, Properties properties, List<FullSetEffect> fullSetEffects,
             boolean noHelmet, int dashCount) {
         this(material, type, properties, fullSetEffects, noHelmet, dashCount, FullSetTraits.NONE);
     }
 
-    public FsbArmorItem(HbmArmorMaterials material, Type type, Properties properties, List<FullSetEffect> fullSetEffects,
+    public FsbArmorItem(ArmorMaterial material, Type type, Properties properties, List<FullSetEffect> fullSetEffects,
             boolean noHelmet, int dashCount, FullSetTraits fullSetTraits) {
         super(material, type, properties.stacksTo(1));
-        this.fsbMaterialId = ResourceLocation.tryParse(material.getName());
+        this.fsbMaterial = material;
+        this.fsbMaterialId = material instanceof HbmArmorMaterials hbmMaterial
+                ? ResourceLocation.tryParse(hbmMaterial.getName()) : null;
         this.fullSetEffects = List.copyOf(fullSetEffects);
         this.noHelmet = noHelmet;
         this.dashCount = Math.max(0, dashCount);
@@ -112,7 +116,8 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        if (!fullSetEffects.isEmpty() || dashCount > 0 || !fullSetTraits.isEmpty()) {
+        List<Component> traitLines = fullSetTraits.tooltipLines();
+        if (!fullSetEffects.isEmpty() || dashCount > 0 || !traitLines.isEmpty()) {
             tooltip.add(Component.translatable("armor.fullSetBonus").withStyle(ChatFormatting.GOLD));
             for (FullSetEffect effect : fullSetEffects) {
                 tooltip.add(Component.literal("  " + effect.tooltip()).withStyle(ChatFormatting.AQUA));
@@ -122,7 +127,7 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
                         .append(Component.translatable("armor.dash", dashCount))
                         .withStyle(ChatFormatting.AQUA));
             }
-            for (Component line : fullSetTraits.tooltipLines()) {
+            for (Component line : traitLines) {
                 tooltip.add(line);
             }
         }
@@ -182,10 +187,7 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
             return false;
         }
 
-        ResourceLocation material = chestplate.fsbMaterialId(chest);
-        if (material == null) {
-            return false;
-        }
+        ArmorMaterial material = chestplate.fsbMaterial;
 
         EquipmentSlot[] slots = chestplate.noHelmetForFsbSet(chest)
                 ? new EquipmentSlot[] {EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}
@@ -196,7 +198,7 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
             if (!(armor.getItem() instanceof FsbArmorItem fsb)) {
                 return false;
             }
-            if (!material.equals(fsb.fsbMaterialId(armor))) {
+            if (material != fsb.fsbMaterial) {
                 return false;
             }
             if (!ignoreCharge && !fsb.isArmorEnabled(armor)) {
@@ -204,6 +206,10 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
             }
         }
         return true;
+    }
+
+    public static boolean hasSameFsbMaterial(FsbArmorItem first, FsbArmorItem second) {
+        return first != null && second != null && first.fsbMaterial == second.fsbMaterial;
     }
 
     public static FullSetEffect effect(MobEffect effect, int duration, int amplifier, String tooltip) {

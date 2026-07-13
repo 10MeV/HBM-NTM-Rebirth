@@ -111,15 +111,13 @@ public class RadioTelexBlockEntity extends BlockEntity implements MenuProvider, 
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityRadioTelex#serialize intentionally does not call super.
+        telex.writeLegacyWire(data);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        telex.readLegacyWire(data);
     }
 
     @Override

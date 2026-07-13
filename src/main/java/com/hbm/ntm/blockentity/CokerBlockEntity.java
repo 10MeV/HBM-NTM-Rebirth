@@ -8,6 +8,7 @@ import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.CokerRecipe;
 import com.hbm.ntm.particle.ParticleUtil;
@@ -113,10 +114,15 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
             }
         }
 
-        if (wasOn && level.getGameTime() % 2L == 0L) {
-            ParticleUtil.spawnCokerChimneySmoke(level, pos);
-        }
         return changed || oldWasOn != wasOn;
+    }
+
+    public static void clientTick(Level level, BlockPos pos, BlockState state, CokerBlockEntity coker) {
+        if (!level.isClientSide || !coker.wasOn || level.getGameTime() % 2L != 0L
+                || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+            return;
+        }
+        ParticleUtil.spawnCokerChimneySmoke(level, pos);
     }
 
     @Override
@@ -181,15 +187,24 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachineCoker#serialize: MachineBase/LoadedBase flags, smoke gate, heat/progress and two tanks.
+        // Inventory remains NBT-only; wasOn is the source for the client-local tower smoke ticker.
+        writeLegacyLoadedTileBinary(data);
+        data.writeBoolean(wasOn);
+        data.writeInt(heat);
+        data.writeInt(progress);
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        wasOn = data.readBoolean();
+        heat = Math.max(0, data.readInt());
+        progress = Math.max(0, data.readInt());
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank);
     }
 
     @Override

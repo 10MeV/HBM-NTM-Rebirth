@@ -1,17 +1,85 @@
 {
   "type": "minecraft:block",
+  "random_sequence": "hbm_ntm_rebirth:blocks/wood_structure",
   "pools": [
     {
       "rolls": 1.0,
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:wood_structure"
+          "name": "hbm_ntm_rebirth:wood_structure",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:0}"
+            }
+          ]
         }
       ],
       "conditions": [
         {
           "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:wood_structure",
+          "properties": {
+            "variant": "0"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:wood_structure",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:1}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:wood_structure",
+          "properties": {
+            "variant": "1"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:wood_structure",
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{hbmLegacyVariant:2}"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hbm_ntm_rebirth:wood_structure",
+          "properties": {
+            "variant": "2"
+          }
         }
       ]
     }

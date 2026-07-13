@@ -10,6 +10,7 @@ import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.PairRecipe;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
@@ -18,6 +19,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -184,6 +186,25 @@ public class CatalyticCrackerBlockEntity extends LegacyRemoteFluidMachineBlockEn
                 tanks.get(i).readFromNbt(tag, key);
             }
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineCatalyticCracker deliberately omits its LoadedBase parent.
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, steamTank);
+        LegacyFluidTankPacket.write(data, leftOutputTank);
+        LegacyFluidTankPacket.write(data, rightOutputTank);
+        LegacyFluidTankPacket.write(data, spentSteamTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, steamTank);
+        LegacyFluidTankPacket.read(data, leftOutputTank);
+        LegacyFluidTankPacket.read(data, rightOutputTank);
+        LegacyFluidTankPacket.read(data, spentSteamTank);
     }
 
     private static boolean hasTankTag(CompoundTag tag, String key) {

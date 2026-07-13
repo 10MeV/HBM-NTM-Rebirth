@@ -1,10 +1,10 @@
 {
-  "export_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports",
+  "export_dir": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports",
   "exported_file_count": 6,
   "exported_recipe_count": 763,
   "handlers": [
     {
-      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmAssemblyMachine.json",
+      "export_file": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports/hbmAssemblyMachine.json",
       "exported_recipe_count": 591,
       "failures": [],
       "legacy_file": "hbmAssemblyMachine.json",
@@ -12,11 +12,11 @@
       "omitted_condition_recipe_count": 0,
       "omitted_conditions": [],
       "skipped_recipe_count": 0,
-      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/assembly_machine",
+      "source_dir": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/assembly_machine",
       "status": "exported"
     },
     {
-      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmChemicalPlant.json",
+      "export_file": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports/hbmChemicalPlant.json",
       "exported_recipe_count": 74,
       "failures": [],
       "legacy_file": "hbmChemicalPlant.json",
@@ -24,11 +24,11 @@
       "omitted_condition_recipe_count": 0,
       "omitted_conditions": [],
       "skipped_recipe_count": 0,
-      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/chemical_plant",
+      "source_dir": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/chemical_plant",
       "status": "exported"
     },
     {
-      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmPUREX.json",
+      "export_file": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports/hbmPUREX.json",
       "exported_recipe_count": 53,
       "failures": [],
       "legacy_file": "hbmPUREX.json",
@@ -38,20 +38,20 @@
         {
           "message": "forge:not condition evaluated false because nested condition forge:tag_empty #forge:nuggets/naquadria evaluated true",
           "recipe_id": "hbm_ntm_rebirth:purex/watznaqadah",
-          "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/purex/watznaqadah.json"
+          "source": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/purex/watznaqadah.json"
         },
         {
           "message": "forge:not condition evaluated false because nested condition forge:tag_empty #forge:nuggets/naquadria evaluated true",
           "recipe_id": "hbm_ntm_rebirth:purex/watznaqadria",
-          "source": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/purex/watznaqadria.json"
+          "source": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/purex/watznaqadria.json"
         }
       ],
       "skipped_recipe_count": 0,
-      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/purex",
+      "source_dir": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/purex",
       "status": "exported"
     },
     {
-      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmPrecisionAssembly.json",
+      "export_file": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports/hbmPrecisionAssembly.json",
       "exported_recipe_count": 2,
       "failures": [],
       "legacy_file": "hbmPrecisionAssembly.json",
@@ -59,11 +59,11 @@
       "omitted_condition_recipe_count": 0,
       "omitted_conditions": [],
       "skipped_recipe_count": 0,
-      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/precass",
+      "source_dir": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/precass",
       "status": "exported"
     },
     {
-      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmPlasmaForge.json",
+      "export_file": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports/hbmPlasmaForge.json",
       "exported_recipe_count": 33,
       "failures": [],
       "legacy_file": "hbmPlasmaForge.json",
@@ -71,11 +71,11 @@
       "omitted_condition_recipe_count": 0,
       "omitted_conditions": [],
       "skipped_recipe_count": 0,
-      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/plasma_forge",
+      "source_dir": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/plasma_forge",
       "status": "exported"
     },
     {
-      "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmFusion.json",
+      "export_file": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports/hbmFusion.json",
       "exported_recipe_count": 10,
       "failures": [],
       "legacy_file": "hbmFusion.json",
@@ -83,11 +83,11 @@
       "omitted_condition_recipe_count": 0,
       "omitted_conditions": [],
       "skipped_recipe_count": 0,
-      "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/fusion_reactor",
+      "source_dir": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/fusion_reactor",
       "status": "exported"
     }
   ],
-  "main_recipe_root": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes",
+  "main_recipe_root": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes",
   "omitted_condition_recipe_count": 2,
   "skipped_recipe_count": 0,
   "status": "exported",

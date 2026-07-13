@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "item": "hbm_ntm_rebirth:block_dineutronium" }],
+  "result": { "item": "hbm_ntm_rebirth:ingot_dineutronium", "count": 9 }
+}

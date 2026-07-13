@@ -19,6 +19,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.menu.TurbineGasMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
@@ -894,15 +895,48 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachineTurbineGas#serialize: inherited MachineBase/LoadedBase flags, then runtime state.
+        // Inventory is NBT-only; the active state branch carries counter while starting/stopping or output while online.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(powerBeforeNet);
+        data.writeInt(rpm);
+        data.writeInt(temp);
+        data.writeInt(state);
+        data.writeBoolean(autoMode);
+        data.writeInt(throttle);
+        data.writeInt(sliderPos);
+        if (state != 1) {
+            data.writeInt(counter);
+        } else {
+            data.writeInt(instantPowerOutput);
+        }
+        LegacyFluidTankPacket.write(data, fuelTank);
+        LegacyFluidTankPacket.write(data, lubricantTank);
+        LegacyFluidTankPacket.write(data, waterTank);
+        LegacyFluidTankPacket.write(data, steamTank);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
+        readLegacyLoadedTileBinary(data);
+        powerBeforeNet = data.readLong();
+        energy.setPower(powerBeforeNet);
+        rpm = data.readInt();
+        temp = data.readInt();
+        state = data.readInt();
+        autoMode = data.readBoolean();
+        throttle = data.readInt();
+        sliderPos = data.readInt();
+        if (state != 1) {
+            counter = data.readInt();
+        } else {
+            instantPowerOutput = data.readInt();
         }
+        LegacyFluidTankPacket.read(data, fuelTank);
+        LegacyFluidTankPacket.read(data, lubricantTank);
+        LegacyFluidTankPacket.read(data, waterTank);
+        LegacyFluidTankPacket.read(data, steamTank);
+        normalizeTankTypes();
     }
 
     @Nullable

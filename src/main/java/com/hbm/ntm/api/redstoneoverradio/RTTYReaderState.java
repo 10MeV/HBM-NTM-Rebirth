@@ -2,6 +2,8 @@ package com.hbm.ntm.api.redstoneoverradio;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import com.hbm.ntm.util.BufferUtil;
 import net.minecraft.world.level.Level;
 
 public class RTTYReaderState {
@@ -122,6 +124,28 @@ public class RTTYReaderState {
             }
         }
         return changed;
+    }
+
+    /** 1.7.10 TileEntityRadioTorchReader runtime packet, without LoadedBase. */
+    public void writeLegacyWire(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(polling);
+        for (String channel : channels) {
+            BufferUtil.writeString(buffer, channel);
+        }
+        for (String name : names) {
+            BufferUtil.writeString(buffer, name);
+        }
+    }
+
+    /** 1.7.10 TileEntityRadioTorchReader runtime packet, without LoadedBase. */
+    public void readLegacyWire(FriendlyByteBuf buffer) {
+        polling = buffer.readBoolean();
+        for (int index = 0; index < SLOT_COUNT; index++) {
+            channels[index] = BufferUtil.readString(buffer);
+        }
+        for (int index = 0; index < SLOT_COUNT; index++) {
+            names[index] = BufferUtil.readString(buffer);
+        }
     }
 
     private static boolean valid(int slot) {

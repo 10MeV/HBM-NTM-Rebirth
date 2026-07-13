@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "L": { "item": "hbm_ntm_rebirth:pellet_buckshot" },
+    "M": { "item": "hbm_ntm_rebirth:mine_ap" }
+  },
+  "pattern": ["L", "M"],
+  "result": { "item": "hbm_ntm_rebirth:mine_shrap" },
+  "show_notification": true
+}

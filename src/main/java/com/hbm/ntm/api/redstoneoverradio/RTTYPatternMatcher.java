@@ -3,6 +3,7 @@ package com.hbm.ntm.api.redstoneoverradio;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -10,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.hbm.ntm.util.BufferUtil;
 
 public class RTTYPatternMatcher {
     public static final String MODE_EXACT = "exact";
@@ -96,6 +98,20 @@ public class RTTYPatternMatcher {
             modes[i] = tag.contains(TAG_MODE_PREFIX + i, Tag.TAG_STRING)
                     ? tag.getString(TAG_MODE_PREFIX + i)
                     : null;
+        }
+    }
+
+    /** Matches ModulePatternMatcher#serialize: one legacy UTF-8 mode per filter slot. */
+    public void writeLegacyWire(FriendlyByteBuf buffer) {
+        for (String mode : modes) {
+            BufferUtil.writeString(buffer, mode);
+        }
+    }
+
+    /** Matches ModulePatternMatcher#deserialize: one legacy UTF-8 mode per filter slot. */
+    public void readLegacyWire(FriendlyByteBuf buffer) {
+        for (int index = 0; index < modes.length; index++) {
+            modes[index] = BufferUtil.readString(buffer);
         }
     }
 

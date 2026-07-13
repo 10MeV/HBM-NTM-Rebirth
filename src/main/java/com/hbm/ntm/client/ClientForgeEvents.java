@@ -54,6 +54,7 @@ import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.item.StingerGunItem;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
+import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ArmorRegistry;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -423,6 +424,7 @@ public final class ClientForgeEvents {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        RemoteDesktopMouseCapture.tick(Minecraft.getInstance());
         ClientHbmPlayerProperties.registerListener();
         LegacyHbmAnimations.tick();
         HbmClientKeybinds.tick();
@@ -451,6 +453,7 @@ public final class ClientForgeEvents {
             return;
         }
         hadLevel = true;
+        HbmPlayerProperties.tickClientRuntime(minecraft.player);
         tickClientArmorMods(minecraft.player);
         spawnRadiationAura(minecraft);
         spawnCraterTownAura(minecraft);

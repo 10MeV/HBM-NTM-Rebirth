@@ -51,6 +51,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 
 import java.util.List;
 import java.util.Random;
@@ -585,10 +586,15 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
 
         double hang = Math.min(length / 15.0D, 0.5D);
         WireOffsets offsets = legacyChargeWireOffsets(deltaX, deltaY, deltaZ, 0.03125D);
+        Level level = entity.level();
         BlockPos.MutableBlockPos lightPos = CHARGE_WIRE_LIGHT_POS.get();
         VertexConsumer wireConsumer = LegacyTexturedQuadRenderer.vertexAlphaConsumer(WIRE_GREYSCALE, buffer,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL);
         PoseStack.Pose wirePose = poseStack.last();
+        int lastLightX = Integer.MIN_VALUE;
+        int lastLightY = Integer.MIN_VALUE;
+        int lastLightZ = Integer.MIN_VALUE;
+        int lastLight = 0;
         for (int j = 0; j < 10; j++) {
             int k = j + 1;
             double sagJ = Math.sin(j / 10.0D * Math.PI) * hang;
@@ -597,7 +603,16 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
             double sampleScale = (j + 0.5D) / 10.0D;
             lightPos.set(bulletX + deltaX * sampleScale, bulletY + deltaY * sampleScale - sagMean,
                     bulletZ + deltaZ * sampleScale);
-            int light = LevelRenderer.getLightColor(entity.level(), lightPos);
+            int sampleX = lightPos.getX();
+            int sampleY = lightPos.getY();
+            int sampleZ = lightPos.getZ();
+            if (sampleX != lastLightX || sampleY != lastLightY || sampleZ != lastLightZ) {
+                lastLight = LevelRenderer.getLightColor(level, lightPos);
+                lastLightX = sampleX;
+                lastLightY = sampleY;
+                lastLightZ = sampleZ;
+            }
+            int light = lastLight;
             LegacyTexturedLineRenderer.wrappedLineSegment(wireConsumer, wirePose,
                     light, OverlayTexture.NO_OVERLAY,
                     deltaX * j / 10.0D,

@@ -11,6 +11,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.MiningLaserMenu;
@@ -29,6 +30,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -547,6 +549,41 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public double getBreakProgress() {
         return clientBreakProgress;
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineMiningLaser#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeInt(lastTargetX);
+        data.writeInt(lastTargetY);
+        data.writeInt(lastTargetZ);
+        data.writeInt(targetX);
+        data.writeInt(targetY);
+        data.writeInt(targetZ);
+        data.writeBoolean(beam);
+        data.writeBoolean(isOn);
+        data.writeDouble(clientBreakProgress);
+        LegacyFluidTankPacket.write(data, oilTank);
+        data.writeBoolean(redstonePowered);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        lastTargetX = data.readInt();
+        lastTargetY = data.readInt();
+        lastTargetZ = data.readInt();
+        targetX = data.readInt();
+        targetY = data.readInt();
+        targetZ = data.readInt();
+        beam = data.readBoolean();
+        isOn = data.readBoolean();
+        breakProgress = data.readDouble();
+        LegacyFluidTankPacket.read(data, oilTank);
+        redstonePowered = data.readBoolean();
     }
 
     public int getTargetX() {

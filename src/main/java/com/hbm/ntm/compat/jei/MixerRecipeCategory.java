@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class MixerRecipeCategory implements IRecipeCategory<MixerRecipe> {
+public final class MixerRecipeCategory implements HbmJeiRecipeCategory<MixerRecipe> {
     private final RecipeType<MixerRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -57,7 +57,7 @@ public final class MixerRecipeCategory implements IRecipeCategory<MixerRecipe> {
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class BoilerRecipeCategory implements IRecipeCategory<BoilerRecipeRuntime.DisplayRecipe> {
+public final class BoilerRecipeCategory implements HbmJeiRecipeCategory<BoilerRecipeRuntime.DisplayRecipe> {
     private final RecipeType<BoilerRecipeRuntime.DisplayRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -58,7 +58,7 @@ public final class BoilerRecipeCategory implements IRecipeCategory<BoilerRecipeR
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

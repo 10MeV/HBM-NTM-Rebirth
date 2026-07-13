@@ -22,7 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.ItemLike;
 
-public final class AnvilSmithingRecipeCategory implements IRecipeCategory<AnvilSmithingRecipe> {
+public final class AnvilSmithingRecipeCategory implements HbmJeiRecipeCategory<AnvilSmithingRecipe> {
     private static final int WIDTH = 176;
     private static final int HEIGHT = 86;
     private static final ResourceLocation LEGACY_NEI_TEXTURE =
@@ -59,7 +59,7 @@ public final class AnvilSmithingRecipeCategory implements IRecipeCategory<AnvilS
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -91,6 +91,7 @@ public final class AnvilSmithingRecipeCategory implements IRecipeCategory<AnvilS
     @Override
     public void draw(AnvilSmithingRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         guiGraphics.drawString(Minecraft.getInstance().font, "Tier " + recipe.tier(), 52, 43, 0x404040, false);
     }
 

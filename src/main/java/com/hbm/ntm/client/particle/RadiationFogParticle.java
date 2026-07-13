@@ -84,7 +84,7 @@ public class RadiationFogParticle extends TextureSheetParticle implements HbmDef
         this.xo = this.x;
         this.yo = this.y;
         this.zo = this.z;
-        if (this.age++ >= this.lifetime) {
+        if (++this.age >= this.lifetime) {
             this.remove();
             return;
         }

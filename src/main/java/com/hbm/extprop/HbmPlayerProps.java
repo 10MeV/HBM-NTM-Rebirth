@@ -5,10 +5,13 @@ import com.hbm.handler.HbmKeybinds.EnumKeybind;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 /**
  * Legacy package facade for source migrations. Real state is owned by
@@ -22,7 +25,7 @@ public final class HbmPlayerProps {
 
     private final Player player;
 
-    private HbmPlayerProps(Player player) {
+    public HbmPlayerProps(Player player) {
         this.player = player;
     }
 
@@ -36,6 +39,13 @@ public final class HbmPlayerProps {
 
     public Player player() {
         return player;
+    }
+
+    /**
+     * Legacy IExtendedEntityProperties lifecycle hook. The 1.7.10 method is
+     * intentionally empty; player state remains owned by HbmPlayerProperties.
+     */
+    public void init(Entity entity, Level level) {
     }
 
     public static boolean hasReceivedBook(Player player) {
@@ -666,8 +676,16 @@ public final class HbmPlayerProps {
         HbmPlayerProperties.serializeLegacySyncedData(player, buffer);
     }
 
+    public void serialize(ByteBuf buffer) {
+        serialize(new FriendlyByteBuf(buffer));
+    }
+
     public void deserialize(FriendlyByteBuf buffer) {
         HbmPlayerProperties.deserializeLegacySyncedData(player, buffer);
+    }
+
+    public void deserialize(ByteBuf buffer) {
+        deserialize(new FriendlyByteBuf(buffer));
     }
 
     public void saveNBTData(CompoundTag nbt) {

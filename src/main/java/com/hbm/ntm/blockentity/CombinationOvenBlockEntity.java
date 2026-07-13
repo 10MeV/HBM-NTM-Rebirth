@@ -9,6 +9,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.menu.CombinationOvenMenu;
 import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.recipe.CombinationOvenRecipe;
@@ -25,6 +26,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.Entity;
@@ -198,6 +200,26 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
         return new CombinationOvenMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityFurnaceCombination#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeBoolean(wasOn);
+        data.writeInt(heat);
+        data.writeInt(progress);
+        LegacyFluidTankPacket.write(data, tank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        // The fire billboard and top lava particle are driven by this old server-side wasOn snapshot.
+        readLegacyLoadedTileBinary(data);
+        wasOn = data.readBoolean();
+        heat = data.readInt();
+        progress = data.readInt();
+        LegacyFluidTankPacket.read(data, tank);
     }
 
     @Override

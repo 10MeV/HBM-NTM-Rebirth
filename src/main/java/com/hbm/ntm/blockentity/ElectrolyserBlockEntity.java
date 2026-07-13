@@ -17,6 +17,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.ElectrolyserMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
@@ -35,6 +36,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -252,6 +254,60 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
             electrolyser.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityElectrolyser#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeInt(progressFluid);
+        data.writeInt(progressOre);
+        data.writeInt(usageOre);
+        data.writeInt(usageFluid);
+        data.writeInt(processFluidTime);
+        data.writeInt(processOreTime);
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank1);
+        LegacyFluidTankPacket.write(data, outputTank2);
+        LegacyFluidTankPacket.write(data, nitricTank);
+        writeMaterialStack(data, leftStack);
+        writeMaterialStack(data, rightStack);
+        data.writeInt(lastSelectedGui);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        // Material reservoirs and GUI mode are visual state; never reconstruct them client-side.
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        progressFluid = data.readInt();
+        progressOre = data.readInt();
+        usageOre = data.readInt();
+        usageFluid = data.readInt();
+        processFluidTime = data.readInt();
+        processOreTime = data.readInt();
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank1);
+        LegacyFluidTankPacket.read(data, outputTank2);
+        LegacyFluidTankPacket.read(data, nitricTank);
+        leftStack = readMaterialStack(data);
+        rightStack = readMaterialStack(data);
+        lastSelectedGui = data.readInt();
+    }
+
+    private static void writeMaterialStack(FriendlyByteBuf data, @Nullable MaterialStack stack) {
+        boolean present = stack != null && !stack.isEmpty() && stack.material != null;
+        data.writeBoolean(present);
+        if (present) {
+            data.writeInt(stack.material.id);
+            data.writeInt(stack.amount);
+        }
+    }
+
+    @Nullable
+    private static MaterialStack readMaterialStack(FriendlyByteBuf data) {
+        return data.readBoolean() ? new MaterialStack(Mats.matById.get(data.readInt()), data.readInt()) : null;
     }
 
     private LegacyMachineUpgradeManager.Levels upgradeLevels() {

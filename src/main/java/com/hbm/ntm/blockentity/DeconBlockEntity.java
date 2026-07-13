@@ -21,7 +21,9 @@ public class DeconBlockEntity extends BlockEntity {
 
     public static void tick(Level level, BlockPos pos, BlockState state, DeconBlockEntity blockEntity) {
         if (level.isClientSide()) {
-            spawnAura(level, pos);
+            if (!LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
+                spawnAura(level, pos);
+            }
             return;
         }
 

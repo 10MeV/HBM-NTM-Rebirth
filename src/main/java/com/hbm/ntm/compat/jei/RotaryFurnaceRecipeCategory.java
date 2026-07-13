@@ -20,7 +20,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class RotaryFurnaceRecipeCategory implements IRecipeCategory<RotaryFurnaceRecipeRuntime.Recipe> {
+public final class RotaryFurnaceRecipeCategory implements HbmJeiRecipeCategory<RotaryFurnaceRecipeRuntime.Recipe> {
     private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
     private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
@@ -67,7 +67,7 @@ public final class RotaryFurnaceRecipeCategory implements IRecipeCategory<Rotary
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -90,6 +90,7 @@ public final class RotaryFurnaceRecipeCategory implements IRecipeCategory<Rotary
     @Override
     public void draw(RotaryFurnaceRecipeRuntime.Recipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         var font = Minecraft.getInstance().font;
         String duration = format(recipe.duration()) + " ticks";
         String steam = HbmFluids.STEAM.getDisplayName().getString() + ": " + format(recipe.steam()) + " mB/t";

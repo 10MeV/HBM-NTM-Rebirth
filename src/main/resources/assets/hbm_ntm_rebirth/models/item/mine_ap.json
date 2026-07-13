@@ -1,0 +1,12 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/bombs/ap_mine.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:models/bombs/mine_ap_grass",
+    "default": "hbm_ntm_rebirth:models/bombs/mine_ap_grass",
+    "texture0": "hbm_ntm_rebirth:models/bombs/mine_ap_grass"
+  }
+}

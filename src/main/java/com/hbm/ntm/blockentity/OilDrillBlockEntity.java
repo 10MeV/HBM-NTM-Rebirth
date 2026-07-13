@@ -15,6 +15,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.OilDrillMenu;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
@@ -400,14 +401,29 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityOilDrillBase#serialize: MachineBase/LoadedBase state, then the live drill snapshot.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeInt(indicator);
+        for (HbmFluidTank tank : getAllTanks()) {
+            LegacyFluidTankPacket.write(data, tank);
+        }
+        if (kind == Kind.PUMPJACK) {
+            // TileEntityMachinePumpjack appends the derived client animation speed.
+            data.writeFloat(pumpjackSpeed);
+        }
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        indicator = data.readInt();
+        for (HbmFluidTank tank : getAllTanks()) {
+            LegacyFluidTankPacket.read(data, tank);
+        }
+        if (kind == Kind.PUMPJACK) {
+            pumpjackSpeed = data.readFloat();
         }
     }
 

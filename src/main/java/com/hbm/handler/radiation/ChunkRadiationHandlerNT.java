@@ -5,6 +5,7 @@ import com.hbm.util.fauxpointtwelve.BlockPos;
 import com.hbm.util.fauxpointtwelve.ChunkCoordIntPair;
 import com.hbm.util.fauxpointtwelve.ForgeDirection;
 import com.hbm.util.fauxpointtwelve.NBTTagCompound;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -39,6 +40,7 @@ import java.util.Set;
 public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
     private static final String NBT_KEY_ROOT = "hbmRadDataNT";
     private static final String NBT_KEY_CHUNK_DATA = "chunkRadData";
+    private static final String NBT_KEY_SECTION_COUNT = "sectionCount";
 
     private static Map<Level, WorldRadiationData> worldMap = new HashMap<>();
     private static RadPocket[] pocketsByBlock = null;
@@ -73,7 +75,7 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
 
     @Override
     public void decrementRad(Level level, int x, int y, int z, float rad) {
-        if (y < 0 || y > 255 || !isSubChunkLoaded(level, x, y, z)) {
+        if (!isInBuildHeight(level, y) || !isSubChunkLoaded(level, x, y, z)) {
             return;
         }
 
@@ -86,6 +88,9 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
 
     @Override
     public void setRadiation(Level level, int x, int y, int z, float rad) {
+        if (!isInBuildHeight(level, y)) {
+            return;
+        }
         RadPocket p = getPocket(level, x, y, z);
         p.radiation = Math.max(rad, 0);
 
@@ -118,7 +123,7 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
     }
 
     public static boolean isSubChunkLoaded(Level level, int x, int y, int z) {
-        if (y < 0 || y > 255) {
+        if (!isInBuildHeight(level, y)) {
             return false;
         }
 
@@ -141,7 +146,7 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
         ChunkRadiationStorage st = getChunkStorage(level, x, y, z);
         SubChunkRadiationStorage sc = st.getForYLevel(y);
         if (sc == null) {
-            rebuildChunkPockets(level.getChunk(x >> 4, z >> 4), y >> 4);
+            rebuildChunkPockets(level.getChunk(x >> 4, z >> 4), sectionY(y));
         }
         sc = st.getForYLevel(y);
         return sc;
@@ -260,8 +265,7 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
                     for (ForgeDirection e : ForgeDirection.VALID_DIRECTIONS) {
                         BlockPos nPos = pos.offset(e, 16);
                         if (!blockExists(p.parent.parent.chunk.getLevel(), nPos.getX(), nPos.getY(), nPos.getZ())
-                                || nPos.getY() < 0
-                                || nPos.getY() > 255) {
+                                || !isInBuildHeight(p.parent.parent.chunk.getLevel(), nPos.getY())) {
                             continue;
                         }
                         if (p.connectionIndices[e.ordinal()].size() == 1
@@ -301,7 +305,10 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
     }
 
     public static void markChunkForRebuild(Level level, int x, int y, int z) {
-        BlockPos chunkPos = new BlockPos(x >> 4, y >> 4, z >> 4);
+        if (!isInBuildHeight(level, y)) {
+            return;
+        }
+        BlockPos chunkPos = new BlockPos(x >> 4, sectionY(y), z >> 4);
         WorldRadiationData r = getWorldRadData(level);
 
         if (r.iteratingDirty) {
@@ -324,10 +331,13 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
         }
     }
 
-    private static void rebuildChunkPockets(LevelChunk chunk, int yIndex) {
-        BlockPos subChunkPos = new BlockPos(chunk.getPos().x << 4, yIndex << 4, chunk.getPos().z << 4);
+    private static void rebuildChunkPockets(LevelChunk chunk, int sectionY) {
+        if (!isSectionInBuildHeight(chunk.getLevel(), sectionY)) {
+            return;
+        }
+        BlockPos subChunkPos = new BlockPos(chunk.getPos().x << 4, sectionY << 4, chunk.getPos().z << 4);
         List<RadPocket> pockets = new ArrayList<>();
-        LevelChunkSection blocks = legacySection(chunk, yIndex);
+        LevelChunkSection blocks = legacySection(chunk, sectionY);
         if (pocketsByBlock == null) {
             pocketsByBlock = new RadPocket[16 * 16 * 16];
         } else {
@@ -371,7 +381,7 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
             pocketsByBlock = null;
         }
         subChunk.pockets = pockets.toArray(new RadPocket[pockets.size()]);
-        st.setForYLevel(yIndex << 4, subChunk);
+        st.setForYLevel(sectionY << 4, subChunk);
     }
 
     private static void doEmptyChunk(LevelChunk chunk, BlockPos subChunkPos, BlockPos pos, RadPocket pocket,
@@ -412,7 +422,7 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
                 if (Math.max(Math.max(newPos.getX(), newPos.getY()), newPos.getZ()) > 15
                         || Math.min(Math.min(newPos.getX(), newPos.getY()), newPos.getZ()) < 0) {
                     BlockPos outPos = newPos.add(subChunkWorldPos);
-                    if (outPos.getY() < 0 || outPos.getY() > 255) {
+                    if (!isInBuildHeight(level, outPos.getY())) {
                         continue;
                     }
                     block = blockAt(level, outPos.getX(), outPos.getY(), outPos.getZ());
@@ -437,7 +447,7 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
     }
 
     private static boolean blockExists(Level level, int x, int y, int z) {
-        return y >= 0 && y < 256 && level.hasChunk(x >> 4, z >> 4);
+        return isInBuildHeight(level, y) && level.hasChunk(x >> 4, z >> 4);
     }
 
     private static boolean isRadResistant(Block block) {
@@ -445,17 +455,18 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
     }
 
     private static Block blockAt(Level level, int x, int y, int z) {
-        if (x < -30000000 || z < -30000000 || x >= 30000000 || z >= 30000000 || y < 0 || y >= 256) {
+        if (x < -30000000 || z < -30000000 || x >= 30000000 || z >= 30000000
+                || !isInBuildHeight(level, y)) {
             return Blocks.AIR;
         }
         return level.getBlockState(new net.minecraft.core.BlockPos(x, y, z)).getBlock();
     }
 
-    private static LevelChunkSection legacySection(LevelChunk chunk, int yIndex) {
-        if (yIndex < 0 || yIndex >= 16) {
-            throw new ArrayIndexOutOfBoundsException(yIndex);
+    private static LevelChunkSection legacySection(LevelChunk chunk, int sectionY) {
+        if (!isSectionInBuildHeight(chunk.getLevel(), sectionY)) {
+            throw new ArrayIndexOutOfBoundsException(sectionY);
         }
-        int rawSection = chunk.getLevel().getSectionIndexFromSectionY(yIndex);
+        int rawSection = chunk.getLevel().getSectionIndexFromSectionY(sectionY);
         LevelChunkSection section = chunk.getSection(rawSection);
         return section.hasOnlyAir() ? null : section;
     }
@@ -470,6 +481,19 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
 
     private static ChunkCoordIntPair legacyPos(ChunkPos pos) {
         return new ChunkCoordIntPair(pos.x, pos.z);
+    }
+
+    private static boolean isInBuildHeight(Level level, int y) {
+        return y >= level.getMinBuildHeight() && y < level.getMaxBuildHeight();
+    }
+
+    private static int sectionY(int blockY) {
+        return blockY >> 4;
+    }
+
+    private static boolean isSectionInBuildHeight(Level level, int sectionY) {
+        int index = WorldUtil.sectionIndex(level, sectionY);
+        return index >= 0 && index < level.getSectionsCount();
     }
 
     public static class RadPocket {
@@ -582,23 +606,24 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
     }
 
     public static class ChunkRadiationStorage {
-        private static ByteBuffer buf = ByteBuffer.allocate(524288);
+        private static ByteBuffer buf = ByteBuffer.allocate(8 * 1024 * 1024);
 
         public WorldRadiationData parent;
         private LevelChunk chunk;
-        private SubChunkRadiationStorage[] chunks = new SubChunkRadiationStorage[16];
+        private SubChunkRadiationStorage[] chunks;
 
         public ChunkRadiationStorage(WorldRadiationData parent, LevelChunk chunk) {
             this.parent = parent;
             this.chunk = chunk;
+            this.chunks = new SubChunkRadiationStorage[chunk.getLevel().getSectionsCount()];
         }
 
         public SubChunkRadiationStorage getForYLevel(int y) {
-            int idx = y >> 4;
-            if (idx < 0 || idx > chunks.length) {
+            int idx = WorldUtil.sectionIndex(chunk.getLevel(), sectionY(y));
+            if (idx < 0 || idx >= chunks.length) {
                 return null;
             }
-            return chunks[y >> 4];
+            return chunks[idx];
         }
 
         public BlockPos getWorldPos(int y) {
@@ -606,16 +631,20 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
         }
 
         public void setForYLevel(int y, SubChunkRadiationStorage sc) {
-            if (chunks[y >> 4] != null) {
-                chunks[y >> 4].remove(chunk.getLevel(), getWorldPos(y));
+            int idx = WorldUtil.sectionIndex(chunk.getLevel(), sectionY(y));
+            if (idx < 0 || idx >= chunks.length) {
+                return;
+            }
+            if (chunks[idx] != null) {
+                chunks[idx].remove(chunk.getLevel(), getWorldPos(y));
                 if (sc != null) {
-                    sc.setRad(chunks[y >> 4]);
+                    sc.setRad(chunks[idx]);
                 }
             }
             if (sc != null) {
                 sc.add(chunk.getLevel(), getWorldPos(y));
             }
-            chunks[y >> 4] = sc;
+            chunks[idx] = sc;
         }
 
         public void unload() {
@@ -631,6 +660,7 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
         }
 
         public NBTTagCompound writeToNBT(NBTTagCompound tag) {
+            tag.setInteger(NBT_KEY_SECTION_COUNT, chunks.length);
             for (SubChunkRadiationStorage st : chunks) {
                 if (st == null) {
                     buf.put((byte) 0);
@@ -682,7 +712,9 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
 
         public void readFromNBT(NBTTagCompound tag) {
             ByteBuffer data = ByteBuffer.wrap(tag.getByteArray(NBT_KEY_CHUNK_DATA));
-            for (int i = 0; i < chunks.length; i++) {
+            int storedSections = tag.hasKey(NBT_KEY_SECTION_COUNT)
+                    ? Math.max(0, tag.getInteger(NBT_KEY_SECTION_COUNT)) : 16;
+            for (int i = 0; i < storedSections && data.hasRemaining(); i++) {
                 boolean subChunkExists = data.get() == 1 ? true : false;
                 if (subChunkExists) {
                     int yLevel = data.getShort();
@@ -691,9 +723,6 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
                     st.pockets = new RadPocket[pocketsLength];
                     for (int j = 0; j < pocketsLength; j++) {
                         st.pockets[j] = readPocket(data, st);
-                        if (st.pockets[j].radiation > 0) {
-                            parent.activePockets.add(st.pockets[j]);
-                        }
                     }
                     boolean perBlockDataExists = data.get() == 1 ? true : false;
                     if (perBlockDataExists) {
@@ -705,9 +734,15 @@ public class ChunkRadiationHandlerNT extends ChunkRadiationHandler {
                             }
                         }
                     }
-                    chunks[i] = st;
-                } else {
-                    chunks[i] = null;
+                    int sectionIndex = WorldUtil.sectionIndex(chunk.getLevel(), sectionY(yLevel));
+                    if (sectionIndex >= 0 && sectionIndex < chunks.length) {
+                        chunks[sectionIndex] = st;
+                        for (RadPocket pocket : st.pockets) {
+                            if (pocket.radiation > 0) {
+                                parent.activePockets.add(pocket);
+                            }
+                        }
+                    }
                 }
             }
         }

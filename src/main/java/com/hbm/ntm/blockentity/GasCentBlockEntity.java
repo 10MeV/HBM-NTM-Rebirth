@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.GasCentMenu;
@@ -20,6 +21,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +29,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
@@ -186,6 +189,53 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
         float pitch = (gasCent.audioDuration - 10) / 100.0F + 0.5F;
         gasCent.audioLoop = LegacyMachineAudioBridge.updateLoop(gasCent.audioLoop, gasCent,
                 "hbm:block.centrifugeOperate", gasCent.audioDuration > 10, 25.0D, 20.0F, 1.0F, pitch);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineGasCent#serialize; BufferUtil strings use an int byte length.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeInt(progress);
+        data.writeBoolean(isProgressing);
+        data.writeInt(inputTank.getFill());
+        data.writeInt(outputTank.getFill());
+        writeLegacyString(data, inputTank.getTankType().legacyName());
+        writeLegacyString(data, outputTank.getTankType().legacyName());
+        LegacyFluidTankPacket.write(data, tank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        progress = data.readInt();
+        isProgressing = data.readBoolean();
+        int inputFill = data.readInt();
+        int outputFill = data.readInt();
+        inputTank.setTankType(PseudoFluidType.fromLegacyName(readLegacyString(data)));
+        outputTank.setTankType(PseudoFluidType.fromLegacyName(readLegacyString(data)));
+        inputTank.setFill(inputFill);
+        outputTank.setFill(outputFill);
+        LegacyFluidTankPacket.read(data, tank);
+    }
+
+    private static void writeLegacyString(FriendlyByteBuf data, String value) {
+        if (value == null) {
+            data.writeInt(-1);
+            return;
+        }
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        data.writeInt(bytes.length);
+        data.writeBytes(bytes);
+    }
+
+    private static String readLegacyString(FriendlyByteBuf data) {
+        int length = data.readInt();
+        if (length < 0) {
+            return "";
+        }
+        return data.readCharSequence(length, StandardCharsets.UTF_8).toString();
     }
 
     private void updateRealTankTypeFromIdentifier() {

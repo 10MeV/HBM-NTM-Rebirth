@@ -1,0 +1,12 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/mine_fat.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:models/mine_fat",
+    "default": "hbm_ntm_rebirth:models/mine_fat",
+    "texture0": "hbm_ntm_rebirth:models/mine_fat"
+  }
+}

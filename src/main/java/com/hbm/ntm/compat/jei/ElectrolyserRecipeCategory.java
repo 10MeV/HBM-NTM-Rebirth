@@ -19,7 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class ElectrolyserRecipeCategory implements IRecipeCategory<ElectrolyserRecipeRuntime.DisplayRecipe> {
+public final class ElectrolyserRecipeCategory implements HbmJeiRecipeCategory<ElectrolyserRecipeRuntime.DisplayRecipe> {
     private final RecipeType<ElectrolyserRecipeRuntime.DisplayRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -63,7 +63,7 @@ public final class ElectrolyserRecipeCategory implements IRecipeCategory<Electro
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

@@ -9,6 +9,8 @@ import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import java.util.Locale;
@@ -31,7 +33,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
-        implements HeatSource, LegacyLookOverlayProvider, CopiableSettings {
+        implements HeatSource, LegacyLookOverlayProvider, CopiableSettings, HbmLegacyLoadedTile {
     private static final String TAG_SETTING = "setting";
     private static final String TAG_HEAT = "heatEnergy";
     private static final String TAG_ACTIVE = "isOn";
@@ -41,6 +43,7 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
     private int setting;
     private boolean active;
     private Object audioLoop;
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
 
     public ElectricHeaterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ELECTRIC_HEATER.get(), pos, state, new HbmEnergyStorage(0L, 0L, 0L));
@@ -82,7 +85,7 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
             return;
         }
         heater.audioLoop = LegacyMachineAudioBridge.updateLoop(heater.audioLoop, heater,
-                "ELECTRIC_HUM_LOOP", heater.active, 7.5D, 7.5F, 0.25F, 1.0F);
+                "ELECTRIC_HUM_LOOP", heater.active, 7.5D, 7.5F, heater.getVolume(0.25F), 1.0F);
     }
 
     private void pullHeatFromBelow(Level level, BlockPos pos) {
@@ -195,6 +198,7 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         tag.putLong(TAG_POWER, energy.getPower());
         tag.putInt(TAG_SETTING, setting);
         tag.putInt(TAG_HEAT, heatEnergy);
@@ -203,6 +207,7 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         if (tag.contains(TAG_POWER, Tag.TAG_LONG)) {
             energy.setPower(tag.getLong(TAG_POWER));
         }
@@ -214,6 +219,7 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
+        writeLegacyLoadedTileClientTag(tag);
         tag.putInt(TAG_SETTING, setting);
         tag.putInt(TAG_HEAT, heatEnergy);
         tag.putBoolean(TAG_ACTIVE, active);
@@ -223,6 +229,7 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
+        readLegacyLoadedTileClientTag(tag);
         setting = Mth.clamp(tag.getInt(TAG_SETTING), 0, 10);
         heatEnergy = Math.max(0, tag.getInt(TAG_HEAT));
         active = tag.getBoolean(TAG_ACTIVE);
@@ -249,15 +256,25 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // 1.7.10 TileEntityHeaterElectric#serialize: no TileEntityLoadedBase prefix.
+        data.writeBoolean(isMuffled());
+        data.writeByte(setting);
+        data.writeInt(heatEnergy);
+        data.writeBoolean(active);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        setMuffled(data.readBoolean());
+        setting = Mth.clamp(data.readByte(), 0, 10);
+        heatEnergy = Math.max(0, data.readInt());
+        active = data.readBoolean();
+        updateEnergyLimit();
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     private void updateEnergyLimit() {

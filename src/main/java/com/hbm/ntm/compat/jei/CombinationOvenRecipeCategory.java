@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class CombinationOvenRecipeCategory implements IRecipeCategory<CombinationOvenRecipe> {
+public final class CombinationOvenRecipeCategory implements HbmJeiRecipeCategory<CombinationOvenRecipe> {
     private final RecipeType<CombinationOvenRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -57,7 +57,7 @@ public final class CombinationOvenRecipeCategory implements IRecipeCategory<Comb
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

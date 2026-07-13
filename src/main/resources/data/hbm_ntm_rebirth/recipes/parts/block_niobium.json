@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["###", "###", "###"],
+  "key": { "#": { "item": "hbm_ntm_rebirth:ingot_niobium" } },
+  "result": { "item": "hbm_ntm_rebirth:block_niobium" }
+}

@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.FoundryMoldItem;
 import com.hbm.ntm.item.FoundryScrapsItem;
 import com.hbm.ntm.menu.StrandCasterMenu;
@@ -24,6 +25,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -370,6 +372,19 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
             amount = 0;
             type = null;
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineStrandCaster has no FoundryCastingBase prefix here.
+        LegacyFluidTankPacket.write(data, waterTank);
+        LegacyFluidTankPacket.write(data, steamTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        LegacyFluidTankPacket.read(data, waterTank);
+        LegacyFluidTankPacket.read(data, steamTank);
     }
 
     @Override

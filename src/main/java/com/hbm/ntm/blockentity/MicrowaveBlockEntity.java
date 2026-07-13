@@ -273,15 +273,19 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMicrowave#serialize: LoadedBase, power, time, speed.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeInt(time);
+        data.writeInt(speed);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        time = data.readInt();
+        speed = Math.max(0, Math.min(5, data.readInt()));
     }
 
     @Override

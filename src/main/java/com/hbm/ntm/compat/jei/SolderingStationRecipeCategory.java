@@ -18,7 +18,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class SolderingStationRecipeCategory implements IRecipeCategory<SolderingStationRecipe> {
+public final class SolderingStationRecipeCategory implements HbmJeiRecipeCategory<SolderingStationRecipe> {
     private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
     private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
@@ -66,7 +66,7 @@ public final class SolderingStationRecipeCategory implements IRecipeCategory<Sol
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -85,6 +85,7 @@ public final class SolderingStationRecipeCategory implements IRecipeCategory<Sol
     @Override
     public void draw(SolderingStationRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         var font = Minecraft.getInstance().font;
         String duration = format(recipe.duration()) + " ticks";
         String consumption = format(recipe.consumption()) + " HE/t";

@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["II"],
+  "key": { "I": { "item": "hbm_ntm_rebirth:ingot_australium" } },
+  "result": { "item": "hbm_ntm_rebirth:billet_australium", "count": 3 }
+}

@@ -24,7 +24,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class ItemProcessingRecipeCategory implements IRecipeCategory<ItemProcessingRecipe> {
+public final class ItemProcessingRecipeCategory implements HbmJeiRecipeCategory<ItemProcessingRecipe> {
     private static final int UNIVERSAL_WIDTH = 166;
     private static final int UNIVERSAL_HEIGHT = 65;
     private static final int SHREDDER_WIDTH = 176;
@@ -105,7 +105,7 @@ public final class ItemProcessingRecipeCategory implements IRecipeCategory<ItemP
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -181,6 +181,7 @@ public final class ItemProcessingRecipeCategory implements IRecipeCategory<ItemP
     @Override
     public void draw(ItemProcessingRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         if (machine == ItemProcessingRecipe.Machine.SHREDDER) {
             shredderPower.draw(guiGraphics, 3, 6);
             shredderProgress.draw(guiGraphics, 80, 23);

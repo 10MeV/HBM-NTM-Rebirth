@@ -36,7 +36,7 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.registries.RegistryObject;
 
-public final class AnnihilatorRecipeCategory implements IRecipeCategory<AnnihilatorRecipeCategory.DisplayRecipe> {
+public final class AnnihilatorRecipeCategory implements HbmJeiRecipeCategory<AnnihilatorRecipeCategory.DisplayRecipe> {
     private final RecipeType<DisplayRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -79,7 +79,7 @@ public final class AnnihilatorRecipeCategory implements IRecipeCategory<Annihila
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

@@ -16,6 +16,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.menu.DieselGeneratorMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -30,6 +31,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -331,6 +333,25 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
         return new DieselGeneratorMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineDiesel#serialize uses signed ints for these bounded values.
+        writeLegacyLoadedTileBinary(data);
+        data.writeInt((int) energy.getPower());
+        data.writeInt((int) powerCap);
+        data.writeBoolean(wasOn);
+        LegacyFluidTankPacket.write(data, tank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readInt());
+        powerCap = data.readInt();
+        wasOn = data.readBoolean();
+        LegacyFluidTankPacket.read(data, tank);
     }
 
     @Override

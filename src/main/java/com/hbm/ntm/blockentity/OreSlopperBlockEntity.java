@@ -14,6 +14,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.BedrockOreBaseItem;
 import com.hbm.ntm.item.BedrockOreItem;
 import com.hbm.ntm.item.BedrockOreItem.BedrockOreGrade;
@@ -35,6 +36,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundSource;
@@ -389,6 +391,29 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public double getFan(float partialTick) {
         return prevFan + (fan - prevFan) * partialTick;
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineOreSlopper#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeLong(consumption);
+        data.writeFloat(progress);
+        data.writeBoolean(processing);
+        LegacyFluidTankPacket.write(data, waterTank);
+        LegacyFluidTankPacket.write(data, slopTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        consumption = data.readLong();
+        progress = data.readFloat();
+        processing = data.readBoolean();
+        LegacyFluidTankPacket.read(data, waterTank);
+        LegacyFluidTankPacket.read(data, slopTank);
     }
 
     public List<ItemStack> getDrops() {

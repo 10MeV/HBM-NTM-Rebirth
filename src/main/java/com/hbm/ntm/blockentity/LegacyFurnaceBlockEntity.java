@@ -13,6 +13,7 @@ import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.BufferUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
@@ -489,15 +490,36 @@ public class LegacyFurnaceBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        writeLegacyLoadedTileBinary(data);
+        if (kind == Kind.IRON) {
+            // TileEntityFurnaceIron#serialize.
+            data.writeInt(maxBurnTime);
+            data.writeInt(burnTime);
+            data.writeInt(ironProgress);
+            data.writeInt(ironProcessingTime);
+        } else {
+            // TileEntityFurnaceSteel#serialize.
+            BufferUtil.writeIntArray(data, steelProgress);
+            BufferUtil.writeIntArray(data, steelBonus);
+            data.writeInt(heat);
+        }
+        data.writeBoolean(wasOn);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            load(tag);
+        readLegacyLoadedTileBinary(data);
+        if (kind == Kind.IRON) {
+            maxBurnTime = data.readInt();
+            burnTime = data.readInt();
+            ironProgress = data.readInt();
+            ironProcessingTime = Math.max(1, data.readInt());
+        } else {
+            steelProgress = normalizedIntArray(BufferUtil.readIntArray(data));
+            steelBonus = normalizedIntArray(BufferUtil.readIntArray(data));
+            heat = data.readInt();
         }
+        wasOn = data.readBoolean();
     }
 
     @Nullable

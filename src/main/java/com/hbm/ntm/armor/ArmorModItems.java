@@ -1732,16 +1732,27 @@ public final class ArmorModItems {
             }
 
             BlockPos center = BlockPos.containing(entity.getX(), entity.getEyeY(), entity.getZ());
+            boolean poison = false;
+            boolean explosive = false;
             for (int i = -RANGE; i <= RANGE; i++) {
                 for (int j = -1; j <= 1; j++) {
                     for (int k = -RANGE; k <= RANGE; k++) {
                         Block block = level.getBlockState(center.offset(i * 2, j * 2, k * 2)).getBlock();
                         if (isPoisonGas(block)) {
-                            LegacySoundPlayer.playLegacyTechBoop(entity, 2.0F, 1.5F);
-                            return;
+                            poison = true;
+                        }
+                        if (isExplosiveGas(block)) {
+                            explosive = true;
                         }
                     }
                 }
+            }
+
+            if (explosive) {
+                // The old source calls this event even though its legacy resource pack has no entry for it.
+                LegacySoundPlayer.playSoundAtEntity(entity, "hbm:weapon.follyAquired", 0.5F, 1.0F);
+            } else if (poison) {
+                LegacySoundPlayer.playLegacyTechBoop(entity, 2.0F, 1.5F);
             }
         }
 
@@ -1752,6 +1763,11 @@ public final class ArmorModItems {
                     || block == ModBlocks.GAS_MONOXIDE.get()
                     || block == ModBlocks.GAS_RADON_DENSE.get()
                     || block == ModBlocks.CHLORINE_GAS.get();
+        }
+
+        private boolean isExplosiveGas(Block block) {
+            return block == ModBlocks.GAS_FLAMMABLE.get()
+                    || block == ModBlocks.GAS_EXPLOSIVE.get();
         }
     }
 

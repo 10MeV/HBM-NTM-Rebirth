@@ -19,7 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class GrenadeRecipeCategory implements IRecipeCategory<GrenadeRecipeCategory.DisplayRecipe> {
+public final class GrenadeRecipeCategory implements HbmJeiRecipeCategory<GrenadeRecipeCategory.DisplayRecipe> {
     private final RecipeType<DisplayRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -60,7 +60,7 @@ public final class GrenadeRecipeCategory implements IRecipeCategory<GrenadeRecip
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

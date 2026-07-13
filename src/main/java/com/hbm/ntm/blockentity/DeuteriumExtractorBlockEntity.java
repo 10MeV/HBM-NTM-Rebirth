@@ -11,6 +11,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +19,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -80,6 +82,23 @@ public class DeuteriumExtractorBlockEntity extends HbmEnergyAndFluidBlockEntity
             extractor.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityDeuteriumExtractor#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(getPower());
+        LegacyFluidTankPacket.write(data, waterTank);
+        LegacyFluidTankPacket.write(data, heavyWaterTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        setPower(data.readLong());
+        LegacyFluidTankPacket.read(data, waterTank);
+        LegacyFluidTankPacket.read(data, heavyWaterTank);
     }
 
     private void tryProcess() {

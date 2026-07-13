@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.CyclotronMenu;
@@ -31,6 +32,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -192,6 +194,29 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         cyclotron.networkPackNT(25);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineCyclotron#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeInt(progress);
+        data.writeByte(plugs);
+        LegacyFluidTankPacket.write(data, water());
+        LegacyFluidTankPacket.write(data, spentSteam());
+        LegacyFluidTankPacket.write(data, amat());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        progress = data.readInt();
+        plugs = data.readByte();
+        LegacyFluidTankPacket.read(data, water());
+        LegacyFluidTankPacket.read(data, spentSteam());
+        LegacyFluidTankPacket.read(data, amat());
     }
 
     private boolean canProcess(LegacyMachineUpgradeManager.Levels upgrades) {

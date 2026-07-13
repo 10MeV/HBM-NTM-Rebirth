@@ -10,6 +10,7 @@ import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -24,6 +25,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.tags.BlockTags;
@@ -159,6 +161,26 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
         }
         autosaw.audioLoop = LegacyMachineAudioBridge.updateLoop(autosaw.audioLoop, autosaw,
                 "hbm:block.turbofanOperate", autosaw.on, 32.0D, 24.0F, 0.35F, 0.9F);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineAutosaw#serialize deliberately has no TileEntityLoadedBase prefix.
+        data.writeBoolean(on);
+        data.writeBoolean(suspended);
+        data.writeFloat(yaw);
+        data.writeFloat(pitch);
+        LegacyFluidTankPacket.write(data, tank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        on = data.readBoolean();
+        suspended = data.readBoolean();
+        targetYaw = data.readFloat();
+        targetPitch = data.readFloat();
+        turnProgress = 3; // 1.7.10's three-ply visual approach.
+        LegacyFluidTankPacket.read(data, tank);
     }
 
     public HbmFluidTank getTank() {

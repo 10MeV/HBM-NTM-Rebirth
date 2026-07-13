@@ -38,12 +38,15 @@ public class LegacyFanBlockEntity extends BlockEntity {
         }
 
         Direction direction = state.getValue(LegacyFanBlock.FACING);
+        boolean skipAnimation = level.isClientSide && LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos);
         int effectiveRange = fan.effectiveRange(level, pos, direction);
         fan.pushEntities(level, pos, direction, effectiveRange);
-        if (level.isClientSide) {
+        if (level.isClientSide && !skipAnimation) {
             fan.spawnCloud(level, pos, direction);
         }
-        fan.spin += 30.0F;
+        if (!level.isClientSide || !skipAnimation) {
+            fan.spin += 30.0F;
+        }
         fan.wrapSpin();
     }
 

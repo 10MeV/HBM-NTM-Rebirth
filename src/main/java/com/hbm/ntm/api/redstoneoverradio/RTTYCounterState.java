@@ -2,7 +2,9 @@ package com.hbm.ntm.api.redstoneoverradio;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
+import com.hbm.ntm.util.BufferUtil;
 
 public class RTTYCounterState {
     public static final int SLOT_COUNT = 3;
@@ -119,6 +121,36 @@ public class RTTYCounterState {
             }
         }
         return changed;
+    }
+
+    /** Legacy counter packet segment before ModulePatternMatcher. */
+    public void writeLegacyWireHead(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(polling);
+        BufferUtil.writeIntArray(buffer, lastCounts);
+    }
+
+    /** Legacy counter packet segment before ModulePatternMatcher. */
+    public void readLegacyWireHead(FriendlyByteBuf buffer) {
+        polling = buffer.readBoolean();
+        int[] legacyCounts = BufferUtil.readIntArray(buffer);
+        for (int index = 0; index < SLOT_COUNT; index++) {
+            lastCounts[index] = legacyCounts != null && index < legacyCounts.length
+                    ? Math.max(0, legacyCounts[index]) : 0;
+        }
+    }
+
+    /** Legacy counter packet segment after ModulePatternMatcher. */
+    public void writeLegacyWireChannels(FriendlyByteBuf buffer) {
+        for (String channel : channels) {
+            BufferUtil.writeString(buffer, channel);
+        }
+    }
+
+    /** Legacy counter packet segment after ModulePatternMatcher. */
+    public void readLegacyWireChannels(FriendlyByteBuf buffer) {
+        for (int index = 0; index < SLOT_COUNT; index++) {
+            channels[index] = RTTYDeviceState.clean(BufferUtil.readString(buffer));
+        }
     }
 
     private static boolean valid(int slot) {

@@ -42,21 +42,20 @@ public class TeslaRenderer implements BlockEntityRenderer<TeslaBlockEntity> {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(tesla, getViewDistance())) {
             return;
         }
-        List<TeslaBlockEntity.TeslaTarget> targetSnapshot = tesla.getTargets();
-        if (targetSnapshot.isEmpty()) {
+        List<TeslaBlockEntity.TeslaTarget> targetView = tesla.getTargets();
+        if (targetView.isEmpty()) {
             return;
         }
 
-        var source = tesla.sourcePosition();
-        double sourceX = source.x;
-        double sourceY = source.y;
-        double sourceZ = source.z;
+        double sourceX = tesla.sourceX();
+        double sourceY = tesla.sourceY();
+        double sourceZ = tesla.sourceZ();
         int start = (int) (level.getGameTime() % 1000L) + 1;
 
         poseStack.pushPose();
         poseStack.translate(0.5D, TeslaBlockEntity.OFFSET, 0.5D);
         LegacyMachineEffectPresenter.enqueueTeslaTargetBeams(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
-                targetSnapshot, sourceX, sourceY, sourceZ, start, LegacyTileRenderPlans.TESLA_BEAM_COLOR,
+                targetView, sourceX, sourceY, sourceZ, start, LegacyTileRenderPlans.TESLA_BEAM_COLOR,
                 LegacyTileRenderPlans.TESLA_BEAM_SIZE, LegacyTileRenderPlans.TESLA_BEAM_LAYERS,
                 LegacyTileRenderPlans.TESLA_BEAM_THICKNESS);
         poseStack.popPose();

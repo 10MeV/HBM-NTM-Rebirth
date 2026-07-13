@@ -15,6 +15,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemBlueprints;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
@@ -32,6 +33,7 @@ import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
+import com.hbm.ntm.util.BufferUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -757,15 +759,36 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachinePrecAss/TileEntityMachinePUREX#serialize: LoadedBase,
+        // every process tank, power/maxPower, didProcess, then the module snapshot.
+        writeLegacyLoadedTileBinary(data);
+        for (HbmFluidTank tank : inputTanks) {
+            LegacyFluidTankPacket.write(data, tank);
+        }
+        for (HbmFluidTank tank : outputTanks) {
+            LegacyFluidTankPacket.write(data, tank);
+        }
+        data.writeLong(energy.getPower());
+        data.writeLong(energy.getMaxPower());
+        data.writeBoolean(didProcess);
+        data.writeDouble(progress);
+        BufferUtil.writeString(data, selectedRecipe);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
+        readLegacyLoadedTileBinary(data);
+        for (HbmFluidTank tank : inputTanks) {
+            LegacyFluidTankPacket.read(data, tank);
         }
+        for (HbmFluidTank tank : outputTanks) {
+            LegacyFluidTankPacket.read(data, tank);
+        }
+        energy.setPower(data.readLong());
+        energy.setMaxPower(Math.max(kind.defaultMaxPower, data.readLong()));
+        didProcess = data.readBoolean();
+        progress = data.readDouble();
+        selectedRecipe = GenericMachineRecipeSelector.normalize(BufferUtil.readString(data));
     }
 
     private void writeClientSyncFields(CompoundTag tag) {

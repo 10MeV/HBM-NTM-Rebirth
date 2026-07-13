@@ -14,6 +14,7 @@ import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -27,6 +28,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -449,6 +451,36 @@ public class WaterPumpBlockEntity extends HbmFluidNetworkBlockEntity
         groundCheckDelay = Math.max(0, tag.getInt(TAG_GROUND_CHECK_DELAY));
         rotor = tag.getFloat(TAG_ROTOR);
         lastRotor = tag.getFloat(TAG_LAST_ROTOR);
+        normalizeTankTypes();
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachinePumpBase has no parent prefix: active, ground check, water.
+        data.writeBoolean(active);
+        data.writeBoolean(onGround);
+        LegacyFluidTankPacket.write(data, water);
+        if (isElectric()) {
+            // TileEntityMachinePumpElectric appends its power buffer.
+            data.writeLong(energy.getPower());
+        } else {
+            // TileEntityMachinePumpSteam appends input steam then spent steam.
+            LegacyFluidTankPacket.write(data, steam);
+            LegacyFluidTankPacket.write(data, spentSteam);
+        }
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        active = data.readBoolean();
+        onGround = data.readBoolean();
+        LegacyFluidTankPacket.read(data, water);
+        if (isElectric()) {
+            energy.setPower(data.readLong());
+        } else {
+            LegacyFluidTankPacket.read(data, steam);
+            LegacyFluidTankPacket.read(data, spentSteam);
+        }
         normalizeTankTypes();
     }
 

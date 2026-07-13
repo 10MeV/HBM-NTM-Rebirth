@@ -1,6 +1,6 @@
 plugins {
     id 'idea'
-    id 'net.minecraftforge.gradle' version '6.0.25'
+    id 'net.minecraftforge.gradle' version '6.0.54'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
 }
 
@@ -12,7 +12,14 @@ base {
 }
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+// Forge 1.20.1 discovers mod classes through a Java 17-era scanner. Keep the
+// Java 21 toolchain for the updated LWJGL runtime, but publish Java 17 bytecode.
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
 }
 
 minecraft {
@@ -62,6 +69,17 @@ repositories {
     maven { url = 'https://maven.aliyun.com/repository/public' }
     maven { url = 'https://maven.blamejared.com' }
     mavenCentral()
+}
+
+// LWJGL 3.3.4+ embeds GLFW 3.4+, which fixes disabled-cursor input in Windows RDP
+// sessions. Keep every LWJGL module aligned to avoid mixing Java/native ABIs.
+configurations.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.lwjgl') {
+            details.useVersion lwjgl_version
+            details.because 'Use GLFW 3.4 RDP input handling while preserving Minecraft MouseHandler behavior'
+        }
+    }
 }
 
 dependencies {

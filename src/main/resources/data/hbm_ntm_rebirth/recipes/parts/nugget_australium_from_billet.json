@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "item": "hbm_ntm_rebirth:billet_australium" }],
+  "result": { "item": "hbm_ntm_rebirth:nugget_australium", "count": 6 }
+}

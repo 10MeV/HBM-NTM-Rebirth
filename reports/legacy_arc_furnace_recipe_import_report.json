@@ -3,7 +3,7 @@
   "imported_recipe_count": 0,
   "legacy_class": "ArcFurnaceRecipes",
   "legacy_file": "hbmArcFurnace.json",
-  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes",
+  "legacy_recipe_dir": "E:/mchbm/code/HBM-NTM-Rebirth/legacy_recipes",
   "modern_recipe_type": "arc_furnace",
   "power": 1000,
   "skipped_recipe_count": 0,

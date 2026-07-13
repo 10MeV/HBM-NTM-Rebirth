@@ -17126,6 +17126,15 @@
     {
       "input": [
         "item",
+        "hbm:ore_australium"
+      ],
+      "solid": [
+        "hbm:nugget_australium"
+      ]
+    },
+    {
+      "input": [
+        "item",
         "hbm:ore_gneiss_gold"
       ],
       "solid": [

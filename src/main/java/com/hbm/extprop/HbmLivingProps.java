@@ -4,7 +4,9 @@ import com.hbm.ntm.player.HbmLivingProperties;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 
 import java.util.AbstractList;
 import java.util.List;
@@ -37,6 +39,13 @@ public final class HbmLivingProps {
 
     public LivingEntity entity() {
         return entity;
+    }
+
+    /**
+     * Legacy IExtendedEntityProperties lifecycle hook. The 1.7.10 method is
+     * intentionally empty; state remains owned by HbmLivingProperties.
+     */
+    public void init(Entity entity, Level level) {
     }
 
     public static float getRadiation(LivingEntity entity) {

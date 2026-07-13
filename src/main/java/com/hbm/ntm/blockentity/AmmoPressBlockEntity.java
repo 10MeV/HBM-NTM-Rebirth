@@ -287,15 +287,18 @@ public class AmmoPressBlockEntity extends BlockEntity implements MenuProvider, H
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        // TileEntityMachineAmmoPress#serialize: LoadedBase, selected recipe, animation countdown.
+        // Lift/press and the animation phase are client-local, exactly as on 1.7.10.
+        writeLegacyLoadedTileBinary(data);
+        data.writeInt(selectedRecipe);
+        data.writeInt(playAnimation);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            load(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        selectedRecipe = data.readInt();
+        playAnimation = data.readInt();
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFillableItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.util.HbmTextUtil;
+import com.hbm.items.armor.ArmorFSB;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -13,13 +14,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import org.jetbrains.annotations.Nullable;
 
-public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
+public class FsbFueledArmorItem extends ArmorFSB implements IFillableItem {
     private static final String TAG_FUEL = "fuel";
 
     private final List<FluidType> acceptedFuelTypes;
@@ -29,28 +31,28 @@ public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
     private final int consumption;
     private final int drain;
 
-    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+    public FsbFueledArmorItem(ArmorMaterial material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, FluidType fuelType, int maxFuel, int fillRate, int consumption,
             int drain) {
         this(material, type, properties, fullSetEffects, List.of(fuelType), maxFuel, fillRate, consumption, drain,
                 FullSetTraits.NONE);
     }
 
-    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+    public FsbFueledArmorItem(ArmorMaterial material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, FluidType fuelType, int maxFuel, int fillRate, int consumption,
             int drain, FullSetTraits fullSetTraits) {
         this(material, type, properties, fullSetEffects, List.of(fuelType), maxFuel, fillRate, consumption, drain,
                 fullSetTraits);
     }
 
-    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+    public FsbFueledArmorItem(ArmorMaterial material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, List<FluidType> acceptedFuelTypes, int maxFuel, int fillRate,
             int consumption, int drain) {
         this(material, type, properties, fullSetEffects, acceptedFuelTypes, maxFuel, fillRate, consumption, drain,
                 FullSetTraits.NONE);
     }
 
-    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+    public FsbFueledArmorItem(ArmorMaterial material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, List<FluidType> acceptedFuelTypes, int maxFuel, int fillRate,
             int consumption, int drain, FullSetTraits fullSetTraits) {
         super(material, type, properties, fullSetEffects, false, 0, fullSetTraits);
@@ -68,7 +70,7 @@ public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
         this.drain = Math.max(0, drain);
     }
 
-    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+    public FsbFueledArmorItem(ArmorMaterial material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, int maxFuel, int fillRate, int consumption, int drain,
             FluidType... acceptedFuelTypes) {
         this(material, type, properties, fullSetEffects,
@@ -76,7 +78,7 @@ public class FsbFueledArmorItem extends FsbArmorItem implements IFillableItem {
                 maxFuel, fillRate, consumption, drain);
     }
 
-    public FsbFueledArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+    public FsbFueledArmorItem(ArmorMaterial material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, int maxFuel, int fillRate, int consumption, int drain,
             FullSetTraits fullSetTraits, FluidType... acceptedFuelTypes) {
         this(material, type, properties, fullSetEffects,

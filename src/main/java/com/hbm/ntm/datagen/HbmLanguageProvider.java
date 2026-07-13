@@ -144,6 +144,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.plate_cast_zirconium", "Cast Zirconium Plate");
         add("item.hbm_ntm_rebirth.plate_cast_starmetal", "Cast Starmetal Plate");
         add("item.hbm_ntm_rebirth.plate_cast_osmiridium", "Cast Osmiridium Plate");
+        add("item.hbm_ntm_rebirth.plate_cast_schrabidium", "Cast Schrabidium Plate");
         add("item.hbm_ntm_rebirth.plate_aluminium", "Aluminium Plate");
         add("item.hbm_ntm_rebirth.powder_uranium", "Uranium Powder");
         add("item.hbm_ntm_rebirth.powder_plutonium", "Plutonium Powder");
@@ -185,6 +186,9 @@ public class HbmLanguageProvider extends LanguageProvider {
                 "Builder's Choice Concrete - Mysterious Purple");
         add("block.hbm_ntm_rebirth.concrete_colored_ext.sand",
                 "Builder's Choice Concrete - Desert Storm");
+        add("block.hbm_ntm_rebirth.wood_structure.roof", "Wooden Roof");
+        add("block.hbm_ntm_rebirth.wood_structure.scaffold", "Wooden Scaffold");
+        add("block.hbm_ntm_rebirth.wood_structure.ceiling", "Wooden Ceiling");
         add("tile.nospawn", "Mobs cannot spawn on this block!");
         add("item.hbm_ntm_rebirth.upgrade_speed_1", "Speed Upgrade Mk.I");
         add("item.hbm_ntm_rebirth.upgrade_speed_2", "Speed Upgrade Mk.II");
@@ -1705,6 +1709,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("subtitles.hbm_ntm_rebirth.entity.rocket_takeoff", "Rocket launches");
         add("subtitles.hbm_ntm_rebirth.entity.bomb", "Bomb echoes");
         add("subtitles.hbm_ntm_rebirth.entity.bomber", "Bomber flies");
+        add("item.hbm_ntm_rebirth.bomb_caller", "Airstrike Designator");
+        add("item.hbm_ntm_rebirth.bomb_caller_napalm", "Airstrike Designator");
+        add("item.hbm_ntm_rebirth.bomb_caller_chlorine", "Airstrike Designator");
+        add("item.hbm_ntm_rebirth.bomb_caller_orange", "Airstrike Designator");
+        add("item.hbm_ntm_rebirth.bomb_caller_atomic", "Airstrike Designator");
         add("subtitles.hbm_ntm_rebirth.entity.plane", "Aircraft damaged");
         add("subtitles.hbm_ntm_rebirth.turret.fire", "Turret fires");
         add("subtitles.hbm_ntm_rebirth.turret.reload", "Turret reloads");
@@ -2476,6 +2485,10 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.float_bomb", "Levitation Bomb");
         add("block.hbm_ntm_rebirth.therm_endo", "Endothermic Bomb");
         add("block.hbm_ntm_rebirth.therm_exo", "Exothermic Bomb");
+        add("block.hbm_ntm_rebirth.mine_ap", "Anti-Personell Mine");
+        add("block.hbm_ntm_rebirth.mine_fat", "Fat Mine");
+        add("block.hbm_ntm_rebirth.mine_he", "Anti-Tank Mine");
+        add("block.hbm_ntm_rebirth.mine_shrap", "Shrapnel Mine");
         add("block.hbm_ntm_rebirth.mine_naval", "Naval Mine");
         add("container.nukeFstbmb", "Balefire Bomb");
         add("container.nukeCustom", "Custom Nuke");
@@ -2779,6 +2792,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.piston_selenium", "Combustion Engine Piston");
         add("item.hbm_ntm_rebirth.piston_set_desh", "Desh Piston Set");
         add("item.hbm_ntm_rebirth.piston_set_starmetal", "Starmetal Piston Set");
+        add("item.hbm_ntm_rebirth.nugget_mercury_tiny", "Tiny Drop of Mercury");
         add("item.hbm_ntm_rebirth.nugget_mercury", "Drop of Mercury");
         add("item.hbm_ntm_rebirth.ingot_euphemium", "Euphemium Ingot");
         add("item.hbm_ntm_rebirth.nugget_euphemium", "Euphemium Nugget");
@@ -2917,6 +2931,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.stick_tnt", "Stick of TNT");
         add("item.hbm_ntm_rebirth.ingot_osmiridium", "Osmiridium Ingot");
         add("item.hbm_ntm_rebirth.nugget_osmiridium", "Osmiridium Nugget");
+        add("item.hbm_ntm_rebirth.nugget_desh", "Desh Nugget");
+        add("item.hbm_ntm_rebirth.nugget_dineutronium", "Dineutronium Nugget");
+        add("item.hbm_ntm_rebirth.nugget_niobium", "Niobium Nugget");
         add("item.hbm_ntm_rebirth.circuit_star_piece_board_blank", "SC - Printed Circuit Board");
         add("item.hbm_ntm_rebirth.circuit_star_piece_board_transistor", "SC - Transistors");
         add("item.hbm_ntm_rebirth.circuit_star_piece_board_converter", "SC - Voltage Converter");
@@ -3084,6 +3101,15 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.gas_radon", "Radon Gas");
         add("block.hbm_ntm_rebirth.gas_radon_dense", "Dense Radon Gas");
         add("block.hbm_ntm_rebirth.gas_radon_tomb", "Tomb Gas");
+        add("block.hbm_ntm_rebirth.gas_flammable", "Flammable Gas");
+        add("block.hbm_ntm_rebirth.gas_explosive", "Explosive Gas");
+        add("block.hbm_ntm_rebirth.vent_chlorine", "Chlorine Vent");
+        add("block.hbm_ntm_rebirth.vent_chlorine_seal", "Chlorine Seal");
+        add("block.hbm_ntm_rebirth.vent_cloud", "Cloud Vent");
+        add("block.hbm_ntm_rebirth.vent_pink_cloud", "Pink Cloud Vent");
+        add("block.hbm_ntm_rebirth.broadcaster_pc", "Corrupted Broadcaster");
+        add("block.hbm_ntm_rebirth.geysir_chlorine", "Chlorine Geyser");
+        add("block.hbm_ntm_rebirth.geysir_nether", "Nether Geyser");
         add("block.hbm_ntm_rebirth.glass_quartz", "Quartz Glass");
         add("block.hbm_ntm_rebirth.oil_pipe", "Crude Oil Extraction Pipe");
         add("block.hbm_ntm_rebirth.pneumatic_tube", "Pneumatic Tube");
@@ -3151,6 +3177,9 @@ public class HbmLanguageProvider extends LanguageProvider {
 
     private void addSatelliteTranslations() {
         add("item.hbm_ntm_rebirth.rangefinder", "Rangefinder");
+        add("item.hbm_ntm_rebirth.anchor_remote", "Recall Device");
+        add("item.hbm_ntm_rebirth.bismuth_tool", "Magnetic Extractor");
+        add("item.hbm_ntm_rebirth.meltdown_tool", "Dyatlov Instant Meltdown Applicator");
         add("item.hbm_ntm_rebirth.oil_detector", "Oil Reservoir Detector");
         add("item.hbm_ntm_rebirth.oil_detector.desc1", "Right-click to scan for oil.");
         add("item.hbm_ntm_rebirth.oil_detector.desc2", "Detector will only find larger deposits.");
@@ -3697,6 +3726,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.billet_am_mix", "Reactor Grade Americium Billet");
         add("item.hbm_ntm_rebirth.billet_americium_fuel", "Americium Fuel Billet");
         add("item.hbm_ntm_rebirth.billet_au198", "Gold-198 Billet");
+        add("item.hbm_ntm_rebirth.billet_australium", "Australium Billet");
         add("item.hbm_ntm_rebirth.billet_australium_greater", "Greater Australium Billet");
         add("item.hbm_ntm_rebirth.billet_australium_lesser", "Lesser Australium Billet");
         add("item.hbm_ntm_rebirth.ingot_australium", "Australium Ingot");
@@ -3799,6 +3829,11 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.ingot_am_mix", "Reactor Grade Americium Ingot");
         add("item.hbm_ntm_rebirth.ingot_americium_fuel", "Ingot of Americium Fuel");
         add("item.hbm_ntm_rebirth.ingot_arsenic_bronze", "Arsenic Bronze Ingot");
+        add("item.hbm_ntm_rebirth.ingot_arsenic", "Arsenic Ingot");
+        add("item.hbm_ntm_rebirth.powder_fertilizer", "Industrial Fertilizer");
+        add("item.hbm_ntm_rebirth.powder_thermite", "Thermite");
+        add("item.hbm_ntm_rebirth.pellet_gas", "Poison Gas Cartridge");
+        add("item.hbm_ntm_rebirth.pellet_gas.desc", "Used in multi purpose bombs:$*cough cough* Halp pls!");
         add("item.hbm_ntm_rebirth.ingot_asbestos", "Asbestos Sheet");
         add("item.hbm_ntm_rebirth.ingot_au198", "Gold-198 Ingot");
         add("item.hbm_ntm_rebirth.ingot_bakelite", "Bakelite Bar");

@@ -19,6 +19,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.fluid.trait.ContainerFluidTrait;
 import com.hbm.ntm.item.PistonSetItem;
@@ -33,6 +34,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -508,6 +510,29 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         } else if (id == CONTROL_THROTTLE) {
             setThrottle(value);
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineCombustionEngine#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeInt(playersUsing);
+        data.writeInt(throttle);
+        data.writeLong(energy.getPower());
+        data.writeBoolean(on);
+        data.writeBoolean(wasOn);
+        LegacyFluidTankPacket.write(data, tank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        playersUsing = Math.max(0, data.readInt());
+        throttle = Mth.clamp(data.readInt(), 0, 30);
+        energy.setPower(data.readLong());
+        on = data.readBoolean();
+        wasOn = data.readBoolean();
+        LegacyFluidTankPacket.read(data, tank);
     }
 
     @Override

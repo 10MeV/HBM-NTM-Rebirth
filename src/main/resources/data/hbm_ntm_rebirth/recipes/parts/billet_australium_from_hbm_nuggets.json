@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["NNN", "NNN"],
+  "key": { "N": { "item": "hbm_ntm_rebirth:nugget_australium" } },
+  "result": { "item": "hbm_ntm_rebirth:billet_australium" }
+}

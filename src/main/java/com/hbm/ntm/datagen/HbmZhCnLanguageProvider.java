@@ -150,6 +150,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.plate_cast_zirconium", "\u94f8\u9020\u9506\u677f");
         add("item.hbm_ntm_rebirth.plate_cast_starmetal", "\u94f8\u9020\u661f\u8f89\u677f");
         add("item.hbm_ntm_rebirth.plate_cast_osmiridium", "\u94f8\u9020\u94f1\u9507\u5408\u91d1\u677f");
+        add("item.hbm_ntm_rebirth.plate_cast_schrabidium", "\u94f8\u9020Sa326\u677f");
         add("item.hbm_ntm_rebirth.plate_aluminium", "\u94dd\u677f");
         add("item.hbm_ntm_rebirth.powder_uranium", "\u94c0\u7c89");
         add("item.hbm_ntm_rebirth.powder_plutonium", "\u949a\u7c89");
@@ -175,6 +176,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.blueprint_folder_discover", "\u84dd\u56fe\u518c");
         add("item.hbm_ntm_rebirth.blueprint_folder_secret", "\u84dd\u56fe\u518c");
         add("item.hbm_ntm_rebirth.bobmazon", "\u9c8d\u9a6c\u900a");
+        add("block.hbm_ntm_rebirth.wood_structure.roof", "\u6728\u8d28\u5730\u677f");
+        add("block.hbm_ntm_rebirth.wood_structure.scaffold", "\u6728\u8d28\u811a\u624b\u67b6");
+        add("block.hbm_ntm_rebirth.wood_structure.ceiling", "\u6728\u8d28\u9876\u68da");
         add("block.hbm_ntm_rebirth.concrete_colored_ext.bronze",
                 "\u5efa\u7b51\u5de5\u6307\u5b9a\u6df7\u51dd\u571f-\u9752\u94dc\u677f\u6750");
         add("block.hbm_ntm_rebirth.concrete_colored_ext.hazard",
@@ -1707,6 +1711,11 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("subtitles.hbm_ntm_rebirth.entity.rocket_takeoff", "\u706b\u7bad\u53d1\u5c04");
         add("subtitles.hbm_ntm_rebirth.entity.bomb", "\u70b8\u5f39\u56de\u54cd");
         add("subtitles.hbm_ntm_rebirth.entity.bomber", "\u8f70\u70b8\u673a\u98de\u884c");
+        add("item.hbm_ntm_rebirth.bomb_caller", "\u7a7a\u88ad\u6307\u793a\u5668");
+        add("item.hbm_ntm_rebirth.bomb_caller_napalm", "\u7a7a\u88ad\u6307\u793a\u5668");
+        add("item.hbm_ntm_rebirth.bomb_caller_chlorine", "\u7a7a\u88ad\u6307\u793a\u5668");
+        add("item.hbm_ntm_rebirth.bomb_caller_orange", "\u7a7a\u88ad\u6307\u793a\u5668");
+        add("item.hbm_ntm_rebirth.bomb_caller_atomic", "\u7a7a\u88ad\u6307\u793a\u5668");
         add("subtitles.hbm_ntm_rebirth.entity.plane", "\u98de\u673a\u53d7\u635f");
         add("subtitles.hbm_ntm_rebirth.turret.fire", "\u70ae\u5854\u5f00\u706b");
         add("subtitles.hbm_ntm_rebirth.turret.reload", "\u70ae\u5854\u88c5\u586b");
@@ -2478,6 +2487,10 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.float_bomb", "\u60ac\u6d6e\u70b8\u5f39");
         add("block.hbm_ntm_rebirth.therm_endo", "\u5438\u70ed\u70b8\u5f39");
         add("block.hbm_ntm_rebirth.therm_exo", "\u653e\u70ed\u70b8\u5f39");
+        add("block.hbm_ntm_rebirth.mine_ap", "\u53cd\u6b65\u5175\u5730\u96f7");
+        add("block.hbm_ntm_rebirth.mine_fat", "\u6838\u5730\u96f7");
+        add("block.hbm_ntm_rebirth.mine_he", "\u53cd\u5766\u514b\u5730\u96f7");
+        add("block.hbm_ntm_rebirth.mine_shrap", "\u7834\u7247\u5730\u96f7");
         add("block.hbm_ntm_rebirth.mine_naval", "\u6c34\u96f7");
         add("container.nukeFstbmb", "\u91ce\u706b\u70b8\u5f39");
         add("container.nukeCustom", "\u81ea\u5b9a\u4e49\u6838\u5f39");
@@ -2781,6 +2794,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.piston_selenium", "\u661f\u578b\u53d1\u52a8\u673a\u6d3b\u585e");
         add("item.hbm_ntm_rebirth.piston_set_desh", "Desh\u6d3b\u585e\u7ec4");
         add("item.hbm_ntm_rebirth.piston_set_starmetal", "\u661f\u8f89\u6d3b\u585e\u7ec4");
+        add("item.hbm_ntm_rebirth.nugget_mercury_tiny", "\u4e00\u5c0f\u6ef4\u6c34\u94f6");
         add("item.hbm_ntm_rebirth.nugget_mercury", "\u4e00\u6ef4\u6c34\u94f6");
         add("item.hbm_ntm_rebirth.ingot_euphemium", "Ep\u952d");
         add("item.hbm_ntm_rebirth.nugget_euphemium", "Ep\u7c92");
@@ -2919,6 +2933,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.stick_tnt", "TNT\u68d2");
         add("item.hbm_ntm_rebirth.ingot_osmiridium", "\u94f1\u9507\u952d");
         add("item.hbm_ntm_rebirth.nugget_osmiridium", "\u94f1\u9507\u7c92");
+        add("item.hbm_ntm_rebirth.nugget_desh", "Desh\u7c92");
+        add("item.hbm_ntm_rebirth.nugget_dineutronium", "\u53cc\u805a\u4e2d\u5b50\u6001\u7d20\u7c92");
+        add("item.hbm_ntm_rebirth.nugget_niobium", "\u94cc\u7c92");
         add("item.hbm_ntm_rebirth.circuit_star_piece_board_blank", "SC-\u5370\u5237\u7535\u8def\u677f");
         add("item.hbm_ntm_rebirth.circuit_star_piece_board_transistor", "SC-\u6676\u4f53\u7ba1");
         add("item.hbm_ntm_rebirth.circuit_star_piece_board_converter", "SC-\u7535\u538b\u8f6c\u6362\u5668");
@@ -3365,6 +3382,8 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.gas_radon", "\u6c21\u6c14");
         add("block.hbm_ntm_rebirth.gas_radon_dense", "\u9ad8\u6d53\u5ea6\u6c21\u6c14");
         add("block.hbm_ntm_rebirth.gas_radon_tomb", "\u53e4\u5893\u6c14\u4f53");
+        add("block.hbm_ntm_rebirth.gas_flammable", "\u53ef\u71c3\u6c14\u4f53");
+        add("block.hbm_ntm_rebirth.gas_explosive", "\u7206\u70b8\u6027\u6c14\u4f53");
         add("block.hbm_ntm_rebirth.glass_quartz", "\u77f3\u82f1\u73bb\u7483");
         add("block.hbm_ntm_rebirth.oil_pipe", "\u539f\u6cb9\u62bd\u53d6\u7ba1");
         add("block.hbm_ntm_rebirth.pneumatic_tube", "\u6c14\u52a8\u7269\u6d41\u7ba1\u9053");
@@ -3431,6 +3450,9 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
 
     private void addSatelliteTranslations() {
         add("item.hbm_ntm_rebirth.rangefinder", "\u6d4b\u8ddd\u4eea");
+        add("item.hbm_ntm_rebirth.anchor_remote", "\u53ec\u56de\u8bbe\u5907");
+        add("item.hbm_ntm_rebirth.bismuth_tool", "\u78c1\u529b\u63d0\u53d6\u5668");
+        add("item.hbm_ntm_rebirth.meltdown_tool", "\u8fbe\u6d1b\u592b\u5feb\u901f\u7194\u6bc1\u88c5\u7f6e");
         add("item.hbm_ntm_rebirth.oil_detector", "\u77f3\u6cb9\u63a2\u6d4b\u4eea");
         add("item.hbm_ntm_rebirth.oil_detector.desc1", "\u5355\u51fb\u53f3\u952e\u626b\u63cf\u5730\u4e0b\u662f\u5426\u5b58\u5728\u6cb9\u7530");
         add("item.hbm_ntm_rebirth.oil_detector.desc2", "\u63a2\u6d4b\u4eea\u53ea\u4f1a\u53d1\u73b0\u5927\u7247\u6cb9\u7530");
@@ -3691,6 +3713,7 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.billet_am_mix", "\u53cd\u5e94\u5806\u7ea7\u9545\u576f\u6599");
         add("item.hbm_ntm_rebirth.billet_americium_fuel", "\u9545\u71c3\u6599\u576f\u6599");
         add("item.hbm_ntm_rebirth.billet_au198", "\u91d1-198\u576f\u6599");
+        add("item.hbm_ntm_rebirth.billet_australium", "\u5965\u65af\u576f\u6599");
         add("item.hbm_ntm_rebirth.billet_australium_greater", "\u5bcc\u96c6\u5965\u65af\u576f\u6599");
         add("item.hbm_ntm_rebirth.billet_australium_lesser", "\u8d2b\u5316\u5965\u65af\u576f\u6599");
         add("item.hbm_ntm_rebirth.ingot_australium", "\u5965\u65af\u952d");
@@ -3793,6 +3816,11 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.ingot_am_mix", "\u53cd\u5e94\u5806\u7ea7\u9545\u952d");
         add("item.hbm_ntm_rebirth.ingot_americium_fuel", "\u9545\u71c3\u6599\u952d");
         add("item.hbm_ntm_rebirth.ingot_arsenic_bronze", "\u7837\u9752\u94dc\u952d");
+        add("item.hbm_ntm_rebirth.ingot_arsenic", "\u7837\u952d");
+        add("item.hbm_ntm_rebirth.powder_fertilizer", "\u5de5\u4e1a\u80a5\u6599");
+        add("item.hbm_ntm_rebirth.powder_thermite", "\u94dd\u70ed\u5242");
+        add("item.hbm_ntm_rebirth.pellet_gas", "\u6bd2\u6c14\u7b52");
+        add("item.hbm_ntm_rebirth.pellet_gas.desc", "\u7528\u4e8e\u591a\u7528\u9014\u70b8\u5f39\uff1a$*\u54b3\u55fd*\u8bf7\u505c\u6b62\uff01");
         add("item.hbm_ntm_rebirth.ingot_asbestos", "\u77f3\u68c9\u677f");
         add("item.hbm_ntm_rebirth.ingot_au198", "\u91d1-198\u952d");
         add("item.hbm_ntm_rebirth.ingot_bakelite", "\u7535\u6728\u952d");

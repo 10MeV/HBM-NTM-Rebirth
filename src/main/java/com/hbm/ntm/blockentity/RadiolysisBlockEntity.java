@@ -14,6 +14,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.menu.RadiolysisMenu;
 import com.hbm.ntm.recipe.RadiolysisRecipes;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -24,6 +25,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.MenuProvider;
@@ -117,6 +119,27 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
             radiolysis.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineRadiolysis#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(power);
+        data.writeInt(heat);
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank1);
+        LegacyFluidTankPacket.write(data, outputTank2);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        setPower(data.readLong());
+        heat = data.readInt();
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank1);
+        LegacyFluidTankPacket.read(data, outputTank2);
     }
 
     public ItemStackHandler getItems() {

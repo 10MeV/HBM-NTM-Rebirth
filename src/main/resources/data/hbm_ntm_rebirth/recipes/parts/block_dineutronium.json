@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["###", "###", "###"],
+  "key": { "#": { "item": "hbm_ntm_rebirth:ingot_dineutronium" } },
+  "result": { "item": "hbm_ntm_rebirth:block_dineutronium" }
+}

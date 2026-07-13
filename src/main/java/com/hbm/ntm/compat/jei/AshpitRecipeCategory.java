@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class AshpitRecipeCategory implements IRecipeCategory<AshpitJeiRecipe> {
+public final class AshpitRecipeCategory implements HbmJeiRecipeCategory<AshpitJeiRecipe> {
     private final RecipeType<AshpitJeiRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -56,7 +56,7 @@ public final class AshpitRecipeCategory implements IRecipeCategory<AshpitJeiReci
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

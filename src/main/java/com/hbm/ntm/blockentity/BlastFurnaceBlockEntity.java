@@ -10,6 +10,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fuel.LegacyBurnTimeModule;
 import com.hbm.ntm.menu.BlastFurnaceMenu;
 import com.hbm.ntm.particle.ParticleUtil;
@@ -27,6 +28,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -149,6 +151,30 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
                         false, 0.075F, 0.25F, 0x202020);
             }
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineBlastFurnace#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeBoolean(progressing);
+        data.writeFloat(progress);
+        data.writeFloat(speed);
+        data.writeInt(fuel);
+        LegacyFluidTankPacket.write(data, airblastTank);
+        LegacyFluidTankPacket.write(data, flueTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        // The top lava/flue visual is driven from this exact server-side working snapshot.
+        readLegacyLoadedTileBinary(data);
+        progressing = data.readBoolean();
+        progress = data.readFloat();
+        speed = data.readFloat();
+        fuel = data.readInt();
+        LegacyFluidTankPacket.read(data, airblastTank);
+        LegacyFluidTankPacket.read(data, flueTank);
     }
 
     public ItemStackHandler getItems() {

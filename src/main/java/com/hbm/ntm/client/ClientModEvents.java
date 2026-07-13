@@ -59,6 +59,8 @@ import com.hbm.ntm.client.renderer.AssemblyMachineRenderer;
 import com.hbm.ntm.client.renderer.AntiBallisticMissileRenderer;
 import com.hbm.ntm.client.renderer.ArtilleryRocketRenderer;
 import com.hbm.ntm.client.renderer.ArtilleryShellRenderer;
+import com.hbm.ntm.client.renderer.AirstrikeBomberRenderer;
+import com.hbm.ntm.client.renderer.AirstrikeBombletRenderer;
 import com.hbm.ntm.client.renderer.ArcFurnaceRenderer;
 import com.hbm.ntm.client.renderer.AutosawRenderer;
 import com.hbm.ntm.client.renderer.BalefireBombRenderer;
@@ -79,6 +81,9 @@ import com.hbm.ntm.client.renderer.ChungusRenderer;
 import com.hbm.ntm.client.renderer.CloudFleijaRenderer;
 import com.hbm.ntm.client.renderer.CloudFleijaRainbowRenderer;
 import com.hbm.ntm.client.renderer.CloudSoliniumRenderer;
+import com.hbm.ntm.client.renderer.VentCloudRenderer;
+import com.hbm.ntm.client.renderer.PinkCloudBroadcasterRenderer;
+import com.hbm.ntm.client.renderer.NuclearFogRenderer;
 import com.hbm.ntm.client.renderer.CoinRenderer;
 import com.hbm.ntm.client.renderer.CogRenderer;
 import com.hbm.ntm.client.renderer.ConveyorPressRenderer;
@@ -127,6 +132,7 @@ import com.hbm.ntm.client.renderer.LegacyFanRenderer;
 import com.hbm.ntm.client.renderer.LegacyFileCabinetRenderer;
 import com.hbm.ntm.client.renderer.LegacyFallingBlockRenderer;
 import com.hbm.ntm.client.renderer.LegacyLanternBlockEntityRenderer;
+import com.hbm.ntm.client.renderer.LandmineRenderer;
 import com.hbm.ntm.client.renderer.LegacyLargeTurbineRenderer;
 import com.hbm.ntm.client.renderer.LegacyLightBlockEntityRenderer;
 import com.hbm.ntm.client.renderer.LegacyPedestalRenderer;
@@ -555,6 +561,10 @@ public final class ClientModEvents {
                     (stack, level, entity, seed) -> stack.getTag() == null
                             ? 0.0F
                             : stack.getTag().getInt(LegacyStateBlockItem.TAG_VARIANT));
+            ItemProperties.register(ModBlocks.WOOD_STRUCTURE.get().asItem(), new ResourceLocation(HbmNtm.MOD_ID, "legacy_variant"),
+                    (stack, level, entity, seed) -> stack.getTag() == null
+                            ? 0.0F
+                            : stack.getTag().getInt(LegacyStateBlockItem.TAG_VARIANT));
             ModItems.HOT_ITEMS.stream()
                     .map(RegistryObject::get)
                     .forEach(item -> ItemProperties.register(item, new ResourceLocation(HbmNtm.MOD_ID, "hot"),
@@ -761,6 +771,7 @@ public final class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.CUSTOM_NUKE.get(), CustomNukeRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BOMB_MULTI.get(), BombMultiRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BALEFIRE_BOMB.get(), BalefireBombRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.LANDMINE.get(), LandmineRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.LEGACY_CHARGE.get(), LegacyChargeBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TURRET_CHEKHOV.get(), TurretBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TURRET_FRIENDLY.get(), TurretBlockEntityRenderer::new);
@@ -809,6 +820,12 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.EMP_BLAST.get(), EmpBlastRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.FIRE_LINGERING.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.MIST.get(), NoopRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.CHLORINE_FX.get(), VentCloudRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.CLOUD_FX.get(), VentCloudRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.PINK_CLOUD_FX.get(), VentCloudRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.ORANGE_FX.get(), VentCloudRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.NUCLEAR_FOG.get(), NuclearFogRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.BROADCASTER_PC.get(), PinkCloudBroadcasterRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.EMP_LOGIC.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.BALEFIRE_EXPLOSION.get(), NoopRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.DEATH_BLAST.get(), DeathBlastRenderer::new);
@@ -853,6 +870,8 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntityTypes.BULLET_PROJECTILE.get(), BulletProjectileRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.ARTILLERY_SHELL.get(), ArtilleryShellRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.ARTILLERY_ROCKET.get(), ArtilleryRocketRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.AIRSTRIKE_BOMBER.get(), AirstrikeBomberRenderer::new);
+        event.registerEntityRenderer(ModEntityTypes.AIRSTRIKE_BOMBLET.get(), AirstrikeBombletRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.CHEMICAL_PROJECTILE.get(), ChemicalProjectileRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.DYNAMITE_STICK.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(ModEntityTypes.COIN.get(), CoinRenderer::new);

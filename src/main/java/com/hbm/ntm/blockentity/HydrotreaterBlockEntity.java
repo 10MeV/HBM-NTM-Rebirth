@@ -7,6 +7,7 @@ import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.TripleRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -14,6 +15,7 @@ import com.hbm.ntm.registry.ModItems;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -202,5 +204,27 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
         if (tag.contains("t3")) {
             sourGasTank.readFromNbt(tag, "t3");
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineHydrotreater#serialize: MachineBase/LoadedBase,
+        // current power, then oil/hydrogen and both product tanks.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, hydrogenTank);
+        LegacyFluidTankPacket.write(data, desulfurizedOilTank);
+        LegacyFluidTankPacket.write(data, sourGasTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, hydrogenTank);
+        LegacyFluidTankPacket.read(data, desulfurizedOilTank);
+        LegacyFluidTankPacket.read(data, sourGasTank);
     }
 }

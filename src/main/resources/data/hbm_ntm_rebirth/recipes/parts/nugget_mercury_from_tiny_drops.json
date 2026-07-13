@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["MMM", "MMM", "MMM"],
+  "key": {
+    "M": { "item": "hbm_ntm_rebirth:nugget_mercury_tiny" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:nugget_mercury" }
+}

@@ -159,15 +159,13 @@ public class ChimneyBlockEntity extends BlockEntity
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityChimneyBase has no inherited packet prefix.
+        data.writeInt(onTicks);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        onTicks = Math.max(0, data.readInt());
     }
 
     private void flushCapturedAsh() {

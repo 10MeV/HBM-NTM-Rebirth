@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["SFS", "SFS"],
+  "key": {
+    "S": { "tag": "minecraft:wooden_slabs" },
+    "F": { "item": "minecraft:oak_fence" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:wood_barrier", "count": 8 },
+  "show_notification": true
+}

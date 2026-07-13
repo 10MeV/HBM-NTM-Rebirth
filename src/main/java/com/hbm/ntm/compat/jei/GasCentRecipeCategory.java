@@ -23,7 +23,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.ItemLike;
 
-public final class GasCentRecipeCategory implements IRecipeCategory<GasCentJeiRecipe> {
+public final class GasCentRecipeCategory implements HbmJeiRecipeCategory<GasCentJeiRecipe> {
     private static final int WIDTH = 166;
     private static final int HEIGHT = 65;
     private static final ResourceLocation LEGACY_NEI_TEXTURE =
@@ -76,7 +76,7 @@ public final class GasCentRecipeCategory implements IRecipeCategory<GasCentJeiRe
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -96,6 +96,7 @@ public final class GasCentRecipeCategory implements IRecipeCategory<GasCentJeiRe
     @Override
     public void draw(GasCentJeiRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         powerBar.draw(guiGraphics, 3, 6);
         (recipe.highSpeed() ? progressHighSpeed : progressNormal).draw(guiGraphics, 74, 17);
         if (recipe.highSpeed()) {

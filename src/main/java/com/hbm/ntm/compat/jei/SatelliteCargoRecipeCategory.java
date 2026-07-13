@@ -38,7 +38,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class SatelliteCargoRecipeCategory
-        implements IRecipeCategory<SatelliteCargoRecipeCategory.DisplayRecipe> {
+        implements HbmJeiRecipeCategory<SatelliteCargoRecipeCategory.DisplayRecipe> {
     private static final int WIDTH = 176;
     private static final int HEIGHT = 86;
     private static final int TEXTURE_SIZE = 256;
@@ -85,7 +85,7 @@ public final class SatelliteCargoRecipeCategory
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -105,6 +105,7 @@ public final class SatelliteCargoRecipeCategory
     @Override
     public void draw(DisplayRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         blit(guiGraphics, 11, 23, 113, 105, 18, 18);
         blit(guiGraphics, 47, 5, 5, 87, 108, 54);
         blit(guiGraphics, 29, 14, 131, 96, 18, 36);

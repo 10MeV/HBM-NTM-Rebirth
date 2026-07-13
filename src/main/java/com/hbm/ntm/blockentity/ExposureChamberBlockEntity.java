@@ -453,15 +453,23 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachineExposureChamber does not serialize its HbmEnergyBlockEntity parent state.
+        data.writeBoolean(isOn);
+        data.writeInt(progress);
+        data.writeInt(processTime);
+        data.writeInt(consumption);
+        data.writeLong(energy.getPower());
+        data.writeByte((byte) savedParticles);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        isOn = data.readBoolean();
+        progress = data.readInt();
+        processTime = Math.max(1, data.readInt());
+        consumption = Math.max(1, data.readInt());
+        energy.setPower(data.readLong());
+        savedParticles = data.readByte();
     }
 
     @Override

@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.SolderingStationMenu;
@@ -30,6 +31,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,6 +40,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -191,6 +194,43 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
             station.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineSolderingStation#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeLong(energy.getMaxPower());
+        data.writeLong(consumption);
+        data.writeInt(progress);
+        data.writeInt(processTime);
+        data.writeBoolean(collisionPrevention);
+        data.writeBoolean(!displayStack.isEmpty());
+        if (!displayStack.isEmpty()) {
+            data.writeInt(BuiltInRegistries.ITEM.getId(displayStack.getItem()));
+            data.writeInt(displayStack.getDamageValue());
+        }
+        LegacyFluidTankPacket.write(data, tank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        setDynamicMaxPower(data.readLong());
+        consumption = data.readLong();
+        progress = data.readInt();
+        processTime = data.readInt();
+        collisionPrevention = data.readBoolean();
+        if (data.readBoolean()) {
+            ItemStack stack = new ItemStack(BuiltInRegistries.ITEM.byId(data.readInt()));
+            stack.setDamageValue(data.readInt());
+            displayStack = stack;
+        } else {
+            displayStack = ItemStack.EMPTY;
+        }
+        LegacyFluidTankPacket.read(data, tank);
     }
 
     private SolderingStationRecipe findRecipe(Level level) {

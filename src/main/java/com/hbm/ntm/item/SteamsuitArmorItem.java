@@ -2,6 +2,7 @@ package com.hbm.ntm.item;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.hbm.items.armor.ArmorFSBFueled;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.fluid.FluidType;
 import java.util.List;
@@ -9,9 +10,10 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ArmorMaterial;
 
-public class SteamsuitArmorItem extends FsbFueledArmorItem {
-    public SteamsuitArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+public class SteamsuitArmorItem extends ArmorFSBFueled {
+    public SteamsuitArmorItem(ArmorMaterial material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, FluidType fuelType, int maxFuel, int fillRate, int consumption,
             int drain, FullSetTraits fullSetTraits) {
         super(material, type, properties, fullSetEffects, fuelType, maxFuel, fillRate, consumption, drain,

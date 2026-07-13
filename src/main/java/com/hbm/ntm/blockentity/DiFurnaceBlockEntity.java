@@ -16,6 +16,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -99,6 +100,24 @@ public class DiFurnaceBlockEntity extends HbmFluidBlockEntity
             furnace.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityDiFurnace#serialize has no TileEntityLoadedBase prefix.
+        data.writeShort(progress);
+        data.writeShort(fuel);
+        data.writeBytes(new byte[] {sideFuel, sideUpper, sideLower});
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        // Keep the old seven-byte display packet exact; processing is derived server-side only.
+        progress = data.readShort();
+        fuel = data.readShort();
+        sideFuel = data.readByte();
+        sideUpper = data.readByte();
+        sideLower = data.readByte();
     }
 
     public ItemStackHandler getItems() {

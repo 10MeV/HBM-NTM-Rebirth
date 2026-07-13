@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "C": { "tag": "forge:dusts/any_smokeless" },
+    "S": { "tag": "forge:ingots/steel" }
+  },
+  "pattern": ["I", "C", "S"],
+  "result": { "item": "hbm_ntm_rebirth:mine_ap", "count": 4 },
+  "show_notification": true
+}

@@ -1,20 +1,22 @@
 package com.hbm.ntm.item;
 
+import com.hbm.items.armor.ArmorFSBFueled;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.particle.ParticleUtil;
 import java.util.List;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-public class DieselSuitArmorItem extends FsbFueledArmorItem {
-    public DieselSuitArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+public class DieselSuitArmorItem extends ArmorFSBFueled {
+    public DieselSuitArmorItem(ArmorMaterial material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, int maxFuel, int fillRate, int consumption, int drain,
             FluidType... acceptedFuelTypes) {
         super(material, type, properties, fullSetEffects, maxFuel, fillRate, consumption, drain, acceptedFuelTypes);
     }
 
-    public DieselSuitArmorItem(HbmArmorMaterials material, Type type, Properties properties,
+    public DieselSuitArmorItem(ArmorMaterial material, Type type, Properties properties,
             List<FullSetEffect> fullSetEffects, int maxFuel, int fillRate, int consumption, int drain,
             FullSetTraits fullSetTraits, FluidType... acceptedFuelTypes) {
         super(material, type, properties, fullSetEffects, maxFuel, fillRate, consumption, drain,

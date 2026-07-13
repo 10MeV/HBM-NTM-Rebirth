@@ -7,6 +7,7 @@ import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.VacuumRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -246,15 +247,28 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachineVacuumDistill#serialize: MachineBase/LoadedBase prefix, power, active flag, five tanks.
+        // The active flag is runtime-only and feeds the old 20-tick boiler-loop keepalive on clients.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeBoolean(isOn);
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, heavyOilTank);
+        LegacyFluidTankPacket.write(data, reformateTank);
+        LegacyFluidTankPacket.write(data, lightOilTank);
+        LegacyFluidTankPacket.write(data, sourGasTank);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        isOn = data.readBoolean();
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, heavyOilTank);
+        LegacyFluidTankPacket.read(data, reformateTank);
+        LegacyFluidTankPacket.read(data, lightOilTank);
+        LegacyFluidTankPacket.read(data, sourGasTank);
     }
 
     private static boolean hasTankTag(CompoundTag tag, String key) {

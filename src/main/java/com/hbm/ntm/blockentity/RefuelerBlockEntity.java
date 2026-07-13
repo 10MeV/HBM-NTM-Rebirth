@@ -7,6 +7,7 @@ import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
@@ -288,15 +289,15 @@ public class RefuelerBlockEntity extends HbmFluidNetworkBlockEntity implements H
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityRefueler#serialize has no LoadedBase prefix.
+        data.writeBoolean(isOperating);
+        LegacyFluidTankPacket.write(data, tank);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        isOperating = data.readBoolean();
+        LegacyFluidTankPacket.read(data, tank);
     }
 
     private static boolean hasTankTag(CompoundTag tag, String key) {

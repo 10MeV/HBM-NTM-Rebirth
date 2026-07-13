@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class DeuteriumTowerRecipeCategory implements IRecipeCategory<DeuteriumTowerRecipeRuntime.DisplayRecipe> {
+public final class DeuteriumTowerRecipeCategory implements HbmJeiRecipeCategory<DeuteriumTowerRecipeRuntime.DisplayRecipe> {
     private final RecipeType<DeuteriumTowerRecipeRuntime.DisplayRecipe> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -59,7 +59,7 @@ public final class DeuteriumTowerRecipeCategory implements IRecipeCategory<Deute
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

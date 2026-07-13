@@ -1,12 +1,10 @@
 package com.hbm.ntm.entity.mob;
 
-import com.hbm.ntm.blockentity.TeslaBlockEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 public class EntityTeslaCrab extends EntityCyberCrab {
     public EntityTeslaCrab(EntityType<? extends EntityTeslaCrab> type, Level level) {
@@ -23,7 +21,7 @@ public class EntityTeslaCrab extends EntityCyberCrab {
     @Override
     public void aiStep() {
         if (!level().isClientSide()) {
-            setTeslaTargets(TeslaBlockEntity.zap(level(), new Vec3(getX(), getY() + 1.0D, getZ()), 3.0D, this));
+            rebuildTeslaTargets(getX(), getY() + 1.0D, getZ(), 3.0D);
         }
         super.aiStep();
     }

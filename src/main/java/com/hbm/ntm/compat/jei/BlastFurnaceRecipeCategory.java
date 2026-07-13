@@ -18,7 +18,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class BlastFurnaceRecipeCategory implements IRecipeCategory<BlastFurnaceRecipe> {
+public final class BlastFurnaceRecipeCategory implements HbmJeiRecipeCategory<BlastFurnaceRecipe> {
     private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
     private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
@@ -64,7 +64,7 @@ public final class BlastFurnaceRecipeCategory implements IRecipeCategory<BlastFu
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -100,6 +100,7 @@ public final class BlastFurnaceRecipeCategory implements IRecipeCategory<BlastFu
     @Override
     public void draw(BlastFurnaceRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
         var font = Minecraft.getInstance().font;
         String duration = BobMathUtil.getShortNumber(recipe.duration()) + " ticks";
         int side = 164;

@@ -1,7 +1,9 @@
 package com.hbm.ntm.fluid.trait;
 
 import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
 import com.hbm.ntm.pollution.PollutionType;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -68,6 +70,43 @@ public class PollutingFluidTrait extends FluidTrait {
             burn.addProperty(entry.getKey().legacyName(), entry.getValue());
         }
         object.add("burn", burn);
+    }
+
+    @Override
+    public void serializeJSON(JsonWriter writer) throws IOException {
+        writer.name("release").beginObject();
+        for (Entry<PollutionKind, Float> entry : releasePollution.entrySet()) {
+            writer.name(entry.getKey().legacyName()).value(entry.getValue());
+        }
+        writer.endObject();
+        writer.name("burn").beginObject();
+        for (Entry<PollutionKind, Float> entry : burnPollution.entrySet()) {
+            writer.name(entry.getKey().legacyName()).value(entry.getValue());
+        }
+        writer.endObject();
+    }
+
+    @Override
+    public void deserializeJSON(JsonObject object) {
+        if (object == null) {
+            return;
+        }
+        if (object.has("release")) {
+            JsonObject release = object.getAsJsonObject("release");
+            for (PollutionKind kind : PollutionKind.orderedValues()) {
+                if (release.has(kind.legacyName())) {
+                    release(kind, release.get(kind.legacyName()).getAsFloat());
+                }
+            }
+        }
+        if (object.has("burn")) {
+            JsonObject burn = object.getAsJsonObject("burn");
+            for (PollutionKind kind : PollutionKind.orderedValues()) {
+                if (burn.has(kind.legacyName())) {
+                    burn(kind, burn.get(kind.legacyName()).getAsFloat());
+                }
+            }
+        }
     }
 
     public enum PollutionKind {

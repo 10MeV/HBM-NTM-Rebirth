@@ -3223,6 +3223,13 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         return hasCompleteLayout();
     }
 
+    /** Source-backed entry point for the legacy Dyatlov instant-meltdown tool. */
+    public void triggerLegacyMeltdown() {
+        if (level instanceof ServerLevel serverLevel) {
+            executeMeltdownSequence(serverLevel);
+        }
+    }
+
     @Nullable
     public static RBMKColumnBlockEntity resolveOperationalColumn(Level level, @Nullable BlockPos pos) {
         if (level == null || pos == null) {

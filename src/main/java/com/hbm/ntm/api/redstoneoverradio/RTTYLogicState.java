@@ -2,7 +2,9 @@ package com.hbm.ntm.api.redstoneoverradio;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
+import com.hbm.ntm.util.BufferUtil;
 
 public class RTTYLogicState {
     private static final String TAG_POLLING = "p";
@@ -175,6 +177,32 @@ public class RTTYLogicState {
             }
         }
         return changed;
+    }
+
+    /** 1.7.10 TileEntityRadioTorchLogic runtime packet, without LoadedBase. */
+    public void writeLegacyWire(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(polling);
+        BufferUtil.writeString(buffer, channel);
+        buffer.writeBoolean(descending);
+        for (String entry : mapping) {
+            BufferUtil.writeString(buffer, entry);
+        }
+        for (int condition : conditions) {
+            buffer.writeInt(condition);
+        }
+    }
+
+    /** 1.7.10 TileEntityRadioTorchLogic runtime packet, without LoadedBase. */
+    public void readLegacyWire(FriendlyByteBuf buffer) {
+        polling = buffer.readBoolean();
+        channel = BufferUtil.readString(buffer);
+        descending = buffer.readBoolean();
+        for (int index = 0; index < mapping.length; index++) {
+            mapping[index] = BufferUtil.readString(buffer);
+        }
+        for (int index = 0; index < conditions.length; index++) {
+            conditions[index] = buffer.readInt();
+        }
     }
 
     public record LogicReceiveResult(boolean received, int redstoneLevel, String signal) {

@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RBMKFuelDisassemblyRecipeCategory
-        implements IRecipeCategory<RBMKFuelDisassemblyRecipeCategory.DisplayRecipe> {
+        implements HbmJeiRecipeCategory<RBMKFuelDisassemblyRecipeCategory.DisplayRecipe> {
     private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
     private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
@@ -103,7 +103,7 @@ public final class RBMKFuelDisassemblyRecipeCategory
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

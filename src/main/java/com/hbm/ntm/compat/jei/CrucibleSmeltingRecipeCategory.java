@@ -18,7 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class CrucibleSmeltingRecipeCategory
-        implements IRecipeCategory<CrucibleSmeltingRecipeRuntime.DisplayRecipe> {
+        implements HbmJeiRecipeCategory<CrucibleSmeltingRecipeRuntime.DisplayRecipe> {
     private static final int WIDTH = 166;
     private static final int HEIGHT = 65;
     private static final ResourceLocation LEGACY_NEI_TEXTURE =
@@ -63,7 +63,7 @@ public final class CrucibleSmeltingRecipeCategory
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 
@@ -80,6 +80,7 @@ public final class CrucibleSmeltingRecipeCategory
     @Override
     public void draw(CrucibleSmeltingRecipeRuntime.DisplayRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        drawBackground(guiGraphics);
     }
 
     private static void addOutputSlots(IRecipeLayoutBuilder builder, List<ItemStack> outputs) {

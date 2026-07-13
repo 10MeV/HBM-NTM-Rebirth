@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class OutgasserRecipeCategory implements IRecipeCategory<OutgasserRecipe> {
+public final class OutgasserRecipeCategory implements HbmJeiRecipeCategory<OutgasserRecipe> {
     private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
     private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
@@ -64,7 +64,7 @@ public final class OutgasserRecipeCategory implements IRecipeCategory<OutgasserR
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

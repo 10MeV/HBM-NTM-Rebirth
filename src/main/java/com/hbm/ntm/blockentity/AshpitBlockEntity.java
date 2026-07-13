@@ -274,15 +274,19 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        // TileEntityAshpit#serialize: TileEntityLoadedBase state, then the two renderer inputs.
+        // The ash counters, inventory, and door interpolation are persisted locally and were never
+        // part of the 1.7.10 runtime packet.
+        writeLegacyLoadedTileBinary(data);
+        data.writeInt(playersUsing);
+        data.writeBoolean(isFull);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            load(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        playersUsing = Math.max(0, data.readInt());
+        isFull = data.readBoolean();
     }
 
     @Override

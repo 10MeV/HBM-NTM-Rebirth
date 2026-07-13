@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "redstone",
+  "pattern": ["SSS", "F F"],
+  "key": {
+    "S": { "tag": "minecraft:wooden_slabs" },
+    "F": { "item": "minecraft:oak_fence" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:wood_structure", "count": 16, "nbt": "{hbmLegacyVariant:0}" },
+  "show_notification": true
+}

@@ -7,6 +7,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
 
 import java.util.Arrays;
+import com.hbm.ntm.util.BufferUtil;
+import net.minecraft.network.FriendlyByteBuf;
 
 public class RTTYAutocalState {
     public static final int DEFAULT_MAX_CLOCK_SPEED = 20;
@@ -236,6 +238,26 @@ public class RTTYAutocalState {
         ListTag historyList = tag.getList(TAG_HISTORY, Tag.TAG_STRING);
         for (int i = 0; i < history.length; i++) {
             history[i] = i < historyList.size() ? historyList.getString(i) : "";
+        }
+    }
+
+    /** 1.7.10 TileEntityRadioAUTOCAL runtime packet payload, after LoadedBase. */
+    public void writeLegacyWire(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(on);
+        buffer.writeBoolean(ignoreError);
+        buffer.writeBoolean(autoReboot);
+        for (String line : history) {
+            BufferUtil.writeString(buffer, line);
+        }
+    }
+
+    /** 1.7.10 TileEntityRadioAUTOCAL runtime packet payload, after LoadedBase. */
+    public void readLegacyWire(FriendlyByteBuf buffer) {
+        on = buffer.readBoolean();
+        ignoreError = buffer.readBoolean();
+        autoReboot = buffer.readBoolean();
+        for (int index = 0; index < history.length; index++) {
+            history[index] = BufferUtil.readString(buffer);
         }
     }
 }

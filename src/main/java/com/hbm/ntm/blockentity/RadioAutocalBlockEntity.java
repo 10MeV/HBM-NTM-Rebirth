@@ -116,15 +116,16 @@ public class RadioAutocalBlockEntity extends BlockEntity implements MenuProvider
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityRadioAUTOCAL#serialize: LoadedBase plus the three
+        // execution flags and six client-visible history lines.
+        writeLegacyLoadedTileBinary(data);
+        autocal.writeLegacyWire(data);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        readLegacyLoadedTileBinary(data);
+        autocal.readLegacyWire(data);
     }
 
     @Override

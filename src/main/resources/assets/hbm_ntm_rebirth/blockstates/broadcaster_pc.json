@@ -1,0 +1,1 @@
+{"variants":{"facing=north":{"model":"hbm_ntm_rebirth:block/broadcaster_pc","y":180},"facing=south":{"model":"hbm_ntm_rebirth:block/broadcaster_pc"},"facing=west":{"model":"hbm_ntm_rebirth:block/broadcaster_pc","y":90},"facing=east":{"model":"hbm_ntm_rebirth:block/broadcaster_pc","y":270}}}

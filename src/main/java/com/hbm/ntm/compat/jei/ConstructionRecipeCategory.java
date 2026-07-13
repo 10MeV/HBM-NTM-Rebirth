@@ -27,7 +27,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class ConstructionRecipeCategory
-        implements IRecipeCategory<ConstructionRecipeCategory.DisplayRecipe> {
+        implements HbmJeiRecipeCategory<ConstructionRecipeCategory.DisplayRecipe> {
     private static final TagKey<Item> DURA_BOLTS =
             ItemTags.create(new ResourceLocation("forge", "bolts/dura_steel"));
     private static final TagKey<Item> STEEL_CAST_PLATES =
@@ -75,7 +75,7 @@ public final class ConstructionRecipeCategory
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

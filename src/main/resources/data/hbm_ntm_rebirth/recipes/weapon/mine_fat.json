@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:circuit_analog" },
+    "D": { "item": "hbm_ntm_rebirth:ducttape" },
+    "N": { "item": "hbm_ntm_rebirth:ammo_standard_nuke_demo" }
+  },
+  "pattern": ["CDN"],
+  "result": { "item": "hbm_ntm_rebirth:mine_fat" },
+  "show_notification": true
+}

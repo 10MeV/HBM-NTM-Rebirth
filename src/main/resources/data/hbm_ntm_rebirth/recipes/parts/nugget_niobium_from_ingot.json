@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [{ "item": "hbm_ntm_rebirth:ingot_niobium" }],
+  "result": { "item": "hbm_ntm_rebirth:nugget_niobium", "count": 9 }
+}

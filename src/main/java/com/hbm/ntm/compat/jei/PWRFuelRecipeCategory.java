@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class PWRFuelRecipeCategory implements IRecipeCategory<PWRFuelRuntime.DisplayFuel> {
+public final class PWRFuelRecipeCategory implements HbmJeiRecipeCategory<PWRFuelRuntime.DisplayFuel> {
     private static final int WIDTH = LegacyNeiUniversalLayout.WIDTH;
     private static final int HEIGHT = LegacyNeiUniversalLayout.HEIGHT;
 
@@ -59,7 +59,7 @@ public final class PWRFuelRecipeCategory implements IRecipeCategory<PWRFuelRunti
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

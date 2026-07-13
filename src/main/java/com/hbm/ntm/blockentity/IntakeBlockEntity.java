@@ -11,6 +11,7 @@ import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -20,6 +21,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -204,6 +206,22 @@ public class IntakeBlockEntity extends HbmEnergyAndFluidBlockEntity implements H
         compressedAir.setTankType(HbmFluids.AIR);
         fan = tag.getFloat("fan");
         previousFan = tag.getFloat("prevFan");
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineIntake#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(getPower());
+        LegacyFluidTankPacket.write(data, compressedAir);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        setPower(data.readLong());
+        LegacyFluidTankPacket.read(data, compressedAir);
+        compressedAir.setTankType(HbmFluids.AIR);
     }
 
     private Direction facing() {

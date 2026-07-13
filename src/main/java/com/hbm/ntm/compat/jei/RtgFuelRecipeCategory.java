@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
-public final class RtgFuelRecipeCategory implements IRecipeCategory<RtgBlockEntity.FuelSpec> {
+public final class RtgFuelRecipeCategory implements HbmJeiRecipeCategory<RtgBlockEntity.FuelSpec> {
     private final RecipeType<RtgBlockEntity.FuelSpec> type;
     private final IDrawable icon;
     private final IDrawableStatic background;
@@ -60,7 +60,7 @@ public final class RtgFuelRecipeCategory implements IRecipeCategory<RtgBlockEnti
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

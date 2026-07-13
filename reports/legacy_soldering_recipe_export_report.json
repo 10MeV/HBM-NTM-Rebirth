@@ -1,11 +1,11 @@
 {
-  "export_file": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/reports/legacy_recipe_exports/hbmSoldering.json",
+  "export_file": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports/hbmSoldering.json",
   "exported_recipe_count": 26,
   "failures": [],
   "legacy_file": "hbmSoldering.json",
   "modern_recipe_type": "soldering_station",
   "skipped_recipe_count": 0,
-  "source_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/src/main/resources/data/hbm_ntm_rebirth/recipes/soldering_station",
+  "source_dir": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/soldering_station",
   "status": "exported",
   "written_file_count": 1
 }

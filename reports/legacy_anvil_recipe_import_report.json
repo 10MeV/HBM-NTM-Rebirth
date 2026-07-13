@@ -2,7 +2,7 @@
   "imported_recipe_count": 0,
   "legacy_class": "AnvilRecipes",
   "legacy_file": "hbmAnvil.json",
-  "legacy_recipe_dir": "E:/游戏/我的世界/开发/HBM-NTM-1.20.1-Forge-Port/legacy_recipes",
+  "legacy_recipe_dir": "E:/mchbm/code/HBM-NTM-Rebirth/legacy_recipes",
   "modern_recipe_type": "anvil_construction",
   "note": "1.7.10 hbmAnvil.json serializes constructionRecipes only; smithing defaults are Java-registered separately.",
   "skipped_recipe_count": 0,

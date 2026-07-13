@@ -3,6 +3,8 @@ package com.hbm.ntm.registry;
 import com.hbm.blocks.gas.BlockGasAsbestos;
 import com.hbm.blocks.gas.BlockGasClorine;
 import com.hbm.blocks.gas.BlockGasCoal;
+import com.hbm.blocks.gas.BlockGasExplosive;
+import com.hbm.blocks.gas.BlockGasFlammable;
 import com.hbm.blocks.gas.BlockGasMeltdown;
 import com.hbm.blocks.gas.BlockGasMonoxide;
 import com.hbm.blocks.gas.BlockGasRadon;
@@ -95,6 +97,7 @@ import com.hbm.ntm.block.FusionStructureComponentBlock;
 import com.hbm.ntm.block.FusionTorusStructCoreBlock;
 import com.hbm.ntm.block.GlowingMushBlock;
 import com.hbm.ntm.block.LegacyChargeBlock;
+import com.hbm.ntm.block.LandmineBlock;
 import com.hbm.ntm.block.LegacyDetCordBlock;
 import com.hbm.ntm.block.LegacyExplosiveChargeBlock;
 import com.hbm.ntm.block.LegacyFurnaceBlock;
@@ -178,6 +181,7 @@ import com.hbm.ntm.block.LegacySpotlightBlock;
 import com.hbm.ntm.block.LegacySubstationBlock;
 import com.hbm.ntm.block.LegacyTapeRecorderBlock;
 import com.hbm.ntm.block.LegacyVolcanicLavaBlock;
+import com.hbm.ntm.block.LegacyWoodStructureBlock;
 import com.hbm.ntm.block.MachineBlockEntityBlock;
 import com.hbm.ntm.block.MachineLpw2Block;
 import com.hbm.ntm.block.MassStorageBlock;
@@ -244,6 +248,10 @@ import com.hbm.ntm.block.RadarBlock;
 import com.hbm.ntm.block.RadGenBlock;
 import com.hbm.ntm.block.RadioboxBlock;
 import com.hbm.ntm.block.RadioReceiverBlock;
+import com.hbm.ntm.block.LegacyVentBlock;
+import com.hbm.ntm.block.LegacyChlorineSealBlock;
+import com.hbm.ntm.block.PinkCloudBroadcasterBlock;
+import com.hbm.ntm.block.LegacyGeysirBlock;
 import com.hbm.ntm.block.RefuelerBlock;
 import com.hbm.ntm.block.ResearchReactorBlock;
 import com.hbm.ntm.block.RadarLargeBlock;
@@ -760,6 +768,15 @@ public final class ModBlocks {
     public static final RegistryObject<Block> GAS_ASBESTOS = toxicGas("gas_asbestos", LegacyToxicGasBlock.Kind.ASBESTOS);
     public static final RegistryObject<Block> GAS_COAL = toxicGas("gas_coal", LegacyToxicGasBlock.Kind.COAL);
     public static final RegistryObject<Block> CHLORINE_GAS = toxicGas("chlorine_gas", LegacyToxicGasBlock.Kind.CHLORINE);
+    public static final RegistryObject<Block> GAS_FLAMMABLE = registerBlockWithItem("gas_flammable", BlockGasFlammable::new);
+    public static final RegistryObject<Block> GAS_EXPLOSIVE = registerBlockWithItem("gas_explosive", BlockGasExplosive::new);
+    public static final RegistryObject<Block> VENT_CHLORINE = registerBlockWithItem("vent_chlorine", () -> new LegacyVentBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 5.0F).sound(SoundType.METAL)));
+    public static final RegistryObject<Block> VENT_CLOUD = registerBlockWithItem("vent_cloud", () -> new LegacyVentBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 5.0F).sound(SoundType.METAL)));
+    public static final RegistryObject<Block> VENT_PINK_CLOUD = registerBlockWithItem("vent_pink_cloud", () -> new LegacyVentBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 5.0F).sound(SoundType.METAL)));
+    public static final RegistryObject<Block> VENT_CHLORINE_SEAL = registerBlockWithItem("vent_chlorine_seal", () -> new LegacyChlorineSealBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0F, 5.0F).sound(SoundType.METAL)));
+    public static final RegistryObject<Block> BROADCASTER_PC = registerBlockWithItem("broadcaster_pc", () -> new PinkCloudBroadcasterBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(5.0F, 10.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> GEYSIR_CHLORINE = registerBlockWithItem("geysir_chlorine", () -> new LegacyGeysirBlock(BlockBehaviour.Properties.of().strength(5.0F).sound(SoundType.STONE)));
+    public static final RegistryObject<Block> GEYSIR_NETHER = registerBlockWithItem("geysir_nether", () -> new LegacyGeysirBlock(BlockBehaviour.Properties.of().strength(2.0F).lightLevel(s -> 15).sound(SoundType.STONE)));
     public static final RegistryObject<Block> ACID_BLOCK = acidLiquidBlock("acid_block");
     public static final RegistryObject<Block> TOXIC_BLOCK = toxicLiquidBlock("toxic_block");
     public static final RegistryObject<Block> SCHRABIDIC_BLOCK = schrabidicLiquidBlock("schrabidic_block");
@@ -816,6 +833,7 @@ public final class ModBlocks {
     public static final RegistryObject<Block> POLE_SATELLITE_RECEIVER =
             poleSatelliteReceiver("pole_satellite_receiver");
     public static final RegistryObject<Block> CONCRETE_COLORED_EXT = concreteColoredExt("concrete_colored_ext");
+    public static final RegistryObject<Block> WOOD_STRUCTURE = woodStructure("wood_structure");
     public static final RegistryObject<Block> VENDING_MACHINE = vendingMachine("vending_machine");
     public static final RegistryObject<Block> MACHINE_ASSEMBLY_MACHINE = assemblyMachine("machine_assembly_machine");
     public static final RegistryObject<Block> MACHINE_TELEPORTER = teleporterMachine("machine_teleporter");
@@ -1281,6 +1299,10 @@ public final class ModBlocks {
     public static final RegistryObject<Block> FLOAT_BOMB = floatBomb("float_bomb");
     public static final RegistryObject<Block> THERM_ENDO = thermoBomb("therm_endo", ThermoBombBlock.Kind.ENDO);
     public static final RegistryObject<Block> THERM_EXO = thermoBomb("therm_exo", ThermoBombBlock.Kind.EXO);
+    public static final RegistryObject<Block> MINE_AP = landmine("mine_ap", LandmineBlock.Kind.AP, 1.5D, 1.0D);
+    public static final RegistryObject<Block> MINE_HE = landmine("mine_he", LandmineBlock.Kind.HE, 2.0D, 5.0D);
+    public static final RegistryObject<Block> MINE_SHRAP = landmine("mine_shrap", LandmineBlock.Kind.SHRAP, 1.5D, 1.0D);
+    public static final RegistryObject<Block> MINE_FAT = landmine("mine_fat", LandmineBlock.Kind.FAT, 2.5D, 1.0D);
     public static final RegistryObject<Block> MINE_NAVAL = navalMine("mine_naval");
     public static final RegistryObject<Block> DYNAMITE = legacyTntBase("dynamite", LegacyTntBaseBlock.Kind.DYNAMITE);
     public static final RegistryObject<Block> TNT_NTM = legacyTntBase("tnt_ntm", LegacyTntBaseBlock.Kind.TNT);
@@ -1337,6 +1359,11 @@ public final class ModBlocks {
             REFUELER,
             RADIOBOX,
             RADIOREC,
+            BROADCASTER_PC,
+            VENT_CHLORINE,
+            VENT_CHLORINE_SEAL,
+            VENT_CLOUD,
+            VENT_PINK_CLOUD,
             TESLA,
             MACHINE_MICROWAVE,
             MACHINE_FUNNEL,
@@ -1627,6 +1654,8 @@ public final class ModBlocks {
             GAS_ASBESTOS,
             GAS_COAL,
             CHLORINE_GAS,
+            GAS_FLAMMABLE,
+            GAS_EXPLOSIVE,
             RAD_ABSORBER,
             GEIGER
     );
@@ -1937,7 +1966,6 @@ public final class ModBlocks {
             "asphalt_light:asphalt_light",
             "sandbags:sandbags",
             "wood_barrier:wood_barrier",
-            "wood_structure:wood_barrier",
             "reinforced_brick:reinforced_brick",
             "reinforced_light:reinforced_light",
             "reinforced_sand:reinforced_sand",
@@ -2019,7 +2047,7 @@ public final class ModBlocks {
             PLANT_FLOWER_CD0, PLANT_FLOWER_CD1,
             BLOCK_CAP_NUKA, BLOCK_CAP_QUANTUM, BLOCK_CAP_SPARKLE, BLOCK_CAP_RAD, BLOCK_CAP_KORL, BLOCK_CAP_FRITZ,
             ASH_DIGAMMA, BALEFIRE, PRIBRIS, PRIBRIS_BURNING, PRIBRIS_RADIATING, PRIBRIS_DIGAMMA,
-            BLOCK_COKE, CONCRETE_COLORED_EXT, ORE_BASALT, VOLCANIC_LAVA_BLOCK, RAD_LAVA_BLOCK, BLOCK_FOAM, MUD_BLOCK,
+            BLOCK_COKE, CONCRETE_COLORED_EXT, WOOD_STRUCTURE, ORE_BASALT, VOLCANIC_LAVA_BLOCK, RAD_LAVA_BLOCK, BLOCK_FOAM, MUD_BLOCK,
                     STEEL_SCAFFOLD, STEEL_BEAM, STEEL_GRATE, STEEL_GRATE_WIDE, CHAIN, BARBED_WIRE,
                     POLE_TOP, POLE_SATELLITE_RECEIVER, DECO_TOASTER, TEKTITE,
                     ORE_TEKTITE_OSMIRIDIUM, BLOCK_GRAPHITE, BLOCK_SEMTEX, BLOCK_C4,
@@ -2043,6 +2071,10 @@ public final class ModBlocks {
             FLOAT_BOMB,
             THERM_ENDO,
             THERM_EXO,
+            MINE_AP,
+            MINE_HE,
+            MINE_SHRAP,
+            MINE_FAT,
             MINE_NAVAL,
             DYNAMITE,
             TNT_NTM,
@@ -2450,6 +2482,16 @@ public final class ModBlocks {
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops()
                 .noOcclusion(), 2.5D, 1.0D));
+    }
+
+    private static RegistryObject<Block> landmine(String name, LandmineBlock.Kind kind, double triggerRange,
+            double triggerHeight) {
+        return registerBlockWithItem(name, () -> new LandmineBlock(BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .strength(1.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .noOcclusion(), kind, triggerRange, triggerHeight));
     }
 
     private static RegistryObject<Block> basicMachine(String name) {
@@ -7530,6 +7572,22 @@ public final class ModBlocks {
                         ConcreteColoredExtBlock.Variant.values().length,
                         variant -> Component.translatable("block." + HbmNtm.MOD_ID + ".concrete_colored_ext."
                                 + ConcreteColoredExtBlock.Variant.byLegacyMeta(variant).serializedName())));
+    }
+
+    private static RegistryObject<Block> woodStructure(String name) {
+        return registerBlockWithItem(name,
+                () -> new LegacyWoodStructureBlock(BlockBehaviour.Properties.of()
+                        .mapColor(MapColor.WOOD)
+                        .strength(5.0F, 15.0F)
+                        .sound(SoundType.WOOD)
+                        .noOcclusion()
+                        .isValidSpawn((state, level, pos, type) -> false)
+                        .isSuffocating((state, level, pos) -> false)
+                        .isViewBlocking((state, level, pos) -> false)),
+                block -> new LegacyStateBlockItem(block.get(), new Item.Properties(), LegacyWoodStructureBlock.VARIANT,
+                        LegacyWoodStructureBlock.Variant.values().length,
+                        variant -> Component.translatable("block." + HbmNtm.MOD_ID + ".wood_structure."
+                                + LegacyWoodStructureBlock.Variant.byLegacyMeta(variant).serializedName())));
     }
 
     private static RegistryObject<Block> volcanicLavaBlock(String name, boolean radioactive) {

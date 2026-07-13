@@ -13,6 +13,7 @@ import com.hbm.ntm.util.EntityDamageUtil;
 import com.hbm.ntm.util.HbmWorldUtil;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -53,6 +54,7 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
     private static final EntityDataAccessor<Boolean> CREEPER_POWERED = findCreeperPoweredAccessor();
 
     private final List<TeslaTarget> targets = new ArrayList<>();
+    private final List<TeslaTarget> targetsView = Collections.unmodifiableList(targets);
 
     public TeslaBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.TESLA.get(), pos, state, new HbmEnergyStorage(MAX_POWER, MAX_POWER, 0L));
@@ -74,7 +76,7 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
         if (tesla.energy.getPower() >= CONSUMPTION) {
             tesla.energy.setPower(tesla.energy.getPower() - CONSUMPTION);
             Vec3 origin = tesla.sourcePosition();
-            tesla.targets.addAll(zap(level, origin, RANGE, null));
+            zapInto(level, origin, RANGE, null, tesla.targets);
         }
 
         tesla.networkPackNT(100);
@@ -85,9 +87,15 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
     }
 
     public static List<TeslaTarget> zap(Level level, Vec3 origin, double radius, @Nullable Entity source) {
+        List<TeslaTarget> ret = new ArrayList<>();
+        zapInto(level, origin, radius, source, ret);
+        return ret;
+    }
+
+    public static void zapInto(Level level, Vec3 origin, double radius, @Nullable Entity source,
+            List<TeslaTarget> output) {
         List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
                 new AABB(origin, origin).inflate(radius), LivingEntity::isAlive);
-        List<TeslaTarget> ret = new ArrayList<>();
         double radiusSqr = radius * radius;
 
         for (LivingEntity target : nearby) {
@@ -110,22 +118,22 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
             }
 
             if (RadiationUtil.hasLegacyClassName(target, "EntityTaintCrab")) {
-                ret.add(new TeslaTarget(target.getX(), target.getY() + 1.25D, target.getZ()));
+                output.add(new TeslaTarget(target.getX(), target.getY() + 1.25D, target.getZ()));
                 target.heal(15.0F);
                 continue;
             }
             if (RadiationUtil.hasLegacyClassName(target, "EntityTeslaCrab")) {
-                ret.add(new TeslaTarget(target.getX(), target.getY() + 1.0D, target.getZ()));
+                output.add(new TeslaTarget(target.getX(), target.getY() + 1.0D, target.getZ()));
                 target.heal(10.0F);
                 continue;
             }
             if (RadiationUtil.hasLegacyClassName(target, "EntityCyberCrab")) {
-                ret.add(new TeslaTarget(target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ()));
+                output.add(new TeslaTarget(target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ()));
                 continue;
             }
             if (target instanceof Creeper creeper) {
                 chargeCreeper(creeper);
-                ret.add(new TeslaTarget(target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ()));
+                output.add(new TeslaTarget(target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ()));
                 continue;
             }
 
@@ -141,15 +149,25 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
             double playerOffset = source != null && target instanceof Player && level.isClientSide
                     ? target.getBbHeight()
                     : 0.0D;
-            ret.add(new TeslaTarget(target.getX(), target.getY() + target.getBbHeight() * 0.5D - playerOffset,
+            output.add(new TeslaTarget(target.getX(), target.getY() + target.getBbHeight() * 0.5D - playerOffset,
                     target.getZ()));
         }
-
-        return ret;
     }
 
     public Vec3 sourcePosition() {
-        return new Vec3(worldPosition.getX() + 0.5D, worldPosition.getY() + OFFSET, worldPosition.getZ() + 0.5D);
+        return new Vec3(sourceX(), sourceY(), sourceZ());
+    }
+
+    public double sourceX() {
+        return worldPosition.getX() + 0.5D;
+    }
+
+    public double sourceY() {
+        return worldPosition.getY() + OFFSET;
+    }
+
+    public double sourceZ() {
+        return worldPosition.getZ() + 0.5D;
     }
 
     public boolean hasTargets() {
@@ -157,7 +175,7 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
     }
 
     public List<TeslaTarget> getTargets() {
-        return List.copyOf(targets);
+        return targetsView;
     }
 
     @Override
@@ -167,13 +185,25 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
 
     @Override
     public AABB getRenderBoundingBox() {
-        Vec3 source = sourcePosition();
-        AABB box = new AABB(worldPosition).minmax(new AABB(source, source)).inflate(BEAM_RENDER_PADDING);
+        double sourceX = sourceX();
+        double sourceY = sourceY();
+        double sourceZ = sourceZ();
+        double minX = Math.min(worldPosition.getX(), sourceX);
+        double minY = Math.min(worldPosition.getY(), sourceY);
+        double minZ = Math.min(worldPosition.getZ(), sourceZ);
+        double maxX = Math.max(worldPosition.getX() + 1.0D, sourceX);
+        double maxY = Math.max(worldPosition.getY() + 1.0D, sourceY);
+        double maxZ = Math.max(worldPosition.getZ() + 1.0D, sourceZ);
         for (TeslaTarget target : targets) {
-            Vec3 targetPoint = new Vec3(target.x(), target.y(), target.z());
-            box = box.minmax(new AABB(source, targetPoint).inflate(BEAM_RENDER_PADDING));
+            minX = Math.min(minX, target.x());
+            minY = Math.min(minY, target.y());
+            minZ = Math.min(minZ, target.z());
+            maxX = Math.max(maxX, target.x());
+            maxY = Math.max(maxY, target.y());
+            maxZ = Math.max(maxZ, target.z());
         }
-        return box;
+        return new AABB(minX - BEAM_RENDER_PADDING, minY - BEAM_RENDER_PADDING, minZ - BEAM_RENDER_PADDING,
+                maxX + BEAM_RENDER_PADDING, maxY + BEAM_RENDER_PADDING, maxZ + BEAM_RENDER_PADDING);
     }
 
     @Override

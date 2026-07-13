@@ -21,6 +21,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
@@ -103,6 +104,7 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
     private boolean retracting;
     private int delay;
     private boolean clientRenderInitialized;
+    private ItemStack syncRenderInput = ItemStack.EMPTY;
 
     public ElectricPressBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ELECTRIC_PRESS.get(), pos, state,
@@ -206,13 +208,33 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
     }
 
     public ItemStack getRenderInputStack() {
-        ItemStack stack = items.getStackInSlot(SLOT_INPUT);
+        ItemStack stack = level != null && level.isClientSide
+                ? syncRenderInput
+                : items.getStackInSlot(SLOT_INPUT);
         if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         }
         ItemStack display = stack.copy();
         display.setCount(1);
         return display;
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineEPress#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeInt(press);
+        data.writeItem(items.getStackInSlot(SLOT_INPUT));
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        syncPress = data.readInt();
+        syncRenderInput = data.readItem();
+        turnProgress = 2;
     }
 
     public List<ItemStack> getDrops() {
@@ -275,6 +297,7 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
         delay = tag.getInt(TAG_DELAY);
 
         if (level != null && level.isClientSide) {
+            syncRenderInput = items.getStackInSlot(SLOT_INPUT).copy();
             boolean targetChanged = press != syncPress;
             syncPress = press;
             if (!clientRenderInitialized) {

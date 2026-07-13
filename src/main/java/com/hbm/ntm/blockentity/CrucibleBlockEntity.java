@@ -9,7 +9,10 @@ import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.item.FoundryScrapsItem;
 import com.hbm.ntm.menu.CrucibleMenu;
+import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.network.HbmTileSyncable;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.pollution.PollutionManager;
 import com.hbm.ntm.pollution.PollutionType;
 import com.hbm.ntm.recipe.CrucibleRecipeRuntime;
@@ -20,10 +23,12 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.util.CrucibleUtil;
 import java.util.ArrayList;
 import java.util.List;
+import java.nio.charset.StandardCharsets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -48,7 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CrucibleBlockEntity extends BlockEntity
-        implements MenuProvider, ICrucibleAcceptor, HbmTileSyncable {
+        implements MenuProvider, ICrucibleAcceptor, HbmTileSyncable, HbmLegacyLoadedTile {
     public static final int SLOT_INPUT_START = 1;
     public static final int SLOT_INPUT_END = 10;
     public static final int SLOT_COUNT = 10;
@@ -88,6 +93,7 @@ public class CrucibleBlockEntity extends BlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
+    private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private final List<MaterialStack> recipeStack = new ArrayList<>();
     private final List<MaterialStack> wasteStack = new ArrayList<>();
@@ -100,6 +106,11 @@ public class CrucibleBlockEntity extends BlockEntity
 
     public CrucibleBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CRUCIBLE.get(), pos, state);
+    }
+
+    @Override
+    public HbmLegacyLoadedTileState getLegacyLoadedTileState() {
+        return legacyLoadedTile;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, CrucibleBlockEntity crucible) {
@@ -118,9 +129,7 @@ public class CrucibleBlockEntity extends BlockEntity
                 || LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
-        level.addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE,
-                pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D,
-                (level.random.nextDouble() - 0.5D) * 0.02D, 0.08D, (level.random.nextDouble() - 0.5D) * 0.02D);
+        ParticleUtil.spawnCrucibleSootSmoke(level, pos);
     }
 
     public ItemStackHandler getItems() {
@@ -281,6 +290,7 @@ public class CrucibleBlockEntity extends BlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        writeLegacyLoadedTileNbt(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
         if (customName != null && !customName.isBlank()) {
             tag.putString(TAG_CUSTOM_NAME, customName);
@@ -295,6 +305,7 @@ public class CrucibleBlockEntity extends BlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readLegacyLoadedTileNbt(tag);
         loadInventory(tag);
         customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
         recipe = CrucibleRecipeRuntime.normalize(tag.contains(TAG_RECIPE) ? tag.getString(TAG_RECIPE) : "null");
@@ -307,6 +318,61 @@ public class CrucibleBlockEntity extends BlockEntity
         wasteStack.addAll(Mats.readList(tag.getList(TAG_WAS, net.minecraft.nbt.Tag.TAG_COMPOUND)));
         progress = tag.getInt(TAG_PROGRESS);
         heat = tag.getInt(TAG_HEAT);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityCrucible#serialize: MachineBase/LoadedBase, smelting state,
+        // FML ByteBufUtils recipe text, then recipe/waste material lists.
+        writeLegacyLoadedTileBinary(data);
+        data.writeInt(progress);
+        data.writeInt(heat);
+        writeLegacyByteBufUtilsString(data, recipe);
+        writeLegacyMaterialList(data, recipeStack);
+        writeLegacyMaterialList(data, wasteStack);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        progress = data.readInt();
+        heat = data.readInt();
+        recipe = CrucibleRecipeRuntime.normalize(readLegacyByteBufUtilsString(data));
+        readLegacyMaterialList(data, recipeStack);
+        readLegacyMaterialList(data, wasteStack);
+    }
+
+    private static void writeLegacyByteBufUtilsString(FriendlyByteBuf data, String value) {
+        byte[] bytes = (value == null ? "" : value).getBytes(StandardCharsets.UTF_8);
+        data.writeVarInt(bytes.length);
+        data.writeBytes(bytes);
+    }
+
+    private static String readLegacyByteBufUtilsString(FriendlyByteBuf data) {
+        byte[] bytes = new byte[data.readVarInt()];
+        data.readBytes(bytes);
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private static void writeLegacyMaterialList(FriendlyByteBuf data, List<MaterialStack> stacks) {
+        data.writeShort(stacks.size());
+        for (MaterialStack stack : stacks) {
+            data.writeInt(stack == null || stack.material == null ? -1 : stack.material.id);
+            data.writeInt(stack == null ? 0 : stack.amount);
+        }
+    }
+
+    private static void readLegacyMaterialList(FriendlyByteBuf data, List<MaterialStack> target) {
+        target.clear();
+        int count = data.readShort();
+        for (int i = 0; i < count; i++) {
+            int materialId = data.readInt();
+            if (materialId == -1) {
+                // TileEntityCrucible's legacy reader does not consume the paired amount here.
+                continue;
+            }
+            target.add(new MaterialStack(Mats.matById.get(materialId), data.readInt()));
+        }
     }
 
     private void loadInventory(CompoundTag tag) {

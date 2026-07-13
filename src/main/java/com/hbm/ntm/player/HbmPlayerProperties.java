@@ -467,6 +467,13 @@ public final class HbmPlayerProperties {
         syncRuntimeIfChanged(player, data);
     }
 
+    /** Client-side counterpart of the legacy faux-ladder update only. */
+    public static void tickClientRuntime(Player player) {
+        if (player != null) {
+            handleFauxLadder(player);
+        }
+    }
+
     public static void plink(Player player, SoundEvent sound, float volume, float pitch) {
         if (player == null || sound == null) {
             return;

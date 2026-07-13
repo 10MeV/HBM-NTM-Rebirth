@@ -19,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class FluidContainerRecipeCategory
-        implements IRecipeCategory<FluidContainerRecipeCategory.DisplayRecipe> {
+        implements HbmJeiRecipeCategory<FluidContainerRecipeCategory.DisplayRecipe> {
     private static final int WIDTH = 176;
     private static final int HEIGHT = 86;
     private static final ResourceLocation LEGACY_NEI_TEXTURE =
@@ -61,7 +61,7 @@ public final class FluidContainerRecipeCategory
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

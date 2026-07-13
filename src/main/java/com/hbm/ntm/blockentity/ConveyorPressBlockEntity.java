@@ -12,10 +12,12 @@ import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.PressRecipe;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.BufferUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.SimpleContainer;
@@ -224,6 +226,24 @@ public class ConveyorPressBlockEntity extends HbmEnergyBlockEntity implements Le
         } else {
             items.setStackInSlot(SLOT_STAMP, ItemStack.EMPTY);
         }
+        turnProgress = 2;
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityConveyorPress -> TileEntityMachineBase.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeDouble(press);
+        BufferUtil.writeItemStack(data, getStamp());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        syncPress = data.readDouble();
+        items.setStackInSlot(SLOT_STAMP, BufferUtil.readItemStack(data));
         turnProgress = 2;
     }
 

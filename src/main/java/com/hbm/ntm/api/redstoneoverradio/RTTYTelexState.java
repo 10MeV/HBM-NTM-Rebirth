@@ -1,6 +1,8 @@
 package com.hbm.ntm.api.redstoneoverradio;
 
 import java.util.Arrays;
+import com.hbm.ntm.util.BufferUtil;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.sounds.SoundEvents;
@@ -111,6 +113,28 @@ public class RTTYTelexState {
         rxChannel = clean(tag.getString("rxChan"));
         sendingChar = (char) tag.getInt("sendingChar");
         sending = tag.getBoolean("isSending");
+    }
+
+    /** 1.7.10 TileEntityRadioTelex runtime packet; it deliberately omits LoadedBase. */
+    public void writeLegacyWire(FriendlyByteBuf buffer) {
+        for (int index = 0; index < LINE_COUNT; index++) {
+            BufferUtil.writeString(buffer, txBuffer[index]);
+            BufferUtil.writeString(buffer, rxBuffer[index]);
+        }
+        BufferUtil.writeString(buffer, txChannel);
+        BufferUtil.writeString(buffer, rxChannel);
+        buffer.writeChar(sendingChar);
+    }
+
+    /** 1.7.10 TileEntityRadioTelex runtime packet; it deliberately omits LoadedBase. */
+    public void readLegacyWire(FriendlyByteBuf buffer) {
+        for (int index = 0; index < LINE_COUNT; index++) {
+            txBuffer[index] = truncate(BufferUtil.readString(buffer));
+            rxBuffer[index] = clean(BufferUtil.readString(buffer));
+        }
+        txChannel = clean(BufferUtil.readString(buffer));
+        rxChannel = clean(BufferUtil.readString(buffer));
+        sendingChar = buffer.readChar();
     }
 
     public String txChannel() {

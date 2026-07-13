@@ -15,14 +15,24 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @OnlyIn(Dist.CLIENT)
 public class LegacyDebrisParticle extends Particle {
     private static final AtomicInteger NEXT_VISUAL_ID = new AtomicInteger();
+    private static final int FACE_NEG_X = 1;
+    private static final int FACE_POS_X = 1 << 1;
+    private static final int FACE_NEG_Y = 1 << 2;
+    private static final int FACE_POS_Y = 1 << 3;
+    private static final int FACE_NEG_Z = 1 << 4;
+    private static final int FACE_POS_Z = 1 << 5;
+    private static final int ALL_FACES = FACE_NEG_X | FACE_POS_X | FACE_NEG_Y
+            | FACE_POS_Y | FACE_NEG_Z | FACE_POS_Z;
 
     private final int visualId;
     private final int debrisSize;
+    private final float debrisHalf;
     private final DebrisCell[] cells;
     private final float pitchStep;
     private final float yawStep;
@@ -36,6 +46,7 @@ public class LegacyDebrisParticle extends Particle {
         super(level, x, y, z);
         this.visualId = NEXT_VISUAL_ID.incrementAndGet();
         this.debrisSize = Math.max(1, debrisSize);
+        this.debrisHalf = this.debrisSize * 0.5F;
         this.cells = makeCells(states, this.debrisSize);
         RandomSource turnRandom = RandomSource.create(this.visualId);
         this.pitchStep = turnRandom.nextFloat() * 10.0F;
@@ -100,8 +111,8 @@ public class LegacyDebrisParticle extends Particle {
         Quaternionf rotation = HbmDeferredParticleRenderer.scratchRotation().rotateY(pitch).rotateZ(yaw);
         int light = this.getLightColor(partialTick);
 
-        for (DebrisCell cell : this.cells) {
-            renderBlockCube(consumer, rotation, light, x, y, z, cell);
+        for (int index = 0; index < this.cells.length; index++) {
+            renderBlockCube(consumer, rotation, light, x, y, z, this.cells[index]);
         }
     }
 
@@ -117,25 +128,38 @@ public class LegacyDebrisParticle extends Particle {
 
     private void renderBlockCube(VertexConsumer consumer, Quaternionf rotation, int light,
             float originX, float originY, float originZ, DebrisCell cell) {
-        float half = this.debrisSize * 0.5F;
+        float half = this.debrisHalf;
         float x0 = cell.x - half;
         float y0 = cell.y - half;
         float z0 = cell.z - half;
         float x1 = x0 + 1.0F;
         float y1 = y0 + 1.0F;
         float z1 = z0 + 1.0F;
-        putFace(consumer, rotation, light, cell, originX, originY, originZ,
-                x0, y0, z0, x0, y1, z0, x0, y1, z1, x0, y0, z1);
-        putFace(consumer, rotation, light, cell, originX, originY, originZ,
-                x1, y0, z0, x1, y0, z1, x1, y1, z1, x1, y1, z0);
-        putFace(consumer, rotation, light, cell, originX, originY, originZ,
-                x0, y0, z0, x0, y0, z1, x1, y0, z1, x1, y0, z0);
-        putFace(consumer, rotation, light, cell, originX, originY, originZ,
-                x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1);
-        putFace(consumer, rotation, light, cell, originX, originY, originZ,
-                x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0);
-        putFace(consumer, rotation, light, cell, originX, originY, originZ,
-                x0, y0, z1, x0, y1, z1, x1, y1, z1, x1, y0, z1);
+        int visibleFaceMask = cell.visibleFaceMask;
+        if ((visibleFaceMask & FACE_NEG_X) != 0) {
+            putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                    x0, y0, z0, x0, y1, z0, x0, y1, z1, x0, y0, z1);
+        }
+        if ((visibleFaceMask & FACE_POS_X) != 0) {
+            putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                    x1, y0, z0, x1, y0, z1, x1, y1, z1, x1, y1, z0);
+        }
+        if ((visibleFaceMask & FACE_NEG_Y) != 0) {
+            putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                    x0, y0, z0, x0, y0, z1, x1, y0, z1, x1, y0, z0);
+        }
+        if ((visibleFaceMask & FACE_POS_Y) != 0) {
+            putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                    x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1);
+        }
+        if ((visibleFaceMask & FACE_NEG_Z) != 0) {
+            putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                    x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0);
+        }
+        if ((visibleFaceMask & FACE_POS_Z) != 0) {
+            putFace(consumer, rotation, light, cell, originX, originY, originZ,
+                    x0, y0, z1, x0, y1, z1, x1, y1, z1, x1, y0, z1);
+        }
     }
 
     private void putFace(VertexConsumer consumer, Quaternionf rotation, int light, DebrisCell cell,
@@ -151,8 +175,10 @@ public class LegacyDebrisParticle extends Particle {
     }
 
     private static DebrisCell[] makeCells(BlockState[] states, int debrisSize) {
-        java.util.ArrayList<DebrisCell> cells = new java.util.ArrayList<>();
         int size = Math.max(1, debrisSize);
+        int cellLimit = Math.min(states.length, size * size * size);
+        DebrisCell[] cells = new DebrisCell[cellLimit];
+        int cellCount = 0;
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 for (int z = 0; z < size; z++) {
@@ -167,11 +193,38 @@ public class LegacyDebrisParticle extends Particle {
                     TextureAtlasSprite sprite = Minecraft.getInstance().getBlockRenderer()
                             .getBlockModelShaper()
                             .getParticleIcon(state);
-                    cells.add(new DebrisCell(x, y, z, sprite));
+                    cells[cellCount++] = new DebrisCell(x, y, z, sprite,
+                            visibleFaceMask(states, size, x, y, z, state));
                 }
             }
         }
-        return cells.toArray(DebrisCell[]::new);
+        return cellCount == cells.length ? cells : Arrays.copyOf(cells, cellCount);
+    }
+
+    private static int visibleFaceMask(BlockState[] states, int size, int x, int y, int z, BlockState state) {
+        if (!state.canOcclude()) {
+            return ALL_FACES;
+        }
+        int mask = ALL_FACES;
+        if (isOccludingCell(states, size, x - 1, y, z)) mask &= ~FACE_NEG_X;
+        if (isOccludingCell(states, size, x + 1, y, z)) mask &= ~FACE_POS_X;
+        if (isOccludingCell(states, size, x, y - 1, z)) mask &= ~FACE_NEG_Y;
+        if (isOccludingCell(states, size, x, y + 1, z)) mask &= ~FACE_POS_Y;
+        if (isOccludingCell(states, size, x, y, z - 1)) mask &= ~FACE_NEG_Z;
+        if (isOccludingCell(states, size, x, y, z + 1)) mask &= ~FACE_POS_Z;
+        return mask;
+    }
+
+    private static boolean isOccludingCell(BlockState[] states, int size, int x, int y, int z) {
+        if (x < 0 || y < 0 || z < 0 || x >= size || y >= size || z >= size) {
+            return false;
+        }
+        int index = (x * size + y) * size + z;
+        if (index < 0 || index >= states.length) {
+            return false;
+        }
+        BlockState neighbor = states[index];
+        return neighbor != null && !neighbor.isAir() && neighbor.canOcclude();
     }
 
     private static final class DebrisCell {
@@ -185,8 +238,9 @@ public class LegacyDebrisParticle extends Particle {
         private final float red;
         private final float green;
         private final float blue;
+        private final int visibleFaceMask;
 
-        private DebrisCell(int x, int y, int z, TextureAtlasSprite sprite) {
+        private DebrisCell(int x, int y, int z, TextureAtlasSprite sprite, int visibleFaceMask) {
             this.x = x;
             this.y = y;
             this.z = z;
@@ -197,6 +251,7 @@ public class LegacyDebrisParticle extends Particle {
             this.red = 1.0F;
             this.green = 1.0F;
             this.blue = 1.0F;
+            this.visibleFaceMask = visibleFaceMask;
         }
     }
 }

@@ -1,33 +1,22 @@
 package com.hbm.ntm.radiation;
 
-import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.CrateBlock;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.world.level.block.Block;
 
 import java.util.List;
-import java.util.Set;
 
 public class ContainerRadiationHazardTransformer implements HazardTransformer {
-    private static final int MAX_CONTAINER_SCAN_SLOTS = 108;
     private static final int STORAGE_CRATE_SCAN_SLOTS = 104;
     private static final int TOOLBOX_SCAN_SLOTS = 24;
     private static final int LEAD_BOX_SCAN_SLOTS = 20;
     private static final int PLASTIC_BAG_SCAN_SLOTS = 1;
-    private static final Set<String> STORAGE_CRATE_NAMES = Set.of(
-            "crate_iron",
-            "crate_steel",
-            "crate_desh",
-            "crate_tungsten",
-            "safe"
-    );
-
     @Override
     public void transformPost(ItemStack stack, List<HazardEntry> entries) {
         if (!stack.hasTag()) {
@@ -35,6 +24,9 @@ public class ContainerRadiationHazardTransformer implements HazardTransformer {
         }
 
         ContainerKind kind = ContainerKind.of(stack.getItem());
+        if (kind == null) {
+            return;
+        }
         float radiation = kind.readRadiation(stack.getTag());
         radiation = kind.transform(radiation);
         if (radiation > 0.0F) {
@@ -70,13 +62,7 @@ public class ContainerRadiationHazardTransformer implements HazardTransformer {
         return (float) (Math.sqrt(value + 1.0D / ((value + 2.0D) * (value + 2.0D))) - 1.0D / (value + 2.0D));
     }
 
-    private static boolean hasLegacyName(Item item, Set<String> names) {
-        ResourceLocation key = ForgeRegistries.ITEMS.getKey(item);
-        return key != null && HbmNtm.MOD_ID.equals(key.getNamespace()) && names.contains(key.getPath());
-    }
-
     private enum ContainerKind {
-        DEFAULT(MAX_CONTAINER_SCAN_SLOTS),
         STORAGE_CRATE(STORAGE_CRATE_SCAN_SLOTS),
         TOOLBOX(TOOLBOX_SCAN_SLOTS),
         LEAD_BOX(LEAD_BOX_SCAN_SLOTS),
@@ -89,7 +75,7 @@ public class ContainerRadiationHazardTransformer implements HazardTransformer {
         }
 
         private static ContainerKind of(Item item) {
-            if (hasLegacyName(item, STORAGE_CRATE_NAMES)) {
+            if (Block.byItem(item) instanceof CrateBlock) {
                 return STORAGE_CRATE;
             }
             if (item == ModItems.TOOLBOX.get()) {
@@ -101,18 +87,13 @@ public class ContainerRadiationHazardTransformer implements HazardTransformer {
             if (item == ModItems.PLASTIC_BAG.get()) {
                 return PLASTIC_BAG;
             }
-            return DEFAULT;
-        }
-
-        private int scanSlots() {
-            return scanSlots;
+            return null;
         }
 
         private float readRadiation(CompoundTag tag) {
             return switch (this) {
                 case STORAGE_CRATE -> readLegacySlotRadiation(tag, scanSlots);
                 case TOOLBOX, LEAD_BOX, PLASTIC_BAG -> readLegacyItemInventoryRadiation(tag, scanSlots);
-                default -> readLegacySlotRadiation(tag, scanSlots) + readLegacyItemInventoryRadiation(tag, scanSlots);
             };
         }
 
@@ -120,7 +101,7 @@ public class ContainerRadiationHazardTransformer implements HazardTransformer {
             return switch (this) {
                 case LEAD_BOX -> squirt(radiation);
                 case PLASTIC_BAG -> radiation * 2.0F;
-                default -> radiation;
+                case STORAGE_CRATE, TOOLBOX -> radiation;
             };
         }
     }

@@ -12,6 +12,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.MixerMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
@@ -25,6 +26,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -168,6 +170,34 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
             mixer.rotation -= 360.0F;
             mixer.prevRotation -= 360.0F;
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // 1.7.10 TileEntityMachineMixer#serialize.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeInt(processTime);
+        data.writeInt(progress);
+        data.writeInt(recipeIndex);
+        data.writeBoolean(wasOn);
+        LegacyFluidTankPacket.write(data, inputTank1);
+        LegacyFluidTankPacket.write(data, inputTank2);
+        LegacyFluidTankPacket.write(data, outputTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        // Rotation remains client-local, while its wasOn/tank source is the old server packet.
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        processTime = data.readInt();
+        progress = data.readInt();
+        recipeIndex = data.readInt();
+        wasOn = data.readBoolean();
+        LegacyFluidTankPacket.read(data, inputTank1);
+        LegacyFluidTankPacket.read(data, inputTank2);
+        LegacyFluidTankPacket.read(data, outputTank);
     }
 
     private boolean tickRecipe(Level level) {

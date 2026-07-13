@@ -10,6 +10,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.LaserWavelength;
 import com.hbm.ntm.menu.SilexMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
@@ -17,6 +18,7 @@ import com.hbm.ntm.recipe.SilexRecipe;
 import com.hbm.ntm.recipe.SilexRecipeRuntime;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.BufferUtil;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +26,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -373,6 +376,28 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntitySILEX#serialize: MachineBase/LoadedBase, fill, progress,
+        // wavelength, tank, then the singular ComparableStack source if filled.
+        writeLegacyLoadedTileBinary(data);
+        data.writeInt(currentFill);
+        data.writeInt(progress);
+        BufferUtil.writeString(data, mode.name());
+        LegacyFluidTankPacket.write(data, tank);
+        writeLegacyCurrentSource(data);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        currentFill = Math.max(0, data.readInt());
+        progress = Math.max(0, data.readInt());
+        mode = LaserWavelength.valueOf(BufferUtil.readString(data));
+        LegacyFluidTankPacket.read(data, tank);
+        readLegacyCurrentSource(data);
+    }
+
+    @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
     }
@@ -429,5 +454,40 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
             currentStack = item == null ? ItemStack.EMPTY : new ItemStack(item);
             currentFluid = HbmFluids.NONE;
         }
+    }
+
+    /**
+     * The old packet writes ComparableStack as an item registry id plus meta.
+     * Direct-fluid SILEX sources were represented by fluid_icon + FluidType id;
+     * the modern split currentFluid/currentStack state is restored at this edge.
+     */
+    private void writeLegacyCurrentSource(FriendlyByteBuf data) {
+        if (currentFill <= 0) {
+            return;
+        }
+        if (!currentStack.isEmpty()) {
+            data.writeInt(Item.getId(currentStack.getItem()));
+            data.writeInt(0);
+            return;
+        }
+        data.writeInt(Item.getId(ModItems.FLUID_ICON.get()));
+        data.writeInt(currentFluid.getId());
+    }
+
+    private void readLegacyCurrentSource(FriendlyByteBuf data) {
+        if (currentFill <= 0) {
+            clearCurrent();
+            return;
+        }
+        int legacyItem = data.readInt();
+        int legacyMeta = data.readInt();
+        if (legacyItem == Item.getId(ModItems.FLUID_ICON.get())) {
+            currentFluid = HbmFluids.fromId(legacyMeta);
+            currentStack = ItemStack.EMPTY;
+            return;
+        }
+        Item item = Item.byId(legacyItem);
+        currentStack = item == null ? ItemStack.EMPTY : new ItemStack(item);
+        currentFluid = HbmFluids.NONE;
     }
 }

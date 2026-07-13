@@ -314,15 +314,19 @@ public class StirlingBlockEntity extends HbmEnergyBlockEntity implements HbmPers
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityStirling deliberately does not call a parent serializer.
+        // Its rotor and cog visibility consume precisely these three values.
+        data.writeLong(powerBuffer);
+        data.writeInt(heat);
+        data.writeBoolean(hasCog);
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
-        }
+        powerBuffer = Math.max(0L, data.readLong());
+        heat = Math.max(0, data.readInt());
+        hasCog = data.readBoolean();
+        refreshEnergyState();
     }
 
     @Override

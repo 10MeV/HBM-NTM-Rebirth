@@ -19,6 +19,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemBlueprints;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
@@ -36,6 +37,7 @@ import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.BufferUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -447,14 +449,47 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(getClientSyncTag());
+        // TileEntityMachineAssemblyFactory#serialize. Module state is ordered after all shared tanks
+        // and processing flags, exactly as the legacy client animation and GUI consumed it.
+        writeLegacyLoadedTileBinary(data);
+        for (HbmFluidTank tank : inputTanks) {
+            LegacyFluidTankPacket.write(data, tank);
+        }
+        for (HbmFluidTank tank : outputTanks) {
+            LegacyFluidTankPacket.write(data, tank);
+        }
+        LegacyFluidTankPacket.write(data, water);
+        LegacyFluidTankPacket.write(data, spentSteam);
+        data.writeLong(energy.getPower());
+        data.writeLong(energy.getMaxPower());
+        for (boolean processing : didProcess) {
+            data.writeBoolean(processing);
+        }
+        for (int i = 0; i < MODULES; i++) {
+            data.writeDouble(progress[i]);
+            BufferUtil.writeString(data, selectedRecipes[i]);
+        }
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            handleClientSyncTag(tag);
+        readLegacyLoadedTileBinary(data);
+        for (HbmFluidTank tank : inputTanks) {
+            LegacyFluidTankPacket.read(data, tank);
+        }
+        for (HbmFluidTank tank : outputTanks) {
+            LegacyFluidTankPacket.read(data, tank);
+        }
+        LegacyFluidTankPacket.read(data, water);
+        LegacyFluidTankPacket.read(data, spentSteam);
+        energy.setPower(data.readLong());
+        energy.setMaxPower(Math.max(DEFAULT_MAX_POWER, data.readLong()));
+        for (int i = 0; i < MODULES; i++) {
+            didProcess[i] = data.readBoolean();
+        }
+        for (int i = 0; i < MODULES; i++) {
+            progress[i] = data.readDouble();
+            selectedRecipes[i] = GenericMachineRecipeSelector.normalize(BufferUtil.readString(data));
         }
     }
 

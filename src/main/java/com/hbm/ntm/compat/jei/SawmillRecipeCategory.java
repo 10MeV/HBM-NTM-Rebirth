@@ -22,7 +22,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 
-public final class SawmillRecipeCategory implements IRecipeCategory<SawmillJeiRecipe> {
+public final class SawmillRecipeCategory implements HbmJeiRecipeCategory<SawmillJeiRecipe> {
     private static final TagKey<Item> WOODEN_RODS =
             ItemTags.create(new ResourceLocation("forge", "rods/wooden"));
 
@@ -68,7 +68,7 @@ public final class SawmillRecipeCategory implements IRecipeCategory<SawmillJeiRe
     }
 
     @Override
-    public IDrawable getBackground() {
+    public IDrawable getRecipeBackground() {
         return background;
     }
 

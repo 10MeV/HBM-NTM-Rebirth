@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:circuit_basic" },
+    "P": { "tag": "forge:plates/steel" },
+    "T": { "tag": "forge:ingots/any_high_explosive" }
+  },
+  "pattern": [" C ", "PTP"],
+  "result": { "item": "hbm_ntm_rebirth:mine_he" },
+  "show_notification": true
+}

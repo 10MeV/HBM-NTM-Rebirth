@@ -9,6 +9,7 @@ import com.hbm.ntm.fluid.HbmFluidPortLayouts.LegacyPort;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes;
 import com.hbm.ntm.fluid.LegacyOilFluidRecipes.TripleRecipe;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
@@ -18,6 +19,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -209,5 +211,27 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
         if (tag.contains("o3")) {
             hydrogenTank.readFromNbt(tag, "o3");
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineCatalyticReformer#serialize: MachineBase/LoadedBase,
+        // current power, then its four process tanks.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, reformateTank);
+        LegacyFluidTankPacket.write(data, petroleumTank);
+        LegacyFluidTankPacket.write(data, hydrogenTank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, reformateTank);
+        LegacyFluidTankPacket.read(data, petroleumTank);
+        LegacyFluidTankPacket.read(data, hydrogenTank);
     }
 }

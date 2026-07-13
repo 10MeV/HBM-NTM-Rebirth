@@ -29,6 +29,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.io.IOException;
@@ -723,27 +724,12 @@ public final class PollutionManager {
 
     private static boolean isLegacyLeafOrPlant(BlockState state) {
         return state.is(BlockTags.LEAVES)
-                || isLegacyPlantMaterial(state)
-                || isLegacyVineMaterial(state);
+                || isLegacyPlantMaterial(state);
     }
 
     private static boolean isLegacyPlantMaterial(BlockState state) {
-        return state.is(Blocks.GRASS)
-                || state.is(Blocks.TALL_GRASS)
-                || state.is(Blocks.FERN)
-                || state.is(Blocks.LARGE_FERN)
-                || state.is(Blocks.DEAD_BUSH)
-                || state.is(BlockTags.FLOWERS)
-                || state.is(BlockTags.SAPLINGS)
-                || state.is(BlockTags.CROPS);
-    }
-
-    private static boolean isLegacyVineMaterial(BlockState state) {
-        return state.is(Blocks.VINE)
-                || state.is(Blocks.TWISTING_VINES)
-                || state.is(Blocks.TWISTING_VINES_PLANT)
-                || state.is(Blocks.WEEPING_VINES)
-                || state.is(Blocks.WEEPING_VINES_PLANT);
+        // 1.7.10's Material.plants covers every BlockBush subclass plus reeds.
+        return state.getBlock() instanceof BushBlock || state.is(Blocks.SUGAR_CANE);
     }
 
     private static boolean isPollutionGridLoaded(ServerLevel level, PollutionGridPos pos) {

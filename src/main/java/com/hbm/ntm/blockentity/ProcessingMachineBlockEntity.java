@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.ProcessingMachineMenu;
@@ -555,14 +556,35 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        writeLegacyLoadedTileBinary(data);
+        if (kind == Kind.CENTRIFUGE) {
+            // TileEntityMachineCentrifuge#serialize.
+            data.writeLong(energy.getPower());
+            data.writeInt(progress);
+            data.writeBoolean(isOn);
+        } else {
+            // TileEntityMachineCrystallizer#serialize.
+            data.writeShort((short) progress);
+            data.writeShort((short) duration);
+            data.writeLong(energy.getPower());
+            data.writeBoolean(isOn);
+            LegacyFluidTankPacket.write(data, crystallizerTank);
+        }
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
-        CompoundTag tag = data.readNbt();
-        if (tag != null) {
-            load(tag);
+        readLegacyLoadedTileBinary(data);
+        if (kind == Kind.CENTRIFUGE) {
+            energy.setPower(data.readLong());
+            progress = data.readInt();
+            isOn = data.readBoolean();
+        } else {
+            progress = data.readShort();
+            duration = Math.max(1, data.readShort());
+            energy.setPower(data.readLong());
+            isOn = data.readBoolean();
+            LegacyFluidTankPacket.read(data, crystallizerTank);
         }
     }
 
