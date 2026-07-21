@@ -20,17 +20,26 @@ public class SatelliteDesignatorItem extends SatelliteChipItem {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        // ItemSatDesignator was invoked through 1.7.10's sole held-item slot.
+        // Keep the modern off hand from becoming a second source-less remote.
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResultHolder.pass(stack);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             Satellite satellite = SatelliteSavedData.get(serverPlayer.serverLevel()).getSatellite(getFrequency(stack));
             if (satellite != null) {
-                BlockHitResult hit = RayTraceUtil.rayTrace(serverPlayer, 300.0D, 1.0F);
-                if (hit.getType() == HitResult.Type.BLOCK) {
+                BlockHitResult hit = RayTraceUtil.rayTraceLegacyLastUncollidable(serverPlayer, 300.0D, 1.0F);
+                if (hit != null && (hit.getType() == HitResult.Type.BLOCK || hit.getType() == HitResult.Type.MISS)) {
                     Direction direction = hit.getDirection();
                     BlockPos target = hit.getBlockPos().relative(direction);
                     if (satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_COORD) {
-                        satellite.tryCoordAction(serverPlayer.serverLevel(), serverPlayer, target.getX(), target.getY(), target.getZ());
+                        // ItemSatDesignator invoked the legacy virtual action;
+                        // do not narrow public registered satellites to the
+                        // optional modern try... result API.
+                        satellite.onCoordAction(serverPlayer.serverLevel(), serverPlayer,
+                                target.getX(), target.getY(), target.getZ());
                     } else if (satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_PANEL) {
-                        satellite.tryClick(serverPlayer.serverLevel(), target.getX(), target.getZ());
+                        satellite.onClick(serverPlayer.serverLevel(), target.getX(), target.getZ());
                     }
                 }
             }

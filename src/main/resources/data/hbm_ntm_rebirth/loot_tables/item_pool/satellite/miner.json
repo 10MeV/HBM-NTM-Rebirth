@@ -385,7 +385,8 @@
               "function": "minecraft:set_count"
             }
           ],
-          "name": "hbm_ntm_rebirth:crystal_trixite"
+          "name": "hbm_ntm_rebirth:crystal_trixite",
+          "weight": 1
         },
         {
           "type": "minecraft:item",
@@ -400,7 +401,8 @@
               "function": "minecraft:set_count"
             }
           ],
-          "name": "hbm_ntm_rebirth:crystal_starmetal"
+          "name": "hbm_ntm_rebirth:crystal_starmetal",
+          "weight": 1
         },
         {
           "type": "minecraft:item",
@@ -421,6 +423,5 @@
       ],
       "rolls": 1.0
     }
-  ],
-  "random_sequence": "hbm_ntm_rebirth:item_pool/satellite/miner"
+  ]
 }

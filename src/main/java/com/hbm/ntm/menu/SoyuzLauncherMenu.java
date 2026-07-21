@@ -2,7 +2,6 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.SoyuzLauncherBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
-import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -16,12 +15,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.items.SlotItemHandler;
 
 public class SoyuzLauncherMenu extends AbstractContainerMenu {
     private static final int MACHINE_SLOT_COUNT = SoyuzLauncherBlockEntity.SLOT_COUNT;
     private static final int PLAYER_INVENTORY_START = MACHINE_SLOT_COUNT;
-    private static final int PLAYER_SLOT_END = PLAYER_INVENTORY_START + 36;
 
     private final SoyuzLauncherBlockEntity blockEntity;
     private long power;
@@ -47,29 +44,31 @@ public class SoyuzLauncherMenu extends AbstractContainerMenu {
         super(ModMenuTypes.SOYUZ_LAUNCHER.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_ROCKET, 62, 18) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return stack.is(ModItems.MISSILE_SOYUZ.get());
-            }
-        });
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_DESIGNATOR, 62, 36));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                SoyuzLauncherBlockEntity.SLOT_ROCKET, 62, 18));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                SoyuzLauncherBlockEntity.SLOT_DESIGNATOR, 62, 36));
         addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SoyuzLauncherBlockEntity.SLOT_SATELLITE, 116, 18));
         addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 SoyuzLauncherBlockEntity.SLOT_ORBITAL, 116, 36));
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_KEROSENE_INPUT, 8, 90));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_KEROSENE_OUTPUT, 8, 108));
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_OXYGEN_INPUT, 26, 90));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_OXYGEN_OUTPUT, 26, 108));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), SoyuzLauncherBlockEntity.SLOT_BATTERY, 44, 108) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                SoyuzLauncherBlockEntity.SLOT_KEROSENE_INPUT, 8, 90));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                SoyuzLauncherBlockEntity.SLOT_KEROSENE_OUTPUT, 8, 108));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                SoyuzLauncherBlockEntity.SLOT_OXYGEN_INPUT, 26, 90));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                SoyuzLauncherBlockEntity.SLOT_OXYGEN_OUTPUT, 26, 108));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                SoyuzLauncherBlockEntity.SLOT_BATTERY, 44, 108));
+        for (int row = 0; row < 3; row++) {
+            for (int column = 0; column < 6; column++) {
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
+                        SoyuzLauncherBlockEntity.SLOT_CARGO_START + column + row * 6,
+                        62 + column * 18, 72 + row * 18));
             }
-        });
-        HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(),
-                SoyuzLauncherBlockEntity.SLOT_CARGO_START, 62, 72, 3, 6);
+        }
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 140, 198);
         addDataSlots();
     }
@@ -148,14 +147,36 @@ public class SoyuzLauncherMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 128.0D);
     }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                SoyuzLauncherBlockEntity.SLOT_ROCKET, SoyuzLauncherBlockEntity.SLOT_ROCKET + 1);
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        var sourceSlot = slots.get(index);
+        if (sourceSlot == null || !sourceSlot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack sourceStack = sourceSlot.getItem();
+        ItemStack result = sourceStack.copy();
+        // ContainerSoyuzLauncher used `par2 <= 27`, not the usual machine-slot
+        // boundary.  Consequently every machine slot and the first player menu
+        // slot merge through [9, end) in reverse; only later player slots try
+        // the rocket slot.  This odd overlap is observable and must not be
+        // normalized to the generic modern quick-move policy.
+        boolean moved = index <= PLAYER_INVENTORY_START
+                ? HbmInventoryMenuHelper.legacyMergeItemStack(slots, sourceStack,
+                        SoyuzLauncherBlockEntity.SLOT_CARGO_START, slots.size(), true)
+                : HbmInventoryMenuHelper.legacyMergeItemStack(slots, sourceStack,
+                        SoyuzLauncherBlockEntity.SLOT_ROCKET, SoyuzLauncherBlockEntity.SLOT_ROCKET + 1, false);
+        if (!moved) {
+            return ItemStack.EMPTY;
+        }
+        HbmInventoryMenuHelper.finishQuickMove(sourceSlot, sourceStack);
+        return result;
     }
 
     private void addDataSlots() {

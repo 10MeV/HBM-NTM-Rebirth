@@ -13,6 +13,9 @@ public final class ObjBlockModels {
     public static final LegacyWavefrontModel BARBED_WIRE = model("barbed_wire", "barbed_wire_model").noSmooth().asVBO();
     public static final LegacyWavefrontModel SPIKES = model("spikes", "spikes").noSmooth().asVBO();
     public static final LegacyWavefrontModel ANTENNA_TOP = model("antenna_top", "steel_beam").noSmooth().asVBO();
+    public static final LegacyWavefrontModel POLE_SATELLITE_RECEIVER =
+            model("pole_satellite_receiver", new ResourceLocation(HbmNtm.MOD_ID,
+                    "textures/models/pole_satellite_receiver.png")).noSmooth().asVBO();
     public static final LegacyWavefrontModel CONSERVE_CRATE = model("conservecrate", "steel_beam").noSmooth().asVBO();
     public static final LegacyWavefrontModel PIPE_RIM = model("pipe_rim", "pipe_side").noSmooth().asVBO();
     public static final LegacyWavefrontModel PIPE_QUAD = model("pipe_quad", "pipe_side").noSmooth().asVBO();

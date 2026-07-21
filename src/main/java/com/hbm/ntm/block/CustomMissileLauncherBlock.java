@@ -18,6 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -35,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implements EntityBlock, RemoteDetonatableBlock {
     private static final int[] COMPACT_DIMENSIONS = new int[] { 0, 0, 1, 1, 1, 1 };
     private static final int[] TABLE_DIMENSIONS = new int[] { 0, 0, 4, 4, 4, 4 };
-    private static final VoxelShape COMPACT_SHAPE = Shapes.box(-1.0D, 0.0D, -1.0D, 2.0D, 1.0D, 2.0D).optimize();
-    private static final VoxelShape TABLE_SHAPE = Shapes.box(-4.0D, 0.0D, -4.0D, 5.0D, 1.0D, 5.0D).optimize();
-
     private final Kind kind;
 
     public CustomMissileLauncherBlock(Properties properties, Kind kind) {
@@ -70,6 +68,44 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
                 .withProxyOffsets(compactLauncherProxyOffsets(), LegacyProxyMode.combo(true, true, true));
     }
 
+    @Override
+    public boolean canPlaceDirectMultiblock(Level level, BlockPos corePos, BlockPos temporaryPos, BlockState state) {
+        if (kind != Kind.LAUNCH_TABLE) {
+            return super.canPlaceDirectMultiblock(level, corePos, temporaryPos, state);
+        }
+
+        // LaunchTable#onBlockPlacedBy only probes the 8x8 non-cross positions
+        // before it overwrites the two centre axes with plate/port dummies.  Do
+        // not turn those source-backed destructive placements into a modern
+        // placement rejection.
+        if (!isReplaceableOrTemporary(level, corePos, temporaryPos)) {
+            return false;
+        }
+        for (int x = -4; x <= 4; x++) {
+            for (int z = -4; z <= 4; z++) {
+                if (x != 0 && z != 0
+                        && !isReplaceableOrTemporary(level, corePos.offset(x, 0, z), temporaryPos)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void completeDirectMultiblockPlacement(Level level, BlockPos corePos, BlockState state,
+            @Nullable net.minecraft.world.entity.LivingEntity placer, ItemStack stack) {
+        if (!level.isClientSide && kind == Kind.LAUNCH_TABLE) {
+            // LaunchTable#onBlockPlacedBy only rejects the 8x8 non-cross cells,
+            // then overwrites both centre axes with its plate/port dummy blocks.
+            // MultiblockHelper deliberately does not overwrite non-replaceable
+            // blocks, so clear those source-authorized destructive cells first.
+            clearLegacyLaunchCross(level, corePos);
+            clearLegacyLaunchColumn(level, corePos, state.getValue(FACING));
+        }
+        super.completeDirectMultiblockPlacement(level, corePos, state, placer, stack);
+    }
+
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
@@ -81,6 +117,12 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // LaunchTable/CompactLauncher only opened their GUI for non-sneaking
+        // players.  Preserve the server-side false branch as a modern PASS so
+        // a held item can receive the interaction.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof CustomMissileLauncherBlockEntity launcher) {
             NetworkHooks.openScreen(serverPlayer, launcher, launcher.getBlockPos());
@@ -128,13 +170,24 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
     @Override
     public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
-        return kind == Kind.LAUNCH_TABLE ? TABLE_SHAPE : COMPACT_SHAPE;
+        // LaunchTable keeps BlockContainer's local one-block bounds.  CompactLauncher
+        // explicitly sets its core bounds to y=1..1; its visible footprint is made
+        // of local plate/port dummies, not a forwarded 3x3 selection box.
+        return kind == Kind.LAUNCH_TABLE ? Shapes.block() : Shapes.empty();
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        // LegacyXrMultiblockBlock inherits HorizontalMachineBlock's full selection
+        // shape.  CompactLauncher overrides that inherited shape in 1.7.10 with
+        // setBlockBounds(0, 1, 0, 1, 1, 1), which is an empty modern VoxelShape.
+        return getMultiblockShape(state, level, pos, context);
     }
 
     @Override
     public VoxelShape getMultiblockCollisionShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
-        return kind == Kind.LAUNCH_TABLE ? TABLE_SHAPE : Shapes.empty();
+        return kind == Kind.LAUNCH_TABLE ? Shapes.block() : Shapes.empty();
     }
 
     @Override
@@ -194,6 +247,35 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
             }
         }
         return offsets;
+    }
+
+    private static boolean isReplaceableOrTemporary(Level level, BlockPos pos, BlockPos temporaryPos) {
+        return level.hasChunkAt(pos) && (pos.equals(temporaryPos) || level.getBlockState(pos).canBeReplaced());
+    }
+
+    private static void clearLegacyLaunchColumn(Level level, BlockPos corePos, Direction facing) {
+        // Old yaw directions 0/1/2/3 become modern core facings N/E/S/W.  The
+        // legacy +X/+Z/-X/-Z clearance column is therefore facing.clockWise().
+        BlockPos column = corePos.relative(facing.getClockWise(), 3);
+        int minBuildHeight = level.getMinBuildHeight();
+        int maxBuildHeight = level.getMaxBuildHeight();
+        for (int offset = 1; offset < 12; offset++) {
+            int y = corePos.getY() + offset;
+            if (y >= minBuildHeight && y < maxBuildHeight) {
+                level.setBlock(new BlockPos(column.getX(), y, column.getZ()), Blocks.AIR.defaultBlockState(),
+                        Block.UPDATE_ALL);
+            }
+        }
+    }
+
+    private static void clearLegacyLaunchCross(Level level, BlockPos corePos) {
+        for (int offset = -4; offset <= 4; offset++) {
+            if (offset == 0) {
+                continue;
+            }
+            level.setBlock(corePos.offset(offset, 0, 0), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            level.setBlock(corePos.offset(0, 0, offset), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        }
     }
 
     private static List<BlockPos> compactLauncherProxyOffsets() {

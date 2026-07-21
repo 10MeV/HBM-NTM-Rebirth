@@ -11,14 +11,14 @@ import java.util.function.Supplier;
 
 public record ClientPanelDataPacket(ResourceLocation panelType, int legacyType, CompoundTag data) implements HbmPreparablePacket {
     public ClientPanelDataPacket {
-        data = data == null ? new CompoundTag() : data.copy();
+        data = data == null ? null : data.copy();
     }
 
     public static ClientPanelDataPacket decode(FriendlyByteBuf buffer) {
         ResourceLocation panelType = buffer.readResourceLocation();
         int legacyType = buffer.readVarInt();
         CompoundTag tag = buffer.readNbt();
-        return new ClientPanelDataPacket(panelType, legacyType, tag == null ? new CompoundTag() : tag);
+        return new ClientPanelDataPacket(panelType, legacyType, tag);
     }
 
     public static void encode(ClientPanelDataPacket packet, FriendlyByteBuf buffer) {

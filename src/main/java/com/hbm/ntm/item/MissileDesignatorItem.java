@@ -44,6 +44,11 @@ public class MissileDesignatorItem extends Item implements DesignatorItem, HbmIt
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
+        // 1.7.10's EntityPlayer#getHeldItem() exposed only the main hand.  Do
+        // not turn the modern off hand into a second target-designation path.
+        if (context.getHand() != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
+        }
         if (mode != Mode.BLOCK) {
             return InteractionResult.PASS;
         }
@@ -62,6 +67,12 @@ public class MissileDesignatorItem extends Item implements DesignatorItem, HbmIt
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        // All legacy designator variants used the sole held-item slot.  This
+        // covers both range/manual right-click behavior and keeps BLOCK's air
+        // use from claiming the modern off hand.
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResultHolder.pass(stack);
+        }
         if (mode == Mode.MANUAL) {
             if (level.isClientSide) {
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
@@ -87,7 +98,8 @@ public class MissileDesignatorItem extends Item implements DesignatorItem, HbmIt
     @Override
     public boolean canReceiveItemAction(ServerPlayer player, InteractionHand hand, ItemStack stack,
                                         ResourceLocation actionType, CompoundTag data) {
-        return mode == Mode.MANUAL && HbmNetworkActions.DESIGNATOR.equals(actionType);
+        return hand == InteractionHand.MAIN_HAND && mode == Mode.MANUAL
+                && HbmNetworkActions.DESIGNATOR.equals(actionType);
     }
 
     @Override

@@ -1,9 +1,12 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.ntl.PneumaticConnector;
+import com.hbm.ntm.client.ClientGeometryInvalidationBridge;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidConnectionUtil;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.menu.PneumaticTubeMenu;
@@ -33,6 +36,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -41,6 +47,7 @@ import java.util.Set;
 
 public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity implements MenuProvider,
         HbmStandardFluidReceiver, PneumaticEndpoint, PneumaticConnector, HbmLegacyControlReceiver {
+    public static final ModelProperty<PneumaticTubeRenderData> RENDER_DATA_PROPERTY = new ModelProperty<>();
     public static final int FILTER_SLOTS = 15;
     public static final int AIR_CAPACITY = 4_000;
     public static final int AIR_COST_PER_SEND = 50;
@@ -107,41 +114,36 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
             return;
         }
 
+        // Legacy TileEntityPneumoTube runs all compressor work before its
+        // independent endpoint-registration pass.  In particular, a failed
+        // compressor send never suppresses receiver registration below.
+        if (isCompressor() && !isRedstoneBlocked()
+                && isLegacyCompressorSendTick(level.getGameTime(), worldPosition)
+                && compair().getFill() >= AIR_COST_PER_SEND) {
+            Optional<PneumaticItemAccess> source = PneumaticUtil.sourceAccess(level, worldPosition, insertionDirection);
+            if (source.isPresent()) {
+                boolean sent = pneumaticNode.getPneumaticNet().send(
+                        source.get(),
+                        this,
+                        sendOrder,
+                        receiveOrder,
+                        PneumaticUtil.rangeForPressure(compair().getPressure()),
+                        sendCounter);
+                sendCounter++;
+                if (sent) {
+                    compair().drain(AIR_COST_PER_SEND, false);
+                    setChanged();
+                    if (soundDelay <= 0) {
+                        LegacySoundPlayer.playLegacyTubeFwoomp(level, worldPosition, 0.25F, 0.9F, 0.2F);
+                        soundDelay = 20;
+                    }
+                }
+            }
+        }
+
         if (isEndpoint() && level.getGameTime() % RECEIVER_INTERVAL_TICKS == 0L) {
             PneumaticUtil.receiver(level, worldPosition, ejectionDirection, this)
                     .ifPresent(receiver -> pneumaticNode.getPneumaticNet().addReceiver(receiver));
-        }
-
-        if (!isCompressor() || isRedstoneBlocked()) {
-            return;
-        }
-
-        if ((level.getGameTime() + Math.abs(PneumaticUtil.identifier(worldPosition))) % SEND_INTERVAL_TICKS != 0L) {
-            return;
-        }
-        if (compair().getFill() < AIR_COST_PER_SEND) {
-            return;
-        }
-
-        Optional<PneumaticItemAccess> source = PneumaticUtil.sourceAccess(level, worldPosition, insertionDirection);
-        if (source.isEmpty()) {
-            return;
-        }
-        boolean sent = pneumaticNode.getPneumaticNet().send(
-                source.get(),
-                this,
-                sendOrder,
-                receiveOrder,
-                PneumaticUtil.rangeForPressure(compair().getPressure()),
-                sendCounter);
-        sendCounter++;
-        if (sent) {
-            compair().drain(AIR_COST_PER_SEND, false);
-            setChanged();
-            if (soundDelay <= 0) {
-                LegacySoundPlayer.playLegacyTubeFwoomp(level, worldPosition, 0.25F, 0.9F, 0.2F);
-                soundDelay = 20;
-            }
         }
     }
 
@@ -149,7 +151,10 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         if (level == null || level.isClientSide) {
             return;
         }
-        Set<Direction> connections = collectPneumaticConnections();
+        // TileEntityPneumoTube creates every PneumaticNode with all six legacy
+        // DirPos endpoints. Nodespace still requires a real reverse node at an
+        // endpoint before joining, so this is not a connection to arbitrary blocks.
+        Set<Direction> connections = PneumaticUtil.allConnections();
         if (pneumaticNode != null && !pneumaticNode.isExpired()
                 && !pneumaticNode.getConnections().equals(connections)) {
             removePneumaticNode();
@@ -176,6 +181,37 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
 
     public Direction getEjectionDirection() {
         return ejectionDirection;
+    }
+
+    /**
+     * A client-side snapshot of the exact connection categories used by the legacy tube renderer.
+     */
+    public record PneumaticTubeRenderData(int pneumaticMask, int airMask, @Nullable Direction insertion,
+                                          @Nullable Direction ejection) {
+        public boolean hasEndpoint() {
+            return insertion != null || ejection != null;
+        }
+    }
+
+    /**
+     * Keeps TileEntityPneumoTube's signed-int send phase exactly: the legacy
+     * code narrowed {@code worldTime + identifier} before taking its absolute
+     * value. Moving {@code abs} onto the identifier changes the five-tick
+     * cadence for negative coordinates and at int wraparound.
+     */
+    private static boolean isLegacyCompressorSendTick(long gameTime, BlockPos pos) {
+        int randTime = Math.abs((int) (gameTime + PneumaticUtil.identifier(pos)));
+        return randTime % SEND_INTERVAL_TICKS == 0;
+    }
+
+    @Override
+    public @NotNull ModelData getModelData() {
+        return tubeModelData().build();
+    }
+
+    protected ModelData.Builder tubeModelData() {
+        return ModelData.builder().with(RENDER_DATA_PROPERTY, new PneumaticTubeRenderData(
+                collectPneumaticConnectionMask(), collectAirConnectionMask(), insertionDirection, ejectionDirection));
     }
 
     public HbmFluidTank compair() {
@@ -303,8 +339,38 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
     }
 
     @Override
+    protected Iterable<FluidPort> getNetworkFluidPorts(FluidType type) {
+        if (type != HbmFluids.AIR || !isCompressor()) {
+            return List.of();
+        }
+        // TileEntityPneumoTube called trySubscribe(AIR, neighbor, side) for
+        // every adjacent side except its two item endpoints. These are
+        // subscription-only ports: AIR must not create an ordinary Fluid Mk2
+        // node at the tube itself.
+        List<FluidPort> ports = new java.util.ArrayList<>();
+        for (Direction side : Direction.values()) {
+            if (side != insertionDirection && side != ejectionDirection) {
+                ports.add(FluidPort.of(side.getStepX(), side.getStepY(), side.getStepZ(), side));
+            }
+        }
+        return ports;
+    }
+
+    @Override
     protected boolean shouldCreateFluidNode() {
-        return isCompressor();
+        // TileEntityPneumoTube only called trySubscribe for AIR. Its only
+        // UNINOS node was the dedicated PneumaticNode, never a Fluid MK2 core
+        // node at the tube position.
+        return false;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsNow() {
+        // Legacy compressor AIR subscriptions were refreshed precisely in the
+        // world-time % 10 branch. Do not let the generic dirty/signature
+        // policy subscribe this remote endpoint ahead of that source-backed
+        // cadence.
+        return level != null && Math.floorMod(level.getGameTime(), RECEIVER_INTERVAL_TICKS) == 0L;
     }
 
     @Override
@@ -319,6 +385,23 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
     @Override
     public boolean canConnectPneumatic(Direction side) {
         return side != null;
+    }
+
+    public boolean hasPneumaticConnection(Direction side) {
+        return side != null
+                && level != null
+                && level.getBlockEntity(worldPosition.relative(side)) instanceof PneumaticConnector connector
+                && connector.canConnectPneumatic(side.getOpposite());
+    }
+
+    public boolean hasAirConnection(Direction side) {
+        return side != null
+                && isCompressor()
+                && side != insertionDirection
+                && side != ejectionDirection
+                && level != null
+                && !(level.getBlockEntity(worldPosition.relative(side)) instanceof PneumaticTubeBlockEntity)
+                && HbmFluidConnectionUtil.canConnect(level, worldPosition, HbmFluids.AIR, this, side);
     }
 
     @Override
@@ -361,6 +444,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         soundDelay = tag.getInt(TAG_SOUND_DELAY);
         HbmItemStackUtil.loadSlottedItems(tag, TAG_FILTER, TAG_FILTER_SLOT, filter);
         pattern.readFromNbt(tag);
+        refreshTubeModelData();
     }
 
     @Override
@@ -418,12 +502,18 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
     public void onLoad() {
         super.onLoad();
         refreshPneumaticNode();
+        refreshTubeModelData();
     }
 
     @Override
     public void setRemoved() {
         removePneumaticNode();
         super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        super.onChunkUnloaded();
     }
 
     private Direction nextValidInventoryDirection(@Nullable Direction current, @Nullable Direction other) {
@@ -451,8 +541,7 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         }
         java.util.EnumSet<Direction> connections = java.util.EnumSet.noneOf(Direction.class);
         for (Direction direction : Direction.values()) {
-            if (level.getBlockEntity(worldPosition.relative(direction)) instanceof PneumaticConnector connector
-                    && connector.canConnectPneumatic(direction.getOpposite())) {
+            if (hasPneumaticConnection(direction)) {
                 connections.add(direction);
             }
         }
@@ -472,6 +561,44 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_NEIGHBORS);
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
         }
+    }
+
+    private int collectPneumaticConnectionMask() {
+        int mask = 0;
+        for (Direction direction : Direction.values()) {
+            if (hasPneumaticConnection(direction)) {
+                mask |= directionMask(direction);
+            }
+        }
+        return mask;
+    }
+
+    private int collectAirConnectionMask() {
+        int mask = 0;
+        for (Direction direction : Direction.values()) {
+            if (hasAirConnection(direction)) {
+                mask |= directionMask(direction);
+            }
+        }
+        return mask;
+    }
+
+    private void refreshTubeModelData() {
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+            ClientGeometryInvalidationBridge.scheduleWithNeighbors(worldPosition);
+        }
+    }
+
+    private static int directionMask(Direction direction) {
+        return switch (direction) {
+            case EAST -> 32;
+            case WEST -> 16;
+            case UP -> 8;
+            case DOWN -> 4;
+            case SOUTH -> 2;
+            case NORTH -> 1;
+        };
     }
 
     private void normalizeAirTank() {

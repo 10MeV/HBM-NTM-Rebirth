@@ -28,7 +28,8 @@ public class BobmazonDeliveryEntity extends Entity {
 
     public BobmazonDeliveryEntity(EntityType<? extends BobmazonDeliveryEntity> type, Level level) {
         super(type, level);
-        setNoGravity(true);
+        // EntityBobmazon only bypasses its parent update while manually moving;
+        // its legacy constructor never grants a persistent no-gravity flag.
         noCulling = true;
     }
 
@@ -43,11 +44,17 @@ public class BobmazonDeliveryEntity extends Entity {
 
     @Override
     public void tick() {
-        super.tick();
+        // EntityBobmazon overrides onUpdate without entering Entity#onUpdate.
+        // Preserve its explicit previous-position bookkeeping instead of
+        // allowing modern base ticking to advance unrelated entity state.
+        xo = getX();
+        yo = getY();
+        zo = getZ();
         setDeltaMovement(0.0D, -0.5D, 0.0D);
 
         for (int i = 0; i < 4; i++) {
-            BlockPos sample = BlockPos.containing(getX() - 0.5D, getY() + 1.0D, getZ() - 0.5D);
+            BlockPos sample = new BlockPos((int) (getX() - 0.5D), (int) (getY() + 1.0D),
+                    (int) (getZ() - 0.5D));
             if (!level().getBlockState(sample).isAir() && !level().isClientSide && entityData.get(STATUS) != 1) {
                 impact();
                 break;
@@ -61,11 +68,15 @@ public class BobmazonDeliveryEntity extends Entity {
     }
 
     public void setPayload(ItemStack payload) {
-        this.payload = payload == null ? ItemStack.EMPTY : payload.copy();
+        // EntityBobmazon stores the stack reference supplied by its caller.
+        // ItemBobmazonPacket already creates an offer copy when required,
+        // while the Lantern Behemoth path intentionally passes its fresh
+        // supplies stack directly.
+        this.payload = payload == null ? ItemStack.EMPTY : payload;
     }
 
     public ItemStack payload() {
-        return payload.copy();
+        return payload;
     }
 
     private void impact() {
@@ -73,7 +84,7 @@ public class BobmazonDeliveryEntity extends Entity {
         level().playSound(null, getX(), getY(), getZ(), ModSounds.ENTITY_OLD_EXPLOSION.get(),
                 SoundSource.BLOCKS, 10.0F, 0.5F + random.nextFloat() * 0.1F);
         if (!payload.isEmpty()) {
-            ItemEntity pack = new ItemEntity(level(), getX(), getY() + 2.0D, getZ(), payload.copy());
+            ItemEntity pack = new ItemEntity(level(), getX(), getY() + 2.0D, getZ(), payload);
             pack.setDeltaMovement(0.0D, pack.getDeltaMovement().y, 0.0D);
             level().addFreshEntity(pack);
         }
@@ -96,7 +107,7 @@ public class BobmazonDeliveryEntity extends Entity {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return distance < 500000.0D;
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

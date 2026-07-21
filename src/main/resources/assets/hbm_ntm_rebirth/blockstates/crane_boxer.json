@@ -1,8 +1,10 @@
 {
   "variants": {
     "facing=north": { "model": "hbm_ntm_rebirth:block/crane_boxer" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/crane_boxer", "y": 90 },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/crane_boxer", "y": 180 },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/crane_boxer", "y": 270 }
+    "facing=east": { "model": "hbm_ntm_rebirth:block/crane_boxer" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/crane_boxer" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/crane_boxer" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/crane_boxer" },
+    "facing=down": { "model": "hbm_ntm_rebirth:block/crane_boxer" }
   }
 }

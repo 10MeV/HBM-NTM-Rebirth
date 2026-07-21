@@ -236,7 +236,6 @@ public final class ConveyorRoutePlanner {
         LIFT(true),
         CHUTE(true),
         CRANE(true),
-        ENTERABLE(true),
         OTHER(false);
 
         private final boolean enterableTarget;

@@ -6,15 +6,13 @@ import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.ntm.block.FoundryChannelBlock;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.uninos.networkproviders.FoundryNetwork;
 import com.hbm.ntm.uninos.networkproviders.FoundryNode;
 import com.hbm.ntm.uninos.networkproviders.FoundryNodespace;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -22,6 +20,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.item.ItemStack;
 
 public class FoundryChannelBlockEntity extends FoundryBaseBlockEntity {
     private static final String TAG_FLOW = "flow";
@@ -40,6 +39,7 @@ public class FoundryChannelBlockEntity extends FoundryBaseBlockEntity {
         int oldAmount = channel.amount;
         Object oldType = channel.type;
         channel.tickServer(level);
+        channel.syncNodeMaterial(level);
         if (oldAmount != channel.amount || oldType != channel.type) {
             channel.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -71,22 +71,36 @@ public class FoundryChannelBlockEntity extends FoundryBaseBlockEntity {
     }
 
     @Override
+    public ItemStack drainAsScrap() {
+        ItemStack scrap = super.drainAsScrap();
+        if (level != null && !level.isClientSide) {
+            syncNodeMaterial(level);
+        }
+        return scrap;
+    }
+
+    @Override
     public boolean canAcceptPartialPour(Level level, BlockPos pos, net.minecraft.world.phys.Vec3 hit,
             Direction side, MaterialStack stack) {
-        return networkAccepts(level, stack) && super.canAcceptPartialPour(level, pos, hit, side, stack);
+        FoundryNode node = ensureNode(level);
+        return node != null && networkAccepts(node, stack) && super.canAcceptPartialPour(level, pos, hit, side, stack);
     }
 
     @Override
     public MaterialStack flow(Level level, BlockPos pos, Direction side, MaterialStack stack) {
         ensureNode(level);
-        return super.flow(level, pos, side, stack);
+        MaterialStack left = super.flow(level, pos, side, stack);
+        syncNodeMaterial(level);
+        return left;
     }
 
     @Override
     public MaterialStack pour(Level level, BlockPos pos, net.minecraft.world.phys.Vec3 hit,
             Direction side, MaterialStack stack) {
         ensureNode(level);
-        return super.pour(level, pos, hit, side, stack);
+        MaterialStack left = super.pour(level, pos, hit, side, stack);
+        syncNodeMaterial(level);
+        return left;
     }
 
     @Override
@@ -166,48 +180,40 @@ public class FoundryChannelBlockEntity extends FoundryBaseBlockEntity {
                         other.amount += diff;
                     }
                 }
+                other.syncNodeMaterial(level);
                 other.setChangedAndUpdate();
             }
         }
     }
 
-    private boolean networkAccepts(Level level, MaterialStack stack) {
+    private boolean networkAccepts(FoundryNode node, MaterialStack stack) {
         if (stack == null || stack.material == null) {
             return false;
         }
-        for (BlockPos pos : connectedChannelPositions(level)) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof FoundryChannelBlockEntity channel && channel.type != null
-                    && channel.type != stack.material) {
+        FoundryNetwork network = node.getFoundryNet();
+        if (network == null || !network.isValid()) {
+            return false;
+        }
+        for (FoundryNode link : network.getLinks()) {
+            if (link.getMaterial() != null && link.getMaterial() != stack.material) {
                 return false;
             }
         }
         return true;
     }
 
-    private Set<BlockPos> connectedChannelPositions(Level level) {
-        Set<BlockPos> visited = new HashSet<>();
-        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
-        queue.add(worldPosition);
-        visited.add(worldPosition);
-        while (!queue.isEmpty()) {
-            BlockPos current = queue.removeFirst();
-            for (Direction direction : Direction.Plane.HORIZONTAL) {
-                BlockPos next = current.relative(direction);
-                if (!visited.contains(next) && level.getBlockState(next).is(ModBlocks.FOUNDRY_CHANNEL.get())) {
-                    visited.add(next);
-                    queue.add(next);
-                }
-            }
-        }
-        return visited;
-    }
-
-    private void ensureNode(Level level) {
-        if (FoundryNodespace.getNode(level, worldPosition) == null) {
-            FoundryNodespace.createNode(level, new FoundryNode(worldPosition,
+    private FoundryNode ensureNode(Level level) {
+        FoundryNode node = FoundryNodespace.getNode(level, worldPosition);
+        if (node == null || node.isExpired()) {
+            node = FoundryNodespace.createNode(level, new FoundryNode(worldPosition,
                     EnumSet.of(Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST)));
         }
+        return node;
+    }
+
+    private void syncNodeMaterial(Level level) {
+        FoundryNode node = ensureNode(level);
+        node.setMaterial(amount > 0 ? type : null);
     }
 
     private static ICrucibleAcceptor acceptorAt(Level level, BlockPos pos) {

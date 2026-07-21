@@ -111,11 +111,12 @@ public final class ObjSoyuzModels {
     public static void renderLanderCapsule(boolean rusted, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
         LANDER.renderOnlyInCallOrder(rusted ? LANDER_RUST_TEXTURE : LANDER_TEXTURE, poseStack, buffer, packedLight,
-                packedOverlay, LANDER_CAPSULE);
+                packedOverlay, LANDER_CAPSULE, LegacyTexturedRenderMode.CUTOUT_CULL);
     }
 
     public static void renderLanderChute(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        LANDER.renderOnlyInCallOrder(CHUTE_TEXTURE, poseStack, buffer, packedLight, packedOverlay, LANDER_CHUTE);
+        LANDER.renderOnlyInCallOrder(CHUTE_TEXTURE, poseStack, buffer, packedLight, packedOverlay, LANDER_CHUTE,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
     }
 
     public static void renderModule(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
@@ -123,6 +124,14 @@ public final class ObjSoyuzModels {
         renderModulePart(MODULE_LANDER_TEXTURE, MODULE_CAPSULE, poseStack, buffer, packedLight, packedOverlay);
         renderModulePart(MODULE_PROPULSION_TEXTURE, MODULE_PROPULSION, poseStack, buffer, packedLight, packedOverlay);
         renderModulePart(MODULE_SOLAR_TEXTURE, MODULE_SOLAR, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    public static void renderModuleRawLightmap(PoseStack poseStack, MultiBufferSource buffer,
+            LegacyRawLightmapCoordinates rawLightmap, int packedOverlay) {
+        renderModuleRawLightmapPart(MODULE_DOME_TEXTURE, MODULE_DOME, poseStack, buffer, rawLightmap, packedOverlay);
+        renderModuleRawLightmapPart(MODULE_LANDER_TEXTURE, MODULE_CAPSULE, poseStack, buffer, rawLightmap, packedOverlay);
+        renderModuleRawLightmapPart(MODULE_PROPULSION_TEXTURE, MODULE_PROPULSION, poseStack, buffer, rawLightmap, packedOverlay);
+        renderModuleRawLightmapPart(MODULE_SOLAR_TEXTURE, MODULE_SOLAR, poseStack, buffer, rawLightmap, packedOverlay);
     }
 
     public static SoyuzRenderPlan soyuzRenderPlan(int skin) {
@@ -210,12 +219,20 @@ public final class ObjSoyuzModels {
 
     private static void renderSoyuzPart(ResourceLocation texture, LegacyWavefrontModel.SelectionHandle selection,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        SOYUZ.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, selection);
+        SOYUZ.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, selection,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
     }
 
     private static void renderModulePart(ResourceLocation texture, LegacyWavefrontModel.SelectionHandle selection,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        MODULE.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, selection);
+        MODULE.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, selection,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
+    }
+
+    private static void renderModuleRawLightmapPart(ResourceLocation texture,
+            LegacyWavefrontModel.SelectionHandle selection, PoseStack poseStack, MultiBufferSource buffer,
+            LegacyRawLightmapCoordinates rawLightmap, int packedOverlay) {
+        MODULE.renderOnlyInCallOrderRawLightmap(texture, poseStack, buffer, rawLightmap, packedOverlay, selection);
     }
 
     private static SoyuzPartPlan part(ResourceLocation texture, LegacyWavefrontModel.SelectionHandle selection,

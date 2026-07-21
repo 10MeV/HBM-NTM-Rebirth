@@ -198,6 +198,13 @@ public class RefuelerBlockEntity extends HbmFluidNetworkBlockEntity implements H
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityRefueler retried its single facing-opposite Fluid Mk2
+        // receiver from updateEntity on every legacy server tick.
+        return true;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type != null && type != HbmFluids.NONE && type == tank.getTankType();
     }

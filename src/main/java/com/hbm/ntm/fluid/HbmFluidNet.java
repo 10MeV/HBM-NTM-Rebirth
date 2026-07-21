@@ -2,23 +2,18 @@ package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmNodeNet;
+import com.hbm.ntm.api.tile.LoadedTile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
+public class HbmFluidNet extends HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, HbmFluidNode> {
     public static final long DEFAULT_TIMEOUT_MS = 3_000L;
 
-    private static final Random RANDOM = new Random();
-
-    private final Map<HbmFluidReceiver, Long> receiverEntries = new LinkedHashMap<>();
-    private final Map<HbmFluidProvider, Long> providerEntries = new LinkedHashMap<>();
     private final FluidType type;
     private final long timeoutMs;
     private long fluidTracker;
@@ -201,6 +196,11 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
         fluidTracker = 0L;
     }
 
+    @Override
+    protected void onLegacyReap() {
+        clearSubscriptions();
+    }
+
     public List<HbmFluidReceiver> getSubscribedReceivers() {
         pruneExpired(System.currentTimeMillis());
         return List.copyOf(receiverEntries.keySet());
@@ -224,7 +224,7 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
     }
 
     @Override
-    public void joinNetwork(com.hbm.ntm.uninos.HbmNodeNet<HbmFluidNode> network) {
+    public void joinNetwork(com.hbm.ntm.uninos.HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, HbmFluidNode> network) {
         if (!(network instanceof HbmFluidNet fluidNet) || fluidNet == this) {
             super.joinNetwork(network);
             return;
@@ -243,7 +243,6 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
 
     public long update() {
         if (type == HbmFluids.NONE || providerEntries.isEmpty() || receiverEntries.isEmpty()) {
-            pruneExpired(System.currentTimeMillis());
             return 0L;
         }
 
@@ -356,7 +355,7 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
         int iterationsLeft = 100;
         while (iterationsLeft > 0 && leftover > 0L && !providers.isEmpty()) {
             iterationsLeft--;
-            HbmFluidProvider provider = providers.get(RANDOM.nextInt(providers.size())).value;
+            HbmFluidProvider provider = providers.get(rand.nextInt(providers.size())).value;
             long toUse = Math.min(leftover, provider.getFluidAvailable(type, pressure));
             provider.useUpFluid(type, pressure, toUse);
             requestedUse += toUse;
@@ -375,11 +374,22 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidNode> {
     }
 
     protected boolean isValidProvider(HbmFluidProvider provider) {
-        return provider != null;
+        return isValidSubscriber(provider);
     }
 
     protected boolean isValidReceiver(HbmFluidReceiver receiver) {
-        return receiver != null;
+        return isValidSubscriber(receiver);
+    }
+
+    private static boolean isValidSubscriber(Object subscriber) {
+        if (subscriber == null) {
+            return false;
+        }
+        if (subscriber instanceof LoadedTile loadedTile && !loadedTile.isLoaded()) {
+            return false;
+        }
+        return !(subscriber instanceof BlockEntity blockEntity)
+                || (!blockEntity.isRemoved() && blockEntity.getLevel() != null);
     }
 
     private int[] pressureRange(int[] range) {

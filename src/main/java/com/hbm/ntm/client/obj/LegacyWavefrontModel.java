@@ -740,6 +740,21 @@ public final class LegacyWavefrontModel {
                 false, renderMode, UvTransform.DEFAULT, selection);
     }
 
+    /**
+     * Submits old fixed-function lightmap texture coordinates through the
+     * shared prepared-OBJ CPU/static-shader path. It is not a packed-light API.
+     */
+    public void renderOnlyInCallOrderRawLightmap(ResourceLocation textureLocation, PoseStack poseStack,
+            MultiBufferSource buffer, LegacyRawLightmapCoordinates rawLightmap, int packedOverlay,
+            SelectionHandle selection) {
+        if (rawLightmap == null) {
+            throw new IllegalArgumentException("rawLightmap");
+        }
+        renderSelection(textureLocation, poseStack, buffer, rawLightmap.vertexUv2(), packedOverlay,
+                255, 255, 255, 255, false, LegacyTexturedRenderMode.RAW_LIGHTMAP_CUTOUT_CULL,
+                UvTransform.DEFAULT, selection);
+    }
+
     public void renderOnlyInCallOrder(ResourceLocation textureLocation, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
             boolean legacyShadow, LegacyTexturedRenderMode renderMode, UvTransform uvTransform,
@@ -2113,7 +2128,9 @@ public final class LegacyWavefrontModel {
         return switch (renderMode) {
             case CUTOUT_CULL -> LegacyTexturedRenderMode.CUTOUT_REVERSED_CULL;
             case CUTOUT_REVERSED_CULL -> LegacyTexturedRenderMode.CUTOUT_CULL;
+            case RAW_LIGHTMAP_CUTOUT_CULL -> LegacyTexturedRenderMode.RAW_LIGHTMAP_CUTOUT_CULL;
             case ADDITIVE_CULL_NO_DEPTH_WRITE -> LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE;
+            case TRANSLUCENT_CULL_DEPTH_WRITE -> LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE;
             default -> renderMode;
         };
     }
@@ -2884,6 +2901,7 @@ public final class LegacyWavefrontModel {
         GPU_UNSUPPORTED_GLINT,
         GPU_UNSUPPORTED_ALPHA,
         GPU_UNSUPPORTED_UV_TRANSFORM,
+        GPU_RAW_LIGHTMAP_COORDINATES,
         GPU_LEGACY_SHADOW,
         GPU_SPRITE_UNSUPPORTED,
         GPU_UNTEXTURED_UNSUPPORTED,
@@ -3958,6 +3976,19 @@ public final class LegacyWavefrontModel {
                 PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
                 RenderBackendFallbackReason fallbackReason) {
             RenderBackendFallbackReason unsupported = unsupportedUntexturedVertexColorTransientReason();
+            HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
+            if (unsupported == RenderBackendFallbackReason.GPU_SHADER_ACTIVE
+                    && canUseIrisVertexColorTransientCompanionPath(flags, renderMode, quad.minimumAlpha())) {
+                try {
+                    if (drawIrisTransientVertexColorCompanion(quad, poseStack, renderMode)) {
+                        return;
+                    }
+                } catch (RuntimeException exception) {
+                    recordIrisCompanionFallback(RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED, 4,
+                            "iris-transient-vertex-color-quad: " + exception.getClass().getSimpleName());
+                    HbmNtm.LOGGER.debug("Failed to draw transient Iris/Oculus vertex-color quad companion", exception);
+                }
+            }
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
                     renderUntexturedVertexColorTransientGpuDisabledCpuFallback(quad, poseStack, buffer, renderMode,
@@ -3986,6 +4017,20 @@ public final class LegacyWavefrontModel {
                 PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
                 RenderBackendFallbackReason fallbackReason) {
             RenderBackendFallbackReason unsupported = unsupportedUntexturedVertexColorTransientReason();
+            HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
+            if (unsupported == RenderBackendFallbackReason.GPU_SHADER_ACTIVE
+                    && canUseIrisVertexColorTransientCompanionPath(flags, renderMode, triangle.minimumAlpha())) {
+                try {
+                    if (drawIrisTransientVertexColorCompanion(triangle, poseStack, renderMode)) {
+                        return;
+                    }
+                } catch (RuntimeException exception) {
+                    recordIrisCompanionFallback(RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED, 3,
+                            "iris-transient-vertex-color-triangle: " + exception.getClass().getSimpleName());
+                    HbmNtm.LOGGER.debug("Failed to draw transient Iris/Oculus vertex-color triangle companion",
+                            exception);
+                }
+            }
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
                     renderUntexturedVertexColorTransientTriangleGpuDisabledCpuFallback(triangle, poseStack, buffer,
@@ -4017,6 +4062,22 @@ public final class LegacyWavefrontModel {
                 PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode,
                 RenderBackendFallbackReason fallbackReason) {
             RenderBackendFallbackReason unsupported = unsupportedUntexturedVertexColorTransientReason();
+            HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
+            if (unsupported == RenderBackendFallbackReason.GPU_SHADER_ACTIVE
+                    && canUseIrisVertexColorTransientCompanionPath(flags, renderMode,
+                            minimumTriangleAlpha(triangles))) {
+                try {
+                    if (drawIrisTransientVertexColorTriangleBatchCompanion(triangles, poseStack, renderMode)) {
+                        return;
+                    }
+                } catch (RuntimeException exception) {
+                    recordIrisCompanionFallback(RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED,
+                            triangles.size() * 3,
+                            "iris-transient-vertex-color-triangle-batch: " + exception.getClass().getSimpleName());
+                    HbmNtm.LOGGER.debug(
+                            "Failed to draw transient Iris/Oculus vertex-color triangle batch companion", exception);
+                }
+            }
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
                     renderUntexturedVertexColorTransientTrianglesGpuDisabledCpuFallback(triangles, poseStack, buffer,
@@ -4046,6 +4107,20 @@ public final class LegacyWavefrontModel {
                 PoseStack poseStack, MultiBufferSource buffer, LegacyTexturedRenderMode renderMode, float lineWidth,
                 RenderBackendFallbackReason fallbackReason) {
             RenderBackendFallbackReason unsupported = unsupportedUntexturedVertexColorTransientReason();
+            HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
+            if (unsupported == RenderBackendFallbackReason.GPU_SHADER_ACTIVE
+                    && canUseIrisLineTransientCompanionPath(flags, renderMode, minimumLineAlpha(lines))) {
+                try {
+                    if (drawIrisTransientLineCompanion(lines, poseStack, renderMode, lineWidth)) {
+                        return;
+                    }
+                } catch (RuntimeException exception) {
+                    recordIrisCompanionFallback(RenderBackendFallbackReason.IRIS_COMPANION_DRAW_FAILED,
+                            lines.size() * 2,
+                            "iris-transient-lines: " + exception.getClass().getSimpleName());
+                    HbmNtm.LOGGER.debug("Failed to draw transient Iris/Oculus LINE companion", exception);
+                }
+            }
             if (unsupported != RenderBackendFallbackReason.NONE) {
                 if (unsupported == RenderBackendFallbackReason.GPU_DISABLED) {
                     renderUntexturedLineGpuDisabledCpuFallback(lines, poseStack, buffer, renderMode, lineWidth,
@@ -4073,6 +4148,9 @@ public final class LegacyWavefrontModel {
                 boolean legacyShadow, LegacyTexturedRenderMode renderMode, UvTransform uvTransform) {
             if (batch.empty()) {
                 return RenderBackendFallbackReason.NONE;
+            }
+            if (LegacyTexturedRenderMode.rawLightmapCoordinates(renderMode)) {
+                return RenderBackendFallbackReason.GPU_RAW_LIGHTMAP_COORDINATES;
             }
             HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
             if (!flags.experimentalGpuBackendEnabled()) {
@@ -4339,6 +4417,16 @@ public final class LegacyWavefrontModel {
                     && flags.shaderPackDetected()
                     && (safeSolidCompanion || transparentMainPassCompanion)
                     && RenderSystem.isOnRenderThread();
+        }
+
+        private static boolean canUseIrisLineTransientCompanionPath(HbmRenderFrameFlags.Snapshot flags,
+                LegacyTexturedRenderMode renderMode, int minimumAlpha) {
+            return canUseIrisUntexturedSingleMeshPath(flags, renderMode, minimumAlpha);
+        }
+
+        private static boolean canUseIrisVertexColorTransientCompanionPath(HbmRenderFrameFlags.Snapshot flags,
+                LegacyTexturedRenderMode renderMode, int minimumAlpha) {
+            return canUseIrisUntexturedSingleMeshPath(flags, renderMode, minimumAlpha);
         }
 
         private static boolean canQueueIrisUntexturedCompanionPath(HbmRenderFrameFlags.Snapshot flags,
@@ -5777,6 +5865,89 @@ public final class LegacyWavefrontModel {
             return drew;
         }
 
+        private boolean drawIrisTransientLineCompanion(List<UntexturedLineTransient> lines,
+                PoseStack poseStack, LegacyTexturedRenderMode renderMode, float lineWidth) {
+            clearIrisCompanionFallback();
+            boolean shadowPass = HbmShaderCompatibilityDetector.isRenderingShadowPass();
+            ShaderInstance shader = HbmIrisExtendedShaderAccess.getBlockEntityShader(shadowPass);
+            if (shader == null) {
+                recordIrisCompanionFallback(RenderBackendFallbackReason.IRIS_SHADER_UNAVAILABLE, lines.size() * 2,
+                        "iris-transient-lines: shader unavailable");
+                return false;
+            }
+            IrisCompanionMesh mesh;
+            irisEligibleBatches++;
+            currentFrameIrisEligibleBatches++;
+            try {
+                mesh = uploadIrisTransientLineCompanionMesh(lines);
+            } catch (RuntimeException exception) {
+                irisUploadFailures.incrementAndGet();
+                throw exception;
+            }
+            try {
+                drawIrisCompanionMesh(mesh, irisUntexturedWhiteTexture(), renderMode, poseStack,
+                        LightTexture.FULL_BRIGHT, 0, 255, 255, 255, 255, shader, shadowPass);
+                clearIrisCompanionFallback();
+                return true;
+            } finally {
+                safeClose(mesh, "transient Iris LINE companion mesh");
+            }
+        }
+
+        private boolean drawIrisTransientVertexColorCompanion(UntexturedVertexColorTransientQuad quad,
+                PoseStack poseStack, LegacyTexturedRenderMode renderMode) {
+            return drawIrisTransientVertexColorCompanion(List.of(
+                    quad.v0(), quad.v1(), quad.v2(), quad.v2(), quad.v3(), quad.v0()),
+                    poseStack, renderMode, "quad");
+        }
+
+        private boolean drawIrisTransientVertexColorCompanion(UntexturedVertexColorTransientTriangle triangle,
+                PoseStack poseStack, LegacyTexturedRenderMode renderMode) {
+            return drawIrisTransientVertexColorCompanion(List.of(triangle.v0(), triangle.v1(), triangle.v2()),
+                    poseStack, renderMode, "triangle");
+        }
+
+        private boolean drawIrisTransientVertexColorTriangleBatchCompanion(
+                List<UntexturedVertexColorTransientTriangle> triangles,
+                PoseStack poseStack, LegacyTexturedRenderMode renderMode) {
+            List<UntexturedVertexColor> vertices = new ArrayList<>(triangles.size() * 3);
+            for (UntexturedVertexColorTransientTriangle triangle : triangles) {
+                vertices.add(triangle.v0());
+                vertices.add(triangle.v1());
+                vertices.add(triangle.v2());
+            }
+            return drawIrisTransientVertexColorCompanion(vertices, poseStack, renderMode, "triangle-batch");
+        }
+
+        private boolean drawIrisTransientVertexColorCompanion(List<UntexturedVertexColor> vertices,
+                PoseStack poseStack, LegacyTexturedRenderMode renderMode, String detail) {
+            clearIrisCompanionFallback();
+            boolean shadowPass = HbmShaderCompatibilityDetector.isRenderingShadowPass();
+            ShaderInstance shader = HbmIrisExtendedShaderAccess.getBlockEntityShader(shadowPass);
+            if (shader == null) {
+                recordIrisCompanionFallback(RenderBackendFallbackReason.IRIS_SHADER_UNAVAILABLE, vertices.size(),
+                        "iris-transient-vertex-color-" + detail + ": shader unavailable");
+                return false;
+            }
+            IrisCompanionMesh mesh;
+            irisEligibleBatches++;
+            currentFrameIrisEligibleBatches++;
+            try {
+                mesh = uploadIrisTransientVertexColorCompanionMesh(vertices, detail);
+            } catch (RuntimeException exception) {
+                irisUploadFailures.incrementAndGet();
+                throw exception;
+            }
+            try {
+                drawIrisCompanionMesh(mesh, irisUntexturedWhiteTexture(), renderMode, poseStack,
+                        LightTexture.FULL_BRIGHT, 0, 255, 255, 255, 255, shader, shadowPass);
+                clearIrisCompanionFallback();
+                return true;
+            } finally {
+                safeClose(mesh, "transient Iris vertex-color companion mesh");
+            }
+        }
+
         private void drawIrisTransientCompanionPart(PreparedBatch batch, VertexFormat.Mode sourceMode,
                 GpuMeshKind kind, TextureAtlasSprite sprite, ResourceLocation textureLocation, PoseStack poseStack,
                 int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean smoothing,
@@ -5857,6 +6028,105 @@ public final class LegacyWavefrontModel {
             }
         }
 
+        private IrisCompanionMesh uploadIrisTransientLineCompanionMesh(List<UntexturedLineTransient> lines) {
+            irisUploadAttempts.incrementAndGet();
+            if (!canAttemptIrisCompanionUpload()) {
+                throw new IrisCompanionTemporarilyUnavailableException(
+                        "Iris companion upload unavailable in the current render context");
+            }
+            IrisCompanionMeshKey key = new IrisCompanionMeshKey(GpuMeshKind.UNTEXTURED,
+                    "transient-lines", System.identityHashCode(lines), null, lines.size() * 2,
+                    VertexFormat.Mode.LINES, false, UvTransform.DEFAULT);
+            BufferBuilder builder = new BufferBuilder(Math.max(256, lines.size() * 112));
+            builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.NEW_ENTITY);
+            for (UntexturedLineTransient line : lines) {
+                emitIrisLineVertex(builder, line.x0(), line.y0(), line.z0(), line.color(), line.alpha(),
+                        line.normalX(), line.normalY(), line.normalZ());
+                emitIrisLineVertex(builder, line.x1(), line.y1(), line.z1(), line.color(), line.alpha(),
+                        line.normalX(), line.normalY(), line.normalZ());
+            }
+            BufferBuilder.RenderedBuffer renderedBuffer = builder.end();
+            InstancedMeshBounds bounds = InstancedMeshBounds.ofLines(lines);
+            return createIrisCompanionMesh(key, renderedBuffer, bounds,
+                    new float[lines.size() * 6], GL11.GL_LINES, true);
+        }
+
+        private IrisCompanionMesh uploadIrisTransientVertexColorCompanionMesh(
+                List<UntexturedVertexColor> vertices, String detail) {
+            irisUploadAttempts.incrementAndGet();
+            if (!canAttemptIrisCompanionUpload()) {
+                throw new IrisCompanionTemporarilyUnavailableException(
+                        "Iris companion upload unavailable in the current render context");
+            }
+            if (vertices.isEmpty() || vertices.size() % 3 != 0) {
+                throw new IllegalArgumentException("Vertex-color Iris companion requires complete triangles");
+            }
+            IrisCompanionMeshKey key = new IrisCompanionMeshKey(GpuMeshKind.UNTEXTURED,
+                    "transient-vertex-color:" + detail, System.identityHashCode(vertices), null, vertices.size(),
+                    VertexFormat.Mode.TRIANGLES, false, UvTransform.DEFAULT);
+            BufferBuilder builder = new BufferBuilder(Math.max(256, vertices.size() * 56));
+            builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.NEW_ENTITY);
+            float[] normal = new float[3];
+            for (int index = 0; index < vertices.size(); index += 3) {
+                UntexturedVertexColor v0 = vertices.get(index);
+                UntexturedVertexColor v1 = vertices.get(index + 1);
+                UntexturedVertexColor v2 = vertices.get(index + 2);
+                vertexColorTriangleNormal(v0, v1, v2, normal);
+                emitIrisVertexColorVertex(builder, v0, normal);
+                emitIrisVertexColorVertex(builder, v1, normal);
+                emitIrisVertexColorVertex(builder, v2, normal);
+            }
+            BufferBuilder.RenderedBuffer renderedBuffer = builder.end();
+            InstancedMeshBounds bounds = InstancedMeshBounds.ofVertexColors(vertices);
+            return createIrisCompanionMesh(key, renderedBuffer, bounds,
+                    new float[vertices.size() * 3], GL11.GL_TRIANGLES, true);
+        }
+
+        private static void vertexColorTriangleNormal(UntexturedVertexColor v0, UntexturedVertexColor v1,
+                UntexturedVertexColor v2, float[] output) {
+            double ax = v1.x() - v0.x();
+            double ay = v1.y() - v0.y();
+            double az = v1.z() - v0.z();
+            double bx = v2.x() - v0.x();
+            double by = v2.y() - v0.y();
+            double bz = v2.z() - v0.z();
+            double normalX = ay * bz - az * by;
+            double normalY = az * bx - ax * bz;
+            double normalZ = ax * by - ay * bx;
+            double length = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+            if (length <= 1.0E-6D) {
+                output[0] = 0.0F;
+                output[1] = 1.0F;
+                output[2] = 0.0F;
+                return;
+            }
+            output[0] = (float) (normalX / length);
+            output[1] = (float) (normalY / length);
+            output[2] = (float) (normalZ / length);
+        }
+
+        private static void emitIrisVertexColorVertex(VertexConsumer consumer, UntexturedVertexColor vertex,
+                float[] normal) {
+            consumer.vertex((float) vertex.x(), (float) vertex.y(), (float) vertex.z())
+                    .color(vertex.red(), vertex.green(), vertex.blue(), vertex.alpha())
+                    .uv(0.0F, 0.0F)
+                    .overlayCoords(0)
+                    .uv2(LightTexture.FULL_BRIGHT)
+                    .normal(normal[0], normal[1], normal[2])
+                    .endVertex();
+        }
+
+        private static void emitIrisLineVertex(VertexConsumer consumer, double x, double y, double z,
+                int color, int alpha, float normalX, float normalY, float normalZ) {
+            consumer.vertex((float) x, (float) y, (float) z)
+                    .color(color >> 16 & 255, color >> 8 & 255, color & 255, clampColor(alpha))
+                    .uv(0.0F, 0.0F)
+                    .overlayCoords(0)
+                    .uv2(LightTexture.FULL_BRIGHT)
+                    .normal(normalX, normalY, normalZ)
+                    .endVertex();
+        }
+
         private IrisCompanionMesh uploadIrisCompanionMesh(IrisCompanionMeshKey key, VertexFormat.Mode sourceMode,
                 int packedLight, int packedOverlay, int red, int green, int blue, int alpha, boolean smoothing,
                 List<PreparedVertex> vertices) {
@@ -5880,6 +6150,15 @@ public final class LegacyWavefrontModel {
                         key.uvTransform());
             }
             BufferBuilder.RenderedBuffer renderedBuffer = builder.end();
+            InstancedMeshBounds bounds = InstancedMeshBounds.of(triangleVertices);
+            return createIrisCompanionMesh(key, renderedBuffer, bounds,
+                    buildIrisCompanionLightWeights(triangleVertices, bounds),
+                    GL11.GL_TRIANGLES, false);
+        }
+
+        private IrisCompanionMesh createIrisCompanionMesh(IrisCompanionMeshKey key,
+                BufferBuilder.RenderedBuffer renderedBuffer, InstancedMeshBounds bounds, float[] lightWeights,
+                int glDrawMode, boolean preserveVertexColors) {
             BufferBuilder.DrawState drawState = renderedBuffer.drawState();
             VertexFormat actualFormat = drawState.format();
             ByteBuffer vertexBytes = renderedBuffer.vertexBuffer();
@@ -5896,10 +6175,9 @@ public final class LegacyWavefrontModel {
                 HbmGlVaoSafety.bindVertexArray(vao);
                 GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
                 GL15.glBufferData(GL15.GL_ARRAY_BUFFER, vertexBytes, GL15.GL_STATIC_DRAW);
-                InstancedMeshBounds bounds = InstancedMeshBounds.of(triangleVertices);
                 IrisCompanionMesh mesh = new IrisCompanionMesh(key, vao, vbo, drawState.vertexCount(),
-                        Math.max(0L, vertexBytes.limit()), actualFormat,
-                        buildIrisCompanionLightWeights(triangleVertices, bounds), bounds, lightSampleKey(key),
+                        Math.max(0L, vertexBytes.limit()), actualFormat, lightWeights, bounds, lightSampleKey(key),
+                        glDrawMode, preserveVertexColors,
                         this::recordIrisLightmapSlotReuse, this::recordIrisLightmapSlotUpload,
                         this::recordIrisLightmapStagingFallback, this::recordIrisShaderAttributeCacheHit,
                         this::recordIrisShaderAttributeCacheMiss,
@@ -6013,10 +6291,13 @@ public final class LegacyWavefrontModel {
                 LegacyTexturedRenderMode renderMode, Matrix4f modelView, int packedLight, int packedOverlay,
                 int red, int green, int blue, int alpha, ShaderInstance shader, boolean shadowPass,
                 int preparedLightmapSlot, Matrix4f projectionMatrix, float fadeAlpha) {
-            RenderType renderType = renderMode.renderType(textureLocation, VertexFormat.Mode.TRIANGLES);
+            RenderType renderType = mesh.linePrimitive()
+                    ? LegacyLineRenderer.type(LegacyLineRenderer.DEFAULT_LINE_WIDTH, renderMode, alpha)
+                    : renderMode.renderType(textureLocation, VertexFormat.Mode.TRIANGLES);
             int previousVao = HbmGlVaoSafety.currentBinding();
             int previousArrayBuffer = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
-            IrisRenderBatchKey batchKey = new IrisRenderBatchKey(textureLocation, renderMode, shadowPass);
+            IrisRenderBatchKey batchKey = new IrisRenderBatchKey(textureLocation, renderMode, shadowPass,
+                    mesh.linePrimitive());
             boolean success = false;
             try {
                 if (!shadowPass) {
@@ -6050,7 +6331,7 @@ public final class LegacyWavefrontModel {
                 setIrisCompanionFadeAlpha(shader, fadeAlpha);
                 HbmIrisRenderBatch.uploadDrawMatrices(modelView);
                 mesh.bindVaoIfNeeded();
-                GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, mesh.vertexCount());
+                GL11.glDrawArrays(mesh.glDrawMode(), 0, mesh.vertexCount());
                 HbmIrisRenderBatch.recordDraw(shadowPass);
                 irisDrawCalls++;
                 currentFrameIrisDrawCalls++;
@@ -9499,6 +9780,8 @@ public final class LegacyWavefrontModel {
             private final float[] lightWeights;
             private final InstancedMeshBounds bounds;
             private final long lightSampleKey;
+            private final int glDrawMode;
+            private final boolean preserveVertexColors;
             private final Runnable lightmapSlotReuseRecorder;
             private final Runnable lightmapSlotUploadRecorder;
             private final Runnable lightmapStagingFallbackRecorder;
@@ -9542,7 +9825,8 @@ public final class LegacyWavefrontModel {
 
             private IrisCompanionMesh(IrisCompanionMeshKey key, int vaoId, int vboId, int vertexCount,
                     long byteSize, VertexFormat format, float[] lightWeights, InstancedMeshBounds bounds,
-                    long lightSampleKey, Runnable lightmapSlotReuseRecorder, Runnable lightmapSlotUploadRecorder,
+                    long lightSampleKey, int glDrawMode, boolean preserveVertexColors,
+                    Runnable lightmapSlotReuseRecorder, Runnable lightmapSlotUploadRecorder,
                     Runnable lightmapStagingFallbackRecorder, Runnable shaderAttributeCacheHitRecorder,
                     Runnable shaderAttributeCacheMissRecorder,
                     Runnable shaderAttributeGenerationInvalidationRecorder,
@@ -9557,6 +9841,8 @@ public final class LegacyWavefrontModel {
                 this.lightWeights = lightWeights;
                 this.bounds = bounds;
                 this.lightSampleKey = lightSampleKey;
+                this.glDrawMode = glDrawMode;
+                this.preserveVertexColors = preserveVertexColors;
                 this.lightmapSlotReuseRecorder = lightmapSlotReuseRecorder;
                 this.lightmapSlotUploadRecorder = lightmapSlotUploadRecorder;
                 this.lightmapStagingFallbackRecorder = lightmapStagingFallbackRecorder;
@@ -9704,7 +9990,11 @@ public final class LegacyWavefrontModel {
             private void applyDrawAttributes(int packedLight, int packedOverlay, int red, int green, int blue,
                     int alpha, boolean allowPerVertexLightmap, int preparedLightmapSlot) {
                 if (colorLocation >= 0) {
-                    HbmIrisRenderBatch.applyConstantColor(colorLocation, red, green, blue, alpha);
+                    if (preserveVertexColors) {
+                        GL20.glEnableVertexAttribArray(colorLocation);
+                    } else {
+                        HbmIrisRenderBatch.applyConstantColor(colorLocation, red, green, blue, alpha);
+                    }
                 }
                 if (uv1Location >= 0) {
                     HbmIrisRenderBatch.applyConstantOverlay(uv1Location, packedOverlay);
@@ -9717,6 +10007,14 @@ public final class LegacyWavefrontModel {
                         HbmIrisRenderBatch.applyConstantLightmap(uv2Location, packedLight);
                     }
                 }
+            }
+
+            private int glDrawMode() {
+                return glDrawMode;
+            }
+
+            private boolean linePrimitive() {
+                return glDrawMode == GL11.GL_LINES;
             }
 
             private int preparePerVertexLightmapSlot(Matrix4f modelView, int packedLight,
@@ -11259,7 +11557,7 @@ public final class LegacyWavefrontModel {
     }
 
     private record IrisRenderBatchKey(ResourceLocation textureLocation, LegacyTexturedRenderMode renderMode,
-                                      boolean shadowPass) {
+                                      boolean shadowPass, boolean linePrimitive) {
     }
 
     private record IrisCompanionQueueKey(GpuMeshKind kind, String stablePartKey, int geometryHash,
@@ -12265,6 +12563,58 @@ public final class LegacyWavefrontModel {
                 maxX = Math.max(maxX, position.x());
                 maxY = Math.max(maxY, position.y());
                 maxZ = Math.max(maxZ, position.z());
+            }
+            if (!Float.isFinite(minX) || !Float.isFinite(minY) || !Float.isFinite(minZ)
+                    || !Float.isFinite(maxX) || !Float.isFinite(maxY) || !Float.isFinite(maxZ)) {
+                return new InstancedMeshBounds(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
+                        0.0F, 0.0F, 0.0F);
+            }
+            return new InstancedMeshBounds(minX, minY, minZ, maxX, maxY, maxZ,
+                    inverseExtent(maxX - minX),
+                    inverseExtent(maxY - minY),
+                    inverseExtent(maxZ - minZ));
+        }
+
+        private static InstancedMeshBounds ofLines(List<UntexturedLineTransient> lines) {
+            float minX = Float.POSITIVE_INFINITY;
+            float minY = Float.POSITIVE_INFINITY;
+            float minZ = Float.POSITIVE_INFINITY;
+            float maxX = Float.NEGATIVE_INFINITY;
+            float maxY = Float.NEGATIVE_INFINITY;
+            float maxZ = Float.NEGATIVE_INFINITY;
+            for (UntexturedLineTransient line : lines) {
+                minX = (float) Math.min(minX, Math.min(line.x0(), line.x1()));
+                minY = (float) Math.min(minY, Math.min(line.y0(), line.y1()));
+                minZ = (float) Math.min(minZ, Math.min(line.z0(), line.z1()));
+                maxX = (float) Math.max(maxX, Math.max(line.x0(), line.x1()));
+                maxY = (float) Math.max(maxY, Math.max(line.y0(), line.y1()));
+                maxZ = (float) Math.max(maxZ, Math.max(line.z0(), line.z1()));
+            }
+            if (!Float.isFinite(minX) || !Float.isFinite(minY) || !Float.isFinite(minZ)
+                    || !Float.isFinite(maxX) || !Float.isFinite(maxY) || !Float.isFinite(maxZ)) {
+                return new InstancedMeshBounds(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
+                        0.0F, 0.0F, 0.0F);
+            }
+            return new InstancedMeshBounds(minX, minY, minZ, maxX, maxY, maxZ,
+                    inverseExtent(maxX - minX),
+                    inverseExtent(maxY - minY),
+                    inverseExtent(maxZ - minZ));
+        }
+
+        private static InstancedMeshBounds ofVertexColors(List<UntexturedVertexColor> vertices) {
+            float minX = Float.POSITIVE_INFINITY;
+            float minY = Float.POSITIVE_INFINITY;
+            float minZ = Float.POSITIVE_INFINITY;
+            float maxX = Float.NEGATIVE_INFINITY;
+            float maxY = Float.NEGATIVE_INFINITY;
+            float maxZ = Float.NEGATIVE_INFINITY;
+            for (UntexturedVertexColor vertex : vertices) {
+                minX = (float) Math.min(minX, vertex.x());
+                minY = (float) Math.min(minY, vertex.y());
+                minZ = (float) Math.min(minZ, vertex.z());
+                maxX = (float) Math.max(maxX, vertex.x());
+                maxY = (float) Math.max(maxY, vertex.y());
+                maxZ = (float) Math.max(maxZ, vertex.z());
             }
             if (!Float.isFinite(minX) || !Float.isFinite(minY) || !Float.isFinite(minZ)
                     || !Float.isFinite(maxX) || !Float.isFinite(maxY) || !Float.isFinite(maxZ)) {

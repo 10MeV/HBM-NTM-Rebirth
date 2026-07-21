@@ -9,6 +9,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class SoyuzCapsuleMenu extends AbstractContainerMenu {
@@ -37,14 +39,35 @@ public class SoyuzCapsuleMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 128.0D);
     }
 
     @Override
-    public net.minecraft.world.item.ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                0, MACHINE_SLOT_COUNT);
+    public ItemStack quickMoveStack(Player player, int index) {
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        Slot slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack stack = slot.getItem();
+        ItemStack result = stack.copy();
+        if (index < MACHINE_SLOT_COUNT) {
+            if (!HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack, PLAYER_INVENTORY_START,
+                    PLAYER_SLOT_END, true)) {
+                return ItemStack.EMPTY;
+            }
+        } else if (!HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack, 0, MACHINE_SLOT_COUNT, false)) {
+            // ContainerSoyuzCapsule permits an existing recovered stack to
+            // merge before its all-slot insertion predicate rejects empty
+            // slots. Keep the source's literal [0,19) destination range.
+            return ItemStack.EMPTY;
+        }
+
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        return result;
     }
 
     private static SoyuzCapsuleBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

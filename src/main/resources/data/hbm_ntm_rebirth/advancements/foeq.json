@@ -1,0 +1,24 @@
+{
+  "parent": "hbm_ntm_rebirth:desh",
+  "display": {
+    "icon": {
+      "item": "hbm_ntm_rebirth:sat_foeq"
+    },
+    "title": {
+      "translate": "advancements.hbm_ntm_rebirth.foeq.title"
+    },
+    "description": {
+      "translate": "advancements.hbm_ntm_rebirth.foeq.description"
+    },
+    "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

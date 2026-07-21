@@ -36,6 +36,8 @@ public final class ModRecipes {
             SERIALIZERS.register("scraps_split",
                     () -> new net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer<>(
                             ScrapsSplitRecipe::new));
+    public static final RegistryObject<RecipeSerializer<TagOutputShapelessRecipe>> TAG_OUTPUT_SHAPELESS =
+            SERIALIZERS.register("tag_output_shapeless", TagOutputShapelessRecipe.Serializer::new);
     public static final RegistryObject<RecipeSerializer<ContainerUpgradeCraftingRecipe>> CONTAINER_UPGRADE_CRAFTING =
             SERIALIZERS.register("container_upgrade_crafting", ContainerUpgradeCraftingRecipe.Serializer::new);
     public static final RegistryObject<RecipeSerializer<LegacyNbtShapedRecipe>> LEGACY_NBT_SHAPED =

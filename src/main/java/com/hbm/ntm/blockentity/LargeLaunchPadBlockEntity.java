@@ -15,6 +15,7 @@ import com.hbm.ntm.item.missile.MissileItem;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -35,11 +36,15 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
     private static final String TAG_FORM_FACTOR = "formFactor";
     private static final String TAG_ERECTED = "erected";
     private static final String TAG_READY_TO_LOAD = "readyToLoad";
-    private static final String TAG_SCHEDULE_ERECT = "scheduleErect";
     private static final String TAG_LIFT = "lift";
     private static final String TAG_ERECTOR = "erector";
     private static final String TAG_PREV_LIFT = "prevLift";
     private static final String TAG_PREV_ERECTOR = "prevErector";
+    // TileEntityLaunchPadLarge sends these two transient flags in its client
+    // binary state.  Modern block-update NBT carries the equivalent client
+    // presentation state; the server recomputes both flags every tick.
+    private static final String TAG_LIFT_MOVING = "liftMoving";
+    private static final String TAG_ERECTOR_MOVING = "erectorMoving";
 
     private int formFactor = -1;
     private boolean erected;
@@ -51,6 +56,10 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
     private float prevErector = 90.0F;
     private boolean liftMoving;
     private boolean erectorMoving;
+    @Nullable
+    private Object liftAudioLoop;
+    @Nullable
+    private Object erectorAudioLoop;
 
     public LargeLaunchPadBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LAUNCH_PAD_LARGE.get(), pos, state);
@@ -76,6 +85,7 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
         if (!level.isClientSide) {
             return;
         }
+        launchPad.updateClientAudioLoops();
         if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
@@ -104,6 +114,8 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
         boolean oldReady = readyToLoad;
         float oldLift = lift;
         float oldErector = erector;
+        boolean oldLiftMoving = liftMoving;
+        boolean oldErectorMoving = erectorMoving;
 
         prevLift = lift;
         prevErector = erector;
@@ -137,7 +149,9 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
                 || oldErected != erected
                 || oldReady != readyToLoad
                 || oldLift != lift
-                || oldErector != erector;
+                || oldErector != erector
+                || oldLiftMoving != liftMoving
+                || oldErectorMoving != erectorMoving;
     }
 
     private void tickAnimation(Level level, BlockPos pos) {
@@ -215,6 +229,20 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
         }
     }
 
+    /**
+     * {@code TileEntityLaunchPadLarge#updateEntity()} creates two client-only
+     * AudioWrapper loops from its synchronized movement flags.  Keep this
+     * separate from the visual LOD gate: the audio bridge applies the old
+     * 25-block audible range itself, whereas the LOD gate only controls local
+     * particles and animation work.
+     */
+    private void updateClientAudioLoops() {
+        liftAudioLoop = LegacyMachineAudioBridge.updateLoop(liftAudioLoop, this, "hbm:door.wgh_start",
+                liftMoving, 25.0D, 25.0F, 0.75F, 1.0F, 0.0D, 0.0D, 0.0D);
+        erectorAudioLoop = LegacyMachineAudioBridge.updateLoop(erectorAudioLoop, this, "hbm:door.garage_move",
+                erectorMoving, 25.0D, 25.0F, 1.5F, 1.0F, 0.0D, 0.0D, 0.0D);
+    }
+
     @Override
     protected boolean isLaunchPadPowered(Level level, BlockPos pos, BlockState blockState) {
         if (level.hasNeighborSignal(pos)) {
@@ -237,15 +265,28 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
     }
 
     @Override
+    protected boolean isReadyForLaunch() {
+        return erected && readyToLoad;
+    }
+
+    @Override
+    protected boolean usesReloadDelay() {
+        return false;
+    }
+
+    @Override
     protected double getLaunchOffset() {
         return 2.0D;
     }
 
     @Override
-    protected void finalizeLaunch(ServerLevel level, Entity missile) {
-        super.finalizeLaunch(level, missile);
+    protected boolean finalizeLaunch(ServerLevel level, Entity missile) {
+        if (!super.finalizeLaunch(level, missile)) {
+            return false;
+        }
         erected = false;
         scheduleErect = false;
+        return true;
     }
 
     @Override
@@ -282,12 +323,16 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        return HbmFluidSideMode.INPUT;
+        // TileEntityLaunchPadBase#canConnect rejects both vertical physical
+        // faces; the large pad inherited that contract in 1.7.10.
+        return side == Direction.UP || side == Direction.DOWN
+                ? HbmFluidSideMode.NONE : HbmFluidSideMode.INPUT;
     }
 
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
-        return HbmEnergySideMode.INPUT;
+        return side == Direction.UP || side == Direction.DOWN
+                ? HbmEnergySideMode.NONE : HbmEnergySideMode.INPUT;
     }
 
     @Override
@@ -343,23 +388,33 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
         tag.putInt(TAG_FORM_FACTOR, formFactor);
         tag.putBoolean(TAG_ERECTED, erected);
         tag.putBoolean(TAG_READY_TO_LOAD, readyToLoad);
-        tag.putBoolean(TAG_SCHEDULE_ERECT, scheduleErect);
         tag.putFloat(TAG_LIFT, lift);
         tag.putFloat(TAG_ERECTOR, erector);
         tag.putFloat(TAG_PREV_LIFT, prevLift);
         tag.putFloat(TAG_PREV_ERECTOR, prevErector);
+        tag.putBoolean(TAG_LIFT_MOVING, liftMoving);
+        tag.putBoolean(TAG_ERECTOR_MOVING, erectorMoving);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        // TileEntityLaunchPadLarge does not serialize its independent 20-tick
+        // erector-motion timer, so it starts clean after reload.
+        delay = 20;
         formFactor = tag.contains(TAG_FORM_FACTOR) ? tag.getInt(TAG_FORM_FACTOR) : -1;
         erected = tag.getBoolean(TAG_ERECTED);
         readyToLoad = tag.getBoolean(TAG_READY_TO_LOAD);
-        scheduleErect = tag.getBoolean(TAG_SCHEDULE_ERECT);
+        // TileEntityLaunchPadLarge only saves the settled erection state.  Its
+        // scheduleErect flag is a one-delay animation latch and is absent from
+        // both the old NBT and binary client state, so a world reload must not
+        // complete an in-flight erection early.
+        scheduleErect = false;
         lift = tag.contains(TAG_LIFT) ? tag.getFloat(TAG_LIFT) : 1.0F;
         erector = tag.contains(TAG_ERECTOR) ? tag.getFloat(TAG_ERECTOR) : 90.0F;
         prevLift = tag.contains(TAG_PREV_LIFT) ? tag.getFloat(TAG_PREV_LIFT) : lift;
         prevErector = tag.contains(TAG_PREV_ERECTOR) ? tag.getFloat(TAG_PREV_ERECTOR) : erector;
+        liftMoving = tag.getBoolean(TAG_LIFT_MOVING);
+        erectorMoving = tag.getBoolean(TAG_ERECTOR_MOVING);
     }
 }

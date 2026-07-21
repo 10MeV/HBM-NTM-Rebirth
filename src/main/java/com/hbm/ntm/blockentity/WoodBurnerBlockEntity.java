@@ -134,7 +134,9 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmEnergyUtil.chargeItemFromStorage(burner.items.getStackInSlot(SLOT_BATTERY),
                 burner.energy, burner.energy.getProviderSpeed());
 
-        if (burner.tank.getTankType() != HbmFluids.NONE) {
+        // TileEntityMachineWoodBurner renews its remote Fluid Mk2 input only
+        // from the legacy twenty-tick connection pass; energy output remains per tick.
+        if (level.getGameTime() % 20L == 0L && burner.tank.getTankType() != HbmFluids.NONE) {
             burner.refreshTrackedReceiverFluidPorts(burner.tank, burner);
         }
         burner.tryProvideEnergyToPorts();
@@ -341,7 +343,10 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return type != HbmFluids.NONE && type == tank.getTankType();
+        // The legacy remote input is owned by the explicit twenty-tick tracker
+        // pass in serverTick. Do not let the generic dirty/keepalive route
+        // subscribe this machine early.
+        return false;
     }
 
     @Override

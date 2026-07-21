@@ -4,7 +4,6 @@ import com.hbm.ntm.uninos.HbmNodespace;
 import com.hbm.ntm.uninos.HbmSubscribableNodeNet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 import java.util.LinkedHashSet;
@@ -17,7 +16,7 @@ public final class HbmTypedNodespace<T, N extends HbmTypedNetworkNode<T>, NET ex
         this.nodespace = new HbmNodespace<NodeKey<T>, N, NET>(
                 HbmTypedNodespace::keysForNode,
                 (node, connection) -> new NodeKey<>(connection.pos(), node.getType()),
-                node -> networkFactory.create(type),
+                node -> () -> networkFactory.create(type),
                 NET::resetTrackers,
                 NET::update,
                 NodeKey::pos);
@@ -35,16 +34,20 @@ public final class HbmTypedNodespace<T, N extends HbmTypedNetworkNode<T>, NET ex
         nodespace.destroyNode(level, new NodeKey<>(pos, type));
     }
 
+    public void destroyNode(Level level, N node) {
+        nodespace.destroyNode(level, node);
+    }
+
     public void unloadLevel(Level level) {
         nodespace.unloadLevel(level);
     }
 
-    public void tick(ServerLevel level) {
-        nodespace.tick(level);
+    public void reapLevel(Level level) {
+        nodespace.reapLevel(level);
     }
 
-    public void unloadChunk(Level level, ChunkPos chunkPos) {
-        nodespace.unloadChunk(level, chunkPos);
+    public void tick(ServerLevel level) {
+        nodespace.tick(level);
     }
 
     public int getNodeCount(Level level) {

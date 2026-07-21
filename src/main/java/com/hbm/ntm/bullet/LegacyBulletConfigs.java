@@ -6,14 +6,7 @@ public final class LegacyBulletConfigs {
     public static final float DEFAULT_SPREAD = 0.005F;
 
     public static final BulletConfig TURBINE = turbine();
-    public static final BulletConfig MASKMAN_BULLET = maskmanBullet();
-    public static final BulletConfig MASKMAN_ORB = maskmanOrb();
     public static final BulletConfig MASKMAN_BOLT = maskmanBolt();
-    public static final BulletConfig MASKMAN_ROCKET = maskmanRocket();
-    public static final BulletConfig MASKMAN_TRACER = maskmanTracer();
-    public static final BulletConfig WORM_BOLT = wormBolt();
-    public static final BulletConfig WORM_LASER = wormHeadBolt();
-    public static final BulletConfig UFO_ROCKET = rocketUfo();
 
     public static BulletConfig standardBullet(String legacyName) {
         return BulletConfig.builder(legacyName)
@@ -84,21 +77,6 @@ public final class LegacyBulletConfigs {
                 .build();
     }
 
-    private static BulletConfig maskmanOrb() {
-        return BulletConfig.builder("maskman_orb")
-                .ammo(BulletAmmo.legacyItem("coin_maskman"))
-                .ballistics(0.25F, 0.0F, 10, 1, 1)
-                .damage(100.0F, 100.0F)
-                .physics(0.0D, 60)
-                .ricochet(false, 0.0D, 0, 0, 1.0D)
-                .penetration(false)
-                .breaksGlass(false)
-                .explosive(1.5F)
-                .appearance(BulletStyle.ORB, 1, BulletPlink.NONE, "")
-                .behavior(BulletBehaviorTag.MASKMAN_ORB_BOLT_VOLLEY)
-                .build();
-    }
-
     private static BulletConfig maskmanBolt() {
         return standardBullet("maskman_bolt").toBuilder()
                 .ammo(BulletAmmo.legacyItem("coin_maskman"))
@@ -109,87 +87,6 @@ public final class LegacyBulletConfigs {
                 .setToBolt(BulletTrail.LACUNAE)
                 .appearance(BulletStyle.BOLT, BulletTrail.LACUNAE.legacyId(), BulletPlink.BULLET, "reddust")
                 .damageType(ModDamageSources.LASER)
-                .build();
-    }
-
-    private static BulletConfig maskmanBullet() {
-        return standardBullet("maskman_bullet").toBuilder()
-                .ammo(BulletAmmo.legacyItem("coin_maskman"))
-                .ballistics(5.0F, 0.0F, 10, 1, 1)
-                .damage(5.0F, 10.0F)
-                .leadChance(15)
-                .appearance(BulletStyle.FLECHETTE, 0, BulletPlink.BULLET, "bluedust")
-                .build();
-    }
-
-    private static BulletConfig maskmanTracer() {
-        return standardBullet("maskman_tracer").toBuilder()
-                .ammo(BulletAmmo.legacyItem("coin_maskman"))
-                .ballistics(5.0F, 0.0F, 10, 1, 1)
-                .damage(15.0F, 20.0F)
-                .leadChance(0)
-                .setToBolt(BulletTrail.NIGHTMARE)
-                .appearance(BulletStyle.BOLT, BulletTrail.NIGHTMARE.legacyId(), BulletPlink.BULLET, "reddust")
-                .damageType(ModDamageSources.LASER)
-                .build();
-    }
-
-    private static BulletConfig maskmanRocket() {
-        return standardGrenade("maskman_rocket").toBuilder()
-                .ammo(BulletAmmo.legacyItem("coin_maskman"))
-                .ballistics(1.0F, DEFAULT_SPREAD, 10, 1, 1)
-                .physics(0.1D, 300)
-                .damage(15.0F, 20.0F)
-                .blockDamage(false)
-                .explosive(5.0F)
-                .appearance(BulletStyle.ROCKET, 0, BulletPlink.GRENADE, "smoke")
-                .build();
-    }
-
-    private static BulletConfig wormBolt() {
-        return standardBullet("worm_bolt").toBuilder()
-                .ammo(BulletAmmo.legacyItem("coin_worm"))
-                .ballistics(5.0F, 0.0F, 10, 1, 1)
-                .physics(0.0D, 60)
-                .damage(15.0F, 25.0F)
-                .leadChance(0)
-                .ricochet(false, 5.0D, 95, 2, 0.8D)
-                .setToBolt(BulletTrail.WORM)
-                .appearance(BulletStyle.BOLT, BulletTrail.WORM.legacyId(), BulletPlink.BULLET, "")
-                .damageType(ModDamageSources.LASER)
-                .build();
-    }
-
-    private static BulletConfig wormHeadBolt() {
-        return standardBullet("worm_laser").toBuilder()
-                .ammo(BulletAmmo.legacyItem("coin_worm"))
-                .ballistics(5.0F, 0.0F, 10, 1, 1)
-                .physics(0.0D, 100)
-                .damage(35.0F, 60.0F)
-                .leadChance(0)
-                .ricochet(false, 5.0D, 95, 2, 0.8D)
-                .setToBolt(BulletTrail.LASER)
-                .appearance(BulletStyle.BOLT, BulletTrail.LASER.legacyId(), BulletPlink.BULLET, "")
-                .damageType(ModDamageSources.LASER)
-                .build();
-    }
-
-    private static BulletConfig rocketConfig(String legacyName) {
-        return standardRocket(legacyName).toBuilder()
-                .ammo(BulletAmmo.NOTHING)
-                .damage(10.0F, 15.0F)
-                .explosive(4.0F)
-                .appearance(BulletStyle.ROCKET, 0, BulletPlink.GRENADE, "smoke")
-                .build();
-    }
-
-    private static BulletConfig rocketUfo() {
-        return rocketConfig("ufo_rocket").toBuilder()
-                .explosive(0.0F)
-                .destroysBlocks(false)
-                .appearance(BulletStyle.ROCKET, 0, BulletPlink.GRENADE, "reddust")
-                .behavior(BulletBehaviorTag.UFO_HOMING)
-                .behavior(BulletBehaviorTag.UFO_BLAST)
                 .build();
     }
 

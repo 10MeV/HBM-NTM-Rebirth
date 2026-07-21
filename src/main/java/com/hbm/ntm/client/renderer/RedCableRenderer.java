@@ -51,7 +51,7 @@ public class RedCableRenderer implements BlockEntityRenderer<RedCableBlockEntity
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

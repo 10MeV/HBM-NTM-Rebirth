@@ -64,8 +64,9 @@ public class FluidDuctExhaustBlockEntity extends BlockEntity implements HbmFluid
                 HbmFluidNodespace.destroyNode(level, worldPosition, type);
                 nodes[i] = null;
             }
-            Set<Direction> connections = HbmFluidConnectionUtil.collectNodeConnections(level, worldPosition, type, this);
-            nodes[i] = HbmFluidNodespace.createNode(level, new HbmFluidNode(worldPosition, type, connections));
+            // TileEntityPipeExhaust inherits IFluidPipeMK2#createNode, whose
+            // node declares all six endpoint positions for every smoke type.
+            nodes[i] = HbmFluidNodespace.createNode(level, new HbmFluidNode(worldPosition, type));
         }
     }
 

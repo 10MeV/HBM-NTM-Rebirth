@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "building",
+  "key": {
+    "1": { "tag": "forge:dyes/brown" },
+    "2": { "tag": "forge:dyes/gray" },
+    "C": { "item": "hbm_ntm_rebirth:concrete_smooth" }
+  },
+  "pattern": ["CCC", "1 2", "CCC"],
+  "result": {
+    "item": "hbm_ntm_rebirth:concrete_colored_ext",
+    "count": 6,
+    "nbt": "{hbmLegacyVariant:0}"
+  },
+  "show_notification": true
+}

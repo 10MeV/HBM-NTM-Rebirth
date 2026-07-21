@@ -38,7 +38,7 @@ public interface FsbPoweredArmor extends IBatteryItem {
                 multiplier = battery.multiplier();
             }
         }
-        return Math.max(0L, Math.round(getBaseMaxCharge(stack) * multiplier));
+        return Math.max(0L, (long) (getBaseMaxCharge(stack) * multiplier));
     }
 
     @Override

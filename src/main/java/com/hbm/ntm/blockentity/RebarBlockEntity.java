@@ -1,9 +1,11 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidReceiver;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.item.RebarPlacerItem;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -35,6 +37,8 @@ public class RebarBlockEntity extends HbmFluidNetworkBlockEntity implements HbmF
     private static final String TAG_LEGACY_META = "meta";
     private static final int MAX_PROGRESS = 1_000;
     private static final int MAX_TRANSFER_PER_REBAR = 50;
+
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.allAdjacent();
 
     private int progress;
     private int prevProgress;
@@ -173,6 +177,16 @@ public class RebarBlockEntity extends HbmFluidNetworkBlockEntity implements HbmF
     }
 
     @Override
+    protected Iterable<FluidPort> getFluidPorts() {
+        return FLUID_PORTS;
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
         return HbmFluidSideMode.NONE;
     }
@@ -208,7 +222,6 @@ public class RebarBlockEntity extends HbmFluidNetworkBlockEntity implements HbmF
 
     @Override
     public void onChunkUnloaded() {
-        removeRebarNode();
         super.onChunkUnloaded();
     }
 

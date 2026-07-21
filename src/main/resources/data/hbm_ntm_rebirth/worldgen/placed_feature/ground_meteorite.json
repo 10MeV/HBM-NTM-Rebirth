@@ -1,0 +1,8 @@
+{
+  "feature": "hbm_ntm_rebirth:ground_meteorite",
+  "placement": [
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

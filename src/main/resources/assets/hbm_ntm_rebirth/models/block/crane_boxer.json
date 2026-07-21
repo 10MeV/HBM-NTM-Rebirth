@@ -1,8 +1,4 @@
 {
-  "parent": "minecraft:block/orientable",
-  "textures": {
-    "top": "hbm_ntm_rebirth:block/crane_boxer_top",
-    "front": "hbm_ntm_rebirth:block/crane_box",
-    "side": "hbm_ntm_rebirth:block/crane_side_box"
-  }
+  "loader": "hbm_ntm_rebirth:crane_logistics_loader",
+  "style": "boxer"
 }

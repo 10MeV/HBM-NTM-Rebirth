@@ -48,14 +48,15 @@ public class CableDiodeBlockEntity extends BlockEntity
             return;
         }
         Direction output = diode.getOutputDirection();
-        if (diode.lastSubscribedOutput != output || Math.floorMod(level.getGameTime() + pos.hashCode(), 20) == 0L) {
-            for (Direction side : Direction.values()) {
-                if (side != output) {
-                    HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, side, diode);
-                }
+        // TileEntityDiode retries every non-output input on every server tick.
+        // Do not let a modern signature/keepalive delay recovery after a cable
+        // is replaced at the same position.
+        for (Direction side : Direction.values()) {
+            if (side != output) {
+                HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, side, diode);
             }
-            diode.lastSubscribedOutput = output;
         }
+        diode.lastSubscribedOutput = output;
         diode.pulses = 0;
         diode.setPower(0L);
     }

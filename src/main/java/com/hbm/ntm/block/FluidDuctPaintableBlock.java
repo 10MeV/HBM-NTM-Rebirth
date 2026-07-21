@@ -140,7 +140,7 @@ public class FluidDuctPaintableBlock extends FluidPipeBlock implements Toolable 
         return stack.getDamageValue() & 15;
     }
 
-    private static BlockState paintStateFromStack(BlockItem blockItem, ItemStack stack) {
+    public static BlockState paintStateFromStack(BlockItem blockItem, ItemStack stack) {
         if (stack.getItem() instanceof FluidDuctVariantBlockItem duct) {
             return duct.stateForStack(stack);
         }

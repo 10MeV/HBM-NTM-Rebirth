@@ -11,8 +11,28 @@ public final class ClientItemRendererBridges {
         LegacyItemRendererBridge.accept(consumer, () -> BalefireBombItemRenderer.INSTANCE);
     }
 
+    public static void acceptBigSword(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> LegacyBigSwordItemRenderer.INSTANCE);
+    }
+
     public static void acceptBombMulti(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> BombMultiItemRenderer.INSTANCE);
+    }
+
+    public static void acceptBoxcar(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> BoxcarItemRenderer.INSTANCE);
+    }
+
+    public static void acceptCrashedBomb(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> CrashedBombItemRenderer.INSTANCE);
+    }
+
+    public static void acceptDecoCrt(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> DecoCrtItemRenderer.INSTANCE);
+    }
+
+    public static void acceptPoleSatelliteReceiver(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> PoleSatelliteReceiverItemRenderer.INSTANCE);
     }
 
     public static void acceptCableDiode(Consumer<IClientItemExtensions> consumer) {

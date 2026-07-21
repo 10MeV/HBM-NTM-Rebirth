@@ -134,7 +134,10 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
     }
 
     protected HbmFluidNode createNode() {
-        return new HbmFluidNode(worldPosition, type, getConnections());
+        // IFluidPipeMK2#createNode always declares all six DirPos endpoints.
+        // Reciprocal node matching, not the current neighbour visual state,
+        // decides whether any of those endpoints joins a Fluid Mk2 network.
+        return new HbmFluidNode(worldPosition, type);
     }
 
     protected Set<Direction> getConnections() {
@@ -195,6 +198,17 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
         if (level != null && level.isClientSide) {
             requestModelDataUpdate();
             ClientGeometryInvalidationBridge.scheduleWithNeighbors(worldPosition);
+        }
+    }
+
+    /**
+     * Matches {@code TileEntityPipeBaseNT#updateEntity}: an already loaded pipe
+     * recreates its typed node after a legacy nodespace reap invalidates it.
+     */
+    public static void serverTick(net.minecraft.world.level.Level level, BlockPos pos, BlockState state,
+            FluidPipeBlockEntity pipe) {
+        if (!level.isClientSide && (pipe.node == null || pipe.node.isExpired())) {
+            pipe.refreshFluidNode();
         }
     }
 

@@ -1071,54 +1071,6 @@
       "hbm_ntm_rebirth:entity/ducc2"
     ]
   },
-  "entity.megaquacc": {
-    "subtitle": "subtitles.hbm_ntm_rebirth.entity.megaquacc",
-    "sounds": [
-      {
-        "name": "hbm_ntm_rebirth:entity/megaquacc",
-        "stream": false
-      }
-    ]
-  },
-  "entity.siege_death": {
-    "subtitle": "subtitles.hbm_ntm_rebirth.entity.siege",
-    "sounds": [
-      "hbm_ntm_rebirth:entity/siege_death1",
-      "hbm_ntm_rebirth:entity/siege_death2",
-      "hbm_ntm_rebirth:entity/siege_death3"
-    ]
-  },
-  "entity.siege_hurt": {
-    "subtitle": "subtitles.hbm_ntm_rebirth.entity.siege",
-    "sounds": [
-      "hbm_ntm_rebirth:entity/siege_hurt1",
-      "hbm_ntm_rebirth:entity/siege_hurt2"
-    ]
-  },
-  "entity.siege_idle": {
-    "subtitle": "subtitles.hbm_ntm_rebirth.entity.siege",
-    "sounds": [
-      "hbm_ntm_rebirth:entity/siege_idle1"
-    ]
-  },
-  "entity.ufo_beam": {
-    "subtitle": "subtitles.hbm_ntm_rebirth.entity.ufo_beam",
-    "sounds": [
-      {
-        "name": "hbm_ntm_rebirth:entity/ufo_beam_short",
-        "stream": false
-      }
-    ]
-  },
-  "entity.ufo_blast": {
-    "subtitle": "subtitles.hbm_ntm_rebirth.entity.ufo_blast",
-    "sounds": [
-      {
-        "name": "hbm_ntm_rebirth:entity/ufo_blast",
-        "stream": false
-      }
-    ]
-  },
   "entity.slicer": {
     "subtitle": "subtitles.hbm_ntm_rebirth.entity.slicer",
     "sounds": [
@@ -1231,7 +1183,8 @@
     "sounds": [
       {
         "name": "hbm_ntm_rebirth:entity/bomber1",
-        "stream": false
+        "stream": false,
+        "attenuation_distance": 250
       }
     ]
   },
@@ -1240,7 +1193,8 @@
     "sounds": [
       {
         "name": "hbm_ntm_rebirth:entity/bomber2",
-        "stream": false
+        "stream": false,
+        "attenuation_distance": 250
       }
     ]
   },
@@ -1623,12 +1577,6 @@
     "subtitle": "subtitles.hbm_ntm_rebirth.weapon.reload",
     "sounds": [
       "hbm_ntm_rebirth:weapon/lever_action_reload"
-    ]
-  },
-  "weapon.b92_reload": {
-    "subtitle": "subtitles.hbm_ntm_rebirth.weapon.reload",
-    "sounds": [
-      "hbm_ntm_rebirth:weapon/b92_reload"
     ]
   },
   "weapon.stinger_lock_on": {

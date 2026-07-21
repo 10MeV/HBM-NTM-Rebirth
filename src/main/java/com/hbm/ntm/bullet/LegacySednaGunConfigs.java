@@ -631,7 +631,7 @@ public final class LegacySednaGunConfigs {
                     .build()));
     public static final SednaGunConfig GUN_AMAT_SUBTLETY = register(exact("gun_amat_subtlety",
             "XFactory50", "ItemGunBaseNT", WeaponQuality.LEGENDARY,
-            "Exact fields copied from XFactory50.init(); magazine prepends secret bmg50_equestrian.",
+            "Exact fields copied from XFactory50.init(); the excluded Equestrian secret round is not accepted.",
             standardMode(0, 1000.0F, 20, 50, Crosshair.CIRCLE, "XFactory50.LAMBDA_SMOKE",
                     "Orchestras.ORCHESTRA_AMAT", "XFactory50.LAMBDA_AMAT_ANIMS")
                     .scopeTexture("hbm:textures/misc/scope_amat.png")
@@ -974,7 +974,7 @@ public final class LegacySednaGunConfigs {
                     .build()));
     public static final SednaGunConfig GUN_DRILL = register(exact("gun_drill", "XFactoryDrill",
             "ItemGunDrill", WeaponQuality.UTILITY,
-            "Exact data fields copied from XFactoryDrill.init(); block breaking, entity melee, engine fuel/electric handling, AoE highlight and weapon-mod evaluation remain deferred to tool runtime migration.",
+            "Exact data fields copied from XFactoryDrill.init(); DrillGunItem owns the source-backed block/entity action, liquid/electric engine consumption, AoE highlight contract, and weapon-mod evaluation.",
             new ModeBuilder(0)
                     .durability(3000.0F).draw(10).inspect(55).hideCrosshair(false)
                     .crosshair(Crosshair.L_CIRCUMFLEX)

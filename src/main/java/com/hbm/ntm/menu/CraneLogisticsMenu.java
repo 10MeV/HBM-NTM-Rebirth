@@ -3,8 +3,12 @@ package com.hbm.ntm.menu;
 import com.hbm.ntm.blockentity.CraneLogisticsBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
+import com.hbm.ntm.util.HbmMenuDataSlots;
+import com.hbm.ntm.util.LegacyPatternMatcher;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -12,6 +16,7 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.items.SlotItemHandler;
 
 public class CraneLogisticsMenu extends AbstractContainerMenu {
     private final CraneLogisticsBlockEntity blockEntity;
@@ -19,6 +24,7 @@ public class CraneLogisticsMenu extends AbstractContainerMenu {
     private final int firstPatternSlot;
     private final int patternSlotCount;
     private final int firstPlayerSlot;
+    private final int[] patternModeIndexes;
 
     public CraneLogisticsMenu(int containerId, Inventory playerInventory, FriendlyByteBuf data) {
         this(containerId, playerInventory, getBlockEntity(playerInventory, data.readBlockPos()));
@@ -29,6 +35,7 @@ public class CraneLogisticsMenu extends AbstractContainerMenu {
         this.blockEntity = blockEntity;
         CraneLogisticsBlockEntity.Kind kind = blockEntity.kind();
         this.machineSlots = kind.slots();
+        this.patternModeIndexes = new int[kind.filterSlots()];
         int patternStart = -1;
         int patternCount = 0;
 
@@ -38,8 +45,8 @@ public class CraneLogisticsMenu extends AbstractContainerMenu {
                 patternCount = 9;
                 HbmInventoryMenuHelper.addPatternSlots(this::addSlot, blockEntity.getItems(), 0, 71, 17, 3, 3);
                 HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(), 9, 8, 17, 3, 3);
-                addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 18, 152, 23));
-                addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 19, 152, 47));
+                addSlot(craneUpgradeSlot(18, 152, 23));
+                addSlot(craneUpgradeSlot(19, 152, 47));
                 HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 26, 103, 161);
             }
             case INSERTER, BOXER -> {
@@ -50,8 +57,8 @@ public class CraneLogisticsMenu extends AbstractContainerMenu {
                 patternStart = slots.size();
                 patternCount = 9;
                 HbmInventoryMenuHelper.addPatternSlots(this::addSlot, blockEntity.getItems(), 0, 40, 17, 3, 3);
-                addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 9, 121, 23));
-                addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 10, 121, 47));
+                addSlot(craneUpgradeSlot(9, 121, 23));
+                addSlot(craneUpgradeSlot(10, 121, 47));
                 HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 103, 161);
             }
             case ROUTER -> {
@@ -70,8 +77,8 @@ public class CraneLogisticsMenu extends AbstractContainerMenu {
             }
             case UNBOXER -> {
                 HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(), 0, 8, 17, 3, 7);
-                addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 21, 152, 23));
-                addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 22, 152, 47));
+                addSlot(craneUpgradeSlot(21, 152, 23));
+                addSlot(craneUpgradeSlot(22, 152, 47));
                 HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 103, 161);
             }
             case PARTITIONER -> {
@@ -84,10 +91,24 @@ public class CraneLogisticsMenu extends AbstractContainerMenu {
         this.firstPatternSlot = patternStart;
         this.patternSlotCount = patternCount;
         this.firstPlayerSlot = slots.size() - 36;
+        addPatternDataSlots();
     }
 
     public CraneLogisticsBlockEntity getBlockEntity() {
         return blockEntity;
+    }
+
+    public int getPatternSlotCount() {
+        return patternSlotCount;
+    }
+
+    public Component getPatternModeLabel(int slot) {
+        if (slot < 0 || slot >= patternModeIndexes.length) {
+            return Component.empty();
+        }
+        String mode = LegacyPatternMatcher.modeForIndex(blockEntity.getItems().getStackInSlot(slot),
+                patternModeIndexes[slot]);
+        return LegacyPatternMatcher.label(mode).copy().withStyle(ChatFormatting.RED);
     }
 
     public CraneLogisticsBlockEntity.Kind kind() {
@@ -126,12 +147,19 @@ public class CraneLogisticsMenu extends AbstractContainerMenu {
     public void clicked(int slotId, int button, ClickType clickType, Player player) {
         if (firstPatternSlot >= 0 && HbmInventoryMenuHelper.handleLegacyPatternSlotClick(slots, slotId, button,
                 clickType, getCarried(), firstPatternSlot, patternSlotCount, blockEntity::cyclePatternMode,
-                null, this::broadcastChanges)) {
+                blockEntity::setPatternStack, this::broadcastChanges)) {
             return;
         }
         super.clicked(slotId, button, clickType, player);
     }
 
+    private void addPatternDataSlots() {
+        for (int slot = 0; slot < patternModeIndexes.length; slot++) {
+            final int patternSlot = slot;
+            HbmMenuDataSlots.addInt(this::addDataSlot, () -> blockEntity.getPatternMode(patternSlot),
+                    value -> patternModeIndexes[patternSlot] = value);
+        }
+    }
     private boolean moveIntoMachine(ItemStack stack) {
         CraneLogisticsBlockEntity.Kind kind = blockEntity.kind();
         return switch (kind) {
@@ -139,6 +167,15 @@ public class CraneLogisticsMenu extends AbstractContainerMenu {
             case GRABBER -> HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 9, 11);
             case ROUTER -> false;
             default -> moveItemStackTo(stack, 0, machineSlots, false);
+        };
+    }
+
+    private SlotItemHandler craneUpgradeSlot(int slot, int x, int y) {
+        return new SlotItemHandler(blockEntity.getItems(), slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return blockEntity.isValidUpgradeForSlot(slot, stack);
+            }
         };
     }
 

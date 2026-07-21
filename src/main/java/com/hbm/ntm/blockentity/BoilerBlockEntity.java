@@ -356,6 +356,13 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityHeatBoiler and TileEntityHeatBoilerIndustrial retried
+        // their remote WATER/STEAM endpoints during every server tick.
+        return true;
+    }
+
+    @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
         return List.of(feedTank);
     }

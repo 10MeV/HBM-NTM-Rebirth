@@ -12,7 +12,6 @@ import com.hbm.ntm.bullet.BulletFlightVisualUtil;
 import com.hbm.ntm.bullet.BulletHomingStateUtil;
 import com.hbm.ntm.bullet.BulletKinematicsUtil;
 import com.hbm.ntm.bullet.BulletLaunchUtil;
-import com.hbm.ntm.bullet.BulletNpcLaunchUtil;
 import com.hbm.ntm.bullet.BulletPersistenceUtil;
 import com.hbm.ntm.bullet.BulletPlink;
 import com.hbm.ntm.bullet.BulletProjectileHitUtil;
@@ -23,7 +22,7 @@ import com.hbm.ntm.bullet.BulletSyncedState;
 import com.hbm.ntm.bullet.BulletTauTrailUtil;
 import com.hbm.ntm.bullet.Ni4NiCoinRicochetUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
-import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.TrackerUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -33,7 +32,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -85,7 +83,6 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     private double prevTauRenderY;
     private double prevTauRenderZ;
     private boolean hasTauRenderPosition;
-    private double renderDistanceWeight = BulletKinematicsUtil.RENDER_DISTANCE_WEIGHT;
     private int turnProgress;
     private double syncPosX;
     private double syncPosY;
@@ -95,6 +92,8 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
     private double velocityX;
     private double velocityY;
     private double velocityZ;
+    private double previousClientVisualSpeed;
+    private double clientVisualSpeed;
     private long forcedChunk = Long.MIN_VALUE;
     private int visualOnlyBeamTicks;
     public float overrideDamage;
@@ -156,32 +155,6 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         return level.addFreshEntity(bullet);
     }
 
-    public static int executeNpcAttack(Level level, BulletNpcLaunchUtil.NpcAttackRequest request,
-            double soundX, double soundY, double soundZ) {
-        if (level == null || request == null || level.isClientSide()) {
-            return 0;
-        }
-        int spawned = spawnAll(level, request.spawnRequests());
-        String sound = legacyNpcSound(request.legacySoundName());
-        if (spawned > 0 && sound != null) {
-            LegacySoundPlayer.playSoundEffect(level, soundX, soundY, soundZ, sound, SoundSource.HOSTILE, 1.0F, 1.0F);
-        }
-        return spawned;
-    }
-
-    @Nullable
-    private static String legacyNpcSound(String legacySoundName) {
-        if (legacySoundName == null) {
-            return null;
-        }
-        return switch (legacySoundName) {
-            case BulletNpcLaunchUtil.MASKMAN_MINIGUN_SOUND -> BulletNpcLaunchUtil.MASKMAN_MINIGUN_SOUND;
-            case BulletNpcLaunchUtil.MASKMAN_ORB_SOUND -> BulletNpcLaunchUtil.MASKMAN_ORB_SOUND;
-            case BulletNpcLaunchUtil.MASKMAN_MISSILE_SOUND -> BulletNpcLaunchUtil.MASKMAN_MISSILE_SOUND;
-            default -> null;
-        };
-    }
-
     public void applyLaunchPlan(BulletLaunchUtil.LaunchPlan plan) {
         if (plan == null || !plan.valid()) {
             discard();
@@ -190,7 +163,6 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         setConfig(plan.config());
         setPos(plan.position().x, plan.position().y, plan.position().z);
         setDeltaMovement(plan.motion());
-        renderDistanceWeight = plan.renderDistanceWeight();
         if (plan.config() != null && plan.config().plink() == BulletPlink.ENERGY) {
             entityData.set(BEAM_LENGTH, (float) BulletProjectileTickUtil.LEGACY_BEAM_RANGE);
         }
@@ -207,7 +179,7 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
 
         BulletConfig currentConfig = config();
         if (currentConfig == null) {
-            discard();
+            discardWithLegacyTeleport();
             return;
         }
 
@@ -221,18 +193,16 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         if (visualOnlyBeamTicks > 0) {
             visualOnlyBeamTicks--;
             if (visualOnlyBeamTicks <= 0) {
-                discard();
+                discardWithLegacyTeleport();
             }
             return;
-        }
-        if (currentConfig.chunkloads()) {
-            forceCurrentChunk();
         }
         if (inGround()) {
             if (BulletStuckStateUtil.sameLegacyStuckBlock(level(), stuckBlockPos, stuckBlockState)) {
                 ticksInGround++;
+                forceCurrentChunkIfConfigured(currentConfig);
                 if (BulletStuckStateUtil.shouldDespawnInGround(ticksInGround)) {
-                    discard();
+                    discardWithLegacyTeleport();
                 }
                 return;
             }
@@ -255,6 +225,10 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
             setDeltaMovement(result.nextMotion());
             updateRotationFromMovement(position().subtract(previousPosition));
         }
+        forceCurrentChunkIfConfigured(currentConfig);
+        if (stuckByHook || result.hit().blockHit().ricocheted()) {
+            TrackerUtil.sendTeleport(this);
+        }
         setHomingTarget(result.homingTarget());
         hasTauTrailNodes = hasTauTrailNodes || result.tauTrail().appended();
         appendTauTrailNode(result.tauTrail());
@@ -266,7 +240,7 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         Ni4NiCoinRicochetUtil.apply(this, currentConfig, result, overrideDamage);
 
         if (result.discardProjectile() || exceededRicochetLimit) {
-            discard();
+            discardWithLegacyTeleport();
         }
     }
 
@@ -293,6 +267,8 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         }
 
         Vec3 currentPosition = position();
+        previousClientVisualSpeed = clientVisualSpeed;
+        clientVisualSpeed = currentPosition.subtract(previousPosition).length();
         BulletFlightVisualUtil.spawnFlamethrowerTrail(currentConfig, level(), currentPosition);
         BulletFlightVisualUtil.spawnFireExtinguisherTrail(currentConfig, level(), currentPosition, motion, random);
         BulletFlightVisualUtil.spawnVanillaTrail(currentConfig, level(), previousPosition, currentPosition);
@@ -582,9 +558,23 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        double edge = Math.max(BulletKinematicsUtil.ENTITY_SIZE, getBoundingBox().getSize());
-        double range = edge * 64.0D * Math.max(1.0D, renderDistanceWeight);
-        return distance < range * range;
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
+    }
+
+    /**
+     * {@code EntityBulletBaseMK4#setDead()} forced a tracker teleport before
+     * removal so one-tick projectiles could render their terminal position.
+     */
+    private void discardWithLegacyTeleport() {
+        if (!level().isClientSide() && !isRemoved()) {
+            TrackerUtil.sendTeleport(this);
+        }
+        discard();
+    }
+
+    /** Source EntityBulletBaseMK4 tracer-speed interpolation, maintained only by the client movement path. */
+    public double legacyInterpolatedClientVisualSpeed(float partialTick) {
+        return Mth.lerp(Mth.clamp(partialTick, 0.0F, 1.0F), previousClientVisualSpeed, clientVisualSpeed);
     }
 
     @Override
@@ -628,6 +618,12 @@ public class BulletProjectileEntity extends Entity implements RadarDetectable {
         clearForcedChunk();
         ForgeChunkManager.forceChunk(serverLevel, HbmNtm.MOD_ID, this, chunk.x, chunk.z, true, true);
         forcedChunk = packed;
+    }
+
+    private void forceCurrentChunkIfConfigured(BulletConfig currentConfig) {
+        if (currentConfig.chunkloads()) {
+            forceCurrentChunk();
+        }
     }
 
     private void clearForcedChunk() {

@@ -14,9 +14,10 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 
-public class PneumaticNetwork extends HbmNodeNet<PneumaticNode> {
+public class PneumaticNetwork extends HbmNodeNet<Object, Object, PneumaticNode> {
     public static final byte SEND_FIRST = 0;
     public static final byte SEND_LAST = 1;
     public static final byte SEND_RANDOM = 2;
@@ -26,15 +27,25 @@ public class PneumaticNetwork extends HbmNodeNet<PneumaticNode> {
     public static final int TIMEOUT_MS = 1_000;
     public static final int ITEMS_PER_TRANSFER = 64;
 
+    /** Legacy-public instance random; legacy send itself did not consume it. */
+    public Random rand = new Random();
+    /** Current shuffle source, intentionally retained independently from legacy {@link #rand}. */
     private final Random random = new Random();
-    private final Map<PneumaticReceiver, Long> receivers = new LinkedHashMap<>();
-    private final LinkedHashSet<PneumaticStackCache> accessors = new LinkedHashSet<>();
-    private final LinkedHashSet<PneumaticSlotMonitorProvider> storages = new LinkedHashSet<>();
+    /** Live legacy receiver timestamp map. */
+    public Map<PneumaticReceiver, Long> receivers = new LinkedHashMap<>();
+    /** Live legacy stack-cache collection. */
+    public LinkedHashSet<PneumaticStackCache> accessors = new LinkedHashSet<>();
+    /** Live legacy storage-provider collection. */
+    public LinkedHashSet<PneumaticSlotMonitorProvider> storages = new LinkedHashSet<>();
 
     private int lastTransfer;
 
     public void addReceiver(PneumaticReceiver receiver) {
         if (receiver != null) {
+            // The legacy HashMap was keyed by IInventory, so an endpoint that
+            // registered the same destination later replaced its direction,
+            // lease and filter carrier instead of creating a second target.
+            receivers.keySet().removeIf(existing -> Objects.equals(existing.handler(), receiver.handler()));
             receivers.put(receiver, System.currentTimeMillis());
         }
     }
@@ -88,7 +99,6 @@ public class PneumaticNetwork extends HbmNodeNet<PneumaticNode> {
     public DebugSnapshot createDebugSnapshot() {
         pruneStale(System.currentTimeMillis());
         accessors.removeIf(PneumaticStackCache::hasExpired);
-        storages.removeIf(PneumaticSlotMonitorProvider::hasExpired);
         return new DebugSnapshot(isValid(), linkCount(), receivers.size(), accessors.size(), storages.size(), lastTransfer, TIMEOUT_MS);
     }
 
@@ -108,33 +118,14 @@ public class PneumaticNetwork extends HbmNodeNet<PneumaticNode> {
         lastTransfer = 0;
     }
 
-    @Override
-    public void joinNetwork(HbmNodeNet<PneumaticNode> network) {
-        if (!(network instanceof PneumaticNetwork pneumaticNetwork) || pneumaticNetwork == this) {
-            super.joinNetwork(network);
-            return;
-        }
-
-        Map<PneumaticReceiver, Long> oldReceivers = new LinkedHashMap<>(pneumaticNetwork.receivers);
-        LinkedHashSet<PneumaticStackCache> oldAccessors = new LinkedHashSet<>(pneumaticNetwork.accessors);
-        LinkedHashSet<PneumaticSlotMonitorProvider> oldStorages = new LinkedHashSet<>(pneumaticNetwork.storages);
-        pneumaticNetwork.receivers.clear();
-        pneumaticNetwork.accessors.clear();
-        pneumaticNetwork.storages.clear();
-        super.joinNetwork(network);
-        receivers.putAll(oldReceivers);
-        accessors.addAll(oldAccessors);
-        storages.addAll(oldStorages);
-    }
-
     public void resetTrackers() {
         lastTransfer = 0;
     }
 
-    public void update() {
+    public long update() {
         pruneStale(System.currentTimeMillis());
         accessors.removeIf(PneumaticStackCache::hasExpired);
-        storages.removeIf(PneumaticSlotMonitorProvider::hasExpired);
+        return 0L;
     }
 
     public boolean send(PneumaticItemAccess source, PneumaticEndpoint sender, int sendOrder, int receiveOrder, int maxRange, int nextReceiver) {
@@ -187,7 +178,10 @@ public class PneumaticNetwork extends HbmNodeNet<PneumaticNode> {
     private int moveItems(IItemHandler source, PneumaticReceiver receiver, PneumaticEndpoint sender, int[] sourceSlots) {
         int transferMassLeft = ITEMS_PER_TRANSFER;
         int movedItems = 0;
-        int itemHardCap = Math.max(1, receiver.endpoint().itemHardCap());
+        // TileEntityMachineAutocrafter was the sole legacy special case and
+        // was identified from the destination IInventory.  The capability
+        // adapter preserves that target-owned limit in receiver.access().
+        int itemHardCap = receiver.access().itemHardCap();
 
         for (int sourceSlot : sourceSlots) {
             ItemStack sourceStack = source.extractItem(sourceSlot, Integer.MAX_VALUE, true);
@@ -317,8 +311,10 @@ public class PneumaticNetwork extends HbmNodeNet<PneumaticNode> {
     private static boolean isValidReceiver(PneumaticReceiver receiver) {
         return receiver != null
                 && receiver.handler() != null
-                && receiver.endpoint() != null
-                && receiver.endpoint().isPneumaticLoaded();
+                // 1.7.10 only applied NodeNet#isBadLink to the receiver
+                // inventory.  The endpoint tube was retained for its filter,
+                // not as a second loaded-state gate on the receiver lease.
+                && receiver.endpoint() != null;
     }
 
     private static boolean inRange(@Nullable BlockPos source, @Nullable BlockPos destination, int maxRange) {
@@ -374,8 +370,19 @@ public class PneumaticNetwork extends HbmNodeNet<PneumaticNode> {
 
         @Override
         public int compare(Map.Entry<PneumaticReceiver, Long> first, Map.Entry<PneumaticReceiver, Long> second) {
-            BlockPos firstPos = first.getKey().endpoint().getPneumaticPos();
-            BlockPos secondPos = second.getKey().endpoint().getPneumaticPos();
+            BlockPos firstPos = first.getKey().access().pos();
+            BlockPos secondPos = second.getKey().access().pos();
+            // Legacy ReceiverComparator gives positioned TileEntity targets
+            // precedence over non-TileEntity inventories.
+            if (firstPos == null && secondPos != null) {
+                return 1;
+            }
+            if (firstPos != null && secondPos == null) {
+                return -1;
+            }
+            if (firstPos == null) {
+                return 0;
+            }
             double firstDistance = firstPos.distSqr(origin);
             double secondDistance = secondPos.distSqr(origin);
             if (firstDistance == secondDistance) {

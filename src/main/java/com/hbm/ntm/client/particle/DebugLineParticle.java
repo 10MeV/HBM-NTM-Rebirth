@@ -54,7 +54,9 @@ public class DebugLineParticle extends Particle {
         this.lineX = lineX;
         this.lineY = lineY;
         this.lineZ = lineZ;
-        this.color = color == 0 ? 0xFFFFFF : color;
+        // ParticleDebugLine stored the supplied packed color verbatim.  In particular,
+        // zero is legacy black rather than a modern fallback to white.
+        this.color = color;
         this.lifetime = 60;
         this.hasPhysics = false;
     }
@@ -78,12 +80,18 @@ public class DebugLineParticle extends Particle {
         double endX = startX + this.lineX;
         double endY = startY + this.lineY;
         double endZ = startZ + this.lineZ;
-        int alpha = Mth.clamp((int) (255.0F * (1.0F - (this.age + partialTick) / (float) this.lifetime)), 0, 255);
-        int red = (this.color >> 16) & 255;
-        int green = (this.color >> 8) & 255;
-        int blue = this.color & 255;
+        // Legacy ParticleDebugLine leaves its vertex alpha opaque and lowers the
+        // lightmap brightness from 240 to 0 over its 60-tick lifetime.  This
+        // POSITION_COLOR batch has no lightmap coordinate, so express that same
+        // visible luminance fade in its RGB channels instead of changing alpha.
+        int legacyLightmapBrightness = (int) (240.0F
+                - 240.0F * (this.age + partialTick) / (float) this.lifetime);
+        float brightness = Mth.clamp(legacyLightmapBrightness / 240.0F, 0.0F, 1.0F);
+        int red = (int) (((this.color >> 16) & 255) * brightness);
+        int green = (int) (((this.color >> 8) & 255) * brightness);
+        int blue = (int) ((this.color & 255) * brightness);
         LegacyLineRenderer.linePositionColorIdentity(consumer, startX, startY, startZ, endX, endY, endZ,
-                red << 16 | green << 8 | blue, alpha);
+                red << 16 | green << 8 | blue, 255);
     }
 
     @Override

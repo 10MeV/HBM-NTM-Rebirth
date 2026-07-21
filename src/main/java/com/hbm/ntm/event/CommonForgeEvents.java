@@ -3,6 +3,7 @@ package com.hbm.ntm.event;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.items.armor.IAttackHandler;
 import com.hbm.items.armor.IDamageHandler;
+import com.hbm.ntm.armor.ArmorModEvents;
 import com.hbm.ntm.command.ModCommands;
 import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.config.RadiationConfig;
@@ -10,19 +11,24 @@ import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.config.WeaponConfig;
 import com.hbm.ntm.api.entity.RadarScanner;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
+import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.damage.DamageResistanceHandler;
 import com.hbm.ntm.damage.EntityDamageUtil;
+import com.hbm.ntm.drone.DroneLogisticsNetwork;
 import com.hbm.ntm.energy.HbmEnergyNodespace;
 import com.hbm.ntm.entity.mob.EntityCyberCrab;
 import com.hbm.ntm.entity.mob.EntityCreeperNuclear;
 import com.hbm.ntm.entity.mob.EntityCreeperTainted;
 import com.hbm.ntm.entity.mob.EntityTaintCrab;
 import com.hbm.ntm.entity.mob.EntityTeslaCrab;
+import com.hbm.ntm.entity.ai.SednaGunMobAttackGoal;
 import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
+import com.hbm.ntm.entity.projectile.BurningFoeqEntity;
+import com.hbm.ntm.entity.train.LegacyRailCarEntity;
 import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.ExplosionNukeSmall;
 import com.hbm.ntm.explosion.NuclearExplosionUtil;
@@ -32,9 +38,11 @@ import com.hbm.ntm.item.EuphemiumArmorItem;
 import com.hbm.ntm.item.DnsArmorItem;
 import com.hbm.ntm.item.FsbArmorItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
+import com.hbm.ntm.item.LegacyBdclItem;
 import com.hbm.ntm.item.NcrpaArmorItem;
 import com.hbm.ntm.item.No9ArmorItem;
 import com.hbm.ntm.item.TrenchmasterArmorItem;
+import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.LoadedTileAccessCache;
 import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
@@ -93,6 +101,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.MushroomCow;
 import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
@@ -125,6 +134,7 @@ import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraft.world.level.storage.LevelResource;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
@@ -151,6 +161,7 @@ public final class CommonForgeEvents {
     private static final int CRATER_MELT_RADIUS = 64;
     private static final int CRATER_MELT_SAMPLES_PER_PLAYER = 32;
     private static final Map<ResourceKey<Level>, Set<Integer>> TRACKED_ITEM_ENTITIES = new HashMap<>();
+    private static boolean handlingConveyorWandLineBreak;
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
@@ -204,7 +215,11 @@ public final class CommonForgeEvents {
         }
 
         event.setAmount(amount);
+        ArmorModEvents.dispatchArmorModHurt(event);
         dispatchLegacyArmorDamageHandlers(event, entity);
+        if (!event.isCanceled() && entity instanceof Player player) {
+            FsbArmorItem.applyLegacyPoweredArmorWear(player, event.getSource(), event.getAmount());
+        }
         DamageResistanceHandler.notifyDamageDealt(entity, event.getSource(), event.getAmount());
     }
 
@@ -212,6 +227,11 @@ public final class CommonForgeEvents {
     public static void onLivingDeath(LivingDeathEvent event) {
         LivingEntity entity = event.getEntity();
         handleCyberCrabDeathDrop(event, entity);
+        if (entity.level() instanceof ServerLevel level && HbmCommonConfig.cataclysmEnabled()) {
+            BurningFoeqEntity foeq = new BurningFoeqEntity(level);
+            foeq.setPos(entity.getX(), 500.0D, entity.getZ());
+            level.addFreshEntity(foeq);
+        }
         if (!(entity instanceof EntityCreeperTainted)
                 || !ModDamageSources.is(event.getSource(), ModDamageSources.BOXCAR)
                 || !(entity.level() instanceof ServerLevel level)) {
@@ -238,6 +258,15 @@ public final class CommonForgeEvents {
             for (int i = 0; i < count; i++) {
                 addCapturedDrop(event, entity, new ItemStack(ModItems.COPPER_COIL.get()));
             }
+        }
+        if (event.getSource().getEntity() instanceof Player player
+                && !(player instanceof FakePlayer)
+                && entity instanceof Enemy
+                && entity.getRandom().nextInt(250) == 0) {
+            // Legacy ModEventHandler: a real player directly killing any IMob has an
+            // independent 1/250 chance to obtain one launch-code piece. Looting does
+            // not alter this roll, and red-room-only key drops remain excluded.
+            addCapturedDrop(event, entity, new ItemStack(ModItems.LAUNCH_CODE_PIECE.get()));
         }
         if (!event.isRecentlyHit()) {
             return;
@@ -281,6 +310,18 @@ public final class CommonForgeEvents {
             return;
         }
         event.getDrops().add(new ItemEntity(entity.level(), entity.getX(), entity.getY(), entity.getZ(), stack.copy()));
+    }
+
+    @SubscribeEvent
+    public static void onLivingUseItemTick(LivingEntityUseItemEvent.Tick event) {
+        if (event.getItem().getItem() instanceof LegacyBdclItem
+                && event.getDuration() <= 24
+                && event.getDuration() % 4 == 0) {
+            // ItemBDCL#onUsingTick decremented itemInUseCount itself during
+            // the final 24 ticks. Forge exposes the equivalent mutable
+            // countdown through this event before the modern use callback.
+            event.setDuration(event.getDuration() - 1);
+        }
     }
 
     @SubscribeEvent
@@ -343,6 +384,9 @@ public final class CommonForgeEvents {
             RadarScanner.updateSystem(event.getServer().getAllLevels());
             for (ServerLevel level : event.getServer().getAllLevels()) {
                 TomImpactWorldEffects.tickLegacyWorldStart(level);
+                HbmEnergyNodespace.tick(level);
+                HbmFluidNodespace.tick(level);
+                HbmUninosNodespaces.tick(level);
             }
             return;
         }
@@ -353,10 +397,9 @@ public final class CommonForgeEvents {
         PollutionManager.tick(event.getServer().getAllLevels());
         for (ServerLevel level : event.getServer().getAllLevels()) {
             ChunkRadiationManager.tick(level);
-            HbmEnergyNodespace.tick(level);
-            HbmFluidNodespace.tick(level);
-            HbmUninosNodespaces.tick(level);
+            DroneLogisticsNetwork.tickLeaseExpiry(level);
             meltCraterColdBlocks(level);
+            TomImpactWorldEffects.applyQueuedPostPopulation(level);
         }
         NeutronHandler.tick(event.getServer());
         ServerTileBinaryControlTransfers.pruneExpired(event.getServer().overworld().getGameTime());
@@ -433,6 +476,7 @@ public final class CommonForgeEvents {
             return;
         }
         LoadedTileAccessCache.invalidate(level, event.getPos());
+        handleConveyorWandLineBreak(event, level);
         if (!HbmAbilityToolItem.isHandlingAbilityBreak()
                 && event.getPlayer().getMainHandItem().getItem() instanceof HbmAbilityToolItem abilityTool
                 && abilityTool.handleAbilityBlockBreak(event)) {
@@ -443,6 +487,52 @@ public final class CommonForgeEvents {
         }
         handleCoalGasOnBlockBreak(event, level);
         handleLeadPollutionOnBlockBreak(event, level);
+    }
+
+    private static void handleConveyorWandLineBreak(BlockEvent.BreakEvent event, ServerLevel level) {
+        if (handlingConveyorWandLineBreak
+                || !(event.getPlayer() instanceof ServerPlayer player)
+                || !player.isShiftKeyDown()
+                || !player.getAbilities().instabuild
+                || !player.getMainHandItem().is(ModItems.CONVEYOR_WAND.get())
+                || !(event.getState().getBlock() instanceof ConveyorBlock conveyor)) {
+            return;
+        }
+
+        Direction input = conveyor.getInputDirection(event.getState());
+        Direction output = conveyor.getOutputDirection(event.getState());
+        handlingConveyorWandLineBreak = true;
+        try {
+            breakExtraConveyor(level, player, event.getPos().relative(input), 32);
+            breakExtraConveyor(level, player, event.getPos().relative(output), 32);
+        } finally {
+            handlingConveyorWandLineBreak = false;
+        }
+    }
+
+    private static void breakExtraConveyor(ServerLevel level, ServerPlayer player, BlockPos pos, int depth) {
+        depth--;
+        if (depth <= 0 || !level.hasChunkAt(pos)) {
+            return;
+        }
+
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof ConveyorBlock conveyor)) {
+            return;
+        }
+
+        Direction input = conveyor.getInputDirection(state);
+        Direction output = conveyor.getOutputDirection(state);
+        int experience = ForgeHooks.onBlockBreakEvent(level, player.gameMode.getGameModeForPlayer(), player, pos);
+        if (experience == -1) {
+            return;
+        }
+
+        LoadedTileAccessCache.invalidate(level, pos);
+        if (level.destroyBlock(pos, false, player)) {
+            breakExtraConveyor(level, player, pos.relative(input), depth);
+            breakExtraConveyor(level, player, pos.relative(output), depth);
+        }
     }
 
     @SubscribeEvent
@@ -502,7 +592,7 @@ public final class CommonForgeEvents {
             HazardExposureUtil.updateLivingInventory(entity);
         }
 
-        if (radiationSyncTick && entity instanceof ServerPlayer serverPlayer) {
+        if (entity instanceof ServerPlayer serverPlayer) {
             syncPollution(serverPlayer);
         }
     }
@@ -599,7 +689,15 @@ public final class CommonForgeEvents {
 
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
-        if (event.getLevel().isClientSide || !(event.getEntity() instanceof ItemEntity itemEntity)) {
+        if (event.getLevel().isClientSide) {
+            return;
+        }
+        if (event.getEntity() instanceof Mob mob
+                && mob.getMainHandItem().getItem() instanceof SednaGunItem gun
+                && gun.supportsNpcGunRuntime(mob.getMainHandItem())) {
+            SednaGunMobAttackGoal.ensureAttached(mob);
+        }
+        if (!(event.getEntity() instanceof ItemEntity itemEntity)) {
             return;
         }
         TRACKED_ITEM_ENTITIES.computeIfAbsent(event.getLevel().dimension(), key -> new HashSet<>()).add(itemEntity.getId());
@@ -610,6 +708,7 @@ public final class CommonForgeEvents {
         if (event.phase != TickEvent.Phase.END || event.level.isClientSide || !(event.level instanceof ServerLevel level)) {
             return;
         }
+        LegacyRailCarEntity.updateMotion(level);
         Set<Integer> tracked = TRACKED_ITEM_ENTITIES.get(level.dimension());
         if (tracked == null || tracked.isEmpty()) {
             return;
@@ -857,12 +956,16 @@ public final class CommonForgeEvents {
     }
 
     @SubscribeEvent
+    public static void onChunkLoad(ChunkEvent.Load event) {
+        if (event.isNewChunk() && event.getLevel() instanceof ServerLevel level) {
+            TomImpactWorldEffects.queuePostPopulation(level, event.getChunk().getPos());
+        }
+    }
+
+    @SubscribeEvent
     public static void onChunkUnload(ChunkEvent.Unload event) {
         if (!event.getLevel().isClientSide() && event.getLevel() instanceof Level level) {
             ChunkRadiationManager.unloadChunk(level, event.getChunk().getPos());
-            HbmEnergyNodespace.unloadChunk(level, event.getChunk().getPos());
-            HbmFluidNodespace.unloadChunk(level, event.getChunk().getPos());
-            HbmUninosNodespaces.unloadChunk(level, event.getChunk().getPos());
             NeutronNodeWorld.unloadChunk(level, event.getChunk().getPos());
         }
     }
@@ -880,6 +983,9 @@ public final class CommonForgeEvents {
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (!event.getLevel().isClientSide() && event.getLevel() instanceof Level level) {
+            if (level instanceof ServerLevel serverLevel) {
+                TomImpactWorldEffects.unloadLevel(serverLevel);
+            }
             ChunkRadiationManager.unloadLevel(level);
             HbmEnergyNodespace.unloadLevel(level);
             HbmFluidNodespace.unloadLevel(level);

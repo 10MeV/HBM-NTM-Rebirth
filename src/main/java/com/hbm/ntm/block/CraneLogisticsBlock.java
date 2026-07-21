@@ -1,8 +1,6 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.Toolable;
-import com.hbm.ntm.api.conveyor.ConveyorMath;
-import com.hbm.ntm.api.conveyor.IConveyorBelt;
 import com.hbm.ntm.api.conveyor.IConveyorItem;
 import com.hbm.ntm.api.conveyor.IConveyorPackage;
 import com.hbm.ntm.api.conveyor.IEnterableBlock;
@@ -17,30 +15,57 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class CraneLogisticsBlock extends HorizontalMachineBlock implements EntityBlock, IEnterableBlock,
-        IConveyorBelt, Toolable {
+public class CraneLogisticsBlock extends Block implements EntityBlock, IEnterableBlock, Toolable {
+    public static final DirectionProperty FACING = BlockStateProperties.FACING;
     private final CraneLogisticsBlockEntity.Kind kind;
 
     public CraneLogisticsBlock(Properties properties, CraneLogisticsBlockEntity.Kind kind) {
-        super(properties, false);
+        super(properties);
         this.kind = kind;
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.SOUTH));
     }
 
     public CraneLogisticsBlockEntity.Kind kind() {
         return kind;
+    }
+
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction facing = context.getNearestLookingDirection().getOpposite();
+        if ((kind == CraneLogisticsBlockEntity.Kind.ROUTER || kind == CraneLogisticsBlockEntity.Kind.PARTITIONER)
+                && facing.getAxis().isVertical()) {
+            facing = context.getHorizontalDirection().getOpposite();
+        }
+        return defaultBlockState().setValue(FACING, facing);
+    }
+
+    @Override
+    public BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    public BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Nullable
@@ -61,7 +86,8 @@ public class CraneLogisticsBlock extends HorizontalMachineBlock implements Entit
 
     @Override
     public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
-        if (tool != ToolType.SCREWDRIVER) {
+        if (tool != ToolType.SCREWDRIVER || kind == CraneLogisticsBlockEntity.Kind.ROUTER
+                || kind == CraneLogisticsBlockEntity.Kind.PARTITIONER) {
             return false;
         }
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof CraneLogisticsBlockEntity crane) {
@@ -98,24 +124,6 @@ public class CraneLogisticsBlock extends HorizontalMachineBlock implements Entit
         }
     }
 
-    @Override
-    public boolean canItemStay(Level level, BlockPos pos, Vec3 itemPos) {
-        return kind == CraneLogisticsBlockEntity.Kind.PARTITIONER;
-    }
-
-    @Override
-    public Vec3 getTravelLocation(Level level, BlockPos pos, Vec3 itemPos, double speed) {
-        Direction direction = stateFacing(level.getBlockState(pos));
-        Vec3 snap = getClosestSnappingPosition(level, pos, itemPos);
-        return ConveyorMath.travelLocation(pos, itemPos, direction, snap, speed);
-    }
-
-    @Override
-    public Vec3 getClosestSnappingPosition(Level level, BlockPos pos, Vec3 itemPos) {
-        Direction direction = stateFacing(level.getBlockState(pos));
-        return ConveyorMath.closestSnappingPosition(pos, itemPos, direction);
-    }
-
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
@@ -149,7 +157,26 @@ public class CraneLogisticsBlock extends HorizontalMachineBlock implements Entit
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
-    private static Direction stateFacing(BlockState state) {
+    @Override
+    public boolean hasAnalogOutputSignal(BlockState state) {
+        return kind == CraneLogisticsBlockEntity.Kind.INSERTER
+                || kind == CraneLogisticsBlockEntity.Kind.BOXER
+                || kind == CraneLogisticsBlockEntity.Kind.UNBOXER;
+    }
+
+    @Override
+    public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof CraneLogisticsBlockEntity crane
+                ? crane.getComparatorSignal()
+                : 0;
+    }
+
+    protected static Direction stateFacing(BlockState state) {
         return state.hasProperty(FACING) ? state.getValue(FACING) : Direction.SOUTH;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
     }
 }

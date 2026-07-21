@@ -5,7 +5,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -16,11 +15,6 @@ import java.util.Collections;
 import java.util.List;
 
 public final class BulletSpecialSpawnUtil {
-    public static final int MASKMAN_ORB_VOLLEY_PERIOD = 10;
-    public static final int MASKMAN_ORB_VOLLEY_PHASE = 5;
-    public static final double MASKMAN_ORB_VOLLEY_RANGE = 50.0D;
-    public static final float MASKMAN_BOLT_THROW_FORCE = 0.5F;
-    public static final float MASKMAN_BOLT_DEVIATION = 0.05F;
     public static final double LEGACY_GRENADE_PROJECTILE_Y_OFFSET = 0.05D;
     public static final double LEGACY_GRENADE_LASER_Y_OFFSET = 0.125D;
     public static final float LEGACY_GRENADE_FRAGMENT_DAMAGE = 10.0F;
@@ -34,40 +28,6 @@ public final class BulletSpecialSpawnUtil {
     private static final double LIGHTNING_SPLIT_RANGE_SQ = LIGHTNING_SPLIT_RANGE * LIGHTNING_SPLIT_RANGE;
     public static final float SHREDDER_SUBMUNITION_GUN_SPREAD = 0.2F;
     public static final double SHREDDER_BLOCK_SIDE_OFFSET = 0.1D;
-
-    public static List<SpawnRequest> collectPreMoveSpawnRequests(BulletConfig config, @Nullable Entity projectile,
-            @Nullable Entity shooter, int ticksExisted, @Nullable RandomSource random) {
-        if (config == null || projectile == null || projectile.level().isClientSide()) {
-            return Collections.emptyList();
-        }
-        if (!config.hasBehavior(BulletBehaviorTag.MASKMAN_ORB_BOLT_VOLLEY)
-                || ticksExisted % MASKMAN_ORB_VOLLEY_PERIOD != MASKMAN_ORB_VOLLEY_PHASE) {
-            return Collections.emptyList();
-        }
-
-        Level level = projectile.level();
-        RandomSource roll = random == null ? level.random : random;
-        AABB search = projectile.getBoundingBox().inflate(MASKMAN_ORB_VOLLEY_RANGE);
-        List<Player> players = level.getEntitiesOfClass(Player.class, search, Player::isAlive);
-        if (players.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<SpawnRequest> requests = new ArrayList<>(players.size());
-        Vec3 origin = projectile.position();
-        for (Player player : players) {
-            Vec3 heading = new Vec3(player.getX() - origin.x, player.getY() + player.getEyeHeight() - origin.y,
-                    player.getZ() - origin.z);
-            if (heading.lengthSqr() <= 1.0E-7D) {
-                continue;
-            }
-            BulletLaunchUtil.LaunchPlan plan = BulletLaunchUtil.directedLaunchPlan(LegacyBulletConfigs.MASKMAN_BOLT,
-                    origin, heading.normalize(), MASKMAN_BOLT_THROW_FORCE, MASKMAN_BOLT_DEVIATION, roll);
-            requests.add(new SpawnRequest(SpawnType.MASKMAN_ORB_BOLT, LegacyBulletConfigs.MASKMAN_BOLT, plan,
-                    shooter, player, origin));
-        }
-        return Collections.unmodifiableList(requests);
-    }
 
     public static List<SpawnRequest> collectLegacyGrenadeFragmentation(Level level, @Nullable Entity thrower,
             Vec3 position, float fragments, boolean fragShell, @Nullable RandomSource random) {
@@ -273,11 +233,6 @@ public final class BulletSpecialSpawnUtil {
     }
 
     public enum SpawnType {
-        MASKMAN_MINIGUN_BULLET,
-        MASKMAN_LASER_ORB,
-        MASKMAN_LASER_MISSILE,
-        MASKMAN_LASER_TRACER,
-        MASKMAN_ORB_BOLT,
         SHREDDER_SUBMUNITION,
         LIGHTNING_SPLIT_SUB_BEAM,
         GRENADE_FRAGMENTATION,

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:powder_neptunium" },
+    { "item": "hbm_ntm_rebirth:powder_iron" },
+    { "item": "hbm_ntm_rebirth:powder_thorium" },
+    { "item": "hbm_ntm_rebirth:powder_astatine" },
+    { "item": "hbm_ntm_rebirth:powder_neodymium" },
+    { "item": "hbm_ntm_rebirth:powder_cs137" },
+    { "item": "hbm_ntm_rebirth:block_meteor" },
+    { "item": "hbm_ntm_rebirth:gravel_obsidian" },
+    { "item": "minecraft:water_bucket" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:crystal_horn" }
+}

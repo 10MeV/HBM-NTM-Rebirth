@@ -76,6 +76,10 @@ public class LargeLaunchPadBlock extends LegacyXrMultiblockBlock implements Enti
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // Legacy BlockDummyable#standardOpenBehavior consumes sneaking use without opening its GUI.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof LargeLaunchPadBlockEntity launchPad) {
             NetworkHooks.openScreen(serverPlayer, launchPad, launchPad.getBlockPos());
@@ -123,6 +127,13 @@ public class LargeLaunchPadBlock extends LegacyXrMultiblockBlock implements Enti
     public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
         return SHAPE;
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        // LaunchPadLarge inherits BlockDummyable's detailed ray-trace bounds.
+        // Its selection shape must therefore match the same rotated footprint.
+        return getMultiblockShape(state, level, pos, context);
     }
 
     @Override

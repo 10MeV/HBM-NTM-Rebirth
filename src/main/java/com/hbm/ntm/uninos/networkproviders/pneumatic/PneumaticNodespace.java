@@ -5,7 +5,6 @@ import com.hbm.ntm.uninos.HbmUninosDiagnostics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 import java.util.stream.Collectors;
@@ -15,7 +14,7 @@ public final class PneumaticNodespace {
             new HbmNodespace<BlockPos, PneumaticNode, PneumaticNetwork>(
                     PneumaticNode::getPositions,
                     (node, connection) -> connection.pos(),
-                    PneumaticNetworkProvider.THE_PROVIDER,
+                    node -> PneumaticNetworkProvider.THE_PROVIDER,
                     PneumaticNetwork::resetTrackers,
                     PneumaticNetwork::update,
                     BlockPos::immutable);
@@ -36,12 +35,17 @@ public final class PneumaticNodespace {
         NODESPACE.destroyNode(level, pos);
     }
 
+    /** Compatibility equivalent of {@code UniNodespace.destroyNode(World, GenNode)}. */
+    public static void destroyNode(Level level, PneumaticNode node) {
+        NODESPACE.destroyNode(level, node);
+    }
+
     public static void unloadLevel(Level level) {
         NODESPACE.unloadLevel(level);
     }
 
-    public static void unloadChunk(Level level, ChunkPos chunkPos) {
-        NODESPACE.unloadChunk(level, chunkPos);
+    public static void reapLevel(Level level) {
+        NODESPACE.reapLevel(level);
     }
 
     public static void tick(ServerLevel level) {

@@ -14,15 +14,18 @@ import net.minecraft.util.Mth;
 public class AntiBallisticMissileRenderer extends EntityRenderer<AntiBallisticMissileEntity> {
     public AntiBallisticMissileRenderer(EntityRendererProvider.Context context) {
         super(context);
-        shadowRadius = 0.5F;
+        shadowRadius = 0.0F;
     }
 
     @Override
     public void render(AntiBallisticMissileEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        LegacyPoseRotations.rotateYDegrees(poseStack, Mth.lerp(partialTick, entity.yRotO, entity.getYRot()));
-        LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F - Mth.lerp(partialTick, entity.xRotO, entity.getXRot()));
+        float renderYaw = Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F;
+        float pitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+        LegacyPoseRotations.rotateYDegrees(poseStack, renderYaw);
+        LegacyPoseRotations.rotateZDegrees(poseStack, pitch);
+        LegacyPoseRotations.rotateYDegrees(poseStack, -renderYaw);
         ObjMissilePartModels.MISSILE_ABM.renderAll(ObjMissilePartModels.MISSILE_ABM_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();

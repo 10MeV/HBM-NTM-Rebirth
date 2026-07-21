@@ -97,7 +97,12 @@ public final class LegacyObjArmorRenderer {
 
         switch (slot) {
             case HEAD -> {
-                renderPart(spec, humanoid.head, poseStack, buffer, packedLight, spec.headTexture(), spec.headParts());
+                if (spec == ENVSUIT) {
+                    renderTranslucentDepthWritePart(spec, humanoid.head, poseStack, buffer, packedLight,
+                            spec.headTexture(), spec.headParts());
+                } else {
+                    renderPart(spec, humanoid.head, poseStack, buffer, packedLight, spec.headTexture(), spec.headParts());
+                }
                 renderExtras(spec, stack, humanoid.head, poseStack, buffer, packedLight, spec.headExtras());
             }
             case CHEST -> {
@@ -159,6 +164,21 @@ public final class LegacyObjArmorRenderer {
         for (String part : parts) {
             ObjArmorModels.renderPartTranslucent(spec.model(), part, texture, poseStack, buffer, packedLight,
                     OverlayTexture.NO_OVERLAY, 255, 255, 255, 255);
+        }
+        poseStack.popPose();
+    }
+
+    private static void renderTranslucentDepthWritePart(Spec spec, net.minecraft.client.model.geom.ModelPart modelPart,
+                                                         PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                                         ResourceLocation texture, String... parts) {
+        poseStack.pushPose();
+        modelPart.translateAndRotate(poseStack);
+        poseStack.scale(LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE,
+                LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE,
+                LegacyAccessoryRenderHelper.BIPED_MODEL_SCALE);
+        for (String part : parts) {
+            ObjArmorModels.renderPartTranslucentDepthWrite(spec.model(), part, texture, poseStack, buffer,
+                    packedLight, OverlayTexture.NO_OVERLAY, 255, 255, 255, 255);
         }
         poseStack.popPose();
     }
@@ -261,7 +281,7 @@ public final class LegacyObjArmorRenderer {
         if (path.startsWith("trenchmaster_")) {
             return TRENCHMASTER;
         }
-        if (path.equals("goggles") || path.equals("ashglasses")) {
+        if (path.equals("ashglasses")) {
             return GOGGLES;
         }
         if (path.equals("nossy_hat") || path.equals("hat")) {
@@ -406,6 +426,7 @@ public final class LegacyObjArmorRenderer {
             poseStack.pushPose();
             applyLegacyItemBaseTransform(displayContext, poseStack);
             applyLegacyArmorInventoryTransform(stack, slot, displayContext, poseStack);
+            applyLegacyArmorCommonItemTransform(stack, slot, poseStack);
             renderLegacyItemSlot(spec, stack, slot, poseStack, buffer, packedLight, packedOverlay);
             poseStack.popPose();
         }
@@ -467,13 +488,41 @@ public final class LegacyObjArmorRenderer {
             }
         }
 
+        private static void applyLegacyArmorCommonItemTransform(ItemStack stack, EquipmentSlot slot,
+                PoseStack poseStack) {
+            ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+            String path = id == null ? "" : id.getPath().toLowerCase(Locale.ROOT);
+            if (path.startsWith("bismuth_") && slot == EquipmentSlot.HEAD) {
+                poseStack.translate(0.0D, -0.5D, 0.0D);
+                poseStack.scale(0.625F, 0.625F, 0.625F);
+            } else if (path.startsWith("bismuth_") && slot == EquipmentSlot.CHEST) {
+                poseStack.scale(0.875F, 0.875F, 0.875F);
+            } else if (path.startsWith("dieselsuit_") && slot == EquipmentSlot.HEAD) {
+                poseStack.translate(0.0D, 0.5D, 0.0D);
+                poseStack.scale(0.875F, 0.875F, 0.875F);
+            } else if (path.startsWith("rpa_") && slot == EquipmentSlot.CHEST) {
+                poseStack.translate(0.0D, 0.25D, 0.0D);
+            } else if (path.startsWith("ncrpa_") && slot == EquipmentSlot.HEAD) {
+                poseStack.translate(0.0D, 0.5D, 0.0D);
+            } else if (path.startsWith("bj_") && slot == EquipmentSlot.CHEST) {
+                float scale = "bj_plate_jetpack".equals(path) ? 0.6875F : 0.875F;
+                poseStack.scale(scale, scale, scale);
+            }
+        }
+
         private static void renderLegacyItemSlot(Spec spec, ItemStack stack, EquipmentSlot slot, PoseStack poseStack,
                 MultiBufferSource buffer, int packedLight, int packedOverlay) {
             switch (slot) {
                 case HEAD -> {
                     poseStack.scale(0.3125F, 0.3125F, 0.3125F);
                     poseStack.translate(0.0D, 1.0D, 0.0D);
-                    renderParts(spec, spec.headTexture(), poseStack, buffer, packedLight, packedOverlay, spec.headParts());
+                    if (spec == ENVSUIT) {
+                        renderTranslucentDepthWriteParts(spec, spec.headTexture(), poseStack, buffer, packedLight,
+                                packedOverlay, spec.headParts());
+                    } else {
+                        renderParts(spec, spec.headTexture(), poseStack, buffer, packedLight, packedOverlay,
+                                spec.headParts());
+                    }
                     renderItemExtras(spec, stack, poseStack, buffer, packedLight, packedOverlay, spec.headExtras());
                 }
                 case CHEST -> {
@@ -484,7 +533,10 @@ public final class LegacyObjArmorRenderer {
                     renderParts(spec, spec.armTexture(), poseStack, buffer, packedLight, packedOverlay, spec.leftArmParts());
                     renderParts(spec, spec.armTexture(), poseStack, buffer, packedLight, packedOverlay, spec.rightArmParts());
                     if (spec.jetpackTexture() != null && shouldRenderJetpack(spec, stack)) {
+                        poseStack.pushPose();
+                        poseStack.translate(0.0D, 0.0D, -0.1D);
                         renderParts(spec, spec.jetpackTexture(), poseStack, buffer, packedLight, packedOverlay, "Jetpack");
+                        poseStack.popPose();
                     }
                     if (spec.cassetteTexture() != null) {
                         renderTranslucentParts(spec, spec.cassetteTexture(), poseStack, buffer, packedLight,
@@ -533,6 +585,17 @@ public final class LegacyObjArmorRenderer {
                 ObjArmorModels.renderPartTranslucent(spec.model(), part, texture, poseStack, buffer,
                         packedLight, packedOverlay,
                         255, 255, 255, 255);
+            }
+        }
+
+        private static void renderTranslucentDepthWriteParts(Spec spec, ResourceLocation texture, PoseStack poseStack,
+                MultiBufferSource buffer, int packedLight, int packedOverlay, String... parts) {
+            if (texture == null) {
+                return;
+            }
+            for (String part : parts) {
+                ObjArmorModels.renderPartTranslucentDepthWrite(spec.model(), part, texture, poseStack, buffer,
+                        packedLight, packedOverlay, 255, 255, 255, 255);
             }
         }
 

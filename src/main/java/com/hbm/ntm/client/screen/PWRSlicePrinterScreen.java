@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.screen;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.network.packet.PWRPrinterSnapshotPacket;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.math.Axis;
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -89,8 +89,8 @@ public class PWRSlicePrinterScreen extends Screen {
         graphics.pose().pushPose();
         graphics.pose().translate(width / 2.0F, height / 2.0F - 36.0F, 400.0F);
         graphics.pose().scale(-24.0F, -24.0F, -12.0F);
-        graphics.pose().mulPose(Axis.XP.rotationDegrees(-30.0F));
-        graphics.pose().mulPose(Axis.YP.rotationDegrees(225.0F));
+        LegacyPoseRotations.rotateXDegrees(graphics.pose(), -30.0F);
+        LegacyPoseRotations.rotateYDegrees(graphics.pose(), 225.0F);
         if (direction == Direction.WEST || direction == Direction.EAST) {
             graphics.pose().translate(sizeX / -2.0D, sizeY / -2.0D, sizeZ / -2.0D);
         } else {

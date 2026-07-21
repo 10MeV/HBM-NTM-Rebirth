@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "misc", "pattern": ["SNS", "CBC", "SFS"],
+  "key": {
+    "S": { "tag": "forge:ingots/starmetal" }, "N": { "item": "hbm_ntm_rebirth:det_nuke" },
+    "C": { "item": "hbm_ntm_rebirth:circuit_advanced" }, "B": { "item": "hbm_ntm_rebirth:boxcar" },
+    "F": { "type": "hbm_ntm_rebirth:fluid_container", "fluid": "hbm_ntm_rebirth:tritium", "amount": 16000 }
+  },
+  "result": { "item": "hbm_ntm_rebirth:mp_warhead_15_boxcar" }
+}

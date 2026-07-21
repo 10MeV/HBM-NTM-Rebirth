@@ -7,14 +7,20 @@ import com.hbm.ntm.bullet.SednaWeaponModEvaluator;
 import com.hbm.ntm.bullet.SednaGunConfig;
 import com.hbm.ntm.bullet.SednaMagazineConfig;
 import com.hbm.ntm.bullet.SednaReceiverConfig;
+import com.hbm.ntm.client.anim.LegacyBusAnimationTransforms;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
+import com.hbm.ntm.client.ClientSednaGunEffects;
+import com.hbm.ntm.client.LegacySednaAimProgress;
 import com.hbm.ntm.client.obj.ObjTrinketModels;
+import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjWeaponModels;
+import com.hbm.ntm.client.particle.SpentCasingDefinition;
 import com.hbm.ntm.client.sound.LegacyClientSoundPlayer;
+import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.item.Ni4NiGunItem;
 import com.hbm.ntm.item.SednaGunItem;
-import com.hbm.ntm.item.StingerGunItem;
 import com.hbm.ntm.util.RayTraceUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
@@ -50,8 +56,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final double LEGACY_GUI_SLOT_PIXELS = 16.0D;
     private static final double LEGACY_GUI_UNIT = 1.0D / LEGACY_GUI_SLOT_PIXELS;
     private static final double FIRST_PERSON_SCREEN_UNIT = 0.25D;
+    private static final int LEGACY_ANIM_RELOAD = 0;
     private static final int LEGACY_ANIM_CYCLE = 3;
+    private static final int LEGACY_ANIM_JAMMED = 4;
     private static final int LEGACY_ANIM_CYCLE_DRY = 5;
+    // AnimationEnums.GunAnimation preserves this ordinal order: ALT_CYCLE, SPINUP.
+    private static final int LEGACY_ANIM_ALT_CYCLE = 6;
+    private static final int LEGACY_ANIM_SPINUP = 7;
     private static final int LEGACY_ANIM_EQUIP = 9;
     private static final int LEGACY_ANIM_INSPECT = 10;
     private static final String LEGACY_LAST_ANIM_KEY = "lastanim_0";
@@ -110,18 +121,23 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static boolean follyWasAiming;
 
     private static final Map<String, RenderSpec> SPECS = Map.ofEntries(
-            specOnly("gun_pepperbox", "pepperbox", "pepperbox",
+            specSpecial("gun_debug", "lilmac", "debug_gun", SpecialRender.DEBUG,
+                    inv(1.25D, 0.0D, 0.0D, 0.0D), fp(0.125D, 1.0D, -0.8D, -0.6D, 0.8D),
+                    "Gun", "Pivot", "Cylinder", "Bullets", "Casings", "Hammer"),
+            specSpecial("gun_pepperbox", "pepperbox", "pepperbox", SpecialRender.PEPPERBOX,
                     inv(1.5D, 0.5D, 0.5D, 0.0D), fp(0.25D, 1.5D, -1.0D, -0.6D, 0.8D),
                     "Grip", "Cylinder", "Hammer", "Trigger"),
-            spec("gun_light_revolver", "bio_revolver", "bio_revolver",
-                    inv(1.125D, -0.5D, 1.5D, 0.0D), fp(0.125D, 0.875D, -0.8D, -0.6D, 0.8D)),
-            spec("gun_light_revolver_atlas", "bio_revolver", "bio_revolver_atlas",
-                    inv(1.125D, -0.5D, 1.5D, 0.0D), fp(0.125D, 0.875D, -0.8D, -0.6D, 0.8D)),
+            specSpecial("gun_light_revolver", "bio_revolver", "bio_revolver", SpecialRender.ATLAS,
+                    inv(1.125D, -0.5D, 1.5D, 0.0D), fp(0.125D, 0.875D, -0.8D, -0.6D, 0.8D),
+                    "Grip", "Barrel", "Latch", "Drum", "Hammer"),
+            specSpecial("gun_light_revolver_atlas", "bio_revolver", "bio_revolver_atlas", SpecialRender.ATLAS,
+                    inv(1.125D, -0.5D, 1.5D, 0.0D), fp(0.125D, 0.875D, -0.8D, -0.6D, 0.8D),
+                    "Grip", "Barrel", "Latch", "Drum", "Hammer"),
             specAkimbo("gun_light_revolver_dani", "bio_revolver", "dani_celestial", SpecialRender.DANI,
                     inv(1.125D, 0.0D, -2.0D, 0.0D), fp(0.125D, 0.875D, 0.0D, 0.0D, 0.0D)),
-            spec("gun_henry", "henry", "henry",
+            specSpecial("gun_henry", "henry", "henry", SpecialRender.HENRY,
                     inv(1.5D, -0.5D, 0.5D, 0.0D), fp(0.375D, 0.875D, -1.0D, -0.8D, 1.4D)),
-            spec("gun_henry_lincoln", "henry", "henry_lincoln",
+            specSpecial("gun_henry_lincoln", "henry", "henry_lincoln", SpecialRender.HENRY,
                     inv(1.5D, -0.5D, 0.5D, 0.0D), fp(0.375D, 0.875D, -1.0D, -0.8D, 1.4D)),
             specSpecial("gun_heavy_revolver", "lilmac", "heavy_revolver", SpecialRender.HEAVY_REVOLVER,
                     inv(1.25D, 0.0D, 0.0D, 0.0D), fp(0.125D, 1.0D, -0.8D, -0.6D, 0.8D),
@@ -141,7 +157,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     "Gun", "Lever"),
             specSpecial("gun_maresleg_broken", "maresleg", "maresleg_broken", SpecialRender.MARESLEG,
                     inv(1.4375D, -0.5D, 0.5D, 0.0D), fp(0.375D, 0.875D, -1.0D, -0.8D, 1.6D)),
-            spec("gun_flaregun", "flaregun", "flaregun",
+            specSpecial("gun_flaregun", "flaregun", "flaregun", SpecialRender.FLAREGUN,
                     inv(1.0D, -0.5D, 0.0D, 0.0D), fp(0.125D, 0.875D, -1.0D, -1.2D, 1.6D)),
             specSpecial("gun_panzerschreck", "panzerschreck", "panzerschreck", SpecialRender.PANZERSCHRECK,
                     inv(1.5D, -0.5D, 0.5D, 0.0D),
@@ -149,11 +165,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     "Tube", "Shield"),
             specSpecial("gun_carbine", "carbine", "huntsman", SpecialRender.CARBINE,
                     inv(1.375D, -0.5D, 0.0D, 0.0D), fp(0.5D, 0.875D, -1.2D, -1.2D, 0.7D)),
-            specOnly("gun_minigun", "minigun", "minigun",
+            specSpecial("gun_minigun", "minigun", "minigun", SpecialRender.MINIGUN,
                     inv(0.875D, -0.25D, 0.5D, 0.0D),
                     fp(0.375D, 0.875D, -1.75D * 0.8D, -1.75D * 0.8D, 3.5D * 0.8D),
                     "Gun", "Grip", "Barrels"),
-            specOnly("gun_minigun_lacunae", "minigun", "minigun_lacunae",
+            specSpecial("gun_minigun_lacunae", "minigun", "minigun_lacunae", SpecialRender.MINIGUN,
                     inv(0.875D, -0.25D, 0.5D, 0.0D),
                     fp(0.375D, 0.875D, -1.75D * 0.8D, -1.75D * 0.8D, 3.5D * 0.8D),
                     "Gun", "Grip", "Barrels"),
@@ -163,9 +179,10 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             specSpecial("gun_am180", "am180", "am180", SpecialRender.AM180,
                     inv(0.75D, 1.5D, 0.0D, 0.0D), fp(0.1875D, 0.875D, -0.8D, -0.8D, 0.8D),
                     "Gun", "Silencer", "Trigger", "Bolt", "Mag", "MagPlate"),
-            spec("gun_liberator", "liberator", "liberator",
-                    inv(1.5D, -0.5D, 0.5D, 0.0D), fp(0.375D, 0.875D, -1.2D, -1.0D, 1.0D)),
-            spec("gun_congolake", "congolake", "congolake",
+            specSpecial("gun_liberator", "liberator", "liberator", SpecialRender.LIBERATOR,
+                    inv(1.5D, -0.5D, 0.5D, 0.0D), fp(0.375D, 0.875D, -1.2D, -1.0D, 1.0D),
+                    "Gun", "Barrel", "Shell1", "Shell2", "Shell3", "Shell4", "Latch"),
+            specSpecial("gun_congolake", "congolake", "congolake", SpecialRender.CONGOLAKE,
                     inv(2.5D, 0.0D, -1.25D, 0.0D), fp(0.5D, 0.875D, -1.2D, -1.6D, 1.0D)),
             specSpecial("gun_lag", "mike_hawk", "lag", SpecialRender.LAG,
                     inv(1.5D, 2.5D, 1.0D, 0.0D), fp(0.25D, 0.875D, -1.2D, -0.8D, 1.2D),
@@ -222,9 +239,9 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     inv(1.75D, 0.0D, -0.5D, 0.0D),
                     fp(0.375D, 0.875D, -1.75D * 0.8D, -2.0D * 0.8D, 2.75D * 0.8D),
                     "Gun", "Latch"),
-            spec("gun_autoshotgun", "shredder", "shredder",
+            specSpecial("gun_autoshotgun", "shredder", "shredder", SpecialRender.SHREDDER,
                     inv(1.25D, -1.5D, 0.0D, 0.0D), fp(0.25D, 0.875D, -1.2D, -1.0D, 1.2D)),
-            spec("gun_autoshotgun_shredder", "shredder", "shredder_orig",
+            specSpecial("gun_autoshotgun_shredder", "shredder", "shredder_orig", SpecialRender.SHREDDER,
                     inv(1.25D, -1.5D, 0.0D, 0.0D),
                     fp(0.25D, 0.875D, -1.5D * 0.8D, -1.25D * 0.8D, 1.5D * 0.8D)),
             specSpecial("gun_quadro", "quadro", "quadro", SpecialRender.QUADRO,
@@ -240,8 +257,9 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             specSpecial("gun_stg77", "stg77", "stg77", SpecialRender.STG77,
                     inv(1.375D, -0.5D, 0.5D, 0.0D), fp(0.5D, 0.875D, -1.2D, -0.8D, 2.0D),
                     "Gun", "Barrel", "Lever", "Magazine", "Safety", "Handle", "Breech"),
-            spec("gun_hangman", "hangman", "hangman",
-                    inv(0.375D, -0.5D, 2.5D, 0.0D), fp(0.125D, 0.875D, -1.2D, -0.7D, 1.4D)),
+            specSpecial("gun_hangman", "hangman", "hangman", SpecialRender.HANGMAN,
+                    inv(0.375D, -0.5D, 2.5D, 0.0D), fp(0.125D, 0.875D, -1.2D, -0.7D, 1.4D),
+                    "Rifle", "Internals", "Lid", "Magazine", "Bullets"),
             specSpecial("gun_mas36", "mas36", "mas36", SpecialRender.MAS36,
                     inv(1.5D, -0.5D, 0.5D, 0.0D), fp(0.375D, 0.875D, -1.2D, -1.0D, 1.4D)),
             specSpecial("gun_bolter", "bolter", "bolter", SpecialRender.BOLTER,
@@ -335,6 +353,9 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         if (spec == null) {
             return;
         }
+        if (displayContext.firstPerson() && hidesFirstPersonAtFullAim(stack)) {
+            return;
+        }
 
         LegacyWavefrontModel model = MODELS.computeIfAbsent(spec,
                 key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
@@ -347,20 +368,38 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.pushPose();
         applyDisplay(stack, displayContext, poseStack, bounds, spec);
-        if (spec.specialRender() == SpecialRender.TESLA_CANNON) {
+        if (spec.specialRender() == SpecialRender.DEBUG) {
+            renderDebug(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.TESLA_CANNON) {
             renderTeslaCannon(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.FATMAN) {
-            renderFatman(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderFatman(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.FOLLY) {
             renderFolly(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.PEPPERBOX) {
+            renderPepperbox(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.HENRY) {
+            renderHenry(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.ATLAS) {
+            renderAtlas(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.HANGMAN) {
+            renderHangman(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.TAU) {
-            renderTau(model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderTau(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.GREASEGUN) {
-            renderGreasegun(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderGreasegun(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.FLAREGUN) {
+            renderFlaregun(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.CONGOLAKE) {
+            renderCongolake(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.MARESLEG) {
-            renderMaresleg(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderMaresleg(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.LIBERATOR) {
+            renderLiberator(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.CARBINE) {
-            renderCarbine(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderCarbine(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.MINIGUN) {
+            renderMinigun(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.AM180) {
             renderAm180(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.UZI) {
@@ -368,9 +407,9 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         } else if (spec.specialRender() == SpecialRender.STAR_F) {
             renderStarF(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.G3) {
-            renderG3(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderG3(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.AMAT) {
-            renderAmat(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderAmat(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.MK108) {
             renderMk108(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.SEXY) {
@@ -380,37 +419,39 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         } else if (spec.specialRender() == SpecialRender.BOLTER) {
             renderBolter(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.STG77) {
-            renderStg77(model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderStg77(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.LASER_PISTOL) {
-            renderLaserPistol(displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderLaserPistol(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.PANZERSCHRECK) {
             renderPanzerschreck(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.STINGER) {
             renderStinger(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.QUADRO) {
-            renderQuadro(displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderQuadro(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.MISSILE_LAUNCHER) {
             renderMissileLauncher(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.LASRIFLE) {
-            renderLasrifle(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderLasrifle(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.ABERRATOR) {
-            renderAberrator(displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderAberrator(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.LAG) {
             renderLag(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.M2) {
-            renderM2(model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderM2(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.COILGUN) {
-            renderCoilgun(model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderCoilgun(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.FIREEXT) {
             renderFireExt(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.SPAS12) {
-            renderSpas12(displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderSpas12(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else if (spec.specialRender() == SpecialRender.SHREDDER) {
+            renderShredder(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.CHARGE_THROWER) {
-            renderChargeThrower(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderChargeThrower(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.DOUBLE_BARREL) {
-            renderDoubleBarrel(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderDoubleBarrel(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.HEAVY_REVOLVER) {
-            renderHeavyRevolver(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            renderHeavyRevolver(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.FLAMER) {
             renderFlamer(stack, displayContext, model, spec, poseStack, buffer, packedLight, packedOverlay);
         } else if (spec.specialRender() == SpecialRender.CHEMTHROWER) {
@@ -426,6 +467,264 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         } else {
             model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay, visibleParts);
         }
+        poseStack.popPose();
+    }
+
+    /**
+     * Renders only the source-audited remote {@code flashMap} muzzle plume after the caller has applied the vanilla
+     * holder-hand matrix. This keeps entity context out of the BEWLR while sharing its actual third-person display
+     * transform and the unified transient quad backend.
+     */
+    public static void renderRemoteMuzzleFlash(ItemStack stack, ItemDisplayContext displayContext, long shotMillis,
+            PoseStack poseStack, MultiBufferSource buffer) {
+        if (!(stack.getItem() instanceof SednaGunItem gunItem) || shotMillis <= 0L
+                || (displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
+                && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND)) {
+            return;
+        }
+        String legacyName = gunItem.gunConfig().legacyName();
+        if (!hasRemoteMuzzleFlash(legacyName)) {
+            return;
+        }
+        RenderSpec spec = SPECS.get(legacyName);
+        if (spec == null) {
+            return;
+        }
+        LegacyWavefrontModel model = MODELS.computeIfAbsent(spec,
+                key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
+        String[] visibleParts = spec.visibleParts().toArray(String[]::new);
+        AABB bounds = displayBounds(displayContext,
+                visibleParts.length == 0 ? model.boundsAll() : model.boundsOnly(visibleParts), spec);
+        if (bounds.getXsize() <= 0.0D || bounds.getYsize() <= 0.0D || bounds.getZsize() <= 0.0D) {
+            return;
+        }
+
+        poseStack.pushPose();
+        applyDisplay(stack, displayContext, poseStack, bounds, spec);
+        int receiverIndex = displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND ? 0 : 1;
+        switch (legacyName) {
+            case "gun_debug" -> {
+                LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+                poseStack.translate(0.125D, 2.5D, 0.0D);
+                ClientSednaGunEffects.renderGapFlash(shotMillis, poseStack, buffer);
+            }
+            case "gun_heavy_revolver", "gun_heavy_revolver_lilmac", "gun_heavy_revolver_protege" -> {
+                poseStack.translate(0.125D, 2.5D, 0.0D);
+                ClientSednaGunEffects.renderGapFlash(shotMillis, poseStack, buffer);
+            }
+            case "gun_uzi_akimbo" -> {
+                if (!hasUpgrade(stack, receiverIndex, SednaWeaponModEvaluator.ID_SILENCER)) {
+                    renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 0.75D, 8.5D, 90.0F, 0.0F, 1.0F,
+                            poseStack, buffer);
+                }
+            }
+            case "gun_maresleg_akimbo" -> renderRemoteMuzzleFlash(shotMillis, 75L, 5.0D, 0.0D, 1.0D, 3.75D,
+                    90.0F, 0.0F, 1.0F, poseStack, buffer);
+            case "gun_minigun_dual" -> renderRemoteMuzzleFlash(shotMillis, 50L, 7.5D, 0.0D, 0.5D, 12.25D,
+                    90.0F, 0.0F, 1.5F, poseStack, buffer);
+            case "gun_aberrator_eott" -> {
+                renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 2.0D, 4.0D, 90.0F, 0.0F, 0.75F,
+                        poseStack, buffer);
+                poseStack.pushPose();
+                poseStack.translate(0.0D, 2.0D, -1.5D);
+                poseStack.scale(0.5F, 0.5F, 0.5F);
+                ClientSednaGunEffects.renderFireball(shotMillis, poseStack, buffer);
+                poseStack.popPose();
+            }
+            case "gun_light_revolver_dani" -> renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 1.5D,
+                    9.25D, 90.0F, 0.0F, 1.0F, poseStack, buffer);
+            case "gun_star_f_akimbo" -> {
+                if (!hasUpgrade(stack, receiverIndex, SednaWeaponModEvaluator.ID_SILENCER)) {
+                    renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 3.0D, 6.125D, 90.0F, 0.0F, 0.75F,
+                            poseStack, buffer);
+                }
+            }
+            case "gun_uzi" -> {
+                if (!hasUpgrade(stack, SednaWeaponModEvaluator.ID_SILENCER)) {
+                    renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 0.75D, 8.5D, 90.0F, 0.0F, 1.0F,
+                            poseStack, buffer);
+                }
+            }
+            case "gun_carbine" -> renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 1.0D, 8.0D, 90.0F,
+                    0.0F, 0.5F, poseStack, buffer);
+            case "gun_pepperbox" -> {
+                renderRemoteMuzzleFlash(shotMillis, 75L, 15.0D, 0.0D, 0.5D, 7.0D, 90.0F, 0.0F, 0.5F,
+                        poseStack, buffer);
+                renderRemoteMuzzleFlash(shotMillis, 75L, 15.0D, 0.0D, 0.5D, 7.0D, 90.0F, 45.0F, 0.5F,
+                        poseStack, buffer);
+            }
+            case "gun_stinger" -> renderRemoteMuzzleFlash(shotMillis, 150L, 10.0D, 0.0D, 3.5D, -10.3795D,
+                    90.0F, 0.0F, 0.75F, poseStack, buffer);
+            case "gun_double_barrel", "gun_double_barrel_sacred_dragon" -> renderRemoteMuzzleFlash(shotMillis,
+                    75L, 5.0D, 0.0D, 0.0D, 8.0D, 90.0F, 0.0F, 2.0F, poseStack, buffer);
+            case "gun_g3" -> {
+                if (!hasUpgrade(stack, SednaWeaponModEvaluator.ID_SILENCER)) {
+                    renderRemoteMuzzleFlash(shotMillis, 75L, 10.0D, 0.0D, 0.0D, 12.0D, 90.0F, -25.0F, 0.75F,
+                            poseStack, buffer);
+                }
+            }
+            case "gun_greasegun" -> renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 0.0D, 8.0D, 90.0F,
+                    0.0F, 0.5F, poseStack, buffer);
+            case "gun_lag" -> renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, -10.25D, 1.0D, 0.0D, 0.0F,
+                    0.0F, 1.0F, poseStack, buffer);
+            case "gun_m2" -> renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 1.625D, 5.0D, 90.0F, 0.0F,
+                    0.5F, poseStack, buffer);
+            case "gun_maresleg", "gun_maresleg_broken" -> renderRemoteMuzzleFlash(shotMillis, 75L, 5.0D,
+                    0.0D, 1.0D, isMareslegShortened(stack, spec) ? 3.75D : 8.0D, 90.0F, 0.0F, 1.0F, poseStack,
+                    buffer);
+            case "gun_liberator" -> renderRemoteMuzzleFlash(shotMillis, 75L, 5.0D, 0.0D, 0.5D, 8.0D, 90.0F,
+                    0.0F, 1.5F, poseStack, buffer);
+            case "gun_henry", "gun_henry_lincoln" -> renderRemoteMuzzleFlash(shotMillis, 75L, 5.0D, 0.0D, 1.0D,
+                    8.0D, 90.0F, 0.0F, 1.0F, poseStack, buffer);
+            case "gun_mk108" -> renderRemoteMuzzleFlash(shotMillis, 50L, 5.0D, 0.0D, 0.0D, 8.125D, 90.0F,
+                    0.0F, 1.0F, poseStack, buffer);
+            case "gun_am180" -> {
+                boolean silenced = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SILENCER);
+                renderRemoteMuzzleFlash(shotMillis, silenced ? 75L : 50L, silenced ? 5.0D : 7.5D, 0.0D, 1.875D,
+                        silenced ? 16.75D : 12.0D, 90.0F, 0.0F, silenced ? 0.5F : 0.75F, poseStack, buffer);
+            }
+            case "gun_spas12" -> renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 1.5D, -11.0D, -90.0F,
+                    0.0F, 1.0F, poseStack, buffer);
+            case "gun_aberrator" -> {
+                renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 2.0D, 4.0D, 90.0F, 0.0F, 0.75F,
+                        poseStack, buffer);
+                poseStack.pushPose();
+                poseStack.translate(0.0D, 2.0D, -1.5D);
+                poseStack.scale(0.5F, 0.5F, 0.5F);
+                ClientSednaGunEffects.renderFireball(shotMillis, poseStack, buffer);
+                poseStack.popPose();
+            }
+            case "gun_hangman" -> renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 0.0D, 29.0D, 90.0F,
+                    0.0F, 2.0F, poseStack, buffer);
+            case "gun_n_i_4_n_i" -> renderRemoteLaserFlash(shotMillis, 75L, 7.5D, 0xFFFFFF, 0.0D, 0.75D, 4.0D,
+                    90.0F, 0.0F, 0.125F, poseStack, buffer);
+            case "gun_star_f" -> {
+                if (!hasUpgrade(stack, SednaWeaponModEvaluator.ID_SILENCER)) {
+                    renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 3.0D, 6.25D, 90.0F, 0.0F, 0.75F,
+                            poseStack, buffer);
+                }
+            }
+            case "gun_congolake" -> renderRemoteMuzzleFlash(shotMillis, 150L, 7.5D, 0.0D, 1.75D, 4.25D, 90.0F,
+                    0.0F, 0.5F, poseStack, buffer);
+            case "gun_amat", "gun_amat_subtlety", "gun_amat_penance" -> {
+                if (!isAmatSilenced(stack)) {
+                    poseStack.pushPose();
+                    poseStack.translate(0.0D, 0.5D, 11.0D);
+                    LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+                    poseStack.scale(0.75F, 0.75F, 0.75F);
+                    ClientSednaGunEffects.renderGapFlash(shotMillis, poseStack, buffer);
+                    poseStack.popPose();
+                }
+            }
+            case "gun_light_revolver", "gun_light_revolver_atlas" -> renderRemoteMuzzleFlash(shotMillis, 75L,
+                    7.5D, 0.0D, 1.5D, 9.25D, 90.0F, 0.0F, 1.0F, poseStack, buffer);
+            case "gun_autoshotgun", "gun_autoshotgun_shredder" -> renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D,
+                    0.0D, 1.0D, 7.5D, 90.0F, 0.0F, 0.75F, poseStack, buffer);
+            case "gun_autoshotgun_sexy", "gun_autoshotgun_heretic" -> renderRemoteMuzzleFlash(shotMillis, 150L,
+                    7.5D, 0.0D, 0.0D, 8.0D, 90.0F, 0.0F, 1.0F, poseStack, buffer);
+            case "gun_panzerschreck" -> renderRemoteMuzzleFlash(shotMillis, 150L, 7.5D, 0.0D, 0.0D, 6.5D,
+                    90.0F, 0.0F, 0.75F, poseStack, buffer);
+            case "gun_laser_pistol", "gun_laser_pistol_pew_pew", "gun_laser_pistol_morning_glory" -> {
+                boolean emerald = "gun_laser_pistol_morning_glory".equals(legacyName);
+                renderRemoteLaserFlash(shotMillis, 150L, 1.5D, emerald ? 0x008000 : 0xFF0000, 0.0D, 2.0D, 4.75D,
+                        90.0F, 0.0F, 1.0F, poseStack, buffer);
+                renderRemoteLaserFlash(shotMillis, 150L, 0.75D, emerald ? 0x80FF00 : 0xFF8000, 0.0D, 2.0D, 4.5D,
+                        90.0F, 0.0F, 1.0F, poseStack, buffer);
+            }
+            case "gun_lasrifle" -> {
+                renderRemoteLaserFlash(shotMillis, 150L, 1.5D, 0xFF0000, 0.0D, 1.5D, 12.0D, 90.0F, 0.0F, 1.0F,
+                        poseStack, buffer);
+                renderRemoteLaserFlash(shotMillis, 150L, 0.75D, 0xFF8000, 0.0D, 1.5D, 11.75D, 90.0F, 0.0F, 1.0F,
+                        poseStack, buffer);
+            }
+            case "gun_minigun" -> renderRemoteMuzzleFlash(shotMillis, 50L, 7.55D, 0.0D, 0.5D, 12.25D, 90.0F,
+                    0.0F, 1.5F, poseStack, buffer);
+            case "gun_minigun_lacunae" -> {
+                renderRemoteLaserFlash(shotMillis, 50L, 1.0D, 0xFF00FF, 0.0D, 0.0D, 12.25D, 90.0F, 0.0F, 1.0F,
+                        poseStack, buffer);
+                renderRemoteLaserFlash(shotMillis, 50L, 0.5D, 0xFF0080, 0.0D, 0.0D, 12.0D, 90.0F, 0.0F, 1.0F,
+                        poseStack, buffer);
+            }
+            case "gun_mas36" -> renderRemoteMuzzleFlash(shotMillis, 75L, 10.0D, 0.0D, 1.0D, 8.0D, 90.0F,
+                    0.0F, 0.5F, poseStack, buffer);
+            case "gun_missile_launcher" -> renderRemoteMuzzleFlash(shotMillis, 75L, 7.5D, 0.0D, 1.0D, 6.75D,
+                    90.0F, 0.0F, 0.75F, poseStack, buffer);
+            case "gun_quadro" -> renderRemoteMuzzleFlash(shotMillis, 150L, 7.5D, 0.0D, 0.75D, 2.0D, 90.0F,
+                    0.0F, 0.75F, poseStack, buffer);
+            case "gun_stg77" -> {
+                poseStack.translate(0.0D, 0.0D, 7.5D);
+                LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+                poseStack.scale(0.25F, 0.25F, 0.25F);
+                LegacyPoseRotations.rotateXDegrees(poseStack, -5.0F);
+                ClientSednaGunEffects.renderGapFlash(shotMillis, poseStack, buffer);
+            }
+            default -> {
+                // Guarded by hasRemoteMuzzleFlash; retained for future source-audited additions.
+            }
+        }
+        poseStack.popPose();
+    }
+
+    private static boolean hasRemoteMuzzleFlash(String legacyName) {
+        return switch (legacyName) {
+            case "gun_debug", "gun_uzi", "gun_uzi_akimbo", "gun_carbine", "gun_stinger", "gun_double_barrel",
+                    "gun_double_barrel_sacred_dragon", "gun_g3", "gun_greasegun", "gun_lag", "gun_m2",
+                    "gun_maresleg", "gun_maresleg_broken", "gun_maresleg_akimbo", "gun_mk108", "gun_am180",
+                    "gun_liberator", "gun_spas12", "gun_aberrator", "gun_aberrator_eott", "gun_hangman",
+                    "gun_n_i_4_n_i", "gun_pepperbox", "gun_panzerschreck", "gun_mas36", "gun_missile_launcher",
+                    "gun_quadro", "gun_heavy_revolver", "gun_heavy_revolver_lilmac", "gun_heavy_revolver_protege",
+                    "gun_henry", "gun_henry_lincoln", "gun_autoshotgun_sexy", "gun_autoshotgun_heretic", "gun_stg77",
+                    "gun_star_f", "gun_star_f_akimbo", "gun_congolake", "gun_amat", "gun_amat_subtlety",
+                    "gun_amat_penance", "gun_light_revolver", "gun_light_revolver_atlas", "gun_light_revolver_dani",
+                    "gun_autoshotgun", "gun_autoshotgun_shredder", "gun_laser_pistol", "gun_laser_pistol_pew_pew",
+                    "gun_laser_pistol_morning_glory", "gun_lasrifle", "gun_minigun", "gun_minigun_dual",
+                    "gun_minigun_lacunae" -> true;
+            default -> false;
+        };
+    }
+
+    /** Whether the third-person renderer owns two source receiver poses instead of one held-gun pose. */
+    public static boolean isAkimbo(ItemStack stack) {
+        if (!(stack.getItem() instanceof SednaGunItem gunItem)) {
+            return false;
+        }
+        RenderSpec spec = SPECS.get(gunItem.gunConfig().legacyName());
+        return spec != null && spec.specialRender().akimbo();
+    }
+
+    private static void renderRemoteMuzzleFlash(long shotMillis, long durationMillis, double length, double x,
+            double y, double z, float yawDegrees, float pitchDegrees, float scale, PoseStack poseStack,
+            MultiBufferSource buffer) {
+        poseStack.pushPose();
+        poseStack.translate(x, y, z);
+        if (yawDegrees != 0.0F) {
+            LegacyPoseRotations.rotateYDegrees(poseStack, yawDegrees);
+        }
+        if (pitchDegrees != 0.0F) {
+            LegacyPoseRotations.rotateXDegrees(poseStack, pitchDegrees);
+        }
+        if (scale != 1.0F) {
+            poseStack.scale(scale, scale, scale);
+        }
+        ClientSednaGunEffects.renderMuzzleFlash(shotMillis, durationMillis, length, poseStack, buffer);
+        poseStack.popPose();
+    }
+
+    private static void renderRemoteLaserFlash(long shotMillis, long durationMillis, double flashScale, int color,
+            double x, double y, double z, float yawDegrees, float pitchDegrees, float scale, PoseStack poseStack,
+            MultiBufferSource buffer) {
+        poseStack.pushPose();
+        poseStack.translate(x, y, z);
+        if (yawDegrees != 0.0F) {
+            LegacyPoseRotations.rotateYDegrees(poseStack, yawDegrees);
+        }
+        if (pitchDegrees != 0.0F) {
+            LegacyPoseRotations.rotateXDegrees(poseStack, pitchDegrees);
+        }
+        if (scale != 1.0F) {
+            poseStack.scale(scale, scale, scale);
+        }
+        ClientSednaGunEffects.renderLaserFlash(shotMillis, durationMillis, flashScale, color, poseStack, buffer);
         poseStack.popPose();
     }
 
@@ -558,16 +857,17 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderTeslaYomi(ItemStack stack, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        if (teslaLegacyAnimation(stack) != LEGACY_ANIM_INSPECT) {
+        boolean bus = legacyBusActive();
+        if (!bus && teslaLegacyAnimation(stack) != LEGACY_ANIM_INSPECT) {
             return;
         }
         double millis = teslaLegacyAnimationMillis(stack);
-        if (millis > 2000.0D) {
+        if (!bus && millis > 2000.0D) {
             return;
         }
 
-        double[] position = teslaYomiPosition(millis);
-        double squeezeZ = teslaYomiSqueezeZ(millis);
+        double[] position = bus ? LegacyHbmAnimations.getRelevantTransformation("YOMI") : teslaYomiPosition(millis);
+        double squeezeZ = bus ? LegacyHbmAnimations.getRelevantTransformation("SQUEEZE")[2] : teslaYomiSqueezeZ(millis);
         poseStack.pushPose();
         poseStack.translate(position[0], position[1], position[2]);
         LegacyPoseRotations.rotateYDegrees(poseStack, 135.0F);
@@ -634,33 +934,87 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         return (-Math.cos(Math.max(0.0D, Math.min(1.0D, progress)) * Math.PI) + 1.0D) / 2.0D;
     }
 
-    private static void renderFatman(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+    private static void renderFatman(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "Launcher", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Handle", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Lid", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            if (!isMagazineLoaded(stack)) {
+                poseStack.pushPose();
+                poseStack.translate(0.0D, 0.0D, 3.0D);
+                ObjWeaponModels.renderPart(model, "Piston", spec.textureLocation(), poseStack, buffer, packedLight,
+                        packedOverlay);
+                poseStack.popPose();
+            } else {
+                ObjWeaponModels.renderPart(model, "Piston", spec.textureLocation(), poseStack, buffer, packedLight,
+                        packedOverlay);
+                ObjWeaponModels.renderPart(model, "MiniNuke", fatmanNukeTexture(stack), poseStack, buffer, packedLight,
+                        packedOverlay);
+            }
+            return;
+        }
+
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] lid = LegacyHbmAnimations.getRelevantTransformation("LID");
+        double[] nuke = LegacyHbmAnimations.getRelevantTransformation("NUKE");
+        double[] piston = LegacyHbmAnimations.getRelevantTransformation("PISTON");
+        double[] handle = LegacyHbmAnimations.getRelevantTransformation("HANDLE");
+        double[] gauge = LegacyHbmAnimations.getRelevantTransformation("GAUGE");
+        poseStack.translate(0.0D, 1.0D, -2.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, -1.0D, 2.0D);
         ObjWeaponModels.renderPart(model, "Launcher", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        ObjWeaponModels.renderPart(model, "Handle", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Lid", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, handle[2]);
+        ObjWeaponModels.renderPart(model, "Handle", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(.4375D, -.875D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) gauge[2]);
+        poseStack.translate(-.4375D, .875D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(.25D, .125D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) lid[2]);
+        poseStack.translate(-.25D, -.125D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Lid", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
 
         boolean loaded = isMagazineLoaded(stack);
         poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, piston[2]);
         if (!loaded) {
-            poseStack.translate(0.0D, 0.0D, 3.0D);
+            if (piston[2] == 0.0D) {
+                poseStack.translate(0.0D, 0.0D, 3.0D);
+            }
         }
         ObjWeaponModels.renderPart(model, "Piston", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         poseStack.popPose();
 
-        if (loaded) {
-            ResourceLocation nukeTexture = "nuke_balefire".equals(loadedMagazineType(stack))
-                    ? FATMAN_BALEFIRE_TEXTURE
-                    : FATMAN_MININUKE_TEXTURE;
-            ObjWeaponModels.renderPart(model, "MiniNuke", nukeTexture, poseStack, buffer, packedLight,
+        if (loaded || nuke[0] != 0.0D || nuke[1] != 0.0D || nuke[2] != 0.0D) {
+            poseStack.pushPose();
+            poseStack.translate(nuke[0], nuke[1], nuke[2]);
+            ObjWeaponModels.renderPart(model, "MiniNuke", fatmanNukeTexture(stack), poseStack, buffer, packedLight,
                     packedOverlay);
+            poseStack.popPose();
         }
+    }
+
+    private static ResourceLocation fatmanNukeTexture(ItemStack stack) {
+        String type = loadedMagazineType(stack);
+        if (type.isEmpty()) {
+            type = primaryMagazineType(stack);
+        }
+        return "nuke_balefire".equals(type) ? FATMAN_BALEFIRE_TEXTURE : FATMAN_MININUKE_TEXTURE;
     }
 
     private static boolean isMagazineLoaded(ItemStack stack) {
@@ -677,7 +1031,42 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         CompoundTag tag = stack.getTag();
         SednaMagazineConfig magazine = tag == null ? null : firstLoadedMagazine(gunItem, tag);
-        return magazine == null ? "" : tag.getString(magazine.nbtTypeKey());
+        return resolvedMagazineType(tag, magazine);
+    }
+
+    /**
+     * Reads the configured primary magazine type without treating an empty count as an absent type.
+     * MagazineFullReload keeps that type while its reload animation is in progress, and Charge Thrower
+     * needs it to render the source projectile during the AMMO rail.
+     */
+    private static String primaryMagazineType(ItemStack stack) {
+        if (!(stack.getItem() instanceof SednaGunItem gunItem)) {
+            return "";
+        }
+        CompoundTag tag = stack.getTag();
+        SednaMagazineConfig magazine = firstMagazine(gunItem);
+        return resolvedMagazineType(tag, magazine);
+    }
+
+    private static String resolvedMagazineType(CompoundTag tag, SednaMagazineConfig magazine) {
+        if (magazine == null) {
+            return "";
+        }
+        List<BulletConfig> accepted = magazine.acceptedBulletConfigNames().stream()
+                .map(LegacySednaRuntimeBulletConfigs::byName)
+                .flatMap(java.util.Optional::stream)
+                .toList();
+        if (accepted.isEmpty()) {
+            return "";
+        }
+        if (magazine.kind() != SednaMagazineConfig.Kind.BELT && tag != null) {
+            BulletConfig stored = LegacySednaRuntimeBulletConfigs.byName(tag.getString(magazine.nbtTypeKey()))
+                    .orElse(null);
+            if (stored != null && accepted.contains(stored)) {
+                return stored.legacyName();
+            }
+        }
+        return accepted.get(0).legacyName();
     }
 
     private static double primaryMagazineFill(ItemStack stack) {
@@ -783,21 +1172,41 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             return;
         }
 
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] load = LegacyHbmAnimations.getRelevantTransformation("LOAD");
+        double[] shell = LegacyHbmAnimations.getRelevantTransformation("SHELL");
+        double[] screw = LegacyHbmAnimations.getRelevantTransformation("SCREW");
+        double[] breech = LegacyHbmAnimations.getRelevantTransformation("BREECH");
+        poseStack.translate(0.0D, 1.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -((float) equip[0]));
+        poseStack.translate(0.0D, -1.0D, 4.0D);
+        poseStack.translate(0.0D, -2.0D, -2.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) load[0]);
+        poseStack.translate(0.0D, 2.0D, 2.0D);
         ObjWeaponModels.renderPart(model, "Cannon", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Shell", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Breech", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Cog", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
+        poseStack.pushPose();
+        poseStack.translate(recoil[0], recoil[1], recoil[2]);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(shell[0], shell[1], shell[2]);
+        ObjWeaponModels.renderPart(model, "Shell", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(breech[0], breech[1], breech[2]);
+        ObjWeaponModels.renderPart(model, "Breech", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) screw[2]);
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Cog", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
         renderFollyAimingText(stack, poseStack, buffer);
     }
 
     private static void renderFollyAimingText(ItemStack stack, PoseStack poseStack, MultiBufferSource buffer) {
-        boolean aiming = stack.getItem() instanceof SednaGunItem gunItem && gunItem.legacyIsAiming(stack);
+        boolean aiming = LegacySednaAimProgress.settledFullyAimed();
         if (aiming && !follyWasAiming) {
             follyAimStartMillis = System.currentTimeMillis();
         }
@@ -972,38 +1381,463 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         model.renderAll(fireExtTexture(stack, spec), poseStack, buffer, packedLight, packedOverlay);
     }
 
-    private static void renderSpas12(ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+    /** Exact ItemRenderPepperbox first-person part hierarchy; static contexts intentionally omit loader/shot. */
+    private static void renderPepperbox(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (displayContext.firstPerson()) {
-            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
-        } else if (displayContext != ItemDisplayContext.GUI) {
-            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        if (!displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "Grip", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Cylinder", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            ObjWeaponModels.renderPart(model, "Trigger", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            return;
         }
+
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] cylinder = LegacyHbmAnimations.getRelevantTransformation("ROTATE");
+        double[] hammer = LegacyHbmAnimations.getRelevantTransformation("HAMMER");
+        double[] trigger = LegacyHbmAnimations.getRelevantTransformation("TRIGGER");
+        double[] translate = LegacyHbmAnimations.getRelevantTransformation("TRANSLATE");
+        double[] loader = LegacyHbmAnimations.getRelevantTransformation("LOADER");
+        double[] shot = LegacyHbmAnimations.getRelevantTransformation("SHOT");
+
+        poseStack.translate(translate[0], translate[1], translate[2]);
+        poseStack.translate(0.0D, 0.0D, -5.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -((float) recoil[0]));
+        poseStack.translate(0.0D, 0.0D, 5.0D);
+
+        if (loader[0] != 0.0D || loader[1] != 0.0D || loader[2] != 0.0D) {
+            poseStack.pushPose();
+            poseStack.translate(loader[0], loader[1], loader[2]);
+            ObjWeaponModels.renderPart(model, "Speedloader", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            if (shot[0] != 0.0D) {
+                ObjWeaponModels.renderPart(model, "Shot", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            }
+            poseStack.popPose();
+        }
+
+        ObjWeaponModels.renderPart(model, "Grip", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) cylinder[0]);
+        ObjWeaponModels.renderPart(model, "Cylinder", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.375D, -1.875D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) hammer[0]);
+        poseStack.translate(0.0D, -0.375D, 1.875D);
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, -trigger[0] * 0.5D);
+        ObjWeaponModels.renderPart(model, "Trigger", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderPepperboxEffects(gun, poseStack, buffer);
+        }
+    }
+
+    /** Exact ItemRenderHenry first-person hierarchy shared by the normal and Lincoln textures. */
+    private static void renderHenry(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] sight = LegacyHbmAnimations.getRelevantTransformation("SIGHT");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] hammer = LegacyHbmAnimations.getRelevantTransformation("HAMMER");
+        double[] lever = LegacyHbmAnimations.getRelevantTransformation("LEVER");
+        double[] turn = LegacyHbmAnimations.getRelevantTransformation("TURN");
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+        double[] twist = LegacyHbmAnimations.getRelevantTransformation("TWIST");
+        double[] bullet = LegacyHbmAnimations.getRelevantTransformation("BULLET");
+        double[] yeet = LegacyHbmAnimations.getRelevantTransformation("YEET");
+        double[] roll = LegacyHbmAnimations.getRelevantTransformation("ROLL");
+
+        poseStack.translate(recoil[0] * 2.0D, recoil[1], recoil[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoil[2] * 5.0D));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) turn[2]);
+        poseStack.translate(yeet[0], yeet[1], yeet[2]);
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) roll[2]);
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+        poseStack.translate(0.0D, -4.0D, 4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]);
+        poseStack.translate(0.0D, 4.0D, -4.0D);
+        poseStack.translate(0.0D, 2.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -((float) equip[0]));
+        poseStack.translate(0.0D, -2.0D, 4.0D);
+
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 1.25D, -0.1875D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) sight[0]);
+        poseStack.translate(0.0D, -1.25D, 0.1875D);
+        ObjWeaponModels.renderPart(model, "Sight", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.625D, -3.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (-30.0D + hammer[0]));
+        poseStack.translate(0.0D, -0.625D, 3.0D);
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.25D, -2.3125D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lever[0]);
+        poseStack.translate(0.0D, -0.25D, 2.3125D);
+        ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) twist[2]);
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Front", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(bullet[0], bullet[1], bullet[2] - 1.0D);
+        ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderHenryEffects(gun, turn[2], poseStack, buffer);
+        }
+    }
+
+    /** Exact ItemRenderAtlas first-person hierarchy shared by Light Revolver and Atlas. */
+    private static void renderAtlas(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] reloadMove = LegacyHbmAnimations.getRelevantTransformation("RELOAD_MOVE");
+        double[] reloadRot = LegacyHbmAnimations.getRelevantTransformation("RELOAD_ROT");
+        double[] front = LegacyHbmAnimations.getRelevantTransformation("FRONT");
+        double[] latch = LegacyHbmAnimations.getRelevantTransformation("LATCH");
+        double[] drum = LegacyHbmAnimations.getRelevantTransformation("DRUM");
+        double[] drumPush = LegacyHbmAnimations.getRelevantTransformation("DRUM_PUSH");
+        double[] hammer = LegacyHbmAnimations.getRelevantTransformation("HAMMER");
+
+        poseStack.translate(recoil[0], recoil[1], recoil[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoil[2] * 10.0D));
+        poseStack.scale((float) spec.firstPerson().renderScale(), (float) spec.firstPerson().renderScale(),
+                (float) spec.firstPerson().renderScale());
+        poseStack.translate(0.0D, 0.0D, -7.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -((float) equip[0]));
+        poseStack.translate(0.0D, 0.0D, 7.0D);
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderRevolverSmoke(gun, 0, recoil[2], poseStack, buffer);
+        }
+        poseStack.translate(reloadMove[0], reloadMove[1], reloadMove[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) reloadRot[0]);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) reloadRot[2]);
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) reloadRot[1]);
+
+        ObjWeaponModels.renderPart(model, "Grip", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) front[2]);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 2.3125D, -0.875D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) latch[2]);
+        poseStack.translate(0.0D, -2.3125D, 0.875D);
+        ObjWeaponModels.renderPart(model, "Latch", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (drum[2] * 60.0D));
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+        poseStack.translate(0.0D, 0.0D, drumPush[2]);
+        ObjWeaponModels.renderPart(model, "Drum", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, -4.5D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (-45.0D + 45.0D * hammer[2]));
+        poseStack.translate(0.0D, 0.0D, 4.5D);
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderRevolverFlash(gun, 0, poseStack, buffer);
+        }
+    }
+
+    /** Exact ItemRenderHangman first-person body and part hierarchy. */
+    private static void renderHangman(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] roll = LegacyHbmAnimations.getRelevantTransformation("ROLL");
+        double[] turn = LegacyHbmAnimations.getRelevantTransformation("TURN");
+        double[] smack = LegacyHbmAnimations.getRelevantTransformation("SMACK");
+        double[] lid = LegacyHbmAnimations.getRelevantTransformation("LID");
+        double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG");
+        double[] bullets = LegacyHbmAnimations.getRelevantTransformation("BULLETS");
+
+        poseStack.translate(1.2D, 0.0D, -1.0D);
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) turn[1]);
+        poseStack.translate(-1.2D, 0.0D, 1.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) roll[2]);
+        poseStack.translate(smack[0], smack[1], smack[2]);
+        poseStack.scale((float) spec.firstPerson().renderScale(), (float) spec.firstPerson().renderScale(),
+                (float) spec.firstPerson().renderScale());
+        poseStack.translate(0.0D, -4.0D, -10.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 4.0D, 10.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+
+        ObjWeaponModels.renderPart(model, "Rifle", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Internals", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        poseStack.translate(-2.1875D, -1.75D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) lid[2]);
+        poseStack.translate(2.1875D, 1.75D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Lid", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(mag[0], mag[1], mag[2]);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        if (bullets[0] == 0.0D) {
+            ObjWeaponModels.renderPart(model, "Bullets", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+        }
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderHangmanEffects(gun, poseStack, buffer);
+        }
+    }
+
+    private static void renderSpas12(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        if (!displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "MainBody", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "PumpGrip", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            return;
+        }
+
+        double[] mainBody = LegacyHbmAnimations.getRelevantTransformation("MainBody");
+        double[] pumpGrip = LegacyHbmAnimations.getRelevantTransformation("PumpGrip");
+        double[] shell = LegacyHbmAnimations.getRelevantTransformation("Shell");
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        LegacyBusAnimationTransforms.apply(poseStack, mainBody);
         ObjWeaponModels.renderPart(model, "MainBody", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+
+        poseStack.pushPose();
+        LegacyBusAnimationTransforms.apply(poseStack, pumpGrip);
         ObjWeaponModels.renderPart(model, "PumpGrip", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
+
+        SpentCasingDefinition casing = LegacySednaRuntimeBulletConfigs.byName(primaryMagazineType(stack))
+                .map(config -> SpentCasingDefinition.fromName(config.spentCasingName()))
+                .orElse(null);
+        int foreColor = casing == null ? SpentCasingDefinition.COLOR_CASE_BRASS : casing.color(0);
+        int shellColor = casing == null ? SpentCasingDefinition.COLOR_CASE_BRASS : casing.color(1);
+        poseStack.pushPose();
+        LegacyBusAnimationTransforms.apply(poseStack, shell);
+        ObjWeaponModels.renderPart(model, "Shell", ObjEffectModels.CASINGS_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay, (shellColor >>> 16) & 0xFF, (shellColor >>> 8) & 0xFF, shellColor & 0xFF, 0xFF);
+        ObjWeaponModels.renderPart(model, "ShellFore", ObjEffectModels.CASINGS_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay, (foreColor >>> 16) & 0xFF, (foreColor >>> 8) & 0xFF, foreColor & 0xFF, 0xFF);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderSpas12Effects(gun, poseStack, buffer);
+        }
+        poseStack.popPose();
     }
 
-    private static void renderTau(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+    private static void renderShredder(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG");
+        double[] speen = LegacyHbmAnimations.getRelevantTransformation("SPEEN");
+        double[] cycle = LegacyHbmAnimations.getRelevantTransformation("CYCLE");
+
+        poseStack.translate(0.0D, -2.0D, -6.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 2.0D, 6.0D);
+        poseStack.translate(0.0D, 0.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]);
+        poseStack.translate(0.0D, 0.0D, 4.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+
+        poseStack.pushPose();
+        poseStack.translate(mag[0], mag[1], mag[2]);
+        poseStack.translate(0.0D, -1.0D, -0.5D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) speen[0]);
+        poseStack.translate(0.0D, 1.0D, 0.5D);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.0D, -1.0D, -0.5D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) cycle[2]);
+        poseStack.translate(0.0D, 1.0D, 0.5D);
+        ObjWeaponModels.renderPart(model, "Shells", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderShredderEffects(gun, poseStack, buffer);
+        }
+        renderShredderAimLabel(poseStack, buffer);
+    }
+
+    private static void renderShredderAimLabel(PoseStack poseStack, MultiBufferSource buffer) {
+        if (!LegacySednaAimProgress.settledFullyAimed()) {
+            return;
+        }
+        Font font = Minecraft.getInstance().font;
+        float scale = 0.04F;
+        float variance = 0.9F + Minecraft.getInstance().player.getRandom().nextFloat() * 0.1F;
+        int color = 0xFF000000 | (Math.round(variance * 255.0F) << 8);
+        poseStack.pushPose();
+        poseStack.translate((font.width("[> <]") / 2.0D) * scale, 3.25D, -1.75D);
+        poseStack.scale(scale, -scale, scale);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        renderLegacyModelText(font, "[> <]", color, poseStack, buffer);
+        poseStack.popPose();
+    }
+
+    private static void renderTau(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        double recoil = displayContext.firstPerson() ? tauRecoilZ(stack) : 0.0D;
+        poseStack.pushPose();
+        if (displayContext.firstPerson()) {
+            poseStack.translate(0.0D, -1.0D, -4.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) tauEquipX(stack));
+            poseStack.translate(0.0D, 1.0D, 4.0D);
+            poseStack.translate(0.0D, 0.0D, recoil);
+            poseStack.translate(0.0D, 0.0D, -2.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoil * 5.0D));
+            poseStack.translate(0.0D, 0.0D, 2.0D);
+        }
         ObjWeaponModels.renderPart(model, "Body", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+
+        poseStack.pushPose();
+        if (displayContext.firstPerson()) {
+            poseStack.translate(0.0D, -0.25D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) tauRotorZ(stack));
+            poseStack.translate(0.0D, 0.25D, 0.0D);
+        }
         ObjWeaponModels.renderPart(model, "Rotor", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
+        poseStack.popPose();
     }
 
-    private static void renderGreasegun(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
+    private static double tauEquipX(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("EQUIP")[0];
+        int animation = teslaLegacyAnimation(stack);
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (animation == LEGACY_ANIM_EQUIP) {
+            return millis <= 500.0D ? lerp(45.0D, 0.0D, sinFull(millis / 500.0D)) : 0.0D;
+        }
+        if (animation == LEGACY_ANIM_INSPECT) {
+            if (millis <= 150.0D) return lerp(0.0D, 2.0D, sinDown(millis / 150.0D));
+            if (millis <= 250.0D) return lerp(2.0D, 0.0D, sinFull((millis - 150.0D) / 100.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double tauRecoilZ(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("RECOIL")[2];
+        int animation = teslaLegacyAnimation(stack);
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (animation == LEGACY_ANIM_CYCLE) {
+            if (millis <= 50.0D) return lerp(0.0D, -0.5D, millis / 50.0D);
+            if (millis <= 200.0D) return lerp(-0.5D, 0.0D, sinFull((millis - 50.0D) / 150.0D));
+        }
+        if (animation == LEGACY_ANIM_ALT_CYCLE) {
+            if (millis <= 100.0D) return lerp(0.0D, -3.0D, sinDown(millis / 100.0D));
+            if (millis <= 350.0D) return lerp(-3.0D, 0.0D, sinFull((millis - 100.0D) / 250.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double tauRotorZ(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("ROTATE")[2];
+        int animation = teslaLegacyAnimation(stack);
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (animation == LEGACY_ANIM_CYCLE || animation == LEGACY_ANIM_ALT_CYCLE) {
+            if (millis <= 50.0D) return lerp(0.0D, -5.0D, sinDown(millis / 50.0D));
+            if (millis <= 150.0D) return lerp(-5.0D, 5.0D, sinFull((millis - 50.0D) / 100.0D));
+            if (millis <= 200.0D) return lerp(5.0D, 0.0D, sinUp((millis - 150.0D) / 50.0D));
+            return 0.0D;
+        }
+        if (animation == LEGACY_ANIM_INSPECT) {
+            return millis <= 1500.0D ? lerp(0.0D, -1080.0D, sinDown(millis / 1500.0D)) : -1080.0D;
+        }
+        if (animation == LEGACY_ANIM_SPINUP) {
+            if (millis <= 3000.0D) return lerp(0.0D, 2160.0D, sinUp(millis / 3000.0D));
+            if (millis <= 13_000.0D) return lerp(0.0D, 14_400.0D, (millis - 3000.0D) / 10_000.0D);
+            return 14_400.0D;
+        }
+        return 0.0D;
+    }
+
+    private static void renderGreasegun(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ResourceLocation texture = hasUpgrade(stack, SednaWeaponModEvaluator.ID_GREASEGUN_CLEAN)
                 ? GREASEGUN_CLEAN_TEXTURE
                 : spec.textureLocation();
+        if (displayContext.firstPerson()) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] stock = LegacyHbmAnimations.getRelevantTransformation("STOCK");
+            double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+            double[] flap = LegacyHbmAnimations.getRelevantTransformation("FLAP");
+            double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+            double[] handle = LegacyHbmAnimations.getRelevantTransformation("HANDLE");
+            double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG");
+            double[] turn = LegacyHbmAnimations.getRelevantTransformation("TURN");
+            double[] bullet = LegacyHbmAnimations.getRelevantTransformation("BULLET");
+            poseStack.translate(0.0D, -3.0D, -3.0D); LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]); poseStack.translate(0.0D, 3.0D, 3.0D);
+            poseStack.translate(0.0D, -3.0D, -3.0D); LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]); poseStack.translate(0.0D, 3.0D, 3.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) turn[2]); poseStack.translate(0.0D, 0.0D, recoil[2]);
+            ObjWeaponModels.renderPart(model, "Gun", texture, poseStack, buffer, packedLight, packedOverlay);
+            poseStack.pushPose(); poseStack.translate(0.0D, 0.0D, -4.0D - stock[2]); ObjWeaponModels.renderPart(model, "Stock", texture, poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+            poseStack.pushPose(); poseStack.translate(mag[0], mag[1], mag[2]); ObjWeaponModels.renderPart(model, "Magazine", texture, poseStack, buffer, packedLight, packedOverlay); if (bullet[0] != 1.0D) ObjWeaponModels.renderPart(model, "Bullet", texture, poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+            poseStack.pushPose(); poseStack.translate(0.0D, -1.4375D, -0.125D); LegacyPoseRotations.rotateXDegrees(poseStack, (float) handle[0]); poseStack.translate(0.0D, 1.4375D, 0.125D); ObjWeaponModels.renderPart(model, "Handle", texture, poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+            poseStack.pushPose(); poseStack.translate(0.0D, 0.53125D, 0.0D); LegacyPoseRotations.rotateZDegrees(poseStack, (float) flap[2]); poseStack.translate(0.0D, -0.5125D, 0.0D); ObjWeaponModels.renderPart(model, "Flap", texture, poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+            if (stack.getItem() instanceof SednaGunItem gun) {
+                ClientSednaGunEffects.renderGreasegunEffects(gun, turn[2], poseStack, buffer);
+            }
+            return;
+        }
         model.renderAll(texture, poseStack, buffer, packedLight, packedOverlay);
     }
 
-    private static void renderMaresleg(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    private static void renderMaresleg(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean shortened = isMareslegShortened(stack, spec);
+        if (!displayContext.firstPerson()) {
+            renderMareslegStatic(model, spec, shortened, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+
+        renderMareslegFirstPersonParts(stack, model, spec, shortened, 0, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    private static void renderMareslegStatic(LegacyWavefrontModel model, RenderSpec spec, boolean shortened,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1016,15 +1850,167 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    private static void renderCarbine(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        boolean scoped = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
+    private static void renderMareslegFirstPersonParts(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec, boolean shortened,
+            int animationIndex, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL", animationIndex);
+        double[] lever = LegacyHbmAnimations.getRelevantTransformation("LEVER", animationIndex);
+        double[] turn = LegacyHbmAnimations.getRelevantTransformation("TURN", animationIndex);
+        double[] flip = LegacyHbmAnimations.getRelevantTransformation("FLIP", animationIndex);
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT", animationIndex);
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP", animationIndex);
+        double[] shell = LegacyHbmAnimations.getRelevantTransformation("SHELL", animationIndex);
+        double[] flag = LegacyHbmAnimations.getRelevantTransformation("FLAG", animationIndex);
+
+        poseStack.pushPose();
+        poseStack.translate(recoil[0] * 2.0D, recoil[1], recoil[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoil[2] * 5.0D));
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) turn[2]);
+        pivotX(poseStack, 0.0D, 0.0D, -4.0D, (float) lift[0]);
+        pivotX(poseStack, 0.0D, 0.0D, -4.0D, (float) -equip[0]);
+        pivotX(poseStack, 0.0D, 0.0D, -2.0D, (float) -flip[0]);
+
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        if (!shortened) {
+            ObjWeaponModels.renderPart(model, "Stock", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+        }
+
+        poseStack.pushPose();
+        pivotX(poseStack, 0.0D, 0.125D, -2.875D, (float) lever[0]);
+        ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(shell[0], shell[1] - 0.75D, shell[2]);
+        ObjWeaponModels.renderPart(model, "Shell", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+
+        if (flag[0] != 0.0D) {
+            poseStack.pushPose();
+            poseStack.translate(0.0D, -0.5D, 0.0D);
+            ObjWeaponModels.renderPart(model, "Shell", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            poseStack.popPose();
+        }
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderMareslegEffects(gun, animationIndex, shortened, turn[2], flip[0], poseStack,
+                    buffer);
+        }
+        poseStack.popPose();
+    }
+
+    private static void pivotX(PoseStack poseStack, double x, double y, double z, float degrees) {
+        poseStack.translate(x, y, z);
+        LegacyPoseRotations.rotateXDegrees(poseStack, degrees);
+        poseStack.translate(-x, -y, -z);
+    }
+
+    private static void renderLiberator(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+        double[] latch = LegacyHbmAnimations.getRelevantTransformation("LATCH");
+        double[] brk = LegacyHbmAnimations.getRelevantTransformation("BREAK");
+
+        poseStack.pushPose();
+        pivotX(poseStack, 0.0D, -1.0D, -3.0D, (float) equip[0]);
+        pivotX(poseStack, 0.0D, -3.0D, -3.0D, (float) lift[0]);
+        poseStack.translate(recoil[0] * 2.0D, recoil[1], recoil[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoil[2] * 10.0D));
+
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.pushPose();
+        pivotX(poseStack, 0.0D, -0.5D, 0.75D, (float) brk[0]);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        for (int shell = 1; shell <= 4; shell++) {
+            double[] transform = LegacyHbmAnimations.getRelevantTransformation("SHELL" + shell);
+            poseStack.pushPose();
+            poseStack.translate(transform[0], transform[1], transform[2]);
+            ObjWeaponModels.renderPart(model, "Shell" + shell, spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            poseStack.popPose();
+        }
+        pivotX(poseStack, 0.0D, 1.15625D, 0.75D, (float) latch[0]);
+        ObjWeaponModels.renderPart(model, "Latch", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderLiberatorEffects(gun, poseStack, buffer);
+        }
+        poseStack.popPose();
+    }
+
+    /** Exact ItemRenderCarbine first-person body and part hierarchy. */
+    private static void renderCarbine(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        boolean scoped = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
+        if (!displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Slide", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            if (scoped) {
+                ObjWeaponModels.renderPart(model, "Scope", CARBINE_SCOPE_TEXTURE, poseStack, buffer, packedLight,
+                        packedOverlay);
+            } else {
+                ObjWeaponModels.renderPart(model, "IronSight", spec.textureLocation(), poseStack, buffer, packedLight,
+                        packedOverlay);
+            }
+            if (hasUpgrade(stack, SednaWeaponModEvaluator.ID_CARBINE_BAYONET)) {
+                ObjWeaponModels.renderPart(model, "Bayonet", CARBINE_BAYONET_TEXTURE, poseStack, buffer, packedLight,
+                        packedOverlay);
+            }
+            return;
+        }
+
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] slide = LegacyHbmAnimations.getRelevantTransformation("SLIDE");
+        double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG");
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+        double[] bullet = LegacyHbmAnimations.getRelevantTransformation("BULLET");
+        double[] rel = LegacyHbmAnimations.getRelevantTransformation("REL");
+        double[] stab = LegacyHbmAnimations.getRelevantTransformation("STAB");
+        poseStack.translate(0.0D, -1.0D, -2.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 1.0D, 2.0D);
+        poseStack.translate(0.0D, 0.0D, -2.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]);
+        poseStack.translate(0.0D, 0.0D, 2.0D);
+        poseStack.translate(stab[0], stab[1], stab[2]);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, slide[2]);
         ObjWeaponModels.renderPart(model, "Slide", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(mag[0], mag[1], mag[2]);
         ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.translate(rel[0], rel[1], rel[2]);
+        if (bullet[0] != 1.0D) {
+            ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+        }
+        poseStack.popPose();
         if (scoped) {
             ObjWeaponModels.renderPart(model, "Scope", CARBINE_SCOPE_TEXTURE, poseStack, buffer, packedLight,
                     packedOverlay);
@@ -1036,11 +2022,62 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             ObjWeaponModels.renderPart(model, "Bayonet", CARBINE_BAYONET_TEXTURE, poseStack, buffer, packedLight,
                     packedOverlay);
         }
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderCarbineEffects(gun, poseStack, buffer);
+        }
+    }
+
+    /** Exact ItemRenderMinigun first-person body and barrel hierarchy for the two single-gun variants. */
+    private static void renderMinigun(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Grip", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Barrels", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            return;
+        }
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] rotate = LegacyHbmAnimations.getRelevantTransformation("ROTATE");
+        poseStack.translate(0.0D, 3.0D, -6.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, -3.0D, 6.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        ObjWeaponModels.renderPart(model, "Grip", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) rotate[2]);
+        ObjWeaponModels.renderPart(model, "Barrels", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            if ("gun_minigun_lacunae".equals(currentLegacyName(stack))) {
+                ClientSednaGunEffects.renderMinigunLacunaeEffects(gun, poseStack, buffer);
+            } else {
+                ClientSednaGunEffects.renderMinigunEffects(gun, poseStack, buffer);
+            }
+        }
     }
 
     private static void renderAm180(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean silenced = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SILENCER);
+        Am180AnimationPose animation = displayContext.firstPerson()
+                ? am180AnimationPose(stack) : Am180AnimationPose.IDENTITY;
+
+        poseStack.pushPose();
+        if (displayContext.firstPerson()) {
+            poseStack.translate(0.0D, -2.0D, -6.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) animation.equipX());
+            poseStack.translate(0.0D, 2.0D, 6.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) animation.turnZ());
+            poseStack.translate(0.0D, 0.0D, animation.recoilZ());
+        }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         if (silenced) {
@@ -1049,25 +2086,205 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         ObjWeaponModels.renderPart(model, "Trigger", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        ObjWeaponModels.renderPart(model, "Bolt", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
 
         poseStack.pushPose();
         if (displayContext.firstPerson()) {
+            poseStack.translate(0.0D, 0.0D, animation.boltZ());
+        }
+        ObjWeaponModels.renderPart(model, "Bolt", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        if (displayContext.firstPerson()) {
+            poseStack.translate(animation.magX(), animation.magY(), animation.magZ());
+            poseStack.translate(0.0D, 2.0625D, 3.75D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) animation.magTurnX());
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) animation.magTurnZ());
+            poseStack.translate(0.0D, -2.0625D, -3.75D);
+            poseStack.translate(0.0D, 2.3125D, 1.5D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) animation.magSpinX());
+            poseStack.translate(0.0D, -2.3125D, -1.5D);
+            poseStack.pushPose();
             poseStack.translate(0.0D, 0.0D, 1.5D);
             LegacyPoseRotations.rotateYDegrees(poseStack, -((float) (primaryMagazineAmount(stack) / 59.0D * 360.0D)));
             poseStack.translate(0.0D, 0.0D, -1.5D);
         }
         ObjWeaponModels.renderPart(model, "Mag", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        poseStack.popPose();
+        if (displayContext.firstPerson()) {
+            poseStack.popPose();
+        }
 
         ObjWeaponModels.renderPart(model, "MagPlate", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        if (displayContext.firstPerson() && stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderAm180Effects(gun, silenced, animation.turnZ(), poseStack, buffer);
+        }
+        poseStack.popPose();
+    }
+
+    private static Am180AnimationPose am180AnimationPose(ItemStack stack) {
+        if (legacyBusActive()) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+            double[] magazine = LegacyHbmAnimations.getRelevantTransformation("MAG");
+            double[] magTurn = LegacyHbmAnimations.getRelevantTransformation("MAGTURN");
+            double[] magSpin = LegacyHbmAnimations.getRelevantTransformation("MAGSPIN");
+            double[] bolt = LegacyHbmAnimations.getRelevantTransformation("BOLT");
+            double[] turn = LegacyHbmAnimations.getRelevantTransformation("TURN");
+            return new Am180AnimationPose(equip[0], recoil[2], magazine[0], magazine[1], magazine[2],
+                    magTurn[0], magTurn[2], magSpin[0], bolt[2], turn[2]);
+        }
+        int animation = teslaLegacyAnimation(stack);
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (animation == LEGACY_ANIM_EQUIP) {
+            return new Am180AnimationPose(millis <= 500.0D ? lerp(45.0D, 0.0D, sinFull(millis / 500.0D)) : 0.0D,
+                    0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        if (animation == LEGACY_ANIM_CYCLE) {
+            double recoil = isTeslaAiming(stack) ? -0.125D : -0.25D;
+            double recoilZ = millis <= 15.0D ? lerp(0.0D, recoil, sinDown(millis / 15.0D))
+                    : millis <= 50.0D ? lerp(recoil, 0.0D, sinFull((millis - 15.0D) / 35.0D)) : 0.0D;
+            return new Am180AnimationPose(0.0D, recoilZ, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        if (animation == LEGACY_ANIM_CYCLE_DRY) {
+            return new Am180AnimationPose(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D,
+                    am180Bolt(millis, 550.0D), am180Turn(millis, 300.0D, 15.0D));
+        }
+        if (animation == LEGACY_ANIM_RELOAD) {
+            return new Am180AnimationPose(0.0D, 0.0D, am180ReloadMagX(millis), am180ReloadMagY(millis),
+                    am180ReloadMagZ(millis), am180ReloadMagTurnX(millis), am180ReloadMagTurnZ(millis), 0.0D,
+                    am180Bolt(millis, 2250.0D), am180Turn(millis, 2000.0D, 15.0D));
+        }
+        if (animation == LEGACY_ANIM_JAMMED) {
+            return new Am180AnimationPose(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D,
+                    am180Bolt(millis, 750.0D), am180Turn(millis, 500.0D, 45.0D));
+        }
+        if (animation == LEGACY_ANIM_INSPECT) {
+            return new Am180AnimationPose(0.0D, 0.0D, am180InspectMagX(millis), am180InspectMagY(millis),
+                    am180InspectMagZ(millis), am180InspectMagTurnX(millis), am180InspectMagTurnZ(millis),
+                    am180InspectMagSpinX(millis), 0.0D, 0.0D);
+        }
+        return Am180AnimationPose.IDENTITY;
+    }
+
+    private static double am180Bolt(double millis, double hold) {
+        if (millis <= hold) {
+            return 0.0D;
+        }
+        if (millis <= hold + 100.0D) {
+            return lerp(0.0D, -1.5D, sinUp((millis - hold) / 100.0D));
+        }
+        if (millis <= hold + 200.0D) {
+            return lerp(-1.5D, 0.0D, sinUp((millis - hold - 100.0D) / 100.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double am180Turn(double millis, double wait, double angle) {
+        if (millis <= wait) {
+            return 0.0D;
+        }
+        if (millis <= wait + 250.0D) {
+            return lerp(0.0D, angle, sinFull((millis - wait) / 250.0D));
+        }
+        if (millis <= wait + 650.0D) {
+            return angle;
+        }
+        if (millis <= wait + 900.0D) {
+            return lerp(angle, 0.0D, sinFull((millis - wait - 650.0D) / 250.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double am180ReloadMagX(double millis) {
+        if (millis <= 250.0D) return 0.0D;
+        if (millis <= 500.0D) return lerp(0.0D, 2.0D, sinFull((millis - 250.0D) / 250.0D));
+        if (millis <= 800.0D) return lerp(2.0D, -10.0D, sinUp((millis - 500.0D) / 300.0D));
+        if (millis <= 1300.0D) return lerp(3.0D, 2.0D, sinFull((millis - 800.0D) / 500.0D));
+        if (millis <= 1550.0D) return lerp(2.0D, 0.0D, sinFull((millis - 1300.0D) / 250.0D));
+        return 0.0D;
+    }
+
+    private static double am180ReloadMagY(double millis) {
+        if (millis <= 500.0D) return 0.0D;
+        if (millis <= 800.0D) return lerp(0.0D, 2.0D, sinUp((millis - 500.0D) / 300.0D));
+        if (millis <= 1300.0D) return lerp(-6.0D, 0.0D, sinFull((millis - 800.0D) / 500.0D));
+        return 0.0D;
+    }
+
+    private static double am180ReloadMagZ(double millis) {
+        if (millis <= 250.0D) return 0.0D;
+        if (millis <= 500.0D) return lerp(0.0D, -4.0D, sinFull((millis - 250.0D) / 250.0D));
+        if (millis <= 1300.0D) return -4.0D;
+        if (millis <= 1550.0D) return lerp(-4.0D, 0.0D, sinFull((millis - 1300.0D) / 250.0D));
+        return 0.0D;
+    }
+
+    private static double am180ReloadMagTurnX(double millis) {
+        if (millis <= 250.0D) return lerp(0.0D, 15.0D, sinFull(millis / 250.0D));
+        if (millis <= 1550.0D) return 15.0D;
+        if (millis <= 1800.0D) return lerp(15.0D, 0.0D, sinFull((millis - 1550.0D) / 250.0D));
+        return 0.0D;
+    }
+
+    private static double am180ReloadMagTurnZ(double millis) {
+        return millis <= 500.0D ? 0.0D : millis <= 800.0D
+                ? lerp(0.0D, 70.0D, sinFull((millis - 500.0D) / 300.0D)) : 0.0D;
+    }
+
+    private static double am180InspectMagX(double millis) {
+        if (millis <= 200.0D) return 0.0D;
+        if (millis <= 400.0D) return lerp(0.0D, 4.0D, sinFull((millis - 200.0D) / 200.0D));
+        if (millis <= 1300.0D) return 4.0D;
+        if (millis <= 1550.0D) return lerp(4.0D, 0.0D, sinFull((millis - 1300.0D) / 250.0D));
+        return 0.0D;
+    }
+
+    private static double am180InspectMagY(double millis) {
+        if (millis <= 400.0D) return millis <= 200.0D ? 0.0D : lerp(0.0D, -1.0D, sinFull((millis - 200.0D) / 200.0D));
+        if (millis <= 450.0D) return lerp(-1.0D, -1.5D, (millis - 400.0D) / 50.0D);
+        if (millis <= 550.0D) return lerp(-1.5D, 0.0D, (millis - 450.0D) / 100.0D);
+        if (millis <= 800.0D) return lerp(0.0D, 6.0D, sinDown((millis - 550.0D) / 250.0D));
+        if (millis <= 950.0D) return lerp(6.0D, 0.0D, sinUp((millis - 800.0D) / 150.0D));
+        if (millis <= 1050.0D) return lerp(0.0D, -1.0D, sinDown((millis - 950.0D) / 100.0D));
+        return millis <= 1300.0D ? -1.0D : 0.0D;
+    }
+
+    private static double am180InspectMagZ(double millis) {
+        if (millis <= 200.0D) return 0.0D;
+        if (millis <= 400.0D) return lerp(0.0D, -4.0D, sinFull((millis - 200.0D) / 200.0D));
+        if (millis <= 1300.0D) return -4.0D;
+        if (millis <= 1550.0D) return lerp(-4.0D, 0.0D, sinFull((millis - 1300.0D) / 250.0D));
+        return 0.0D;
+    }
+
+    private static double am180InspectMagTurnX(double millis) {
+        if (millis <= 250.0D) return lerp(0.0D, 15.0D, sinFull(millis / 250.0D));
+        if (millis <= 1650.0D) return 15.0D;
+        if (millis <= 1900.0D) return lerp(15.0D, 0.0D, sinFull((millis - 1650.0D) / 250.0D));
+        return 0.0D;
+    }
+
+    private static double am180InspectMagTurnZ(double millis) {
+        return 0.0D;
+    }
+
+    private static double am180InspectMagSpinX(double millis) {
+        if (millis <= 600.0D) return 0.0D;
+        if (millis <= 1100.0D) return lerp(0.0D, -400.0D, sinFull((millis - 600.0D) / 500.0D));
+        if (millis <= 1350.0D) return -400.0D;
+        if (millis <= 1600.0D) return lerp(-400.0D, -360.0D, (millis - 1350.0D) / 250.0D);
+        return -360.0D;
     }
 
     private static void renderUzi(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (displayContext.firstPerson()) {
+            renderUziFirstPersonParts(stack, model, 0, false, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
         boolean silenced = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SILENCER);
         if (silenced && displayContext == ItemDisplayContext.GUI) {
             poseStack.scale(0.625F, 0.625F, 0.625F);
@@ -1088,6 +2305,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderStarF(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (displayContext.firstPerson()) {
+            renderStarFFirstPersonParts(stack, model, spec.textureLocation(), 0, 1, poseStack, buffer, packedLight,
+                    packedOverlay);
+            return;
+        }
         boolean silenced = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SILENCER);
         if (silenced && displayContext == ItemDisplayContext.GUI) {
             poseStack.scale(0.625F, 0.625F, 0.625F);
@@ -1110,7 +2332,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    private static void renderG3(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+    private static void renderG3(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean stock = !hasUpgrade(stack, SednaWeaponModEvaluator.ID_NO_STOCK);
         boolean silenced = "gun_g3_zebra".equals(currentLegacyName(stack))
@@ -1118,6 +2340,11 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         boolean scoped = "gun_g3_zebra".equals(currentLegacyName(stack))
                 || hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
         ResourceLocation texture = g3Texture(stack, spec);
+
+        if (displayContext.firstPerson()) {
+            renderG3FirstPerson(stack, model, texture, stock, silenced, scoped, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
 
         ObjWeaponModels.renderPart(model, "Rifle", texture, poseStack, buffer, packedLight, packedOverlay);
         if (stock) {
@@ -1148,8 +2375,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    private static void renderAmat(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+    private static void renderAmat(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (displayContext.firstPerson()) {
+            renderAmatFirstPersonParts(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         ObjWeaponModels.renderPart(model, "Bolt", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1180,8 +2412,98 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
     }
 
+    /** Exact ItemRenderAmat first-person body, bolt, scope, and bipod hierarchy. */
+    private static void renderAmatFirstPersonParts(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyHbmAnimations.Animation animation = LegacyHbmAnimations.getRelevantAnim();
+        boolean deployed = animation == null || animation.animation().getBus("BIPOD") == null;
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] bipod = LegacyHbmAnimations.getRelevantTransformation("BIPOD");
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] boltTurn = LegacyHbmAnimations.getRelevantTransformation("BOLT_TURN");
+        double[] boltPull = LegacyHbmAnimations.getRelevantTransformation("BOLT_PULL");
+        double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG");
+        double[] scopeThrow = LegacyHbmAnimations.getRelevantTransformation("SCOPE_THROW");
+        double[] scopeSpin = LegacyHbmAnimations.getRelevantTransformation("SCOPE_SPIN");
+
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        poseStack.translate(0.0D, -3.0D, -8.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]);
+        poseStack.translate(0.0D, 3.0D, 8.0D);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+
+        poseStack.pushPose();
+        poseStack.translate(scopeThrow[0], scopeThrow[1], scopeThrow[2]);
+        poseStack.translate(0.0D, 1.5D, -4.5D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) scopeSpin[0]);
+        poseStack.translate(0.0D, -1.5D, 4.5D);
+        ObjWeaponModels.renderPart(model, "Scope", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.625D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) boltTurn[2]);
+        poseStack.translate(0.0D, -0.625D, 0.0D);
+        poseStack.translate(0.0D, 0.0D, boltPull[2]);
+        ObjWeaponModels.renderPart(model, "Bolt", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(mag[0], mag[1], mag[2]);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(0.3125D, -0.625D, -1.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (deployed ? 25.0D : bipod[1]));
+        poseStack.translate(-0.3125D, 0.625D, 1.0D);
+        ObjWeaponModels.renderPart(model, "BipodHingeLeft", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.translate(0.3125D, -0.625D, -1.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (deployed ? 80.0D : bipod[0]));
+        poseStack.translate(-0.3125D, 0.625D, 1.0D);
+        ObjWeaponModels.renderPart(model, "BipodLeft", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(-0.3125D, -0.625D, -1.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (deployed ? -25.0D : -bipod[1]));
+        poseStack.translate(0.3125D, 0.625D, 1.0D);
+        ObjWeaponModels.renderPart(model, "BipodHingeRight", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.translate(-0.3125D, -0.625D, -1.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (deployed ? 80.0D : bipod[0]));
+        poseStack.translate(0.3125D, 0.625D, 1.0D);
+        ObjWeaponModels.renderPart(model, "BipodRight", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+
+        if (isAmatSilenced(stack)) {
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 0.625D, -4.3125D);
+            poseStack.scale(1.25F, 1.25F, 1.25F);
+            ObjWeaponModels.renderPart(extraModel("g3", "g3", "g3"), "Silencer", G3_ATTACHMENTS_TEXTURE, poseStack,
+                    buffer, packedLight, packedOverlay);
+            poseStack.popPose();
+        } else {
+            ObjWeaponModels.renderPart(model, "MuzzleBrake", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+        }
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderAmatEffects(gun, isAmatSilenced(stack), poseStack, buffer);
+        }
+    }
+
     private static void renderMk108(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (displayContext.firstPerson()) {
+            renderMk108FirstPerson(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1201,6 +2523,10 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
     }
 
     private static double[][] mk108LoadedShellPositions() {
+        return mk108ShellPositions(1.0D);
+    }
+
+    private static double[][] mk108ShellPositions(double reloadProgress) {
         double p = 0.0625D;
         double x = p * 22.0D;
         double y = p * -46.0D;
@@ -1208,13 +2534,14 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         double vx = 0.0D;
         double vy = 0.53125D;
         double[] anglesLoaded = { 0.0D, 0.0D, -5.0D, 0.0D, -5.0D, 60.0D, 45.0D, -10.0D, 0.0D };
+        double[] anglesUnloaded = { 0.0D, -30.0D, -60.0D, -45.0D, -45.0D, 0.0D, 0.0D, 0.0D, 0.0D };
         double[][] shells = new double[anglesLoaded.length][3];
 
         for (int i = 0; i < anglesLoaded.length; i++) {
             shells[i][0] = x;
             shells[i][1] = y;
             shells[i][2] = angle - 90.0D;
-            double delta = anglesLoaded[i];
+            double delta = Mth.lerp(reloadProgress, anglesUnloaded[i], anglesLoaded[i]);
             angle += delta;
             double radians = -delta * Mth.DEG_TO_RAD;
             double nextVx = vx * Math.cos(radians) - vy * Math.sin(radians);
@@ -1225,6 +2552,166 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             y += vy;
         }
         return shells;
+    }
+
+    /** Exact ItemRenderFlaregun first-person part hierarchy on the shared OBJ backend. */
+    private static void renderFlaregun(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] hammer = LegacyHbmAnimations.getRelevantTransformation("HAMMER");
+        double[] open = LegacyHbmAnimations.getRelevantTransformation("OPEN");
+        double[] shell = LegacyHbmAnimations.getRelevantTransformation("SHELL");
+        double[] flip = LegacyHbmAnimations.getRelevantTransformation("FLIP");
+
+        poseStack.translate(recoil[0], recoil[1], recoil[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoil[2] * 10.0D));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) flip[0]);
+        poseStack.translate(0.0D, 0.0D, -8.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, -((float) equip[0]));
+        poseStack.translate(0.0D, 0.0D, 8.0D);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 1.8125D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (hammer[0] - 15.0D));
+        poseStack.translate(0.0D, -1.8125D, 4.0D);
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 2.156D, 1.78D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) open[0]);
+        poseStack.translate(0.0D, -2.156D, -1.78D);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(shell[0], shell[1], shell[2]);
+        ObjWeaponModels.renderPart(model, "Flare", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderFlaregunSmoke(gun, poseStack, buffer);
+        }
+    }
+
+    /** ItemRenderCongoLake authored-JSON hierarchy; the source shell uses the shared casing texture. */
+    private static void renderCongolake(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+        poseStack.pushPose();
+        LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("Gun"));
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("Pump"));
+        ObjWeaponModels.renderPart(model, "Pump", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("Sight"));
+        ObjWeaponModels.renderPart(model, "Sight", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("Loop"));
+        ObjWeaponModels.renderPart(model, "Loop", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("GuardOuter"));
+        ObjWeaponModels.renderPart(model, "GuardOuter", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("GuardInner"));
+        ObjWeaponModels.renderPart(model, "GuardInner", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.popPose();
+
+        CompoundTag tag = stack.getTag();
+        boolean showShell = primaryMagazineAmount(stack) > 0 || tag == null || tag.getInt(LEGACY_LAST_ANIM_KEY) != LEGACY_ANIM_INSPECT;
+        if (showShell) {
+            SpentCasingDefinition casing = LegacySednaRuntimeBulletConfigs.byName(primaryMagazineType(stack))
+                    .map(config -> SpentCasingDefinition.fromName(config.spentCasingName())).orElse(null);
+            int shellColor = casing == null ? SpentCasingDefinition.COLOR_CASE_BRASS : casing.color(0);
+            int foreColor = casing == null ? SpentCasingDefinition.COLOR_CASE_BRASS : casing.color(1);
+            poseStack.pushPose();
+            LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("Shell"));
+            ObjWeaponModels.renderPart(model, "Shell", ObjEffectModels.CASINGS_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay, (shellColor >>> 16) & 255, (shellColor >>> 8) & 255, shellColor & 255, 255);
+            ObjWeaponModels.renderPart(model, "ShellFore", ObjEffectModels.CASINGS_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay, (foreColor >>> 16) & 255, (foreColor >>> 8) & 255, foreColor & 255, 255);
+            poseStack.popPose();
+        }
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderCongolakeEffects(gun, LegacyHbmAnimations.getRelevantTransformation("Gun"),
+                    poseStack, buffer);
+        }
+    }
+
+    private static void renderMk108FirstPerson(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyHbmAnimations.Animation animation = LegacyHbmAnimations.getRelevantAnim();
+        boolean doesYeet = animation != null && animation.animation().getBus("GRENH1") != null;
+        boolean doesCycle = animation != null && animation.animation().getBus("CYCLE") != null;
+        boolean reloading = animation != null && animation.animation().getBus("BELT") != null;
+        boolean useShellCount = animation != null && animation.animation().getBus("SHELLS") != null;
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] cycle = LegacyHbmAnimations.getRelevantTransformation("CYCLE");
+        double[] barrel = LegacyHbmAnimations.getRelevantTransformation("BARREL");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] lid = LegacyHbmAnimations.getRelevantTransformation("LID");
+        double[] belt = LegacyHbmAnimations.getRelevantTransformation("BELT");
+        double[] drum = LegacyHbmAnimations.getRelevantTransformation("DRUM");
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+        double[] shellCount = LegacyHbmAnimations.getRelevantTransformation("SHELLS");
+
+        if (doesYeet) {
+            for (int i = 1; i <= 3; i++) {
+                double[] horizontal = LegacyHbmAnimations.getRelevantTransformation("GRENH" + i);
+                if (horizontal[0] <= -4.0D) continue;
+                double[] vertical = LegacyHbmAnimations.getRelevantTransformation("GRENV" + i);
+                double[] spin = LegacyHbmAnimations.getRelevantTransformation("GRENS" + i);
+                poseStack.pushPose();
+                poseStack.translate(horizontal[0], vertical[1], 0.0D);
+                poseStack.translate(0.0D, 0.0D, -2.3125D);
+                LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
+                LegacyPoseRotations.rotateYDegrees(poseStack, -((float) spin[0]));
+                poseStack.translate(0.0D, 0.0D, 2.3125D);
+                ObjWeaponModels.renderPart(model, "Grenade", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+                poseStack.popPose();
+            }
+        }
+        poseStack.translate(0.0D, -1.0D, -8.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 1.0D, 8.0D);
+        poseStack.translate(0.0D, 1.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]);
+        poseStack.translate(0.0D, -1.0D, 4.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose(); poseStack.translate(0.0D, 0.0D, barrel[2] * 2.0D);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+        poseStack.pushPose(); poseStack.translate(0.0D, 0.6875D, -1.0D); LegacyPoseRotations.rotateXDegrees(poseStack, (float) lid[0]); poseStack.translate(0.0D, -0.6875D, 1.0D);
+        ObjWeaponModels.renderPart(model, "Lid", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(drum[0], drum[1], drum[2]);
+        ObjWeaponModels.renderPart(model, "Drum", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        double[][] shells = mk108ShellPositions(reloading ? belt[0] : 1.0D);
+        int shellAmount = useShellCount ? (int) shellCount[0] : primaryMagazineAmount(stack);
+        double cycleProgress = doesCycle ? cycle[0] : 1.0D;
+        for (int i = 0; i < shells.length - 1; i++) {
+            double[] a = shells[i], b = shells[i + 1];
+            renderMk108Shell(model, spec.textureLocation(), Mth.lerp(cycleProgress, a[0], b[0]), Mth.lerp(cycleProgress, a[1], b[1]), Mth.lerp(cycleProgress, a[2], b[2]), shells.length - i < shellAmount + 2, poseStack, buffer, packedLight, packedOverlay);
+        }
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderMk108Effects(gun, poseStack, buffer);
+        }
     }
 
     private static void renderMk108Shell(LegacyWavefrontModel model, ResourceLocation texture, double x, double y,
@@ -1242,6 +2729,10 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void renderSexy(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (displayContext.firstPerson()) {
+            renderSexyFirstPerson(stack, model, spec, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1266,11 +2757,141 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 { p * 17.0D, p * -13.0D, -90.0D },
                 { p * 17.0D, p * -20.0D, -90.0D }
         };
-        int shellAmount = displayContext.firstPerson() ? primaryMagazineAmount(stack) : Integer.MAX_VALUE;
+        int shellAmount = Integer.MAX_VALUE;
         for (int i = 0; i < shells.length; i++) {
-            boolean shell = !displayContext.firstPerson() || shells.length + 1 - i < shellAmount + 2;
+            boolean shell = shells.length + 1 - i < shellAmount + 2;
             renderSexyShell(model, spec.textureLocation(), shells[i][0], shells[i][1], shells[i][2], shell,
                     poseStack, buffer, packedLight, packedOverlay);
+        }
+    }
+
+    /** Exact ItemRenderSexy first-person body, inspection-bottle, and generated belt hierarchy. */
+    private static void renderSexyFirstPerson(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyHbmAnimations.Animation animation = LegacyHbmAnimations.getRelevantAnim();
+        boolean doesCycle = animation != null && animation.animation().getBus("CYCLE") != null;
+        boolean reloading = animation != null && animation.animation().getBus("BELT") != null;
+        boolean useShellCount = animation != null && animation.animation().getBus("SHELLS") != null;
+        boolean girlDinner = animation != null && animation.animation().getBus("BOTTLE") != null;
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] lower = LegacyHbmAnimations.getRelevantTransformation("LOWER");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] cycle = LegacyHbmAnimations.getRelevantTransformation("CYCLE");
+        double[] barrel = LegacyHbmAnimations.getRelevantTransformation("BARREL");
+        double[] hood = LegacyHbmAnimations.getRelevantTransformation("HOOD");
+        double[] lever = LegacyHbmAnimations.getRelevantTransformation("LEVER");
+        double[] belt = LegacyHbmAnimations.getRelevantTransformation("BELT");
+        double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG");
+        double[] magRot = LegacyHbmAnimations.getRelevantTransformation("MAGROT");
+        double[] shellCount = LegacyHbmAnimations.getRelevantTransformation("SHELLS");
+        double[] bottle = LegacyHbmAnimations.getRelevantTransformation("BOTTLE");
+        double[] sip = LegacyHbmAnimations.getRelevantTransformation("SIP");
+
+        if (girlDinner) {
+            poseStack.pushPose();
+            poseStack.translate(bottle[0], bottle[1], bottle[2]);
+            poseStack.translate(0.0D, 2.0D, 0.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) sip[0]);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+            LegacyPoseRotations.rotateXDegrees(poseStack, -15.0F);
+            poseStack.translate(0.0D, -2.0D, 0.0D);
+            poseStack.scale(1.5F, 1.5F, 1.5F);
+            ObjWeaponModels.WHISKEY.renderAll(ObjWeaponModels.WHISKEY_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
+            poseStack.popPose();
+        }
+
+        poseStack.translate(0.0D, -1.0D, -8.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 1.0D, 8.0D);
+        poseStack.translate(0.0D, 0.0D, -6.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lower[0]);
+        poseStack.translate(0.0D, 0.0D, 6.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, barrel[2]);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, -0.375D);
+        poseStack.scale(1.0F, 1.0F, (float) (1.0D + 0.457247371D * barrel[2]));
+        poseStack.translate(0.0D, 0.0D, 0.375D);
+        ObjWeaponModels.renderPart(model, "RecoilSpring", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.4375D, -2.875D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) hood[0]);
+        poseStack.translate(0.0D, -0.4375D, 2.875D);
+        ObjWeaponModels.renderPart(model, "Hood", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.46875D, -6.875D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (lever[2] * 60.0D));
+        poseStack.translate(0.0D, -0.46875D, 6.875D);
+        ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, -6.75D);
+        poseStack.scale(1.0F, 1.0F, (float) (1.0D - lever[2] * .25D));
+        poseStack.translate(0.0D, 0.0D, 6.75D);
+        ObjWeaponModels.renderPart(model, "LockSpring", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(mag[0], mag[1], mag[2]);
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) magRot[2]);
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        renderSexyBelt(stack, model, spec.textureLocation(), reloading ? belt[0] : 1.0D,
+                doesCycle ? cycle[0] : 1.0D, useShellCount ? (int) shellCount[0] : primaryMagazineAmount(stack),
+                poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderSexyEffects(gun, poseStack, buffer);
+        }
+    }
+
+    private static void renderSexyBelt(ItemStack stack, LegacyWavefrontModel model, ResourceLocation texture,
+            double reloadProgress, double cycleProgress, int shellAmount, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        double[] loaded = { 0.0D, 0.0D, 20.0D, 20.0D, 50.0D, 60.0D, 70.0D };
+        double[] unloaded = { 0.0D, -10.0D, -50.0D, -60.0D, -60.0D, 0.0D, 0.0D };
+        double[][] shells = new double[loaded.length][3];
+        double x = .0625D * 17.0D;
+        double y = .0625D * -26.0D;
+        double angle = 0.0D;
+        double vectorX = 0.0D;
+        double vectorY = .4375D;
+        for (int i = 0; i < shells.length; i++) {
+            shells[i][0] = x;
+            shells[i][1] = y;
+            shells[i][2] = angle - 90.0D;
+            double delta = Mth.lerp(reloadProgress, unloaded[i], loaded[i]);
+            angle += delta;
+            double radians = Math.toRadians(-delta);
+            double rotatedX = vectorX * Math.cos(radians) - vectorY * Math.sin(radians);
+            vectorY = vectorX * Math.sin(radians) + vectorY * Math.cos(radians);
+            vectorX = rotatedX;
+            x += vectorX;
+            y += vectorY;
+        }
+        for (int i = 0; i < shells.length - 1; i++) {
+            double[] previous = shells[i];
+            double[] next = shells[i + 1];
+            boolean shell = shells.length - i < shellAmount + 2;
+            renderSexyShell(model, texture, Mth.lerp(cycleProgress, previous[0], next[0]),
+                    Mth.lerp(cycleProgress, previous[1], next[1]), Mth.lerp(cycleProgress, previous[2], next[2]),
+                    shell, poseStack, buffer, packedLight, packedOverlay);
         }
     }
 
@@ -1288,28 +2909,100 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.popPose();
     }
 
+    /** Exact ItemRenderMAS36 first-person body, reload-clip, and clipped-bullet-strip hierarchy. */
     private static void renderMas36(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean scoped = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
         boolean bayonet = hasUpgrade(stack, SednaWeaponModEvaluator.ID_MAS_BAYONET);
+        if (!displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Stock", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Bolt", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            if (scoped) {
+                ObjWeaponModels.renderPart(model, "Scope", spec.textureLocation(), poseStack, buffer, packedLight,
+                        packedOverlay);
+            }
+            if (bayonet) {
+                if (displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
+                        && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+                    poseStack.translate(0.0D, -1.0D, -6.0D);
+                }
+                ObjWeaponModels.renderPart(model, "Bayonet", spec.textureLocation(), poseStack, buffer, packedLight,
+                        packedOverlay);
+            }
+            return;
+        }
+
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+        double[] stock = LegacyHbmAnimations.getRelevantTransformation("STOCK");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] boltTurn = LegacyHbmAnimations.getRelevantTransformation("BOLT_TURN");
+        double[] boltPull = LegacyHbmAnimations.getRelevantTransformation("BOLT_PULL");
+        double[] bullet = LegacyHbmAnimations.getRelevantTransformation("BULLET");
+        double[] showClip = LegacyHbmAnimations.getRelevantTransformation("SHOW_CLIP");
+        double[] clip = LegacyHbmAnimations.getRelevantTransformation("CLIP");
+        double[] bullets = LegacyHbmAnimations.getRelevantTransformation("BULLETS");
+        double[] stab = LegacyHbmAnimations.getRelevantTransformation("STAB");
+        poseStack.translate(0.0D, -3.0D, -3.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]);
+        poseStack.translate(0.0D, 3.0D, 3.0D);
+        poseStack.translate(stab[0], stab[1], stab[2]);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        if (bayonet) {
+            ObjWeaponModels.renderPart(model, "Bayonet", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+        }
+        poseStack.pushPose();
+        poseStack.translate(0.0D, .3125D, -2.125D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) stock[0]);
+        poseStack.translate(0.0D, -.3125D, 2.125D);
         ObjWeaponModels.renderPart(model, "Stock", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, .0625D * 18.5D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) boltTurn[2]);
+        poseStack.translate(0.0D, -.0625D * 18.5D, 0.0D);
+        poseStack.translate(0.0D, 0.0D, boltPull[2]);
         ObjWeaponModels.renderPart(model, "Bolt", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(bullet[0], bullet[1], bullet[2]);
+        ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
         if (scoped) {
             ObjWeaponModels.renderPart(model, "Scope", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
         }
-        if (bayonet) {
-            if (!displayContext.firstPerson()
-                    && displayContext != ItemDisplayContext.THIRD_PERSON_LEFT_HAND
-                    && displayContext != ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-                poseStack.translate(0.0D, -1.0D, -6.0D);
-            }
-            ObjWeaponModels.renderPart(model, "Bayonet", spec.textureLocation(), poseStack, buffer, packedLight,
+        if (showClip[0] != 0.0D) {
+            poseStack.pushPose();
+            poseStack.translate(clip[0], clip[1], clip[2]);
+            ObjWeaponModels.renderPart(model, "Clip", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
+            poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(bullets[0], bullets[1], bullets[2]);
+            if (bullets[0] == 0.0D) {
+                model.renderPartClipped("Bullets", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
+                        255, 255, 255, 255, false, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                        LegacyWavefrontModel.UvTransform.DEFAULT, 0.0D, 1.0D, 0.0D, bullets[1] - .5D);
+            } else {
+                ObjWeaponModels.renderPart(model, "Bullets", spec.textureLocation(), poseStack, buffer, packedLight,
+                        packedOverlay);
+            }
+            poseStack.popPose();
+        }
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderMas36Effects(gun, poseStack, buffer);
         }
     }
 
@@ -1317,13 +3010,37 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         if (displayContext.firstPerson()) {
+            poseStack.pushPose();
+            if (legacyBusActive()) {
+                double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+                double[] tilt = LegacyHbmAnimations.getRelevantTransformation("TILT");
+                LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoil[0] * 5.0D));
+                poseStack.translate(0.0D, 0.0D, recoil[0]);
+                poseStack.translate(0.0D, tilt[0], 3.0D);
+                LegacyPoseRotations.rotateXDegrees(poseStack, (float) (tilt[0] * 35.0D));
+                poseStack.translate(0.0D, 0.0D, -3.0D);
+            }
             ObjWeaponModels.renderPart(model, "Body", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
+            poseStack.pushPose();
+            if (legacyBusActive()) {
+                double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG");
+                poseStack.translate(0.0D, 0.0D, 5.0D);
+                double angle = -mag[0] * 60.0D * (mag[2] == 1.0D ? 2.5D : 1.0D);
+                LegacyPoseRotations.rotateXDegrees(poseStack, (float) angle);
+                poseStack.translate(0.0D, 0.0D, -5.0D);
+            }
             ObjWeaponModels.renderPart(model, "Mag", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
-            ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight,
-                    packedOverlay);
+            boolean magazineEjected = legacyBusActive()
+                    && LegacyHbmAnimations.getRelevantTransformation("MAG")[2] == 1.0D;
+            if (!magazineEjected) {
+                ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight,
+                        packedOverlay);
+            }
+            poseStack.popPose();
             renderBolterAmmoText(stack, poseStack, buffer);
+            poseStack.popPose();
         } else {
             model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
         }
@@ -1341,7 +3058,62 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.popPose();
     }
 
-    private static void renderStg77(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+    private static void renderStg77(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            renderStg77Static(model, spec, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
+        if (HbmClientConfig.legacyGunAnimations()) {
+            renderStg77Legacy(model, spec, poseStack, buffer, packedLight, packedOverlay);
+        } else {
+            renderStg77Json(model, spec, poseStack, buffer, packedLight, packedOverlay);
+        }
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+            double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+            ClientSednaGunEffects.renderStg77Effects(gun, equip[0], lift[0], recoil[2], poseStack, buffer);
+        }
+    }
+
+    private static void renderG3FirstPerson(ItemStack stack, LegacyWavefrontModel model, ResourceLocation texture,
+            boolean stock, boolean silenced, boolean scoped, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG");
+        double[] speen = LegacyHbmAnimations.getRelevantTransformation("SPEEN");
+        double[] bolt = LegacyHbmAnimations.getRelevantTransformation("BOLT");
+        double[] plug = LegacyHbmAnimations.getRelevantTransformation("PLUG");
+        double[] handle = LegacyHbmAnimations.getRelevantTransformation("HANDLE");
+        double[] bullet = LegacyHbmAnimations.getRelevantTransformation("BULLET");
+        poseStack.translate(0.0D, -2.0D, -6.0D); LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]); poseStack.translate(0.0D, 2.0D, 6.0D);
+        poseStack.translate(0.0D, 0.0D, -4.0D); LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]); poseStack.translate(0.0D, 0.0D, 4.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        ObjWeaponModels.renderPart(model, "Rifle", texture, poseStack, buffer, packedLight, packedOverlay);
+        if (stock) ObjWeaponModels.renderPart(model, "Stock", texture, poseStack, buffer, packedLight, packedOverlay);
+        if (!silenced) ObjWeaponModels.renderPart(model, "Flash_Hider", texture, poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Trigger", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose(); poseStack.translate(mag[0], mag[1], mag[2]); poseStack.translate(0.0D, -1.75D, -0.5D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) speen[2]); LegacyPoseRotations.rotateYDegrees(poseStack, (float) speen[1]); poseStack.translate(0.0D, 1.75D, 0.5D);
+        ObjWeaponModels.renderPart(model, "Magazine", texture, poseStack, buffer, packedLight, packedOverlay);
+        if (bullet[0] == 0.0D) ObjWeaponModels.renderPart(model, "Bullet", texture, poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+        poseStack.pushPose(); poseStack.translate(0.0D, 0.0D, bolt[2]); ObjWeaponModels.renderPart(model, "Guide_And_Bolt", texture, poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+        poseStack.pushPose(); poseStack.translate(0.0D, 0.625D, plug[2]); LegacyPoseRotations.rotateZDegrees(poseStack, (float) handle[2]); poseStack.translate(0.0D, -0.625D, 0.0D); ObjWeaponModels.renderPart(model, "Plug", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.0D, 0.625D, 5.25D); LegacyPoseRotations.rotateZDegrees(poseStack, 22.5F); LegacyPoseRotations.rotateYDegrees(poseStack, (float) handle[1]); LegacyPoseRotations.rotateZDegrees(poseStack, -22.5F); poseStack.translate(0.0D, -0.625D, -5.25D); ObjWeaponModels.renderPart(model, "Handle", texture, poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+        int mode = stack.getTag() == null ? 0 : stack.getTag().getInt("mode_0");
+        poseStack.pushPose(); poseStack.translate(0.0D, -0.875D, -3.5D); LegacyPoseRotations.rotateXDegrees(poseStack, (float) (-30.0D * (1.0D - mode))); poseStack.translate(0.0D, 0.875D, 3.5D); ObjWeaponModels.renderPart(model, "Selector", texture, poseStack, buffer, packedLight, packedOverlay); poseStack.popPose();
+        if (silenced) ObjWeaponModels.renderPart(model, "Silencer", G3_ATTACHMENTS_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        if (scoped) ObjWeaponModels.renderPart(model, "Scope", G3_ATTACHMENTS_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderG3Effects(gun, silenced, poseStack, buffer);
+        }
+    }
+
+    private static void renderStg77Static(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
@@ -1359,12 +3131,128 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 packedOverlay);
     }
 
-    private static void renderLaserPistol(ItemDisplayContext displayContext, LegacyWavefrontModel model,
+    /** Default 1.7.10 route: the authored stg77.json hierarchy through LegacyBusAnimationLoader. */
+    private static void renderStg77Json(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        poseStack.pushPose();
+        poseStack.translate(0.0D, -1.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 1.0D, 4.0D);
+        LegacyHbmAnimations.applyRelevantTransformation("Gun", poseStack);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        renderStg77JsonChild(model, spec, poseStack, buffer, packedLight, packedOverlay, "Magazine");
+        renderStg77JsonChild(model, spec, poseStack, buffer, packedLight, packedOverlay, "Lever");
+        renderStg77JsonChild(model, spec, poseStack, buffer, packedLight, packedOverlay, "Breech");
+        renderStg77JsonChild(model, spec, poseStack, buffer, packedLight, packedOverlay, "Handle");
+        renderStg77JsonChild(model, spec, poseStack, buffer, packedLight, packedOverlay, "Safety");
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, -1.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 1.0D, 4.0D);
+        LegacyHbmAnimations.applyRelevantTransformation("Gun", poseStack);
+        LegacyHbmAnimations.applyRelevantTransformation("Barrel", poseStack);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderStg77JsonChild(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, String part) {
+        poseStack.pushPose();
+        LegacyHbmAnimations.applyRelevantTransformation(part, poseStack);
+        ObjWeaponModels.renderPart(model, part, spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    /** Optional ClientConfig.GUN_ANIMS_LEGACY route, copied from ItemRenderSTG77's matrix order. */
+    private static void renderStg77Legacy(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] bolt = LegacyHbmAnimations.getRelevantTransformation("BOLT");
+        double[] handle = LegacyHbmAnimations.getRelevantTransformation("HANDLE");
+        double[] safety = LegacyHbmAnimations.getRelevantTransformation("SAFETY");
+        double[] inspectGun = LegacyHbmAnimations.getRelevantTransformation("INSPECT_GUN");
+        double[] inspectBarrel = LegacyHbmAnimations.getRelevantTransformation("INSPECT_BARREL");
+        double[] inspectMove = LegacyHbmAnimations.getRelevantTransformation("INSPECT_MOVE");
+        double[] inspectLever = LegacyHbmAnimations.getRelevantTransformation("INSPECT_LEVER");
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, -1.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 1.0D, 4.0D);
+        poseStack.translate(0.0D, 0.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]);
+        poseStack.translate(0.0D, 0.0D, 4.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) inspectGun[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) inspectGun[0]);
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) inspectLever[2]);
+        ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, bolt[2]);
+        ObjWeaponModels.renderPart(model, "Breech", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.125D, 0.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) handle[2]);
+        poseStack.translate(-0.125D, 0.0D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Handle", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(safety[0], 0.0D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Safety", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(inspectMove[0], inspectMove[1], inspectMove[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) inspectBarrel[0]);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) inspectBarrel[2]);
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.popPose();
+    }
+
+    private static void renderLaserPistol(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        if (displayContext.firstPerson() && legacyBusActive()) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+            double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+            double[] jolt = LegacyHbmAnimations.getRelevantTransformation("JOLT");
+            double[] swirl = LegacyHbmAnimations.getRelevantTransformation("SWIRL");
+            poseStack.translate(0.0D, -1.0D, -6.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+            poseStack.translate(0.0D, 1.0D, 6.0D);
+            poseStack.translate(0.0D, 2.0D, -2.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]);
+            poseStack.translate(0.0D, -2.0D, 2.0D);
+            poseStack.translate(0.0D, -1.0D, -1.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) swirl[0]);
+            poseStack.translate(0.0D, 1.0D, 1.0D);
+            poseStack.translate(recoil[0], recoil[1], recoil[2]);
+            poseStack.translate(jolt[0], jolt[1], jolt[2]);
+        }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+
+        poseStack.pushPose();
+        if (displayContext.firstPerson() && legacyBusActive()) {
+            double[] latch = LegacyHbmAnimations.getRelevantTransformation("LATCH");
+            poseStack.translate(1.125D, 0.0D, -1.9125D);
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) latch[1]);
+            poseStack.translate(-1.125D, 0.0D, 1.9125D);
+        }
         ObjWeaponModels.renderPart(model, "Latch", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
         if (spec.visibleParts().contains("Capacitors")) {
             ObjWeaponModels.renderPart(model, "Capacitors", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
@@ -1374,14 +3262,33 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     packedOverlay);
         }
         if (displayContext.firstPerson()) {
+            poseStack.pushPose();
+            if (legacyBusActive()) {
+                double[] latch = LegacyHbmAnimations.getRelevantTransformation("LATCH");
+                double[] battery = LegacyHbmAnimations.getRelevantTransformation("BATTERY");
+                poseStack.translate(1.125D, 0.0D, -1.9125D);
+                LegacyPoseRotations.rotateYDegrees(poseStack, (float) latch[1]);
+                poseStack.translate(-1.125D, 0.0D, 1.9125D);
+                poseStack.translate(battery[0], battery[1], battery[2]);
+            }
             ObjWeaponModels.renderPart(model, "Battery", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
+            poseStack.popPose();
+            if (stack.getItem() instanceof SednaGunItem gun) {
+                ClientSednaGunEffects.renderLaserPistolEffects(gun,
+                        "gun_laser_pistol_morning_glory".equals(currentLegacyName(stack)), poseStack, buffer);
+            }
         }
+        poseStack.popPose();
     }
 
     private static void renderPanzerschreck(ItemStack stack, ItemDisplayContext displayContext,
             LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        if (displayContext.firstPerson() && legacyBusActive()) {
+            applyPanzerschreckBodyAnimation(poseStack);
+        }
         ObjWeaponModels.renderPart(model, "Tube", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         if (!SednaWeaponModEvaluator.hasUpgrade(stack, 0, SednaWeaponModEvaluator.ID_NO_SHIELD)) {
@@ -1389,16 +3296,30 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     packedOverlay);
         }
         if (displayContext.firstPerson()) {
+            poseStack.pushPose();
+            if (legacyBusActive()) {
+                double[] rocket = LegacyHbmAnimations.getRelevantTransformation("ROCKET");
+                poseStack.translate(rocket[0], rocket[1], rocket[2]);
+            }
             ObjWeaponModels.renderPart(model, "Rocket", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
+            poseStack.popPose();
+            if (stack.getItem() instanceof SednaGunItem gun) {
+                ClientSednaGunEffects.renderPanzerschreckFlash(gun, poseStack, buffer);
+            }
         }
+        poseStack.popPose();
     }
 
     private static void renderStinger(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (displayContext.firstPerson()) {
-            if (stack.getItem() instanceof StingerGunItem stinger && stinger.shouldRenderLegacyStingerCrosshair(stack)) {
+            if (LegacySednaAimProgress.settledFullyAimed()) {
                 return;
+            }
+            poseStack.pushPose();
+            if (legacyBusActive()) {
+                applyPanzerschreckBodyAnimation(poseStack);
             }
             poseStack.pushPose();
             LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
@@ -1406,14 +3327,34 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.popPose();
 
             poseStack.pushPose();
-            poseStack.translate(0.0D, 3.5D, -3.0D);
+            if (legacyBusActive()) {
+                double[] rocket = LegacyHbmAnimations.getRelevantTransformation("ROCKET");
+                poseStack.translate(rocket[0], rocket[1] + 3.5D, rocket[2] - 3.0D);
+            } else {
+                poseStack.translate(0.0D, 3.5D, -3.0D);
+            }
             ObjWeaponModels.renderPart(extraModel("panzerschreck", "panzerschreck", "panzerschreck"),
                     "Rocket", PANZERSCHRECK_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
             renderStingerNotAccurateText(poseStack, buffer);
             poseStack.popPose();
+            if (stack.getItem() instanceof SednaGunItem gun) {
+                ClientSednaGunEffects.renderStingerFlash(gun, poseStack, buffer);
+            }
+            poseStack.popPose();
         } else {
             model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
         }
+    }
+
+    private static void applyPanzerschreckBodyAnimation(PoseStack poseStack) {
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] reload = LegacyHbmAnimations.getRelevantTransformation("RELOAD");
+        poseStack.translate(0.0D, -1.0D, -1.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 1.0D, 1.0D);
+        poseStack.translate(0.0D, -4.0D, -3.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) reload[0]);
+        poseStack.translate(0.0D, 4.0D, 3.0D);
     }
 
     private static void renderStingerNotAccurateText(PoseStack poseStack, MultiBufferSource buffer) {
@@ -1429,37 +3370,279 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.popPose();
     }
 
-    private static void renderQuadro(ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+    private static void renderQuadro(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "Launcher", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            return;
+        }
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+        double[] reloadPush = LegacyHbmAnimations.getRelevantTransformation("RELOAD_PUSH");
+        double[] reloadRotate = LegacyHbmAnimations.getRelevantTransformation("RELOAD_ROTATE");
+
+        poseStack.translate(0.0D, -1.0D, -1.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 1.0D, 1.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        poseStack.translate(0.0D, -1.0D, -1.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) reloadRotate[2]);
+        poseStack.translate(0.0D, 1.0D, 1.0D);
         ObjWeaponModels.renderPart(model, "Launcher", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        if (displayContext.firstPerson()) {
-            ObjWeaponModels.renderPart(model, "Rockets", QUADRO_ROCKET_TEXTURE, poseStack, buffer, packedLight,
-                    packedOverlay);
+        poseStack.pushPose();
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+        poseStack.translate(0.0D, 3.0D, 0.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (reloadPush[1] * 30.0D));
+        poseStack.translate(0.0D, -3.0D, 0.0D);
+        poseStack.translate(0.0D, 0.0D, reloadPush[0] * 3.0D);
+        ObjWeaponModels.renderPart(model, "Rockets", QUADRO_ROCKET_TEXTURE, poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderQuadroFlash(gun, poseStack, buffer);
         }
+        renderQuadroAimLabel(poseStack, buffer);
+    }
+
+    private static void renderQuadroAimLabel(PoseStack poseStack, MultiBufferSource buffer) {
+        if (!LegacySednaAimProgress.settledFullyAimed()) {
+            return;
+        }
+        Font font = Minecraft.getInstance().font;
+        String label = ">> <<";
+        float scale = 0.04F;
+        float rotation = -180.0F - (System.currentTimeMillis() / 2L) % 360L;
+        poseStack.pushPose();
+        poseStack.translate(-0.375D, 2.25D, 0.875D);
+        LegacyPoseRotations.rotateYDegrees(poseStack, rotation);
+        poseStack.translate(-(font.width(label) / 2.0D) * scale, 0.0D, 0.0D);
+        poseStack.scale(scale, -scale, scale);
+        renderLegacyModelText(font, label, 0xFF00FFFF, poseStack, buffer);
+        poseStack.popPose();
     }
 
     private static void renderMissileLauncher(ItemStack stack, ItemDisplayContext displayContext,
             LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        if (!displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "Launcher", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            ObjWeaponModels.renderPart(model, "Front", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            if (isMagazineLoaded(stack)) {
+                ObjWeaponModels.renderPart(model, "Missile", spec.textureLocation(), poseStack, buffer, packedLight,
+                        packedOverlay);
+            }
+            return;
+        }
+
+        MissileLauncherAnimationPose animation = missileLauncherAnimationPose(stack);
+        poseStack.pushPose();
+        poseStack.translate(0.0D, -2.0D, -2.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) animation.equipX());
+        poseStack.translate(0.0D, 2.0D, 2.0D);
         ObjWeaponModels.renderPart(model, "Launcher", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.25D, 1.6875D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) animation.openX());
+        poseStack.translate(0.0D, -0.25D, -1.6875D);
         ObjWeaponModels.renderPart(model, "Front", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        if (displayContext.firstPerson() || isMagazineLoaded(stack)) {
-            ObjWeaponModels.renderPart(model, "Missile", spec.textureLocation(), poseStack, buffer, packedLight,
-                    packedOverlay);
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, animation.barrelZ());
+        ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(animation.missileX(), animation.missileY(), animation.missileZ());
+        ObjWeaponModels.renderPart(model, "Missile", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderMissileLauncherFlash(gun, poseStack, buffer);
         }
+        poseStack.popPose();
+
+        renderMissileLauncherAutoLabel(stack, poseStack, buffer);
+        poseStack.popPose();
     }
 
-    private static void renderLasrifle(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
+    private static MissileLauncherAnimationPose missileLauncherAnimationPose(ItemStack stack) {
+        if (legacyBusActive()) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] barrel = LegacyHbmAnimations.getRelevantTransformation("BARREL");
+            double[] open = LegacyHbmAnimations.getRelevantTransformation("OPEN");
+            double[] missile = LegacyHbmAnimations.getRelevantTransformation("MISSILE");
+            return new MissileLauncherAnimationPose(equip[0], open[0], barrel[2], missile[0], missile[1], missile[2]);
+        }
+
+        int animation = teslaLegacyAnimation(stack);
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (animation == LEGACY_ANIM_EQUIP) {
+            return new MissileLauncherAnimationPose(
+                    millis <= 1000.0D ? lerp(60.0D, 0.0D, sinDown(millis / 1000.0D)) : 0.0D,
+                    0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        if (animation == LEGACY_ANIM_RELOAD) {
+            return new MissileLauncherAnimationPose(missileLauncherReloadEquipX(millis), missileLauncherReloadOpenX(millis),
+                    missileLauncherReloadBarrelZ(millis), missileLauncherReloadMissileX(millis), 0.0D,
+                    missileLauncherReloadMissileZ(millis));
+        }
+        if (animation == LEGACY_ANIM_JAMMED || animation == LEGACY_ANIM_INSPECT) {
+            return new MissileLauncherAnimationPose(missileLauncherJammedEquipX(millis), missileLauncherJammedOpenX(millis),
+                    missileLauncherJammedBarrelZ(millis), 0.0D, 0.0D, 0.0D);
+        }
+        return MissileLauncherAnimationPose.IDENTITY;
+    }
+
+    private static double missileLauncherReloadBarrelZ(double millis) {
+        if (millis <= 150.0D) {
+            return lerp(0.0D, 1.5D, millis / 150.0D);
+        }
+        if (millis <= 2250.0D) {
+            return 1.5D;
+        }
+        if (millis <= 2400.0D) {
+            return lerp(1.5D, 0.0D, (millis - 2250.0D) / 150.0D);
+        }
+        return 0.0D;
+    }
+
+    private static double missileLauncherReloadOpenX(double millis) {
+        if (millis <= 250.0D) {
+            return 0.0D;
+        }
+        if (millis <= 750.0D) {
+            return lerp(0.0D, 90.0D, sinFull((millis - 250.0D) / 500.0D));
+        }
+        if (millis <= 1750.0D) {
+            return 90.0D;
+        }
+        if (millis <= 2250.0D) {
+            return lerp(90.0D, 0.0D, sinFull((millis - 1750.0D) / 500.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double missileLauncherReloadEquipX(double millis) {
+        if (millis <= 2250.0D) {
+            return 0.0D;
+        }
+        if (millis <= 2400.0D) {
+            return lerp(0.0D, -1.0D, sinDown((millis - 2250.0D) / 150.0D));
+        }
+        if (millis <= 2550.0D) {
+            return lerp(-1.0D, 0.0D, sinUp((millis - 2400.0D) / 150.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double missileLauncherReloadMissileX(double millis) {
+        if (millis <= 750.0D) {
+            return -10.0D;
+        }
+        if (millis <= 1100.0D) {
+            return lerp(3.0D, 0.0D, sinFull((millis - 750.0D) / 350.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double missileLauncherReloadMissileZ(double millis) {
+        if (millis <= 750.0D) {
+            return 0.0D;
+        }
+        if (millis <= 1100.0D) {
+            return lerp(2.0D, -6.0D, sinFull((millis - 750.0D) / 350.0D));
+        }
+        if (millis <= 1450.0D) {
+            return lerp(-6.0D, 0.0D, sinUp((millis - 1100.0D) / 350.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double missileLauncherJammedBarrelZ(double millis) {
+        if (millis <= 150.0D) {
+            return lerp(0.0D, 1.5D, millis / 150.0D);
+        }
+        if (millis <= 1500.0D) {
+            return 1.5D;
+        }
+        if (millis <= 1650.0D) {
+            return lerp(1.5D, 0.0D, (millis - 1500.0D) / 150.0D);
+        }
+        return 0.0D;
+    }
+
+    private static double missileLauncherJammedOpenX(double millis) {
+        if (millis <= 250.0D) {
+            return 0.0D;
+        }
+        if (millis <= 750.0D) {
+            return lerp(0.0D, 90.0D, sinFull((millis - 250.0D) / 500.0D));
+        }
+        if (millis <= 1000.0D) {
+            return 90.0D;
+        }
+        if (millis <= 1500.0D) {
+            return lerp(90.0D, 0.0D, sinFull((millis - 1000.0D) / 500.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double missileLauncherJammedEquipX(double millis) {
+        if (millis <= 1500.0D) {
+            return 0.0D;
+        }
+        if (millis <= 1650.0D) {
+            return lerp(0.0D, -1.0D, sinDown((millis - 1500.0D) / 150.0D));
+        }
+        if (millis <= 1800.0D) {
+            return lerp(-1.0D, 0.0D, sinUp((millis - 1650.0D) / 150.0D));
+        }
+        return 0.0D;
+    }
+
+    private static void renderMissileLauncherAutoLabel(ItemStack stack, PoseStack poseStack, MultiBufferSource buffer) {
+        if (!(stack.getItem() instanceof SednaGunItem) || !LegacySednaAimProgress.settledFullyAimed()
+                || Minecraft.getInstance().player == null) {
+            return;
+        }
+
+        Font font = Minecraft.getInstance().font;
+        float scale = 0.04F;
+        float variance = 0.7F + Minecraft.getInstance().player.getRandom().nextFloat() * 0.3F;
+        int color = 0xFF000000 | (Math.round(variance * 255.0F) << 16);
+        poseStack.pushPose();
+        poseStack.translate(0.9375D, 2.25D, -0.5625D + (font.width("AUTO") / 2.0D) * scale);
+        poseStack.scale(scale, -scale, scale);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        renderLegacyModelText(font, "AUTO", color, poseStack, buffer);
+        poseStack.popPose();
+    }
+
+    private static void renderLasrifle(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean shotgun = SednaWeaponModEvaluator.hasUpgrade(stack, 0, SednaWeaponModEvaluator.ID_LAS_SHOTGUN);
         boolean capacitor = SednaWeaponModEvaluator.hasUpgrade(stack, 0, SednaWeaponModEvaluator.ID_LAS_CAPACITOR);
         boolean scope = !SednaWeaponModEvaluator.hasUpgrade(stack, 0, SednaWeaponModEvaluator.ID_LAS_AUTO);
 
+        poseStack.pushPose();
+        if (displayContext.firstPerson() && legacyBusActive()) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+            poseStack.translate(0.0D, -1.0D, -6.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+            poseStack.translate(0.0D, 1.0D, 6.0D);
+            poseStack.translate(recoil[0], recoil[1], recoil[2]);
+        }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         ObjWeaponModels.renderPart(model, "Stock", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1468,10 +3651,24 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             ObjWeaponModels.renderPart(model, "Scope", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
         }
+        poseStack.pushPose();
+        if (displayContext.firstPerson() && legacyBusActive()) {
+            double[] lever = LegacyHbmAnimations.getRelevantTransformation("LEVER");
+            poseStack.translate(0.0D, -0.375D, 2.375D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) lever[0]);
+            poseStack.translate(0.0D, 0.375D, -2.375D);
+        }
         ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        if (displayContext.firstPerson() && legacyBusActive()) {
+            double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG");
+            poseStack.translate(mag[0], mag[1], mag[2]);
+        }
         ObjWeaponModels.renderPart(model, "Battery", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
         if (!shotgun) {
             ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
@@ -1485,10 +3682,18 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             ObjWeaponModels.renderPart(mods, "UnderBarrel", LASRIFLE_MODS_TEXTURE, poseStack, buffer, packedLight,
                     packedOverlay);
         }
+        if (displayContext.firstPerson() && stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderLasrifleEffects(gun, poseStack, buffer);
+        }
+        poseStack.popPose();
     }
 
-    private static void renderAberrator(ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
+    private static void renderAberrator(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model, RenderSpec spec,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (displayContext.firstPerson()) {
+            renderAberratorFirstPersonParts(stack, model, spec, 1, 0, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1505,35 +3710,202 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 packedOverlay);
     }
 
-    private static void renderLag(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
-            RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
-        ObjWeaponModels.renderPart(model, "Grip", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Slide", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        if (displayContext.firstPerson()) {
-            if (primaryMagazineAmount(stack) > 0) {
-                ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight,
-                        packedOverlay);
-            }
-            ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight,
-                    packedOverlay);
+    /** Exact ItemRenderAberrator/ItemRenderEOTT first-person hierarchy; side is 1 for the single gun. */
+    private static void renderAberratorFirstPersonParts(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec, int side,
+            int animationIndex, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP", animationIndex);
+        double[] rise = LegacyHbmAnimations.getRelevantTransformation("RISE", animationIndex);
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL", animationIndex);
+        double[] slide = LegacyHbmAnimations.getRelevantTransformation("SLIDE", animationIndex);
+        double[] bullet = LegacyHbmAnimations.getRelevantTransformation("BULLET", animationIndex);
+        double[] hammer = LegacyHbmAnimations.getRelevantTransformation("HAMMER", animationIndex);
+        double[] roll = LegacyHbmAnimations.getRelevantTransformation("ROLL", animationIndex);
+        double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG", animationIndex);
+        double[] magRoll = LegacyHbmAnimations.getRelevantTransformation("MAGROLL", animationIndex);
+        double[] sight = LegacyHbmAnimations.getRelevantTransformation("SIGHT", animationIndex);
+
+        poseStack.translate(0.0D, rise[1], 0.0D);
+        poseStack.translate(0.0D, 1.0D, -2.25D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, -1.0D, 2.25D);
+        poseStack.translate(0.0D, -1.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) recoil[0]);
+        poseStack.translate(0.0D, 1.0D, 4.0D);
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (roll[2] * side));
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 2.4375D, -1.9375D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) sight[0]);
+        poseStack.translate(0.0D, -2.4375D, 1.9375D);
+        ObjWeaponModels.renderPart(model, "Sight", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(mag[0] * side, mag[1], mag[2]);
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (magRoll[2] * side));
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Magazine", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(bullet[0], bullet[1], bullet[2]);
+        ObjWeaponModels.renderPart(model, "Bullet", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, slide[2]);
+        ObjWeaponModels.renderPart(model, "Slide", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 1.25D, -3.625D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (-45.0D + hammer[0]));
+        poseStack.translate(0.0D, -1.25D, 3.625D);
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderAberratorEffects(gun, animationIndex, side, recoil[0], roll[2], poseStack, buffer);
         }
     }
 
-    private static void renderM2(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+    private static void renderLag(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        boolean animated = displayContext.firstPerson() && legacyBusActive();
+        poseStack.pushPose();
+        if (animated) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] addTrans = LegacyHbmAnimations.getRelevantTransformation("ADD_TRANS");
+            double[] addRot = LegacyHbmAnimations.getRelevantTransformation("ADD_ROT");
+            poseStack.translate(4.0D, -4.0D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) -equip[0]);
+            poseStack.translate(-4.0D, 4.0D, 0.0D);
+            poseStack.translate(addTrans[0], addTrans[1], addTrans[2]);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) addRot[2]);
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) addRot[1]);
+        }
+        renderLagPart(model, spec, poseStack, buffer, packedLight, packedOverlay, "Grip", animated);
+        renderLagPart(model, spec, poseStack, buffer, packedLight, packedOverlay, "Slide", animated);
+        renderLagPart(model, spec, poseStack, buffer, packedLight, packedOverlay, "Hammer", animated);
+        if (displayContext.firstPerson()) {
+            if (primaryMagazineAmount(stack) > 0) {
+                renderLagPart(model, spec, poseStack, buffer, packedLight, packedOverlay, "Bullet", animated);
+            }
+            renderLagPart(model, spec, poseStack, buffer, packedLight, packedOverlay, "Magazine", animated);
+            if (stack.getItem() instanceof SednaGunItem gun) {
+                ClientSednaGunEffects.renderLagEffects(gun, poseStack, buffer);
+            }
+        }
+        poseStack.popPose();
+    }
+
+    /** ItemRenderLAG applies each JSON bus directly; the source JSON's offsets preserve part pivots. */
+    private static void renderLagPart(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay, String part, boolean animated) {
+        poseStack.pushPose();
+        if (animated) {
+            LegacyHbmAnimations.applyRelevantTransformation(part, poseStack);
+        }
+        ObjWeaponModels.renderPart(model, part, spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+    }
+
+    private static void renderM2(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        if (displayContext.firstPerson()) {
+            double equip = m2EquipX(stack);
+            poseStack.translate(0.0D, 1.0D, -2.25D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip);
+            poseStack.translate(0.0D, -1.0D, 2.25D);
+            poseStack.translate(0.0D, 0.0D, m2RecoilZ(stack));
+        }
+        poseStack.pushPose();
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (displayContext.firstPerson() && stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderM2Effects(gun, poseStack, buffer);
+        }
+        poseStack.popPose();
+    }
+
+    private static double m2EquipX(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("EQUIP")[0];
+        if (teslaLegacyAnimation(stack) != LEGACY_ANIM_EQUIP) {
+            return 0.0D;
+        }
+        double millis = teslaLegacyAnimationMillis(stack);
+        return millis <= 500.0D ? lerp(80.0D, 0.0D, sinFull(millis / 500.0D)) : 0.0D;
+    }
+
+    private static double m2RecoilZ(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("RECOIL")[2];
+        if (teslaLegacyAnimation(stack) != LEGACY_ANIM_CYCLE) {
+            return 0.0D;
+        }
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (millis <= 25.0D) {
+            return lerp(0.0D, -0.25D, millis / 25.0D);
+        }
+        if (millis <= 100.0D) {
+            return lerp(-0.25D, 0.0D, (millis - 25.0D) / 75.0D);
+        }
+        return 0.0D;
+    }
+
+    private static void renderCoilgun(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
+        if (displayContext.firstPerson()) {
+            double recoil = coilgunRecoil(stack);
+            poseStack.translate(-1.5D - recoil * 0.5D, 0.0D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (recoil * 45.0D));
+            poseStack.translate(1.5D, 0.0D, 0.0D);
+
+            double reload = coilgunReload(stack);
+            poseStack.translate(-2.5D, 0.0D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (reload * -45.0D));
+            poseStack.translate(2.5D, 0.0D, 0.0D);
+        }
         model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
     }
 
-    private static void renderCoilgun(LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
-        model.renderAll(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+    private static double coilgunRecoil(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("RECOIL")[0];
+        if (teslaLegacyAnimation(stack) != LEGACY_ANIM_CYCLE) {
+            return 0.0D;
+        }
+        double target = isTeslaAiming(stack) ? 0.5D : 1.0D;
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (millis <= 100.0D) {
+            return lerp(0.0D, target, millis / 100.0D);
+        }
+        if (millis <= 300.0D) {
+            return lerp(target, 0.0D, (millis - 100.0D) / 200.0D);
+        }
+        return 0.0D;
+    }
+
+    private static double coilgunReload(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("RELOAD")[0];
+        int animation = teslaLegacyAnimation(stack);
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (animation == LEGACY_ANIM_EQUIP) {
+            return millis <= 250.0D ? lerp(1.0D, 0.0D, millis / 250.0D) : 0.0D;
+        }
+        if (animation == LEGACY_ANIM_RELOAD) {
+            if (millis <= 250.0D) {
+                return lerp(0.0D, 1.0D, millis / 250.0D);
+            }
+            if (millis <= 750.0D) {
+                return 1.0D;
+            }
+            if (millis <= 1_000.0D) {
+                return lerp(1.0D, 0.0D, (millis - 750.0D) / 250.0D);
+            }
+        }
+        return 0.0D;
     }
 
     private static void renderLegacyModelText(Font font, String text, int color, PoseStack poseStack,
@@ -1542,78 +3914,339 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
     }
 
-    private static void renderChargeThrower(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    private static void renderChargeThrower(ItemStack stack, ItemDisplayContext displayContext,
+            LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        boolean animated = displayContext.firstPerson() && legacyBusActive();
+        poseStack.pushPose();
+        if (animated) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+            double[] raise = LegacyHbmAnimations.getRelevantTransformation("RAISE");
+            double[] turn = LegacyHbmAnimations.getRelevantTransformation("TURN");
+            double[] roll = LegacyHbmAnimations.getRelevantTransformation("ROLL");
+            poseStack.translate(0.0D, 0.0D, -7.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) -equip[0]);
+            poseStack.translate(0.0D, 0.0D, 7.0D);
+            poseStack.translate(0.0D, -7.0D, 4.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) raise[0]);
+            poseStack.translate(0.0D, 7.0D, -4.0D);
+            poseStack.translate(recoil[0], recoil[1], recoil[2]);
+            poseStack.translate(0.0D, 0.0D, -2.0D);
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) turn[1]);
+            poseStack.translate(0.0D, 0.0D, 2.0D);
+            poseStack.translate(0.0D, -1.0D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) roll[2]);
+            poseStack.translate(0.0D, 1.0D, 0.0D);
+        }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         if (hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE)) {
             ObjWeaponModels.renderPart(model, "Scope", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
         }
-        String loadedType = loadedMagazineType(stack);
-        if ("ct_hook".equals(loadedType)) {
-            ObjWeaponModels.renderPart(model, "Hook", CHARGE_THROWER_HOOK_TEXTURE, poseStack, buffer, packedLight,
-                    packedOverlay);
-        } else if ("ct_mortar".equals(loadedType)) {
-            ObjWeaponModels.renderPart(model, "Mortar", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight,
-                    packedOverlay);
-        } else if ("ct_mortar_charge".equals(loadedType)) {
-            ObjWeaponModels.renderPart(model, "Mortar", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight,
-                    packedOverlay);
-            ObjWeaponModels.renderPart(model, "Oomph", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight,
-                    packedOverlay);
+        String loadedType = primaryMagazineType(stack);
+        boolean showAmmo = !loadedType.isBlank() && (!displayContext.firstPerson() || primaryMagazineAmount(stack) > 0
+                || chargeThrowerReloading());
+        if (showAmmo) {
+            poseStack.pushPose();
+            if (animated) {
+                double[] ammo = LegacyHbmAnimations.getRelevantTransformation("AMMO");
+                double[] twist = LegacyHbmAnimations.getRelevantTransformation("TWIST");
+                poseStack.translate(ammo[0], ammo[1], ammo[2]);
+                LegacyPoseRotations.rotateZDegrees(poseStack, (float) twist[2]);
+            }
+            if ("ct_hook".equals(loadedType)) {
+                ObjWeaponModels.renderPart(model, "Hook", CHARGE_THROWER_HOOK_TEXTURE, poseStack, buffer, packedLight,
+                        packedOverlay);
+            } else if ("ct_mortar".equals(loadedType)) {
+                ObjWeaponModels.renderPart(model, "Mortar", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight,
+                        packedOverlay);
+            } else if ("ct_mortar_charge".equals(loadedType)) {
+                ObjWeaponModels.renderPart(model, "Mortar", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight,
+                        packedOverlay);
+                ObjWeaponModels.renderPart(model, "Oomph", CHARGE_THROWER_MORTAR_TEXTURE, poseStack, buffer, packedLight,
+                        packedOverlay);
+            }
+            poseStack.popPose();
         }
+        poseStack.popPose();
     }
 
-    private static void renderDoubleBarrel(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    private static boolean chargeThrowerReloading() {
+        LegacyHbmAnimations.Animation animation = LegacyHbmAnimations.getRelevantAnim();
+        return animation != null && animation.animation().getBus("AMMO") != null;
+    }
+
+    private static void renderDoubleBarrel(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean sawedOff = isDoubleBarrelSawedOff(stack);
+        boolean animated = displayContext.firstPerson() && legacyBusActive();
+        poseStack.pushPose();
+        if (animated) {
+            double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] turn = LegacyHbmAnimations.getRelevantTransformation("TURN");
+            double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT");
+            poseStack.translate(recoil[0] * 3.0D, recoil[1], recoil[2]);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoil[2] * 10.0D));
+            poseStack.translate(0.0D, 0.0D, -4.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) -equip[0]);
+            poseStack.translate(0.0D, 0.0D, 4.0D);
+            poseStack.translate(0.0D, 0.0D, -4.0D);
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) turn[1]);
+            poseStack.translate(0.0D, 0.0D, 4.0D);
+            poseStack.translate(0.0D, 0.0D, -4.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) -lift[0]);
+            poseStack.translate(0.0D, 0.0D, 4.0D);
+        }
         ObjWeaponModels.renderPart(model, "Stock", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.pushPose();
+        if (animated) {
+            double[] barrel = LegacyHbmAnimations.getRelevantTransformation("BARREL");
+            poseStack.translate(0.0D, -0.4375D, -0.875D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) barrel[0]);
+            poseStack.translate(0.0D, 0.4375D, 0.875D);
+        }
         ObjWeaponModels.renderPart(model, "BarrelShort", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         if (!sawedOff) {
             ObjWeaponModels.renderPart(model, "Barrel", spec.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay);
         }
+        poseStack.pushPose();
+        if (animated) {
+            double[] buckle = LegacyHbmAnimations.getRelevantTransformation("BUCKLE");
+            poseStack.translate(0.75D, 0.0D, -0.6875D);
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) buckle[1]);
+            poseStack.translate(-0.75D, 0.0D, 0.6875D);
+        }
         ObjWeaponModels.renderPart(model, "Buckle", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        if (animated) {
+            double[] lever = LegacyHbmAnimations.getRelevantTransformation("LEVER");
+            poseStack.translate(-0.3125D, 0.3125D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) lever[2]);
+            poseStack.translate(0.3125D, -0.3125D, 0.0D);
+        }
         ObjWeaponModels.renderPart(model, "Lever", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        ObjWeaponModels.renderPart(model, "Shells", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
+        poseStack.popPose();
+        if (!animated || LegacyHbmAnimations.getRelevantTransformation("NO_AMMO")[0] == 0.0D) {
+            poseStack.pushPose();
+            if (animated) {
+                double[] shells = LegacyHbmAnimations.getRelevantTransformation("SHELLS");
+                double[] shellFlip = LegacyHbmAnimations.getRelevantTransformation("SHELL_FLIP");
+                poseStack.translate(shells[0], shells[1], shells[2]);
+                poseStack.translate(0.0D, 0.0D, -1.0D);
+                LegacyPoseRotations.rotateXDegrees(poseStack, (float) shellFlip[0]);
+                poseStack.translate(0.0D, 0.0D, 1.0D);
+            }
+            ObjWeaponModels.renderPart(model, "Shells", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+            poseStack.popPose();
+        }
+        poseStack.popPose();
+        if (displayContext.firstPerson() && stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderDoubleBarrelEffects(gun, poseStack, buffer);
+        }
+        poseStack.popPose();
     }
 
-    private static void renderHeavyRevolver(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+    private static void renderHeavyRevolver(ItemStack stack, ItemDisplayContext displayContext,
+            LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
         boolean scoped = isHeavyRevolverScoped(stack);
         LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        boolean animated = displayContext.firstPerson() && legacyBusActive();
+        poseStack.pushPose();
+        double recoilZ = 0.0D;
+        if (animated) {
+            double[] spin = LegacyHbmAnimations.getRelevantTransformation("SPIN");
+            double[] rotate = LegacyHbmAnimations.getRelevantTransformation("ROTATE");
+            double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+            recoilZ = recoil[2];
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) spin[0]);
+            poseStack.translate(6.0D, -3.0D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) rotate[0]);
+            poseStack.translate(-6.0D, 3.0D, 0.0D);
+            poseStack.translate(0.0D, 0.0D, recoil[2]);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (recoil[2] * 10.0D));
+        }
+        if (displayContext.firstPerson() && stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderHeavyRevolverSmoke(gun, recoilZ, poseStack, buffer);
+        }
+        if (animated) {
+            double[] reloadLift = LegacyHbmAnimations.getRelevantTransformation("RELOAD_LIFT");
+            double[] reloadJolt = LegacyHbmAnimations.getRelevantTransformation("RELOAD_JOLT");
+            double[] reloadTilt = LegacyHbmAnimations.getRelevantTransformation("RELAOD_TILT");
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) reloadLift[0]);
+            poseStack.translate(reloadJolt[0], 0.0D, 0.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) reloadTilt[0]);
+        }
         ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.pushPose();
+        if (animated) {
+            double[] cylinderFlip = LegacyHbmAnimations.getRelevantTransformation("RELOAD_CYLINDER");
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) cylinderFlip[0]);
+        }
+        if (displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "Pivot", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+        }
+        poseStack.translate(0.0D, 1.75D, 0.0D);
+        if (animated) {
+            double[] drum = LegacyHbmAnimations.getRelevantTransformation("DRUM");
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (drum[2] * -60.0D));
+        }
+        poseStack.translate(0.0D, -1.75D, 0.0D);
         ObjWeaponModels.renderPart(model, "Cylinder", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        ObjWeaponModels.renderPart(model, "Bullets", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
+        if (animated) {
+            double[] bullets = LegacyHbmAnimations.getRelevantTransformation("RELOAD_BULLETS");
+            poseStack.translate(bullets[0], bullets[1], bullets[2]);
+        }
+        boolean hideBullets = animated && LegacyHbmAnimations.getRelevantTransformation("RELOAD_BULLETS_CON")[0] == 1.0D;
+        if (!hideBullets) {
+            ObjWeaponModels.renderPart(model, "Bullets", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+        }
         ObjWeaponModels.renderPart(model, "Casings", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
-        ObjWeaponModels.renderPart(model, "Pivot", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
+        if (!displayContext.firstPerson()) {
+            ObjWeaponModels.renderPart(model, "Pivot", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+        }
+        poseStack.popPose();
+        poseStack.pushPose();
+        if (displayContext.firstPerson()) {
+            poseStack.translate(4.0D, 1.25D, 0.0D);
+            double hammer = animated ? LegacyHbmAnimations.getRelevantTransformation("HAMMER")[2] : 0.0D;
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (-30.0D + hammer * 30.0D));
+            poseStack.translate(-4.0D, -1.25D, 0.0D);
+        }
         ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
         if (scoped) {
             ObjWeaponModels.renderPart(model, "Scope", LILMAC_SCOPE_TEXTURE, poseStack, buffer, packedLight,
                     packedOverlay);
+        }
+        if (displayContext.firstPerson() && stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderHeavyRevolverFlash(gun, poseStack, buffer);
+        }
+        poseStack.popPose();
+    }
+
+    /** Exact {@code ItemRenderDebug}: lilmac geometry, debug texture and its separate ROTATE rail. */
+    private static void renderDebug(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
+            RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+        boolean animated = displayContext.firstPerson() && legacyBusActive();
+        double recoilZ = 0.0D;
+        if (animated) {
+            double[] equipSpin = LegacyHbmAnimations.getRelevantTransformation("ROTATE");
+            double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL");
+            recoilZ = recoil[2];
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) equipSpin[0]);
+            float aim = LegacySednaAimProgress.interpolated(Minecraft.getInstance().getFrameTime());
+            poseStack.translate(-recoilZ * aim, 0.0D, recoilZ * (1.0D - aim));
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) (recoilZ * 10.0D));
+            if (stack.getItem() instanceof SednaGunItem gun) {
+                poseStack.pushPose();
+                poseStack.translate(-9.0D, 2.5D, 0.0D);
+                LegacyPoseRotations.rotateZDegrees(poseStack, (float) (-recoilZ * 10.0D));
+                ClientSednaGunEffects.renderSmoke(gun, 0, 0.5D, poseStack, buffer);
+                poseStack.popPose();
+            }
+            double[] reloadLift = LegacyHbmAnimations.getRelevantTransformation("RELOAD_LIFT");
+            double[] reloadJolt = LegacyHbmAnimations.getRelevantTransformation("RELOAD_JOLT");
+            double[] reloadTilt = LegacyHbmAnimations.getRelevantTransformation("RELAOD_TILT");
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) reloadLift[0]);
+            poseStack.translate(reloadJolt[0], 0.0D, 0.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) reloadTilt[0]);
+        }
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        if (animated) {
+            LegacyPoseRotations.rotateXDegrees(poseStack,
+                    (float) LegacyHbmAnimations.getRelevantTransformation("RELOAD_CYLINDER")[0]);
+        }
+        ObjWeaponModels.renderPart(model, "Pivot", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.0D, 1.75D, 0.0D);
+        if (animated) {
+            LegacyPoseRotations.rotateXDegrees(poseStack,
+                    (float) (LegacyHbmAnimations.getRelevantTransformation("DRUM")[2] * -60.0D));
+        }
+        poseStack.translate(0.0D, -1.75D, 0.0D);
+        ObjWeaponModels.renderPart(model, "Cylinder", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        if (animated) {
+            double[] bullets = LegacyHbmAnimations.getRelevantTransformation("RELOAD_BULLETS");
+            poseStack.translate(bullets[0], bullets[1], bullets[2]);
+        }
+        if (!animated || LegacyHbmAnimations.getRelevantTransformation("RELOAD_BULLETS_CON")[0] != 1.0D) {
+            ObjWeaponModels.renderPart(model, "Bullets", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        }
+        ObjWeaponModels.renderPart(model, "Casings", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        if (animated) {
+            poseStack.translate(4.0D, 1.25D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack,
+                    (float) (-30.0D + 30.0D * LegacyHbmAnimations.getRelevantTransformation("HAMMER")[2]));
+            poseStack.translate(-4.0D, -1.25D, 0.0D);
+        }
+        ObjWeaponModels.renderPart(model, "Hammer", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (displayContext.firstPerson() && stack.getItem() instanceof SednaGunItem gun) {
+            poseStack.pushPose();
+            poseStack.translate(0.125D, 2.5D, 0.0D);
+            ClientSednaGunEffects.renderGapFlash(gun, 0, poseStack, buffer);
+            poseStack.popPose();
         }
     }
 
     private static void renderFlamer(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Tank", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
+        boolean animated = displayContext.firstPerson() && legacyBusActive();
+        poseStack.pushPose();
+        if (animated) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            double[] rotate = LegacyHbmAnimations.getRelevantTransformation("ROTATE");
+            poseStack.translate(0.0D, 2.0D, -6.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) -equip[0]);
+            poseStack.translate(0.0D, -2.0D, 6.0D);
+            poseStack.translate(0.0D, 1.0D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) rotate[2]);
+            poseStack.translate(0.0D, -1.0D, 0.0D);
+        }
 
         poseStack.pushPose();
+        if (animated) {
+            LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("Gun"));
+        }
+        ObjWeaponModels.renderPart(model, "Gun", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        if (spec.visibleParts().contains("HeatShield")) {
+            ObjWeaponModels.renderPart(model, "HeatShield", spec.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay);
+        }
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        if (animated) {
+            LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("Tank"));
+        }
+        ObjWeaponModels.renderPart(model, "Tank", spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        if (animated) {
+            LegacyBusAnimationTransforms.apply(poseStack, LegacyHbmAnimations.getRelevantTransformation("Gauge"));
+        }
         if (displayContext.firstPerson()) {
             double fill = primaryMagazineFill(stack);
             poseStack.translate(1.25D, 1.25D, 0.0D);
@@ -1623,16 +4256,19 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         poseStack.popPose();
-
-        if (spec.visibleParts().contains("HeatShield")) {
-            ObjWeaponModels.renderPart(model, "HeatShield", spec.textureLocation(), poseStack, buffer, packedLight,
-                    packedOverlay);
-        }
+        poseStack.popPose();
     }
 
     private static void renderChemthrower(ItemStack stack, ItemDisplayContext displayContext,
             LegacyWavefrontModel model, RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        if (displayContext.firstPerson() && legacyBusActive()) {
+            double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP");
+            poseStack.translate(0.0D, -2.0D, -4.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) -equip[0]);
+            poseStack.translate(0.0D, 2.0D, 4.0D);
+        }
         if (!displayContext.firstPerson()) {
             LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
@@ -1653,10 +4289,33 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         ObjWeaponModels.renderPart(model, "Gauge", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
         poseStack.popPose();
+        poseStack.popPose();
     }
 
     private static void renderDrill(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
             RenderSpec spec, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        double equip = 0.0D;
+        double deploy = 0.0D;
+        double lift = 0.0D;
+        double spin = 0.0D;
+        if (displayContext.firstPerson() && legacyBusActive()) {
+            equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP")[0];
+            deploy = LegacyHbmAnimations.getRelevantTransformation("DEPLOY")[0];
+            lift = LegacyHbmAnimations.getRelevantTransformation("LIFT")[0];
+            spin = LegacyHbmAnimations.getRelevantTransformation("SPIN")[0];
+        }
+
+        poseStack.pushPose();
+        if (displayContext.firstPerson()) {
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) (15.0D * (1.0D - deploy * 0.5D)));
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (-10.0D * (1.0D - deploy * 0.5D)));
+            poseStack.translate(0.0D, 2.0D, -6.0D);
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) (equip * -45.0D));
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) (equip * -20.0D));
+            poseStack.translate(0.0D, -2.0D, 6.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift);
+            poseStack.translate(0.0D, 0.0D, deploy);
+        }
         ObjWeaponModels.renderPart(model, "Base", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
 
@@ -1673,16 +4332,34 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 packedOverlay);
         poseStack.popPose();
 
-        ObjWeaponModels.renderPart(model, "Piston1", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Piston2", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
-        ObjWeaponModels.renderPart(model, "Piston3", spec.textureLocation(), poseStack, buffer, packedLight,
-                packedOverlay);
+        renderDrillPiston(model, "Piston1", spin, 0.0D, spec.textureLocation(), poseStack, buffer,
+                packedLight, packedOverlay);
+        renderDrillPiston(model, "Piston2", spin, Math.PI * 2.0D / 3.0D, spec.textureLocation(), poseStack,
+                buffer, packedLight, packedOverlay);
+        renderDrillPiston(model, "Piston3", spin, Math.PI * 4.0D / 3.0D, spec.textureLocation(), poseStack,
+                buffer, packedLight, packedOverlay);
+
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) -spin);
         ObjWeaponModels.renderPart(model, "DrillBack", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) spin);
         ObjWeaponModels.renderPart(model, "DrillFront", spec.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay);
+        poseStack.popPose();
+        poseStack.popPose();
+    }
+
+    private static void renderDrillPiston(LegacyWavefrontModel model, String part, double spin, double phase,
+            ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        double pistonY = Math.sin((spin * 5.0D) * Math.PI / 180.0D + phase) * 0.125D - 0.125D;
+        poseStack.translate(0.0D, pistonY, 0.0D);
+        ObjWeaponModels.renderPart(model, part, texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
     }
 
     private static void renderNi4Ni(ItemStack stack, ItemDisplayContext displayContext, LegacyWavefrontModel model,
@@ -1694,11 +4371,31 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         int light = colors == null ? 0xFFFFFF : colors[1];
         int grip = colors == null ? 0xFFFFFF : colors[2];
 
+        poseStack.pushPose();
+        if (displayContext.firstPerson()) {
+            double equip = ni4NiEquipX(stack);
+            poseStack.translate(0.0D, 0.0D, -2.25D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip);
+            poseStack.translate(0.0D, 0.0D, 2.25D);
+
+            poseStack.translate(0.0D, -1.0D, -6.0D);
+            LegacyPoseRotations.rotateXDegrees(poseStack, (float) ni4NiRecoilX(stack));
+            poseStack.translate(0.0D, 1.0D, 6.0D);
+        }
+
         renderTintedPart(model, "FrameDark", texture, poseStack, buffer, packedLight, packedOverlay, dark);
         renderTintedPart(model, "Grip", texture, poseStack, buffer, packedLight, packedOverlay, grip);
         renderTintedPart(model, "FrameLight", texture, poseStack, buffer, packedLight, packedOverlay, light);
+
+        poseStack.pushPose();
+        if (displayContext.firstPerson()) {
+            poseStack.translate(0.0D, 1.1875D, 0.0D);
+            LegacyPoseRotations.rotateZDegrees(poseStack, (float) ni4NiDrumZ(stack));
+            poseStack.translate(0.0D, -1.1875D, 0.0D);
+        }
         renderTintedPart(model, "Cylinder", texture, poseStack, buffer, packedLight, packedOverlay, light);
         ObjWeaponModels.renderPart(model, "CylinderHighlights", texture, poseStack, buffer, 0xF000F0, packedOverlay);
+        poseStack.popPose();
         ObjWeaponModels.renderPart(model, "Barrel", texture, poseStack, buffer, 0xF000F0, packedOverlay);
 
         int coinCount = displayContext == ItemDisplayContext.GUI ? 4 : Ni4NiGunItem.getCoinCount(stack);
@@ -1706,6 +4403,57 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         renderNi4NiCoin(model, "Coin2", coinCount, 3, 7, poseStack, buffer, 0xF000F0, packedOverlay);
         renderNi4NiCoin(model, "Coin3", coinCount, 2, 6, poseStack, buffer, 0xF000F0, packedOverlay);
         renderNi4NiCoin(model, "Coin4", coinCount, 1, 5, poseStack, buffer, 0xF000F0, packedOverlay);
+        if (displayContext.firstPerson() && stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderNi4NiLaserFlash(gun, poseStack, buffer);
+        }
+        poseStack.popPose();
+    }
+
+    private static double ni4NiEquipX(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("EQUIP")[0];
+        int animation = teslaLegacyAnimation(stack);
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (animation == LEGACY_ANIM_EQUIP) {
+            return millis <= 500.0D ? lerp(-720.0D, 0.0D, millis / 500.0D) : 0.0D;
+        }
+        if (animation == LEGACY_ANIM_INSPECT) {
+            if (millis <= 750.0D) {
+                return lerp(0.0D, -1080.0D, millis / 750.0D);
+            }
+            if (millis <= 850.0D) {
+                return -1080.0D;
+            }
+            if (millis <= 1600.0D) {
+                return lerp(-1080.0D, 0.0D, (millis - 850.0D) / 750.0D);
+            }
+        }
+        return 0.0D;
+    }
+
+    private static double ni4NiRecoilX(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("RECOIL")[0];
+        if (teslaLegacyAnimation(stack) != LEGACY_ANIM_CYCLE) {
+            return 0.0D;
+        }
+        double recoil = isTeslaAiming(stack) ? -5.0D : -30.0D;
+        double millis = teslaLegacyAnimationMillis(stack);
+        if (millis <= 100.0D) {
+            return lerp(0.0D, recoil, sinDown(millis / 100.0D));
+        }
+        if (millis <= 250.0D) {
+            return lerp(recoil, 0.0D, sinFull((millis - 100.0D) / 150.0D));
+        }
+        return 0.0D;
+    }
+
+    private static double ni4NiDrumZ(ItemStack stack) {
+        if (legacyBusActive()) return LegacyHbmAnimations.getRelevantTransformation("DRUM")[2];
+        if (teslaLegacyAnimation(stack) != LEGACY_ANIM_CYCLE) {
+            return 0.0D;
+        }
+        double millis = teslaLegacyAnimationMillis(stack);
+        return millis <= 50.0D ? 0.0D : millis <= 350.0D
+                ? lerp(0.0D, 120.0D, sinFull((millis - 50.0D) / 300.0D)) : 120.0D;
     }
 
     private static void renderTintedPart(LegacyWavefrontModel model, String part, ResourceLocation texture,
@@ -1845,12 +4593,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 }
                 poseStack.pushPose();
                 poseStack.translate(-1.0D, 1.0D, 0.0D);
-                renderStarFAkimboParts(stack, model, 1, poseStack, buffer, packedLight, packedOverlay);
+                renderStarFAkimboStaticParts(stack, model, 1, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
 
                 poseStack.pushPose();
                 poseStack.translate(1.0D, 1.0D, 0.0D);
-                renderStarFAkimboParts(stack, model, 0, poseStack, buffer, packedLight, packedOverlay);
+                renderStarFAkimboStaticParts(stack, model, 0, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
             }
             case MINIGUN_DUAL -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight,
@@ -1887,7 +4635,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     poseStack, buffer, packedLight, packedOverlay);
             case UZI_AKIMBO -> renderUziAkimboParts(stack, model, leftHand ? 0 : 1, leftHand,
                     poseStack, buffer, packedLight, packedOverlay);
-            case STAR_F_AKIMBO -> renderStarFAkimboParts(stack, model, leftHand ? 0 : 1,
+            case STAR_F_AKIMBO -> renderStarFAkimboStaticParts(stack, model, leftHand ? 0 : 1,
                     poseStack, buffer, packedLight, packedOverlay);
             default -> {
                 if (spec.visibleParts().isEmpty()) {
@@ -1961,7 +4709,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     poseStack.scale(0.625F, 0.625F, 0.625F);
                     poseStack.translate(0.0D, 0.0D, -4.0D);
                 }
-                renderStarFAkimboParts(stack, model, 1, poseStack, buffer, packedLight, packedOverlay);
+                renderStarFAkimboStaticParts(stack, model, 1, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 0.0D, 5.0D);
@@ -1971,7 +4719,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                     poseStack.scale(0.625F, 0.625F, 0.625F);
                     poseStack.translate(0.0D, 0.0D, -4.0D);
                 }
-                renderStarFAkimboParts(stack, model, 0, poseStack, buffer, packedLight, packedOverlay);
+                renderStarFAkimboStaticParts(stack, model, 0, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
             }
             default -> {
@@ -2034,7 +4782,65 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    private static void renderStarFAkimboParts(ItemStack stack, LegacyWavefrontModel model, int configIndex,
+    private static void renderUziFirstPersonParts(ItemStack stack, LegacyWavefrontModel model, int configIndex,
+            boolean mirror, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ResourceLocation texture = hasUpgrade(stack, configIndex, SednaWeaponModEvaluator.ID_UZI_SATURN)
+                ? UZI_SATURNITE_TEXTURE
+                : UZI_TEXTURE;
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP", configIndex);
+        double[] stockFront = LegacyHbmAnimations.getRelevantTransformation("STOCKFRONT", configIndex);
+        double[] stockBack = LegacyHbmAnimations.getRelevantTransformation("STOCKBACK", configIndex);
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL", configIndex);
+        double[] lift = LegacyHbmAnimations.getRelevantTransformation("LIFT", configIndex);
+        double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG", configIndex);
+        double[] bullet = LegacyHbmAnimations.getRelevantTransformation("BULLET", configIndex);
+        double[] slide = LegacyHbmAnimations.getRelevantTransformation("SLIDE", configIndex);
+        double[] yeet = LegacyHbmAnimations.getRelevantTransformation("YEET", configIndex);
+        double[] speen = LegacyHbmAnimations.getRelevantTransformation("SPEEN", configIndex);
+
+        poseStack.translate(yeet[0], yeet[1], yeet[2]);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (speen[0] * (mirror ? -1.0D : 1.0D)));
+        poseStack.translate(0.0D, -2.0D, -4.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 2.0D, 4.0D);
+        poseStack.translate(0.0D, 0.0D, -6.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) lift[0]);
+        poseStack.translate(0.0D, 0.0D, 6.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        ObjWeaponModels.renderPart(model, mirror ? "GunMirror" : "Gun", texture, poseStack, buffer, packedLight, packedOverlay);
+        if (hasUpgrade(stack, configIndex, SednaWeaponModEvaluator.ID_SILENCER)) {
+            ObjWeaponModels.renderPart(model, "Silencer", texture, poseStack, buffer, packedLight, packedOverlay);
+        }
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.3125D, -5.75D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (180.0D - stockFront[0]));
+        poseStack.translate(0.0D, -0.3125D, 5.75D);
+        ObjWeaponModels.renderPart(model, "StockFront", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(0.0D, -0.3125D, -3.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (-200.0D - stockBack[0]));
+        poseStack.translate(0.0D, 0.3125D, 3.0D);
+        ObjWeaponModels.renderPart(model, "StockBack", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, slide[2]);
+        ObjWeaponModels.renderPart(model, "Slide", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(mag[0], mag[1], mag[2]);
+        ObjWeaponModels.renderPart(model, "Magazine", texture, poseStack, buffer, packedLight, packedOverlay);
+        if (bullet[0] == 1.0D) {
+            ObjWeaponModels.renderPart(model, "Bullet", texture, poseStack, buffer, packedLight, packedOverlay);
+        }
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderUziEffects(gun, configIndex,
+                    hasUpgrade(stack, configIndex, SednaWeaponModEvaluator.ID_SILENCER), poseStack, buffer);
+        }
+    }
+
+    private static void renderStarFAkimboStaticParts(ItemStack stack, LegacyWavefrontModel model, int configIndex,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ObjWeaponModels.renderPart(model, "Gun", STAR_F_ELITE_TEXTURE, poseStack, buffer, packedLight,
                 packedOverlay);
@@ -2088,16 +4894,59 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     private static void applyLegacyAkimboFirstPersonPose(RenderSpec spec, int side, PoseStack poseStack) {
         double offset = 0.8D;
+        double hipX = 0.0D;
+        double hipY = 0.0D;
+        double hipZ = 0.0D;
+        double aimX = 0.0D;
+        double aimY = 0.0D;
+        double aimZ = 0.0D;
         switch (spec.specialRender()) {
-            case MARESLEG_AKIMBO -> poseStack.translate(-1.5D * offset * side, -1.0D * offset, 2.0D * offset);
-            case MINIGUN_DUAL -> poseStack.translate(-2.75D * offset * side, -1.75D * offset, 2.5D * offset);
-            case EOTT -> poseStack.translate(-1.0D * offset * side, -1.25D * offset, 1.25D * offset);
-            case DANI -> poseStack.translate(-1.5D * offset * side, -0.75D * offset, 1.0D * offset);
-            case UZI_AKIMBO -> poseStack.translate(-2.25D * offset * side, -1.5D * offset, 2.5D * offset);
-            case STAR_F_AKIMBO -> poseStack.translate(-2.0D * offset * side, -1.75D * offset, 2.5D * offset);
+            case MARESLEG_AKIMBO -> {
+                hipX = -1.5D * offset * side;
+                hipY = -1.0D * offset;
+                hipZ = 2.0D * offset;
+                aimY = -3.875D / 8.0D;
+                aimZ = 1.0D;
+            }
+            case MINIGUN_DUAL -> {
+                hipX = -2.75D * offset * side;
+                hipY = -1.75D * offset;
+                hipZ = 2.5D * offset;
+            }
+            case EOTT -> {
+                hipX = -1.0D * offset * side;
+                hipY = -1.25D * offset;
+                hipZ = 1.25D * offset;
+                aimY = -5.25D / 8.0D;
+                aimZ = 0.125D;
+            }
+            case DANI -> {
+                hipX = -1.5D * offset * side;
+                hipY = -0.75D * offset;
+                hipZ = 1.0D * offset;
+                aimY = -3.125D / 8.0D;
+                aimZ = 0.25D;
+            }
+            case UZI_AKIMBO -> {
+                hipX = -2.25D * offset * side;
+                hipY = -1.5D * offset;
+                hipZ = 2.5D * offset;
+                aimY = -4.375D / 8.0D;
+                aimZ = 1.0D;
+            }
+            case STAR_F_AKIMBO -> {
+                hipX = -2.0D * offset * side;
+                hipY = -1.75D * offset;
+                hipZ = 2.5D * offset;
+                aimY = -7.625D / 8.0D;
+                aimZ = 1.0D;
+            }
             default -> {
             }
         }
+        float progress = LegacySednaAimProgress.interpolated(Minecraft.getInstance().getFrameTime());
+        poseStack.translate(hipX + (aimX - hipX) * progress, hipY + (aimY - hipY) * progress,
+                hipZ + (aimZ - hipZ) * progress);
         poseStack.scale((float) spec.firstPerson().renderScale(), (float) spec.firstPerson().renderScale(),
                 (float) spec.firstPerson().renderScale());
     }
@@ -2106,20 +4955,153 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             int side, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         boolean mirror = side == -1;
         switch (spec.specialRender()) {
-            case MARESLEG_AKIMBO -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight,
-                    packedOverlay, "Gun", "Lever");
-            case MINIGUN_DUAL -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight,
-                    packedOverlay, mirror ? "GunDual" : "Gun", "Barrels");
-            case EOTT -> ObjWeaponModels.renderOnly(model, spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
-                    "Gun", "Hammer", "Magazine", "Bullet", "Slide", "Sight");
-            case DANI -> model.renderAll(mirror ? DANI_CELESTIAL_TEXTURE : DANI_LUNAR_TEXTURE,
+            case MARESLEG_AKIMBO -> renderMareslegFirstPersonParts(stack, model, spec, true, mirror ? 0 : 1,
                     poseStack, buffer, packedLight, packedOverlay);
-            case UZI_AKIMBO -> renderUziAkimboParts(stack, model, mirror ? 0 : 1, mirror,
+            case MINIGUN_DUAL -> renderMinigunDualFirstPersonParts(stack, model, spec, mirror ? 0 : 1, side,
                     poseStack, buffer, packedLight, packedOverlay);
-            case STAR_F_AKIMBO -> renderStarFAkimboParts(stack, model, mirror ? 0 : 1,
+            case EOTT -> renderAberratorFirstPersonParts(stack, model, spec, side, mirror ? 0 : 1,
                     poseStack, buffer, packedLight, packedOverlay);
+            case DANI -> renderDaniFirstPersonParts(stack, model, mirror ? 0 : 1, side,
+                    mirror ? DANI_CELESTIAL_TEXTURE : DANI_LUNAR_TEXTURE, poseStack, buffer, packedLight,
+                    packedOverlay);
+            case UZI_AKIMBO -> renderUziFirstPersonParts(stack, model, mirror ? 0 : 1, mirror,
+                    poseStack, buffer, packedLight, packedOverlay);
+            case STAR_F_AKIMBO -> renderStarFFirstPersonParts(stack, model, STAR_F_ELITE_TEXTURE, mirror ? 0 : 1,
+                    side, poseStack, buffer, packedLight, packedOverlay);
             default -> model.renderOnly(spec.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
                     spec.visibleParts().toArray(String[]::new));
+        }
+    }
+
+    /** Exact ItemRenderStarF/ItemRenderStarFAkimbo shared first-person part hierarchy. */
+    private static void renderStarFFirstPersonParts(ItemStack stack, LegacyWavefrontModel model, ResourceLocation texture,
+            int configIndex, int side, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP", configIndex);
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL", configIndex);
+        double[] hammer = LegacyHbmAnimations.getRelevantTransformation("HAMMER", configIndex);
+        double[] tilt = LegacyHbmAnimations.getRelevantTransformation("TILT", configIndex);
+        double[] turn = LegacyHbmAnimations.getRelevantTransformation("TURN", configIndex);
+        double[] mag = LegacyHbmAnimations.getRelevantTransformation("MAG", configIndex);
+        double[] bullet = LegacyHbmAnimations.getRelevantTransformation("BULLET", configIndex);
+        double[] slide = LegacyHbmAnimations.getRelevantTransformation("SLIDE", configIndex);
+
+        poseStack.translate(0.0D, -2.0D, -8.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, 2.0D, 8.0D);
+        poseStack.translate(0.0D, 1.0D, -3.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (turn[2] * side));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) tilt[0]);
+        poseStack.translate(0.0D, -1.0D, 3.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        ObjWeaponModels.renderPart(model, "Gun", texture, poseStack, buffer, packedLight, packedOverlay);
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 1.75D, -4.25D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (60.0D * (hammer[0] - 1.0D)));
+        poseStack.translate(0.0D, -1.75D, 4.25D);
+        ObjWeaponModels.renderPart(model, "Hammer", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, slide[2] * 2.3125D);
+        ObjWeaponModels.renderPart(model, "Slide", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        poseStack.pushPose();
+        poseStack.translate(mag[0], mag[1], mag[2]);
+        ObjWeaponModels.renderPart(model, "Mag", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.translate(bullet[0], bullet[1], bullet[2]);
+        ObjWeaponModels.renderPart(model, "Bullet", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+
+        if (hasUpgrade(stack, configIndex, SednaWeaponModEvaluator.ID_SILENCER)) {
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 2.375D, -0.25D);
+            ObjWeaponModels.renderPart(extraModel("uzi", "uzi", "uzi"), "Silencer", UZI_TEXTURE, poseStack, buffer,
+                    packedLight, packedOverlay);
+            poseStack.popPose();
+        }
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderStarFEffects(gun, configIndex,
+                    hasUpgrade(stack, configIndex, SednaWeaponModEvaluator.ID_SILENCER), poseStack, buffer);
+        }
+    }
+
+    /** Exact ItemRenderMinigunDual two-index first-person body and barrel hierarchy. */
+    private static void renderMinigunDualFirstPersonParts(ItemStack stack, LegacyWavefrontModel model, RenderSpec spec,
+            int configIndex, int side, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP", configIndex);
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL", configIndex);
+        double[] rotate = LegacyHbmAnimations.getRelevantTransformation("ROTATE", configIndex);
+        poseStack.translate(0.0D, 3.0D, -6.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) equip[0]);
+        poseStack.translate(0.0D, -3.0D, 6.0D);
+        poseStack.translate(0.0D, 0.0D, recoil[2]);
+        ObjWeaponModels.renderPart(model, configIndex == 0 ? "GunDual" : "Gun", spec.textureLocation(), poseStack,
+                buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (rotate[2] * side));
+        ObjWeaponModels.renderPart(model, "Barrels", spec.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderMinigunDualFlash(gun, configIndex, poseStack, buffer);
+        }
+    }
+
+    /** Exact ItemRenderDANI per-configuration first-person revolver hierarchy. */
+    private static void renderDaniFirstPersonParts(ItemStack stack, LegacyWavefrontModel model, int configIndex, int side,
+            ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay) {
+        double[] recoil = LegacyHbmAnimations.getRelevantTransformation("RECOIL", configIndex);
+        double[] reloadMove = LegacyHbmAnimations.getRelevantTransformation("RELOAD_MOVE", configIndex);
+        double[] reloadRotation = LegacyHbmAnimations.getRelevantTransformation("RELOAD_ROT", configIndex);
+        double[] equip = LegacyHbmAnimations.getRelevantTransformation("EQUIP", configIndex);
+        double[] front = LegacyHbmAnimations.getRelevantTransformation("FRONT", configIndex);
+        double[] latch = LegacyHbmAnimations.getRelevantTransformation("LATCH", configIndex);
+        double[] drum = LegacyHbmAnimations.getRelevantTransformation("DRUM", configIndex);
+        double[] drumPush = LegacyHbmAnimations.getRelevantTransformation("DRUM_PUSH", configIndex);
+        double[] hammer = LegacyHbmAnimations.getRelevantTransformation("HAMMER", configIndex);
+
+        poseStack.translate(recoil[0], recoil[1], recoil[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (recoil[2] * 10.0D));
+        poseStack.translate(0.0D, -2.0D, -2.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) -equip[0]);
+        poseStack.translate(0.0D, 2.0D, 2.0D);
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderRevolverSmoke(gun, configIndex, recoil[2], poseStack, buffer);
+        }
+        poseStack.translate(reloadMove[0], reloadMove[1], reloadMove[2]);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) reloadRotation[0]);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (reloadRotation[2] * side));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) (reloadRotation[1] * side));
+        ObjWeaponModels.renderPart(model, "Grip", texture, poseStack, buffer, packedLight, packedOverlay);
+
+        poseStack.pushPose();
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) front[2]);
+        ObjWeaponModels.renderPart(model, "Barrel", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 2.3125D, -0.875D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) latch[2]);
+        poseStack.translate(0.0D, -2.3125D, 0.875D);
+        ObjWeaponModels.renderPart(model, "Latch", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) (drum[2] * 60.0D));
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+        poseStack.translate(0.0D, 0.0D, drumPush[2]);
+        ObjWeaponModels.renderPart(model, "Drum", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 0.0D, -4.5D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (-45.0D + 45.0D * hammer[2]));
+        poseStack.translate(0.0D, 0.0D, 4.5D);
+        ObjWeaponModels.renderPart(model, "Hammer", texture, poseStack, buffer, packedLight, packedOverlay);
+        poseStack.popPose();
+        if (stack.getItem() instanceof SednaGunItem gun) {
+            ClientSednaGunEffects.renderRevolverFlash(gun, configIndex, poseStack, buffer);
         }
     }
 
@@ -2195,26 +5177,34 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 return;
             }
             if (spec.specialRender() == SpecialRender.SPAS12) {
-                applyLegacySpas12FirstPersonDisplay(displayContext, poseStack, spec);
+                applyLegacySpas12FirstPersonDisplay(stack, displayContext, poseStack, spec);
                 return;
             }
             if (spec.specialRender() == SpecialRender.CHARGE_THROWER) {
-                applyLegacyChargeThrowerFirstPersonDisplay(displayContext, poseStack, spec);
+                applyLegacyChargeThrowerFirstPersonDisplay(stack, displayContext, poseStack, spec);
                 return;
             }
             if (spec.specialRender() == SpecialRender.CHEMTHROWER) {
-                applyLegacyChemthrowerFirstPersonDisplay(displayContext, poseStack, spec);
+                applyLegacyChemthrowerFirstPersonDisplay(stack, displayContext, poseStack, spec);
                 return;
             }
             if (spec.specialRender() == SpecialRender.NI4NI) {
-                applyLegacyFirstPersonDisplay(displayContext, poseStack, spec);
+                applyLegacyFirstPersonDisplay(stack, displayContext, poseStack, spec);
                 return;
             }
             if (spec.specialRender() == SpecialRender.DRILL) {
-                applyLegacyDrillFirstPersonDisplay(displayContext, poseStack, spec);
+                applyLegacyDrillFirstPersonDisplay(stack, displayContext, poseStack, spec);
                 return;
             }
-            applyLegacyFirstPersonDisplay(displayContext, poseStack, spec);
+            if (spec.specialRender() == SpecialRender.DEBUG) {
+                applyLegacyFirstPersonDisplay(stack, displayContext, poseStack, spec);
+                return;
+            }
+            if (spec.specialRender() == SpecialRender.ATLAS || spec.specialRender() == SpecialRender.HANGMAN) {
+                applyLegacyFirstPersonDisplayBeforeModelScale(stack, displayContext, poseStack, spec);
+                return;
+            }
+            applyLegacyFirstPersonDisplay(stack, displayContext, poseStack, spec);
             return;
         }
 
@@ -2398,7 +5388,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         poseStack.translate(inventory.x(), inventory.y(), inventory.z());
     }
 
-    private static void applyLegacyFirstPersonDisplay(ItemDisplayContext displayContext, PoseStack poseStack,
+    private static void applyLegacyFirstPersonDisplay(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack,
             RenderSpec spec) {
         FirstPersonPose firstPerson = spec.firstPerson();
         boolean leftHand = displayContext == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
@@ -2409,7 +5399,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 (float) FIRST_PERSON_SCREEN_UNIT);
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
-        poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
+        applyLegacyAimTranslation(stack, spec, poseStack);
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
                 (float) firstPerson.renderScale());
         if (spec.firstPersonYawDegrees() != 0.0D) {
@@ -2444,7 +5434,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 (float) spec.firstPerson().renderScale());
     }
 
-    private static void applyLegacySpas12FirstPersonDisplay(ItemDisplayContext displayContext,
+    private static void applyLegacySpas12FirstPersonDisplay(ItemStack stack, ItemDisplayContext displayContext,
             PoseStack poseStack, RenderSpec spec) {
         FirstPersonPose firstPerson = spec.firstPerson();
         boolean leftHand = displayContext == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
@@ -2455,12 +5445,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 (float) FIRST_PERSON_SCREEN_UNIT);
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
-        poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
+        applyLegacyAimTranslation(stack, spec, poseStack);
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
                 (float) firstPerson.renderScale());
     }
 
-    private static void applyLegacyChargeThrowerFirstPersonDisplay(ItemDisplayContext displayContext,
+    private static void applyLegacyChargeThrowerFirstPersonDisplay(ItemStack stack, ItemDisplayContext displayContext,
             PoseStack poseStack, RenderSpec spec) {
         FirstPersonPose firstPerson = spec.firstPerson();
         boolean leftHand = displayContext == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
@@ -2471,12 +5461,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 (float) FIRST_PERSON_SCREEN_UNIT);
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
-        poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
+        applyLegacyAimTranslation(stack, spec, poseStack);
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
                 (float) firstPerson.renderScale());
     }
 
-    private static void applyLegacyChemthrowerFirstPersonDisplay(ItemDisplayContext displayContext,
+    private static void applyLegacyChemthrowerFirstPersonDisplay(ItemStack stack, ItemDisplayContext displayContext,
             PoseStack poseStack, RenderSpec spec) {
         FirstPersonPose firstPerson = spec.firstPerson();
         boolean leftHand = displayContext == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
@@ -2487,13 +5477,13 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 (float) FIRST_PERSON_SCREEN_UNIT);
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
-        poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
+        applyLegacyAimTranslation(stack, spec, poseStack);
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
                 (float) firstPerson.renderScale());
         LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
     }
 
-    private static void applyLegacyDrillFirstPersonDisplay(ItemDisplayContext displayContext,
+    private static void applyLegacyDrillFirstPersonDisplay(ItemStack stack, ItemDisplayContext displayContext,
             PoseStack poseStack, RenderSpec spec) {
         FirstPersonPose firstPerson = spec.firstPerson();
         boolean leftHand = displayContext == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
@@ -2504,11 +5494,12 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
                 (float) FIRST_PERSON_SCREEN_UNIT);
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
-        poseStack.translate(firstPerson.aimX(), firstPerson.aimY(), firstPerson.aimZ());
+        applyLegacyAimTranslation(stack, spec, poseStack);
         poseStack.scale((float) firstPerson.renderScale(), (float) firstPerson.renderScale(),
                 (float) firstPerson.renderScale());
-        LegacyPoseRotations.rotateYDegrees(poseStack, 15.0F);
-        LegacyPoseRotations.rotateXDegrees(poseStack, -10.0F);
+        double deploy = legacyBusActive() ? LegacyHbmAnimations.getRelevantTransformation("DEPLOY")[0] : 0.0D;
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) (15.0D * (1.0D - deploy * 0.5D)));
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (-10.0D * (1.0D - deploy * 0.5D)));
     }
 
     private static Map.Entry<String, RenderSpec> spec(String legacyName, String modelName, String textureName,
@@ -2613,14 +5604,311 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
             InventoryPose inventory, FirstPersonPose firstPerson, List<String> visibleParts) {
     }
 
+    /** Keeps source body rails before the renderer-local model scale. */
+    private static void applyLegacyFirstPersonDisplayBeforeModelScale(ItemStack stack, ItemDisplayContext displayContext,
+            PoseStack poseStack, RenderSpec spec) {
+        FirstPersonPose firstPerson = spec.firstPerson();
+        if (displayContext == ItemDisplayContext.FIRST_PERSON_LEFT_HAND) {
+            poseStack.scale(-1.0F, 1.0F, 1.0F);
+        }
+        poseStack.scale((float) FIRST_PERSON_SCREEN_UNIT, (float) FIRST_PERSON_SCREEN_UNIT,
+                (float) FIRST_PERSON_SCREEN_UNIT);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        poseStack.translate(0.0D, 0.0D, firstPerson.setupZ());
+        applyLegacyAimTranslation(stack, spec, poseStack);
+        if (spec.firstPersonYawDegrees() != 0.0D) {
+            LegacyPoseRotations.rotateYDegrees(poseStack, (float) spec.firstPersonYawDegrees());
+        }
+    }
+
+    /** Exact ItemRenderWeaponBase#standardAimingTransform inputs for every non-akimbo route that invokes it. */
+    private static void applyLegacyAimTranslation(ItemStack stack, RenderSpec spec, PoseStack poseStack) {
+        FirstPersonPose hip = spec.firstPerson();
+        double targetX = hip.aimX();
+        double targetY = hip.aimY();
+        double targetZ = hip.aimZ();
+        switch (currentLegacyName(stack)) {
+            case "gun_pepperbox" -> {
+                targetX = 0.0D;
+                targetY = -2.5D / 8.0D;
+                targetZ = 0.5D;
+            }
+            case "gun_debug" -> {
+                targetX = 0.0D;
+                targetY = -3.875D / 8.0D;
+                targetZ = 0.0D;
+            }
+            case "gun_light_revolver", "gun_light_revolver_atlas" -> {
+                targetX = 0.0D;
+                targetY = -3.125D / 8.0D;
+                targetZ = 0.25D;
+            }
+            case "gun_henry", "gun_henry_lincoln" -> {
+                targetX = 0.0D;
+                targetY = -5.0D / 8.0D;
+                targetZ = 1.0D;
+            }
+            case "gun_greasegun" -> {
+                targetX = 0.0D;
+                targetY = -2.625D / 8.0D;
+                targetZ = 1.125D;
+            }
+            case "gun_maresleg", "gun_maresleg_broken" -> {
+                targetX = 0.0D;
+                targetY = -3.875D / 8.0D;
+                targetZ = 1.0D;
+            }
+            case "gun_flaregun" -> {
+                targetX = 0.0D;
+                targetY = -5.5D / 8.0D;
+                targetZ = 0.5D;
+            }
+            case "gun_panzerschreck" -> {
+                targetX = -0.9375D;
+                targetY = -9.25D / 8.0D;
+                targetZ = 0.25D;
+            }
+            case "gun_minigun", "gun_minigun_lacunae" -> {
+                targetX = 0.0D;
+                targetY = -6.25D / 8.0D;
+                targetZ = 1.0D;
+            }
+            case "gun_am180" -> {
+                targetX = 0.0D;
+                targetY = -4.1875D / 8.0D;
+                targetZ = 0.25D;
+            }
+            case "gun_liberator" -> {
+                targetX = 0.0D;
+                targetY = -4.625D / 8.0D;
+                targetZ = 0.25D;
+            }
+            case "gun_congolake" -> {
+                targetX = 0.0D;
+                targetY = -10.0D / 8.0D;
+                targetZ = 0.25D;
+            }
+            case "gun_lag" -> {
+                targetX = 0.0D;
+                targetY = -3.375D / 8.0D;
+                targetZ = 0.5D;
+            }
+            case "gun_uzi" -> {
+                targetX = 0.0D;
+                targetY = -4.375D / 8.0D;
+                targetZ = 1.0D;
+            }
+            case "gun_mk108" -> {
+                targetX = -0.75D;
+                targetY = -0.75D;
+                targetZ = 1.5D;
+            }
+            case "gun_m2" -> {
+                targetX = 0.0D;
+                targetY = -12.5D / 8.0D;
+                targetZ = 1.75D;
+            }
+            case "gun_aberrator" -> {
+                targetX = 0.0D;
+                targetY = -5.25D / 8.0D;
+                targetZ = 0.125D;
+            }
+            case "gun_laser_pistol", "gun_laser_pistol_pew_pew", "gun_laser_pistol_morning_glory" -> {
+                targetX = 0.0D;
+                targetY = -10.0D / 8.0D;
+                targetZ = 1.25D;
+            }
+            case "gun_autoshotgun", "gun_autoshotgun_shredder" -> {
+                targetX = 0.0D;
+                targetY = -6.25D / 8.0D;
+                targetZ = 0.5D;
+            }
+            case "gun_quadro" -> {
+                targetX = -1.5D * 0.8D;
+                targetY = -3.0D * 0.8D;
+                targetZ = 2.5D * 0.8D;
+            }
+            case "gun_autoshotgun_sexy", "gun_autoshotgun_heretic" -> {
+                targetX = -0.5D;
+                targetY = -0.5D;
+                targetZ = 2.0D;
+            }
+            case "gun_hangman" -> {
+                targetX = 0.0D;
+                targetY = -1.5D / 8.0D;
+                targetZ = 1.25D;
+            }
+            case "gun_bolter" -> {
+                targetX = 0.0D;
+                targetY = -10.5D / 8.0D;
+                targetZ = 1.25D;
+            }
+            case "gun_missile_launcher" -> {
+                targetX = -1.0D * 0.8D;
+                targetY = -1.25D * 0.8D;
+                targetZ = 0.0D;
+            }
+            case "gun_tau" -> {
+                targetX = -1.75D * 0.8D;
+                targetY = -1.75D * 0.8D;
+                targetZ = 3.5D * 0.8D;
+            }
+            case "gun_tesla_cannon" -> {
+                targetX = -1.3125D * 0.8D;
+                targetY = 0.0D;
+                targetZ = -0.5D * 0.8D;
+            }
+            case "gun_coilgun" -> {
+                targetX = 0.0D;
+                targetY = -7.5D / 8.0D;
+                targetZ = 1.0D;
+            }
+            case "gun_flamer", "gun_flamer_topaz", "gun_flamer_daybreaker" -> {
+                targetX = 0.0D;
+                targetY = -4.625D / 8.0D;
+                targetZ = 0.25D;
+            }
+            case "gun_fatman" -> {
+                targetX = -1.0D * 0.8D;
+                targetY = -1.25D * 0.8D;
+                targetZ = 0.0D;
+            }
+            case "gun_folly" -> {
+                targetX = -2.0D * 0.75D;
+                targetY = -1.0D * 0.75D;
+                targetZ = 2.25D * 0.8D;
+            }
+            case "gun_n_i_4_n_i" -> {
+                targetX = 0.0D;
+                targetY = -5.0D / 8.0D;
+                targetZ = 0.125D;
+            }
+            case "gun_drill" -> {
+                targetX = -1.0D * 0.8D;
+                targetY = -1.75D * 0.8D;
+                targetZ = 1.25D * 0.8D;
+            }
+            case "gun_spas12" -> {
+                targetX = 0.0D;
+                targetY = 0.0D;
+                targetZ = 0.0D;
+            }
+            case "gun_stinger" -> {
+                targetX = -2.625D * 0.8D;
+                targetY = -6.5D;
+                targetZ = -8.5D;
+            }
+            case "gun_chemthrower" -> {
+                targetX = 0.0D;
+                targetY = -4.375D / 8.0D;
+                targetZ = 1.0D;
+            }
+            case "gun_double_barrel", "gun_double_barrel_sacred_dragon" -> {
+                targetX = 0.0D;
+                targetY = -2.0D / 8.0D;
+                targetZ = 1.0D;
+            }
+            case "gun_carbine" -> {
+                targetX = 0.0D;
+                targetY = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE) ? -1.0D : -6.25D / 8.0D;
+                targetZ = 0.25D;
+            }
+            case "gun_g3", "gun_g3_zebra" -> {
+                boolean scoped = "gun_g3_zebra".equals(currentLegacyName(stack))
+                        || hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
+                targetX = 0.0D;
+                targetY = scoped ? -5.53125D / 8.0D : -3.5625D / 8.0D;
+                targetZ = scoped ? 1.46875D : 1.75D;
+            }
+            case "gun_amat", "gun_amat_subtlety", "gun_amat_penance" -> {
+                targetX = 0.0D;
+                targetY = -4.875D / 8.0D;
+                targetZ = 1.875D;
+            }
+            case "gun_mas36" -> {
+                boolean scoped = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
+                targetX = scoped ? -0.2D : 0.0D;
+                targetY = scoped ? -5.875D / 8.0D : -4.6825D / 8.0D;
+                targetZ = scoped ? 1.125D : 0.75D;
+            }
+            case "gun_charge_thrower" -> {
+                boolean scoped = hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
+                targetX = scoped ? -0.15625D : -0.75D;
+                targetY = scoped ? -6.5D / 8.0D : -0.625D;
+                targetZ = scoped ? 1.6875D : 1.75D;
+            }
+            case "gun_heavy_revolver", "gun_heavy_revolver_lilmac", "gun_heavy_revolver_protege" -> {
+                boolean scoped = isHeavyRevolverScoped(stack);
+                targetX = 0.0D;
+                targetY = scoped ? -4.75D / 8.0D : -3.875D / 8.0D;
+                targetZ = scoped ? -0.25D : 0.0D;
+            }
+            case "gun_lasrifle" -> {
+                boolean scoped = !hasUpgrade(stack, SednaWeaponModEvaluator.ID_LAS_AUTO);
+                targetX = 0.0D;
+                targetY = scoped ? -7.375D / 8.0D : -5.25D / 8.0D;
+                targetZ = scoped ? 0.75D : 1.0D;
+            }
+            case "gun_stg77" -> {
+                targetX = 0.0D;
+                targetY = -5.75D / 8.0D;
+                targetZ = 2.0D;
+            }
+            default -> {
+            }
+        }
+        float progress = LegacySednaAimProgress.interpolated(Minecraft.getInstance().getFrameTime());
+        poseStack.translate(hip.aimX() + (targetX - hip.aimX()) * progress,
+                hip.aimY() + (targetY - hip.aimY()) * progress,
+                hip.aimZ() + (targetZ - hip.aimZ()) * progress);
+    }
+
+    private static boolean hidesFirstPersonAtFullAim(ItemStack stack) {
+        if (!LegacySednaAimProgress.settledFullyAimed()) {
+            return false;
+        }
+        return switch (currentLegacyName(stack)) {
+            case "gun_carbine", "gun_mas36", "gun_charge_thrower" ->
+                    hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
+            case "gun_g3" -> hasUpgrade(stack, SednaWeaponModEvaluator.ID_SCOPE);
+            case "gun_g3_zebra", "gun_amat", "gun_amat_subtlety", "gun_amat_penance", "gun_stg77",
+                    "gun_stinger" -> true;
+            case "gun_heavy_revolver", "gun_heavy_revolver_lilmac", "gun_heavy_revolver_protege" ->
+                    isHeavyRevolverScoped(stack);
+            case "gun_lasrifle" -> !hasUpgrade(stack, SednaWeaponModEvaluator.ID_LAS_AUTO);
+            default -> false;
+        };
+    }
+
+    private record MissileLauncherAnimationPose(double equipX, double openX, double barrelZ, double missileX,
+            double missileY, double missileZ) {
+        private static final MissileLauncherAnimationPose IDENTITY = new MissileLauncherAnimationPose(0.0D, 0.0D,
+                0.0D, 0.0D, 0.0D, 0.0D);
+    }
+
+    private record Am180AnimationPose(double equipX, double recoilZ, double magX, double magY, double magZ,
+            double magTurnX, double magTurnZ, double magSpinX, double boltZ, double turnZ) {
+        private static final Am180AnimationPose IDENTITY = new Am180AnimationPose(0.0D, 0.0D, 0.0D, 0.0D, 0.0D,
+                0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
+    }
+
     private enum SpecialRender {
         NONE(false),
+        DEBUG(false),
         TAU(false),
         TESLA_CANNON(false),
         FATMAN(false),
+        PEPPERBOX(false),
+        HENRY(false),
+        ATLAS(false),
+        HANGMAN(false),
         GREASEGUN(false),
+        FLAREGUN(false),
+        CONGOLAKE(false),
         MARESLEG(false),
+        LIBERATOR(false),
         CARBINE(false),
+        MINIGUN(false),
         AM180(false),
         UZI(false),
         STAR_F(false),
@@ -2650,6 +5938,7 @@ public class SednaGunItemRenderer extends BlockEntityWithoutLevelRenderer {
         STAR_F_AKIMBO(true),
         FIREEXT(false),
         SPAS12(false),
+        SHREDDER(false),
         CHARGE_THROWER(false),
         DOUBLE_BARREL(false),
         HEAVY_REVOLVER(false),

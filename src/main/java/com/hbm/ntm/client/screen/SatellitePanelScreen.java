@@ -1,14 +1,14 @@
 package com.hbm.ntm.client.screen;
 
-import com.hbm.ntm.util.HbmRegistryUtil;
-
+import com.hbm.inventory.recipes.MachineRecipes;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.ClientSatelliteData;
 import com.hbm.ntm.client.sound.LegacyClientSoundPlayer;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
-import com.hbm.ntm.satellite.SatelliteInterfaceItem;
+import com.hbm.ntm.recipe.LegacyOreDictionaryMappings;
+import com.hbm.ntm.util.HbmRegistryUtil;
 import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,16 +16,13 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.lwjgl.glfw.GLFW;
 
 public class SatellitePanelScreen extends Screen {
@@ -54,16 +51,10 @@ public class SatellitePanelScreen extends Screen {
         leftPos = (width - IMAGE_WIDTH) / 2;
         topPos = (height - IMAGE_HEIGHT) / 2;
         if (minecraft != null && minecraft.player != null) {
-            centerX = minecraft.player.getBlockX();
-            centerZ = minecraft.player.getBlockZ();
-        }
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        if (!isHeldSatelliteInterface()) {
-            onClose();
+            // GUIScreenSatInterface used Java's (int) cast, which truncates toward
+            // zero rather than flooring negative coordinates like getBlockX().
+            centerX = (int) minecraft.player.getX();
+            centerZ = (int) minecraft.player.getZ();
         }
     }
 
@@ -71,7 +62,7 @@ public class SatellitePanelScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current(currentFrequency()).orElse(null);
+        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current().orElse(null);
         if (snapshot == null) {
             drawNotConnected(graphics);
         } else if (snapshot.satellite().satelliteInterface() != Satellite.SatelliteInterface.SAT_PANEL) {
@@ -98,8 +89,12 @@ public class SatellitePanelScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current(currentFrequency()).orElse(null);
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && snapshot != null
+        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current().orElse(null);
+        // GUIScreenSatInterface accepted its unused mouse-button argument and
+        // dispatched any click inside the map.  Keeping this intentionally
+        // includes right and middle clicks; only the area and CAN_CLICK action
+        // gate the old SatLaserPacket path.
+        if (minecraft != null && minecraft.player != null && snapshot != null
                 && snapshot.satellite().interfaceActions().contains(Satellite.InterfaceAction.CAN_CLICK)
                 && isInsideMap((int) mouseX, (int) mouseY)) {
             ModMessages.sendSatLaser(hand, worldX((int) mouseX), worldZ((int) mouseY), currentFrequency());
@@ -148,6 +143,11 @@ public class SatellitePanelScreen extends Screen {
             int z = centerZ + scanPos - 100;
             int y = WorldUtil.legacyGetHeightValue(minecraft.level, x, z) - 1;
             BlockPos pos = new BlockPos(x, y, z);
+            // GUIScreenSatInterface assigned every map column on every pass.
+            // Keep unloaded modern chunks from retaining the color sampled at
+            // this ring-buffer index 200 passes ago; the 1.7.10 client queried
+            // its air fallback and therefore replaced that pixel.
+            map[i + 100][scanPos] = 0;
             if (HbmRegistryUtil.hasChunkAt(minecraft.level, pos)) {
                 BlockState state = minecraft.level.getBlockState(pos);
                 map[i + 100][scanPos] = state.getMapColor(minecraft.level, pos).col;
@@ -184,43 +184,52 @@ public class SatellitePanelScreen extends Screen {
         if (minecraft == null || minecraft.level == null || minecraft.player == null) {
             return;
         }
-        AABB area = new AABB(centerX - 100, minecraft.level.getMinBuildHeight(), centerZ - 100,
-                centerX + 100, minecraft.level.getMaxBuildHeight(), centerZ + 100);
+        // GUIScreenSatInterface keeps its radar query centered on the player;
+        // arrow-key map panning changes only the red-dot projection below.
+        // The source used a deliberate 0..5000 entity interval, rather than
+        // the ordinary block build height: it includes Soyuz/capsule flight at
+        // Y=600. Modernize only the old lower world-bottom assumption; retain
+        // the explicit high-altitude ceiling (or a future taller dimension).
+        double maxRadarY = Math.max(5000.0D, minecraft.level.getMaxBuildHeight());
+        AABB area = new AABB(minecraft.player.getX() - 100.0D, minecraft.level.getMinBuildHeight(),
+                minecraft.player.getZ() - 100.0D, minecraft.player.getX() + 100.0D,
+                maxRadarY, minecraft.player.getZ() + 100.0D);
         for (Entity entity : minecraft.level.getEntities(minecraft.player, area,
                 entity -> entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() >= 0.5D)) {
             int x = (int) ((entity.getX() - centerX) / 201.0D * 192.0D) - 4;
             int z = (int) ((entity.getZ() - centerZ) / 201.0D * 192.0D) - 13;
-            int type = entity instanceof Player ? 7 : entity instanceof Mob ? 6 : 5;
+            int type = entity instanceof Player ? 7 : entity instanceof Monster ? 6 : 5;
             graphics.blit(TEXTURE, leftPos + 108 + x, topPos + 117 + z, 216, 8 * type, 8, 8);
         }
     }
 
     private int oreColor(BlockState state) {
-        Block block = state.getBlock();
-        ResourceLocation key = ForgeRegistries.BLOCKS.getKey(block);
-        String path = key == null ? "" : key.getPath();
-        if (path.contains("coal")) return 0x333333;
-        if (path.contains("iron")) return 0xB2AA92;
-        if (path.contains("gold")) return 0xFFE460;
-        if (path.contains("silver")) return 0xE5E5E5;
-        if (path.contains("diamond")) return 0x6ED5EF;
-        if (path.contains("emerald")) return 0x6CF756;
-        if (path.contains("lapis")) return 0x092F7A;
-        if (path.contains("redstone")) return 0xE50000;
-        if (path.contains("tin")) return 0xA09797;
-        if (path.contains("copper")) return 0xD16208;
-        if (path.contains("lead")) return 0x384B68;
-        if (path.contains("aluminum") || path.contains("aluminium")) return 0xDBDBDB;
-        if (path.contains("tungsten")) return 0x333333;
-        if (path.contains("titanium")) return 0xDDDDDD;
-        if (path.contains("uranium")) return 0x3E4F3C;
-        if (path.contains("beryllium")) return 0x8E8D7D;
-        if (path.contains("sulfur")) return 0x9B9309;
-        if (path.contains("salpeter") || path.contains("niter")) return 0xA5A09D;
-        if (path.contains("fluorite")) return 0xFFFFFF;
-        if (path.contains("schrabidium")) return 0x1CFFFF;
-        if (path.contains("rare_earth")) return 0xFFCC99;
-        return state.is(BlockTags.create(new ResourceLocation("forge", "ores"))) ? 0xBA00AF : 0;
+        // The legacy screen queried the old OreDictionary through mODE, not a
+        // registry-name heuristic. Keep the exact old priority and delegate the
+        // 1.20 tag conversion to the shared compatibility facade.
+        ItemStack stack = new ItemStack(state.getBlock());
+        if (MachineRecipes.mODE(stack, "oreCoal")) return 0x333333;
+        if (MachineRecipes.mODE(stack, "oreIron")) return 0xB2AA92;
+        if (MachineRecipes.mODE(stack, "oreGold")) return 0xFFE460;
+        if (MachineRecipes.mODE(stack, "oreSilver")) return 0xE5E5E5;
+        if (MachineRecipes.mODE(stack, "oreDiamond")) return 0x6ED5EF;
+        if (MachineRecipes.mODE(stack, "oreEmerald")) return 0x6CF756;
+        if (MachineRecipes.mODE(stack, "oreLapis")) return 0x092F7A;
+        if (MachineRecipes.mODE(stack, "oreRedstone")) return 0xE50000;
+        if (MachineRecipes.mODE(stack, "oreTin")) return 0xA09797;
+        if (MachineRecipes.mODE(stack, "oreCopper")) return 0xD16208;
+        if (MachineRecipes.mODE(stack, "oreLead")) return 0x384B68;
+        if (MachineRecipes.mODE(stack, "oreAluminum")) return 0xDBDBDB;
+        if (MachineRecipes.mODE(stack, "oreTungsten")) return 0x333333;
+        if (MachineRecipes.mODE(stack, "oreTitanium")) return 0xDDDDDD;
+        if (MachineRecipes.mODE(stack, "oreUranium")) return 0x3E4F3C;
+        if (MachineRecipes.mODE(stack, "oreBeryllium")) return 0x8E8D7D;
+        if (MachineRecipes.mODE(stack, "oreSulfur")) return 0x9B9309;
+        if (MachineRecipes.mODE(stack, "oreSalpeter") || MachineRecipes.mODE(stack, "oreNiter")) return 0xA5A09D;
+        if (MachineRecipes.mODE(stack, "oreFluorite")) return 0xFFFFFF;
+        if (MachineRecipes.mODE(stack, "oreSchrabidium")) return 0x1CFFFF;
+        if (MachineRecipes.mODE(stack, "oreRareEarth")) return 0xFFCC99;
+        return LegacyOreDictionaryMappings.isAnyLegacyOre(stack) ? 0xBA00AF : 0;
     }
 
     private void printMap(GuiGraphics graphics) {
@@ -283,12 +292,4 @@ public class SatellitePanelScreen extends Screen {
         }
     }
 
-    private boolean isHeldSatelliteInterface() {
-        if (minecraft == null || minecraft.player == null) {
-            return false;
-        }
-        ItemStack stack = minecraft.player.getItemInHand(hand);
-        return stack.getItem() instanceof SatelliteInterfaceItem item
-                && item.mode() == SatelliteInterfaceItem.Mode.PANEL;
-    }
 }

@@ -1,21 +1,26 @@
 package com.hbm.items.special;
 
+import com.hbm.ntm.client.HolotapeScreenBridge;
 import com.hbm.util.EnumUtil;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Legacy 1.7.10 package bridge for the hidden holotape image metadata item.
  *
- * <p>The modern port currently uses split hidden items for the source-backed
- * holotape image carriers. GUI and image/text browsing remain a dedicated
- * holotape-system slice.
+ * <p>The modern port uses split hidden items for the source-backed holotape
+ * image carriers and a client-only text browser for their original GUI contract.
  */
 @Deprecated(forRemoval = false)
 public class ItemHolotapeImage extends ItemHoloTape {
@@ -32,6 +37,15 @@ public class ItemHolotapeImage extends ItemHoloTape {
 
     public EnumHoloImage legacyType() {
         return legacyType;
+    }
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (level.isClientSide) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> HolotapeScreenBridge.open(hand));
+        }
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 
     @Override

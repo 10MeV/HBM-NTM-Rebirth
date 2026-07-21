@@ -7,6 +7,8 @@ import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidReleaseEffects;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.menu.StorageDrumMenu;
@@ -56,6 +58,7 @@ public class StorageDrumBlockEntity extends HbmFluidNetworkBlockEntity
     private static final int[] SHORT_LIQUID = { 0, 50, 150, 250, 350, 500, 750, 1_000 };
     private static final int[] SHORT_GAS = { 100, 100, 500, 1_000, 1_000, 1_000, 1_000, 1_000 };
 
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.allAdjacent();
     private final HbmFluidTank liquidTank;
     private final HbmFluidTank gasTank;
     private int age;
@@ -168,6 +171,16 @@ public class StorageDrumBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
         return getSendingTanks().stream().anyMatch(tank -> tank.getTankType() == type && tank.getFill() > 0);
+    }
+
+    @Override
+    protected Iterable<FluidPort> getFluidPorts() {
+        return FLUID_PORTS;
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
     }
 
     @Override

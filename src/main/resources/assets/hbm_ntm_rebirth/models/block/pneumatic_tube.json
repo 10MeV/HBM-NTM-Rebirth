@@ -1,7 +1,9 @@
 {
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "hbm_ntm_rebirth:block/pneumatic_tube",
-    "particle": "hbm_ntm_rebirth:block/pneumatic_tube"
-  }
+  "loader": "hbm_ntm_rebirth:pneumatic_tube_loader",
+  "base": "hbm_ntm_rebirth:block/pneumatic_tube",
+  "straight": "hbm_ntm_rebirth:block/pneumatic_tube_straight",
+  "input": "hbm_ntm_rebirth:block/pneumatic_tube_in",
+  "output": "hbm_ntm_rebirth:block/pneumatic_tube_out",
+  "connector": "hbm_ntm_rebirth:block/pneumatic_tube_connector",
+  "textures": {"particle": "hbm_ntm_rebirth:block/pneumatic_tube"}
 }

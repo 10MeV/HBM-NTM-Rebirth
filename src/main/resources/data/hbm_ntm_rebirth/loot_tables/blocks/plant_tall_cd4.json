@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [{ "type": "minecraft:item", "name": "hbm_ntm_rebirth:plant_flower_cd0" }],
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:plant_tall_cd4", "properties": { "half": "upper" } }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hbm_ntm_rebirth:plant_item_mustardwillow",
+          "functions": [
+            { "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 3.0, "max": 6.0 } }
+          ]
+        }
+      ],
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:plant_tall_cd4", "properties": { "half": "upper" } }
+      ]
+    }
+  ]
+}

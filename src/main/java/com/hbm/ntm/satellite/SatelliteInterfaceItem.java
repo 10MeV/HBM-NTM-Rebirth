@@ -1,11 +1,9 @@
 package com.hbm.ntm.satellite;
 
 import com.hbm.ntm.network.HbmCoordinateActionReceiver;
-import com.hbm.ntm.network.HbmNetworkActions;
 import com.hbm.ntm.network.ModMessages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -35,20 +33,15 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        // 1.7.10 exposed only EntityPlayer#getHeldItem(): both satellite remotes were
+        // consequently main-hand-only. Do not turn the 1.20 off hand into a second,
+        // source-less remote-control channel.
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResultHolder.pass(stack);
+        }
         if (level.isClientSide) {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
                     com.hbm.ntm.client.SatelliteScreenBridge.open(hand, mode));
-        }
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-            Satellite satellite = SatelliteSavedData.get(serverPlayer.serverLevel()).getSatellite(getFrequency(stack));
-            if (satellite == null) {
-                serverPlayer.displayClientMessage(Component.translatable("satchip.no_satellite"), true);
-            } else {
-                serverPlayer.displayClientMessage(Component.translatable(
-                        mode == Mode.COORD ? "satchip.coord.ready" : "satchip.interface.ready",
-                        satellite.legacyName(),
-                        getFrequency(stack)), true);
-            }
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
@@ -57,7 +50,7 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         super.inventoryTick(stack, level, entity, slot, selected);
         if (level.isClientSide || !(entity instanceof ServerPlayer player) || player.tickCount % 2 != 0
-                || !isHeldStack(player, stack, selected)) {
+                || !isLegacyHeldMainHandStack(player, stack)) {
             return;
         }
         Satellite satellite = SatelliteSavedData.get(player.serverLevel()).getSatellite(getFrequency(stack));
@@ -74,6 +67,21 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
     @Override
     public boolean canReceiveCoordinateAction(ServerPlayer player, ItemStack stack, BlockPos pos, int action, int value,
                                               int frequency, CompoundTag data) {
+        // SatCoordPacket and SatLaserPacket both checked p.getHeldItem() in the
+        // legacy handler. Keep the packet boundary aligned with the tick-sync and
+        // right-click boundaries above; the packet intentionally does not constrain
+        // PANEL versus COORD mode because the legacy packets did not either.
+        if (!isLegacyHeldMainHandStack(player, stack)) {
+            return false;
+        }
+        // The common 1.20 packet has an extensible action field, whereas the
+        // legacy satellite boundary had exactly two distinct packet types:
+        // SatCoordPacket and SatLaserPacket.  Do not let an unrelated action
+        // fall through to the coordinate path merely because this item happens
+        // to be held.
+        if (action != ACTION_COORD && action != ACTION_LASER) {
+            return false;
+        }
         if (frequency != getFrequency(stack)) {
             return false;
         }
@@ -91,23 +99,30 @@ public class SatelliteInterfaceItem extends SatelliteChipItem implements HbmCoor
         if (satellite == null) {
             return;
         }
-        if (isLaserAction(action, data)) {
-            satellite.tryClick(player.serverLevel(), pos.getX(), pos.getZ());
+        if (action == ACTION_LASER) {
+            // SatLaserPacket dispatched the legacy virtual directly.  The
+            // modern tryClick helper is intentionally only an opt-in result
+            // API for built-in satellites; using it here would silently skip
+            // a source-compatible public satellite that overrides onClick.
+            satellite.onClick(player.serverLevel(), pos.getX(), pos.getZ());
             return;
         }
-        satellite.tryCoordAction(player.serverLevel(), player, pos.getX(), pos.getY(), pos.getZ());
+        // Same contract as SatCoordPacket: retain the public onCoordAction
+        // dispatch point rather than requiring a non-legacy try... override.
+        satellite.onCoordAction(player.serverLevel(), player, pos.getX(), pos.getY(), pos.getZ());
     }
 
     public Mode mode() {
         return mode;
     }
 
-    private static boolean isLaserAction(int action, CompoundTag data) {
-        return action == ACTION_LASER || data.getBoolean("laser")
-                || HbmNetworkActions.SATELLITE_LASER.toString().equals(data.getString("actionType"));
-    }
-
-    private static boolean isHeldStack(Player player, ItemStack stack, boolean selected) {
-        return selected || player.getMainHandItem() == stack || player.getOffhandItem() == stack;
+    /**
+     * {@code ItemSatInterface#onUpdate} used {@code EntityPlayer#getHeldItem()}, which was
+     * the sole main-hand stack in 1.7.10.  The panel snapshot is therefore intentionally not
+     * refreshed for a modern off-hand copy or merely because an inventory callback marks a
+     * stack selected.
+     */
+    private static boolean isLegacyHeldMainHandStack(Player player, ItemStack stack) {
+        return player.getMainHandItem() == stack;
     }
 }

@@ -1,5 +1,6 @@
 package com.hbm.ntm.entity.cart;
 
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -22,6 +23,11 @@ public abstract class NtmMinecartEntity extends Minecart {
 
     protected NtmMinecartEntity(EntityType<? extends NtmMinecartEntity> type, Level level) {
         super(type, level);
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     protected NtmMinecartEntity(EntityType<? extends NtmMinecartEntity> type, Level level,

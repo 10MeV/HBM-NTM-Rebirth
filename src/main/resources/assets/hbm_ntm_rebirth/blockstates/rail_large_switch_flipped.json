@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hbm_ntm_rebirth:block/rail_large_switch_flipped_north" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/rail_large_switch_flipped_south" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/rail_large_switch_flipped_east" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/rail_large_switch_flipped_west" }
+  }
+}

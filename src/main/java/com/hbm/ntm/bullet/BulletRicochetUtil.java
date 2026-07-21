@@ -1,10 +1,11 @@
 package com.hbm.ntm.bullet;
 
 import com.hbm.ntm.block.ShotDetonatableBlock;
+import com.hbm.ntm.block.DecoCrtBlock;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -128,8 +129,9 @@ public final class BulletRicochetUtil {
         }
         boolean detonated = state.getBlock() instanceof ShotDetonatableBlock detonatable
                 && detonatable.detonateFromShot(level, hitBlock, state, source);
-        if ("deco_crt".equals(BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath())) {
-            // The modern bulk legacy CRT block is not yet registered as a metadata-preserving deco_crt.
+        if (state.is(ModBlocks.DECO_CRT.get())) {
+            // 1.7.10 BulletConfig: meta % 4 + 4.  This preserves horizontal rotation and selects "broken".
+            level.setBlock(hitBlock, state.setValue(DecoCrtBlock.VARIANT, 1), Block.UPDATE_ALL);
             return new ShredderBlockTouch(false, detonated);
         }
         return new ShredderBlockTouch(false, detonated);

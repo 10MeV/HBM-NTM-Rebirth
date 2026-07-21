@@ -3,6 +3,7 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.FluidDuctPaintableExhaustBlock;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
+import com.hbm.ntm.block.RedCablePaintableBlock;
 import com.hbm.ntm.blockentity.FluidPipeBlockEntity;
 import com.hbm.ntm.blockentity.PaintableDuctBlockEntity;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
@@ -25,13 +26,15 @@ public class FluidDuctPaintableRenderer<T extends BlockEntity & PaintableDuctBlo
     private static final TextureAtlasSprite DUCT_EXHAUST_BASE = sprite("fluid_duct_paintable_block_exhaust");
     private static final TextureAtlasSprite DUCT_OVERLAY = sprite("fluid_duct_paintable_overlay");
     private static final TextureAtlasSprite DUCT_COLOR_OVERLAY = sprite("fluid_duct_paintable_color");
+    private static final TextureAtlasSprite RED_CABLE_BASE = sprite("red_cable_base");
+    private static final TextureAtlasSprite RED_CABLE_OVERLAY = sprite("red_cable_overlay");
 
     public FluidDuctPaintableRenderer(BlockEntityRendererProvider.Context context) {
     }
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -55,8 +58,11 @@ public class FluidDuctPaintableRenderer<T extends BlockEntity & PaintableDuctBlo
             int modelLight = LegacyRenderLighting.resolveMultiblockLight(duct, packedLight);
             BlockState painted = duct.getPaintedState();
             boolean exhaust = state.getBlock() instanceof FluidDuctPaintableExhaustBlock;
-            boolean overlay = state.hasProperty(com.hbm.ntm.block.FluidDuctPaintableBlock.OVERLAY)
-                    && state.getValue(com.hbm.ntm.block.FluidDuctPaintableBlock.OVERLAY);
+            boolean redCable = state.getBlock() instanceof RedCablePaintableBlock;
+            boolean overlay = (state.hasProperty(com.hbm.ntm.block.FluidDuctPaintableBlock.OVERLAY)
+                    && state.getValue(com.hbm.ntm.block.FluidDuctPaintableBlock.OVERLAY))
+                    || (state.hasProperty(RedCablePaintableBlock.OVERLAY)
+                    && state.getValue(RedCablePaintableBlock.OVERLAY));
 
             poseStack.pushPose();
             if (painted != null) {
@@ -70,8 +76,11 @@ public class FluidDuctPaintableRenderer<T extends BlockEntity & PaintableDuctBlo
             } else {
                 LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(
                         poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_CULL, 255);
-                renderCube(exhaust ? DUCT_EXHAUST_BASE : DUCT_BASE, batch, modelLight, packedOverlay);
-                if (!exhaust) {
+                renderCube(redCable ? RED_CABLE_BASE : exhaust ? DUCT_EXHAUST_BASE : DUCT_BASE,
+                        batch, modelLight, packedOverlay);
+                if (redCable && overlay) {
+                    renderCube(RED_CABLE_OVERLAY, batch, modelLight, packedOverlay);
+                } else if (!exhaust) {
                     int color = duct instanceof FluidPipeBlockEntity pipe ? pipe.getFluidType().getColor() : 0xFFFFFF;
                     renderCube(DUCT_COLOR_OVERLAY, batch, modelLight, packedOverlay, color);
                 }

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["P", "S", "B"],
+  "key": {
+    "P": { "tag": "forge:plates/aluminium" },
+    "S": { "item": "hbm_ntm_rebirth:steel_scaffold" },
+    "B": { "item": "hbm_ntm_rebirth:steel_beam" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:seg_10" }
+}

@@ -5,6 +5,8 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergyHandler;
+import com.hbm.ntm.energy.HbmEnergyNode;
+import com.hbm.ntm.energy.HbmNetworkNode;
 import com.hbm.ntm.energy.HbmEnergyProvider;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergySideMode;
@@ -18,7 +20,9 @@ import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -314,6 +318,18 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
     @Override
     protected HbmEnergyReceiver getNetworkEnergyReceiver() {
         return bigEnergy;
+    }
+
+    @Override
+    protected HbmEnergyNode createEnergyNode() {
+        Set<BlockPos> positions = new LinkedHashSet<>();
+        Set<HbmNetworkNode.NodeConnection> connections = new LinkedHashSet<>();
+        for (HbmEnergyUtil.EnergyPort port : getEnergyPorts()) {
+            BlockPos connectorPos = port.conductorPos(worldPosition);
+            positions.add(connectorPos.relative(port.direction().getOpposite()).immutable());
+            connections.add(new HbmNetworkNode.NodeConnection(connectorPos, port.direction()));
+        }
+        return HbmEnergyNode.withConnectionPoints(positions, connections);
     }
 
     @Override

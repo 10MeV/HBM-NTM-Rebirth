@@ -57,6 +57,7 @@ import com.hbm.ntm.fluid.HbmFluidTraitConfig;
 import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.itempool.HbmItemPoolRegistry;
+import com.hbm.ntm.item.Ni4NiGunItem;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.LegacyDimensionIdNetwork;
 import com.hbm.ntm.network.LegacyNetworkDispatcher;
@@ -104,9 +105,11 @@ import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SatelliteSavedData;
 import com.hbm.ntm.uninos.HbmNodespace;
 import com.hbm.ntm.uninos.HbmUninosDiagnostics;
+import com.hbm.ntm.uninos.HbmUninosNodespaces;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNodespace;
 import com.hbm.ntm.util.HbmLegacyLootUtil;
 import com.hbm.ntm.util.HbmMachinePerformanceCounters;
+import com.hbm.ntm.util.HbmRegistryUtil;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -263,6 +266,10 @@ public final class ModCommands {
         dispatcher.register(legacyPacketThreadingCommand("ntmpackets"));
         dispatcher.register(legacyPacketThreadingCommand("ntmpacket"));
         dispatcher.register(legacySatelliteCommand("ntmsatellites"));
+        dispatcher.register(legacyCustomizeCommand());
+        dispatcher.register(Commands.literal("ntmreapnetworks")
+                .requires(source -> source.hasPermission(2))
+                .executes(context -> reapUninosNetworks(context.getSource())));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> satelliteCommand() {
@@ -1856,6 +1863,56 @@ public final class ModCommands {
         return frequency;
     }
 
+    private static LiteralArgumentBuilder<CommandSourceStack> legacyCustomizeCommand() {
+        return Commands.literal("ntmcustomize")
+                .executes(context -> customizeNi4Ni(context.getSource(), List.of()))
+                .then(Commands.argument("args", StringArgumentType.greedyString())
+                        .executes(context -> customizeNi4Ni(context.getSource(),
+                                splitLegacyCustomizeArgs(StringArgumentType.getString(context, "args")))));
+    }
+
+    private static List<String> splitLegacyCustomizeArgs(String rawArgs) {
+        String trimmed = rawArgs.trim();
+        return trimmed.isEmpty() ? List.of() : Arrays.asList(trimmed.split("\\s+"));
+    }
+
+    private static int customizeNi4Ni(CommandSourceStack source, List<String> args) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.literal("Customization is only available to players!"));
+            return 0;
+        }
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof Ni4NiGunItem)) {
+            source.sendFailure(Component.literal("You have to hold a customizable item to use this command!"));
+            return 0;
+        }
+        if (args.isEmpty()) {
+            Ni4NiGunItem.resetColors(stack);
+            source.sendSuccess(() -> Component.literal("Colors reset!").withStyle(ChatFormatting.GREEN), false);
+            return 1;
+        }
+        if (args.size() != 3) {
+            Ni4NiGunItem.resetColors(stack);
+            source.sendFailure(Component.literal("Requires three hexadecimal colors!"));
+            return 0;
+        }
+        try {
+            int dark = Integer.parseInt(args.get(0), 16);
+            int light = Integer.parseInt(args.get(1), 16);
+            int grip = Integer.parseInt(args.get(2), 16);
+            if (dark < 0 || dark > 0xFFFFFF || light < 0 || light > 0xFFFFFF || grip < 0 || grip > 0xFFFFFF) {
+                source.sendFailure(Component.literal("Colors must range from 0 to FFFFFF!"));
+                return 0;
+            }
+            Ni4NiGunItem.setColors(stack, dark, light, grip);
+            source.sendSuccess(() -> Component.literal("Colors set!").withStyle(ChatFormatting.GREEN), false);
+            return 1;
+        } catch (Throwable exception) {
+            source.sendFailure(Component.literal(exception.getLocalizedMessage()));
+            return 0;
+        }
+    }
+
     private static LiteralArgumentBuilder<CommandSourceStack> legacyPacketThreadingCommand(String name) {
         return Commands.literal(name)
                 .requires(source -> source.hasPermission(2))
@@ -2556,7 +2613,9 @@ public final class ModCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> networkCommand() {
         return Commands.literal("network")
                 .then(Commands.literal("uninos")
-                        .executes(context -> getUninosNodespace(context.getSource())))
+                        .executes(context -> getUninosNodespace(context.getSource()))
+                        .then(Commands.literal("reap")
+                                .executes(context -> reapUninosNetworks(context.getSource()))))
                 .then(Commands.literal("pneumatic")
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                 .executes(context -> getPneumaticNetwork(
@@ -4637,7 +4696,7 @@ public final class ModCommands {
                 + "; " + warheadDiagnostics.summary()), false);
         source.sendSuccess(() -> Component.literal("Turret target hooks are registered for future turret consumers; "
                 + "they do not target entities until a migrated turret uses them."), false);
-        source.sendSuccess(() -> Component.literal("Custom warhead impact hooks are consumed by CustomMissileExplosion CUSTOM0..CUSTOM9."), false);
+        source.sendSuccess(() -> Component.literal("Custom warhead hooks are frozen source facades; CUSTOM0..CUSTOM9 remain inert."), false);
         return turretDiagnostics.totalRegistrations() + warheadDiagnostics.totalRegistrations();
     }
 
@@ -4907,6 +4966,26 @@ public final class ModCommands {
         return totals.uniqueNodes();
     }
 
+    private static int reapUninosNetworks(CommandSourceStack source) {
+        int nodes = 0;
+        int networks = 0;
+        for (ServerLevel level : source.getServer().getAllLevels()) {
+            HbmUninosDiagnostics.Totals totals = HbmUninosDiagnostics.totals(level);
+            HbmEnergyNodespace.Diagnostics energy = HbmEnergyNodespace.getDiagnostics(level);
+            HbmFluidNodespace.Diagnostics fluid = HbmFluidNodespace.getDiagnostics(level);
+            nodes += totals.uniqueNodes() + energy.uniqueNodes() + fluid.uniqueNodes();
+            networks += totals.networks() + energy.networks() + fluid.networks();
+            HbmUninosNodespaces.reapLevel(level);
+            HbmEnergyNodespace.reapLevel(level);
+            HbmFluidNodespace.reapLevel(level);
+        }
+        int clearedNodes = nodes;
+        int clearedNetworks = networks;
+        source.sendSuccess(() -> Component.literal("UNINOS nodespaces cleared: nodes=" + clearedNodes
+                + " networks=" + clearedNetworks), true);
+        return clearedNodes;
+    }
+
     private static int getPneumaticNetwork(CommandSourceStack source, BlockPos pos) {
         PneumaticNodespace.NetworkDebugSnapshot snapshot = PneumaticNodespace.getNetworkDebugSnapshot(source.getLevel(), pos);
         if (!snapshot.nodePresent()) {
@@ -5160,11 +5239,12 @@ public final class ModCommands {
                 continue;
             }
             families++;
-            java.util.Map<Integer, RegistryObject<Item>> mappedItems = LegacyMetaItemMappings.mappingsByMeta().getOrDefault(legacyId, java.util.Map.of());
+            java.util.Map<Integer, ItemStack> mappedItems = LegacyMetaItemMappings.stacksByMeta(legacyId, 1);
             variants += mappedItems.size();
             source.sendSuccess(() -> Component.literal("Legacy meta " + legacyId + " variants=" + mappedItems.size()), false);
-            for (java.util.Map.Entry<Integer, RegistryObject<Item>> entry : mappedItems.entrySet()) {
-                source.sendSuccess(() -> Component.literal(" - " + entry.getKey() + " -> " + entry.getValue().getId()), false);
+            for (java.util.Map.Entry<Integer, ItemStack> entry : mappedItems.entrySet()) {
+                source.sendSuccess(() -> Component.literal(" - " + entry.getKey() + " -> "
+                        + HbmRegistryUtil.itemKey(entry.getValue().getItem())), false);
             }
         }
         int totalFamilies = families;

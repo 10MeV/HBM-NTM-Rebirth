@@ -1,6 +1,7 @@
 package com.hbm.ntm.item.missile;
 
 import com.hbm.ntm.api.entity.LegacyMissileRadarProfile;
+import com.hbm.ntm.item.LegacyLoreItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -14,7 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class MissileItem extends Item {
+public class MissileItem extends LegacyLoreItem {
     private final FormFactor formFactor;
     private final Tier tier;
     private final Fuel fuel;
@@ -47,11 +48,11 @@ public class MissileItem extends Item {
                     .withStyle(ChatFormatting.RED));
             return;
         }
-        tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.missile.fuel", fuel.display())
-                .withStyle(fuel.color()));
+        tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.missile.fuel", fuel.display()));
         if (fuelCap > 0) {
             tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.missile.fuel_capacity", fuelCap));
         }
+        super.appendHoverText(stack, level, tooltip, flag);
     }
 
     @Override
@@ -167,7 +168,7 @@ public class MissileItem extends Item {
         }
 
         public Component display() {
-            return Component.translatable(translationKey);
+            return Component.translatable(translationKey).withStyle(color);
         }
 
         public ChatFormatting color() {

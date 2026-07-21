@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "misc",
+  "pattern": [" P ", "KDK", " P "],
+  "key": {
+    "P": { "tag": "forge:welded_plates/titanium" },
+    "K": { "type": "hbm_ntm_rebirth:fluid_container", "fluid": "hbm_ntm_rebirth:kerosene", "amount": 1000 },
+    "D": { "type": "hbm_ntm_rebirth:drone_variant", "variant": "patrol_chunkloading" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:drone", "nbt": "{droneType:\"patrol_express_chunkloading\"}" }
+}

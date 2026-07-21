@@ -6,7 +6,7 @@ public enum RebarNetworkProvider implements HbmNetworkProvider<RebarNode, RebarN
     THE_PROVIDER;
 
     @Override
-    public RebarNetwork provideNetwork(RebarNode seedNode) {
+    public RebarNetwork provideNetwork() {
         return new RebarNetwork();
     }
 }

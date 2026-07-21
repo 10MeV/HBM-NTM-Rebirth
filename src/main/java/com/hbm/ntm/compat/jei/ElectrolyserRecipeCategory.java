@@ -20,7 +20,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public final class ElectrolyserRecipeCategory implements HbmJeiRecipeCategory<ElectrolyserRecipeRuntime.DisplayRecipe> {
+    enum Mode {
+        FLUID,
+        METAL
+    }
+
     private final RecipeType<ElectrolyserRecipeRuntime.DisplayRecipe> type;
+    private final Mode mode;
     private final IDrawable icon;
     private final IDrawableStatic background;
     private final IDrawableStatic slotBackground;
@@ -28,8 +34,9 @@ public final class ElectrolyserRecipeCategory implements HbmJeiRecipeCategory<El
     private final ItemStack catalyst;
 
     ElectrolyserRecipeCategory(RecipeType<ElectrolyserRecipeRuntime.DisplayRecipe> type,
-            ItemLike catalyst, IGuiHelper guiHelper) {
+            Mode mode, ItemLike catalyst, IGuiHelper guiHelper) {
         this.type = type;
+        this.mode = mode;
         this.icon = guiHelper.createDrawableItemLike(catalyst);
         this.background = LegacyNeiUniversalLayout.background(guiHelper);
         this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
@@ -70,7 +77,7 @@ public final class ElectrolyserRecipeCategory implements HbmJeiRecipeCategory<El
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, ElectrolyserRecipeRuntime.DisplayRecipe recipe,
             IFocusGroup focuses) {
-        if (recipe.isFluid()) {
+        if (mode == Mode.FLUID) {
             FluidRecipe fluid = recipe.fluid();
             LegacyNeiUniversalLayout.addInputSlots(builder, slotBackground,
                     List.of(List.of(fluidIcon(fluid.input(), fluid.amount()))));

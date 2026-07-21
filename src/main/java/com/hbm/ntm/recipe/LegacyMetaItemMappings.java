@@ -12,6 +12,7 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +37,7 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation CHUNK_ORE = hbm("chunk_ore");
     public static final ResourceLocation PLANT_ITEM = hbm("plant_item");
     public static final ResourceLocation PLANT_FLOWER = hbm("plant_flower");
+    public static final ResourceLocation PLANT_TALL = hbm("plant_tall");
     public static final ResourceLocation PARTS_LEGENDARY = hbm("parts_legendary");
     public static final ResourceLocation PART_GENERIC = hbm("part_generic");
     public static final ResourceLocation ITEM_EXPENSIVE = hbm("item_expensive");
@@ -359,9 +361,6 @@ public final class LegacyMetaItemMappings {
         registerSparse(AMMO_SECRET, Map.of(
                 0, requireLegacyItem("ammo_secret_folly_sm"),
                 1, requireLegacyItem("ammo_secret_folly_nuke"),
-                2, requireLegacyItem("ammo_secret_m44_equestrian"),
-                3, requireLegacyItem("ammo_secret_g12_equestrian"),
-                4, requireLegacyItem("ammo_secret_bmg50_equestrian"),
                 5, requireLegacyItem("ammo_secret_p35_800"),
                 6, requireLegacyItem("ammo_secret_bmg50_black"),
                 7, requireLegacyItem("ammo_secret_p35_800_bl")));
@@ -458,9 +457,25 @@ public final class LegacyMetaItemMappings {
         registerList(ARC_ELECTRODE, ModItems.ARC_ELECTRODE_ITEMS.subList(0, 4));
         registerList(ARC_ELECTRODE_BURNT, ModItems.ARC_ELECTRODE_ITEMS.subList(4, 8));
         registerList(PA_COIL, ModItems.PA_COIL_ITEMS);
-        registerSparse(HOLOTAPE_IMAGE, Map.of(
-                0, requireLegacyItem("holotape_image_digamma"),
-                1, requireLegacyItem("holotape_image_restored")));
+        registerSparse(HOLOTAPE_IMAGE, Map.ofEntries(
+                Map.entry(0, requireLegacyItem("holotape_image_digamma")),
+                Map.entry(1, requireLegacyItem("holotape_image_restored")),
+                Map.entry(2, requireLegacyItem("holotape_image_fe_hall")),
+                Map.entry(3, requireLegacyItem("holotape_image_fe_corridor")),
+                Map.entry(4, requireLegacyItem("holotape_image_fe_server")),
+                Map.entry(5, requireLegacyItem("holotape_image_feh_dome")),
+                Map.entry(6, requireLegacyItem("holotape_image_feh_boat")),
+                Map.entry(7, requireLegacyItem("holotape_image_feh_lsc")),
+                Map.entry(8, requireLegacyItem("holotape_image_f3_rc")),
+                Map.entry(9, requireLegacyItem("holotape_image_f3_iv")),
+                Map.entry(10, requireLegacyItem("holotape_image_f3_wm")),
+                Map.entry(11, requireLegacyItem("holotape_image_nv_crater")),
+                Map.entry(12, requireLegacyItem("holotape_image_nv_divide")),
+                Map.entry(13, requireLegacyItem("holotape_image_nv_bm")),
+                Map.entry(14, requireLegacyItem("holotape_image_o_1")),
+                Map.entry(15, requireLegacyItem("holotape_image_o_2")),
+                Map.entry(16, requireLegacyItem("holotape_image_o_3")),
+                Map.entry(17, requireLegacyItem("holotape_image_challenge"))));
         register(ROD_ZIRNOX,
                 requireLegacyItem("rod_zirnox_natural_uranium_fuel"),
                 requireLegacyItem("rod_zirnox_uranium_fuel"),
@@ -525,6 +540,14 @@ public final class LegacyMetaItemMappings {
             return Optional.empty();
         }
         return Optional.ofNullable(variants.get(legacyMeta));
+    }
+
+    /**
+     * Returns whether the old item ID/meta pair has a modern counterpart. Unlike {@link #item(ResourceLocation, int)},
+     * this also covers old vanilla metadata which has no {@link RegistryObject} carrier in the port.
+     */
+    public static boolean hasMapping(ResourceLocation legacyId, int legacyMeta) {
+        return vanillaStack(legacyId, legacyMeta, 1).isPresent() || item(legacyId, legacyMeta).isPresent();
     }
 
     public static RegistryObject<Item> requireItem(ResourceLocation legacyId, int legacyMeta) {
@@ -616,6 +639,10 @@ public final class LegacyMetaItemMappings {
     }
 
     public static Optional<ItemLike> itemLike(ResourceLocation legacyId, int legacyMeta) {
+        Optional<ItemStack> vanillaStack = vanillaStack(legacyId, legacyMeta, 1);
+        if (vanillaStack.isPresent()) {
+            return Optional.of(vanillaStack.get().getItem());
+        }
         return item(legacyId, legacyMeta).map(RegistryObject::get);
     }
 
@@ -625,7 +652,8 @@ public final class LegacyMetaItemMappings {
     }
 
     public static int variantCount(ResourceLocation legacyId) {
-        return variants(legacyId).size();
+        Map<Integer, ItemLike> vanillaVariants = VANILLA_META_VARIANTS.get(legacyId);
+        return vanillaVariants != null ? vanillaVariants.size() : variants(legacyId).size();
     }
 
     public static boolean isDamageValueBacked(ResourceLocation legacyId) {
@@ -645,7 +673,29 @@ public final class LegacyMetaItemMappings {
     }
 
     public static Set<ResourceLocation> legacyIds() {
-        return Collections.unmodifiableSet(ITEM_VARIANTS.keySet());
+        LinkedHashSet<ResourceLocation> ids = new LinkedHashSet<>(VANILLA_META_VARIANTS.keySet());
+        ids.addAll(ITEM_VARIANTS.keySet());
+        return Collections.unmodifiableSet(ids);
+    }
+
+    /**
+     * Returns resolved modern stacks keyed by their original metadata. This is the carrier-neutral view for commands,
+     * diagnostics and importers; {@link #mappingsByMeta()} intentionally remains a RegistryObject-only compatibility API.
+     */
+    public static Map<Integer, ItemStack> stacksByMeta(ResourceLocation legacyId, int count) {
+        Map<Integer, ItemLike> vanillaVariants = VANILLA_META_VARIANTS.get(legacyId);
+        LinkedHashMap<Integer, ItemStack> stacks = new LinkedHashMap<>();
+        if (vanillaVariants != null) {
+            vanillaVariants.keySet().stream().sorted()
+                    .forEach(meta -> vanillaStack(legacyId, meta, count).ifPresent(stack -> stacks.put(meta, stack)));
+        } else {
+            Map<Integer, RegistryObject<Item>> variants = ITEM_VARIANTS.get(legacyId);
+            if (variants != null) {
+                variants.keySet().stream().sorted()
+                        .forEach(meta -> stack(legacyId, meta, count).ifPresent(stack -> stacks.put(meta, stack)));
+            }
+        }
+        return Collections.unmodifiableMap(stacks);
     }
 
     public static Map<ResourceLocation, List<RegistryObject<Item>>> mappings() {

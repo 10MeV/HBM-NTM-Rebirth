@@ -402,7 +402,13 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void refreshFluidPorts() {
-        refreshTrackedTransceiverFluidPorts(inputTank, outputTank, this);
+        // TileEntityMachineCompressorBase#updateConnections only renewed its
+        // Fluid Mk2 input on the world-time twenty-tick boundary. Its output
+        // tryProvide loop, however, ran on every server tick.
+        if (level != null && level.getGameTime() % 20L == 0L) {
+            refreshTrackedReceiverFluidPorts(inputTank, this);
+        }
+        refreshTrackedProviderFluidPorts(outputTank, this);
     }
 
     @Override
@@ -411,8 +417,18 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
         return compressorEnergyPortsForState();
+    }
+
+    @Override
+    protected boolean usesLegacyTwentyTickEnergyPortSubscriptionCadence() {
+        return true;
     }
 
     @Override

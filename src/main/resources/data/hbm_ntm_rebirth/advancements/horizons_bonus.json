@@ -1,0 +1,23 @@
+{
+  "parent": "hbm_ntm_rebirth:horizons_end",
+  "display": {
+    "icon": {
+      "item": "hbm_ntm_rebirth:sat_gerald"
+    },
+    "title": {
+      "translate": "advancements.hbm_ntm_rebirth.horizons_bonus.title"
+    },
+    "description": {
+      "translate": "advancements.hbm_ntm_rebirth.horizons_bonus.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "triggered": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

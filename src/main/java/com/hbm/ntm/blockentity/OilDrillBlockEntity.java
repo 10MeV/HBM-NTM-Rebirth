@@ -290,6 +290,23 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityOilDrillBase#updateEntity called updateConnections and sent both non-empty output
+        // tanks every server tick. TileEntityMachineFrackingTower extends that path and adds its
+        // FRACKSOL typed receiver in updateConnections, so all three concrete drill variants retry
+        // their source-backed remote fluid endpoints on the next tick after a duct replacement.
+        return true;
+    }
+
+    @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        // TileEntityOilDrillBase#updateEntity calls updateConnections on every
+        // server tick; its parent implementation retries each remote Energy Mk2
+        // receiver before the Oil Well/Pumpjack/Fracking processing pass.
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         if (kind == Kind.PUMPJACK) {
             Direction dir = facing();

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:plate_cast_titanium" },
+    "R": { "tag": "forge:ingots/rubber" },
+    "T": { "tag": "forge:plates/titanium" }
+  },
+  "pattern": ["T T", "TCT", "RRR"],
+  "result": { "item": "hbm_ntm_rebirth:envsuit_plate" },
+  "show_notification": true
+}

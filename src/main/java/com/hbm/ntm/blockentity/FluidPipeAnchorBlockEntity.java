@@ -55,10 +55,14 @@ public class FluidPipeAnchorBlockEntity extends FluidPipeBlockEntity {
         positions.add(worldPosition.immutable());
 
         Set<HbmNetworkNode.NodeConnection> connections = new LinkedHashSet<>();
+        // TileEntityPipeAnchor keeps an UNKNOWN DirPos at its own block in
+        // addition to the metadata-facing physical endpoint and any anchors.
+        connections.add(HbmNetworkNode.NodeConnection.point(worldPosition));
         Direction attachedSide = FluidPipeAnchorBlock.attachedSide(getBlockState());
-        if (level != null && HbmFluidConnectionUtil.canConnect(level, worldPosition, getFluidType(), this, attachedSide)) {
-            connections.add(new HbmNetworkNode.NodeConnection(worldPosition.relative(attachedSide), attachedSide));
-        }
+        // TileEntityPipeAnchor#createNode always adds its metadata-facing
+        // DirPos.  The nodespace's reciprocal check decides whether a real
+        // neighbour is present, so creation must not prune this endpoint.
+        connections.add(new HbmNetworkNode.NodeConnection(worldPosition.relative(attachedSide), attachedSide));
         for (BlockPos remote : remoteConnections) {
             connections.add(HbmNetworkNode.NodeConnection.direct(remote, worldPosition));
         }

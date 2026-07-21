@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "ingredients": [
+    { "tag": "forge:any/tar" },
+    { "type": "hbm_ntm_rebirth:fluid_container", "fluid": "hbm_ntm_rebirth:water", "amount": 1000 },
+    { "item": "minecraft:white_dye" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:bdcl" }
+}

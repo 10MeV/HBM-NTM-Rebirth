@@ -2,7 +2,6 @@ package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.SatelliteLinkerMenu;
-import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -22,8 +21,8 @@ public class SatelliteLinkerScreen extends AbstractContainerScreen<SatelliteLink
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        renderInfoIcon(graphics, leftPos - 16, topPos + 36, 2);
-        renderInfoIcon(graphics, leftPos - 16, topPos + 52, 3);
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 36, 2);
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 52, 3);
     }
 
     @Override
@@ -36,21 +35,17 @@ public class SatelliteLinkerScreen extends AbstractContainerScreen<SatelliteLink
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(-16, 36, 16, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, List.of(
-                    Component.translatable("container.hbm_ntm_rebirth.sat_linker.copy.0"),
-                    Component.translatable("container.hbm_ntm_rebirth.sat_linker.copy.1")
-            ).stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
-        } else if (isHovering(-16, 52, 16, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, List.of(
-                    Component.translatable("container.hbm_ntm_rebirth.sat_linker.randomize.0"),
-                    Component.translatable("container.hbm_ntm_rebirth.sat_linker.randomize.1")
-            ).stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
-        }
+        // GUIMachineSatLinker used GuiInfoContainer#drawCustomInfoStat for
+        // both icons: the legacy panel and its tooltip are deliberately
+        // anchored at guiLeft - 8, guiTop + 52 rather than at the cursor.
+        LegacyGuiElements.renderCustomInfoStat(graphics, font, mouseX, mouseY,
+                leftPos - 16, topPos + 36, 16, 16, leftPos - 8, topPos + 52,
+                Component.translatable("container.hbm_ntm_rebirth.sat_linker.copy.0"),
+                Component.translatable("container.hbm_ntm_rebirth.sat_linker.copy.1"));
+        LegacyGuiElements.renderCustomInfoStat(graphics, font, mouseX, mouseY,
+                leftPos - 16, topPos + 52, 16, 16, leftPos - 8, topPos + 52,
+                Component.translatable("container.hbm_ntm_rebirth.sat_linker.randomize.0"),
+                Component.translatable("container.hbm_ntm_rebirth.sat_linker.randomize.1"));
         renderTooltip(graphics, mouseX, mouseY);
-    }
-
-    private void renderInfoIcon(GuiGraphics graphics, int x, int y, int icon) {
-        graphics.blit(TEXTURE, x, y, 176, icon * 16, 16, 16);
     }
 }

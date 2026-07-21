@@ -68,6 +68,10 @@ public class RustedLaunchPadBlock extends LegacyXrMultiblockBlock implements Ent
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // Legacy BlockDummyable#standardOpenBehavior consumes sneaking use without opening its GUI.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof RustedLaunchPadBlockEntity launchPad) {
             NetworkHooks.openScreen(serverPlayer, launchPad, launchPad.getBlockPos());
@@ -115,6 +119,13 @@ public class RustedLaunchPadBlock extends LegacyXrMultiblockBlock implements Ent
     public VoxelShape getMultiblockShape(BlockState state, BlockGetter level, BlockPos corePos,
             CollisionContext context) {
         return SHAPE;
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        // LaunchPadRusted shares LaunchPad's BlockDummyable detailed selection
+        // contract rather than LegacyXrMultiblockBlock's inherited unit cube.
+        return getMultiblockShape(state, level, pos, context);
     }
 
     @Override

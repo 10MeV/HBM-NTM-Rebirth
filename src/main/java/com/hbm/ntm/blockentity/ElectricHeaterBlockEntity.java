@@ -59,6 +59,10 @@ public class ElectricHeaterBlockEntity extends HbmEnergyBlockEntity
         long oldPower = heater.energy.getPower();
 
         if (level.getGameTime() % 20L == 0L) {
+            // Legacy TileEntityHeaterElectric calls trySubscribe directly on
+            // every twentieth tick.  Its remote conductor may have been
+            // replaced without changing this machine's port signature.
+            heater.markEnergyPortSubscriptionsDirty();
             heater.subscribeEnergyReceiverToPorts();
         }
 

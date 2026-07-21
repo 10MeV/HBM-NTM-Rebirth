@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": { "item": "hbm_ntm_rebirth:cell_uf6" },
+    "T": { "item": "hbm_ntm_rebirth:powder_aluminium" },
+    "H": { "item": "hbm_ntm_rebirth:crystal_charred" }
+  },
+  "pattern": ["STS", "THT", "STS"],
+  "result": { "item": "hbm_ntm_rebirth:crystal_pulsar", "count": 32 }
+}

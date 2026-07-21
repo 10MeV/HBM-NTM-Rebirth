@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" P ", "HCH", " B "],
+  "key": {
+    "P": { "tag": "forge:ingots/any_plastic" },
+    "H": { "tag": "forge:pipes/steel" },
+    "C": { "tag": "forge:circuits/vacuum_tube" },
+    "B": { "tag": "forge:shells/steel" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:drone", "count": 2 }
+}

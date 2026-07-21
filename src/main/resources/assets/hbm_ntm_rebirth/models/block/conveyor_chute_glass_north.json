@@ -1,0 +1,8 @@
+{
+  "parent": "block/block",
+  "render_type": "minecraft:cutout",
+  "textures": { "top": "hbm_ntm_rebirth:block/grate_top", "side": "hbm_ntm_rebirth:block/grate_side" },
+  "elements": [
+    { "from": [4, 0, 2], "to": [12, 16, 2], "faces": { "down": { "texture": "#top" }, "up": { "texture": "#top" }, "north": { "texture": "#side" }, "south": { "texture": "#side" }, "west": { "texture": "#side" }, "east": { "texture": "#side" } } }
+  ]
+}

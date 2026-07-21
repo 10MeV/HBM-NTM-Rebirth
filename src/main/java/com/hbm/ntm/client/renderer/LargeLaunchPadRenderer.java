@@ -90,6 +90,13 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         poseStack.translate(0.0D, lift, 0.0D);
         ObjLaunchModels.renderMissileErectorPart(parts.erector(), parts.texture(), poseStack, buffer, packedLight,
                 packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+        // RenderLaunchPadLarge deliberately leaves the erector transform once the
+        // missile is upright.  The launched-ready preview stays vertical at the
+        // pad origin instead of inheriting the lift/pivot matrix used while loading.
+        if (launchPad.isErected()) {
+            poseStack.popPose();
+            poseStack.pushPose();
+        }
         if (!missile.isEmpty() && (launchPad.isErected() || launchPad.isReadyToLoad())) {
             poseStack.translate(0.0D, 2.0D, 0.0D);
             MissileItemRenderer.renderRawMissile(missile, poseStack, buffer, packedLight, packedOverlay);

@@ -342,11 +342,28 @@ public final class EntityDamageUtil {
     }
 
     public static void damageArmorNT(LivingEntity living, float amount) {
-        // Legacy 1.7.10 method body is intentionally empty.
+        com.hbm.ntm.damage.EntityDamageUtil.damageArmorNT(living, amount);
     }
 
     public static void damageArmorNt(LivingEntity living, float amount) {
         damageArmorNT(living, amount);
+    }
+
+    public static void knockBack(LivingEntity living, Entity attacker, float damage, double motionX, double motionZ,
+            double multiplier) {
+        com.hbm.ntm.damage.EntityDamageUtil.knockBack(living, attacker, damage, motionX, motionZ, multiplier);
+    }
+
+    public static float applyArmorCalculationsNT(LivingEntity living, DamageSource source, float amount) {
+        return com.hbm.ntm.damage.EntityDamageUtil.applyArmorCalculationsNT(living, source, amount);
+    }
+
+    public static float applyArmorCalculationsNt(LivingEntity living, DamageSource source, float amount) {
+        return com.hbm.ntm.damage.EntityDamageUtil.applyArmorCalculationsNt(living, source, amount);
+    }
+
+    public static void setBeenAttacked(LivingEntity living) {
+        com.hbm.ntm.damage.EntityDamageUtil.setBeenAttacked(living);
     }
 
     public static HitResult getMouseOver(Player attacker, double reach) {

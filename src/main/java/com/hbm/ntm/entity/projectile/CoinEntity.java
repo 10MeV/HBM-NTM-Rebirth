@@ -1,5 +1,6 @@
 package com.hbm.ntm.entity.projectile;
 
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import com.hbm.ntm.registry.ModEntityTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -10,6 +11,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -30,6 +32,23 @@ public class CoinEntity extends Entity {
 
     public CoinEntity(Level level) {
         this(ModEntityTypes.COIN.get(), level);
+    }
+
+    /**
+     * 1.7.10 EntityCoin used {@code posY} as the center of its one-block-high
+     * hitbox via {@code yOffset = 0.5F}. Keep that coordinate contract so the
+     * throw origin, flight ray and beam/coin interception all share the old
+     * visual center instead of treating it as a modern feet position.
+     */
+    @Override
+    protected AABB makeBoundingBox() {
+        return new AABB(getX() - 0.5D, getY() - 0.5D, getZ() - 0.5D,
+                getX() + 0.5D, getY() + 0.5D, getZ() + 0.5D);
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

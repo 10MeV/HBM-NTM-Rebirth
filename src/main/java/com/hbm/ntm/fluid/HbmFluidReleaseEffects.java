@@ -32,11 +32,17 @@ public final class HbmFluidReleaseEffects {
 
     public static ReleaseReport applyLegacyTraitRelease(Level level, BlockPos pos, FluidType fluid, int amountMb,
             FluidReleaseType releaseType) {
-        return collectEffects(fluid, amountMb, releaseType, true, level, pos, true, false, 1.0F);
+        // 1.7.10 FluidType#onFluidRelease is an empty per-fluid hook.  It does
+        // not iterate the attached FluidTrait instances: machines that need
+        // pollution call FT_Polluting.pollute(...) explicitly, while no legacy
+        // call site dispatches FT_VentRadiation through this hook.  Keep the
+        // compatibility carrier inert rather than turning every overflow into
+        // a new radiation emission.
+        return collectEffects(fluid, amountMb, releaseType, false, null, null, false, false, 0.0F);
     }
 
     public static ReleaseReport previewLegacyTraitRelease(FluidType fluid, int amountMb, FluidReleaseType releaseType) {
-        return collectEffects(fluid, amountMb, releaseType, false, null, null, true, false, 1.0F);
+        return collectEffects(fluid, amountMb, releaseType, false, null, null, false, false, 0.0F);
     }
 
     public static ReleaseReport applyLegacyPollutingRelease(Level level, BlockPos pos, FluidType fluid,

@@ -10,9 +10,7 @@ import com.hbm.ntm.satellite.Satellite;
 import com.hbm.ntm.satellite.SatelliteSavedData;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmInventoryUtil;
-import com.hbm.ntm.util.HbmItemStackUtil;
 import java.util.List;
-import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -50,7 +48,10 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == SLOT_CHIP && stack.getItem() instanceof ISatelliteChip;
+            // TileEntityMachineSatDock#isItemValidForSlot only checks the
+            // slot number.  ContainerSatDock supplies the separate manual
+            // ItemSatChip class boundary; the inventory itself stays generic.
+            return slot == SLOT_CHIP;
         }
 
         @Override
@@ -73,7 +74,11 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
 
         SatelliteSavedData data = SatelliteSavedData.get(serverLevel);
         ItemStack chip = dock.items.getStackInSlot(SLOT_CHIP);
-        if (chip.getItem() instanceof ISatelliteChip) {
+        // TileEntityMachineSatDock gates this path on a non-null slot, then
+        // calls ISatChip#getFreqS. That helper returns zero for an arbitrary
+        // non-chip stack, so direct inventory/NBT insertion can intentionally
+        // address a miner registered at frequency zero.
+        if (!chip.isEmpty()) {
             int frequency = ISatelliteChip.getFrequencyFromStack(chip);
             Satellite satellite = data.getCargoSatellite(frequency);
             if (satellite != null
@@ -91,19 +96,29 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
                 pos.getX() + 0.25D, pos.getY() + 0.75D, pos.getZ() + 0.25D,
                 pos.getX() + 0.75D, pos.getY() + 2.0D, pos.getZ() + 0.75D);
         for (MinerRocketEntity rocket : serverLevel.getEntitiesOfClass(MinerRocketEntity.class, landingBox)) {
-            if (chip.getItem() instanceof ISatelliteChip) {
-                int frequency = ISatelliteChip.getFrequencyFromStack(chip);
+            // ISatChip#getFreqS returns zero for a null slot as well as a
+            // non-chip stack.  The source only guards the mismatched-frequency
+            // explosion with a non-null chip; its unloading branch always
+            // reads that same helper, so a frequency-zero miner can unload
+            // after the chip was removed.
+            int frequency = ISatelliteChip.getFrequencyFromStack(chip);
+            if (!chip.isEmpty()) {
                 if (frequency != rocket.satelliteFrequency()) {
                     rocket.discard();
                     ExplosionNukeSmall.explode(serverLevel, pos.getX() + 0.5D, pos.getY() + 0.5D,
                             pos.getZ() + 0.5D, ExplosionNukeSmall.PARAMS_TOTS);
                     break;
                 }
-                if (rocket.mode() == MinerRocketEntity.MODE_UNLOADING && rocket.timer() == 50) {
-                    Satellite satellite = data.getCargoSatellite(frequency);
-                    if (satellite != null) {
-                        satellite.cargoPool().ifPresent(pool -> dock.unloadCargo(serverLevel, pool));
-                    }
+            }
+            if (rocket.mode() == MinerRocketEntity.MODE_UNLOADING && rocket.timer() == 50) {
+                // The source only tests for non-null here, then directly casts
+                // to SatelliteMiner. Do not reuse the launch-path cargo query:
+                // that query deliberately filters non-miners, while this legacy
+                // corrupted/mutated-state boundary throws ClassCastException.
+                Satellite satellite = data.getSatFromFreq(frequency);
+                if (satellite != null) {
+                    String pool = ((com.hbm.saveddata.satellites.SatelliteMiner) satellite).getCargo();
+                    dock.unloadCargo(serverLevel, pool);
                 }
             }
         }
@@ -139,11 +154,30 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
         if (stack.isEmpty()) {
             return;
         }
-        ItemStack remaining = HbmInventoryUtil.tryAddItemToExistingStacksUnchecked(items, 0,
-                OUTPUT_SLOT_COUNT - 1, stack);
-        if (!remaining.isEmpty()) {
-            HbmInventoryUtil.tryAddItemToFirstNewSlotUnchecked(items, 0, OUTPUT_SLOT_COUNT - 1,
-                    HbmItemStackUtil.carefulCopyWithSize(remaining, 1));
+        // TileEntityMachineSatDock#addToInv compares only item and metadata.
+        // In particular it neither compares nor preserves an incoming NBT payload:
+        // matching output keeps its existing NBT, while a new output is one bare item.
+        for (int slot = 0; slot < OUTPUT_SLOT_COUNT; slot++) {
+            ItemStack current = items.getStackInSlot(slot);
+            if (current.is(stack.getItem()) && current.getDamageValue() == stack.getDamageValue()
+                    && current.getCount() < current.getMaxStackSize()) {
+                int transferred = Math.min(current.getMaxStackSize() - current.getCount(), stack.getCount());
+                current.grow(transferred);
+                items.setStackInSlot(slot, current);
+                stack.shrink(transferred);
+                if (stack.isEmpty()) {
+                    return;
+                }
+            }
+        }
+
+        for (int slot = 0; slot < OUTPUT_SLOT_COUNT; slot++) {
+            if (items.getStackInSlot(slot).isEmpty()) {
+                ItemStack bareOutput = new ItemStack(stack.getItem(), 1);
+                bareOutput.setDamageValue(stack.getDamageValue());
+                items.setStackInSlot(slot, bareOutput);
+                return;
+            }
         }
     }
 
@@ -155,11 +189,10 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
         if (target == null) {
             return;
         }
-        Optional<IItemHandler> handler = target.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve();
-        if (handler.isPresent()) {
-            HbmInventoryUtil.moveSingleItemFromHandlerToHandler(items, 0, OUTPUT_SLOT_COUNT - 1, handler.get());
-            return;
-        }
+        // TileEntityMachineSatDock only accepted IInventory.  Container is its
+        // modern equivalent here: retain the old slot order, merge semantics
+        // and canPlaceItem boundary, but do not add a new item-handler-only
+        // output path that the legacy dock could not use.
         if (target instanceof Container container) {
             HbmInventoryUtil.moveSingleItemFromHandlerToContainer(items, 0, OUTPUT_SLOT_COUNT - 1, container);
         }
@@ -167,7 +200,7 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public Component getDisplayName() {
-        if (customName != null && !customName.isBlank()) {
+        if (customName != null && !customName.isEmpty()) {
             return Component.literal(customName);
         }
         return Component.translatable("container.satDock");
@@ -183,7 +216,9 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
-        if (customName != null && !customName.isBlank()) {
+        // TileEntityMachineSatDock writes every non-null customName, while its
+        // hasCustomInventoryName equivalent still hides an empty display name.
+        if (customName != null) {
             tag.putString(TAG_CUSTOM_NAME, customName);
         }
     }

@@ -10,6 +10,7 @@ import java.util.List;
 public final class RadarHostStateProfile {
     public static final String TAG_LEGACY_POWER = "power";
     public static final String TAG_ENTRIES = "Entries";
+    public static final String TAG_SHOW_MAP = "showMap";
 
     private RadarHostStateProfile() {
     }
@@ -43,6 +44,34 @@ public final class RadarHostStateProfile {
 
     public static RadarSyncSnapshot syncSnapshotFromTag(CompoundTag tag) {
         return RadarSyncSnapshot.fromTag(tag);
+    }
+
+    /**
+     * TileEntityMachineRadarNT persisted only its durable host controls and full
+     * terrain map. Jam state, redstone output and scan entries were sent over its
+     * live packet every tick and must start clean after a world reload.
+     */
+    public static void writePersistentState(CompoundTag tag, long power,
+            RadarDetectable.RadarScanParams scanSettings, boolean redstoneProximityMode, boolean showMap) {
+        if (tag == null) {
+            return;
+        }
+        tag.putLong(TAG_LEGACY_POWER, power);
+        (scanSettings != null ? scanSettings : RadarDetectable.RadarScanParams.DEFAULT).writeTo(tag);
+        RadarRedstoneMode.fromLegacyFlag(redstoneProximityMode).writeTo(tag);
+        tag.putBoolean(TAG_SHOW_MAP, showMap);
+    }
+
+    public static PersistentState persistentStateFromTag(CompoundTag tag) {
+        RadarDetectable.RadarScanParams legacyMissingValue = new RadarDetectable.RadarScanParams(false, false,
+                false, false);
+        if (tag == null) {
+            return new PersistentState(0L, legacyMissingValue, false, false);
+        }
+        return new PersistentState(tag.getLong(TAG_LEGACY_POWER),
+                RadarDetectable.RadarScanParams.fromTag(tag, legacyMissingValue),
+                RadarRedstoneMode.fromTag(tag, RadarRedstoneMode.TIER).legacyFlag(),
+                tag.getBoolean(TAG_SHOW_MAP));
     }
 
     public static boolean hasLegacyPower(CompoundTag tag) {
@@ -93,6 +122,13 @@ public final class RadarHostStateProfile {
             scanSettings = scanSettings == null ? RadarDetectable.RadarScanParams.DEFAULT : scanSettings;
             entries = List.copyOf(entries != null ? entries : List.of());
             map = RadarMap.normalize(map);
+        }
+    }
+
+    public record PersistentState(long power, RadarDetectable.RadarScanParams scanSettings,
+                                  boolean redstoneProximityMode, boolean showMap) {
+        public PersistentState {
+            scanSettings = scanSettings != null ? scanSettings : RadarDetectable.RadarScanParams.DEFAULT;
         }
     }
 }

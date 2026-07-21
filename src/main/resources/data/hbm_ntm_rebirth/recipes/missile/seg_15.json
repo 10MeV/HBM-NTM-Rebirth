@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["PP", "SS", "BB"],
+  "key": {
+    "P": { "tag": "forge:plates/titanium" },
+    "S": { "item": "hbm_ntm_rebirth:steel_scaffold" },
+    "B": { "item": "hbm_ntm_rebirth:steel_beam" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:seg_15" }
+}

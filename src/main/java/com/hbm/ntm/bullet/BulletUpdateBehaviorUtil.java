@@ -1,6 +1,8 @@
 package com.hbm.ntm.bullet;
 
 import com.hbm.ntm.item.SednaGunItem;
+import com.hbm.ntm.entity.logic.C130Entity;
+import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.HazardType;
@@ -8,10 +10,12 @@ import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.util.RayTraceUtil;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -73,20 +77,6 @@ public final class BulletUpdateBehaviorUtil {
             return new KnownUpdateResult(updatedMotion, currentHomingTarget, false, false, brokenInPath,
                     acceleration, acceleration != currentAcceleration, true);
         }
-        if (config.hasBehavior(BulletBehaviorTag.UFO_HOMING)) {
-            LivingEntity currentLivingTarget = currentHomingTarget instanceof LivingEntity living ? living : null;
-            HomingResult homing = updateHoming(projectile, shooter, updatedMotion, currentLivingTarget,
-                    BulletHomingUtil.UFO_RANGE, BulletHomingUtil.UFO_ANGLE);
-            boolean blast = false;
-            if (config.hasBehavior(BulletBehaviorTag.UFO_BLAST) && homing.target() != null
-                    && BulletHomingUtil.shouldTriggerUfoBlast(projectile, homing.target())) {
-                BulletImpactUtil.applyUfoBlast(projectile.level(), projectile.position());
-                blast = true;
-            }
-            return new KnownUpdateResult(homing.motion(), homing.target(), homing.acquiredTarget(), blast,
-                    brokenInPath, acceleration, acceleration != currentAcceleration);
-        }
-
         if (config.hasBehavior(BulletBehaviorTag.CHLOROPHYTE_HOMING)) {
             LivingEntity currentLivingTarget = currentHomingTarget instanceof LivingEntity living ? living : null;
             HomingResult homing = updateHoming(projectile, shooter, updatedMotion, currentLivingTarget,
@@ -116,6 +106,7 @@ public final class BulletUpdateBehaviorUtil {
             return new KnownPostMoveResult(motion, currentHomingTarget, currentAcceleration, false);
         }
         float acceleration = applyRocketAcceleration(config, shooter, currentAcceleration);
+        applyAirdropFlare(config, projectile, shooter, position);
         Vec3 updatedMotion = applyRocketSteering(config, shooter, position, motion);
         if (currentHomingTarget != null && currentHomingTarget.isAlive() && !hasAutonomousHoming(config)) {
             updatedMotion = BulletHomingUtil.steerLegacyLockOn(currentHomingTarget, position,
@@ -123,6 +114,26 @@ public final class BulletUpdateBehaviorUtil {
         }
         return new KnownPostMoveResult(updatedMotion, currentHomingTarget, acceleration,
                 acceleration != currentAcceleration);
+    }
+
+    private static void applyAirdropFlare(BulletConfig config, Entity projectile, @Nullable Entity shooter,
+            Vec3 postMovePosition) {
+        if (projectile.level().isClientSide() || projectile.tickCount != 40) {
+            return;
+        }
+        C130Entity.Payload payload = config.hasBehavior(BulletBehaviorTag.AIRDROP_SUPPLIES)
+                ? C130Entity.Payload.SUPPLIES
+                : config.hasBehavior(BulletBehaviorTag.AIRDROP_WEAPONS) ? C130Entity.Payload.WEAPONS : null;
+        if (payload == null) {
+            return;
+        }
+        if (shooter != null) {
+            LegacySoundPlayer.playLegacyTechBleep(shooter, 1.0F, 1.0F);
+        }
+        int x = Mth.floor(postMovePosition.x);
+        int z = Mth.floor(postMovePosition.z);
+        int y = projectile.level().getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+        projectile.level().addFreshEntity(C130Entity.create(projectile.level(), x, y, z, payload));
     }
 
     private static void applyFollySupermatterBeam(BulletConfig config, Entity projectile, @Nullable Entity shooter,
@@ -223,8 +234,7 @@ public final class BulletUpdateBehaviorUtil {
     }
 
     private static boolean hasAutonomousHoming(BulletConfig config) {
-        return config.hasBehavior(BulletBehaviorTag.UFO_HOMING)
-                || config.hasBehavior(BulletBehaviorTag.CHLOROPHYTE_HOMING);
+        return config.hasBehavior(BulletBehaviorTag.CHLOROPHYTE_HOMING);
     }
 
     private static boolean applyFireExtinguisherWaterUpdate(BulletConfig config, Entity projectile) {

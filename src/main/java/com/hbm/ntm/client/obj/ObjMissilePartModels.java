@@ -188,7 +188,7 @@ public final class ObjMissilePartModels {
         register(parts, "mp_stability_15_flat", PartKind.FINS, 0, 3, MP_S_15_FLAT, "stability/mp_s_15_flat");
         register(parts, "mp_stability_15_thin", PartKind.FINS, 0, 3, MP_S_15_THIN, "stability/mp_s_15_thin");
         register(parts, "mp_stability_15_soyuz", PartKind.FINS, 0, 3, MP_S_15_SOYUZ, "stability/mp_s_15_soyuz");
-        register(parts, "mp_stability_20_flat", PartKind.FINS, 0, 3, MP_S_20, UNIVERSAL_TEXTURE);
+        register(parts, "mp_s_20", PartKind.FINS, 0, 3, MP_S_20, UNIVERSAL_TEXTURE);
 
         register(parts, "mp_fuselage_10_kerosene", PartKind.FUSELAGE, 4, 3, MP_F_10_KEROSENE, "fuselages/mp_f_10_kerosene");
         register(parts, "mp_fuselage_10_kerosene_camo", PartKind.FUSELAGE, 4, 3, MP_F_10_KEROSENE, "fuselages/mp_f_10_kerosene_camo");

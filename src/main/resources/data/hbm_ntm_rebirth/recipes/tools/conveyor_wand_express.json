@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "redstone",
+  "pattern": [
+    "CCC",
+    "CLC",
+    "CCC"
+  ],
+  "key": {
+    "C": {
+      "type": "forge:nbt",
+      "item": "hbm_ntm_rebirth:conveyor_wand",
+      "nbt": "{Type:\"REGULAR\"}"
+    },
+    "L": {
+      "type": "hbm_ntm_rebirth:fluid_container",
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:lubricant"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:conveyor_wand",
+    "count": 8,
+    "nbt": "{Type:\"EXPRESS\"}"
+  },
+  "show_notification": true
+}

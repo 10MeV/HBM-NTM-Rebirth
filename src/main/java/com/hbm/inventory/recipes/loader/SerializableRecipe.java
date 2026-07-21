@@ -188,6 +188,9 @@ public abstract class SerializableRecipe {
             if (meta == HbmIngredient.WILDCARD_META) {
                 return new IngredientStack(HbmIngredient.legacyWildcard(legacyId, stacksize));
             }
+            if (LegacyMetaItemMappings.hasMapping(legacyId, meta)) {
+                return new IngredientStack(HbmIngredient.legacyMeta(legacyId, meta, stacksize));
+            }
             ItemStack stack = readLegacyItemStack(legacyId, stacksize, meta);
             return new ComparableStack(stack);
         }
@@ -219,11 +222,12 @@ public abstract class SerializableRecipe {
             ItemStack stack = nbtStack.toStack();
             writer.value(nbtStack.nbt != null ? "nbt" : "item");
             writer.value(itemName(stack));
-            if (nbtStack.stacksize != 1 || nbtStack.meta > 0 || nbtStack.nbt != null) {
+            int meta = legacyMeta(stack, nbtStack.meta);
+            if (nbtStack.stacksize != 1 || meta > 0 || nbtStack.nbt != null) {
                 writer.value(nbtStack.stacksize);
             }
-            if (nbtStack.meta > 0 || nbtStack.nbt != null) {
-                writer.value(nbtStack.meta);
+            if (meta > 0 || nbtStack.nbt != null) {
+                writer.value(meta);
             }
             if (nbtStack.nbt != null) {
                 writer.value(nbtStack.nbt.toString());
@@ -232,11 +236,12 @@ public abstract class SerializableRecipe {
             ItemStack stack = comp.toStack();
             writer.value("item");
             writer.value(itemName(stack));
-            if (comp.stacksize != 1 || comp.meta > 0) {
+            int meta = legacyMeta(stack, comp.meta);
+            if (comp.stacksize != 1 || meta > 0) {
                 writer.value(comp.stacksize);
             }
-            if (comp.meta > 0) {
-                writer.value(comp.meta);
+            if (meta > 0) {
+                writer.value(meta);
             }
         } else if (astack instanceof OreDictStack ore) {
             writer.value("dict");
@@ -316,11 +321,12 @@ public abstract class SerializableRecipe {
         writer.beginArray();
         writer.setIndent("");
         writer.value(itemName(stack));
-        if (stack.getCount() != 1 || stack.getDamageValue() != 0 || stack.hasTag()) {
+        int meta = legacyMeta(stack, stack.getDamageValue());
+        if (stack.getCount() != 1 || meta != 0 || stack.hasTag()) {
             writer.value(stack.getCount());
         }
-        if (stack.getDamageValue() != 0 || stack.hasTag()) {
-            writer.value(stack.getDamageValue());
+        if (meta != 0 || stack.hasTag()) {
+            writer.value(meta);
         }
         if (stack.hasTag()) {
             writer.value(stack.getTag().toString());
@@ -334,11 +340,12 @@ public abstract class SerializableRecipe {
         writer.setIndent("");
         ItemStack item = stack.getKey();
         writer.value(itemName(item));
-        if (item.getCount() != 1 || item.getDamageValue() != 0 || item.hasTag()) {
+        int meta = legacyMeta(item, item.getDamageValue());
+        if (item.getCount() != 1 || meta != 0 || item.hasTag()) {
             writer.value(item.getCount());
         }
-        if (item.getDamageValue() != 0 || item.hasTag()) {
-            writer.value(item.getDamageValue());
+        if (meta != 0 || item.hasTag()) {
+            writer.value(meta);
         }
         if (item.hasTag()) {
             writer.value(item.getTag().toString());
@@ -416,7 +423,7 @@ public abstract class SerializableRecipe {
     }
 
     private static ItemStack readLegacyItemStack(ResourceLocation legacyId, int count, int legacyMeta) {
-        if (LegacyMetaItemMappings.item(legacyId, legacyMeta).isPresent()) {
+        if (LegacyMetaItemMappings.hasMapping(legacyId, legacyMeta)) {
             return LegacyMetaItemMappings.stackPreservingCount(legacyId, legacyMeta, count).orElseThrow();
         }
         if (legacyMeta != 0) {
@@ -484,6 +491,19 @@ public abstract class SerializableRecipe {
     }
 
     private static String itemName(ItemStack stack) {
+        return LegacyMetaItemMappings.legacyIdentity(stack)
+                .map(LegacyMetaItemMappings.LegacyStackIdentity::legacyId)
+                .map(ResourceLocation::toString)
+                .orElseGet(() -> itemNameWithoutLegacyMeta(stack));
+    }
+
+    private static int legacyMeta(ItemStack stack, int fallback) {
+        return LegacyMetaItemMappings.legacyIdentity(stack)
+                .map(LegacyMetaItemMappings.LegacyStackIdentity::legacyMeta)
+                .orElse(fallback);
+    }
+
+    private static String itemNameWithoutLegacyMeta(ItemStack stack) {
         ResourceLocation name = HbmRegistryUtil.itemKey(stack.getItem());
         if (name == null) {
             throw new JsonSyntaxException("Cannot serialize unregistered item stack: " + stack);
@@ -537,12 +557,6 @@ public abstract class SerializableRecipe {
 
         @Override
         public AStack copy(int stacksize) {
-            List<ItemStack> display = ingredient.displayStacks();
-            if (display.size() == 1) {
-                ItemStack stack = display.get(0);
-                stack.setCount(stacksize);
-                return ingredient.hasPartialNbt() ? new NBTStack(stack) : new ComparableStack(stack);
-            }
             return new IngredientStack(new HbmIngredient(ingredient.ingredient(), stacksize, ingredient.exactStack(),
                     ingredient.partialNbt(), ingredient.legacyId(), ingredient.legacyMeta(), ingredient.legacyWildcard(),
                     ingredient.legacyOreName(), ingredient.fluidContainerType(), ingredient.fluidContainerAmount()));

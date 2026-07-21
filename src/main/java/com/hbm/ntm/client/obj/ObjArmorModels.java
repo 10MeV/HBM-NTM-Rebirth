@@ -196,6 +196,20 @@ public final class ObjArmorModels {
                 LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
     }
 
+    /** The old {@code ModelArmorWings} enables GL_CULL_FACE around all four wing groups. */
+    public static void renderPartCull(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        renderPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay, 255, 255, 255, 255,
+                LegacyTexturedRenderMode.CUTOUT_CULL);
+    }
+
+    public static void renderPartTranslucentDepthWrite(LegacyWavefrontModel model, String partName,
+            ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            int red, int green, int blue, int alpha) {
+        renderPart(model, partName, texture, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
+                LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE);
+    }
+
     public static void renderPartAdditive(LegacyWavefrontModel model, String partName, ResourceLocation texture,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             int red, int green, int blue, int alpha) {
@@ -226,6 +240,9 @@ public final class ObjArmorModels {
         if (renderMode == LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE) {
             model.renderPartTranslucent(partName, texture, poseStack, buffer, packedLight, packedOverlay,
                     red, green, blue, alpha);
+        } else if (renderMode == LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE) {
+            model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                    red, green, blue, alpha, false, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
         } else if (renderMode == LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE) {
             model.renderPartAdditive(partName, texture, poseStack, buffer, packedLight, packedOverlay,
                     red, green, blue, alpha);

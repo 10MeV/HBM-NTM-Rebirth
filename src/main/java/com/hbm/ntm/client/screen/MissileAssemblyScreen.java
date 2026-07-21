@@ -1,11 +1,16 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.obj.ObjMissilePartModels;
+import com.hbm.ntm.client.obj.ObjMissilePartModels.LegacyMissilePart;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
+import com.hbm.ntm.item.missile.CustomMissilePartProfile;
 import com.hbm.ntm.menu.MissileAssemblyMenu;
 import com.hbm.ntm.network.ModMessages;
-import com.mojang.math.Axis;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -27,23 +32,20 @@ public class MissileAssemblyScreen extends AbstractContainerScreen<MissileAssemb
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        drawState(graphics, menu.getChipState(), 13);
-        drawState(graphics, menu.getWarheadState(), 31);
-        drawState(graphics, menu.getFuselageState(), 49);
-        drawState(graphics, menu.getStabilityState(), 67);
-        drawState(graphics, menu.getThrusterState(), 85);
+        // GUIMachineMissileAssembly only marked a present but incompatible fins
+        // part red. The other four slots only received their positive green mark.
+        drawState(graphics, menu.getChipState(), 13, false);
+        drawState(graphics, menu.getWarheadState(), 31, false);
+        drawState(graphics, menu.getFuselageState(), 49, false);
+        drawState(graphics, menu.getStabilityState(), 67, true);
+        drawState(graphics, menu.getThrusterState(), 85, false);
         if (menu.canBuild()) {
             graphics.blit(TEXTURE, leftPos + 115, topPos + 35, 176, 0, 18, 18);
         }
 
         ItemStack preview = menu.previewMissileStack();
         if (!preview.isEmpty()) {
-            graphics.pose().pushPose();
-            graphics.pose().translate(leftPos + 83.0F, topPos + 89.0F, 120.0F);
-            graphics.pose().mulPose(Axis.YN.rotationDegrees((float) ((System.currentTimeMillis() / 10L) % 360L)));
-            graphics.pose().scale(2.0F, 2.0F, 1.0F);
-            graphics.renderItem(preview, -8, -8);
-            graphics.pose().popPose();
+            renderMultipartPreview(graphics, preview);
         }
     }
 
@@ -72,11 +74,48 @@ public class MissileAssemblyScreen extends AbstractContainerScreen<MissileAssemb
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    private void drawState(GuiGraphics graphics, int state, int x) {
+    private void drawState(GuiGraphics graphics, int state, int x, boolean showInvalid) {
         if (state == 1) {
             graphics.blit(TEXTURE, leftPos + x, topPos + 23, 194, 0, 6, 8);
-        } else if (state == 0) {
+        } else if (showInvalid && state == 0) {
             graphics.blit(TEXTURE, leftPos + x, topPos + 23, 200, 0, 6, 8);
         }
+    }
+
+    private void renderMultipartPreview(GuiGraphics graphics, ItemStack preview) {
+        CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(preview);
+        if (assembly == null) {
+            return;
+        }
+        LegacyMissilePart thruster = part(assembly.thruster());
+        LegacyMissilePart fins = part(assembly.fins());
+        LegacyMissilePart fuselage = part(assembly.fuselage());
+        LegacyMissilePart warhead = part(assembly.warhead());
+        ObjMissilePartModels.MissileRenderPlan plan =
+                ObjMissilePartModels.missileRenderPlan(thruster, fins, fuselage, warhead);
+        if (plan.steps().isEmpty()) {
+            return;
+        }
+
+        // GUIMachineMissileAssembly: (88, 98, 100), its historical 144px fitting
+        // constant, then the exact Y/-X/-Z multipart orientation chain.
+        double scale = 8.0D * 18.0D / Math.max(plan.multipartHeight(), 6.0D);
+        graphics.flush();
+        graphics.pose().pushPose();
+        graphics.pose().translate(leftPos + 88.0D, topPos + 98.0D, 100.0D);
+        LegacyPoseRotations.rotateYDegrees(graphics.pose(), -((System.currentTimeMillis() / 10L) % 360L));
+        graphics.pose().translate(plan.multipartHeight() / 2.0D * scale, 0.0D, 0.0D);
+        graphics.pose().scale((float) scale, (float) scale, (float) scale);
+        LegacyPoseRotations.rotateXDegrees(graphics.pose(), 90.0F);
+        LegacyPoseRotations.rotateZDegrees(graphics.pose(), -90.0F);
+        graphics.pose().scale(-1.0F, -1.0F, -1.0F);
+        ObjMissilePartModels.renderMissile(thruster, fins, fuselage, warhead, graphics.pose(), graphics.bufferSource(),
+                LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+        graphics.pose().popPose();
+        graphics.flush();
+    }
+
+    private static LegacyMissilePart part(CustomMissilePartProfile.ResolvedPart part) {
+        return part == null ? null : ObjMissilePartModels.part(part.legacyName());
     }
 }

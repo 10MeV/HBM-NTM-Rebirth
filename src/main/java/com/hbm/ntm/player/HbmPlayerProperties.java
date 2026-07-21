@@ -4,6 +4,8 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.api.item.ArmorDashProvider;
+import com.hbm.ntm.entity.train.LegacyRailCarEntity;
+import com.hbm.ntm.entity.train.RailCarMenuAccess;
 import com.hbm.ntm.item.FsbArmorItem;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.HbmKeybind;
@@ -871,6 +873,12 @@ public final class HbmPlayerProperties {
             toggleMagnet(player);
         } else if (keybind == HbmKeybind.TOGGLE_HEAD) {
             toggleHud(player);
+        } else if (keybind == HbmKeybind.TRAIN
+                && player.getVehicle() instanceof LegacyRailCarEntity
+                && player.getVehicle() instanceof RailCarMenuAccess menu) {
+            // Exact old condition: only a player riding an HBM custom rail car
+            // which supplies its own GUI responds to the TRAIN rising edge.
+            menu.openInventory(player);
         }
     }
 

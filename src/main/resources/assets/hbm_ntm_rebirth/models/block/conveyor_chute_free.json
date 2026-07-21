@@ -1,0 +1,17 @@
+{
+  "parent": "block/block",
+  "render_type": "minecraft:cutout",
+  "textures": { "belt": "hbm_ntm_rebirth:block/conveyor", "concrete": "hbm_ntm_rebirth:block/concrete", "grate_top": "hbm_ntm_rebirth:block/grate_top", "grate_side": "hbm_ntm_rebirth:block/grate_side" },
+  "elements": [
+    { "from": [4, 0, 0], "to": [12, 4, 16], "faces": { "down": { "texture": "#belt" }, "up": { "texture": "#belt", "rotation": 270 }, "north": { "texture": "#belt" }, "south": { "texture": "#belt" }, "west": { "texture": "#belt" }, "east": { "texture": "#belt" } } },
+    { "from": [0, 0, 4], "to": [4, 4, 12], "faces": { "down": { "texture": "#belt" }, "up": { "texture": "#belt", "rotation": 270 }, "north": { "texture": "#belt" }, "south": { "texture": "#belt" }, "west": { "texture": "#belt" }, "east": { "texture": "#belt" } } },
+    { "from": [12, 0, 4], "to": [16, 4, 12], "faces": { "down": { "texture": "#belt" }, "up": { "texture": "#belt", "rotation": 270 }, "north": { "texture": "#belt" }, "south": { "texture": "#belt" }, "west": { "texture": "#belt" }, "east": { "texture": "#belt" } } },
+    { "from": [0, 0, 0], "to": [4, 16, 4], "faces": { "down": { "texture": "#concrete" }, "up": { "texture": "#concrete" }, "north": { "texture": "#concrete" }, "south": { "texture": "#concrete" }, "west": { "texture": "#concrete" }, "east": { "texture": "#concrete" } } },
+    { "from": [12, 0, 0], "to": [16, 16, 4], "faces": { "down": { "texture": "#concrete" }, "up": { "texture": "#concrete" }, "north": { "texture": "#concrete" }, "south": { "texture": "#concrete" }, "west": { "texture": "#concrete" }, "east": { "texture": "#concrete" } } },
+    { "from": [0, 0, 12], "to": [4, 16, 16], "faces": { "down": { "texture": "#concrete" }, "up": { "texture": "#concrete" }, "north": { "texture": "#concrete" }, "south": { "texture": "#concrete" }, "west": { "texture": "#concrete" }, "east": { "texture": "#concrete" } } },
+    { "from": [12, 0, 12], "to": [16, 16, 16], "faces": { "down": { "texture": "#concrete" }, "up": { "texture": "#concrete" }, "north": { "texture": "#concrete" }, "south": { "texture": "#concrete" }, "west": { "texture": "#concrete" }, "east": { "texture": "#concrete" } } },
+    { "from": [4, 4, 2], "to": [12, 16, 2], "faces": { "down": { "texture": "#grate_top" }, "up": { "texture": "#grate_top" }, "north": { "texture": "#grate_side" }, "south": { "texture": "#grate_side" }, "west": { "texture": "#grate_side" }, "east": { "texture": "#grate_side" } } },
+    { "from": [2, 4, 4], "to": [2, 16, 12], "faces": { "down": { "texture": "#grate_top" }, "up": { "texture": "#grate_top" }, "north": { "texture": "#grate_side" }, "south": { "texture": "#grate_side" }, "west": { "texture": "#grate_side" }, "east": { "texture": "#grate_side" } } },
+    { "from": [14, 4, 4], "to": [14, 16, 12], "faces": { "down": { "texture": "#grate_top" }, "up": { "texture": "#grate_top" }, "north": { "texture": "#grate_side" }, "south": { "texture": "#grate_side" }, "west": { "texture": "#grate_side" }, "east": { "texture": "#grate_side" } } }
+  ]
+}

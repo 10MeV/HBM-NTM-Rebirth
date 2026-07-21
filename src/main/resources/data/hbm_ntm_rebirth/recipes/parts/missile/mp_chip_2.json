@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "misc", "pattern": ["P", "C", "S"],
+  "key": { "P": { "tag": "forge:ingots/any_rubber" }, "C": { "item": "hbm_ntm_rebirth:circuit_analog" }, "S": { "item": "hbm_ntm_rebirth:steel_scaffold" } },
+  "result": { "item": "hbm_ntm_rebirth:mp_c_2" }
+}

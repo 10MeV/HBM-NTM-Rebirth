@@ -13,7 +13,7 @@ import net.minecraft.network.FriendlyByteBuf;
  */
 public class SatPanelPacket extends ThreadedPacket {
     public int type;
-    public CompoundTag data = new CompoundTag();
+    public CompoundTag data;
 
     public SatPanelPacket() {
     }
@@ -27,14 +27,13 @@ public class SatPanelPacket extends ThreadedPacket {
 
     public SatPanelPacket(int type, CompoundTag data) {
         this.type = type;
-        this.data = data == null ? new CompoundTag() : data.copy();
+        this.data = data == null ? null : data.copy();
     }
 
     @Override
     public void fromBytes(FriendlyByteBuf buffer) {
         type = buffer.readInt();
-        CompoundTag tag = buffer.readNbt();
-        data = tag == null ? new CompoundTag() : tag;
+        data = buffer.readNbt();
     }
 
     @Override

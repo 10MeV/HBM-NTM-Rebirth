@@ -83,10 +83,7 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new ExternalItemHandler(items));
-    private final IFluidHandler waterHandler;
-    private final IFluidHandler steamHandler;
-    private final ICapabilityProvider waterDelegate;
-    private final ICapabilityProvider steamDelegate;
+    private final ICapabilityProvider fluidDelegate;
     private final List<HbmFluidTank> receivingTanks;
     private final List<HbmFluidTank> sendingTanks;
     private NTMMaterial type;
@@ -107,12 +104,12 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         this.sendingTanks = List.of(steamTank);
         this.waterTank.setTankType(HbmFluids.WATER);
         this.steamTank.setTankType(HbmFluids.SPENTSTEAM);
-        waterHandler = new ForgeFluidHandlerAdapter(List.of(waterTank), List.of(), 0, true, false,
+        // TileEntityMachineStrandCaster#updateConnections uses both tanks at
+        // every one of its four remote endpoints.  Keep the proxy capability
+        // aligned with that shared-port contract as well.
+        IFluidHandler fluidHandler = new ForgeFluidHandlerAdapter(List.of(waterTank), List.of(steamTank), 0, true, true,
                 this::onFluidContentsChanged);
-        steamHandler = new ForgeFluidHandlerAdapter(List.of(), List.of(steamTank), 0, false, true,
-                this::onFluidContentsChanged);
-        waterDelegate = new FluidDelegate(() -> waterHandler);
-        steamDelegate = new FluidDelegate(() -> steamHandler);
+        fluidDelegate = new FluidDelegate(() -> fluidHandler);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, StrandCasterBlockEntity caster) {
@@ -327,10 +324,7 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
     @Nullable
     @Override
     public ICapabilityProvider getLegacyProxyDelegate(BlockPos proxyPos) {
-        if (waterPortPositions().contains(proxyPos)) {
-            return waterDelegate;
-        }
-        return steamPortPositions().contains(proxyPos) ? steamDelegate : null;
+        return fluidPortPositions().contains(proxyPos) ? fluidDelegate : null;
     }
 
     @Override
@@ -482,24 +476,12 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
     }
 
     private List<BlockPos> fluidPortPositions() {
-        List<BlockPos> ports = new ArrayList<>(waterPortPositions());
-        ports.addAll(steamPortPositions());
-        return ports;
-    }
-
-    private List<BlockPos> waterPortPositions() {
         Direction facing = facing(getBlockState());
         Direction rot = facing.getClockWise();
         return List.of(
                 worldPosition.offset(relative(facing, rot, -1, 2, 0)),
-                worldPosition.offset(relative(facing, rot, -5, 2, 0)));
-    }
-
-    private List<BlockPos> steamPortPositions() {
-        Direction facing = facing(getBlockState());
-        Direction rot = facing.getClockWise();
-        return List.of(
                 worldPosition.offset(relative(facing, rot, -1, -1, 0)),
+                worldPosition.offset(relative(facing, rot, -5, 2, 0)),
                 worldPosition.offset(relative(facing, rot, -5, -1, 0)));
     }
 

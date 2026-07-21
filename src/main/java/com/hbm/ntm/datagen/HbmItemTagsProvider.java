@@ -203,6 +203,30 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyForgeTag("dyes/magenta", "chemical_dye_magenta");
         addLegacyForgeTag("dyes/orange", "chemical_dye_orange");
         addLegacyForgeTag("dyes/white", "chemical_dye_white");
+        // ItemCrayon was registered under every matching legacy dye entry.
+        // The modern registry splits its metadata variants, so preserve both
+        // the aggregate dye tag and the colour-specific entries.
+        addLegacyForgeTag("dyes",
+                "crayon_black", "crayon_red", "crayon_green", "crayon_brown", "crayon_blue",
+                "crayon_purple", "crayon_cyan", "crayon_silver", "crayon_gray", "crayon_pink",
+                "crayon_lime", "crayon_yellow", "crayon_lightblue", "crayon_magenta", "crayon_orange",
+                "crayon_white");
+        addLegacyForgeTag("dyes/black", "crayon_black");
+        addLegacyForgeTag("dyes/red", "crayon_red");
+        addLegacyForgeTag("dyes/green", "crayon_green");
+        addLegacyForgeTag("dyes/brown", "crayon_brown");
+        addLegacyForgeTag("dyes/blue", "crayon_blue");
+        addLegacyForgeTag("dyes/purple", "crayon_purple");
+        addLegacyForgeTag("dyes/cyan", "crayon_cyan");
+        addLegacyForgeTag("dyes/light_gray", "crayon_silver");
+        addLegacyForgeTag("dyes/gray", "crayon_gray");
+        addLegacyForgeTag("dyes/pink", "crayon_pink");
+        addLegacyForgeTag("dyes/lime", "crayon_lime");
+        addLegacyForgeTag("dyes/yellow", "crayon_yellow");
+        addLegacyForgeTag("dyes/light_blue", "crayon_lightblue");
+        addLegacyForgeTag("dyes/magenta", "crayon_magenta");
+        addLegacyForgeTag("dyes/orange", "crayon_orange");
+        addLegacyForgeTag("dyes/white", "crayon_white");
         addLegacyForgeTag("gems", "cinnebar");
         addLegacyForgeTag("gems/cinnabar", "cinnebar");
     }
@@ -269,16 +293,27 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
 
     private void addLegacyMaterialTags() {
         addLegacyMaterialAliases("ingot", "ingots", "ingot_uranium", "Uranium");
+        addLegacyBareIngotAliases("ingot_uranium", "Uranium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_u233", "Uranium233", "U233");
+        addLegacyBareIngotAliases("ingot_u233", "Uranium233", "U233");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_u235", "Uranium235", "U235");
+        addLegacyBareIngotAliases("ingot_u235", "Uranium235", "U235");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_u238", "Uranium238", "U238");
+        addLegacyBareIngotAliases("ingot_u238", "Uranium238", "U238");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_th232", "Thorium232", "Th232", "Thorium");
+        addLegacyBareIngotAliases("ingot_th232", "Thorium232", "Th232", "Thorium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_plutonium", "Plutonium");
+        addLegacyBareIngotAliases("ingot_plutonium", "Plutonium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_pu238", "Plutonium238", "Pu238");
+        addLegacyBareIngotAliases("ingot_pu238", "Plutonium238", "Pu238");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_pu239", "Plutonium239", "Pu239");
+        addLegacyBareIngotAliases("ingot_pu239", "Plutonium239", "Pu239");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_pu240", "Plutonium240", "Pu240");
+        addLegacyBareIngotAliases("ingot_pu240", "Plutonium240", "Pu240");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_pu241", "Plutonium241", "Pu241");
+        addLegacyBareIngotAliases("ingot_pu241", "Plutonium241", "Pu241");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_pu_mix", "PlutoniumRG");
+        addLegacyBareIngotAliases("ingot_pu_mix", "PlutoniumRG");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_am241", "Americium241", "Am241");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_am242", "Americium242", "Am242");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_am_mix", "AmericiumRG");
@@ -292,6 +327,7 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyBareIngotAliases("ingot_polonium", "Polonium210", "Po210", "Polonium");
         addLegacyBareIngotAliases("ingot_technetium", "Technetium99", "Tc99");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_sr90", "Strontium90", "Sr90");
+        addLegacyBareIngotAliases("ingot_sr90", "Strontium90", "Sr90");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_ra226", "Radium226", "Ra226");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_actinium", "Actinium227", "Ac227");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_co60", "Cobalt60", "Co60");
@@ -345,6 +381,8 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("ingot", "ingots", "ingot_silicon", "Silicon");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_ferrouranium", "Ferrouranium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_asbestos", "Asbestos");
+        addLegacyBareIngotAliases("ingot_asbestos", "Asbestos");
+        addLegacyBareIngotAliases("lithium", "Lithium");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_cobalt", "Cobalt");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_boron", "Boron");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_fiberglass", "Fiberglass");

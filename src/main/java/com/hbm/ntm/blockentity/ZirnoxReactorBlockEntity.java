@@ -333,7 +333,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean shouldCreateFluidNode() {
-        return !isTilted();
+        return false;
     }
 
     @Override

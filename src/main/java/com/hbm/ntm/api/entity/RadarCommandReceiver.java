@@ -25,11 +25,6 @@ public interface RadarCommandReceiver {
         return new BlockPos(floor(target.getX()), y, floor(target.getZ()));
     }
 
-    static BlockPos legacyXMirroredEntityTarget(Entity target, int y) {
-        int x = floor(target.getX());
-        return new BlockPos(x, y, x);
-    }
-
     static Vec3 centeredPositionTarget(int x, int y, int z) {
         return new Vec3(x + 0.5D, y, z + 0.5D);
     }

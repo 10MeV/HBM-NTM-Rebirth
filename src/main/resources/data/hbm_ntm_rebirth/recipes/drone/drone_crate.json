@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["T", "C"],
+  "key": { "T": { "item": "hbm_ntm_rebirth:drone_waypoint" }, "C": { "item": "hbm_ntm_rebirth:crate_steel" } },
+  "result": { "item": "hbm_ntm_rebirth:drone_crate" }
+}

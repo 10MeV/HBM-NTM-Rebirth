@@ -75,6 +75,21 @@ public final class Nodespace {
             return this;
         }
 
+        /**
+         * Compatibility equivalent of 1.7.10 {@code GenNode#setStandardConnections}.
+         * The supplied coordinates intentionally define the connection origin rather
+         * than being inferred from this node's first mapped position.
+         */
+        public PowerNode setStandardConnections(int xCoord, int yCoord, int zCoord) {
+            return setConnections(
+                    new DirPos(xCoord + 1, yCoord, zCoord, Direction.EAST),
+                    new DirPos(xCoord - 1, yCoord, zCoord, Direction.WEST),
+                    new DirPos(xCoord, yCoord + 1, zCoord, Direction.UP),
+                    new DirPos(xCoord, yCoord - 1, zCoord, Direction.DOWN),
+                    new DirPos(xCoord, yCoord, zCoord + 1, Direction.SOUTH),
+                    new DirPos(xCoord, yCoord, zCoord - 1, Direction.NORTH));
+        }
+
         public PowerNode addConnection(DirPos connection) {
             if (connection == null) {
                 return this;

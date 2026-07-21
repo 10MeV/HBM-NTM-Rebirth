@@ -2,9 +2,9 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.model.RubberBoatModel;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.entity.item.RubberBoatEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -30,15 +30,15 @@ public class RubberBoatRenderer extends EntityRenderer<RubberBoatEntity> {
     public void render(RubberBoatEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F - yaw);
         float hitTime = entity.getTimeSinceHit() - partialTick;
         float damage = entity.getDamageTaken() - partialTick;
         if (damage < 0.0F) {
             damage = 0.0F;
         }
         if (hitTime > 0.0F) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(Mth.sin(hitTime) * hitTime * damage / 10.0F
-                    * entity.getForwardDirection()));
+            LegacyPoseRotations.rotateXDegrees(poseStack, Mth.sin(hitTime) * hitTime * damage / 10.0F
+                    * entity.getForwardDirection());
         }
 
         LocalPlayer player = Minecraft.getInstance().player;

@@ -6,7 +6,7 @@ public enum PneumaticNetworkProvider implements HbmNetworkProvider<PneumaticNode
     THE_PROVIDER;
 
     @Override
-    public PneumaticNetwork provideNetwork(PneumaticNode seedNode) {
+    public PneumaticNetwork provideNetwork() {
         return new PneumaticNetwork();
     }
 }

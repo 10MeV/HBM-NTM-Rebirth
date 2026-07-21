@@ -30,7 +30,7 @@ public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollec
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

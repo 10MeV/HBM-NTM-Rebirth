@@ -55,19 +55,13 @@ public class ChemthrowerItem extends SednaGunItem implements IFillableItem {
 
     @Override
     public boolean providesFluid(FluidType type, ItemStack stack) {
-        return type != null && type != HbmFluids.NONE && getFluidType(stack) == type;
+        return type != null && getFluidType(stack) == type;
     }
 
     @Override
     public int tryEmpty(FluidType type, int amount, ItemStack stack) {
-        if (!providesFluid(type, stack)) {
-            return 0;
-        }
         int toUnload = Math.min(Math.min(getFill(stack), amount), TRANSFER_SPEED);
         setFill(stack, getFill(stack) - toUnload);
-        if (getFill(stack) <= 0) {
-            setFluidType(stack, HbmFluids.NONE);
-        }
         return toUnload;
     }
 
@@ -96,18 +90,18 @@ public class ChemthrowerItem extends SednaGunItem implements IFillableItem {
         if (type == HbmFluids.NONE || getFill(stack) < CONSUMPTION) {
             return;
         }
+        // ItemGunChemthrower.LAMBDA_FIRE begins with ItemGunBaseNT.playAnimation(CYCLE).
+        // Besides the first-person animation, SednaGunItem uses this state to retain the
+        // source ORCHESTRA_CHEMTHROWER loop for its five-tick firing window.
+        playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE);
         SednaReceiverConfig receiver = gun.receiver();
         SednaReceiverConfig.Offset offset = receiver.projectileOffset();
         EntityChemical chemical = new EntityChemical(level, player, offset.side(), offset.up(), offset.forward());
         chemical.setFluid(type);
         level.addFreshEntity(chemical);
 
-        if (!player.getAbilities().instabuild) {
-            setFill(stack, Math.max(0, getFill(stack) - CONSUMPTION));
-            if (getFill(stack) <= 0) {
-                setFluidType(stack, HbmFluids.NONE);
-            }
-        }
+        // MagazineFluid#useUpAmmo subtracts stored fluid directly; it has no creative-player exemption.
+        setFill(stack, Math.max(0, getFill(stack) - CONSUMPTION));
         addWearClamped(stack, gun.mode().configIndex(), 1, gun.mode().durability());
         LegacySoundPlayer.playLegacyFlamethrowerShoot(player, 1.0F, 1.0F);
     }

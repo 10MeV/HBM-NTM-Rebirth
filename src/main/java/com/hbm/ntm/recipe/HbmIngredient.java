@@ -92,7 +92,9 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
     }
 
     public static HbmIngredient legacyMeta(ResourceLocation legacyId, int legacyMeta, int count) {
-        LegacyMetaItemMappings.requireItem(legacyId, legacyMeta);
+        if (legacyMeta == WILDCARD_META) {
+            return legacyWildcard(legacyId, count);
+        }
         ItemStack stack = LegacyMetaItemMappings.stack(legacyId, legacyMeta, count)
                 .orElseThrow(() -> new IllegalStateException("Missing legacy item mapping: " + legacyId
                         + " meta " + legacyMeta));
@@ -346,13 +348,6 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         ResourceLocation legacyId = object.has("legacy_id") ? new ResourceLocation(object.get("legacy_id").getAsString()) : null;
         int legacyMeta = object.has("legacy_meta") ? object.get("legacy_meta").getAsInt() : 0;
         boolean legacyWildcard = object.has("legacy_wildcard") && object.get("legacy_wildcard").getAsBoolean();
-        if (legacyId != null && legacyWildcard && LegacyMetaItemMappings.stacks(legacyId, count).isEmpty()) {
-            throw new JsonSyntaxException("Missing legacy wildcard item mapping: " + legacyId);
-        }
-        if (legacyId != null && !legacyWildcard && legacyMeta != 0
-                && LegacyMetaItemMappings.stack(legacyId, legacyMeta, count).isEmpty()) {
-            throw new JsonSyntaxException("Missing legacy item mapping: " + legacyId + " meta " + legacyMeta);
-        }
         String legacyOreName = object.has("legacy_ore") ? object.get("legacy_ore").getAsString() : null;
         FluidType fluidContainerType = null;
         int fluidContainerAmount = 0;
@@ -365,8 +360,8 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
                 throw new JsonSyntaxException("Invalid HBM fluid container ingredient");
             }
         }
-        return new HbmIngredient(ingredient, count, exactStack, partialNbt, legacyId, legacyMeta, legacyWildcard,
-                legacyOreName, fluidContainerType, fluidContainerAmount);
+        return decoded(ingredient, count, exactStack, partialNbt, legacyId, legacyMeta, legacyWildcard,
+                legacyOreName, fluidContainerType, fluidContainerAmount, "JSON");
     }
 
     public void toNetwork(FriendlyByteBuf buffer) {
@@ -416,6 +411,32 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (buffer.readBoolean()) {
             fluidContainerType = HbmFluids.fromName(buffer.readUtf());
             fluidContainerAmount = buffer.readVarInt();
+        }
+        return decoded(ingredient, count, exactStack, partialNbt, legacyId, legacyMeta, legacyWildcard,
+                legacyOreName, fluidContainerType, fluidContainerAmount, "network");
+    }
+
+    private static HbmIngredient decoded(Ingredient ingredient, int count, ItemStack exactStack,
+            CompoundTag partialNbt, @Nullable ResourceLocation legacyId, int legacyMeta, boolean legacyWildcard,
+            @Nullable String legacyOreName, @Nullable FluidType fluidContainerType, int fluidContainerAmount,
+            String source) {
+        // Old AStack JSON encoded a wildcard solely as meta 32767. Accept that canonical legacy spelling even when a
+        // pre-provenance datapack has no separate legacy_wildcard flag.
+        legacyWildcard |= legacyId != null && legacyMeta == WILDCARD_META;
+        if (legacyWildcard && legacyId == null) {
+            throw new JsonSyntaxException("HBM ingredient from " + source + " has legacy_wildcard without legacy_id");
+        }
+        if (legacyId != null && legacyWildcard && LegacyMetaItemMappings.stacks(legacyId, count).isEmpty()) {
+            throw new JsonSyntaxException("Missing legacy wildcard item mapping: " + legacyId);
+        }
+        if (legacyId != null && !legacyWildcard && LegacyMetaItemMappings.hasMapping(legacyId, legacyMeta)) {
+            ItemStack mapped = LegacyMetaItemMappings.stack(legacyId, legacyMeta, count).orElseThrow();
+            if (!ingredient.toJson().equals(Ingredient.of(mapped).toJson())) {
+                throw new JsonSyntaxException("HBM ingredient from " + source + " declares legacy item " + legacyId
+                        + " meta " + legacyMeta + " but does not match its mapped modern item");
+            }
+        } else if (legacyId != null && !legacyWildcard && legacyMeta != 0) {
+            throw new JsonSyntaxException("Missing legacy item mapping: " + legacyId + " meta " + legacyMeta);
         }
         return new HbmIngredient(ingredient, count, exactStack, partialNbt, legacyId, legacyMeta, legacyWildcard,
                 legacyOreName, fluidContainerType, fluidContainerAmount);

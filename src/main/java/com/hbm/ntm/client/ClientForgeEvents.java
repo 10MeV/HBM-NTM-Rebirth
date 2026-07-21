@@ -5,21 +5,27 @@ import com.hbm.ntm.armor.ArmorModHandler;
 import com.hbm.ntm.armor.ArmorModItem;
 import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.client.anim.LegacyHbmAnimations;
+import com.hbm.ntm.client.light.ClientBlockLightOverrides;
 import com.hbm.ntm.client.overlay.LegacyHelmetOverlayRenderer;
+import com.hbm.ntm.client.overlay.LegacyAshExposureOverlay;
 import com.hbm.ntm.client.overlay.LegacyHevHudRenderer;
 import com.hbm.ntm.client.overlay.LegacyLookOverlayRenderer;
 import com.hbm.ntm.client.obj.ObjArmorModels;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel.RenderBackendClearReason;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel.RenderBackendFlushStage;
-import com.hbm.ntm.client.overlay.ToolAbilityHudRenderer;
+import com.hbm.ntm.client.overlay.LegacyItemHudRenderer;
 import com.hbm.ntm.client.particle.HbmDeferredParticleRenderer;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
 import com.hbm.ntm.client.render.HbmClientGeometryInvalidation;
 import com.hbm.ntm.client.render.HbmOverheadMarkers;
+import com.hbm.ntm.client.render.HbmThermalVisionRenderer;
+import com.hbm.ntm.client.render.HbmVatsRenderer;
 import com.hbm.ntm.client.render.HbmRenderEffects;
+import com.hbm.ntm.client.render.SoyuzHologramRenderer;
 import com.hbm.ntm.client.render.HbmRenderFrameLight;
 import com.hbm.ntm.client.render.HbmRenderFrameFlags;
+import com.hbm.ntm.client.render.ConveyorRoutePreview;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
@@ -27,17 +33,22 @@ import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
 import com.hbm.ntm.client.render.shader.HbmIrisRenderBatch;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.hbm.ntm.client.render.LegacyMultiblockHighlightRenderer;
+import com.hbm.ntm.client.render.DrillGunHighlightRenderer;
 import com.hbm.ntm.client.renderer.LegacyAccessoryRenderHelper;
+import com.hbm.ntm.client.renderer.LegacyArmorCapeRenderer;
 import com.hbm.ntm.client.renderer.LegacyHeadArmorRenderer;
 import com.hbm.ntm.client.renderer.LegacyJetpackRenderer;
 import com.hbm.ntm.client.renderer.LegacyLightSampleCache;
 import com.hbm.ntm.client.renderer.LegacyObjArmorRenderer;
+import com.hbm.ntm.client.renderer.LegacySpecialAccessoryRenderer;
 import com.hbm.ntm.client.renderer.LegacyRenderLighting;
 import com.hbm.ntm.client.renderer.LegacyScreenQuadRenderer;
 import com.hbm.ntm.client.renderer.NukeTorexRenderer;
 import com.hbm.ntm.client.screen.ArmorTableScreen;
+import com.hbm.ntm.client.screen.WeaponTableScreen;
 import com.hbm.ntm.client.renderer.SednaGunHudRenderer;
 import com.hbm.ntm.client.renderer.SednaGunItemRenderer;
+import com.hbm.ntm.client.renderer.PowerArmorWeaponItemRenderer;
 import com.hbm.ntm.client.sound.LegacyMovingEntitySound;
 import com.hbm.ntm.client.sound.LegacyNullSoundRedirects;
 import com.hbm.ntm.client.sound.SoundLoopSiren;
@@ -51,7 +62,10 @@ import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.api.item.HazardClass;
 import com.hbm.ntm.item.SednaGunItem;
+import com.hbm.ntm.item.PowerArmorWeaponItem;
+import com.hbm.ntm.item.FsbArmorItem;
 import com.hbm.ntm.item.StingerGunItem;
+import com.hbm.ntm.bullet.SednaWeaponModInstallManager;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
 import com.hbm.ntm.player.HbmPlayerProperties;
@@ -131,6 +145,25 @@ public final class ClientForgeEvents {
         addCustomNukeInformation(event.getItemStack(), event.getToolTip());
         addInstalledArmorModInformation(event);
         addItemTagInformation(event);
+        addWeaponTableRecognizedMods(event);
+    }
+
+    /** Exact old GUIWeaponTable-only recognizedMods tooltip visibility and red line layout. */
+    private static void addWeaponTableRecognizedMods(ItemTooltipEvent event) {
+        if (!(Minecraft.getInstance().screen instanceof WeaponTableScreen)
+                || !(event.getItemStack().getItem() instanceof SednaGunItem)) {
+            return;
+        }
+        List<ItemStack> recognized = SednaWeaponModInstallManager.recognizedUpgradeItems(event.getItemStack(), 0);
+        if (recognized.isEmpty()) {
+            return;
+        }
+        event.getToolTip().add(Component.translatable("gui.weapon.accepts").append(":")
+                .withStyle(ChatFormatting.RED));
+        for (ItemStack mod : recognized) {
+            event.getToolTip().add(Component.literal("  ").append(mod.getHoverName())
+                    .withStyle(ChatFormatting.RED));
+        }
     }
 
     private static void addInstalledArmorModInformation(ItemTooltipEvent event) {
@@ -226,6 +259,16 @@ public final class ClientForgeEvents {
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
         ItemStack stack = event.getItemStack();
+        if (stack.getItem() instanceof PowerArmorWeaponItem powerArmorWeapon
+                && powerArmorWeapon.kind() == PowerArmorWeaponItem.Kind.MELEE) {
+            Minecraft minecraft = Minecraft.getInstance();
+            Player player = minecraft.player;
+            if (player != null && PowerArmorWeaponItemRenderer.INSTANCE.renderFirstPerson(stack, player,
+                    event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getPartialTick())) {
+                event.setCanceled(true);
+            }
+            return;
+        }
         if (!(stack.getItem() instanceof SednaGunItem)) {
             return;
         }
@@ -245,6 +288,7 @@ public final class ClientForgeEvents {
 
         PoseStack poseStack = event.getPoseStack();
         poseStack.pushPose();
+        LegacySednaFirstPersonMotion.apply(minecraft, stack, poseStack, event.getPartialTick());
         SednaGunItemRenderer.INSTANCE.renderByItem(stack, context, poseStack, event.getMultiBufferSource(),
                 event.getPackedLight(), OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
@@ -287,7 +331,7 @@ public final class ClientForgeEvents {
         if (event.getOverlay().id().equals(VanillaGuiOverlay.CROSSHAIR.id())) {
             LegacyLookOverlayRenderer.render(event);
             if (ClientHbmPlayerProperties.shouldRenderHud()) {
-                ToolAbilityHudRenderer.render(event);
+                LegacyItemHudRenderer.renderCrosshair(event);
             }
             return;
         }
@@ -319,7 +363,7 @@ public final class ClientForgeEvents {
         }
         event.setCanceled(true);
         if (gun instanceof StingerGunItem stinger) {
-            if (!stinger.shouldRenderLegacyStingerCrosshair(stack)) {
+            if (!LegacySednaAimProgress.fullyAimed()) {
                 return;
             }
             int screenWidth = event.getWindow().getGuiScaledWidth();
@@ -327,10 +371,10 @@ public final class ClientForgeEvents {
             LegacyScreenQuadRenderer.renderCrosshair(OVERLAY_MISC_TEXTURE, event.getGuiGraphics(),
                     screenWidth, screenHeight, stinger.currentCrosshair(stack));
             LegacyScreenQuadRenderer.renderStingerLockon(OVERLAY_MISC_TEXTURE, event.getGuiGraphics(),
-                    screenWidth, screenHeight, stinger.legacyStingerLockonProgress(stack));
+                    screenWidth, screenHeight, LegacyStingerLockonProgress.current());
             return;
         }
-        if (gun.shouldHideCrosshair(stack)) {
+        if (gun.shouldHideCrosshair(stack) && LegacySednaAimProgress.fullyAimed()) {
             return;
         }
         LegacyScreenQuadRenderer.renderCrosshair(OVERLAY_MISC_TEXTURE, event.getGuiGraphics(),
@@ -374,8 +418,11 @@ public final class ClientForgeEvents {
         }
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {
+            ConveyorRoutePreview.render(event);
             HbmRenderEffects.render(event);
+            SoyuzHologramRenderer.render(event);
             HbmOverheadMarkers.render(event);
+            HbmThermalVisionRenderer.render(event);
             return;
         }
 
@@ -416,31 +463,48 @@ public final class ClientForgeEvents {
 
     @SubscribeEvent
     public static void onRenderBlockHighlight(RenderHighlightEvent.Block event) {
+        if (DrillGunHighlightRenderer.render(event)) {
+            return;
+        }
         LegacyMultiblockHighlightRenderer.render(event);
     }
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
+        // Legacy ModEventHandlerRenderer advances this interpolation on WorldTick START.
+        // Keep that phase separate from the other client maintenance work below, which is END-only.
+        if (event.phase == TickEvent.Phase.START) {
+            LegacySednaAimProgress.tick(Minecraft.getInstance());
+            LegacyStingerLockonProgress.tick(Minecraft.getInstance());
+            LegacyAshExposureOverlay.tick(Minecraft.getInstance());
+            updateSootFog();
+            return;
+        }
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        LegacySednaFirstPersonMotion.tick(Minecraft.getInstance());
         RemoteDesktopMouseCapture.tick(Minecraft.getInstance());
+        WindowsImeCharInputBridge.tick(Minecraft.getInstance());
         ClientHbmPlayerProperties.registerListener();
         LegacyHbmAnimations.tick();
+        LegacySednaVisualRecoil.tick(Minecraft.getInstance());
         HbmClientKeybinds.tick();
         ClientMuzzleFlashEffects.tick();
+        ClientSednaGunEffects.tick(Minecraft.getInstance());
         HbmRenderEffects.tick();
         HbmOverheadMarkers.tick();
+        ConveyorRoutePreview.tick();
         HbmBlackHoleEffects.tick();
         HbmShaderCompatibilityDetector.processPendingChunkInvalidation();
         HbmClientGeometryInvalidation.processPendingInvalidations();
-        updateSootFog();
         showEmptyGasMaskFilterWarning();
         pruneNetworkTransfers();
         pruneVanishedEntities();
 
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
+            ConveyorRoutePreview.clear();
             HbmDeferredParticleRenderer.clear();
             HbmClientGeometryInvalidation.clearPending();
             HbmRenderFrameCulling.clear();
@@ -454,7 +518,10 @@ public final class ClientForgeEvents {
         }
         hadLevel = true;
         HbmPlayerProperties.tickClientRuntime(minecraft.player);
-        tickClientArmorMods(minecraft.player);
+        ClientBlockLightOverrides.tick(minecraft.level);
+        ClientBlockLightOverrides.tickNo9(minecraft.level, minecraft.player);
+        tickClientFsbArmor(minecraft.player);
+        tickClientArmorMods(minecraft);
         spawnRadiationAura(minecraft);
         spawnCraterTownAura(minecraft);
     }
@@ -483,24 +550,54 @@ public final class ClientForgeEvents {
     @SubscribeEvent
     public static void onClientLevelUnload(LevelEvent.Unload event) {
         if (event.getLevel().isClientSide()) {
+            ConveyorRoutePreview.clear();
+            ClientBlockLightOverrides.clear();
             HbmClientGeometryInvalidation.clearPending();
             HbmClientGeometryInvalidation.noteWorldGeometryChanged();
         }
     }
 
-    private static void tickClientArmorMods(Player player) {
+    private static void tickClientArmorMods(Minecraft minecraft) {
+        Player player = minecraft.player;
         if (player == null) {
             return;
         }
-        for (ItemStack armor : player.getArmorSlots()) {
+        tickClientArmorMods(player);
+        tickClientDirectWearablePlateMod(player);
+        // Old ModEventHandler#onLivingUpdate dispatched ItemArmorMod#modUpdate for
+        // every client-side EntityLivingBase, not just the local player. This keeps
+        // remote WD40 hurt particles and installed-jetpack prediction on that same
+        // one existing client module hook.
+        for (Entity entity : minecraft.level.entitiesForRendering()) {
+            if (entity instanceof LivingEntity living && living != player) {
+                tickClientArmorMods(living);
+            }
+        }
+    }
+
+    private static void tickClientArmorMods(LivingEntity entity) {
+        for (ItemStack armor : entity.getArmorSlots()) {
             if (!ArmorModHandler.hasMods(armor)) {
                 continue;
             }
             for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
                 if (mod.getItem() instanceof ArmorModItem armorMod) {
-                    armorMod.onClientArmorModTick(player, armor, mod);
+                    armorMod.onClientArmorModTick(entity, armor, mod);
                 }
             }
+        }
+    }
+
+    /**
+     * {@code JetpackBase} and {@code WingsMurk} were also valid direct chest-slot items in 1.7.10.
+     * Their movement code ran client-side, while their particles remained server-originated.
+     */
+    private static void tickClientDirectWearablePlateMod(Player player) {
+        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
+        if (chest.getItem() instanceof ArmorModItems.Jetpack jetpack) {
+            jetpack.tickClientJetpack(player, chest);
+        } else if (chest.getItem() instanceof ArmorModItems.Wings wings) {
+            wings.tickWings(player);
         }
     }
 
@@ -525,6 +622,28 @@ public final class ClientForgeEvents {
         event.setNearPlaneDistance(0.0F);
         event.setFarPlaneDistance(fogDistance);
         event.setCanceled(true);
+    }
+
+    private static void tickClientFsbArmor(Player player) {
+        if (player == null) {
+            return;
+        }
+        FsbArmorItem.tickLegacyContributorPoweredStep(player);
+        ItemStack chestplate = player.getItemBySlot(EquipmentSlot.CHEST);
+        if (chestplate.getItem() instanceof FsbArmorItem armor) {
+            armor.tickClientEquippedArmor(chestplate, player);
+        }
+    }
+
+    /** Modern Forge equivalent of ModEventHandlerClient#setupFOV for legacy Sedna weapon renderers. */
+    @SubscribeEvent
+    public static void onComputeFov(ViewportEvent.ComputeFov event) {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
+        event.setFOV(LegacySednaAimProgress.applyLegacyViewFov(player.getMainHandItem(), event.getFOV(),
+                (float) event.getPartialTick()));
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
@@ -671,6 +790,7 @@ public final class ClientForgeEvents {
         ClientPanelData.clearAll();
         ClientInformMessages.clearAll();
         ClientMuzzleFlashEffects.clearAll();
+        ClientSednaGunEffects.clearAll();
         HbmRenderEffects.clearAll();
         HbmOverheadMarkers.clearAll();
         HbmBlackHoleEffects.clearAll();
@@ -689,8 +809,7 @@ public final class ClientForgeEvents {
     }
 
     private static void updateSootFog() {
-        if (!RadiationConfig.pollutionEnabled() || !RadiationConfig.pollutionSootFogEnabled()) {
-            renderSoot = 0.0F;
+        if (!RadiationConfig.pollutionSootFogEnabled()) {
             return;
         }
 
@@ -706,7 +825,7 @@ public final class ClientForgeEvents {
     }
 
     private static float visibleSoot() {
-        if (!RadiationConfig.pollutionEnabled() || !RadiationConfig.pollutionSootFogEnabled()) {
+        if (!RadiationConfig.pollutionSootFogEnabled()) {
             return 0.0F;
         }
         return Math.max(0.0F, renderSoot - RadiationConfig.pollutionSootFogThreshold());
@@ -765,6 +884,8 @@ public final class ClientForgeEvents {
             if (event.getRenderer().getModel() instanceof HumanoidModel<?> humanoid) {
                 LegacyObjArmorRenderer.renderEquippedArmor(event.getEntity(), humanoid, event.getPoseStack(),
                         event.getMultiBufferSource(), event.getPackedLight());
+                LegacyArmorCapeRenderer.renderEquippedCape(event.getEntity(), event.getPoseStack(),
+                        event.getMultiBufferSource(), event.getPackedLight());
                 LegacyHeadArmorRenderer.renderEquippedHeadArmor(event.getEntity(), humanoid, event.getPoseStack(),
                         event.getMultiBufferSource(), event.getPackedLight());
                 if (event.getEntity() instanceof Player player) {
@@ -772,8 +893,11 @@ public final class ClientForgeEvents {
                             event.getMultiBufferSource(), event.getPackedLight());
                     renderBackTesla(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
                     renderWings(player, humanoid, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+                    LegacySpecialAccessoryRenderer.render(player, humanoid, event.getPoseStack(),
+                            event.getMultiBufferSource(), event.getPackedLight(), event.getPartialTick());
                 }
             }
+            HbmVatsRenderer.render(event.getEntity(), event.getPoseStack(), event.getMultiBufferSource());
         } finally {
             LegacyObjArmorRenderer.restoreLegacyPlayerParts(visibility);
         }
@@ -866,14 +990,14 @@ public final class ClientForgeEvents {
         poseStack.translate(1.0D, 5.0D, 3.0D);
         LegacyPoseRotations.rotateZDegrees(poseStack, (float) rot);
         poseStack.translate(-1.0D, -5.0D, -3.0D);
-        ObjArmorModels.renderPart(ObjArmorModels.WINGS, "LeftBase", ObjArmorModels.WINGS_MURK_TEXTURE,
+        ObjArmorModels.renderPartCull(ObjArmorModels.WINGS, "LeftBase", ObjArmorModels.WINGS_MURK_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
 
         poseStack.translate(16.0D, 5.0D, 2.0D);
         LegacyPoseRotations.rotateYDegrees(poseStack, (float) rot2);
         LegacyPoseRotations.rotateZDegrees(poseStack, (float) (rot2 * 0.25D + 5.0D));
         poseStack.translate(-16.0D, -5.0D, -2.0D);
-        ObjArmorModels.renderPart(ObjArmorModels.WINGS, "LeftTip", ObjArmorModels.WINGS_MURK_TEXTURE,
+        ObjArmorModels.renderPartCull(ObjArmorModels.WINGS, "LeftTip", ObjArmorModels.WINGS_MURK_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }
@@ -890,14 +1014,14 @@ public final class ClientForgeEvents {
         poseStack.translate(-1.0D, 5.0D, 3.0D);
         LegacyPoseRotations.rotateZDegrees(poseStack, (float) -rot);
         poseStack.translate(1.0D, -5.0D, -3.0D);
-        ObjArmorModels.renderPart(ObjArmorModels.WINGS, "RightBase", ObjArmorModels.WINGS_MURK_TEXTURE,
+        ObjArmorModels.renderPartCull(ObjArmorModels.WINGS, "RightBase", ObjArmorModels.WINGS_MURK_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
 
         poseStack.translate(-16.0D, 5.0D, 2.0D);
         LegacyPoseRotations.rotateYDegrees(poseStack, (float) -rot2);
         LegacyPoseRotations.rotateZDegrees(poseStack, (float) (-rot2 * 0.25D - 5.0D));
         poseStack.translate(16.0D, -5.0D, -2.0D);
-        ObjArmorModels.renderPart(ObjArmorModels.WINGS, "RightTip", ObjArmorModels.WINGS_MURK_TEXTURE,
+        ObjArmorModels.renderPartCull(ObjArmorModels.WINGS, "RightTip", ObjArmorModels.WINGS_MURK_TEXTURE,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }

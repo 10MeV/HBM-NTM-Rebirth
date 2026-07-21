@@ -40,7 +40,9 @@ public final class ArmorUtil {
     public static final String FILTERK_KEY = FILTER_KEY;
     public static final int ASH_EXPOSURE_LIMIT_ASH_GLASSES = 64;
     public static final int ASH_EXPOSURE_LIMIT_SAND_OR_LIGHT = 192;
-    public static final int ASH_EXPOSURE_LIMIT_UNPROTECTED = 243;
+    // Legacy BlockAshes increments while its integer counter is < 256 * 0.95,
+    // so the final reachable value is 244 (not the truncated threshold 243).
+    public static final int ASH_EXPOSURE_LIMIT_UNPROTECTED = 244;
     public static HazardClass[] FULL_NO_LIGHT = new HazardClass[] {
             HazardClass.PARTICLE_COARSE,
             HazardClass.PARTICLE_FINE,
@@ -90,8 +92,6 @@ public final class ArmorUtil {
             "spacesuit"
     };
 
-    private static final Set<String> FARADAY_KEYWORDS = Set.of(
-            "netherite", "paa", "security", "cobalt");
     private static final Set<Item> EXTERNAL_PROTECTION_LIST_ITEMS =
             Collections.newSetFromMap(new IdentityHashMap<>());
 
@@ -836,11 +836,6 @@ public final class ArmorUtil {
         }
         String key = stack.getItem().getDescriptionId().toLowerCase(Locale.US);
         for (String metal : metals) {
-            if (key.contains(metal)) {
-                return true;
-            }
-        }
-        for (String metal : FARADAY_KEYWORDS) {
             if (key.contains(metal)) {
                 return true;
             }

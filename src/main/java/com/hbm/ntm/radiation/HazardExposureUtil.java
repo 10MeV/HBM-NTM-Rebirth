@@ -21,6 +21,7 @@ public final class HazardExposureUtil {
         HazardExposureContext context = HazardExposureContext.of(player);
         applyMainInventoryHazards(player, context);
         applyInventoryHazards(player, player.getInventory().armor, context);
+        applyInventoryHazards(player, player.getInventory().offhand, context);
     }
 
     public static void updateLivingInventory(LivingEntity entity) {

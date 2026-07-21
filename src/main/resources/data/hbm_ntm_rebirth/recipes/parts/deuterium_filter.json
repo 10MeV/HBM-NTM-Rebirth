@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "T": { "tag": "forge:ingots/any_resistant_alloy" },
+    "S": { "tag": "forge:dusts/sulfur" },
+    "C": { "item": "hbm_ntm_rebirth:catalyst_clay" }
+  },
+  "pattern": ["TST", "SCS", "TST"],
+  "result": { "item": "hbm_ntm_rebirth:deuterium_filter" }
+}

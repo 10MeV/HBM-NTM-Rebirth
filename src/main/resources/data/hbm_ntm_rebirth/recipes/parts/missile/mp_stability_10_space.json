@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["ASA", "PSP"],
+  "key": { "A": { "tag": "forge:plates/aluminium" }, "P": { "tag": "forge:ingots/steel" }, "S": { "item": "hbm_ntm_rebirth:steel_scaffold" } },
+  "result": { "item": "hbm_ntm_rebirth:mp_stability_10_space" }
+}

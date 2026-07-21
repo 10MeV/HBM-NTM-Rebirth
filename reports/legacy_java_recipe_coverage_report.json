@@ -17,13 +17,13 @@
       "blocked_count": 0,
       "count_contract": "dynamic_registry",
       "legacy_file": "handler/nei/RTGRecipeHandler.java",
-      "legacy_format_note": "dynamic NEI/list surface generated from ItemRTGPellet.getRecipeMap() / accepted RTG pellet specs",
+      "legacy_format_note": "dynamic NEI/list surface generated from ItemRTGPellet.getRecipeMap() / accepted RTG pellet specs; the legacy handler and modern category are absent while RTG decay is disabled",
       "legacy_recipe_id": "ntmRTG",
       "legacy_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/handler/nei/RTGRecipeHandler.java",
       "machine": "rtg",
       "missing_count": 0,
       "modern_count_current": 10,
-      "modern_source": "RtgRecipeRuntime.displayRecipes()",
+      "modern_source": "RtgConfig.doRtgsDecay() ? RtgRecipeRuntime.displayRecipes() : none",
       "status": "dynamic_display_surface_tracked"
     },
     {
@@ -465,7 +465,7 @@
       "legacy_registration_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/main/NEIRegistry.java",
       "legacy_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/handler/nei/ElectrolyserFluidHandler.java",
       "missing_count": 0,
-      "modern_source": "ElectrolyserRecipeCategory fluid / ModRecipes.ELECTROLYZER_FLUID",
+      "modern_source": "ElectrolyserRecipeCategory fluid / HbmJeiPlugin.ELECTROLYSER_FLUID / ModRecipes.ELECTROLYZER_FLUID",
       "status": "registered_recipe_family_covered"
     },
     {
@@ -478,7 +478,7 @@
       "legacy_registration_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/main/NEIRegistry.java",
       "legacy_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/handler/nei/ElectrolyserMetalHandler.java",
       "missing_count": 0,
-      "modern_source": "ElectrolyserRecipeCategory metal / ModRecipes.ELECTROLYZER_METAL",
+      "modern_source": "ElectrolyserRecipeCategory metal / HbmJeiPlugin.ELECTROLYSER_METAL / ModRecipes.ELECTROLYZER_METAL",
       "status": "registered_recipe_family_covered"
     },
     {
@@ -848,7 +848,7 @@
       "coverage_surface": "rtg",
       "excluded_count": 0,
       "legacy_file": "RTGRecipeHandler.java",
-      "legacy_format_note": "old conditional RTG NEI handler is dynamic display data tracked under dynamic_display_surfaces",
+      "legacy_format_note": "old conditional RTG NEI handler is registered only while RTG decay is enabled and is tracked under dynamic_display_surfaces",
       "legacy_handler": "RTGRecipeHandler",
       "legacy_registration_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/main/NEIRegistry.java",
       "legacy_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/handler/nei/RTGRecipeHandler.java",
@@ -3916,13 +3916,13 @@
       "blocked_count": 0,
       "excluded": [],
       "excluded_count": 0,
-      "legacy_count": 32,
+      "legacy_count": 33,
       "legacy_file": "PlasmaForgeRecipes.java",
       "legacy_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/inventory/recipes/PlasmaForgeRecipes.java",
       "machine": "plasma_forge_reliable_scope",
       "missing": [],
       "missing_count": 0,
-      "modern_count": 32,
+      "modern_count": 33,
       "present": [
         {
           "internal_name": "plsm.plateeuphemium",
@@ -4087,6 +4087,12 @@
           "source_order": 26
         },
         {
+          "internal_name": "plsm.gerald",
+          "modern_id": "hbm_ntm_rebirth:plasma_forge/gerald",
+          "modern_source_order": 137,
+          "source_order": 29
+        },
+        {
           "internal_name": "plsm.dfccore",
           "modern_id": "hbm_ntm_rebirth:plasma_forge/dfc_core",
           "modern_source_order": 138,
@@ -4117,7 +4123,7 @@
           "source_order": 34
         }
       ],
-      "present_count": 32,
+      "present_count": 33,
       "status": "checked"
     }
   ],
@@ -4136,6 +4142,18 @@
     },
     {
       "blocked_count": 0,
+      "excluded_count": 0,
+      "legacy_file": "main/NEIConfig.java",
+      "legacy_format_note": "modern JEI restores the legacy GUI recipe entry points for the 22 migrated handler classes and 23 category endpoints (Anvil exposes construction and smithing together) that bind guiGui/transferRectsGui; current screen process bounds replace obsolete 1.7.10 texture coordinates, and shared remote-fluid/processing screens expose only the category selected by their COKER profile or machine kind",
+      "legacy_registration_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/main/NEIRegistry.java",
+      "legacy_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/main/NEIConfig.java",
+      "missing_count": 0,
+      "modern_source": "LegacyJeiGuiInteractions + HbmJeiPlugin#registerGuiHandlers",
+      "status": "modern_gui_click_bridge",
+      "surface": "nei_machine_gui_recipe_clicks"
+    },
+    {
+      "blocked_count": 0,
       "excluded_count": 1,
       "legacy_file": "handler/nei/CustomMachineHandler.java",
       "legacy_format_note": "registered per CustomMachineConfigJSON.niceList in 1.7.10, but the whole custom-machine feature family is hard-excluded by project rule",
@@ -4144,6 +4162,18 @@
       "missing_count": 0,
       "status": "excluded",
       "surface": "custom_machine_nei"
+    },
+    {
+      "blocked_count": 0,
+      "excluded_count": 0,
+      "legacy_file": "main/NEIConfig.java",
+      "legacy_format_note": "modern JEI removes the old hidden-item set at runtime and applies NEI_HIDE_SECRETS to secret guns/ammo/items and generic-machine recipes",
+      "legacy_registration_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/main/NEIConfig.java",
+      "legacy_source": "E:/mchbm/rawcode/Hbm-s-Nuclear-Tech-GIT-master/src/main/java/com/hbm/main/NEIConfig.java",
+      "missing_count": 0,
+      "modern_source": "LegacyJeiVisibility + HbmJeiPlugin#onRuntimeAvailable",
+      "status": "modern_visibility_bridge",
+      "surface": "nei_config_visibility"
     },
     {
       "blocked_count": 0,
@@ -4546,7 +4576,7 @@
       "machine": "shredder",
       "main_resource_recipe_dir": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/shredder",
       "missing_count": 0,
-      "modern_count": 302,
+      "modern_count": 307,
       "modern_recipe_type": "shredder",
       "present_count": 302,
       "status": "main_resources_aligned"
@@ -5060,7 +5090,7 @@
       "machine": "anvil_construction",
       "main_resource_recipe_dir": "E:/mchbm/code/HBM-NTM-Rebirth/src/main/resources/data/hbm_ntm_rebirth/recipes/anvil_construction",
       "missing_count": 0,
-      "modern_count": 61,
+      "modern_count": 63,
       "modern_recipe_type": "anvil_construction",
       "present_count": 61,
       "status": "main_resources_aligned"

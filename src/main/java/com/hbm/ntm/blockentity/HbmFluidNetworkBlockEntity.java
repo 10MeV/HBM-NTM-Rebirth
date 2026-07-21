@@ -96,9 +96,6 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             if (port == null) {
                 continue;
             }
-            if (!HbmFluidUtil.isLoadedPort(level, worldPosition, port)) {
-                continue;
-            }
             BlockPos connectorPos = port.connectorPos(worldPosition);
             positions.add(connectorPos.relative(port.direction().getOpposite()));
             connections.add(new HbmNetworkNode.NodeConnection(connectorPos, port.direction()));
@@ -455,7 +452,14 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
     }
 
     protected boolean shouldRefreshFluidNetworkSubscriptionsNow() {
-        if (fluidSubscriptionDirty) {
+        if (usesLegacyTwentyTickFluidPortSubscriptionCadence()) {
+            // These old hosts retried remote Fluid Mk2 subscriptions only from
+            // their exact `% 20 == 0` pass.  In particular, a same-position
+            // duct replacement must not be picked up by the generic dirty or
+            // staggered keepalive route before that legacy boundary.
+            return level != null && level.getGameTime() % 20L == 0L;
+        }
+        if (shouldRefreshFluidNetworkSubscriptionsEveryTick() || fluidSubscriptionDirty) {
             return true;
         }
         int providerSignature = activeProviderSubscriptionSignature();
@@ -465,6 +469,24 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             return true;
         }
         return isStaggeredKeepalive(FLUID_SUBSCRIPTION_KEEPALIVE_TICKS);
+    }
+
+    /**
+     * Opt in only for legacy hosts which explicitly called their remote fluid
+     * subscription routine every server tick.  Ordinary machines retain the
+     * dirty/signature/keepalive refresh policy above.
+     */
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return false;
+    }
+
+    /**
+     * Opt in only for legacy hosts whose remote Fluid Mk2 receiver pass ran on
+     * the world's exact twenty-tick boundary. Direct per-tick providers stay
+     * on their own production call path.
+     */
+    protected boolean usesLegacyTwentyTickFluidPortSubscriptionCadence() {
+        return false;
     }
 
     private boolean hasExpiredFluidNode() {
@@ -741,7 +763,7 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         List<FluidType> removedTypes = new ArrayList<>();
         for (FluidType type : getTrackedFluidNodeTypes()) {
             if (!active.contains(type)) {
-                HbmFluidNodespace.destroyNode(level, worldPosition, type);
+                destroyTrackedFluidNode(type);
                 removeFluidNode(type);
                 removedTypes.add(type);
             }
@@ -756,7 +778,7 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         while (iterator.hasNext()) {
             FluidType type = iterator.next();
             if (!hasTankType(active, type)) {
-                HbmFluidNodespace.destroyNode(level, worldPosition, type);
+                destroyTrackedFluidNode(type);
                 iterator.remove();
                 removedTypes++;
             }
@@ -778,9 +800,18 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             return;
         }
         for (FluidType type : getTrackedFluidNodeTypes()) {
-            HbmFluidNodespace.destroyNode(level, worldPosition, type);
+            destroyTrackedFluidNode(type);
         }
         super.removeFluidNode();
+    }
+
+    private void destroyTrackedFluidNode(FluidType type) {
+        HbmFluidNode node = getFluidNode(type);
+        if (node != null) {
+            HbmFluidNodespace.destroyNode(level, node);
+        } else {
+            HbmFluidNodespace.destroyNode(level, worldPosition, type);
+        }
     }
 
     @Override
@@ -798,7 +829,6 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
 
     @Override
     public void onChunkUnloaded() {
-        removeFluidNode();
         super.onChunkUnloaded();
     }
 

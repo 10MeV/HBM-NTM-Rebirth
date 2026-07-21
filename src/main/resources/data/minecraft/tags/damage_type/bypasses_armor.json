@@ -41,6 +41,8 @@
     "hbm_ntm_rebirth:subatomic_2",
     "hbm_ntm_rebirth:subatomic_3",
     "hbm_ntm_rebirth:subatomic_4",
-    "hbm_ntm_rebirth:subatomic_5"
+    "hbm_ntm_rebirth:subatomic_5",
+    "hbm_ntm_rebirth:fsb_hard_landing",
+    "hbm_ntm_rebirth:boltgun"
   ]
 }

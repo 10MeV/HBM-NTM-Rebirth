@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "Q": { "item": "minecraft:quartz" },
+    "I": { "item": "minecraft:iron_ingot" },
+    "G": { "item": "minecraft:gold_ingot" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "pattern": ["QIQ", "QIQ", "GSG"],
+  "result": { "item": "hbm_ntm_rebirth:big_sword" }
+}

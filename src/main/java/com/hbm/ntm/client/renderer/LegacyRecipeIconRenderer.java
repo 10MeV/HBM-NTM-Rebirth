@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.BakedModel;
@@ -20,7 +21,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 
 public final class LegacyRecipeIconRenderer {
-    private static final double RECIPE_ICON_RANGE = 35.0D * 35.0D;
     private static final Map<Block, Boolean> BLOCK_ITEM_GUI_3D = new IdentityHashMap<>();
 
     private LegacyRecipeIconRenderer() {
@@ -28,14 +28,6 @@ public final class LegacyRecipeIconRenderer {
 
     public static void clearModelCache() {
         BLOCK_ITEM_GUI_3D.clear();
-    }
-
-    static boolean shouldRender(BlockEntity blockEntity) {
-        return shouldRenderAtDistance(playerDistanceSq(blockEntity));
-    }
-
-    static boolean shouldRenderWithin(BlockEntity blockEntity, double range) {
-        return shouldRenderWithinDistance(playerDistanceSq(blockEntity), range);
     }
 
     static double playerDistanceSq(BlockEntity blockEntity) {
@@ -52,11 +44,9 @@ public final class LegacyRecipeIconRenderer {
     }
 
     static boolean shouldRenderAtDistance(double distanceSq) {
-        return distanceSq < RECIPE_ICON_RANGE;
-    }
-
-    static boolean shouldRenderWithinDistance(double distanceSq, double range) {
-        return distanceSq < range * range;
+        // Recipe icons are rendered ItemStack models inside a BER.  They must use
+        // the same strict global cutoff as every other HBM world model.
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distanceSq);
     }
 
     static void renderInLegacyMachineSpace(GenericMachineRecipe recipe, Level level, PoseStack poseStack,

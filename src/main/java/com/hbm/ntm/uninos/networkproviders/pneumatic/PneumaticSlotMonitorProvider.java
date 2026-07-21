@@ -1,11 +1,12 @@
 package com.hbm.ntm.uninos.networkproviders.pneumatic;
 
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 public interface PneumaticSlotMonitorProvider {
     PneumaticSlotMonitor[] getMonitors();
 
-    ItemStack getSlotAt(int index);
+    @Nullable ItemStack getSlotAt(int index);
 
     long getAmountAt(int index);
 

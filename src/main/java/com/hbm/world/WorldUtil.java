@@ -2,10 +2,13 @@ package com.hbm.world;
 
 import com.hbm.util.fauxpointtwelve.ChunkCoordIntPair;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -48,6 +51,26 @@ public final class WorldUtil {
 
     public static LevelChunk provideChunkAtBlock(Level level, BlockPos pos) {
         return com.hbm.ntm.world.WorldUtil.provideChunkAtBlock(level, pos).orElse(null);
+    }
+
+    /** User-approved 1.20.1 quart-granular replacement for legacy setBiome. */
+    public static boolean setBiome(ServerLevel level, int blockX, int blockZ, Holder<Biome> biome) {
+        return com.hbm.ntm.world.WorldUtil.setBiome(level, blockX, blockZ, biome);
+    }
+
+    /** User-approved 1.20.1 quart-granular replacement for legacy setBiome. */
+    public static boolean setBiome(ServerLevel level, int blockX, int blockZ, ResourceKey<Biome> biomeKey) {
+        return com.hbm.ntm.world.WorldUtil.setBiome(level, blockX, blockZ, biomeKey);
+    }
+
+    /** Native chunk biome synchronization replacing the old custom packet path. */
+    public static void syncBiomeChange(ServerLevel level, int blockX, int blockZ) {
+        com.hbm.ntm.world.WorldUtil.syncBiomeChange(level, blockX, blockZ);
+    }
+
+    /** Native chunk synchronization replacing the former single-block biome packet. */
+    public static void syncBiomeChangeBlock(ServerLevel level, int blockX, int blockZ) {
+        com.hbm.ntm.world.WorldUtil.syncBiomeChangeBlock(level, blockX, blockZ);
     }
 
     public static Optional<LevelChunk> provideChunkOptional(ServerLevel level, int chunkX, int chunkZ) {

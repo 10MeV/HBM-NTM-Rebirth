@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.entity.effect.CloudFleijaEntity;
 import com.hbm.ntm.entity.effect.CloudFleijaRainbowEntity;
 import com.hbm.ntm.entity.effect.CloudSoliniumEntity;
+import com.hbm.ntm.entity.effect.CloudTomEntity;
 import com.hbm.ntm.entity.effect.DigammaSpearEntity;
 import com.hbm.ntm.entity.effect.EmpBlastEntity;
 import com.hbm.ntm.entity.effect.FalloutRainEntity;
@@ -19,15 +20,25 @@ import com.hbm.ntm.entity.effect.NukeTorexEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
+import com.hbm.entity.logic.EntityWaypoint;
 import com.hbm.ntm.entity.item.LegacyFallingBlockEntity;
 import com.hbm.ntm.entity.item.LegacyPrimedExplosiveEntity;
+import com.hbm.ntm.entity.item.DeliveryDroneEntity;
+import com.hbm.ntm.entity.item.RequestDroneEntity;
+import com.hbm.ntm.entity.item.ParachuteCrateEntity;
 import com.hbm.ntm.entity.cart.NtmCrateMinecartEntity;
 import com.hbm.ntm.entity.cart.NtmDestroyerMinecartEntity;
 import com.hbm.ntm.entity.cart.NtmEmptyMinecartEntity;
 import com.hbm.ntm.entity.cart.NtmPowderMinecartEntity;
 import com.hbm.ntm.entity.cart.NtmSemtexMinecartEntity;
+import com.hbm.ntm.entity.train.RailCarBoundingDummyEntity;
+import com.hbm.ntm.entity.train.RailCarSeatDummyEntity;
+import com.hbm.ntm.entity.train.CargoTramEntity;
+import com.hbm.ntm.entity.train.CargoTramTrailerEntity;
 import com.hbm.ntm.entity.logic.BalefireExplosionEntity;
 import com.hbm.ntm.entity.logic.AirstrikeBomberEntity;
+import com.hbm.ntm.entity.logic.C130Entity;
+import com.hbm.ntm.entity.projectile.BoxcarEntity;
 import com.hbm.ntm.entity.logic.DeathBlastEntity;
 import com.hbm.ntm.entity.logic.EmpLogicEntity;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
@@ -40,7 +51,11 @@ import com.hbm.ntm.entity.mob.EntityCyberCrab;
 import com.hbm.ntm.entity.mob.EntityCreeperNuclear;
 import com.hbm.ntm.entity.mob.EntityCreeperTainted;
 import com.hbm.ntm.entity.mob.EntityDuck;
+import com.hbm.ntm.entity.mob.EntityFBI;
+import com.hbm.ntm.entity.mob.EntityFBIDrone;
+import com.hbm.ntm.entity.mob.EntityUndeadSoldier;
 import com.hbm.ntm.entity.mob.EntityRADBeast;
+import com.hbm.ntm.entity.mob.EntityParasiteMaggot;
 import com.hbm.ntm.entity.mob.EntityTaintCrab;
 import com.hbm.ntm.entity.mob.EntityTeslaCrab;
 import com.hbm.ntm.entity.missile.AntiBallisticMissileEntity;
@@ -52,20 +67,31 @@ import com.hbm.ntm.entity.missile.SoyuzCapsuleEntity;
 import com.hbm.ntm.entity.missile.SoyuzEntity;
 import com.hbm.ntm.entity.projectile.ArtilleryRocketEntity;
 import com.hbm.ntm.entity.projectile.ArtilleryShellEntity;
+import com.hbm.ntm.entity.projectile.EntityAcidBomb;
 import com.hbm.ntm.entity.projectile.AirstrikeBombletEntity;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
+import com.hbm.ntm.entity.projectile.BurningFoeqEntity;
 import com.hbm.ntm.entity.projectile.ChemicalProjectileEntity;
 import com.hbm.ntm.entity.projectile.CoinEntity;
 import com.hbm.ntm.entity.projectile.CogEntity;
 import com.hbm.ntm.entity.projectile.DynamiteStickEntity;
+import com.hbm.ntm.entity.projectile.DisperserCanisterEntity;
 import com.hbm.ntm.entity.projectile.FallingNukeEntity;
 import com.hbm.ntm.entity.projectile.RBMKDebrisEntity;
 import com.hbm.ntm.entity.projectile.RubbleEntity;
 import com.hbm.ntm.entity.projectile.SawbladeEntity;
 import com.hbm.ntm.entity.projectile.ShrapnelEntity;
+import com.hbm.ntm.entity.projectile.TomProjectileEntity;
 import com.hbm.ntm.entity.projectile.WastePearlEntity;
 import com.hbm.ntm.entity.projectile.ZirnoxDebrisEntity;
 import com.hbm.entity.mob.glyphid.EntityGlyphidDigger;
+import com.hbm.entity.mob.glyphid.EntityGlyphid;
+import com.hbm.entity.mob.glyphid.EntityGlyphidBrawler;
+import com.hbm.entity.mob.glyphid.EntityGlyphidBombardier;
+import com.hbm.entity.mob.glyphid.EntityGlyphidBlaster;
+import com.hbm.entity.mob.glyphid.EntityGlyphidBehemoth;
+import com.hbm.entity.mob.glyphid.EntityGlyphidBrenda;
+import com.hbm.entity.mob.glyphid.EntityGlyphidNuclear;
 import com.hbm.entity.mob.glyphid.EntityGlyphidScout;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -75,6 +101,13 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 public final class ModEntityTypes {
+    /**
+     * 1.7.10 launch pads replaced the entity-mapping default with this value
+     * after each successful missile spawn. Modern Forge exposes it on the
+     * EntityType instead of the individual tracker entry.
+     */
+    private static final int LAUNCH_PAD_MISSILE_TRACKING_RANGE = 500;
+
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, HbmNtm.MOD_ID);
 
@@ -93,6 +126,18 @@ public final class ModEntityTypes {
                     .clientTrackingRange(64)
                     .updateInterval(3)
                     .build("entity_c_package"));
+
+    public static final RegistryObject<EntityType<DeliveryDroneEntity>> DELIVERY_DRONE =
+            ENTITY_TYPES.register("entity_delivery_drone", () -> EntityType.Builder
+                    .<DeliveryDroneEntity>of(DeliveryDroneEntity::new, MobCategory.MISC)
+                    .sized(0.75F, 0.75F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .build("entity_delivery_drone"));
+    public static final RegistryObject<EntityType<RequestDroneEntity>> REQUEST_DRONE =
+            ENTITY_TYPES.register("entity_request_drone", () -> EntityType.Builder
+                    .<RequestDroneEntity>of(RequestDroneEntity::new, MobCategory.MISC)
+                    .sized(0.75F, 0.75F).clientTrackingRange(250).updateInterval(1).build("entity_request_drone"));
 
     public static final RegistryObject<EntityType<RubberBoatEntity>> RUBBER_BOAT =
             ENTITY_TYPES.register("entity_rubber_boat", () -> EntityType.Builder
@@ -142,6 +187,40 @@ public final class ModEntityTypes {
                     .updateInterval(3)
                     .build("entity_ntm_cart_destroyer"));
 
+    /** Invisible dynamic collision member of the non-vanilla HBM rail-car system. */
+    public static final RegistryObject<EntityType<RailCarBoundingDummyEntity>> RAIL_CAR_BOUNDING_DUMMY =
+            ENTITY_TYPES.register("entity_ntm_bounding_dummy", () -> EntityType.Builder
+                    .<RailCarBoundingDummyEntity>of(RailCarBoundingDummyEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .build("entity_ntm_bounding_dummy"));
+
+    /** Dynamic passenger seat for the non-vanilla HBM rail-car system. */
+    public static final RegistryObject<EntityType<RailCarSeatDummyEntity>> RAIL_CAR_SEAT_DUMMY =
+            ENTITY_TYPES.register("entity_ntm_seat_dummy", () -> EntityType.Builder
+                    .<RailCarSeatDummyEntity>of(RailCarSeatDummyEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.1F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .build("entity_ntm_seat_dummy"));
+
+    public static final RegistryObject<EntityType<CargoTramEntity>> CARGO_TRAM =
+            ENTITY_TYPES.register("entity_ntm_cargo_tram", () -> EntityType.Builder
+                    .<CargoTramEntity>of(CargoTramEntity::new, MobCategory.MISC)
+                    .sized(5.0F, 2.0F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .build("entity_ntm_cargo_tram"));
+
+    public static final RegistryObject<EntityType<CargoTramTrailerEntity>> CARGO_TRAM_TRAILER =
+            ENTITY_TYPES.register("entity_ntm_cargo_tram_trailer", () -> EntityType.Builder
+                    .<CargoTramTrailerEntity>of(CargoTramTrailerEntity::new, MobCategory.MISC)
+                    .sized(5.0F, 2.0F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .build("entity_ntm_cargo_tram_trailer"));
+
     public static final RegistryObject<EntityType<EntityCreeperNuclear>> NUCLEAR_CREEPER =
             ENTITY_TYPES.register("entity_mob_nuclear_creeper", () -> EntityType.Builder
                     .<EntityCreeperNuclear>of(com.hbm.entity.mob.EntityCreeperNuclear::new, MobCategory.MONSTER)
@@ -190,6 +269,29 @@ public final class ModEntityTypes {
                     .updateInterval(3)
                     .build("entity_fucc_a_ducc"));
 
+    public static final RegistryObject<EntityType<EntityFBIDrone>> FBI_DRONE =
+            ENTITY_TYPES.register("entity_ntm_fbi_drone", () -> EntityType.Builder
+                    .<EntityFBIDrone>of(EntityFBIDrone::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.8F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_ntm_fbi_drone"));
+
+    public static final RegistryObject<EntityType<EntityFBI>> FBI =
+            ENTITY_TYPES.register("entity_ntm_fbi", () -> EntityType.Builder
+                    .<EntityFBI>of(EntityFBI::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.8F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .fireImmune()
+                    .build("entity_ntm_fbi"));
+
+    public static final RegistryObject<EntityType<EntityUndeadSoldier>> UNDEAD_SOLDIER =
+            ENTITY_TYPES.register("entity_ntm_undead_soldier", () -> EntityType.Builder
+                    .<EntityUndeadSoldier>of(EntityUndeadSoldier::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.8F).clientTrackingRange(80).updateInterval(3)
+                    .build("entity_ntm_undead_soldier"));
+
     public static final RegistryObject<EntityType<EntityRADBeast>> RAD_BEAST =
             ENTITY_TYPES.register("entity_ntm_radiation_blaze", () -> EntityType.Builder
                     .<EntityRADBeast>of(com.hbm.entity.mob.EntityRADBeast::new, MobCategory.MONSTER)
@@ -198,6 +300,24 @@ public final class ModEntityTypes {
                     .updateInterval(3)
                     .fireImmune()
                     .build("entity_ntm_radiation_blaze"));
+
+    public static final RegistryObject<EntityType<EntityGlyphid>> GLYPHID =
+            ENTITY_TYPES.register("entity_glyphid", () -> EntityType.Builder
+                    .<EntityGlyphid>of(EntityGlyphid::new, MobCategory.MONSTER)
+                    .sized(1.75F, 1.0F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_glyphid"));
+
+    public static final RegistryObject<EntityType<EntityWaypoint>> GLYPHID_WAYPOINT =
+            ENTITY_TYPES.register("entity_waypoint", () -> EntityType.Builder
+                    .<EntityWaypoint>of(EntityWaypoint::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_waypoint"));
 
     public static final RegistryObject<EntityType<EntityGlyphidScout>> GLYPHID_SCOUT =
             ENTITY_TYPES.register("entity_glyphid_scout", () -> EntityType.Builder
@@ -214,6 +334,69 @@ public final class ModEntityTypes {
                     .clientTrackingRange(80)
                     .updateInterval(3)
                     .build("entity_glyphid_digger"));
+
+    public static final RegistryObject<EntityType<EntityGlyphidBrawler>> GLYPHID_BRAWLER =
+            ENTITY_TYPES.register("entity_glyphid_brawler", () -> EntityType.Builder
+                    .<EntityGlyphidBrawler>of(EntityGlyphidBrawler::new, MobCategory.MONSTER)
+                    .sized(2.0F, 1.125F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_glyphid_brawler"));
+
+    public static final RegistryObject<EntityType<EntityGlyphidBombardier>> GLYPHID_BOMBARDIER =
+            ENTITY_TYPES.register("entity_glyphid_bombardier", () -> EntityType.Builder
+                    .<EntityGlyphidBombardier>of(EntityGlyphidBombardier::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_glyphid_bombardier"));
+
+    public static final RegistryObject<EntityType<EntityGlyphidBlaster>> GLYPHID_BLASTER =
+            ENTITY_TYPES.register("entity_glyphid_blaster", () -> EntityType.Builder
+                    .<EntityGlyphidBlaster>of(EntityGlyphidBlaster::new, MobCategory.MONSTER)
+                    .sized(2.0F, 1.125F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_glyphid_blaster"));
+
+    public static final RegistryObject<EntityType<EntityGlyphidBehemoth>> GLYPHID_BEHEMOTH =
+            ENTITY_TYPES.register("entity_glyphid_behemoth", () -> EntityType.Builder
+                    .<EntityGlyphidBehemoth>of(EntityGlyphidBehemoth::new, MobCategory.MONSTER)
+                    .sized(2.5F, 1.5F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_glyphid_behemoth"));
+
+    public static final RegistryObject<EntityType<EntityGlyphidBrenda>> GLYPHID_BRENDA =
+            ENTITY_TYPES.register("entity_glyphid_brenda", () -> EntityType.Builder
+                    .<EntityGlyphidBrenda>of(EntityGlyphidBrenda::new, MobCategory.MONSTER)
+                    .sized(2.5F, 1.75F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .fireImmune()
+                    .build("entity_glyphid_brenda"));
+
+    public static final RegistryObject<EntityType<EntityGlyphidNuclear>> GLYPHID_NUCLEAR =
+            ENTITY_TYPES.register("entity_glyphid_nuclear", () -> EntityType.Builder
+                    .<EntityGlyphidNuclear>of(EntityGlyphidNuclear::new, MobCategory.MONSTER)
+                    .sized(2.5F, 1.75F).clientTrackingRange(80).updateInterval(3).fireImmune().noSummon()
+                    .build("entity_glyphid_nuclear"));
+
+    public static final RegistryObject<EntityType<EntityAcidBomb>> ACID_BOMB =
+            ENTITY_TYPES.register("entity_acid_bomb", () -> EntityType.Builder
+                    .<EntityAcidBomb>of(com.hbm.entity.projectile.EntityAcidBomb::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .build("entity_acid_bomb"));
+
+    public static final RegistryObject<EntityType<EntityParasiteMaggot>> PARASITE_MAGGOT =
+            ENTITY_TYPES.register("entity_parasite_maggot", () -> EntityType.Builder
+                    .<EntityParasiteMaggot>of(EntityParasiteMaggot::new, MobCategory.MONSTER)
+                    .sized(0.3F, 0.7F)
+                    .clientTrackingRange(80)
+                    .updateInterval(3)
+                    .build("entity_parasite_maggot"));
 
     public static final RegistryObject<EntityType<NukeExplosionMk5Entity>> NUKE_EXPLOSION_MK5 =
             ENTITY_TYPES.register("entity_nuke_explosion_mk5", () -> EntityType.Builder
@@ -239,9 +422,24 @@ public final class ModEntityTypes {
                     .sized(0.1F, 0.1F)
                     .clientTrackingRange(1000)
                     .updateInterval(1)
-                    .fireImmune()
                     .noSummon()
                     .build("entity_tom_bust"));
+
+    public static final RegistryObject<EntityType<TomProjectileEntity>> TOM_PROJECTILE =
+            ENTITY_TYPES.register("entity_tom_the_moonstone", () -> EntityType.Builder
+                    .<TomProjectileEntity>of(TomProjectileEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .build("entity_tom_the_moonstone"));
+
+    public static final RegistryObject<EntityType<BurningFoeqEntity>> BURNING_FOEQ =
+            ENTITY_TYPES.register("entity_burning_foeq", () -> EntityType.Builder
+                    .<BurningFoeqEntity>of(BurningFoeqEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .build("entity_burning_foeq"));
 
     public static final RegistryObject<EntityType<FalloutRainEntity>> FALLOUT_RAIN =
             ENTITY_TYPES.register("entity_fallout_rain", () -> EntityType.Builder
@@ -272,6 +470,16 @@ public final class ModEntityTypes {
                     .fireImmune()
                     .noSummon()
                     .build("entity_cloud_solinium"));
+
+    public static final RegistryObject<EntityType<CloudTomEntity>> CLOUD_TOM =
+            ENTITY_TYPES.register("entity_moonstone_blast", () -> EntityType.Builder
+                    .<CloudTomEntity>of(CloudTomEntity::new, MobCategory.MISC)
+                    .sized(20.0F, 40.0F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("entity_moonstone_blast"));
 
     public static final RegistryObject<EntityType<CloudFleijaRainbowEntity>> CLOUD_FLEIJA_RAINBOW =
             ENTITY_TYPES.register("entity_cloud_rainbow", () -> EntityType.Builder
@@ -413,9 +621,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_laser_blast", () -> EntityType.Builder
                     .<DeathBlastEntity>of(DeathBlastEntity::new, MobCategory.MISC)
                     .sized(0.1F, 0.1F)
-                    .clientTrackingRange(256)
+                    .clientTrackingRange(1000)
                     .updateInterval(1)
-                    .fireImmune()
                     .noSummon()
                     .build("entity_laser_blast"));
 
@@ -447,8 +654,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_generic", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.GENERIC),
                             MobCategory.MISC)
-                    .sized(1.0F, 3.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_generic"));
 
@@ -456,8 +663,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_decoy", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.DECOY),
                             MobCategory.MISC)
-                    .sized(1.0F, 3.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_decoy"));
 
@@ -465,8 +672,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_incendiary", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.INCENDIARY),
                             MobCategory.MISC)
-                    .sized(1.0F, 3.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_incendiary"));
 
@@ -474,8 +681,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_cluster", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.CLUSTER),
                             MobCategory.MISC)
-                    .sized(1.0F, 3.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_cluster"));
 
@@ -483,8 +690,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_buster", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.BUSTER),
                             MobCategory.MISC)
-                    .sized(1.0F, 3.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_buster"));
 
@@ -492,8 +699,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_strong", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.STRONG),
                             MobCategory.MISC)
-                    .sized(1.25F, 4.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_strong"));
 
@@ -501,8 +708,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_incendiary_strong", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.INCENDIARY_STRONG),
                             MobCategory.MISC)
-                    .sized(1.25F, 4.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_incendiary_strong"));
 
@@ -510,8 +717,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_cluster_strong", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.CLUSTER_STRONG),
                             MobCategory.MISC)
-                    .sized(1.25F, 4.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_cluster_strong"));
 
@@ -519,8 +726,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_buster_strong", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.BUSTER_STRONG),
                             MobCategory.MISC)
-                    .sized(1.25F, 4.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_buster_strong"));
 
@@ -528,8 +735,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_emp_strong", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.EMP_STRONG),
                             MobCategory.MISC)
-                    .sized(1.25F, 4.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_emp_strong"));
 
@@ -537,8 +744,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_burst", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.BURST),
                             MobCategory.MISC)
-                    .sized(1.5F, 5.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_burst"));
 
@@ -546,8 +753,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_inferno", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.INFERNO),
                             MobCategory.MISC)
-                    .sized(1.5F, 5.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_inferno"));
 
@@ -555,8 +762,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_rain", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.RAIN),
                             MobCategory.MISC)
-                    .sized(1.5F, 5.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_rain"));
 
@@ -564,8 +771,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_drill", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.DRILL),
                             MobCategory.MISC)
-                    .sized(1.5F, 5.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_drill"));
 
@@ -573,8 +780,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_stealth", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.STEALTH),
                             MobCategory.MISC)
-                    .sized(1.0F, 3.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_stealth"));
 
@@ -582,8 +789,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_emp", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.EMP),
                             MobCategory.MISC)
-                    .sized(0.75F, 2.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_emp"));
 
@@ -591,17 +798,26 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_micronuclear", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.MICRO),
                             MobCategory.MISC)
-                    .sized(0.75F, 2.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_micronuclear"));
+
+    public static final RegistryObject<EntityType<MissileEntity>> MISSILE_TEST =
+            ENTITY_TYPES.register("entity_missile_test_mk2", () -> EntityType.Builder
+                    .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.TEST),
+                            MobCategory.MISC)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
+                    .updateInterval(1)
+                    .build("entity_missile_test_mk2"));
 
     public static final RegistryObject<EntityType<MissileEntity>> MISSILE_SCHRABIDIUM =
             ENTITY_TYPES.register("entity_missile_schrabidium", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.SCHRABIDIUM),
                             MobCategory.MISC)
-                    .sized(0.75F, 2.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_schrabidium"));
 
@@ -609,8 +825,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_blackhole", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.BHOLE),
                             MobCategory.MISC)
-                    .sized(0.75F, 2.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_blackhole"));
 
@@ -618,8 +834,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_taint", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.TAINT),
                             MobCategory.MISC)
-                    .sized(0.75F, 2.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_taint"));
 
@@ -627,8 +843,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_nuclear", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.NUCLEAR),
                             MobCategory.MISC)
-                    .sized(2.0F, 7.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_nuclear"));
 
@@ -636,8 +852,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_mirv", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.MIRV),
                             MobCategory.MISC)
-                    .sized(2.0F, 7.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_mirv"));
 
@@ -645,8 +861,8 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_volcano", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.VOLCANO),
                             MobCategory.MISC)
-                    .sized(2.0F, 7.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_volcano"));
 
@@ -654,17 +870,26 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_doomsday", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.DOOMSDAY),
                             MobCategory.MISC)
-                    .sized(2.0F, 7.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_doomsday"));
+
+    public static final RegistryObject<EntityType<MissileEntity>> MISSILE_SHUTTLE =
+            ENTITY_TYPES.register("entity_missile_shuttle", () -> EntityType.Builder
+                    .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.SHUTTLE),
+                            MobCategory.MISC)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
+                    .updateInterval(1)
+                    .build("entity_missile_shuttle"));
 
     public static final RegistryObject<EntityType<MissileEntity>> MISSILE_DOOMSDAY_RUSTED =
             ENTITY_TYPES.register("entity_missile_doomsday_rusted", () -> EntityType.Builder
                     .<MissileEntity>of((type, level) -> new MissileEntity(type, level, MissileEntity.Variant.DOOMSDAY_RUSTED),
                             MobCategory.MISC)
-                    .sized(2.0F, 7.0F)
-                    .clientTrackingRange(1000)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_doomsday_rusted"));
 
@@ -672,17 +897,17 @@ public final class ModEntityTypes {
             ENTITY_TYPES.register("entity_missile_anti", () -> EntityType.Builder
                     .<AntiBallisticMissileEntity>of(AntiBallisticMissileEntity::new, MobCategory.MISC)
                     .sized(1.5F, 1.5F)
-                    .clientTrackingRange(1000)
+                    .clientTrackingRange(LAUNCH_PAD_MISSILE_TRACKING_RANGE)
                     .updateInterval(1)
                     .build("entity_missile_anti"));
 
     public static final RegistryObject<EntityType<CustomMissileEntity>> MISSILE_CUSTOM =
-            ENTITY_TYPES.register("entity_missile_custom", () -> EntityType.Builder
+            ENTITY_TYPES.register("entity_custom_missile", () -> EntityType.Builder
                     .<CustomMissileEntity>of(CustomMissileEntity::new, MobCategory.MISC)
                     .sized(1.5F, 1.5F)
                     .clientTrackingRange(1000)
                     .updateInterval(1)
-                    .build("entity_missile_custom"));
+                    .build("entity_custom_missile"));
 
     public static final RegistryObject<EntityType<MinerRocketEntity>> MINER_ROCKET =
             ENTITY_TYPES.register("entity_miner_lander", () -> EntityType.Builder
@@ -711,7 +936,9 @@ public final class ModEntityTypes {
     public static final RegistryObject<EntityType<SoyuzCapsuleEntity>> SOYUZ_CAPSULE =
             ENTITY_TYPES.register("entity_soyuz_capsule", () -> EntityType.Builder
                     .<SoyuzCapsuleEntity>of(SoyuzCapsuleEntity::new, MobCategory.MISC)
-                    .sized(1.0F, 2.0F)
+                    // EntitySoyuzCapsule inherits EntityThrowable's 1.7.10 default size;
+                    // its visible OBJ does not define a larger collision box.
+                    .sized(0.25F, 0.25F)
                     .clientTrackingRange(1000)
                     .updateInterval(1)
                     .fireImmune()
@@ -800,6 +1027,23 @@ public final class ModEntityTypes {
                     .updateInterval(1)
                     .build("entity_bomber"));
 
+    public static final RegistryObject<EntityType<C130Entity>> C130 =
+            ENTITY_TYPES.register("entity_c130", () -> EntityType.Builder
+                    .<C130Entity>of(C130Entity::new, MobCategory.MISC)
+                    .sized(8.0F, 4.0F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .build("entity_c130"));
+
+    public static final RegistryObject<EntityType<ParachuteCrateEntity>> PARACHUTE_CRATE =
+            ENTITY_TYPES.register("entity_parachute_crate", () -> EntityType.Builder
+                    .<ParachuteCrateEntity>of(ParachuteCrateEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(250)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .build("entity_parachute_crate"));
+
     public static final RegistryObject<EntityType<AirstrikeBombletEntity>> AIRSTRIKE_BOMBLET =
             ENTITY_TYPES.register("entity_bomblet_zeta", () -> EntityType.Builder
                     .<AirstrikeBombletEntity>of(AirstrikeBombletEntity::new, MobCategory.MISC)
@@ -807,6 +1051,15 @@ public final class ModEntityTypes {
                     .clientTrackingRange(250)
                     .updateInterval(1)
                     .build("entity_bomblet_zeta"));
+
+    public static final RegistryObject<EntityType<BoxcarEntity>> BOXCAR =
+            ENTITY_TYPES.register("entity_boxcar", () -> EntityType.Builder
+                    .<BoxcarEntity>of(BoxcarEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(1000)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .build("entity_boxcar"));
 
     public static final RegistryObject<EntityType<ChemicalProjectileEntity>> CHEMICAL_PROJECTILE =
             ENTITY_TYPES.register("entity_chemthrower_splash", () -> EntityType.Builder
@@ -832,6 +1085,14 @@ public final class ModEntityTypes {
                     .clientTrackingRange(128)
                     .updateInterval(1)
                     .build("entity_dynamite_stick"));
+
+    public static final RegistryObject<EntityType<DisperserCanisterEntity>> DISPERSER_CANISTER =
+            ENTITY_TYPES.register("entity_disperser_canister", () -> EntityType.Builder
+                    .<DisperserCanisterEntity>of(DisperserCanisterEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    .build("entity_disperser_canister"));
 
     public static final RegistryObject<EntityType<CoinEntity>> COIN =
             ENTITY_TYPES.register("entity_coin", () -> EntityType.Builder

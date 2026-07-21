@@ -7,6 +7,8 @@ import com.hbm.ntm.particle.LegacyCasingEjectors;
 import com.hbm.ntm.particle.LegacyBlockStateMappings;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.client.sound.HbmDelayedSounds;
+import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModParticleTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ParticleStatus;
@@ -72,7 +74,11 @@ public final class HbmParticleEffects {
         String type = data.getString("type");
         if (ParticleUtil.TYPE_GAS_FLAME.equals(type)) {
             spawnGasFlame(level, data, x, y, z);
-        } else if (ParticleUtil.TYPE_DEBUG_DRONE.equals(type) || ParticleUtil.TYPE_DEBUG_LINE.equals(type)) {
+        } else if (ParticleUtil.TYPE_DEBUG_DRONE.equals(type)) {
+            if (isHoldingDroneDebugItem()) {
+                spawnDebugLine(level, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"), data.getInt("color"));
+            }
+        } else if (ParticleUtil.TYPE_DEBUG_LINE.equals(type)) {
             spawnDebugLine(level, x, y, z, data.getDouble("mX"), data.getDouble("mY"), data.getDouble("mZ"), data.getInt("color"));
         } else if (ParticleUtil.TYPE_DEBUG_TEXT.equals(type)) {
             spawnDebugText(level, data, x, y, z);
@@ -187,6 +193,22 @@ public final class HbmParticleEffects {
         } else if (ParticleUtil.TYPE_CHAOS_CLOUD.equals(type)) {
             spawnChaosCloud(level, data, x, y, z);
         }
+    }
+
+    /** Exact ClientProxy#effectNT allowlist for logistics-only debugdrone line visibility. */
+    private static boolean isHoldingDroneDebugItem() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return false;
+        }
+        Item held = player.getMainHandItem().getItem();
+        return held == ModItems.DRONE.get()
+                || held == ModBlocks.DRONE_CRATE_PROVIDER.get().asItem()
+                || held == ModBlocks.DRONE_CRATE_REQUESTER.get().asItem()
+                || held == ModBlocks.DRONE_DOCK.get().asItem()
+                || held == ModBlocks.DRONE_WAYPOINT_REQUEST.get().asItem()
+                || held == ModBlocks.DRONE_WAYPOINT.get().asItem()
+                || held == ModItems.DRONE_LINKER.get();
     }
 
     public static boolean isLocalPlayerWithin(double x, double y, double z, double range) {

@@ -33,6 +33,10 @@ public final class HbmItemPoolRegistry {
 
     public static RollResult rollStacks(ServerLevel level, String legacyPoolId, Vec3 origin) {
         ResourceLocation id = lootTableId(legacyPoolId);
+        if (!isKnownPoolId(legacyPoolId)) {
+            HbmNtm.LOGGER.warn("Ignored inactive or excluded Item Pool '{}' ({}).", legacyPoolId, id);
+            return new RollResult(legacyPoolId, id, id, false, List.of());
+        }
         List<ItemStack> stacks = roll(level, id, origin);
         if (!stacks.isEmpty()) {
             return new RollResult(legacyPoolId, id, id, false, stacks);

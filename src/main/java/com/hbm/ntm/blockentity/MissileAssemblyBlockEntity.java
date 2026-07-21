@@ -31,6 +31,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,20 +64,10 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            if (slot == SLOT_OUTPUT) {
-                return false;
-            }
-            if (!(stack.getItem() instanceof MissilePartItem part)) {
-                return false;
-            }
-            return switch (slot) {
-                case SLOT_CHIP -> part.type() == MissilePartItem.PartType.CHIP;
-                case SLOT_WARHEAD -> part.type() == MissilePartItem.PartType.WARHEAD;
-                case SLOT_FUSELAGE -> part.type() == MissilePartItem.PartType.FUSELAGE;
-                case SLOT_STABILITY -> part.type() == MissilePartItem.PartType.FINS;
-                case SLOT_THRUSTER -> part.type() == MissilePartItem.PartType.THRUSTER;
-                default -> false;
-            };
+            // TileEntityMachineMissileAssembly#isItemValidForSlot always returned false.
+            // Player menu slots were ordinary unfiltered Slots, whereas automation could
+            // not insert anything. Keep those two legacy boundaries separate.
+            return false;
         }
 
         @Override
@@ -86,6 +80,8 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
+    private final LazyOptional<IItemHandler> externalItemHandler =
+            LazyOptional.of(() -> new MissileAssemblyExternalItemHandler(items));
 
     public MissileAssemblyBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MISSILE_ASSEMBLY.get(), pos, state);
@@ -94,7 +90,7 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
     public static void serverTick(Level level, BlockPos pos, BlockState state, MissileAssemblyBlockEntity assembly) {
         if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
             ModMessages.sendToAllAround(ModMessages.missileMultipartPacket(pos, assembly.multipartSnapshot()),
-                    serverLevel, pos, MULTIPART_SYNC_RANGE);
+                    serverLevel, pos.getX(), pos.getY(), pos.getZ(), MULTIPART_SYNC_RANGE);
         }
     }
 
@@ -289,6 +285,16 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
         return Component.translatable("container.missileAssembly");
     }
 
+    /**
+     * {@code MachineMissileAssembly#onBlockPlacedBy} copied a named block item's
+     * display name into the tile entity. Keep the legacy string-NBT carrier used
+     * by this machine rather than introducing a separate modern name component.
+     */
+    public void setCustomName(String name) {
+        customName = name;
+        setChanged();
+    }
+
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
@@ -330,6 +336,20 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
     }
 
     @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        externalItemHandler.invalidate();
+    }
+
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
+        if (capability == ForgeCapabilities.ITEM_HANDLER) {
+            return externalItemHandler.cast();
+        }
+        return super.getCapability(capability, side);
+    }
+
+    @Override
     public AABB getRenderBoundingBox() {
         BlockState state = getBlockState();
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
@@ -353,8 +373,53 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
             currentLevel.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
             if (currentLevel instanceof ServerLevel serverLevel) {
                 ModMessages.sendToAllAround(ModMessages.missileMultipartPacket(worldPosition, multipartSnapshot()),
-                        serverLevel, worldPosition, MULTIPART_SYNC_RANGE);
+                        serverLevel, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                        MULTIPART_SYNC_RANGE);
             }
+        }
+    }
+
+    /**
+     * TileEntityMachineMissileAssembly exposed its legacy {@code access = {0}}
+     * array on every side, while rejecting both insert and extract.  Keep that
+     * observable one-slot surface without granting automation access to the
+     * five other GUI-only slots.
+     */
+    private static final class MissileAssemblyExternalItemHandler implements IItemHandler {
+        private final ItemStackHandler inventory;
+
+        private MissileAssemblyExternalItemHandler(ItemStackHandler inventory) {
+            this.inventory = inventory;
+        }
+
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot == 0 ? inventory.getStackInSlot(SLOT_CHIP) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot == 0 ? inventory.getSlotLimit(SLOT_CHIP) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return false;
         }
     }
 }

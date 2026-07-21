@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_analog"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:machine_diesel"
+    },
+    "S": {
+      "tag": "forge:ingots/steel"
+    },
+    "W": {
+      "item": "minecraft:red_wool"
+    }
+  },
+  "pattern": [
+    "W W",
+    "CDC",
+    "SWS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:dieselsuit_plate"
+  },
+  "show_notification": true
+}

@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class Ni4NiGunItem extends SednaGunItem {
+    private static final int CONFIG_INDEX = 0;
+    private static final String KEY_SECONDARY = "mouse2_";
     public static final String KEY_COIN_COUNT = "coincount";
     public static final String KEY_COIN_CHARGE = "coincharge";
     public static final String KEY_COLORS = "colors";
@@ -59,8 +61,10 @@ public class Ni4NiGunItem extends SednaGunItem {
 
     @Override
     public void handleKeybind(ServerPlayer player, ItemStack stack, HbmKeybind keybind, boolean pressed) {
-        if (keybind == HbmKeybind.GUN_SECONDARY && pressed) {
-            throwCoin(player, stack);
+        if (keybind == HbmKeybind.GUN_SECONDARY) {
+            if (handleEdgeKey(stack, KEY_SECONDARY, CONFIG_INDEX, pressed) && pressed) {
+                throwCoin(player, stack);
+            }
             return;
         }
         super.handleKeybind(player, stack, keybind, pressed);
@@ -92,7 +96,7 @@ public class Ni4NiGunItem extends SednaGunItem {
         coin.setDeltaMovement(look.scale(0.8D).add(0.0D, 0.5D, 0.0D));
         level.addFreshEntity(coin);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.EXPERIENCE_ORB_PICKUP,
-                SoundSource.PLAYERS, 1.0F, 1.0F);
+                SoundSource.PLAYERS, 1.0F, 1.0F + player.getRandom().nextFloat() * 0.25F);
         setCoinCount(stack, count - 1);
     }
 

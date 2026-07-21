@@ -10,7 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -48,11 +47,6 @@ public class ConveyorBlock extends Block implements IConveyorBelt, Toolable {
         return stateFromLegacyMetadata(ConveyorMath.legacyMetadataForPlacementYaw(context.getRotation()));
     }
 
-    @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
-        int metadata = ConveyorMath.legacyMetadataForPlacementYaw(placer.getYRot());
-        level.setBlock(pos, stateFromLegacyMetadata(metadata), 2);
-    }
 
     @Override
     public boolean canItemStay(Level level, BlockPos pos, Vec3 itemPos) {
@@ -138,6 +132,18 @@ public class ConveyorBlock extends Block implements IConveyorBelt, Toolable {
         Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
         ConveyorPathType path = state.hasProperty(PATH) ? state.getValue(PATH) : ConveyorPathType.STRAIGHT;
         return facing.get3DDataValue() + path.legacyOffset() * 4;
+    }
+
+    public Direction getInputDirection(BlockState state) {
+        return ConveyorMath.inputDirection(legacyMetadata(state));
+    }
+
+    public Direction getOutputDirection(BlockState state) {
+        return ConveyorMath.outputDirection(legacyMetadata(state));
+    }
+
+    public boolean supportsWandEdgeSnapping(BlockState state) {
+        return true;
     }
 
     protected BlockState nextScrewdriverState(BlockState state, int metadata, int baseMetadata,

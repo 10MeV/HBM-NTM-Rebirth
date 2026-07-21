@@ -50,7 +50,6 @@ public final class HazardRegistry {
 
         registerRadioactiveParts();
         registerRadioactiveBlocks();
-        registerLegacyMaterialSecondaryHazards();
         registerExistingLegacyResourceHazards();
         registerLegacyWasteAndCrystalHazards();
         registerLegacyNukePartHazards();
@@ -115,6 +114,8 @@ public final class HazardRegistry {
         registerForgeTag("tiny_dusts/coal", HazardType.COAL, RadiationConstants.NUGGET * RadiationConstants.POWDER_MULTIPLIER);
         registerForgeTag("dusts/lignite", HazardType.COAL, RadiationConstants.POWDER_MULTIPLIER);
         registerForgeTag("tiny_dusts/lignite", HazardType.COAL, RadiationConstants.NUGGET * RadiationConstants.POWDER_MULTIPLIER);
+        registerForgeTag("lithium", legacyOreDictData(
+                new HazardEntry(HazardType.HYDROACTIVE, RadiationConstants.INGOT)));
         registerForgeTag("ingots/lithium", legacyOreDictData(
                 new HazardEntry(HazardType.HYDROACTIVE, RadiationConstants.INGOT)));
         registerForgeTag("dusts/lithium", legacyOreDictData(
@@ -125,6 +126,8 @@ public final class HazardRegistry {
                 new HazardEntry(HazardType.HYDROACTIVE, RadiationConstants.BLOCK)));
         registerForgeTag("ores/lithium", legacyOreDictData(
                 new HazardEntry(HazardType.HYDROACTIVE, RadiationConstants.INGOT)));
+        registerForgeTag("asbestos", legacyOreDictData(
+                new HazardEntry(HazardType.ASBESTOS, RadiationConstants.INGOT)));
         registerForgeTag("ingots/asbestos", legacyOreDictData(
                 new HazardEntry(HazardType.ASBESTOS, RadiationConstants.INGOT)));
         registerForgeTag("dusts/asbestos", legacyOreDictData(
@@ -162,6 +165,7 @@ public final class HazardRegistry {
     }
 
     private static void registerLegacyUraniumTagHazards() {
+        registerLegacyRadiationTagHazard("uranium", RadiationConstants.INGOT, RadiationConstants.U);
         registerLegacyRadiationTagHazard("ingots/uranium", RadiationConstants.INGOT, RadiationConstants.U);
         registerLegacyRadiationTagHazard("nuggets/uranium", RadiationConstants.NUGGET, RadiationConstants.U);
         registerLegacyRadiationTagHazard("billets/uranium", RadiationConstants.BILLET, RadiationConstants.U);
@@ -177,6 +181,8 @@ public final class HazardRegistry {
         registerLegacyRadiationTagHazard("billets/u238", RadiationConstants.BILLET, RadiationConstants.U238);
         registerLegacyRadiationTagHazard("storage_blocks/uranium238", RadiationConstants.BLOCK, RadiationConstants.U238);
         registerLegacyRadiationTagHazard("storage_blocks/u238", RadiationConstants.BLOCK, RadiationConstants.U238);
+        registerLegacyRadiationTagHazard("uranium238", RadiationConstants.INGOT, RadiationConstants.U238);
+        registerLegacyRadiationTagHazard("u238", RadiationConstants.INGOT, RadiationConstants.U238);
     }
 
     private static void registerLegacyEnrichedUraniumTagHazards() {
@@ -187,6 +193,7 @@ public final class HazardRegistry {
     private static void registerLegacyMaterialRadiationTagHazards(String primaryAlias, String shortAlias, float radiation) {
         registerLegacyMaterialRadiationAliasTagHazards(primaryAlias, radiation);
         registerLegacyMaterialRadiationAliasTagHazards(shortAlias, radiation);
+        registerLegacyBareIngotRadiationTagHazards(radiation, primaryAlias, shortAlias);
     }
 
     private static void registerLegacyMaterialRadiationAliasTagHazards(String alias, float radiation) {
@@ -199,6 +206,7 @@ public final class HazardRegistry {
     private static void registerLegacyTh232TagHazards() {
         registerLegacyMaterialRadiationTagHazards("thorium232", "th232", RadiationConstants.TH232);
         registerLegacyMaterialRadiationAliasTagHazards("thorium", RadiationConstants.TH232);
+        registerLegacyBareIngotRadiationTagHazards(RadiationConstants.TH232, "thorium");
         registerLegacyRadiationTagHazard("dusts/thorium232", RadiationConstants.POWDER_MULTIPLIER, RadiationConstants.TH232);
         registerLegacyRadiationTagHazard("dusts/th232", RadiationConstants.POWDER_MULTIPLIER, RadiationConstants.TH232);
         registerLegacyRadiationTagHazard("dusts/thorium", RadiationConstants.POWDER_MULTIPLIER, RadiationConstants.TH232);
@@ -208,6 +216,7 @@ public final class HazardRegistry {
     }
 
     private static void registerLegacyPuPurgPu238TagHazards() {
+        registerLegacyRadiationTagHazard("plutonium", RadiationConstants.INGOT, RadiationConstants.PU);
         registerLegacyRadiationTagHazard("ingots/plutonium", RadiationConstants.INGOT, RadiationConstants.PU);
         registerLegacyRadiationTagHazard("nuggets/plutonium", RadiationConstants.NUGGET, RadiationConstants.PU);
         registerLegacyRadiationTagHazard("billets/plutonium", RadiationConstants.BILLET, RadiationConstants.PU);
@@ -217,15 +226,18 @@ public final class HazardRegistry {
         registerLegacyRadiationTagHazard("ores/nether/plutonium", RadiationConstants.INGOT, RadiationConstants.PU);
 
         registerLegacyMaterialRadiationAliasTagHazards("plutonium_rg", RadiationConstants.PU_REACTOR_GRADE);
+        registerLegacyBareIngotRadiationTagHazards(RadiationConstants.PU_REACTOR_GRADE, "plutonium_rg");
 
         registerLegacyMaterialRadiationHotAliasTagHazards("plutonium238", RadiationConstants.PU238, 3.0F);
         registerLegacyMaterialRadiationHotAliasTagHazards("pu238", RadiationConstants.PU238, 3.0F);
+        registerLegacyBareIngotRadiationHotTagHazards(RadiationConstants.PU238, 3.0F, "plutonium238", "pu238");
     }
 
     private static void registerLegacyPu239Pu240Pu241TagHazards() {
         registerLegacyMaterialRadiationTagHazards("plutonium239", "pu239", RadiationConstants.PU239);
         registerLegacyMaterialRadiationTagHazards("plutonium240", "pu240", RadiationConstants.PU240);
         registerLegacyMaterialRadiationNoBlockTagHazards("plutonium241", "pu241", RadiationConstants.PU241);
+        registerLegacyBareIngotRadiationTagHazards(RadiationConstants.PU241, "plutonium241", "pu241");
     }
 
     private static void registerLegacyMaterialRadiationNoBlockTagHazards(String primaryAlias, String shortAlias,
@@ -323,6 +335,8 @@ public final class HazardRegistry {
     private static void registerLegacySr90TagHazards() {
         registerLegacySr90TagHazard("ingots/strontium90", RadiationConstants.INGOT);
         registerLegacySr90TagHazard("ingots/sr90", RadiationConstants.INGOT);
+        registerLegacySr90TagHazard("strontium90", RadiationConstants.INGOT);
+        registerLegacySr90TagHazard("sr90", RadiationConstants.INGOT);
         registerLegacySr90TagHazard("nuggets/strontium90", RadiationConstants.NUGGET);
         registerLegacySr90TagHazard("nuggets/sr90", RadiationConstants.NUGGET);
         registerLegacySr90TagHazard("billets/strontium90", RadiationConstants.BILLET);
@@ -542,8 +556,9 @@ public final class HazardRegistry {
         registerRad("ingot_mox_fuel", RadiationConstants.MOX_FUEL);
         registerRad("ingot_americium_fuel", RadiationConstants.AM_FUEL);
         registerRad("ingot_thorium_fuel", RadiationConstants.TH_FUEL);
-        registerRad("ingot_schrabidium_fuel", RadiationConstants.SA_FUEL);
-        registerByName("ingot_schrabidium_fuel", HazardType.BLINDING, 5.0F);
+        registerByName("ingot_schrabidium_fuel",
+                new HazardEntry(HazardType.RADIATION, RadiationConstants.SA_FUEL),
+                new HazardEntry(HazardType.BLINDING, 5.0F));
         registerRad("ingot_hes", RadiationConstants.SA_FUEL);
         registerRad("ingot_les", RadiationConstants.SA_FUEL);
 
@@ -558,8 +573,9 @@ public final class HazardRegistry {
         registerNugget("nugget_neptunium_fuel", RadiationConstants.NP_FUEL);
         registerNugget("nugget_mox_fuel", RadiationConstants.MOX_FUEL);
         registerNugget("nugget_americium_fuel", RadiationConstants.AM_FUEL);
-        registerNugget("nugget_schrabidium_fuel", RadiationConstants.SA_FUEL);
-        registerByName("nugget_schrabidium_fuel", HazardType.BLINDING, 5.0F * RadiationConstants.NUGGET);
+        registerByName("nugget_schrabidium_fuel",
+                new HazardEntry(HazardType.RADIATION, RadiationConstants.SA_FUEL * RadiationConstants.NUGGET),
+                new HazardEntry(HazardType.BLINDING, 5.0F * RadiationConstants.NUGGET));
         registerNugget("nugget_hes", RadiationConstants.SA_FUEL);
         registerNugget("nugget_les", RadiationConstants.SA_FUEL);
 
@@ -570,13 +586,14 @@ public final class HazardRegistry {
         registerBillet("billet_neptunium_fuel", RadiationConstants.NP_FUEL);
         registerBillet("billet_mox_fuel", RadiationConstants.MOX_FUEL);
         registerBillet("billet_americium_fuel", RadiationConstants.AM_FUEL);
-        registerBillet("billet_schrabidium_fuel", RadiationConstants.SA_FUEL);
+        registerByName("billet_schrabidium_fuel",
+                new HazardEntry(HazardType.RADIATION, RadiationConstants.SA_FUEL * RadiationConstants.BILLET),
+                new HazardEntry(HazardType.BLINDING, 5.0F * RadiationConstants.BILLET));
         registerBillet("billet_hes", RadiationConstants.SA_FUEL);
         registerBillet("billet_les", RadiationConstants.SA_FUEL);
         registerBillet("billet_po210be", RadiationConstants.PO210_BE);
         registerBillet("billet_ra226be", RadiationConstants.RA226_BE);
         registerBillet("billet_pu238be", RadiationConstants.PU238_BE);
-        registerByName("billet_schrabidium_fuel", HazardType.BLINDING, 5.0F * RadiationConstants.BILLET);
     }
 
     private static void registerRadioactiveBlocks() {
@@ -596,8 +613,9 @@ public final class HazardRegistry {
         registerBlockRad("ancient_scrap", 150.0F);
         registerBlockRad("block_corium", 150.0F);
         registerBlockRad("block_corium_cobble", 150.0F);
-        registerBlockRad("block_schrabidium_fuel", RadiationConstants.SA_FUEL * RadiationConstants.BLOCK);
-        registerBlockByName("block_schrabidium_fuel", HazardType.BLINDING, 5.0F * RadiationConstants.BLOCK);
+        registerBlockByName("block_schrabidium_fuel",
+                new HazardEntry(HazardType.RADIATION, RadiationConstants.SA_FUEL * RadiationConstants.BLOCK),
+                new HazardEntry(HazardType.BLINDING, 5.0F * RadiationConstants.BLOCK));
     }
 
     private static void registerSellafieldItemHazards() {
@@ -609,17 +627,11 @@ public final class HazardRegistry {
         registerLegacyStateBlockVariant("sellafield", 5, HazardType.RADIATION, 10.0F);
     }
 
-    private static void registerLegacyMaterialSecondaryHazards() {
-
-    }
-
     private static void registerExistingLegacyResourceHazards() {
         registerRad("insert_polonium", 100.0F);
         registerBlockRad("block_yellowcake", RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER);
         registerBlockRad("block_fallout", RadiationConstants.YELLOWCAKE * RadiationConstants.BLOCK * RadiationConstants.POWDER_MULTIPLIER);
         registerBlockByName("yellow_barrel", HazardType.RADIATION, RadiationConstants.WASTE * RadiationConstants.INGOT * 10.0F);
-        registerMaterialPowderHazards();
-
         registerBlockByName("ore_asbestos", HazardType.ASBESTOS, 1.0F);
         registerBlockByName("ore_gneiss_asbestos", HazardType.ASBESTOS, 1.0F);
         registerBlockByName("stone_resource_asbestos", HazardType.ASBESTOS, 1.0F);
@@ -913,59 +925,50 @@ public final class HazardRegistry {
     }
 
     private static void registerLegacyPwrFuelHazards() {
-        registerPwrFuel(0, "meu", RadiationConstants.U_FUEL * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(1, "heu233", RadiationConstants.U233 * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(2, "heu235", RadiationConstants.U235 * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(3, "men", RadiationConstants.NP_FUEL * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(4, "hen237", RadiationConstants.NP237 * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(5, "mox", RadiationConstants.MOX_FUEL * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(6, "mep", RadiationConstants.PU_REACTOR_GRADE * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(7, "hep239", RadiationConstants.PU239 * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(8, "hep241", RadiationConstants.PU241 * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(9, "mea", RadiationConstants.AM_MIX * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(10, "hea242", RadiationConstants.AM242 * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(11, "hes326", RadiationConstants.SA326 * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(12, "hes327", RadiationConstants.SA327 * RadiationConstants.BILLET * 2.0F);
-        registerPwrFuel(13, "bfb_am_mix", RadiationConstants.AM_MIX * RadiationConstants.BILLET);
-        registerPwrFuel(14, "bfb_pu241", RadiationConstants.PU241 * RadiationConstants.BILLET);
+        registerPwrFuel(0, RadiationConstants.U_FUEL * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(1, RadiationConstants.U233 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(2, RadiationConstants.U235 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(3, RadiationConstants.NP_FUEL * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(4, RadiationConstants.NP237 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(5, RadiationConstants.MOX_FUEL * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(6, RadiationConstants.PU_REACTOR_GRADE * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(7, RadiationConstants.PU239 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(8, RadiationConstants.PU241 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(9, RadiationConstants.AM_MIX * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(10, RadiationConstants.AM242 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(11, RadiationConstants.SA326 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(12, RadiationConstants.SA327 * RadiationConstants.BILLET * 2.0F);
+        registerPwrFuel(13, RadiationConstants.AM_MIX * RadiationConstants.BILLET);
+        registerPwrFuel(14, RadiationConstants.PU241 * RadiationConstants.BILLET);
     }
 
-    private static void registerPwrFuel(int legacyMeta, String suffix, float base) {
+    private static void registerPwrFuel(int legacyMeta, float base) {
         registerLegacyMeta(LegacyMetaItemMappings.PWR_FUEL, legacyMeta, HazardType.RADIATION, base);
-        registerByName("pwr_fuel_" + suffix, HazardType.RADIATION, base);
 
         HazardData hot = new HazardData()
                 .addEntry(HazardType.RADIATION, base * 10.0F)
                 .addEntry(HazardType.HOT, 5.0F);
         registerLegacyMeta(LegacyMetaItemMappings.PWR_FUEL_HOT, legacyMeta, hot);
-        registerByName("pwr_fuel_hot_" + suffix,
-                new HazardEntry(HazardType.RADIATION, base * 10.0F),
-                new HazardEntry(HazardType.HOT, 5.0F));
 
         registerLegacyMeta(LegacyMetaItemMappings.PWR_FUEL_DEPLETED, legacyMeta, HazardType.RADIATION, base * 10.0F);
-        registerByName("pwr_fuel_depleted_" + suffix, HazardType.RADIATION, base * 10.0F);
     }
 
     private static void registerLegacyWatzPelletHazards() {
         float fourIngots = RadiationConstants.INGOT * 4.0F;
-        registerWatzPellet(0, "schrabidium", RadiationConstants.SA326 * fourIngots);
-        registerWatzPellet(1, "hes", RadiationConstants.SA_FUEL * fourIngots);
-        registerWatzPellet(2, "mes", RadiationConstants.SA_FUEL * fourIngots);
-        registerWatzPellet(3, "les", RadiationConstants.SA_FUEL * fourIngots);
-        registerWatzPellet(4, "hen", RadiationConstants.NP237 * fourIngots);
-        registerWatzPellet(5, "meu", RadiationConstants.U_FUEL * fourIngots);
-        registerWatzPellet(6, "mep", RadiationConstants.PU_REACTOR_GRADE * fourIngots);
-        registerWatzPellet(9, "du", RadiationConstants.U238 * fourIngots);
-        registerWatzPellet(10, "nqd", RadiationConstants.U235 * fourIngots);
-        registerWatzPellet(11, "nqr", RadiationConstants.PU239 * fourIngots);
+        registerWatzPellet(0, RadiationConstants.SA326 * fourIngots);
+        registerWatzPellet(1, RadiationConstants.SA_FUEL * fourIngots);
+        registerWatzPellet(2, RadiationConstants.SA_FUEL * fourIngots);
+        registerWatzPellet(3, RadiationConstants.SA_FUEL * fourIngots);
+        registerWatzPellet(4, RadiationConstants.NP237 * fourIngots);
+        registerWatzPellet(5, RadiationConstants.U_FUEL * fourIngots);
+        registerWatzPellet(6, RadiationConstants.PU_REACTOR_GRADE * fourIngots);
+        registerWatzPellet(9, RadiationConstants.U238 * fourIngots);
+        registerWatzPellet(10, RadiationConstants.U235 * fourIngots);
+        registerWatzPellet(11, RadiationConstants.PU239 * fourIngots);
     }
 
-    private static void registerWatzPellet(int legacyMeta, String suffix, float radiation) {
+    private static void registerWatzPellet(int legacyMeta, float radiation) {
         registerLegacyMeta(LegacyMetaItemMappings.WATZ_PELLET, legacyMeta, HazardType.RADIATION, radiation);
-        registerByName("watz_pellet_" + suffix, HazardType.RADIATION, radiation);
-    }
-
-    private static void registerMaterialPowderHazards() {
     }
 
     private static void registerRad(String itemName, float level) {

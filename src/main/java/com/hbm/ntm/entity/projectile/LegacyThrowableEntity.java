@@ -1,5 +1,6 @@
 package com.hbm.ntm.entity.projectile;
 
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -27,6 +28,11 @@ public abstract class LegacyThrowableEntity extends Entity {
     protected LegacyThrowableEntity(EntityType<?> type, Level level) {
         super(type, level);
         setNoGravity(false);
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

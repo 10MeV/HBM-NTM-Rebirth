@@ -4,7 +4,6 @@ import com.hbm.ntm.uninos.HbmNodespace;
 import com.hbm.ntm.uninos.HbmUninosDiagnostics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 public final class FoundryNodespace {
@@ -12,7 +11,7 @@ public final class FoundryNodespace {
             new HbmNodespace<BlockPos, FoundryNode, FoundryNetwork>(
                     FoundryNode::getPositions,
                     (node, connection) -> connection.pos(),
-                    node -> new FoundryNetwork(),
+                    node -> FoundryNetworkProvider.THE_PROVIDER,
                     FoundryNetwork::resetTrackers,
                     FoundryNetwork::update,
                     BlockPos::immutable);
@@ -29,12 +28,17 @@ public final class FoundryNodespace {
         NODESPACE.destroyNode(level, pos);
     }
 
+    /** Compatibility equivalent of {@code UniNodespace.destroyNode(World, GenNode)}. */
+    public static void destroyNode(Level level, FoundryNode node) {
+        NODESPACE.destroyNode(level, node);
+    }
+
     public static void unloadLevel(Level level) {
         NODESPACE.unloadLevel(level);
     }
 
-    public static void unloadChunk(Level level, ChunkPos chunkPos) {
-        NODESPACE.unloadChunk(level, chunkPos);
+    public static void reapLevel(Level level) {
+        NODESPACE.reapLevel(level);
     }
 
     public static void tick(ServerLevel level) {

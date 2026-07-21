@@ -273,6 +273,11 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
         return canConnectFluidSide(side) ? List.of(inputTank) : List.of();
     }

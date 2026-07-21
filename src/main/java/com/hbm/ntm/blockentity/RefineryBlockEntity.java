@@ -12,7 +12,6 @@ import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmExtinguishType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
-import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
 import com.hbm.ntm.fluid.HbmFluidRepairMaterials.HbmRepairMaterial;
 import com.hbm.ntm.fluid.HbmFluidStack;
@@ -204,6 +203,12 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachineRefinery#updateEntity invokes updateConnections on every server tick.
+        return true;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return !exploded && type == getAllTanks().get(0).getTankType();
     }
@@ -216,7 +221,19 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
-        return HbmFluidPortLayouts.squareSidesWithoutCorners(2);
+        // TileEntityMachineRefinery#getConPos declares two remote ports per
+        // side.  Do not use squareSidesWithoutCorners(2): that helper includes
+        // each side midpoint as a third port and changes the old eight-port
+        // Fluid Mk2 topology into twelve ports.
+        return List.of(
+                FluidPort.of(2, 0, 1, Direction.EAST),
+                FluidPort.of(2, 0, -1, Direction.EAST),
+                FluidPort.of(-2, 0, 1, Direction.WEST),
+                FluidPort.of(-2, 0, -1, Direction.WEST),
+                FluidPort.of(1, 0, 2, Direction.SOUTH),
+                FluidPort.of(-1, 0, 2, Direction.SOUTH),
+                FluidPort.of(1, 0, -2, Direction.NORTH),
+                FluidPort.of(-1, 0, -2, Direction.NORTH));
     }
 
     @Override
@@ -230,6 +247,11 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
                 EnergyPort.of(-1, 0, 2, Direction.SOUTH),
                 EnergyPort.of(1, 0, -2, Direction.NORTH),
                 EnergyPort.of(-1, 0, -2, Direction.NORTH));
+    }
+
+    @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

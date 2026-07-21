@@ -50,6 +50,11 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
     public TrinketBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
     }
 
+    @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
     public static void registerAdditionalModels() {
         // Loading this class initializes the ObjModelPart registry entries used by ObjModelLibrary.
     }

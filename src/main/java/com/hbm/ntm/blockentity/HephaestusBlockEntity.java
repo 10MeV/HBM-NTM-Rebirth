@@ -174,6 +174,10 @@ public class HephaestusBlockEntity extends HbmFluidBlockEntity implements HbmSta
         if (state.is(ModBlocks.VOLCANIC_LAVA_BLOCK.get())) {
             return 150;
         }
+        if (state.is(ModBlocks.ORE_VOLCANO.get())) {
+            fissureScanTime = level.getGameTime();
+            return 300;
+        }
         return 0;
     }
 

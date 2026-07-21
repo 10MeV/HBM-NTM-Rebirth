@@ -2,6 +2,7 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.SatelliteDockBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -46,11 +47,15 @@ public class SatelliteDockBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
                                  BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (!player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof SatelliteDockBlockEntity dock) {
             NetworkHooks.openScreen(serverPlayer, dock, dock.getBlockPos());
+            return InteractionResult.CONSUME;
         }
-        return player.isShiftKeyDown() ? InteractionResult.PASS : InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.PASS;
     }
 
     @Nullable
@@ -66,9 +71,7 @@ public class SatelliteDockBlock extends LegacyVisibleMultiblockMachineBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide
                 && level.getBlockEntity(pos) instanceof SatelliteDockBlockEntity dock) {
-            for (ItemStack stack : dock.getDrops()) {
-                Block.popResource(level, pos, stack);
-            }
+            HbmInventoryMenuHelper.spillItems(level, pos, dock.getItems());
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

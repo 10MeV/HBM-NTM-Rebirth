@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "combat",
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:ingot_chainsteel" },
+    "D": { "item": "hbm_ntm_rebirth:demon_core_closed" },
+    "E": { "item": "hbm_ntm_rebirth:ingot_euphemium" },
+    "M": { "item": "hbm_ntm_rebirth:ingot_meteorite_forged" },
+    "Y": { "item": "hbm_ntm_rebirth:billet_yharonite" }
+  },
+  "pattern": ["MEM", "YDY", "YCY"],
+  "result": {
+    "item": "hbm_ntm_rebirth:crucible",
+    "nbt": "{Damage:3}"
+  }
+}

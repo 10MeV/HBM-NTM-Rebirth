@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/legacy_blocks/pneumatic_storage_access",
+    "up": "hbm_ntm_rebirth:block/legacy_blocks/pneumatic_storage_access",
+    "north": "hbm_ntm_rebirth:block/legacy_blocks/pneumatic_storage_access_front",
+    "south": "hbm_ntm_rebirth:block/legacy_blocks/pneumatic_storage_access",
+    "west": "hbm_ntm_rebirth:block/legacy_blocks/pneumatic_storage_access",
+    "east": "hbm_ntm_rebirth:block/legacy_blocks/pneumatic_storage_access"
+  }
+}

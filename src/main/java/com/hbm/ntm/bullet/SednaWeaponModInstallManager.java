@@ -79,6 +79,21 @@ public final class SednaWeaponModInstallManager {
         return true;
     }
 
+    /** Source ItemGunBaseNT#recognizedMods, exposed for the Weapon Table's client-only tooltip. */
+    public static List<ItemStack> recognizedUpgradeItems(ItemStack gunStack, int configIndex) {
+        if (!(gunStack.getItem() instanceof SednaGunItem)) {
+            return List.of();
+        }
+        List<ItemStack> recognized = new ArrayList<>();
+        for (RegistryObject<Item> entry : ModItems.WEAPON_MOD_ITEMS) {
+            ItemStack candidate = new ItemStack(entry.get());
+            if (isApplicable(gunStack, candidate, configIndex, false)) {
+                recognized.add(candidate);
+            }
+        }
+        return List.copyOf(recognized);
+    }
+
     private static Optional<Integer> applicableModId(String owner, ItemStack modStack) {
         if (!(modStack.getItem() instanceof WeaponModItem modItem)) {
             return Optional.empty();
@@ -364,8 +379,10 @@ public final class SednaWeaponModInstallManager {
             case SednaWeaponModEvaluator.ID_SCOPE -> "SCOPE";
             case SednaWeaponModEvaluator.ID_SAWED_OFF, SednaWeaponModEvaluator.ID_CHOKE,
                     SednaWeaponModEvaluator.ID_LAS_SHOTGUN -> "BARREL";
-            case SednaWeaponModEvaluator.ID_NO_SHIELD -> "SHIELD";
-            case SednaWeaponModEvaluator.ID_NO_STOCK, SednaWeaponModEvaluator.ID_GREASEGUN_CLEAN,
+            // Legacy WeapnModG3SawedOff uses the SHIELD mutex slot too.  It is deliberately
+            // distinct from the G3 polymer-furniture slot, so a shortened G3 can retain either skin.
+            case SednaWeaponModEvaluator.ID_NO_SHIELD, SednaWeaponModEvaluator.ID_NO_STOCK -> "SHIELD";
+            case SednaWeaponModEvaluator.ID_GREASEGUN_CLEAN,
                     SednaWeaponModEvaluator.ID_FURNITURE_GREEN, SednaWeaponModEvaluator.ID_FURNITURE_BLACK,
                     SednaWeaponModEvaluator.ID_UZI_SATURN -> "FURNITURE";
             case SednaWeaponModEvaluator.ID_MINIGUN_SLOWDOWN, SednaWeaponModEvaluator.ID_MINIGUN_SPEED,

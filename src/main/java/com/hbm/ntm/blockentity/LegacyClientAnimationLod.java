@@ -5,11 +5,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
-final class LegacyClientAnimationLod {
+public final class LegacyClientAnimationLod {
     private LegacyClientAnimationLod() {
     }
 
-    static boolean shouldSkipAnimationUpdate(Level level, BlockPos pos) {
+    public static boolean shouldSkipAnimationUpdate(Level level, BlockPos pos) {
         if (level == null || pos == null || !level.isClientSide) {
             return false;
         }

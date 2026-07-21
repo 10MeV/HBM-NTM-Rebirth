@@ -53,7 +53,36 @@ public class BjJetpackArmorItem extends FsbPoweredArmorItem {
                 Vec3 look = player.getLookAngle().scale(lift);
                 player.setDeltaMovement(movement.x + look.x, movement.y + lift + look.y, movement.z + look.z);
                 player.hasImpulse = true;
-                player.fallDistance = 0.0F;
+            }
+        }
+    }
+
+    @Override
+    public void tickClientEquippedArmor(ItemStack stack, Player player) {
+        super.tickClientEquippedArmor(stack, player);
+        if (!hasFullSet(player)) {
+            return;
+        }
+
+        // ArmorBJJetpack#onArmorTick ran this movement and sound branch on both logical sides.
+        ArmorUtil.resetFlightTime(player);
+        Level level = player.level();
+        if (HbmPlayerProperties.isJetpackActive(player)) {
+            Vec3 movement = player.getDeltaMovement();
+            if (movement.y < 0.4D) {
+                player.setDeltaMovement(movement.x, movement.y + 0.1D, movement.z);
+                player.hasImpulse = true;
+            }
+            player.fallDistance = 0.0F;
+            LegacySoundPlayer.playLegacyImmolatorShoot(level, player.getX(), player.getY(), player.getZ(),
+                    player.getSoundSource(), 0.125F, 1.5F);
+        } else if (player.isShiftKeyDown()) {
+            Vec3 movement = player.getDeltaMovement();
+            if (movement.y < -0.08D) {
+                double lift = movement.y * -0.4D;
+                Vec3 look = player.getLookAngle().scale(lift);
+                player.setDeltaMovement(movement.x + look.x, movement.y + lift + look.y, movement.z + look.z);
+                player.hasImpulse = true;
             }
         }
     }

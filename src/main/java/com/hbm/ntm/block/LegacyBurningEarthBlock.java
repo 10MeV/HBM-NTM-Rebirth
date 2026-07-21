@@ -105,6 +105,19 @@ public class LegacyBurningEarthBlock extends Block {
                 || state.getBlock() instanceof BushBlock;
     }
 
+    /**
+     * The six log blocks covered by 1.7.10's {@code BlockLog}.  Later vanilla
+     * wood families were not part of that source contract.
+     */
+    public static boolean isLegacyVanillaLog(BlockState state) {
+        return state.is(Blocks.OAK_LOG)
+                || state.is(Blocks.SPRUCE_LOG)
+                || state.is(Blocks.BIRCH_LOG)
+                || state.is(Blocks.JUNGLE_LOG)
+                || state.is(Blocks.ACACIA_LOG)
+                || state.is(Blocks.DARK_OAK_LOG);
+    }
+
     public static boolean isLegacyBurningEarthSpreadTarget(BlockState state) {
         return state.is(Blocks.GRASS_BLOCK)
                 || state.is(Blocks.MYCELIUM)

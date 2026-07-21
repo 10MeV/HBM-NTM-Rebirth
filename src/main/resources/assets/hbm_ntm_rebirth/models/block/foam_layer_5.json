@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/snow_height10", "textures": { "particle": "hbm_ntm_rebirth:block/foam", "texture": "hbm_ntm_rebirth:block/foam" } }

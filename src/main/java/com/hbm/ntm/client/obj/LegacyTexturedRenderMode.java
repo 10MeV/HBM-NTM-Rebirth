@@ -21,9 +21,11 @@ public enum LegacyTexturedRenderMode {
     CUTOUT_DOUBLE_SIDED,
     CUTOUT_REVERSED_CULL,
     CUTOUT_CULL,
+    RAW_LIGHTMAP_CUTOUT_CULL,
     TRANSLUCENT,
     TRANSLUCENT_NO_DEPTH_WRITE,
     TRANSLUCENT_DEPTH_WRITE,
+    TRANSLUCENT_CULL_DEPTH_WRITE,
     ADDITIVE_NO_DEPTH_WRITE,
     ADDITIVE_CULL_NO_DEPTH_WRITE,
     ADDITIVE_DEPTH_WRITE,
@@ -73,6 +75,10 @@ public enum LegacyTexturedRenderMode {
                     () -> GL11.glFrontFace(GL11.GL_CCW));
     private static final RenderStateShard.ShaderStateShard BLOCK_LIT_SHADER =
             new RenderStateShard.ShaderStateShard(HbmOptimizedRenderShaders::blockLitStaticShader);
+    private static final RenderStateShard.ShaderStateShard LEGACY_STANDARD_ITEM_LIT_SHADER =
+            new RenderStateShard.ShaderStateShard(HbmOptimizedRenderShaders::legacyStandardItemLitStaticShader);
+    private static final RenderStateShard.ShaderStateShard ENTITY_CUTOUT_SHADER =
+            new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityCutoutShader);
     private static final int LEGACY_OBJ_BUFFER_SIZE = 1_048_576;
     private static final Map<Key, RenderType> CACHE = new ConcurrentHashMap<>();
 
@@ -93,7 +99,8 @@ public enum LegacyTexturedRenderMode {
 
     public boolean translucent() {
         return this != CUTOUT_NO_CULL && this != CUTOUT_DOUBLE_SIDED
-                && this != CUTOUT_REVERSED_CULL && this != CUTOUT_CULL;
+                && this != CUTOUT_REVERSED_CULL && this != CUTOUT_CULL
+                && this != RAW_LIGHTMAP_CUTOUT_CULL;
     }
 
     public RenderModeStatePlan statePlan() {
@@ -106,12 +113,16 @@ public enum LegacyTexturedRenderMode {
                     false, false, true, true);
             case CUTOUT_CULL -> new RenderModeStatePlan(false, BlendFunction.NONE, true, DepthTest.LEQUAL,
                     false, false, true, true);
+            case RAW_LIGHTMAP_CUTOUT_CULL -> new RenderModeStatePlan(false, BlendFunction.NONE, true, DepthTest.LEQUAL,
+                    false, false, true, true);
             case TRANSLUCENT -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, true, DepthTest.LEQUAL,
                     true, true, true, true);
             case TRANSLUCENT_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, false, DepthTest.LEQUAL,
                     false, true, true, true);
             case TRANSLUCENT_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, true, DepthTest.LEQUAL,
                     false, true, true, true);
+            case TRANSLUCENT_CULL_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.NORMAL_ALPHA, true, DepthTest.LEQUAL,
+                    false, false, true, true);
             case ADDITIVE_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.ADDITIVE, false, DepthTest.LEQUAL,
                     false, true, true, true);
             case ADDITIVE_CULL_NO_DEPTH_WRITE -> new RenderModeStatePlan(true, BlendFunction.ADDITIVE, false, DepthTest.LEQUAL,
@@ -162,11 +173,9 @@ public enum LegacyTexturedRenderMode {
     }
 
     private static RenderType createCutout(String name, ResourceLocation texture, boolean cull,
-            boolean reversedFrontFace, VertexFormat.Mode drawMode, boolean blockLitShader) {
+            boolean reversedFrontFace, VertexFormat.Mode drawMode, RenderStateShard.ShaderStateShard shader) {
         RenderType.CompositeState.CompositeStateBuilder builder = RenderType.CompositeState.builder()
-                .setShaderState(blockLitShader
-                        ? BLOCK_LIT_SHADER
-                        : new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEntityCutoutShader))
+                .setShaderState(shader)
                 .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
                 .setDepthTestState(LEQUAL_DEPTH_TEST)
                 .setCullState(new RenderStateShard.CullStateShard(cull))
@@ -186,11 +195,17 @@ public enum LegacyTexturedRenderMode {
 
     private static boolean useWorldBlockLitShader(LegacyTexturedRenderMode mode) {
         HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
-        return worldBlockLitEligible(mode)
-                && HbmOptimizedRenderShaders.blockLitStaticShader() != null
-                && HbmRenderFrameCulling.inMachineRendererScope()
+        return (rawLightmapCoordinates(mode)
+                ? HbmOptimizedRenderShaders.legacyStandardItemLitStaticShader() != null
+                : worldBlockLitEligible(mode) && HbmOptimizedRenderShaders.blockLitStaticShader() != null)
+                && (rawLightmapCoordinates(mode)
+                || (HbmRenderFrameCulling.inMachineRendererScope()
                 && !flags.shaderPackDetected()
-                && !flags.shaderShadowPass();
+                && !flags.shaderShadowPass()));
+    }
+
+    public static boolean rawLightmapCoordinates(LegacyTexturedRenderMode mode) {
+        return mode == RAW_LIGHTMAP_CUTOUT_CULL;
     }
 
     private static boolean worldBlockLitEligible(LegacyTexturedRenderMode mode) {
@@ -207,13 +222,20 @@ public enum LegacyTexturedRenderMode {
                     .replace(':', '_').replace('/', '_').replace('.', '_') + "_" + drawMode.name().toLowerCase()
                     + (blockLitShader ? "_block_lit" : "_entity_lit");
             return switch (mode) {
-                case CUTOUT_NO_CULL -> createCutout(name, texture, false, false, drawMode, blockLitShader);
-                case CUTOUT_DOUBLE_SIDED -> createCutout(name, texture, false, false, drawMode, blockLitShader);
-                case CUTOUT_REVERSED_CULL -> createCutout(name, texture, true, true, drawMode, blockLitShader);
-                case CUTOUT_CULL -> createCutout(name, texture, true, false, drawMode, blockLitShader);
+                case CUTOUT_NO_CULL -> createCutout(name, texture, false, false, drawMode,
+                        blockLitShader ? BLOCK_LIT_SHADER : ENTITY_CUTOUT_SHADER);
+                case CUTOUT_DOUBLE_SIDED -> createCutout(name, texture, false, false, drawMode,
+                        blockLitShader ? BLOCK_LIT_SHADER : ENTITY_CUTOUT_SHADER);
+                case CUTOUT_REVERSED_CULL -> createCutout(name, texture, true, true, drawMode,
+                        blockLitShader ? BLOCK_LIT_SHADER : ENTITY_CUTOUT_SHADER);
+                case CUTOUT_CULL -> createCutout(name, texture, true, false, drawMode,
+                        blockLitShader ? BLOCK_LIT_SHADER : ENTITY_CUTOUT_SHADER);
+                case RAW_LIGHTMAP_CUTOUT_CULL -> createCutout(name, texture, true, false, drawMode,
+                        LEGACY_STANDARD_ITEM_LIT_SHADER);
                 case TRANSLUCENT -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);
                 case TRANSLUCENT_NO_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);
                 case TRANSLUCENT_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);
+                case TRANSLUCENT_CULL_DEPTH_WRITE -> createCustom(name, texture, NORMAL_ALPHA_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, true, drawMode, blockLitShader);
                 case ADDITIVE_NO_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);
                 case ADDITIVE_CULL_NO_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, false, LEQUAL_DEPTH_TEST, true, drawMode, blockLitShader);
                 case ADDITIVE_DEPTH_WRITE -> createCustom(name, texture, ADDITIVE_TRANSPARENCY, true, LEQUAL_DEPTH_TEST, false, drawMode, blockLitShader);

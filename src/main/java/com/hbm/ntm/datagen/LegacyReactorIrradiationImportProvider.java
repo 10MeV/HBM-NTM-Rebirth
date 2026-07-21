@@ -196,7 +196,7 @@ public final class LegacyReactorIrradiationImportProvider implements DataProvide
         int meta = array.size() > 3 ? array.get(3).getAsInt() : 0;
         CompoundTag nbt = array.size() > 4 ? parseNbt(array.get(4).getAsString(), key, sourceIndex)
                 : new CompoundTag();
-        if (nbt.isEmpty() && LegacyMetaItemMappings.item(legacyId, meta).isPresent()) {
+        if (nbt.isEmpty() && LegacyMetaItemMappings.hasMapping(legacyId, meta)) {
             return HbmIngredient.legacyMeta(legacyId, meta, count);
         }
         ItemStack stack = mapLegacyItemStack(legacyId, count, meta, nbt, key, sourceIndex);

@@ -1,3 +1,95 @@
 {
-  "parent": "hbm_ntm_rebirth:block/concrete_colored"
+  "parent": "hbm_ntm_rebirth:block/concrete_colored_white",
+  "overrides": [
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 1
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_orange"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 2
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_magenta"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 3
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_light_blue"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 4
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_yellow"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 5
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_lime"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 6
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_pink"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 7
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_gray"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 8
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_silver"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 9
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_cyan"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 10
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_purple"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 11
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_blue"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 12
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_brown"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 13
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_green"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 14
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_red"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 15
+      },
+      "model": "hbm_ntm_rebirth:block/concrete_colored_black"
+    }
+  ]
 }

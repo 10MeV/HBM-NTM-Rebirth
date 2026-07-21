@@ -171,6 +171,12 @@ public class TeleporterBlockEntity extends HbmEnergyBlockEntity implements Legac
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityMachineTeleporter retries every adjacent receiver per tick.
+        return true;
+    }
+
+    @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         if (!hasTarget()) {
             return LegacyLookOverlay.forBlock(this, List.of(

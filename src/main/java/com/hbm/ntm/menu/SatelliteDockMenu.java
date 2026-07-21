@@ -2,7 +2,7 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.SatelliteDockBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
-import com.hbm.ntm.satellite.ISatelliteChip;
+import com.hbm.ntm.satellite.SatelliteChipItem;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
@@ -34,7 +34,9 @@ public class SatelliteDockMenu extends AbstractContainerMenu {
         addSlot(new SlotItemHandler(blockEntity.getItems(), SatelliteDockBlockEntity.SLOT_CHIP, 26, 35) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return stack.getItem() instanceof ISatelliteChip;
+                // ContainerSatDock accepts ItemSatChip and its subclasses, not
+                // every ISatChip implementation (notably the armor mod lens).
+                return stack.getItem() instanceof SatelliteChipItem;
             }
         });
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
@@ -51,9 +53,31 @@ public class SatelliteDockMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                0, SatelliteDockBlockEntity.OUTPUT_SLOT_COUNT);
+        if (index < 0 || index >= slots.size()) {
+            return ItemStack.EMPTY;
+        }
+        Slot slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack stack = slot.getItem();
+        ItemStack result = stack.copy();
+        if (index < MACHINE_SLOT_COUNT) {
+            if (!HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack, PLAYER_INVENTORY_START,
+                    PLAYER_SLOT_END, true)) {
+                return ItemStack.EMPTY;
+            }
+        } else if (!HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack, 0,
+                SatelliteDockBlockEntity.OUTPUT_SLOT_COUNT, false)) {
+            // ContainerSatDock's player branch is precisely [0, 15): it may
+            // merge into an existing take-only output before placement checks,
+            // but it cannot populate an empty output or shift-click into slot 15.
+            return ItemStack.EMPTY;
+        }
+
+        HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        return result;
     }
 
     private static SatelliteDockBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

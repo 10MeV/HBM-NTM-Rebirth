@@ -16,6 +16,22 @@
     "hbm_ntm_rebirth:chemical_dye_lightblue",
     "hbm_ntm_rebirth:chemical_dye_magenta",
     "hbm_ntm_rebirth:chemical_dye_orange",
-    "hbm_ntm_rebirth:chemical_dye_white"
+    "hbm_ntm_rebirth:chemical_dye_white",
+    "hbm_ntm_rebirth:crayon_black",
+    "hbm_ntm_rebirth:crayon_red",
+    "hbm_ntm_rebirth:crayon_green",
+    "hbm_ntm_rebirth:crayon_brown",
+    "hbm_ntm_rebirth:crayon_blue",
+    "hbm_ntm_rebirth:crayon_purple",
+    "hbm_ntm_rebirth:crayon_cyan",
+    "hbm_ntm_rebirth:crayon_silver",
+    "hbm_ntm_rebirth:crayon_gray",
+    "hbm_ntm_rebirth:crayon_pink",
+    "hbm_ntm_rebirth:crayon_lime",
+    "hbm_ntm_rebirth:crayon_yellow",
+    "hbm_ntm_rebirth:crayon_lightblue",
+    "hbm_ntm_rebirth:crayon_magenta",
+    "hbm_ntm_rebirth:crayon_orange",
+    "hbm_ntm_rebirth:crayon_white"
   ]
 }

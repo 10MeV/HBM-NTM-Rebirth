@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": { "item": "hbm_ntm_rebirth:particle_strange" },
+    "T": { "item": "hbm_ntm_rebirth:powder_tungsten" },
+    "H": { "item": "hbm_ntm_rebirth:crystal_horn" }
+  },
+  "pattern": ["STS", "THT", "STS"],
+  "result": { "item": "hbm_ntm_rebirth:crystal_virus" }
+}

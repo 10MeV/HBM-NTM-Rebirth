@@ -391,7 +391,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
 
         ProcessingResult result = GenericMachineRecipeRuntime.update(level, kind.recipeMachine, selectedRecipe,
                 progress, items.getStackInSlot(SLOT_BLUEPRINT), energy, items, kind.inputSlots, kind.outputSlots,
-                inputTankList, outputTankList, upgradeFactors(), true, kind.tankCapacity, worldPosition);
+                inputTankList, outputTankList, upgradeFactors(), true, kind.tankCapacity);
         selectedRecipe = result.selectedRecipe();
         progress = result.progress();
         didProcess = result.didProcess();
@@ -442,8 +442,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     }
 
     private void subscribeEnergyReceiverToPorts() {
-        if (level != null && !level.isClientSide
-                && Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) == 0L) {
+        if (level != null && !level.isClientSide) {
             HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, kind.energyPorts, this);
         }
     }

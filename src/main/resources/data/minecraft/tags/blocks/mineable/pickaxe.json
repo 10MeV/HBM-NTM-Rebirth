@@ -333,6 +333,10 @@
                    "hbm_ntm_rebirth:launch_pad_rusted",
                    "hbm_ntm_rebirth:pipe_anchor",
                    "hbm_ntm_rebirth:pneumatic_tube",
+                   "hbm_ntm_rebirth:pneumatic_tube_paintable",
+                   "hbm_ntm_rebirth:pneumatic_storage_access",
+                   "hbm_ntm_rebirth:pneumatic_storage_clutter",
+                   "hbm_ntm_rebirth:pneumatic_storage_mono",
                    "hbm_ntm_rebirth:crane_extractor",
                    "hbm_ntm_rebirth:crane_inserter",
                    "hbm_ntm_rebirth:crane_grabber",
@@ -351,6 +355,7 @@
                    "hbm_ntm_rebirth:radio_torch_receiver",
                    "hbm_ntm_rebirth:radio_torch_sender",
                    "hbm_ntm_rebirth:red_cable",
+                   "hbm_ntm_rebirth:red_cable_paintable",
                    "hbm_ntm_rebirth:red_cable_gauge",
                    "hbm_ntm_rebirth:red_connector",
                    "hbm_ntm_rebirth:red_connector_super",
@@ -433,11 +438,34 @@
                    "hbm_ntm_rebirth:block_meteor",
                    "hbm_ntm_rebirth:block_meteor_cobble",
                    "hbm_ntm_rebirth:block_meteor_broken",
+                   "hbm_ntm_rebirth:block_meteor_molten",
+                   "hbm_ntm_rebirth:ore_meteor_iron",
+                   "hbm_ntm_rebirth:ore_meteor_copper",
+                   "hbm_ntm_rebirth:ore_meteor_aluminium",
+                   "hbm_ntm_rebirth:ore_meteor_rareearth",
+                   "hbm_ntm_rebirth:ore_meteor_cobalt",
+                   "hbm_ntm_rebirth:block_meteor_treasure",
                    "hbm_ntm_rebirth:reinforced_glass",
                    "hbm_ntm_rebirth:reinforced_glass_pane",
                    "hbm_ntm_rebirth:reinforced_laminate",
                    "hbm_ntm_rebirth:reinforced_laminate_pane",
                    "hbm_ntm_rebirth:block_coke",
-                   "hbm_ntm_rebirth:deco_toaster"
+                   "hbm_ntm_rebirth:deco_toaster",
+                   "hbm_ntm_rebirth:rail_narrow_straight",
+                   "hbm_ntm_rebirth:rail_large_straight",
+                   "hbm_ntm_rebirth:rail_large_straight_short",
+                   "hbm_ntm_rebirth:rail_narrow_curve",
+                   "hbm_ntm_rebirth:rail_large_curve",
+                   "hbm_ntm_rebirth:rail_large_curve_7",
+                   "hbm_ntm_rebirth:rail_large_curve_9"
+                   ,"hbm_ntm_rebirth:rail_large_ramp"
+                   ,"hbm_ntm_rebirth:rail_large_buffer"
+                   ,"hbm_ntm_rebirth:rail_large_switch"
+                   ,"hbm_ntm_rebirth:rail_large_switch_flipped"
+                   ,"hbm_ntm_rebirth:crystal_virus"
+                   ,"hbm_ntm_rebirth:crystal_hardened"
+                   ,"hbm_ntm_rebirth:crystal_pulsar"
+                   ,"hbm_ntm_rebirth:concrete_colored"
+                   ,"hbm_ntm_rebirth:concrete_colored_ext"
                ]
 }

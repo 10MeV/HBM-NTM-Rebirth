@@ -194,8 +194,12 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         }
 
         poseStack.pushPose();
-        LegacyPoseRotations.rotateYDegrees(poseStack, Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F);
-        LegacyPoseRotations.rotateZDegrees(poseStack, Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) + 180.0F);
+        if (config == null || config.renderRotations()) {
+            LegacyPoseRotations.rotateYDegrees(poseStack,
+                    Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F);
+            LegacyPoseRotations.rotateZDegrees(poseStack,
+                    Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) + 180.0F);
+        }
         poseStack.scale(1.5F, 1.5F, 1.5F);
         if (renderLegacySpecialProjectile(trail, entity, partialTick, poseStack, buffer, packedLight)) {
             poseStack.popPose();
@@ -207,7 +211,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         }
 
         switch (style) {
-            case NORMAL, FOLLY -> renderBullet(trail, entity, poseStack, buffer, packedLight, bulletCube);
+            case NORMAL, FOLLY -> renderBullet(trail, entity, partialTick, poseStack, buffer, packedLight, bulletCube);
             case PISTOL -> renderProjectilePart(PROJECTILE_BULLET_PISTOL, BULLET_PISTOL, 0.5F,
                     poseStack, buffer, packedLight);
             case FLECHETTE -> renderProjectilePart(PROJECTILE_FLECHETTE, FLECHETTE, 0.5F,
@@ -219,7 +223,7 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
                 if (trail == LegacySednaBulletAppearance.ROCKET_THRUST) {
                     poseStack.pushPose();
                     poseStack.translate(0.375D, 0.0D, 0.0D);
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0x808080, 0xFFF2A7, 2.0D,
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0x808080, 0xFFF2A7, 2.0D,
                             0.03125D, 0.03125D * 0.25D);
                     poseStack.popPose();
                 }
@@ -454,7 +458,20 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
                     buffer, packedLight);
             case LegacySednaBulletAppearance.MINI_NUKE_BALEFIRE -> renderLegacyBalefireNuke(entity, partialTick,
                     poseStack, buffer, packedLight);
-            case LegacySednaBulletAppearance.HIVE_ROCKET -> renderLegacyHiveRocket(poseStack, buffer, packedLight);
+            case LegacySednaBulletAppearance.HIVE_ROCKET -> renderLegacyPanzerschreckRocket(poseStack, buffer,
+                    packedLight);
+            case LegacySednaBulletAppearance.ROCKET_RPZB -> {
+                renderLegacyPanzerschreckRocket(poseStack, buffer, packedLight);
+                renderLegacyRocketThrust(entity, partialTick, poseStack, buffer);
+            }
+            case LegacySednaBulletAppearance.ROCKET_QD -> {
+                renderLegacyQuickDrawRocket(poseStack, buffer, packedLight);
+                renderLegacyRocketThrust(entity, partialTick, poseStack, buffer);
+            }
+            case LegacySednaBulletAppearance.ROCKET_ML -> {
+                renderLegacyMissileLauncherRocket(poseStack, buffer, packedLight);
+                renderLegacyRocketThrust(entity, partialTick, poseStack, buffer);
+            }
             case LegacySednaBulletAppearance.CLUSTER_BOMB -> renderLegacyClusterBomb(poseStack, buffer, packedLight);
             case LegacySednaBulletAppearance.BIG_NUKE_MIRV -> renderLegacyBigNukeMirv(poseStack, buffer,
                     packedLight);
@@ -508,13 +525,42 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.popPose();
     }
 
-    private static void renderLegacyHiveRocket(PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    private static void renderLegacyPanzerschreckRocket(PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.scale(0.125F / 1.5F, 0.125F / 1.5F, 0.125F / 1.5F);
         LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
         poseStack.translate(0.0D, 0.0D, 3.5D);
         ObjWeaponModels.renderPart(PANZERSCHRECK_MODEL_OBJ, "Rocket", PANZERSCHRECK, poseStack, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
+    }
+
+    private static void renderLegacyQuickDrawRocket(PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        poseStack.scale(1.0F / 1.5F, 1.0F / 1.5F, 1.0F / 1.5F);
+        LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
+        PROJECTILES.renderOnlyInCallOrder(ROCKET, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
+                PROJECTILE_ROCKET);
+        poseStack.popPose();
+    }
+
+    private static void renderLegacyMissileLauncherRocket(PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight) {
+        poseStack.pushPose();
+        poseStack.scale(0.25F / 1.5F, 0.25F / 1.5F, 0.25F / 1.5F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
+        poseStack.translate(0.0D, -1.0D, -4.5D);
+        ObjWeaponModels.renderPart(ObjWeaponModels.MISSILE_LAUNCHER, "Missile",
+                ObjWeaponModels.MISSILE_LAUNCHER_TEXTURE, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
+    }
+
+    private static void renderLegacyRocketThrust(BulletProjectileEntity entity, float partialTick, PoseStack poseStack,
+            MultiBufferSource buffer) {
+        poseStack.pushPose();
+        poseStack.translate(0.375D, 0.0D, 0.0D);
+        renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0x808080, 0xFFF2A7, 2.0D,
+                0.03125D, 0.03125D * 0.25D);
         poseStack.popPose();
     }
 
@@ -668,10 +714,10 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     private record WireOffsets(double iX, double iY, double iZ, double jX, double jZ) {
     }
 
-    private static void renderBullet(int trail, BulletProjectileEntity entity, PoseStack poseStack,
+    private static void renderBullet(int trail, BulletProjectileEntity entity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer,
             int packedLight, ModelPart bulletCube) {
-        if (renderLegacySednaBullet(trail, entity, poseStack, buffer)) {
+        if (renderLegacySednaBullet(trail, entity, partialTick, poseStack, buffer)) {
             return;
         }
         if (trail == 2) {
@@ -687,29 +733,30 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         renderProjectilePart(PROJECTILE_BULLET_RIFLE, BULLET_RIFLE, 0.5F, poseStack, buffer, packedLight);
     }
 
-    private static boolean renderLegacySednaBullet(int trail, BulletProjectileEntity entity, PoseStack poseStack,
+    private static boolean renderLegacySednaBullet(int trail, BulletProjectileEntity entity, float partialTick,
+            PoseStack poseStack,
             MultiBufferSource buffer) {
         switch (trail) {
             case LegacySednaBulletAppearance.STANDARD ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0xFFBF00, 0xFFFFFF);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0xFFBF00, 0xFFFFFF);
             case LegacySednaBulletAppearance.AP ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0xFF6A00, 0xFFE28D);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0xFF6A00, 0xFFE28D);
             case LegacySednaBulletAppearance.EXPRESS ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0x9E082E, 0xFF8A79);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0x9E082E, 0xFF8A79);
             case LegacySednaBulletAppearance.DU ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0x5CCD41, 0xE9FF8D);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0x5CCD41, 0xE9FF8D);
             case LegacySednaBulletAppearance.HE ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0xD8CA00, 0xFFF19D);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0xD8CA00, 0xFFF19D);
             case LegacySednaBulletAppearance.SM ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0x42A8DD, 0xFFFFFF);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0x42A8DD, 0xFFFFFF);
             case LegacySednaBulletAppearance.BLACK ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0x000000, 0x7F006E);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0x000000, 0x7F006E);
             case LegacySednaBulletAppearance.LEGENDARY ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0x7F006E, 0xFF7FED);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0x7F006E, 0xFF7FED);
             case LegacySednaBulletAppearance.FRAGMENTATION ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0xFF6A00, 0xFFE28D);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0xFF6A00, 0xFFE28D);
             case LegacySednaBulletAppearance.FLECHETTE ->
-                    renderLegacySednaBullet(entity, poseStack, buffer, 0x8C8C8C, 0xCACACA);
+                    renderLegacySednaBullet(entity, partialTick, poseStack, buffer, 0x8C8C8C, 0xCACACA);
             default -> {
                 return false;
             }
@@ -717,14 +764,15 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         return true;
     }
 
-    private static void renderLegacySednaBullet(BulletProjectileEntity entity, PoseStack poseStack,
+    private static void renderLegacySednaBullet(BulletProjectileEntity entity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int dark, int light) {
-        renderLegacySednaBullet(entity, poseStack, buffer, dark, light, 1.0D, 0.03125D, 0.03125D * 0.25D);
+        renderLegacySednaBullet(entity, partialTick, poseStack, buffer, dark, light, 1.0D, 0.03125D,
+                0.03125D * 0.25D);
     }
 
-    private static void renderLegacySednaBullet(BulletProjectileEntity entity, PoseStack poseStack,
+    private static void renderLegacySednaBullet(BulletProjectileEntity entity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int dark, int light, double lengthMultiplier, double widthF, double widthB) {
-        double length = entity.getDeltaMovement().length() * lengthMultiplier / 1.5D;
+        double length = entity.legacyInterpolatedClientVisualSpeed(partialTick) * lengthMultiplier / 1.5D;
         if (length <= 0.0D) {
             return;
         }
@@ -895,7 +943,8 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         poseStack.pushPose();
         LegacyPoseRotations.rotateZDegrees(poseStack, 90.0F);
         poseStack.translate(0.0D, 0.5D, 0.0D);
-        LegacyPoseRotations.rotateXDegrees(poseStack, (entity.tickCount + partialTick) * 18.0F);
+        // Legacy RenderBullet uses the client wall-clock angle rather than entity age.
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) (System.currentTimeMillis() % 360L));
         poseStack.translate(0.0D, -0.5D, 0.0D);
         LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.scale(1.0F, 2.0F, 1.0F);

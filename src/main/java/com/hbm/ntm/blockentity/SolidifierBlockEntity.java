@@ -223,6 +223,12 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachineSolidifier#updateEntity invokes updateConnections on every server tick.
+        return true;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type == tank.getTankType();
     }
@@ -241,6 +247,11 @@ public class SolidifierBlockEntity extends HbmEnergyAndFluidBlockEntity
                 EnergyPort.of(-2, 1, 0, Direction.WEST),
                 EnergyPort.of(0, 1, 2, Direction.SOUTH),
                 EnergyPort.of(0, 1, -2, Direction.NORTH));
+    }
+
+    @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

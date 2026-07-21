@@ -372,6 +372,16 @@ public class WaterPumpBlockEntity extends HbmFluidNetworkBlockEntity
         return false;
     }
 
+    /**
+     * TileEntityMachinePumpBase sends non-empty WATER every server tick for both variants;
+     * TileEntityMachinePumpSteam additionally retries STEAM/SPENTSTEAM fluid ports every tick.
+     * The electric variant's separate twenty-tick call is Energy Mk2-only.
+     */
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
+    }
+
     @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
         return getReceivingTanks();

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "hbm_ntm_rebirth:block/dfc_core" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/dfc_core" },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/dfc_core" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/dfc_core" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/dfc_core" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/dfc_core" }
+  }
+}

@@ -5,12 +5,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public final class ObjEntityModels {
     public static final LegacyWavefrontModel TESLACRAB = model("teslacrab");
-    public static final LegacyWavefrontModel MASKMAN = model("maskman");
     public static final LegacyWavefrontModel BLOCKSPIDER = model("blockspider");
     public static final LegacyWavefrontModel TAINTCRAB = model("taintcrab");
-    public static final LegacyWavefrontModel UFO = model("ufo");
-    public static final LegacyWavefrontModel MINI_UFO = model("mini_ufo");
-    public static final LegacyWavefrontModel SIEGE_UFO = model("siege_ufo");
     public static final LegacyWavefrontModel GLYPHID = model("glyphid");
     public static final LegacyWavefrontModel QUADCOPTER = model("quadcopter");
     public static final LegacyWavefrontModel C130 = new LegacyWavefrontModel(
@@ -20,8 +16,6 @@ public final class ObjEntityModels {
     public static final LegacyWavefrontModel DUCHESS_GAMBIT = rootModel("duchessgambit");
     public static final LegacyWavefrontModel DORNIER = rootModel("dornier", modelTexture("dornier_1"));
     public static final LegacyWavefrontModel B29 = rootModel("b29", modelTexture("b29_0"));
-    public static final LegacyWavefrontModel BOT_PRIME_HEAD = model("bot_prime_head", "mark_zero_head");
-    public static final LegacyWavefrontModel BOT_PRIME_BODY = model("bot_prime_body", "mark_zero_body");
     public static final LegacyWavefrontModel PLASTIC_BAG = model("plasticbag");
     public static final LegacyWavefrontModel TUNNELER = new LegacyWavefrontModel(
             new ResourceLocation(HbmNtm.MOD_ID, "models/mobs/tunneler.obj")).asVBO();
@@ -30,13 +24,9 @@ public final class ObjEntityModels {
             modelTexture("turbofan_blades")).asVBO();
 
     public static final ResourceLocation TESLACRAB_TEXTURE = texture("teslacrab");
-    public static final ResourceLocation MASKMAN_TEXTURE = texture("maskman");
     public static final ResourceLocation BLOCKSPIDER_TEXTURE = texture("blockspider");
     public static final ResourceLocation TAINTCRAB_TEXTURE = texture("taintcrab");
     public static final ResourceLocation TAINTCRAB_CLEAN_TEXTURE = texture("taintcrab_clean");
-    public static final ResourceLocation UFO_TEXTURE = texture("ufo");
-    public static final ResourceLocation MINI_UFO_TEXTURE = texture("mini_ufo");
-    public static final ResourceLocation SIEGE_UFO_TEXTURE = texture("siege_ufo");
     public static final ResourceLocation GLYPHID_TEXTURE = texture("glyphid");
     public static final ResourceLocation GLYPHID_BRAWLER_TEXTURE = texture("glyphid_brawler");
     public static final ResourceLocation GLYPHID_BEHEMOTH_TEXTURE = texture("glyphid_behemoth");
@@ -57,8 +47,6 @@ public final class ObjEntityModels {
     public static final ResourceLocation B29_1_TEXTURE = modelTexture("b29_1");
     public static final ResourceLocation B29_2_TEXTURE = modelTexture("b29_2");
     public static final ResourceLocation B29_3_TEXTURE = modelTexture("b29_3");
-    public static final ResourceLocation BOT_PRIME_HEAD_TEXTURE = texture("mark_zero_head");
-    public static final ResourceLocation BOT_PRIME_BODY_TEXTURE = texture("mark_zero_body");
     public static final ResourceLocation PLASTIC_BAG_TEXTURE = texture("plasticbag");
     public static final ResourceLocation CAPSULE_TEXTURE = modelTexture("turbofan_blades");
 

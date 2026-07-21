@@ -210,6 +210,11 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type != HbmFluids.NONE && type == coldTank.getTankType();
     }
@@ -217,6 +222,11 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
         return type == hotTank.getTankType() && hotTank.getFill() > 0;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override
@@ -304,13 +314,12 @@ public class FusionMHDTBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void onChunkUnloaded() {
-        destroyNode();
         super.onChunkUnloaded();
     }
 
     private void destroyNode() {
         if (level != null && !level.isClientSide && plasmaNode != null) {
-            PlasmaNodespace.destroyNode(level, plasmaNode.getPos());
+            PlasmaNodespace.destroyNode(level, plasmaNode);
         }
         plasmaNode = null;
     }

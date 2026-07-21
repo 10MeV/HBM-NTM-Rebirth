@@ -30,7 +30,7 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

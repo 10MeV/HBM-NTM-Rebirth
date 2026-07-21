@@ -66,10 +66,19 @@ public class FluidValveBlock extends HbmFluidNodeBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide || kind != Kind.COUNTER) {
+        if (level.isClientSide) {
             return null;
         }
-        return createTickerHelper(type, ModBlockEntities.FLUID_COUNTER_VALVE.get(), FluidCounterValveBlockEntity::serverTick);
+        if (type == ModBlockEntities.FLUID_COUNTER_VALVE.get()) {
+            return createTickerHelper(type, ModBlockEntities.FLUID_COUNTER_VALVE.get(),
+                    FluidCounterValveBlockEntity::serverTick);
+        }
+        if (type == ModBlockEntities.FLUID_VALVE.get()) {
+            return (tickLevel, tickPos, tickState, blockEntity) ->
+                    FluidPipeBlockEntity.serverTick(tickLevel, tickPos, tickState,
+                            (FluidPipeBlockEntity) blockEntity);
+        }
+        return null;
     }
 
     @Override

@@ -1,5 +1,16 @@
 {
   "multipart": [
-    { "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift" } }
+    { "when": { "facing": "north", "bottom": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_bottom" } },
+    { "when": { "facing": "east", "bottom": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_bottom", "y": 90 } },
+    { "when": { "facing": "south", "bottom": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_bottom", "y": 180 } },
+    { "when": { "facing": "west", "bottom": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_bottom", "y": 270 } },
+    { "when": { "facing": "north", "bottom": "false", "top": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_middle" } },
+    { "when": { "facing": "east", "bottom": "false", "top": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_middle", "y": 90 } },
+    { "when": { "facing": "south", "bottom": "false", "top": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_middle", "y": 180 } },
+    { "when": { "facing": "west", "bottom": "false", "top": "false" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_middle", "y": 270 } },
+    { "when": { "facing": "north", "top": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_top" } },
+    { "when": { "facing": "east", "top": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_top", "y": 90 } },
+    { "when": { "facing": "south", "top": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_top", "y": 180 } },
+    { "when": { "facing": "west", "top": "true" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_lift_top", "y": 270 } }
   ]
 }

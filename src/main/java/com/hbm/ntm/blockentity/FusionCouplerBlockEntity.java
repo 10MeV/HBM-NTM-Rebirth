@@ -105,18 +105,17 @@ public class FusionCouplerBlockEntity extends BlockEntity
 
     @Override
     public void onChunkUnloaded() {
-        destroyNodes();
         super.onChunkUnloaded();
     }
 
     private void destroyNodes() {
         if (level != null && !level.isClientSide) {
             if (klystronNode != null) {
-                KlystronNodespace.destroyNode(level, klystronNode.getPos());
+                KlystronNodespace.destroyNode(level, klystronNode);
                 klystronNode = null;
             }
             if (plasmaNode != null) {
-                PlasmaNodespace.destroyNode(level, plasmaNode.getPos());
+                PlasmaNodespace.destroyNode(level, plasmaNode);
                 plasmaNode = null;
             }
         }

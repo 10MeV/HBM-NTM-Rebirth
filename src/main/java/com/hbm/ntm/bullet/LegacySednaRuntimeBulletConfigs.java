@@ -27,8 +27,6 @@ public final class LegacySednaRuntimeBulletConfigs {
             .explosive(2.0F)
             .build());
     public static final BulletConfig G12_PHOSPHORUS = runtime(LegacySednaBulletConfigs.G12_PHOSPHORUS);
-    public static final BulletConfig G12_EQUESTRIAN_BJ = runtime(LegacySednaBulletConfigs.G12_EQUESTRIAN_BJ);
-    public static final BulletConfig G12_EQUESTRIAN_TKR = runtime(LegacySednaBulletConfigs.G12_EQUESTRIAN_TKR);
 
     public static final BulletConfig[] GAUNTLET_12GA_ORDER = {
             G12_BP,
@@ -76,8 +74,6 @@ public final class LegacySednaRuntimeBulletConfigs {
     public static final BulletConfig M44_JHP = runtime(LegacySednaBulletConfigs.M44_JHP);
     public static final BulletConfig M44_AP = runtime(LegacySednaBulletConfigs.M44_AP);
     public static final BulletConfig M44_EXPRESS = runtime(LegacySednaBulletConfigs.M44_EXPRESS);
-    public static final BulletConfig M44_EQUESTRIAN_PIP = runtime(LegacySednaBulletConfigs.M44_EQUESTRIAN_PIP);
-    public static final BulletConfig M44_EQUESTRIAN_MN7 = runtime(LegacySednaBulletConfigs.M44_EQUESTRIAN_MN7);
     public static final BulletConfig M357_BP = runtime(LegacySednaBulletConfigs.M357_BP);
     public static final BulletConfig M357_SP = runtime(LegacySednaBulletConfigs.M357_SP);
     public static final BulletConfig M357_FMJ = runtime(LegacySednaBulletConfigs.M357_FMJ);
@@ -97,7 +93,6 @@ public final class LegacySednaRuntimeBulletConfigs {
     public static final BulletConfig BMG50_HE = runtime(LegacySednaBulletConfigs.BMG50_HE);
     public static final BulletConfig BMG50_SM = runtime(LegacySednaBulletConfigs.BMG50_SM);
     public static final BulletConfig BMG50_BLACK = runtime(LegacySednaBulletConfigs.BMG50_BLACK);
-    public static final BulletConfig BMG50_EQUESTRIAN = runtime(LegacySednaBulletConfigs.BMG50_EQUESTRIAN);
 
     public static final BulletConfig B75 = runtime(LegacySednaBulletConfigs.B75);
     public static final BulletConfig B75_INC = runtime(LegacySednaBulletConfigs.B75_INC);
@@ -246,17 +241,14 @@ public final class LegacySednaRuntimeBulletConfigs {
 
     private static final List<BulletConfig> ADDITIONAL_SYNCED = List.of(
             G10, G10_SHRAPNEL, G10_DU, G10_SLUG, G10_EXPLOSIVE,
-            G12_EQUESTRIAN_BJ, G12_EQUESTRIAN_TKR,
             P22_SP, P22_FMJ, P22_JHP, P22_AP,
             P9_SP, P9_FMJ, P9_JHP, P9_AP,
             R556_SP, R556_FMJ, R556_JHP, R556_AP, R556_INC_SP, R556_INC_FMJ, R556_INC_JHP, R556_INC_AP,
             R762_SP, R762_FMJ, R762_JHP, R762_AP, R762_DU, R762_HE,
             M44_BP, M44_SP, M44_FMJ, M44_JHP, M44_AP, M44_EXPRESS,
-            M44_EQUESTRIAN_PIP, M44_EQUESTRIAN_MN7,
             M357_BP, M357_SP, M357_FMJ, M357_JHP, M357_AP, M357_EXPRESS,
             P45_SP, P45_FMJ, P45_JHP, P45_AP, P45_DU,
             BMG50_SP, BMG50_FMJ, BMG50_JHP, BMG50_AP, BMG50_DU, BMG50_HE, BMG50_SM, BMG50_BLACK,
-            BMG50_EQUESTRIAN,
             B75, B75_INC, B75_EXP,
             G26_FLARE, G26_FLARE_SUPPLY, G26_FLARE_WEAPON,
             G40_HE, G40_HEAT, G40_DEMO, G40_INC, G40_PHOSPHORUS,
@@ -320,6 +312,7 @@ public final class LegacySednaRuntimeBulletConfigs {
                 .blackPowder(config.blackPowder())
                 .blockDamage(true)
                 .appearance(style(config), trail(config), plink(config), particle(config))
+                .renderRotations(config.renderRotations())
                 .spentCasingName(config.spentCasingName())
                 .casingItem(config.casingItemName(), config.casingItemStackSize(), config.casingItemAmount())
                 .damageType(damageType(config.damageClass()))
@@ -490,8 +483,14 @@ public final class LegacySednaRuntimeBulletConfigs {
         if (renderer.contains("STANDARD_BULLET")) {
             return LegacySednaBulletAppearance.STANDARD;
         }
-        if (renderer.contains("RPZB") || renderer.contains("QD") || renderer.contains("ML")) {
-            return LegacySednaBulletAppearance.ROCKET_THRUST;
+        if (renderer.contains("RPZB")) {
+            return LegacySednaBulletAppearance.ROCKET_RPZB;
+        }
+        if (renderer.contains("QD")) {
+            return LegacySednaBulletAppearance.ROCKET_QD;
+        }
+        if (renderer.contains("ML")) {
+            return LegacySednaBulletAppearance.ROCKET_ML;
         }
         return 0;
     }

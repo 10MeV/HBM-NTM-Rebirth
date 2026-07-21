@@ -6,8 +6,9 @@ import com.hbm.ntm.itempool.HbmItemPoolIds;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
-import net.minecraft.nbt.CompoundTag;
+import java.util.function.BiConsumer;
 import net.minecraft.data.loot.LootTableSubProvider;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -16,66 +17,26 @@ import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
-import net.minecraft.world.level.storage.loot.functions.SetNbtFunction;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
+import net.minecraft.world.level.storage.loot.functions.SetNbtFunction;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import net.minecraftforge.registries.RegistryObject;
 
-import java.util.function.BiConsumer;
-
-public class HbmItemPoolLootProvider implements LootTableSubProvider {
-    private static final String BLUEPRINT_DISCOVER_SOYUZ = "discover.soyuz";
-    private static final int CIRCUIT_VACUUM_TUBE = 0;
-    private static final int CIRCUIT_CAPACITOR = 1;
-    private static final int CIRCUIT_PCB = 3;
-    private static final int CIRCUIT_CHIP = 5;
-    private static final int CIRCUIT_ANALOG = 7;
-    private static final int CIRCUIT_BASIC = 8;
-    private static final int CIRCUIT_ADVANCED = 9;
-    private static final int BATTERY_REDSTONE = 0;
-    private static final int BATTERY_LEAD = 1;
-    private static final int BATTERY_LITHIUM = 2;
+/**
+ * Datapack source of truth for active legacy ItemPools. Frozen structure/reward pools are not
+ * emitted here; ground-refresh meteorite treasure is an explicit non-event exception.
+ */
+public final class HbmItemPoolLootProvider implements LootTableSubProvider {
     private static final int AMMO_M357_SP = 5;
     private static final int AMMO_M357_FMJ = 6;
     private static final int AMMO_M44_SP = 11;
     private static final int AMMO_M44_FMJ = 12;
     private static final int AMMO_P9_SP = 20;
     private static final int AMMO_P9_FMJ = 21;
-    private static final int AMMO_P9_JHP = 22;
     private static final int AMMO_R762_SP = 28;
-    private static final int AMMO_R762_DU = 32;
-    private static final int AMMO_BMG50_FMJ = 34;
     private static final int AMMO_G12_BP = 41;
-    private static final int AMMO_G12 = 44;
-    private static final int AMMO_G26_FLARE_SUPPLY = 51;
-    private static final int AMMO_G26_FLARE_WEAPON = 52;
-    private static final int AMMO_G40_HE = 53;
     private static final int AMMO_ROCKET_HE = 58;
-    private static final int AMMO_NUKE_STANDARD = 73;
-    private static final int AMMO_NUKE_DEMO = 74;
-    private static final int AMMO_NUKE_HIGH = 75;
-    private static final int AMMO_NUKE_TOTS = 76;
-    private static final int WIRE_FINE_ALUMINIUM = 1_300;
-    private static final int WIRE_FINE_COPPER = 2_900;
-    private static final int WIRE_DENSE_MINGRADE = 31;
-    private static final int WIRE_DENSE_GOLD = 7_900;
-    private static final int CASING_SMALL = 0;
-    private static final int CASING_SMALL_STEEL = 2;
-    private static final int CASING_SHOTSHELL = 4;
-    private static final int CASING_BUCKSHOT = 5;
-    private static final int COKE_PETROLEUM = 2;
-    private static final int POWDER_ASH_WOOD = 0;
-    private static final int PELLET_RTG_DEPLETED_LEAD = 3;
-    private static final int ROD_THF = 5;
-    private static final int ROD_U235 = 6;
-    private static final int ROD_U238 = 8;
-    private static final int ZIRNOX_URANIUM_FUEL = 1;
-    private static final int ZIRNOX_THORIUM_FUEL = 3;
-    private static final int ZIRNOX_MOX_FUEL = 4;
-    private static final int ZIRNOX_U233_FUEL = 6;
-    private static final int ZIRNOX_U235_FUEL = 7;
-    private static final int ZIRNOX_LITHIUM = 9;
 
     @Override
     public void generate(BiConsumer<ResourceLocation, LootTable.Builder> output) {
@@ -86,581 +47,108 @@ public class HbmItemPoolLootProvider implements LootTableSubProvider {
                 entry(legacyItem("dust"), 2, 5, 5)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SODA), pool(
-                entry(ModItems.BOTTLE_NUKA, 1, 1, 10),
-                entry(ModItems.BOTTLE_CHERRY, 1, 1, 5),
-                entry(ModItems.BOTTLE_QUANTUM, 1, 1, 1),
-                entry(ModItems.CAN_BEPIS, 1, 1, 10),
-                entry(ModItems.CAN_LUNA, 1, 1, 10),
-                entry(ModItems.CAN_MUG, 1, 1, 10),
+                entry(ModItems.BOTTLE_NUKA, 1, 1, 10), entry(ModItems.BOTTLE_CHERRY, 1, 1, 5),
+                entry(ModItems.BOTTLE_QUANTUM, 1, 1, 1), entry(ModItems.CAN_BEPIS, 1, 1, 10),
+                entry(ModItems.CAN_LUNA, 1, 1, 10), entry(ModItems.CAN_MUG, 1, 1, 10),
                 entry(ModItems.CAN_BREEN, 1, 1, 1)));
-
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SNACKS), pool(
-                entry(ModItems.DEFINITELYFOOD, 1, 1, 10),
-                entry(ModItems.TWINKIE, 1, 1, 10),
-                entry(ModItems.CHOCOLATE, 1, 1, 10),
-                entry(ModItems.CANNED_BEEF, 1, 1, 5),
-                entry(ModItems.CANNED_TUBE, 1, 1, 5)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VAULT_RUSTY), pool(
-                entry(Items.GOLD_INGOT, 3, 14, 1),
-                entry(ModItems.GUN_HEAVY_REVOLVER, 1, 1, 2),
-                entry(ModItems.GUN_AM180, 1, 1, 1),
-                entry(ModItems.BOTTLE_QUANTUM, 1, 3, 1),
-                entry(ModItems.COBALT_INGOT, 4, 12, 1),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_BMG50_FMJ, 24, 48, 1),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_P9_JHP, 48, 64, 2),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CHIP, 3, 6, 1),
-                entry(ModItems.GAS_MASK_M65, 1, 1, 1),
-                entry(Items.DIAMOND, 1, 2, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VAULT_STANDARD), pool(
-                entry(legacyItem("ingot_desh"), 2, 6, 1),
-                entry(legacyItem("powder_desh_mix"), 1, 5, 1),
-                entry(Items.DIAMOND, 3, 6, 1),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_NUKE_STANDARD, 1, 1, 1),
-                entry(ModItems.AMMO_CONTAINER, 1, 1, 1),
-                entry(legacyItem("powder_yellowcake"), 16, 24, 1),
-                entry(ModItems.GUN_UZI, 1, 1, 1),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 12, 16, 1),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CHIP, 2, 6, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VAULT_REINFORCED), pool(
-                entry(legacyItem("ingot_desh"), 6, 16, 1),
-                entry(ModItems.SAT_CHIP, 1, 1, 1),
-                entry(Items.DIAMOND, 5, 9, 1),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_NUKE_STANDARD, 1, 3, 1),
-                entry(ModItems.AMMO_CONTAINER, 1, 4, 1),
-                entry(legacyItem("powder_yellowcake"), 26, 42, 1),
-                entry(ModItems.GUN_HEAVY_REVOLVER, 1, 1, 1),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CHIP, 18, 32, 1),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_BASIC, 6, 12, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VAULT_UNBREAKABLE), pool(
-                entry(ModItems.AMMO_CONTAINER, 3, 6, 1),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_NUKE_DEMO, 2, 3, 1),
-                entry(ModItems.GUN_CARBINE, 1, 1, 1),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_R762_DU, 16, 32, 1),
-                entry(ModItems.GUN_CONGOLAKE, 1, 1, 1),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_ADVANCED, 6, 12, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_BLUEPRINTS), pool(
-                blueprint(BLUEPRINT_DISCOVER_SOYUZ, 1, 1, 5)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_GENERIC), pool(
-                entry(Items.BREAD, 1, 5, 8),
-                entry(ModItems.TWINKIE, 1, 3, 6),
-                entry(Items.IRON_INGOT, 2, 6, 10),
-                entry(ModItems.STEEL_INGOT, 2, 5, 7),
-                entry(ModItems.BERYLLIUM_INGOT, 1, 2, 4),
-                entry(ModItems.TITANIUM_INGOT, 1, 1, 3),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 1, 1, 5),
-                entry(ModItems.GUN_LIGHT_REVOLVER, 1, 1, 3),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_M357_SP, 2, 6, 4),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G12_BP, 3, 6, 3),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G26_FLARE_SUPPLY, 1, 1, 1),
-                entry(ModItems.GUN_KIT_1, 1, 3, 4),
-                entry(ModItems.GUN_MARESLEG, 1, 1, 1),
-                meta(LegacyMetaItemMappings.CASING, CASING_SMALL, 4, 10, 3),
-                meta(LegacyMetaItemMappings.CASING, CASING_SHOTSHELL, 4, 10, 3),
-                entry(legacyItem("cordite"), 4, 6, 5),
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_REDSTONE, 1, 1, 1),
-                fluidCanister(HbmFluids.DIESEL, 1, 2, 2),
-                fluidCanister(HbmFluids.BIOFUEL, 1, 2, 3),
-                entry(legacyItem("scrap"), 1, 3, 10),
-                entry(ModItems.BOTTLE_NUKA, 1, 3, 4),
-                entry(ModItems.BOTTLE_CHERRY, 1, 1, 2),
-                entry(ModItems.CAP_NUKA, 1, 15, 7),
-                entry(ModItems.COIN_TOKEN, 1, 1, 2),
-                entry(legacyItem("dust"), 2, 4, 9),
-                entry(ModItems.BOTTLE_OPENER, 1, 1, 2),
-                entry(ModItems.GAS_MASK_FILTER, 1, 1, 3)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_ANTENNA), pool(
-                entry(ModItems.TWINKIE, 1, 3, 4),
-                entry(ModItems.STEEL_INGOT, 1, 2, 7),
-                entry(legacyItem("ingot_red_copper"), 1, 1, 4),
-                entry(ModItems.TITANIUM_INGOT, 1, 3, 5),
-                entry(legacyItem("wire_fine_mingrade"), 2, 3, 7),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 1, 1, 4),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CAPACITOR, 1, 1, 2),
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_REDSTONE, 1, 1, 1),
-                entry(ModBlocks.STEEL_SCAFFOLD, 1, 3, 8),
-                entry(legacyItem("scrap"), 1, 3, 10),
-                entry(ModItems.BOTTLE_NUKA, 1, 3, 4),
-                entry(ModItems.BOTTLE_CHERRY, 1, 1, 2),
-                entry(ModItems.CAP_NUKA, 1, 15, 7),
-                entry(legacyItem("dust"), 2, 4, 9),
-                entry(ModItems.BOTTLE_OPENER, 1, 1, 2),
-                entry(ModItems.GAS_MASK_FILTER, 1, 1, 2)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_EXPENSIVE), pool(
-                entry(ModItems.CHLORINE_PINWHEEL, 1, 1, 1),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 1, 1, 4),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_ANALOG, 1, 1, 3),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CHIP, 1, 1, 2),
-                entry(ModItems.GUN_KIT_1, 1, 3, 6),
-                entry(ModItems.GUN_KIT_2, 1, 2, 3),
-                entry(ModItems.GUN_PANZERSCHRECK, 1, 1, 4),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_ROCKET_HE, 1, 4, 5),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G26_FLARE_SUPPLY, 1, 1, 5),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G26_FLARE_WEAPON, 1, 1, 3),
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LITHIUM, 1, 1, 1),
-                entry(ModItems.SYRINGE_AWESOME, 1, 1, 1),
-                entry(ModBlocks.RED_BARREL, 1, 1, 6),
-                fluidCanister(HbmFluids.DIESEL, 1, 2, 2),
-                fluidCanister(HbmFluids.BIOFUEL, 1, 2, 3),
-                entry(ModItems.BOTTLE_NUKA, 1, 3, 6),
-                entry(ModItems.BOTTLE_QUANTUM, 1, 1, 3),
-                entry(ModItems.GAS_MASK_FILTER, 1, 1, 4),
-                entry(ModItems.GUN_DOUBLE_BARREL, 1, 1, 1),
-                blueprint(BLUEPRINT_DISCOVER_SOYUZ, 1, 1, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_NUKE_TRASH), pool(
-                entry(legacyItem("nugget_u238"), 3, 12, 5),
-                entry(legacyItem("nugget_pu240"), 3, 8, 5),
-                entry(legacyItem("nugget_neptunium"), 1, 4, 3),
-                meta(LegacyMetaItemMappings.ROD, ROD_U238, 1, 1, 3),
-                meta(LegacyMetaItemMappings.ROD_DUAL, ROD_U238, 1, 1, 3),
-                meta(LegacyMetaItemMappings.ROD_QUAD, ROD_U238, 1, 1, 3),
-                entry(ModItems.BOTTLE_QUANTUM, 1, 1, 1),
-                entry(ModBlocks.YELLOW_BARREL, 1, 1, 2),
-                entry(ModItems.GAS_MASK_FILTER, 1, 1, 5)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_NUKE_MISC), pool(
-                entry(legacyItem("nugget_u235"), 3, 12, 5),
-                entry(legacyItem("nugget_pu238"), 3, 12, 5),
-                entry(legacyItem("nugget_ra226"), 3, 6, 5),
-                meta(LegacyMetaItemMappings.ROD, ROD_U235, 1, 1, 3),
-                meta(LegacyMetaItemMappings.ROD_DUAL, ROD_U235, 1, 1, 3),
-                meta(LegacyMetaItemMappings.ROD_QUAD, ROD_U235, 1, 1, 3),
-                meta(LegacyMetaItemMappings.ROD_ZIRNOX, ZIRNOX_URANIUM_FUEL, 1, 1, 4),
-                meta(LegacyMetaItemMappings.ROD_ZIRNOX, ZIRNOX_MOX_FUEL, 1, 1, 4),
-                meta(LegacyMetaItemMappings.ROD_ZIRNOX, ZIRNOX_LITHIUM, 1, 1, 3),
-                meta(LegacyMetaItemMappings.ROD_ZIRNOX, ZIRNOX_THORIUM_FUEL, 1, 1, 3),
-                meta(LegacyMetaItemMappings.ROD_DUAL, ROD_THF, 1, 1, 3),
-                entry(ModItems.THORIUM_POWDER, 1, 1, 1),
-                entry(legacyItem("powder_neptunium"), 1, 1, 1),
-                entry(legacyItem("powder_strontium"), 1, 1, 1),
-                entry(legacyItem("powder_cobalt"), 1, 1, 1),
-                entry(legacyItem("rod_zirnox_tritium"), 1, 1, 1),
-                meta(LegacyMetaItemMappings.ROD_ZIRNOX, ZIRNOX_U233_FUEL, 1, 1, 1),
-                meta(LegacyMetaItemMappings.ROD_ZIRNOX, ZIRNOX_U235_FUEL, 1, 1, 1),
-                entry(legacyItem("pellet_rtg"), 1, 1, 3),
-                entry(ModItems.BOTTLE_QUANTUM, 1, 1, 1),
-                entry(ModBlocks.YELLOW_BARREL, 1, 3, 3),
-                entry(ModItems.GAS_MASK_FILTER, 1, 1, 5)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VERTIBIRD), pool(
-                entry(ModItems.T51_HELMET, 1, 1, 15),
-                entry(ModItems.T51_PLATE, 1, 1, 15),
-                entry(ModItems.T51_LEGS, 1, 1, 15),
-                entry(ModItems.T51_BOOTS, 1, 1, 15),
-                entry(ModItems.GUN_LIGHT_REVOLVER, 1, 1, 4),
-                entry(ModItems.GUN_KIT_1, 2, 3, 4),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_M357_FMJ, 1, 24, 4),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G40_HE, 1, 6, 3),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G26_FLARE_WEAPON, 1, 1, 5),
-                entry(legacyItem("billet_uranium_fuel"), 1, 1, 2),
-                entry(legacyItem("ingot_uranium_fuel"), 1, 1, 2),
-                entry(ModItems.BOTTLE_NUKA, 1, 3, 6),
-                entry(ModItems.BOTTLE_QUANTUM, 1, 1, 3),
-                meta(LegacyMetaItemMappings.ROD, ROD_U235, 1, 1, 2),
-                entry(ModItems.GAS_MASK_M65, 1, 1, 5),
-                entry(ModItems.GAS_MASK_FILTER, 1, 1, 5)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SPACESHIP), pool(
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LEAD, 1, 1, 2),
-                entry(ModItems.COPPER_COIL, 2, 16, 5),
-                entry(legacyItem("wire_fine_mingrade"), 8, 32, 5),
-                entry(legacyItem("cell_tritium"), 1, 8, 5),
-                entry(legacyItem("powder_niobium"), 1, 1, 1),
-                meta(LegacyMetaItemMappings.WIRE_DENSE, WIRE_DENSE_MINGRADE, 2, 4, 5),
-                meta(LegacyMetaItemMappings.WIRE_DENSE, WIRE_DENSE_GOLD, 1, 3, 5),
-                entry(ModBlocks.legacyBlock("block_tungsten"), 3, 8, 5),
-                entry(ModBlocks.RED_CABLE, 8, 16, 5)));
+                entry(ModItems.DEFINITELYFOOD, 1, 1, 10), entry(ModItems.CANNED_BEEF, 1, 1, 5),
+                entry(ModItems.CANNED_TUBE, 1, 1, 5), entry(ModItems.TWINKIE, 1, 1, 10),
+                entry(ModItems.CHOCOLATE, 1, 1, 10)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SAT_MINER), pool(
-                entry(legacyItem("powder_aluminium"), 3, 3, 10),
-                entry(ModItems.IRON_POWDER, 3, 3, 10),
-                entry(ModItems.TITANIUM_POWDER, 2, 2, 8),
-                entry(legacyItem("crystal_tungsten"), 2, 2, 7),
-                entry(legacyItem("powder_coal"), 4, 4, 15),
-                entry(ModItems.URANIUM_POWDER, 2, 2, 5),
-                entry(ModItems.PLUTONIUM_POWDER, 1, 1, 5),
-                entry(ModItems.THORIUM_POWDER, 2, 2, 7),
-                entry(legacyItem("powder_desh_mix"), 3, 3, 5),
-                entry(legacyItem("powder_diamond"), 2, 2, 7),
-                entry(Items.REDSTONE, 5, 5, 15),
-                entry(legacyItem("powder_nitan_mix"), 2, 2, 5),
-                entry(ModItems.POWDER_POWER, 2, 2, 5),
-                entry(ModItems.COPPER_POWDER, 5, 5, 15),
-                entry(ModItems.LEAD_POWDER, 3, 3, 10),
-                entry(legacyItem("fluorite"), 4, 4, 15),
-                entry(legacyItem("powder_lapis"), 4, 4, 10),
-                entry(legacyItem("crystal_aluminium"), 1, 1, 5),
-                entry(legacyItem("crystal_gold"), 1, 1, 5),
-                entry(legacyItem("crystal_phosphorus"), 1, 1, 10),
-                entry(ModBlocks.legacyBlock("gravel_diamond"), 1, 1, 3),
-                entry(legacyItem("crystal_uranium"), 1, 1, 3),
-                entry(legacyItem("crystal_plutonium"), 1, 1, 3),
-                entry(legacyItem("crystal_trixite"), 1, 1, 1),
-                entry(legacyItem("crystal_starmetal"), 1, 1, 1),
-                entry(legacyItem("crystal_lithium"), 2, 2, 4)));
-
+                entry(legacyItem("powder_aluminium"), 3, 3, 10), entry(ModItems.IRON_POWDER, 3, 3, 10),
+                entry(ModItems.TITANIUM_POWDER, 2, 2, 8), entry(legacyItem("crystal_tungsten"), 2, 2, 7),
+                entry(legacyItem("powder_coal"), 4, 4, 15), entry(ModItems.URANIUM_POWDER, 2, 2, 5),
+                entry(ModItems.PLUTONIUM_POWDER, 1, 1, 5), entry(ModItems.THORIUM_POWDER, 2, 2, 7),
+                entry(legacyItem("powder_desh_mix"), 3, 3, 5), entry(legacyItem("powder_diamond"), 2, 2, 7),
+                entry(Items.REDSTONE, 5, 5, 15), entry(legacyItem("powder_nitan_mix"), 2, 2, 5),
+                entry(ModItems.POWDER_POWER, 2, 2, 5), entry(ModItems.COPPER_POWDER, 5, 5, 15),
+                entry(ModItems.LEAD_POWDER, 3, 3, 10), entry(legacyItem("fluorite"), 4, 4, 15),
+                entry(legacyItem("powder_lapis"), 4, 4, 10), entry(legacyItem("crystal_aluminium"), 1, 1, 5),
+                entry(legacyItem("crystal_gold"), 1, 1, 5), entry(legacyItem("crystal_phosphorus"), 1, 1, 10),
+                entry(ModBlocks.legacyBlock("gravel_diamond"), 1, 1, 3), entry(legacyItem("crystal_uranium"), 1, 1, 3),
+                entry(legacyItem("crystal_plutonium"), 1, 1, 3), entry(legacyItem("crystal_trixite"), 1, 1, 1),
+                entry(legacyItem("crystal_starmetal"), 1, 1, 1), entry(legacyItem("crystal_lithium"), 2, 2, 4)));
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SAT_LUNAR), pool(
-                entry(ModBlocks.MOON_TURF, 48, 48, 5),
-                entry(ModBlocks.MOON_TURF, 32, 32, 7),
-                entry(ModBlocks.MOON_TURF, 16, 16, 5),
-                entry(legacyItem("powder_lithium"), 3, 3, 5),
-                entry(ModItems.IRON_POWDER, 3, 3, 5),
-                entry(legacyItem("crystal_iron"), 1, 1, 1),
+                entry(ModBlocks.MOON_TURF, 48, 48, 5), entry(ModBlocks.MOON_TURF, 32, 32, 7),
+                entry(ModBlocks.MOON_TURF, 16, 16, 5), entry(legacyItem("powder_lithium"), 3, 3, 5),
+                entry(ModItems.IRON_POWDER, 3, 3, 5), entry(legacyItem("crystal_iron"), 1, 1, 1),
                 entry(legacyItem("crystal_lithium"), 1, 1, 1)));
 
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_MACHINE_PARTS), pool(
-                entry(ModItems.STEEL_PLATE, 1, 5, 5),
-                entry(legacyItem("shell_steel"), 1, 3, 3),
-                entry(legacyItem("bolt_steel"), 4, 16, 3),
-                entry(legacyItem("bolt_tungsten"), 4, 16, 3),
-                entry(legacyItem("plate_polymer"), 1, 6, 5),
-                entry(ModItems.TUNGSTEN_COIL, 1, 2, 5),
-                entry(ModItems.MOTOR, 1, 2, 4),
-                entry(ModItems.COPPER_COIL, 1, 3, 4),
-                entry(legacyItem("coil_copper_torus"), 1, 2, 3),
-                entry(legacyItem("wire_fine_mingrade"), 1, 8, 5),
-                entry(legacyItem("blade_titanium"), 1, 8, 1),
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LEAD, 1, 1, 3),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 1, 2, 4),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_PCB, 1, 3, 5),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CAPACITOR, 1, 1, 3)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_NUKE_FUEL), pool(
-                entry(legacyItem("billet_uranium"), 1, 4, 4),
-                entry(legacyItem("billet_th232"), 1, 3, 3),
-                entry(legacyItem("billet_uranium_fuel"), 1, 3, 5),
-                entry(legacyItem("billet_mox_fuel"), 1, 3, 5),
-                entry(legacyItem("billet_thorium_fuel"), 1, 3, 3),
-                entry(legacyItem("billet_ra226be"), 1, 2, 2),
-                entry(legacyItem("billet_beryllium"), 1, 1, 1),
-                entry(legacyItem("nugget_u233"), 1, 1, 1),
-                entry(legacyItem("nugget_uranium_fuel"), 1, 1, 1),
-                entry(legacyItem("rod_zirnox_empty"), 1, 3, 3),
-                entry(legacyItem("ingot_graphite"), 1, 4, 3),
-                entry(legacyItem("pile_rod_uranium"), 2, 5, 3),
-                entry(legacyItem("pile_rod_source"), 1, 2, 2),
-                entry(legacyItem("reacher"), 1, 1, 3),
-                entry(ModItems.SCREWDRIVER, 1, 1, 2)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SILO), pool(
-                entry(ModItems.MISSILE_GENERIC, 1, 1, 4),
-                entry(ModItems.MISSILE_INCENDIARY, 1, 1, 4),
-                entry(ModItems.GAS_MASK_M65, 1, 1, 5),
-                meta(LegacyMetaItemMappings.BATTERY_PACK, BATTERY_LEAD, 1, 1, 3),
-                entry(ModItems.DESIGNATOR, 1, 1, 5),
-                entry(legacyItem("thruster_small"), 1, 1, 5),
-                entry(legacyItem("thruster_medium"), 1, 1, 4),
-                entry(ModItems.BOTTLE_NUKA, 1, 3, 10)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_OFFICE_TRASH), pool(
-                entry(Items.PAPER, 1, 12, 10),
-                entry(Items.BOOK, 1, 3, 4),
-                entry(ModItems.TWINKIE, 1, 2, 6),
-                entry(ModItems.COFFEE, 1, 1, 4),
-                entry(ModItems.CAN_EMPTY, 1, 1, 2),
-                entry(ModItems.RING_PULL, 1, 1, 4),
-                entry(ModItems.CAN_CREATURE, 1, 2, 2),
-                entry(ModItems.CAN_SMART, 1, 3, 2),
-                entry(ModItems.CAN_MRSUGAR, 1, 2, 2),
-                entry(ModItems.CAP_NUKA, 1, 16, 2),
-                entry(ModItems.COIN_TOKEN, 1, 1, 2)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_FILING_CABINET), pool(
-                entry(Items.PAPER, 1, 12, 240),
-                entry(Items.BOOK, 1, 3, 90),
-                entry(Items.MAP, 1, 1, 50),
-                entry(Items.WRITABLE_BOOK, 1, 1, 30),
-                entry(ModItems.CIGARETTE, 1, 16, 20),
-                entry(ModItems.INK, 1, 1, 1),
-                entry(legacyItem("dust"), 1, 1, 40),
-                entry(legacyItem("dust_tiny"), 1, 3, 75),
-                entry(ModItems.SCREWDRIVER, 1, 1, 10),
-                entry(ModItems.COIN_TOKEN, 1, 1, 30)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SOLID_FUEL), pool(
-                entry(legacyItem("solid_fuel"), 1, 5, 1),
-                entry(legacyItem("solid_fuel_presto"), 1, 2, 2),
-                entry(legacyItem("ball_dynamite"), 1, 4, 2),
-                meta(LegacyMetaItemMappings.COKE, COKE_PETROLEUM, 1, 3, 1),
-                entry(Items.REDSTONE, 1, 3, 1),
-                entry(legacyItem("niter"), 1, 3, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VAULT_LAB), pool(
-                entry(ModItems.SCREWDRIVER, 1, 1, 10),
-                entry(Items.PAPER, 1, 2, 15),
-                entry(Items.GLASS_BOTTLE, 1, 1, 5),
-                entry(ModItems.MORNING_GLORY, 1, 1, 1),
-                entry(legacyItem("filter_coal"), 1, 1, 5),
-                entry(legacyItem("cell_empty"), 1, 1, 5),
-                entry(ModItems.MERCURY_DROP, 1, 1, 3),
-                entry(legacyItem("powder_cobalt"), 1, 1, 1),
-                entry(ModItems.BORON_POWDER, 1, 1, 1),
-                entry(legacyItem("dust"), 1, 3, 25),
-                blueprint(BLUEPRINT_DISCOVER_SOYUZ, 1, 1, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_VAULT_LOCKERS), pool(
-                entry(Items.PAPER, 1, 6, 7),
-                entry(Items.CLOCK, 1, 1, 3),
-                entry(Items.BOOK, 1, 5, 10),
-                entry(ModItems.ROBES_HELMET, 1, 1, 1),
-                entry(ModItems.ROBES_PLATE, 1, 1, 1),
-                entry(ModItems.ROBES_LEGS, 1, 1, 1),
-                entry(ModItems.ROBES_BOOTS, 1, 1, 1),
-                entry(ModItems.ARMOR_POLISH, 1, 1, 3),
-                entry(ModItems.JACKET, 1, 1, 1),
-                entry(ModItems.JACKET2, 1, 1, 1),
-                entry(ModItems.GAS_MASK_M65, 1, 1, 2),
-                entry(ModItems.GAS_MASK_MONO, 1, 1, 2),
-                entry(ModItems.GOGGLES, 1, 1, 2),
-                entry(ModItems.GAS_MASK_FILTER, 1, 1, 4),
-                entry(ModItems.DEFINITELYFOOD, 2, 7, 5),
-                entry(ModItems.CIGARETTE, 1, 8, 5),
-                entry(ModItems.GUN_KIT_1, 1, 1, 3),
-                entry(ModItems.RAG, 1, 3, 5),
-                entry(Items.EXPERIENCE_BOTTLE, 1, 3, 1),
-                entry(ModItems.AMMO_CONTAINER, 1, 1, 1),
-                entry(ModItems.COIN_TOKEN, 1, 1, 5),
-                blueprint(BLUEPRINT_DISCOVER_SOYUZ, 1, 1, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_OIL_RIG), pool(
-                fluidCanister(HbmFluids.OIL, 1, 4, 5),
-                entry(ModItems.CANISTER_EMPTY, 4, 16, 10),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_ANALOG, 1, 4, 1),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CAPACITOR, 1, 1, 3)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_RTG), pool(
-                meta(LegacyMetaItemMappings.PELLET_RTG_DEPLETED, PELLET_RTG_DEPLETED_LEAD, 1, 1, 40),
-                entry(legacyItem("pellet_rtg_weak"), 1, 1, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_REPAIR_MATERIALS), pool(
-                entry(ModItems.ALUMINIUM_INGOT, 2, 8, 3),
-                entry(ModItems.STEEL_INGOT, 1, 12, 4),
-                entry(ModItems.ALUMINIUM_PLATE, 5, 12, 3),
-                entry(ModItems.IRON_PLATE, 6, 16, 3),
-                entry(ModItems.STEEL_PLATE, 2, 12, 2),
-                entry(ModItems.TUNGSTEN_INGOT, 1, 2, 1),
-                entry(ModBlocks.legacyBlock("deco_aluminium"), 12, 24, 4),
-                entry(ModBlocks.legacyBlock("deco_steel"), 5, 12, 2),
-                entry(ModBlocks.legacyBlock("block_aluminium"), 1, 2, 1),
-                entry(ModBlocks.legacyBlock("block_steel"), 1, 1, 1),
-                entry(legacyItem("bolt_steel"), 4, 16, 3),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_VACUUM_TUBE, 1, 2, 4),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_ANALOG, 1, 3, 5),
-                meta(LegacyMetaItemMappings.CIRCUIT, CIRCUIT_CAPACITOR, 1, 1, 3)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_HIVE), pool(
-                entry(Items.IRON_INGOT, 1, 3, 10),
-                entry(ModItems.STEEL_INGOT, 1, 2, 10),
-                entry(ModItems.ALUMINIUM_INGOT, 1, 2, 10),
-                entry(legacyItem("scrap"), 3, 6, 10),
-                entry(ModItems.GAS_MASK_M65, 1, 1, 10),
-                entry(ModItems.STEEL_CHESTPLATE, 1, 1, 5),
-                entry(ModItems.STEEL_LEGS, 1, 1, 5),
-                entry(ModItems.STEEL_PICKAXE, 1, 1, 5),
-                entry(ModItems.STEEL_SHOVEL, 1, 1, 5),
-                entry(ModItems.GUN_MARESLEG, 1, 1, 5),
-                entry(ModItems.GUN_LIGHT_REVOLVER, 1, 1, 1),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G12, 4, 4, 10),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_M357_SP, 6, 12, 10),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G40_HE, 1, 1, 2),
-                entry(ModItems.BOTTLE_NUKA, 1, 2, 20),
-                entry(ModItems.BOTTLE_QUANTUM, 1, 2, 1),
-                entry(ModItems.DEFINITELYFOOD, 5, 12, 20),
-                entry(ModItems.SYRINGE_METAL_STIMPAK, 1, 1, 5),
-                entry(Items.EXPERIENCE_BOTTLE, 1, 3, 5)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_BONES), pool(
-                entry(Items.BONE, 1, 1, 10),
-                entry(Items.ROTTEN_FLESH, 1, 1, 5),
-                entry(ModItems.BIOMASS, 1, 1, 2)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_CAPS), pool(
-                entry(ModItems.CAP_NUKA, 4, 4, 20),
-                entry(ModItems.CAP_QUANTUM, 4, 4, 3),
-                entry(ModItems.CAP_SPARKLE, 4, 4, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MED_SYRINGE), pool(
-                entry(ModItems.SYRINGE_METAL_STIMPAK, 1, 1, 10),
-                entry(ModItems.SYRINGE_METAL_MEDX, 1, 1, 5),
-                entry(ModItems.SYRINGE_METAL_PSYCHO, 1, 1, 5)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MED_PILLS), pool(
-                entry(ModItems.RADAWAY, 1, 1, 10),
-                entry(ModItems.RADX, 1, 1, 10),
-                entry(ModItems.IV_BLOOD, 1, 1, 15),
-                entry(ModItems.SIOX, 1, 1, 5)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MAKESHIFT_GUN), pool(
-                entry(ModItems.GUN_MARESLEG, 1, 1, 10)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MAKESHIFT_WRENCH), pool(
-                entry(ModItems.WRENCH, 1, 1, 10)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MAKESHIFT_PLATES), pool(
-                entry(ModItems.STEEL_PLATE, 1, 1, 10)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MAKESHIFT_WIRE), pool(
-                meta(LegacyMetaItemMappings.WIRE_FINE, WIRE_FINE_ALUMINIUM, 1, 1, 10)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_NUKE_STORAGE), pool(
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_NUKE_STANDARD, 1, 1, 50),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_NUKE_HIGH, 1, 1, 10),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_NUKE_TOTS, 1, 1, 10)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_OF_GARBAGE), pool(
-                entry(Items.STRING, 1, 1, 15),
-                entry(legacyItem("scrap"), 1, 5, 20),
-                entry(legacyItem("powder_cement"), 1, 6, 40),
-                entry(legacyItem("nugget_lead"), 1, 3, 20),
-                meta(LegacyMetaItemMappings.POWDER_ASH, POWDER_ASH_WOOD, 1, 1, 15),
-                entry(ModItems.IRON_PLATE, 1, 2, 15),
-                entry(ModItems.LEAD_PLATE, 1, 1, 15),
-                entry(ModItems.CAP_NUKA, 1, 8, 15),
-                entry(legacyItem("fallout"), 1, 2, 15),
-                entry(ModItems.TUNGSTEN_COIL, 1, 2, 15),
-                entry(legacyItem("ingot_asbestos"), 1, 1, 15),
-                entry(ModItems.CAN_EMPTY, 1, 1, 15),
-                entry(ModItems.SYRINGE_METAL_EMPTY, 1, 1, 15),
-                entry(ModItems.SYRINGE_EMPTY, 1, 1, 15),
-                entry(legacyItem("dust"), 1, 3, 40),
-                entry(legacyItem("dust_tiny"), 1, 7, 40),
-                entry(ModItems.MOTOR, 1, 1, 5),
-                entry(ModItems.CANNED_MYSTERY, 0, 1, 5)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_MECHANICAL), pool(
-                entry(ModItems.DEFUSER, 1, 1, 30),
-                entry(ModItems.SCREWDRIVER, 1, 1, 30),
-                meta(LegacyMetaItemMappings.WIRE_FINE, WIRE_FINE_COPPER, 8, 12, 120),
-                entry(ModItems.STEEL_PLATE, 3, 8, 40),
-                entry(ModItems.COPPER_PLATE, 2, 5, 40),
-                entry(ModItems.COPPER_COIL, 2, 5, 40),
-                entry(ModItems.TUNGSTEN_COIL, 2, 5, 40)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_PILE_GEAR), pool(
-                entry(ModItems.DEFUSER, 1, 1, 40),
-                entry(ModItems.SCREWDRIVER, 1, 1, 30),
-                entry(ModItems.CANTEEN_VODKA, 1, 1, 40),
-                meta(LegacyMetaItemMappings.CASING, CASING_SMALL_STEEL, 1, 4, 30),
-                meta(LegacyMetaItemMappings.CASING, CASING_SMALL, 3, 8, 40),
-                meta(LegacyMetaItemMappings.CASING, CASING_BUCKSHOT, 3, 8, 40),
-                entry(ModItems.TAURUN_HELMET, 1, 1, 20),
-                entry(ModItems.TAURUN_PLATE, 1, 1, 20),
-                entry(ModItems.TAURUN_LEGS, 1, 1, 20),
-                entry(ModItems.TAURUN_BOOTS, 1, 1, 20),
-                entry(ModItems.CANNED_BEEF, 2, 5, 40)));
+        // Exact ItemPoolsSingle.POOL_METEORITE_TREASURE entries that have modern counterparts.
+        // block_meteor_treasure performs 1..3 independent rolls, matching BlockMeteoriteTreasure.
+        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_METEORITE_TREASURE), pool(
+                entry(ModItems.COBALT_PICKAXE, 1, 1, 10),
+                entry(legacyItem("ingot_zirconium"), 1, 16, 10),
+                entry(legacyItem("ingot_niobium"), 1, 16, 10),
+                entry(ModItems.COBALT_INGOT, 1, 16, 10),
+                entry(legacyItem("ingot_boron"), 1, 16, 10),
+                entry(legacyItem("ingot_starmetal"), 1, 1, 5),
+                entry(legacyItem("crystal_gold"), 1, 4, 10),
+                meta(LegacyMetaItemMappings.CIRCUIT, 0, 4, 8, 10),
+                meta(LegacyMetaItemMappings.CIRCUIT, 5, 2, 4, 10),
+                entry(ModItems.DEFINITELYFOOD, 16, 32, 25),
+                entry(ModItems.PILL_HERBAL, 1, 2, 10), entry(ModItems.SERUM, 1, 1, 5),
+                entry(ModItems.HEART_PIECE, 1, 1, 5), entry(ModItems.SCRUMPY, 1, 1, 5),
+                entry(ModItems.LAUNCH_CODE_PIECE, 1, 1, 5), entry(ModItems.EGG_GLYPHID, 1, 1, 5),
+                entry(legacyItem("gem_alexandrite"), 1, 1, 1), entry(ModItems.BLUEPRINT_FOLDER_DISCOVER, 1, 1, 1)));
 
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_SUPPLIES), pool(
-                entry(ModItems.DEFINITELYFOOD, 3, 10, 25),
-                entry(ModItems.SYRINGE_METAL_STIMPAK, 1, 3, 10),
-                entry(ModItems.PILL_IODINE, 1, 2, 2),
-                fluidCanister(HbmFluids.DIESEL, 1, 4, 5),
-                entry(ModItems.GEIGER_COUNTER, 1, 1, 2),
-                entry(ModItems.MED_BAG, 1, 1, 3),
+                entry(ModItems.DEFINITELYFOOD, 3, 10, 25), entry(ModItems.SYRINGE_METAL_STIMPAK, 1, 3, 10),
+                entry(ModItems.PILL_IODINE, 1, 2, 2), fluidCanister(HbmFluids.DIESEL, 1, 4, 5),
+                entry(ModBlocks.MACHINE_DIESEL, 1, 1, 1),
+                entry(ModItems.GEIGER_COUNTER, 1, 1, 2), entry(ModItems.MED_BAG, 1, 1, 3),
                 entry(ModItems.RADAWAY, 1, 5, 10)));
-
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_WEAPONS), pool(
-                entry(ModItems.GUN_LIGHT_REVOLVER, 1, 1, 100),
-                entry(ModItems.GUN_HENRY, 1, 1, 100),
-                entry(ModItems.GUN_MARESLEG, 1, 1, 100),
-                entry(ModItems.GUN_GREASEGUN, 1, 1, 100),
-                entry(ModItems.GUN_CARBINE, 1, 1, 50),
-                entry(ModItems.GUN_HEAVY_REVOLVER, 1, 1, 50),
-                entry(ModItems.GUN_PANZERSCHRECK, 1, 1, 20),
-                entry(ModItems.GUN_DOUBLE_BARREL, 1, 1, 10),
+                entry(ModItems.GUN_LIGHT_REVOLVER, 1, 1, 100), entry(ModItems.GUN_HENRY, 1, 1, 100),
+                entry(ModItems.GUN_MARESLEG, 1, 1, 100), entry(ModItems.GUN_GREASEGUN, 1, 1, 100),
+                entry(ModItems.GUN_CARBINE, 1, 1, 50), entry(ModItems.GUN_HEAVY_REVOLVER, 1, 1, 50),
+                entry(ModItems.GUN_PANZERSCHRECK, 1, 1, 20), entry(ModItems.GUN_DOUBLE_BARREL, 1, 1, 10),
                 entry(ModItems.GUN_NI4NI, 1, 1, 1)));
-
         output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_AMMO), pool(
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_M357_SP, 12, 12, 10),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_M357_FMJ, 6, 6, 10),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_M44_SP, 12, 12, 5),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_M44_FMJ, 6, 6, 5),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_P9_SP, 12, 12, 10),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_P9_FMJ, 6, 6, 10),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_R762_SP, 6, 6, 5),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_G12_BP, 6, 6, 10),
-                meta(LegacyMetaItemMappings.AMMO_STANDARD, AMMO_ROCKET_HE, 1, 1, 3),
-                entry(ModItems.AMMO_CONTAINER, 1, 1, 1)));
-
-        output.accept(HbmItemPoolIds.tableFor(HbmItemPoolIds.POOL_RED_PEDESTAL), pool(
-                entry(ModItems.BALLISTIC_GAUNTLET, 1, 1, 10),
-                entry(ModItems.ARMOR_POLISH, 1, 1, 10),
-                entry(ModItems.BANDAID, 1, 1, 10),
-                entry(ModItems.SERUM, 1, 1, 10),
-                entry(ModItems.QUARTZ_PLUTONIUM, 1, 1, 10),
-                entry(ModItems.MORNING_GLORY, 1, 1, 10),
-                entry(ModItems.SPIDER_MILK, 1, 1, 10),
-                entry(ModItems.INK, 1, 1, 10),
-                entry(ModItems.HEART_CONTAINER, 1, 1, 10),
-                entry(ModItems.BLACK_DIAMOND, 1, 1, 10),
-                entry(ModItems.SCRUMPY, 1, 1, 10),
-                entry(ModItems.WILD_P, 1, 1, 5),
-                entry(ModItems.CARD_AOS, 1, 1, 5),
-                entry(ModItems.CARD_QOS, 1, 1, 5),
-                entry(ModItems.STARMETAL_SWORD, 1, 1, 5)));
+                meta(AMMO_M357_SP, 12, 12, 10), meta(AMMO_M357_FMJ, 6, 6, 10),
+                meta(AMMO_M44_SP, 12, 12, 5), meta(AMMO_M44_FMJ, 6, 6, 5),
+                meta(AMMO_P9_SP, 12, 12, 10), meta(AMMO_P9_FMJ, 6, 6, 10),
+                meta(AMMO_R762_SP, 6, 6, 5), meta(AMMO_G12_BP, 6, 6, 10),
+                meta(AMMO_ROCKET_HE, 1, 1, 3), entry(ModItems.AMMO_CONTAINER, 1, 1, 1)));
     }
 
     private static LootTable.Builder pool(LootPoolSingletonContainer.Builder<?>... entries) {
         LootPool.Builder pool = LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F));
-        for (LootPoolSingletonContainer.Builder<?> entry : entries) {
-            pool.add(entry);
-        }
+        for (LootPoolSingletonContainer.Builder<?> entry : entries) pool.add(entry);
         return LootTable.lootTable().withPool(pool);
     }
 
-    private static LootPoolSingletonContainer.Builder<?> meta(ResourceLocation legacyId, int legacyMeta, int min, int max, int weight) {
-        return entry(LegacyMetaItemMappings.requireItem(legacyId, legacyMeta), min, max, weight);
+    private static LootPoolSingletonContainer.Builder<?> meta(int legacyMeta, int min, int max, int weight) {
+        return entry(LegacyMetaItemMappings.requireItem(LegacyMetaItemMappings.AMMO_STANDARD, legacyMeta), min, max, weight);
+    }
+
+    private static LootPoolSingletonContainer.Builder<?> meta(ResourceLocation family, int legacyMeta, int min, int max,
+            int weight) {
+        return entry(LegacyMetaItemMappings.requireItem(family, legacyMeta), min, max, weight);
     }
 
     private static LootPoolSingletonContainer.Builder<?> entry(RegistryObject<? extends ItemLike> item, int min, int max, int weight) {
-        if (item == null) {
-            throw new IllegalStateException("Missing migrated item for item pool loot table.");
-        }
         return entry(item.get(), min, max, weight);
     }
 
     private static LootPoolSingletonContainer.Builder<?> entry(ItemLike item, int min, int max, int weight) {
-        return LootItem.lootTableItem(item)
-                .setWeight(weight)
+        return LootItem.lootTableItem(item).setWeight(weight)
                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max)));
     }
 
     private static LootPoolSingletonContainer.Builder<?> fluidCanister(FluidType type, int min, int max, int weight) {
-        return entry(ModItems.CANISTER_FULL, min, max, weight)
-                .apply(SetNbtFunction.setTag(fluidTag(type, 1_000, 0)));
-    }
-
-    private static LootPoolSingletonContainer.Builder<?> blueprint(String pool, int min, int max, int weight) {
-        return entry(ModItems.BLUEPRINTS, min, max, weight)
-                .apply(SetNbtFunction.setTag(blueprintTag(pool)));
-    }
-
-    private static CompoundTag fluidTag(FluidType type, int amount, int pressure) {
         CompoundTag tag = new CompoundTag();
         tag.putString("hbm_fluid", type.getName());
-        tag.putInt("hbm_fluid_amount", amount);
-        tag.putInt("hbm_fluid_pressure", pressure);
-        return tag;
-    }
-
-    private static CompoundTag blueprintTag(String pool) {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("pool", pool);
-        return tag;
+        tag.putInt("hbm_fluid_amount", 1_000);
+        tag.putInt("hbm_fluid_pressure", 0);
+        return entry(ModItems.CANISTER_FULL, min, max, weight).apply(SetNbtFunction.setTag(tag));
     }
 
     private static RegistryObject<Item> legacyItem(String name) {
         RegistryObject<Item> item = ModItems.legacyItem(name);
-        if (item == null) {
-            throw new IllegalStateException("Missing migrated item for item pool loot table: " + name);
-        }
+        if (item == null) throw new IllegalStateException("Missing migrated item for item pool loot table: " + name);
         return item;
     }
 }

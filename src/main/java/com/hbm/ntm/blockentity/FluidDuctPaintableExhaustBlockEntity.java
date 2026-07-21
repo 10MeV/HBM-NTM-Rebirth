@@ -142,8 +142,9 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
                 HbmFluidNodespace.destroyNode(level, worldPosition, type);
                 nodes[i] = null;
             }
-            Set<Direction> connections = HbmFluidConnectionUtil.collectNodeConnections(level, worldPosition, type, this);
-            nodes[i] = HbmFluidNodespace.createNode(level, new HbmFluidNode(worldPosition, type, connections));
+            // TileEntityPipeExhaustPaintable inherits TileEntityPipeExhaust,
+            // and therefore IFluidPipeMK2's unconditional six endpoint node.
+            nodes[i] = HbmFluidNodespace.createNode(level, new HbmFluidNode(worldPosition, type));
         }
     }
 

@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "misc", "pattern": ["CCC", "CTC", "CCC"],
+  "key": { "C": { "tag": "forge:ingots/desh" }, "T": { "item": "hbm_ntm_rebirth:mp_fuselage_15_solid" } },
+  "result": { "item": "hbm_ntm_rebirth:mp_fuselage_15_solid_desh" }
+}

@@ -15,15 +15,18 @@ public class EuphemiumArmorItem extends ArmorItem {
     }
 
     public void tickEquippedArmor(ItemStack stack, Level level, Player player) {
-        if (!level.isClientSide && hasFullSet(player)) {
+        if (!hasFullSet(player)) {
+            return;
+        }
+        if (!level.isClientSide) {
             player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 5, 127, true, true));
             player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 5, 127, true, true));
             player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 5, 127, true, true));
-            player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 5, 127, true, true));
-            if (player.getDeltaMovement().y < -0.25D) {
-                player.setDeltaMovement(player.getDeltaMovement().x, -0.25D, player.getDeltaMovement().z);
-                player.fallDistance = 0.0F;
-            }
+            player.addEffect(new MobEffectInstance(MobEffects.SATURATION, 5, 127, true, true));
+        }
+        if (player.getDeltaMovement().y < -0.25D) {
+            player.setDeltaMovement(player.getDeltaMovement().x, -0.25D, player.getDeltaMovement().z);
+            player.fallDistance = 0.0F;
         }
     }
 

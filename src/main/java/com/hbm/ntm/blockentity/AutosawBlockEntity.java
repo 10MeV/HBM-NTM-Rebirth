@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.block.LegacyTallPlantBlock;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
@@ -111,6 +112,9 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
             autosaw.on = false;
         } else if (level.getGameTime() % 20L == 0L) {
             autosaw.on = autosaw.tank.drain(1, false) > 0;
+            if (autosaw.tank.getTankType() != HbmFluids.NONE) {
+                autosaw.refreshTrackedReceiverFluidPorts(autosaw.tank, autosaw);
+            }
         }
         if (autosaw.on && !autosaw.suspended) {
             autosaw.runSaw(level, pos);
@@ -270,7 +274,9 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return acceptsFuel(type) && type == tank.getTankType();
+        // The legacy remote input is renewed only by its twenty-tick machine
+        // pass. Do not let the generic dirty/keepalive route subscribe early.
+        return false;
     }
 
     @Override
@@ -416,7 +422,7 @@ public class AutosawBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     private boolean shouldIgnore(BlockState state) {
-        return false;
+        return state.getBlock() instanceof LegacyTallPlantBlock plant && plant.shouldAutosawIgnore(state);
     }
 
     private void cutCrop(Level level, BlockPos pos, BlockState state) {

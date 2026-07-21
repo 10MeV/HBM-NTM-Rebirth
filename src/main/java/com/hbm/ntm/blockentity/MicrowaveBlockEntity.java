@@ -192,6 +192,13 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityMicrowave retries all six adjacent Energy Mk2 receivers on
+        // every legacy server tick before it processes its food inventory.
+        return true;
+    }
+
+    @Override
     public Component getDisplayName() {
         return Component.translatableWithFallback("container.microwave", "Microwave");
     }

@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:steel_corner" } },
+  "output": { "item": "hbm_ntm_rebirth:powder_steel_tiny", "count": 18 },
+  "source_order": 101
+}

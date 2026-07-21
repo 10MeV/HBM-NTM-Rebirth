@@ -19,6 +19,22 @@ public final class LegacyMultiblockPorts {
         return xrFloorRingPorts(radius, FluidPort::of);
     }
 
+    /**
+     * TileEntityMachineCrystallizer#getConPos: the eight floor-level perimeter
+     * receiver ports are not the same topology as a complete radius-two ring.
+     */
+    public static List<FluidPort> crystallizerFluidPorts() {
+        return List.of(
+                FluidPort.of(2, 0, 1, Direction.EAST),
+                FluidPort.of(2, 0, -1, Direction.EAST),
+                FluidPort.of(-2, 0, 1, Direction.WEST),
+                FluidPort.of(-2, 0, -1, Direction.WEST),
+                FluidPort.of(1, 0, 2, Direction.SOUTH),
+                FluidPort.of(-1, 0, 2, Direction.SOUTH),
+                FluidPort.of(1, 0, -2, Direction.NORTH),
+                FluidPort.of(-1, 0, -2, Direction.NORTH));
+    }
+
     public static List<EnergyPort> factoryRecipeEnergyPorts(Direction facing, boolean topChemicalPorts) {
         return factoryMachinePorts(facing, topChemicalPorts, EnergyPort::of);
     }

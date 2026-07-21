@@ -88,6 +88,7 @@ public final class GeneralConfig {
             enableMycelium = com.hbm.ntm.config.RadiationConfig.myceliumSpreadEnabled();
             enableGuns = com.hbm.ntm.config.WeaponConfig.gunsEnabled();
             enableVirus = com.hbm.ntm.config.HbmCommonConfig.crystalVirusSpreadingEnabled();
+            enableCataclysm = com.hbm.ntm.config.HbmCommonConfig.cataclysmEnabled();
             enableCrosshairs = com.hbm.ntm.config.HbmClientConfig.customCrosshairsEnabled();
             enableMOTD = com.hbm.ntm.config.HbmCommonConfig.motdEnabled();
         } catch (IllegalStateException | NullPointerException ignored) {

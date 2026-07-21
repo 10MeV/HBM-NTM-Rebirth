@@ -1,0 +1,26 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:missile_doomsday_rusted" },
+      "count": 1
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/any_hardplastic" },
+      "count": 8
+    },
+    {
+      "ingredient": { "tag": "forge:welded_plates/aluminium" },
+      "count": 2
+    },
+    {
+      "ingredient": { "tag": "forge:billets/pu239" },
+      "count": 3
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:missile_doomsday"
+  },
+  "tier_lower": 5,
+  "overlay": "construction"
+}

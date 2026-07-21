@@ -1,19 +1,17 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.config.HbmClientConfig;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 
 public final class LegacyBlockEntityRenderDistances {
     /**
-     * @deprecated Use {@link #machine()} so the Modernized-style client distance config is observed.
+     * @deprecated Use {@link #machine()} so every block-entity model shares the global contract.
      */
     @Deprecated
-    public static final int MACHINE = 32 * 16;
-    public static final int LEGACY_65536_SQUARED = 256;
-
+    public static final int MACHINE = HbmModelRenderDistances.BLOCKS;
     private LegacyBlockEntityRenderDistances() {
     }
 
     public static int machine() {
-        return HbmClientConfig.modelStaticRenderDistanceBlocks();
+        return MACHINE;
     }
 }

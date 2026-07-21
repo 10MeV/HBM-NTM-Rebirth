@@ -1,9 +1,9 @@
 package com.hbm.ntm.entity.logic;
 
-import com.hbm.ntm.damage.EntityDamageUtil;
-import com.hbm.ntm.particle.ParticleUtil;
-import com.hbm.ntm.radiation.ModDamageSources;
+import com.hbm.ntm.bullet.LegacyBulletConfigs;
+import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -11,21 +11,18 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraftforge.network.NetworkHooks;
-
-import java.util.List;
 
 public class DeathBlastEntity extends Entity {
     public static final int MAX_AGE = 60;
-    private static final double DAMAGE_RADIUS = 40.0D;
-    private static final double DAMAGE_RADIUS_SQ = DAMAGE_RADIUS * DAMAGE_RADIUS;
-    private static final float MAX_DAMAGE = 250.0F;
+    private static final int NUCLEAR_RADIUS = 40;
+    private static final int MASKMAN_BOLT_COUNT = 100;
+    private static final double MASKMAN_BOLT_HORIZONTAL_SPEED = 0.2D;
+    private static final double MASKMAN_BOLT_VERTICAL_SPEED = -0.01D;
 
     public DeathBlastEntity(EntityType<? extends DeathBlastEntity> type, Level level) {
         super(type, level);
-        noPhysics = true;
-        setNoGravity(true);
+        noCulling = true;
     }
 
     public DeathBlastEntity(Level level) {
@@ -38,31 +35,37 @@ public class DeathBlastEntity extends Entity {
 
     @Override
     public void tick() {
-        super.tick();
+        // EntityDeathBlast#onUpdate deliberately omitted super.onUpdate().
+        // Its ticksExisted therefore never advances on its own, including for
+        // the SatelliteLaser-created runtime entity.
         if (!level().isClientSide && tickCount >= MAX_AGE) {
             discard();
-            applyDamageOnlyBlast();
+            detonateLegacyPayload();
             ParticleUtil.spawnNuclearBurstVisual(level(), getX(), getY() + 0.5D, getZ(), ParticleUtil.TYPE_MUKE, false);
             LegacySoundPlayer.playLegacyMukeExplosion(level(), getX(), getY(), getZ(), 25.0F, 0.9F);
         }
     }
 
-    private void applyDamageOnlyBlast() {
-        AABB bounds = new AABB(getX(), getY(), getZ(), getX(), getY(), getZ()).inflate(DAMAGE_RADIUS);
-        List<Entity> targets = level().getEntities(this, bounds,
-                entity -> entity.isAlive() && !entity.isSpectator());
-        for (Entity target : targets) {
-            double distanceSq = target.distanceToSqr(this);
-            if (distanceSq > DAMAGE_RADIUS_SQ) {
-                continue;
-            }
-            double distance = Math.sqrt(distanceSq);
-            float damage = (float) ((1.0D - distance / DAMAGE_RADIUS) * MAX_DAMAGE);
-            if (damage > 0.0F) {
-                EntityDamageUtil.attackEntityFromNt(target,
-                        ModDamageSources.source(level(), ModDamageSources.LASER, this),
-                        damage, true);
-            }
+    /**
+     * {@code RenderDeathBlast#renderOrb} reads the legacy entity age directly.
+     * In particular, it does not interpolate that value with a render partial
+     * tick.
+     */
+    public int legacyRenderAge() {
+        return tickCount;
+    }
+
+    private void detonateLegacyPayload() {
+        level().addFreshEntity(NukeExplosionMk5Entity.statFacNoRad(level(), NUCLEAR_RADIUS, getX(), getY(), getZ()));
+        for (int i = 0; i < MASKMAN_BOLT_COUNT; i++) {
+            double angle = 2.0D * Math.PI * i / MASKMAN_BOLT_COUNT;
+            // 1.7.10 Vec3(0.2, 0, 0).rotateAroundY(angle): z is negative sine.
+            BulletProjectileEntity bolt = new BulletProjectileEntity(level());
+            bolt.setConfig(LegacyBulletConfigs.MASKMAN_BOLT);
+            bolt.setPos(getX(), getY() + 2.0D, getZ());
+            bolt.setDeltaMovement(MASKMAN_BOLT_HORIZONTAL_SPEED * Math.cos(angle), MASKMAN_BOLT_VERTICAL_SPEED,
+                    -MASKMAN_BOLT_HORIZONTAL_SPEED * Math.sin(angle));
+            level().addFreshEntity(bolt);
         }
     }
 
@@ -81,6 +84,6 @@ public class DeathBlastEntity extends Entity {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return distance < 25000.0D;
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 }

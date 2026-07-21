@@ -33,7 +33,9 @@ public class FluidDuctPaintableModelLoader
         ResourceLocation overlay = texture(json, "overlay", DEFAULT_OVERLAY);
         ResourceLocation colorOverlay = texture(json, "color_overlay", DEFAULT_COLOR_OVERLAY);
         ResourceLocation particle = texture(json, "particle", base);
-        return new Geometry(base, overlay, colorOverlay, particle, exhaust);
+        boolean tintedUnpainted = GsonHelper.getAsBoolean(json, "tinted_unpainted", !exhaust);
+        boolean unpaintedOverlay = GsonHelper.getAsBoolean(json, "unpainted_overlay", false);
+        return new Geometry(base, overlay, colorOverlay, particle, exhaust, tintedUnpainted, unpaintedOverlay);
     }
 
     private static ResourceLocation texture(String path) {
@@ -50,7 +52,8 @@ public class FluidDuctPaintableModelLoader
     }
 
     public record Geometry(ResourceLocation base, ResourceLocation overlay, ResourceLocation colorOverlay,
-                           ResourceLocation particle, boolean exhaust) implements IUnbakedGeometry<Geometry> {
+                           ResourceLocation particle, boolean exhaust, boolean tintedUnpainted,
+                           boolean unpaintedOverlay) implements IUnbakedGeometry<Geometry> {
         @Override
         public void resolveParents(Function<ResourceLocation, UnbakedModel> modelGetter,
                 IGeometryBakingContext context) {
@@ -65,7 +68,7 @@ public class FluidDuctPaintableModelLoader
             TextureAtlasSprite colorOverlaySprite = spriteGetter.apply(material(colorOverlay));
             TextureAtlasSprite particleSprite = spriteGetter.apply(material(particle));
             return new FluidDuctPaintableBakedModel(baseSprite, overlaySprite, colorOverlaySprite,
-                    particleSprite, exhaust, context.getTransforms());
+                    particleSprite, exhaust, tintedUnpainted, unpaintedOverlay, context.getTransforms());
         }
 
         private static Material material(ResourceLocation texture) {

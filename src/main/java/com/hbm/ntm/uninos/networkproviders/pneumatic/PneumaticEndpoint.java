@@ -11,10 +11,6 @@ public interface PneumaticEndpoint {
 
     BlockPos getPneumaticPos();
 
-    default int itemHardCap() {
-        return PneumaticNetwork.ITEMS_PER_TRANSFER;
-    }
-
     default boolean isPneumaticLoaded() {
         return !(this instanceof BlockEntity blockEntity) || !blockEntity.isRemoved();
     }

@@ -1,8 +1,10 @@
 {
   "variants": {
     "facing=north": { "model": "hbm_ntm_rebirth:block/crane_router" },
-    "facing=east": { "model": "hbm_ntm_rebirth:block/crane_router", "y": 90 },
-    "facing=south": { "model": "hbm_ntm_rebirth:block/crane_router", "y": 180 },
-    "facing=west": { "model": "hbm_ntm_rebirth:block/crane_router", "y": 270 }
+    "facing=east": { "model": "hbm_ntm_rebirth:block/crane_router" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/crane_router" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/crane_router" },
+    "facing=up": { "model": "hbm_ntm_rebirth:block/crane_router" },
+    "facing=down": { "model": "hbm_ntm_rebirth:block/crane_router" }
   }
 }

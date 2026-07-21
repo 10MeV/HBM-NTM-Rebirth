@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.conveyor.ConveyorMath;
 import com.hbm.ntm.api.conveyor.IConveyorBelt;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
@@ -586,8 +587,8 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private boolean supplyConveyor(ServerLevel level, List<ItemStack> stacks) {
         BlockPos out = outputPos();
-        BlockState state = level.getBlockState(out);
-        if (!(state.getBlock() instanceof IConveyorBelt belt)) {
+        IConveyorBelt belt = ConveyorMath.conveyorAt(level, out);
+        if (belt == null) {
             return false;
         }
         boolean moved = false;
@@ -818,6 +819,11 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean usesLegacyTwentyTickEnergyPortSubscriptionCadence() {
+        return true;
+    }
+
+    @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.INPUT;
     }
@@ -829,7 +835,10 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return type != HbmFluids.NONE && type == tank.getTankType();
+        // The legacy remote input is owned by the explicit twenty-tick tracker
+        // pass in tickServer. Do not let the generic dirty/keepalive route
+        // subscribe this machine early.
+        return false;
     }
 
     @Override

@@ -241,6 +241,13 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachineTurbine retried its direct Fluid Mk2 input and
+        // non-empty output endpoints every server tick.
+        return true;
+    }
+
+    @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
         return List.of(inputTank);
     }

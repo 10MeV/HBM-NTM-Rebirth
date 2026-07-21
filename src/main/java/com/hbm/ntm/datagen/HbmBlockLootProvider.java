@@ -4,8 +4,10 @@ import net.minecraft.advancements.critereon.EnchantmentPredicate;
 import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.advancements.critereon.MinMaxBounds;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
+import com.hbm.ntm.block.ConcreteColoredBlock;
 import com.hbm.ntm.block.ConcreteColoredExtBlock;
 import com.hbm.ntm.block.DecoToasterBlock;
+import com.hbm.ntm.block.DecoCrtBlock;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidPipeBlock;
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
@@ -26,6 +28,8 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoublePlantBlock;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
@@ -88,6 +92,27 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .forEach(block -> dropSelf(block.get()));
         addNoDrop(ModBlocks.TURRET_HOWARD_DAMAGED.get());
         addNoDrop(ModBlocks.TURRET_SENTRY_DAMAGED.get());
+        dropSelf(ModBlocks.RAIL_NARROW_STRAIGHT.get());
+        dropSelf(ModBlocks.RAIL_LARGE_STRAIGHT.get());
+        dropSelf(ModBlocks.RAIL_LARGE_STRAIGHT_SHORT.get());
+        dropSelf(ModBlocks.RAIL_NARROW_CURVE.get());
+        dropSelf(ModBlocks.RAIL_LARGE_CURVE.get());
+        dropSelf(ModBlocks.RAIL_LARGE_CURVE_7.get());
+        dropSelf(ModBlocks.RAIL_LARGE_CURVE_9.get());
+        dropSelf(ModBlocks.RAIL_LARGE_RAMP.get());
+        dropSelf(ModBlocks.RAIL_LARGE_BUFFER.get());
+        // These two registered blocks are only internal carriers for the
+        // 1.7.10 rail multiblock segments. Their owner destroys the rail
+        // core, which is the sole block item that may be returned.
+        addNoDrop(ModBlocks.RAIL_DUMMY.get());
+        addNoDrop(ModBlocks.RAIL_NARROW_DUMMY.get());
+        dropSelf(ModBlocks.RAIL_LARGE_SWITCH.get());
+        dropSelf(ModBlocks.RAIL_LARGE_SWITCH_FLIPPED.get());
+        dropSelf(ModBlocks.STEEL_POLES.get());
+        dropSelf(ModBlocks.STEEL_WALL.get());
+        dropSelf(ModBlocks.STEEL_CORNER.get());
+        dropSelf(ModBlocks.STEEL_ROOF.get());
+        dropSelf(ModBlocks.legacyBlock("crystal_pulsar").get());
         addNoDrop(ModBlocks.MACHINE_FLUIDTANK.get());
         addNoDrop(ModBlocks.MACHINE_BAT9000.get());
         addNoDrop(ModBlocks.MACHINE_BIGASSTANK.get());
@@ -117,8 +142,14 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 legacyStateVariantDrop(ModBlocks.RAD_ABSORBER.get(), LegacyRadAbsorberBlock.TIER, 4));
         add(ModBlocks.DECO_TOASTER.get(),
                 legacyStateVariantDrop(ModBlocks.DECO_TOASTER.get(), DecoToasterBlock.VARIANT, 3));
+        add(ModBlocks.DECO_CRT.get(),
+                legacyStateVariantDrop(ModBlocks.DECO_CRT.get(), DecoCrtBlock.VARIANT, 4));
+        addNoDrop(ModBlocks.LANTERN_BEHEMOTH.get());
+        dropSelf(ModBlocks.BOXCAR.get());
         add(ModBlocks.CONCRETE_COLORED_EXT.get(),
                 legacyStateVariantDrop(ModBlocks.CONCRETE_COLORED_EXT.get(), ConcreteColoredExtBlock.VARIANT, 8));
+        RegistryObject<? extends Block> concreteColored = ModBlocks.legacyBlock("concrete_colored");
+        add(concreteColored.get(), legacyStateVariantDrop(concreteColored.get(), ConcreteColoredBlock.VARIANT, 16));
         addNoDrop(ModBlocks.BARREL_STEEL.get());
         addNoDrop(ModBlocks.BARREL_TCALLOY.get());
         addNoDrop(ModBlocks.BARREL_ANTIMATTER.get());
@@ -144,6 +175,10 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addNoDrop(ModBlocks.CRATE_STEEL.get());
         addNoDrop(ModBlocks.CRATE_DESH.get());
         addNoDrop(ModBlocks.CRATE_TUNGSTEN.get());
+        // BlockSupplyCrate#getItemDropped returns null. The block itself
+        // preserves its NBT through playerWillDestroy, while crowbar releases
+        // its contents directly.
+        addNoDrop(ModBlocks.CRATE_SUPPLY.get());
         addNoDrop(ModBlocks.SAFE.get());
         addNoDrop(ModBlocks.MASS_STORAGE.get());
         addNoDrop(ModBlocks.VENDING_MACHINE.get());
@@ -164,7 +199,10 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.STRUCT_SOYUZ_CORE.get());
         dropSelf(ModBlocks.LAUNCH_PAD.get());
         dropSelf(ModBlocks.LAUNCH_PAD_LARGE.get());
-        dropSelf(ModBlocks.LAUNCH_PAD_RUSTED.get());
+        // LaunchPadRusted#getItemDropped returns null in 1.7.10.  Its
+        // inventory is still handled by RustedLaunchPadBlock#onCoreRemoved,
+        // but breaking the pad itself must not recreate the block item.
+        addNoDrop(ModBlocks.LAUNCH_PAD_RUSTED.get());
         add(ModBlocks.LAUNCH_TABLE.get(), block -> createSingleItemTable(ModBlocks.STRUCT_LAUNCHER_CORE_LARGE.get()));
         add(ModBlocks.COMPACT_LAUNCHER.get(), block -> createSingleItemTable(ModBlocks.STRUCT_LAUNCHER_CORE.get()));
         dropSelf(ModBlocks.MACHINE_MISSILE_ASSEMBLY.get());
@@ -197,6 +235,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .filter(block -> !"glyphid_base".equals(block.getId().getPath()))
                 .filter(block -> !"glyphid_spawner".equals(block.getId().getPath()))
                 .filter(block -> block != ModBlocks.CONCRETE_COLORED_EXT)
+                .filter(block -> !"concrete_colored".equals(block.getId().getPath()))
                 .filter(block -> block != ModBlocks.BLOCK_COKE)
                 .filter(block -> block != ModBlocks.WOOD_STRUCTURE)
                 .forEach(block -> dropSelf(block.get()));
@@ -211,6 +250,8 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addPileGraphiteDrops();
         addNoDrop(ModBlocks.WASTE_LEAVES.get());
         addNoDrop(ModBlocks.LEAVES_LAYER.get());
+        addNoDrop(ModBlocks.FOAM_LAYER.get());
+        addNoDrop(ModBlocks.SAND_BORON_LAYER.get());
         addNoDrop(ModBlocks.BARRICADE.get());
         addNoDrop(ModBlocks.OIL_SPILL.get());
         add(ModBlocks.WASTE_LOG.get(), wasteLogDrop());
@@ -218,6 +259,11 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .filter(block -> block != ModBlocks.PLANT_FLOWER_CD1)
                 .forEach(block -> dropSelf(block.get()));
         add(ModBlocks.PLANT_FLOWER_CD1.get(), block -> createSingleItemTable(ModBlocks.PLANT_FLOWER_CD0.get()));
+        addNoDrop(ModBlocks.PLANT_DEAD_BIGFLOWER.get());
+        add(ModBlocks.PLANT_TALL_WEED.get(), block -> tallPlantDrop(block, ModBlocks.PLANT_FLOWER_WEED.get(), false));
+        add(ModBlocks.PLANT_TALL_CD2.get(), block -> tallPlantDrop(block, ModBlocks.PLANT_FLOWER_CD0.get(), false));
+        add(ModBlocks.PLANT_TALL_CD3.get(), block -> tallPlantDrop(block, ModBlocks.PLANT_FLOWER_CD0.get(), false));
+        add(ModBlocks.PLANT_TALL_CD4.get(), block -> tallPlantDrop(block, ModBlocks.PLANT_FLOWER_CD0.get(), true));
         add(ModBlocks.MUSH_BLOCK.get(), hugeMushDrop());
         add(ModBlocks.MUSH_BLOCK_STEM.get(), hugeMushDrop());
         add(ModBlocks.FROZEN_GRASS.get(), block -> singleItemDrop(Items.SNOWBALL));
@@ -382,6 +428,13 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         addLegacyNoSilkFortuneDrop("ore_oil", "oil_tar_crude");
         addLegacyNoFortuneOreDrop("block_meteor_cobble", "fragment_meteorite");
         addLegacyNoFortuneOreDrop("block_meteor_broken", "fragment_meteorite", 1.0F, 3.0F);
+        addNoDrop(ModBlocks.BLOCK_METEOR_MOLTEN.get());
+        addNoDrop(ModBlocks.BLOCK_METEOR_TREASURE.get()); // Runtime drops are POOL_METEORITE_TREASURE rolls.
+        dropSelf(ModBlocks.ORE_METEOR_IRON.get());
+        dropSelf(ModBlocks.ORE_METEOR_COPPER.get());
+        dropSelf(ModBlocks.ORE_METEOR_ALUMINIUM.get());
+        dropSelf(ModBlocks.ORE_METEOR_RAREEARTH.get());
+        dropSelf(ModBlocks.ORE_METEOR_COBALT.get());
         addNoDrop(ModBlocks.ORE_BEDROCK_COLTAN.get());
     }
 
@@ -557,6 +610,27 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                                 LootItem.lootTableItem(ModBlocks.MUSH.get())
                                         .when(LootItemRandomChanceCondition.randomChance(1.0F / 9.0F))))
                         .when(ExplosionCondition.survivesExplosion()));
+    }
+
+    private LootTable.Builder tallPlantDrop(Block tallPlant, Block flower, boolean mature) {
+        LootItemCondition.Builder upperHalf = LootItemBlockStatePropertyCondition.hasBlockStateProperties(tallPlant)
+                .setProperties(StatePropertiesPredicate.Builder.properties()
+                        .hasProperty(DoublePlantBlock.HALF, DoubleBlockHalf.UPPER));
+        LootTable.Builder table = LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(ConstantValue.exactly(1.0F))
+                        .add(LootItem.lootTableItem(flower))
+                        .when(ExplosionCondition.survivesExplosion())
+                        .when(upperHalf));
+        if (mature) {
+            table.withPool(LootPool.lootPool()
+                    .setRolls(ConstantValue.exactly(1.0F))
+                    .add(LootItem.lootTableItem(ModItems.legacyItem("plant_item_mustardwillow").get())
+                            .apply(SetItemCountFunction.setCount(UniformGenerator.between(3.0F, 6.0F))))
+                    .when(ExplosionCondition.survivesExplosion())
+                    .when(upperHalf));
+        }
+        return table;
     }
 
     private LootPool.Builder fixedStackPool(net.minecraft.world.level.ItemLike item, float count) {

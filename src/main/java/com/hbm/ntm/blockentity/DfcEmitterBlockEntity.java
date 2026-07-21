@@ -7,8 +7,10 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.menu.DfcEmitterMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
@@ -43,6 +45,8 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int RANGE = 50;
     public static final int CONTROL_SET_WATTS = 0;
     public static final int CONTROL_TOGGLE = 1;
+
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.allAdjacent();
 
     private final HbmFluidTank cryogel;
     private int watts = 1;
@@ -200,6 +204,21 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type == cryogel.getTankType();
+    }
+
+    @Override
+    protected Iterable<FluidPort> getFluidPorts() {
+        return FLUID_PORTS;
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

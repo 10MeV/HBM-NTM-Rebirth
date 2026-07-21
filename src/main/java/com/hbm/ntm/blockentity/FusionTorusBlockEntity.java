@@ -377,6 +377,11 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type != HbmFluids.NONE && getReceivingTanks().stream().anyMatch(tank -> tank.getTankType() == type);
     }
@@ -384,6 +389,16 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
         return getSendingTanks().stream().anyMatch(tank -> tank.getTankType() == type && tank.getFill() > 0);
+    }
+
+    @Override
+    protected boolean usesLegacyTwentyTickFluidPortSubscriptionCadence() {
+        return true;
+    }
+
+    @Override
+    protected boolean usesLegacyTwentyTickEnergyPortSubscriptionCadence() {
+        return true;
     }
 
     @Override
@@ -544,7 +559,6 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void onChunkUnloaded() {
-        destroyNodes();
         super.onChunkUnloaded();
     }
 
@@ -922,12 +936,12 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         for (KlystronNode node : klystronNodes) {
             if (node != null) {
-                KlystronNodespace.destroyNode(level, node.getPos());
+                KlystronNodespace.destroyNode(level, node);
             }
         }
         for (PlasmaNode node : plasmaNodes) {
             if (node != null) {
-                PlasmaNodespace.destroyNode(level, node.getPos());
+                PlasmaNodespace.destroyNode(level, node);
             }
         }
         java.util.Arrays.fill(klystronNodes, null);

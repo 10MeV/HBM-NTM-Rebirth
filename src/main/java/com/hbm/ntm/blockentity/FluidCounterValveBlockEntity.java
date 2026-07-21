@@ -37,10 +37,10 @@ public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
         if (level.isClientSide) {
             return;
         }
-        if (counterValve.getFluidNode() == null && counterValve.isOpen()
-                && counterValve.getFluidType() != HbmFluids.NONE) {
-            counterValve.refreshFluidNode();
-        }
+        // TileEntityFluidCounterValve#updateEntity invokes its PipeBase super
+        // first.  This includes recreating a node made expired by legacy reap
+        // before the counter observes the current network tracker.
+        FluidPipeBlockEntity.serverTick(level, pos, state, counterValve);
         long oldCounter = counterValve.counter;
         if (counterValve.getFluidType() != HbmFluids.NONE) {
             HbmFluidNet net = counterValve.getFluidNet();

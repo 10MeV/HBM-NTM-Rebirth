@@ -174,6 +174,13 @@ public class DeuteriumExtractorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityDeuteriumExtractor#updateEntity retried its adjacent Fluid
+        // Mk2 receiver/provider endpoints on every server tick.
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return ALL_FLUID_PORTS;
     }
@@ -181,6 +188,11 @@ public class DeuteriumExtractorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
         return ALL_ENERGY_PORTS;
+    }
+
+    @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

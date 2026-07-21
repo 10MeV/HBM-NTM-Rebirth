@@ -12,7 +12,9 @@ public class RadiationMobEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
-        RadiationUtil.applyRadiationEffect(entity, amplifier);
+        if (!entity.level().isClientSide()) {
+            RadiationUtil.applyRadiationEffect(entity, amplifier);
+        }
     }
 
     @Override

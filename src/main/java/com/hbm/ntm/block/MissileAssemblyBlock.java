@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -35,11 +36,23 @@ public class MissileAssemblyBlock extends HorizontalMachineBlock implements Enti
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MissileAssemblyBlockEntity assembly) {
             NetworkHooks.openScreen(serverPlayer, assembly, pos);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide && stack.hasCustomHoverName()
+                && level.getBlockEntity(pos) instanceof MissileAssemblyBlockEntity assembly) {
+            assembly.setCustomName(stack.getHoverName().getString());
+        }
     }
 
     @Nullable

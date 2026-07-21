@@ -207,8 +207,18 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type != HbmFluids.NONE && type == airTank.getTankType();
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override
@@ -317,13 +327,12 @@ public class FusionKlystronBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void onChunkUnloaded() {
-        destroyNode();
         super.onChunkUnloaded();
     }
 
     private void destroyNode() {
         if (level != null && !level.isClientSide && klystronNode != null) {
-            KlystronNodespace.destroyNode(level, klystronNode.getPos());
+            KlystronNodespace.destroyNode(level, klystronNode);
         }
         klystronNode = null;
     }

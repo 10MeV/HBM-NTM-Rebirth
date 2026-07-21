@@ -76,7 +76,7 @@ public class ArtilleryShellEntity extends LegacyThrowableEntity implements Radar
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return true;
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     public ArtilleryShellEntity setType(int type) {

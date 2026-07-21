@@ -425,7 +425,7 @@ public class RubberBoatEntity extends Entity {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return distance < 16384.0D;
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

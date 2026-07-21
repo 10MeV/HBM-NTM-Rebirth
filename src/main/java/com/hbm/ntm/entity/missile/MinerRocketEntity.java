@@ -30,9 +30,7 @@ public class MinerRocketEntity extends Entity {
 
     public MinerRocketEntity(EntityType<? extends MinerRocketEntity> type, Level level) {
         super(type, level);
-        setNoGravity(true);
         noCulling = true;
-        noPhysics = true;
     }
 
     public MinerRocketEntity(Level level) {
@@ -47,20 +45,40 @@ public class MinerRocketEntity extends Entity {
 
     @Override
     public void tick() {
-        super.tick();
-        double motionY = switch (mode()) {
-            case MODE_UNLOADING -> 0.0D;
-            case MODE_LIFTING -> 1.0D;
-            default -> -0.75D;
-        };
+        // EntityMinerRocket#onUpdate never invokes Entity#onUpdate.  Its
+        // complete movement contract is the manual setPositionAndRotation
+        // below; entering the modern parent tick would add fluid pushing and
+        // other base physics that legacy never applied to this rocket.
+        // The old watcher branches assign motionY only for modes 0, 1 and 2.
+        // An unrecognized persisted/watcher value does not become a landing
+        // rocket: it keeps the previous Y motion while the legacy tick still
+        // clears X/Z below.
+        double motionY = getDeltaMovement().y;
+        switch (mode()) {
+            case MODE_LANDING -> motionY = -0.75D;
+            case MODE_UNLOADING -> motionY = 0.0D;
+            case MODE_LIFTING -> motionY = 1.0D;
+            default -> {
+                // Keep the source's no-assignment boundary for unknown modes.
+            }
+        }
         setDeltaMovement(0.0D, motionY, 0.0D);
-        setPos(getX(), getY() + motionY, getZ());
+        // EntityMinerRocket uses setPositionAndRotation(..., 0, 0) every
+        // mode tick, so vertical travel never preserves a stale yaw or pitch.
+        moveTo(getX(), getY() + motionY, getZ(), 0.0F, 0.0F);
 
-        BlockPos dockPos = BlockPos.containing(getX() - 0.5D, getY() - 0.5D, getZ() - 0.5D);
-        BlockPos obstaclePos = BlockPos.containing(getX() - 0.5D, getY() + 1.0D, getZ() - 0.5D);
+        BlockPos dockPos = new BlockPos((int) (getX() - 0.5D), (int) (getY() - 0.5D),
+                (int) (getZ() - 0.5D));
+        BlockPos obstaclePos = new BlockPos((int) (getX() - 0.5D), (int) (getY() + 1.0D),
+                (int) (getZ() - 0.5D));
         if (mode() == MODE_LANDING && level().getBlockState(dockPos).is(ModBlocks.SAT_DOCK.get())) {
             setMode(MODE_UNLOADING);
-            setPos(getX(), Math.floor(getY()), getZ());
+            // EntityMinerRocket clears motionY in the same landing tick that
+            // switches its watcher to unloading.  Waiting for the following
+            // tick to install the unloading velocity leaves a source-visible
+            // -0.75 delta movement behind the docked rocket.
+            setDeltaMovement(0.0D, 0.0D, 0.0D);
+            setPos(getX(), (int) getY(), getZ());
         } else if (!level().getBlockState(obstaclePos).isAir() && !level().isClientSide && mode() != MODE_UNLOADING) {
             discard();
             ExplosionLarge.explodeFire(level(), getX() - 0.5D, getY(), getZ() - 0.5D,
@@ -105,6 +123,11 @@ public class MinerRocketEntity extends Entity {
 
     public int timer() {
         return timer;
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

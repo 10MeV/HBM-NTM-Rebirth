@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["G", "T", "C"],
+  "key": { "G": { "tag": "forge:dyes/green" }, "T": { "item": "minecraft:redstone_torch" }, "C": { "tag": "forge:circuits/basic" } },
+  "result": { "item": "hbm_ntm_rebirth:drone_waypoint", "count": 4 }
+}

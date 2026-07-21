@@ -1,6 +1,5 @@
 package com.hbm.ntm.satellite;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +19,10 @@ public class SatelliteChipItem extends Item implements ISatelliteChip {
     }
 
     public SatelliteChipItem(Properties properties, LegacySatelliteType satelliteType, String... descriptionKeys) {
-        super(properties.stacksTo(1));
+        // 1.7.10 set the max stack size at each real ModItems registration,
+        // rather than in ItemSatChip or either remote subclass. Preserve that
+        // extension boundary by honoring the caller's properties here.
+        super(properties);
         this.satelliteType = satelliteType;
         this.descriptionKeys = descriptionKeys == null
                 ? List.of()
@@ -40,10 +42,9 @@ public class SatelliteChipItem extends Item implements ISatelliteChip {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("satchip.frequency")
-                .append(": " + getFrequency(stack))
-                .withStyle(ChatFormatting.GRAY));
+                .append(": " + getFrequency(stack)));
         for (String descriptionKey : descriptionKeys) {
-            tooltip.add(Component.translatable(descriptionKey).withStyle(ChatFormatting.AQUA));
+            tooltip.add(Component.translatable(descriptionKey));
         }
         super.appendHoverText(stack, level, tooltip, flag);
     }

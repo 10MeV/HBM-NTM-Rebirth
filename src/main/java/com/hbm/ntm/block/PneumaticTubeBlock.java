@@ -3,6 +3,7 @@ package com.hbm.ntm.block;
 import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.api.ntl.PneumaticConnector;
 import com.hbm.ntm.blockentity.PneumaticTubeBlockEntity;
+import com.hbm.ntm.client.ClientGeometryInvalidationBridge;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -71,6 +72,9 @@ public class PneumaticTubeBlock extends BaseEntityBlock implements Toolable {
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (level.isClientSide) {
+            ClientGeometryInvalidationBridge.scheduleWithNeighbors(pos);
+        }
         if (!state.is(oldState.getBlock())) {
             refreshTube(level, pos);
             refreshNeighborTubes(level, pos);
@@ -80,12 +84,18 @@ public class PneumaticTubeBlock extends BaseEntityBlock implements Toolable {
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, block, neighborPos, movedByPiston);
+        if (level.isClientSide) {
+            ClientGeometryInvalidationBridge.scheduleWithNeighbors(pos);
+        }
         refreshTube(level, pos);
         refreshNeighborTubes(level, pos);
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (level.isClientSide) {
+            ClientGeometryInvalidationBridge.scheduleWithNeighbors(pos);
+        }
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof PneumaticTubeBlockEntity tube) {
             tube.removePneumaticNode();
             refreshNeighborTubes(level, pos);
@@ -151,7 +161,8 @@ public class PneumaticTubeBlock extends BaseEntityBlock implements Toolable {
 
     private static boolean connects(BlockGetter level, BlockPos pos, Direction direction) {
         if (level.getBlockEntity(pos) instanceof PneumaticTubeBlockEntity tube
-                && (tube.getInsertionDirection() == direction || tube.getEjectionDirection() == direction)) {
+                && (tube.getInsertionDirection() == direction || tube.getEjectionDirection() == direction
+                || tube.hasAirConnection(direction))) {
             return true;
         }
         return level.getBlockEntity(pos.relative(direction)) instanceof PneumaticConnector connector

@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
-public class LegacyLanternBlockEntityRenderer implements BlockEntityRenderer<LegacyLanternBlockEntity> {
+public class LegacyLanternBlockEntityRenderer<T extends LegacyLanternBlockEntity> implements BlockEntityRenderer<T> {
     private static final float[][] LIGHT_VERTICES = {
             {0.6875F, 4.0625F, 0.6875F},
             {0.8125F, 4.8125F, 0.8125F},
@@ -31,13 +31,18 @@ public class LegacyLanternBlockEntityRenderer implements BlockEntityRenderer<Leg
     }
 
     @Override
-    public boolean shouldRender(LegacyLanternBlockEntity blockEntity, Vec3 cameraPos) {
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(T blockEntity, Vec3 cameraPos) {
         return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
                 && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
-    public void render(LegacyLanternBlockEntity blockEntity, float partialTick, PoseStack poseStack,
+    public void render(T blockEntity, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;

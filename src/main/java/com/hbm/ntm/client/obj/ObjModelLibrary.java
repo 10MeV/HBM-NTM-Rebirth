@@ -136,6 +136,7 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_FENSU_LEGACY = ObjMachineModels.FENSU_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RADAR_BODY_LEGACY = ObjMachineModels.RADAR_BODY_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RADAR_LEGACY = ObjMachineModels.RADAR_LEGACY;
+    public static final ResourceLocation MACHINE_RADAR_DISH_TEXTURE = ObjMachineModels.machineTexture("radar_dish");
     public static final LegacyWavefrontModel MACHINE_RADAR_LARGE_LEGACY = ObjMachineModels.RADAR_LARGE_LEGACY;
     public static final LegacyWavefrontModel MACHINE_RADAR_SCREEN_LEGACY = ObjMachineModels.RADAR_SCREEN_LEGACY;
     public static final LegacyWavefrontModel MACHINE_SOLAR_MIRROR_LEGACY = ObjMachineModels.SOLAR_MIRROR_LEGACY;
@@ -429,12 +430,8 @@ public final class ObjModelLibrary {
     public static final ResourceLocation UTILITY_TESLA_TEXTURE = ObjUtilityModels.TESLA_TEXTURE;
     public static final LegacyWavefrontModel UTILITY_FILE_CABINET = ObjUtilityModels.FILE_CABINET;
     public static final LegacyWavefrontModel ENTITY_TESLACRAB = ObjEntityModels.TESLACRAB;
-    public static final LegacyWavefrontModel ENTITY_MASKMAN = ObjEntityModels.MASKMAN;
     public static final LegacyWavefrontModel ENTITY_BLOCKSPIDER = ObjEntityModels.BLOCKSPIDER;
     public static final LegacyWavefrontModel ENTITY_TAINTCRAB = ObjEntityModels.TAINTCRAB;
-    public static final LegacyWavefrontModel ENTITY_UFO = ObjEntityModels.UFO;
-    public static final LegacyWavefrontModel ENTITY_MINI_UFO = ObjEntityModels.MINI_UFO;
-    public static final LegacyWavefrontModel ENTITY_SIEGE_UFO = ObjEntityModels.SIEGE_UFO;
     public static final LegacyWavefrontModel ENTITY_GLYPHID = ObjEntityModels.GLYPHID;
     public static final LegacyWavefrontModel ENTITY_QUADCOPTER = ObjEntityModels.QUADCOPTER;
     public static final LegacyWavefrontModel ENTITY_C130 = ObjEntityModels.C130;
@@ -442,8 +439,6 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel ENTITY_DUCHESS_GAMBIT = ObjEntityModels.DUCHESS_GAMBIT;
     public static final LegacyWavefrontModel ENTITY_DORNIER = ObjEntityModels.DORNIER;
     public static final LegacyWavefrontModel ENTITY_B29 = ObjEntityModels.B29;
-    public static final LegacyWavefrontModel ENTITY_BOT_PRIME_HEAD = ObjEntityModels.BOT_PRIME_HEAD;
-    public static final LegacyWavefrontModel ENTITY_BOT_PRIME_BODY = ObjEntityModels.BOT_PRIME_BODY;
     public static final LegacyWavefrontModel ENTITY_PLASTIC_BAG = ObjEntityModels.PLASTIC_BAG;
     public static final LegacyWavefrontModel ENTITY_TUNNELER = ObjEntityModels.TUNNELER;
     public static final LegacyWavefrontModel ENTITY_CAPSULE = ObjEntityModels.CAPSULE;

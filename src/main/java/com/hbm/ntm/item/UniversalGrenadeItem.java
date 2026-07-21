@@ -17,21 +17,30 @@ import com.hbm.ntm.explosion.vnt.standard.BlockProcessorStandard;
 import com.hbm.ntm.explosion.vnt.standard.EntityProcessorCrossSmooth;
 import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectWeapon;
 import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
+import com.hbm.ntm.network.HbmLegacyItemAnimationReceiver;
+import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -46,16 +55,127 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.fml.DistExecutor;
 import org.jetbrains.annotations.Nullable;
 
-public class UniversalGrenadeItem extends ItemGenericGrenade {
+public class UniversalGrenadeItem extends ItemGenericGrenade implements HbmLegacyItemAnimationReceiver {
     public static final String KEY_SHELL = "shell";
     public static final String KEY_FILLING = "filling";
     public static final String KEY_FUZE = "fuze";
     public static final String KEY_EXTRA = "extra";
+    private static final String KEY_EQUIPPED = "hbmGrenadeEquipped";
+    private static final short ANIMATION_EQUIP = 1;
 
     public UniversalGrenadeItem(Item.Properties properties) {
         super(15, properties);
+    }
+
+    /**
+     * Unlike ordinary grenades, the legacy universal grenade may only be
+     * thrown after it has been readied while held. The timer belongs to the
+     * player extended properties, not the item, so switching stacks correctly
+     * resets the shared deployment state.
+     */
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (HbmPlayerProperties.getGrenadeDeployment(player) < getShell(stack).drawDuration()) {
+            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+        }
+
+        if (!level.isClientSide) {
+            DynamiteStickEntity grenade = new DynamiteStickEntity(level, player);
+            grenade.setItem(stack.copyWithCount(1));
+            grenade.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F,
+                    (float) getThrowForce(stack), 1.0F);
+            level.addFreshEntity(grenade);
+
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
+            HbmPlayerProperties.resetGrenadeDeployment(player);
+            if (!stack.isEmpty() && player instanceof ServerPlayer serverPlayer) {
+                triggerEquipAnimation(serverPlayer);
+            }
+        }
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        if (level.isClientSide || !(entity instanceof ServerPlayer player)) {
+            return;
+        }
+
+        CompoundTag tag = stack.getOrCreateTag();
+        boolean wasEquipped = tag.getBoolean(KEY_EQUIPPED);
+        if (!selected) {
+            if (wasEquipped) {
+                tag.putBoolean(KEY_EQUIPPED, false);
+            }
+            return;
+        }
+
+        if (!wasEquipped) {
+            HbmPlayerProperties.resetGrenadeDeployment(player);
+            triggerEquipAnimation(player);
+            tag.putBoolean(KEY_EQUIPPED, true);
+            return;
+        }
+
+        int deployment = HbmPlayerProperties.incrementGrenadeDeployment(player);
+        switch (getShell(stack)) {
+            case FRAG -> {
+                if (deployment == 18) {
+                    playReadySound(player, "GUN_REVOLVER_COCK", 1.0F, 1.0F);
+                }
+            }
+            case STICK -> {
+                if (deployment == 16 || deployment == 25) {
+                    playReadySound(player, "GUN_BOLT_OPEN", 1.0F, 1.25F);
+                }
+            }
+            case TECH -> {
+                if (deployment == 18) {
+                    playReadySound(player, "GRENADE_TECH", 1.0F, 1.0F);
+                }
+            }
+            case NUKE -> {
+                if (deployment == 26) {
+                    playReadySound(player, "GRENADE_NUKA", 1.0F, 1.0F);
+                }
+            }
+        }
+    }
+
+    private static void playReadySound(Player player, String legacySound, float volume, float pitch) {
+        LegacySoundPlayer.playSoundAtPlayer(player, legacySound, volume, pitch);
+    }
+
+    private static void triggerEquipAnimation(ServerPlayer player) {
+        ModMessages.sendLegacyItemAnimation(player, ANIMATION_EQUIP, 0, 0);
+    }
+
+    @Override
+    public void handleLegacyItemAnimation(ItemStack stack, int selectedSlot, short animationType, int receiverIndex,
+            int itemIndex) {
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                com.hbm.ntm.client.UniversalGrenadeAnimationClient.handle(
+                        stack, selectedSlot, animationType, itemIndex));
+    }
+
+    @Override
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        try {
+            Class<?> bridge = Class.forName("com.hbm.ntm.client.renderer.UniversalGrenadeItemRendererBridge");
+            bridge.getMethod("accept", Consumer.class).invoke(null, consumer);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException exception) {
+            throw new IllegalStateException("Missing universal grenade client renderer bridge", exception);
+        } catch (InvocationTargetException exception) {
+            throw new IllegalStateException("Universal grenade client renderer bridge failed", exception.getCause());
+        }
     }
 
     @Override
@@ -425,6 +545,7 @@ public class UniversalGrenadeItem extends ItemGenericGrenade {
                 triplet.setOwner(thrower);
             }
             triplet.setItem(make(shell, filling, Fuze.S3));
+            triplet.setTriplexTrail();
             triplet.setPos(x, y, z);
             triplet.setDeltaMovement(Math.cos(angle) * 0.25D, 0.75D, Math.sin(angle) * 0.25D);
             level.addFreshEntity(triplet);
@@ -491,25 +612,29 @@ public class UniversalGrenadeItem extends ItemGenericGrenade {
     }
 
     public enum Filling {
-        POWDER("powder", Shell.FRAG, Shell.STICK),
-        HE("he", Shell.FRAG, Shell.STICK),
-        DEMO("demo", Shell.FRAG, Shell.STICK),
-        INC("inc", Shell.FRAG, Shell.STICK),
-        WP("wp", Shell.FRAG, Shell.STICK),
-        CLUSTER("cluster", Shell.FRAG, Shell.STICK),
-        EMP("emp", Shell.TECH),
-        PLASMA("plasma", Shell.TECH),
-        LASER("laser", Shell.TECH),
-        CLUSTER_HEAVY("cluster_heavy", Shell.NUKE),
-        NUCLEAR("nuclear", Shell.NUKE),
-        NUCLEAR_DEMO("nuclear_demo", Shell.NUKE),
-        SCHRAB("schrab", Shell.NUKE);
+        POWDER("powder", 0x424242, 0x939176, Shell.FRAG, Shell.STICK),
+        HE("he", 0x595533, 0xA49D62, Shell.FRAG, Shell.STICK),
+        DEMO("demo", 0x595533, 0xDD4029, Shell.FRAG, Shell.STICK),
+        INC("inc", 0x5A5A5A, 0xFF5F21, Shell.FRAG, Shell.STICK),
+        WP("wp", 0xDCDCDC, 0xFF5F21, Shell.FRAG, Shell.STICK),
+        CLUSTER("cluster", 0x5A5A5A, 0xFFC711, Shell.FRAG, Shell.STICK),
+        EMP("emp", 0x93A1AC, 0x00FFFF, Shell.TECH),
+        PLASMA("plasma", 0x655B2C, 0x4CFF00, Shell.TECH),
+        LASER("laser", 0x493A3A, 0xFF0000, Shell.TECH),
+        CLUSTER_HEAVY("cluster_heavy", 0x5A5A5A, 0xFF5F21, Shell.NUKE),
+        NUCLEAR("nuclear", 0xDFD7A8, 0xA49D62, Shell.NUKE),
+        NUCLEAR_DEMO("nuclear_demo", 0xDFD7A8, 0xDD4029, Shell.NUKE),
+        SCHRAB("schrab", 0x00BDBD, 0x000000, Shell.NUKE);
 
         private final String suffix;
+        private final int bodyColor;
+        private final int labelColor;
         private final List<Shell> compatibleShells;
 
-        Filling(String suffix, Shell... compatibleShells) {
+        Filling(String suffix, int bodyColor, int labelColor, Shell... compatibleShells) {
             this.suffix = suffix;
+            this.bodyColor = bodyColor;
+            this.labelColor = labelColor;
             this.compatibleShells = List.of(compatibleShells);
         }
 
@@ -519,6 +644,14 @@ public class UniversalGrenadeItem extends ItemGenericGrenade {
 
         public boolean compatible(Shell shell) {
             return compatibleShells.contains(shell);
+        }
+
+        public int bodyColor() {
+            return bodyColor;
+        }
+
+        public int labelColor() {
+            return labelColor;
         }
 
         public String itemId() {
@@ -535,16 +668,18 @@ public class UniversalGrenadeItem extends ItemGenericGrenade {
     }
 
     public enum Fuze {
-        S3("s3"),
-        S7("s7"),
-        S15("s15"),
-        IMPACT("impact"),
-        AIRBURST("airburst");
+        S3("s3", 0x000000),
+        S7("s7", 0x404040),
+        S15("s15", 0x808080),
+        IMPACT("impact", 0xE36C17),
+        AIRBURST("airburst", 0x56A137);
 
         private final String suffix;
+        private final int bandColor;
 
-        Fuze(String suffix) {
+        Fuze(String suffix, int bandColor) {
             this.suffix = suffix;
+            this.bandColor = bandColor;
         }
 
         public String suffix() {
@@ -553,6 +688,10 @@ public class UniversalGrenadeItem extends ItemGenericGrenade {
 
         public String itemId() {
             return "grenade_fuze_" + suffix;
+        }
+
+        public int bandColor() {
+            return bandColor;
         }
 
         public String translationKey() {

@@ -619,6 +619,15 @@
     },
     {
       "input": [
+        "hbm:tile.boxcar"
+      ],
+      "output": [
+        "hbm:powder_steel",
+        32
+      ]
+    },
+    {
+      "input": [
         "minecraft:skull",
         1,
         4
@@ -846,11 +855,29 @@
     },
     {
       "input": [
+        "hbm:tile.steel_poles"
+      ],
+      "output": [
+        "hbm:powder_steel_tiny",
+        2
+      ]
+    },
+    {
+      "input": [
         "hbm:crystal_lithium"
       ],
       "output": [
         "hbm:powder_lithium",
         3
+      ]
+    },
+    {
+      "input": [
+        "hbm:tile.steel_roof"
+      ],
+      "output": [
+        "hbm:powder_steel_tiny",
+        9
       ]
     },
     {
@@ -864,11 +891,29 @@
     },
     {
       "input": [
+        "hbm:tile.steel_wall"
+      ],
+      "output": [
+        "hbm:powder_steel_tiny",
+        9
+      ]
+    },
+    {
+      "input": [
         "hbm:crystal_cobalt"
       ],
       "output": [
         "hbm:powder_cobalt",
         3
+      ]
+    },
+    {
+      "input": [
+        "hbm:tile.steel_corner"
+      ],
+      "output": [
+        "hbm:powder_steel_tiny",
+        18
       ]
     },
     {

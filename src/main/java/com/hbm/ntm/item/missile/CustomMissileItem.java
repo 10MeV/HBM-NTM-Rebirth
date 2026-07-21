@@ -1,6 +1,7 @@
 package com.hbm.ntm.item.missile;
 
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.explosion.CustomMissileExplosion;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -49,15 +50,36 @@ public class CustomMissileItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         CompoundTag tag = stack.getTag();
         if (tag == null) {
-            tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.custom_missile.empty")
-                    .withStyle(ChatFormatting.RED));
             return;
         }
-        appendPart(tooltip, "chip", tag, TAG_CHIP);
-        appendPart(tooltip, "warhead", tag, TAG_WARHEAD);
-        appendPart(tooltip, "fuselage", tag, TAG_FUSELAGE);
-        appendPart(tooltip, "stability", tag, TAG_STABILITY);
-        appendPart(tooltip, "thruster", tag, TAG_THRUSTER);
+        CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(stack);
+        if (assembly == null || assembly.chip() == null || assembly.warhead() == null
+                || assembly.fuselage() == null || assembly.thruster() == null) {
+            tooltip.add(Component.translatable("error.generic").withStyle(ChatFormatting.RED));
+            return;
+        }
+
+        CustomMissilePartProfile warhead = assembly.warhead().profile();
+        CustomMissilePartProfile fuselage = assembly.fuselage().profile();
+        CustomMissilePartProfile chip = assembly.chip().profile();
+        CustomMissilePartProfile fins = assembly.fins() == null ? null : assembly.fins().profile();
+
+        tooltip.add(descriptionLine("item.missile.desc.warhead", warheadName(warhead.warheadType())));
+        tooltip.add(descriptionLine("item.missile.desc.strength", gray(Float.toString(warhead.strength()))));
+        tooltip.add(descriptionLine("item.missile.desc.fuelType", fuelName(fuselage.fuelType())));
+        tooltip.add(descriptionLine("item.missile.desc.fuelAmount",
+                gray(Float.toString(fuselage.fuel()) + "l")));
+        tooltip.add(descriptionLine("item.missile.desc.chipInaccuracy",
+                gray(Float.toString(chip.inaccuracy() * 100.0F) + "%")));
+        tooltip.add(descriptionLine("item.missile.desc.finInaccuracy",
+                gray(Float.toString((fins == null ? 1.0F : fins.inaccuracy()) * 100.0F) + "%")));
+        Component size = sizeName(fuselage.top()).copy()
+                .append(Component.literal("/"))
+                .append(sizeName(fuselage.bottom()));
+        tooltip.add(descriptionLine("item.missile.desc.size",
+                gray(size)));
+        tooltip.add(descriptionLine("item.missile.desc.health",
+                gray(Float.toString(assembly.displayHealth()) + "HP")));
     }
 
     public static void setPart(ItemStack stack, String key, ItemStack part) {
@@ -99,10 +121,64 @@ public class CustomMissileItem extends Item {
         return ResourceLocation.tryParse(tag.getString(key));
     }
 
-    private static void appendPart(List<Component> tooltip, String label, CompoundTag tag, String key) {
-        if (tag.contains(key)) {
-            tooltip.add(Component.translatable("tooltip.hbm_ntm_rebirth.custom_missile." + label, tag.getString(key))
-                    .withStyle(ChatFormatting.GRAY));
+    private static Component descriptionLine(String labelKey, Component value) {
+        return Component.translatable(labelKey).withStyle(ChatFormatting.BOLD)
+                .append(Component.literal(": "))
+                .append(value);
+    }
+
+    private static Component gray(String value) {
+        return Component.literal(value).withStyle(ChatFormatting.GRAY);
+    }
+
+    private static Component gray(Component value) {
+        return value.copy().withStyle(ChatFormatting.GRAY);
+    }
+
+    private static Component warheadName(@Nullable CustomMissileExplosion.WarheadType type) {
+        if (type == null) {
+            return Component.translatable("general.na").withStyle(ChatFormatting.BOLD);
         }
+        return switch (type) {
+            case HE -> Component.translatable("item.warhead.desc.he").withStyle(ChatFormatting.YELLOW);
+            case INC -> Component.translatable("item.warhead.desc.incendiary").withStyle(ChatFormatting.GOLD);
+            case CLUSTER -> Component.translatable("item.warhead.desc.cluster").withStyle(ChatFormatting.GRAY);
+            case BUSTER -> Component.translatable("item.warhead.desc.bunker_buster").withStyle(ChatFormatting.WHITE);
+            case NUCLEAR -> Component.translatable("item.warhead.desc.nuclear").withStyle(ChatFormatting.DARK_GREEN);
+            case TX -> Component.translatable("item.warhead.desc.thermonuclear").withStyle(ChatFormatting.DARK_PURPLE);
+            case N2 -> Component.translatable("item.warhead.desc.n2").withStyle(ChatFormatting.RED);
+            case BALEFIRE -> Component.translatable("item.warhead.desc.balefire").withStyle(ChatFormatting.GREEN);
+            case SCHRAB -> Component.translatable("item.warhead.desc.schrabidium").withStyle(ChatFormatting.AQUA);
+            case TAINT -> Component.translatable("item.warhead.desc.taint").withStyle(ChatFormatting.DARK_PURPLE);
+            case CLOUD -> Component.translatable("item.warhead.desc.cloud").withStyle(ChatFormatting.LIGHT_PURPLE);
+            case TURBINE -> Component.translatable("item.warhead.desc.turbine")
+                    .withStyle(System.currentTimeMillis() % 1000L < 500L ? ChatFormatting.RED : ChatFormatting.LIGHT_PURPLE);
+            case CUSTOM0, CUSTOM1, CUSTOM2, CUSTOM3, CUSTOM4, CUSTOM5, CUSTOM6, CUSTOM7, CUSTOM8, CUSTOM9 ->
+                    Component.translatable("general.na").withStyle(ChatFormatting.BOLD);
+        };
+    }
+
+    private static Component fuelName(@Nullable CustomMissilePartProfile.FuelType type) {
+        if (type == null) {
+            return Component.translatable("general.na").withStyle(ChatFormatting.BOLD);
+        }
+        return switch (type) {
+            case KEROSENE -> Component.translatable("item.missile.fuel.kerosene_peroxide")
+                    .withStyle(ChatFormatting.LIGHT_PURPLE);
+            case SOLID -> Component.translatable("item.missile.fuel.solid").withStyle(ChatFormatting.GOLD);
+            case HYDROGEN -> Component.translatable("item.missile.fuel.hydrogen").withStyle(ChatFormatting.DARK_AQUA);
+            case XENON -> Component.translatable("item.missile.fuel.xenon").withStyle(ChatFormatting.DARK_PURPLE);
+            case BALEFIRE -> Component.translatable("item.missile.fuel.balefire").withStyle(ChatFormatting.GREEN);
+        };
+    }
+
+    private static Component sizeName(CustomMissilePartProfile.PartSize size) {
+        return switch (size) {
+            case SIZE_10 -> Component.literal("1.0m");
+            case SIZE_15 -> Component.literal("1.5m");
+            case SIZE_20 -> Component.literal("2.0m");
+            case ANY -> Component.translatable("item.missile.part.size.any");
+            case NONE -> Component.translatable("item.missile.part.size.none");
+        };
     }
 }

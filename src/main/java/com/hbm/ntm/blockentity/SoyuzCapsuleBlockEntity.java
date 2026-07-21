@@ -6,6 +6,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -26,6 +27,15 @@ public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
+        public boolean isItemValid(int slot, @org.jetbrains.annotations.NotNull ItemStack stack) {
+            // TileEntitySoyuzCapsule inherits TileEntityInventoryBase's
+            // all-slot false predicate. The recovered cargo inventory is
+            // extract-only to players; EntitySoyuzCapsule fills it through
+            // the direct landing setters below rather than through a Slot.
+            return false;
+        }
+
+        @Override
         protected void onContentsChanged(int slot) {
             setChanged();
         }
@@ -42,12 +52,19 @@ public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider
 
     public void setCargoSlot(int slot, ItemStack stack) {
         if (slot >= 0 && slot < CARGO_SLOT_COUNT) {
-            items.setStackInSlot(slot, stack.copy());
+            // TileEntityInventoryBase#setInventorySlotContents assigned its
+            // ItemStack argument directly.  EntitySoyuzCapsule's landing path
+            // therefore preserves its cargo stack references in the recovered
+            // capsule rather than creating a detached inventory copy.  The
+            // legacy entity array is nullable, while ItemStackHandler is not;
+            // null becomes EMPTY only at this inventory-capability boundary.
+            items.setStackInSlot(slot, stack == null ? ItemStack.EMPTY : stack);
         }
     }
 
     public void setRocketStack(ItemStack stack) {
-        items.setStackInSlot(SLOT_ROCKET, stack.copy());
+        // Keep the same direct-assignment contract as the old inventory base.
+        items.setStackInSlot(SLOT_ROCKET, stack);
     }
 
     public List<ItemStack> getDrops() {
@@ -72,7 +89,9 @@ public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
-        if (hasCustomName()) {
+        // TileEntityInventoryBase wrote every non-null name.  An empty name is
+        // not displayed as custom, but its legacy NBT presence remains distinct.
+        if (customName != null) {
             tag.putString(TAG_CUSTOM_NAME, customName);
         }
     }
@@ -80,7 +99,17 @@ public class SoyuzCapsuleBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        HbmInventoryMenuHelper.loadLegacyOrForgeItems(tag, items);
+        // TileEntitySoyuzCapsule inherits TileEntityInventoryBase#readFromNBT,
+        // which only replaces slots represented by its legacy "items" list.
+        // In particular, an empty list does not clear cargo that was already
+        // present on this block entity.  Use the shared list-overwrite entry
+        // point directly instead of the generic handler loader, which resets
+        // every absent slot before reading.
+        if (tag.contains("items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadSlottedItems(tag.getList("items", Tag.TAG_COMPOUND), "slot", items);
+        } else if (tag.contains("Items", Tag.TAG_LIST)) {
+            HbmInventoryMenuHelper.loadSlottedItems(tag.getList("Items", Tag.TAG_COMPOUND), "Slot", items);
+        }
         customName = tag.getString(TAG_CUSTOM_NAME);
     }
 

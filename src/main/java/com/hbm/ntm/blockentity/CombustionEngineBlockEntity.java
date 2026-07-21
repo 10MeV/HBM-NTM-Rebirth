@@ -282,6 +282,14 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         return tank;
     }
 
+    /**
+     * Legacy {@code TileEntityMachinePolluting#getSmokeTanks()} compatibility.
+     * The returned tanks are the live buffers used by {@link #sendSmokeToPorts}.
+     */
+    public HbmFluidTank[] getSmokeTanks() {
+        return pollution.getSmokeTanks();
+    }
+
     public ItemStackHandler getItems() {
         return items;
     }

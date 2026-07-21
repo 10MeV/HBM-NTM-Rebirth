@@ -268,6 +268,8 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
         boolean oldWasOn = wasOn;
 
         tryPullHeat(level, pos);
+        // TileEntityFurnaceCombination#updateEntity dispatches both fluid and
+        // smoke only during its twenty-tick connection pass.
         if (level.getGameTime() % 20L == 0L) {
             sendOutputsToPorts(level, pos, state);
         }
@@ -327,13 +329,13 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
     }
 
     private void sendOutputsToPorts(Level level, BlockPos pos, BlockState state) {
-        for (Direction dir : Direction.Plane.HORIZONTAL) {
-            Direction rot = dir.getClockWise();
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            Direction rotation = direction.getClockWise();
             for (int y = 0; y <= 1; y++) {
-                for (int j = -1; j <= 1; j++) {
-                    BlockPos port = pos.offset(dir.getStepX() * 2 + rot.getStepX() * j, y,
-                            dir.getStepZ() * 2 + rot.getStepZ() * j);
-                    sendAtPort(level, port, dir);
+                for (int offset = -1; offset <= 1; offset++) {
+                    BlockPos port = pos.offset(direction.getStepX() * 2 + rotation.getStepX() * offset, y,
+                            direction.getStepZ() * 2 + rotation.getStepZ() * offset);
+                    sendAtPort(level, port, direction);
                 }
             }
         }
@@ -438,12 +440,12 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
 
     private static List<FluidPort> fluidPorts(BlockState state) {
         List<FluidPort> ports = new ArrayList<>();
-        for (Direction dir : Direction.Plane.HORIZONTAL) {
-            Direction rot = dir.getClockWise();
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            Direction rotation = direction.getClockWise();
             for (int y = 0; y <= 1; y++) {
-                for (int j = -1; j <= 1; j++) {
-                    ports.add(FluidPort.of(dir.getStepX() * 2 + rot.getStepX() * j, y,
-                            dir.getStepZ() * 2 + rot.getStepZ() * j, dir));
+                for (int offset = -1; offset <= 1; offset++) {
+                    ports.add(FluidPort.of(direction.getStepX() * 2 + rotation.getStepX() * offset, y,
+                            direction.getStepZ() * 2 + rotation.getStepZ() * offset, direction));
                 }
             }
         }

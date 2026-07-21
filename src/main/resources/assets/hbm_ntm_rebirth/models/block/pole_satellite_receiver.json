@@ -5,8 +5,8 @@
   "automatic_culling": false,
   "render_type": "minecraft:cutout",
   "textures": {
-    "particle": "hbm_ntm_rebirth:models/pole_satellite_receiver",
-    "default": "hbm_ntm_rebirth:models/pole_satellite_receiver",
-    "texture0": "hbm_ntm_rebirth:models/pole_satellite_receiver"
+    "particle": "hbm_ntm_rebirth:block/deco_satellite_receiver",
+    "default": "hbm_ntm_rebirth:block/deco_satellite_receiver",
+    "texture0": "hbm_ntm_rebirth:block/deco_satellite_receiver"
   }
 }

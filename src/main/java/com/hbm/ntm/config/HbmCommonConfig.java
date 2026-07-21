@@ -11,6 +11,7 @@ public final class HbmCommonConfig {
     public static final ForgeConfigSpec.BooleanValue ENABLE_CRYSTAL_VIRUS_SPREADING;
     public static final ForgeConfigSpec.BooleanValue ENABLE_MOTD;
     public static final ForgeConfigSpec.BooleanValue ENABLE_MACHINE_GRAVITY;
+    public static final ForgeConfigSpec.BooleanValue ENABLE_CATACLYSM;
     public static final ForgeConfigSpec.IntValue ICF_LASER_CAPACITOR_POWER;
     public static final ForgeConfigSpec.IntValue ICF_LASER_TURBO_POWER;
     public static final ForgeConfigSpec.LongValue FUSION_MHDT_MINIMUM_PLASMA;
@@ -40,6 +41,9 @@ public final class HbmCommonConfig {
         ENABLE_MACHINE_GRAVITY = builder
                 .comment("Legacy GeneralConfig 1.44_enableMachineGravity: large machines require a proper foundation and tilt when unsupported. The old 528-only companion switch is intentionally not migrated.")
                 .define("enableMachineGravity", false);
+        ENABLE_CATACLYSM = builder
+                .comment("Legacy GeneralConfig enableCataclysm: every server-side living death spawns a Burning FOEQ at y=500.")
+                .define("enableCataclysm", false);
         builder.pop();
 
         builder.push("machines");
@@ -63,6 +67,7 @@ public final class HbmCommonConfig {
         ServerConfig.define(builder);
         BombConfig.define(builder);
         WeaponConfig.define(builder);
+        MobConfig.define(builder);
         ToolConfig.define(builder);
         PotionConfig.define(builder);
         AshpitConfig.define(builder);
@@ -75,6 +80,7 @@ public final class HbmCommonConfig {
         BoilerConfig.define(builder);
         RadarConfig.define(builder);
         RtgConfig.define(builder);
+        WorldgenConfig.define(builder);
 
         SPEC = builder.build();
     }
@@ -101,6 +107,10 @@ public final class HbmCommonConfig {
 
     public static boolean machineGravityEnabled() {
         return booleanValue(ENABLE_MACHINE_GRAVITY, false);
+    }
+
+    public static boolean cataclysmEnabled() {
+        return booleanValue(ENABLE_CATACLYSM, false);
     }
 
     public static int icfLaserCapacitorPower() {

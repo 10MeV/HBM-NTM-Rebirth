@@ -20,7 +20,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlockEntity> {
-    private static final int INFO_VIEW_DISTANCE = 32;
     private static final int FONT_COLOR = 0x00FF00;
     private static final int FONT_SHADOW_COLOR = (FONT_COLOR & 0xFCFCFC) >> 2 | FONT_COLOR & 0xFF000000;
 
@@ -62,7 +61,7 @@ public class MassStorageRenderer implements BlockEntityRenderer<MassStorageBlock
 
     @Override
     public int getViewDistance() {
-        return INFO_VIEW_DISTANCE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     private static void applyFrontPanelTransform(BlockState state, PoseStack poseStack) {

@@ -310,7 +310,14 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean shouldCreateFluidNode() {
-        return level == null || !hasWatzAbove(level);
+        return false;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityWatz invoked subscribeToTop from its unlocked top-segment
+        // updateEntity path on every legacy server tick.
+        return true;
     }
 
     @Override

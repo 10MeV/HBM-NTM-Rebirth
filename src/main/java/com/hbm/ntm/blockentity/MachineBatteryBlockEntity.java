@@ -414,6 +414,14 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         subscribeEnergyReceiverToAllSides();
     }
 
+    @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityMachineBattery retries every adjacent input subscription on every legacy tick.
+        // This remains necessary after buffer mode removes its local node and Nodespace rebuilds
+        // the neighboring cable network during the intervening nodespace tick.
+        return getCurrentMode() == MODE_INPUT || super.isEnergyPortKeepalive();
+    }
+
     protected void handleBufferMode() {
         refreshEnergyNodeState();
         refreshEnergyNetworkSubscriptions();

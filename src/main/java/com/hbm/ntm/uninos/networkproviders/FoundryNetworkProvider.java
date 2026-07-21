@@ -6,7 +6,7 @@ public enum FoundryNetworkProvider implements HbmNetworkProvider<FoundryNode, Fo
     THE_PROVIDER;
 
     @Override
-    public FoundryNetwork provideNetwork(FoundryNode seedNode) {
+    public FoundryNetwork provideNetwork() {
         return new FoundryNetwork();
     }
 }

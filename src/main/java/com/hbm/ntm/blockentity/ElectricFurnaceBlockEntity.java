@@ -143,6 +143,14 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityMachineElectricFurnace#updateConnections is called only
+        // from its exact world-time 40-tick branch, not the generic staggered
+        // 20-tick subscription keepalive.
+        return level != null && level.getGameTime() % 40L == 0L;
+    }
+
+    @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         // 1.7.10 TileEntityMachineElectricFurnace#serialize.
         writeLegacyLoadedTileBinary(data);

@@ -137,6 +137,13 @@ public class DfcStabilizerBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityCoreStabilizer retries all adjacent Energy Mk2 receivers
+        // from every legacy server update.
+        return true;
+    }
+
+    @Override
     public AABB getRenderBoundingBox() {
         return new AABB(worldPosition.offset(-RANGE, -RANGE, -RANGE), worldPosition.offset(RANGE + 1, RANGE + 1, RANGE + 1));
     }

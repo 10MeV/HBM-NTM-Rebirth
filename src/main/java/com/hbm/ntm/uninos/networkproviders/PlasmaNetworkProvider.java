@@ -6,7 +6,7 @@ public enum PlasmaNetworkProvider implements HbmNetworkProvider<PlasmaNode, Plas
     THE_PROVIDER;
 
     @Override
-    public PlasmaNetwork provideNetwork(PlasmaNode seedNode) {
+    public PlasmaNetwork provideNetwork() {
         return new PlasmaNetwork();
     }
 }

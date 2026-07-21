@@ -13,15 +13,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 
-import java.util.AbstractCollection;
 import java.util.AbstractMap;
-import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,8 +27,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public class SatelliteSavedData extends WorldSavedData {
     public static final String DATA_NAME = "satellites";
@@ -47,7 +42,13 @@ public class SatelliteSavedData extends WorldSavedData {
     public static final String TAG_DATA = "data";
     public static final int LEGACY_RANDOM_FREQUENCY_BOUND = 100000;
 
-    public final HashMap<Integer, Satellite> sats = new DirtyTrackingSatelliteMap();
+    /**
+     * Legacy code exposes this exact mutable HashMap and performs markDirty() at
+     * each mutation site that needs persistence.  Do not add modern implicit
+     * dirty tracking here: callers are allowed to mutate the public table
+     * without changing the SavedData dirty state.
+     */
+    public final HashMap<Integer, Satellite> sats = new HashMap<>();
     private final Map<Integer, Satellite> satellites = sats;
     private LoadDiagnostics loadDiagnostics = LoadDiagnostics.empty();
     private List<EntryLoadDiagnostics> legacyEntryLoadDiagnostics = List.of();
@@ -380,10 +381,19 @@ public class SatelliteSavedData extends WorldSavedData {
 
     public Optional<Satellite> getCargoSatelliteOptional(int frequency) {
         Satellite satellite = getSatFromFreq(frequency);
-        if (!Satellite.hasCargoPool(satellite)) {
+        // TileEntityMachineSatDock only accepts SatelliteMiner (and subclasses),
+        // not every satellite that happens to expose a cargo-pool-shaped helper.
+        // SavedData normally supplies the old-package facades, but retain the
+        // internal modern equivalent for callers that construct it directly.
+        if (!isLegacyMinerSatellite(satellite)) {
             return Optional.empty();
         }
         return Optional.of(satellite);
+    }
+
+    private static boolean isLegacyMinerSatellite(Satellite satellite) {
+        return satellite instanceof com.hbm.saveddata.satellites.SatelliteMiner
+                || satellite instanceof SatelliteMiner;
     }
 
     public boolean containsFrequency(int frequency, LegacySatelliteType type) {
@@ -447,7 +457,7 @@ public class SatelliteSavedData extends WorldSavedData {
         if (satellite == null) {
             return;
         }
-        ((DirtyTrackingSatelliteMap) sats).putWithoutDirty(frequency, satellite);
+        sats.put(frequency, satellite);
     }
 
     public boolean putSatelliteData(int frequency, int legacyId, CompoundTag data) {
@@ -1046,336 +1056,6 @@ public class SatelliteSavedData extends WorldSavedData {
             }
         }
         return list;
-    }
-
-    private final class DirtyTrackingSatelliteMap extends HashMap<Integer, Satellite> {
-        private boolean markIfChanged(boolean changed) {
-            if (changed) {
-                setDirty();
-            }
-            return changed;
-        }
-
-        private Satellite putWithoutDirty(Integer key, Satellite value) {
-            return super.put(key, value);
-        }
-
-        @Override
-        public Satellite put(Integer key, Satellite value) {
-            boolean hadKey = containsKey(key);
-            Satellite previous = super.put(key, value);
-            if (!hadKey || previous != value) {
-                setDirty();
-            }
-            return previous;
-        }
-
-        @Override
-        public Satellite putIfAbsent(Integer key, Satellite value) {
-            boolean hadKey = containsKey(key);
-            Satellite previous = super.get(key);
-            Satellite result = super.putIfAbsent(key, value);
-            if (hadKey != containsKey(key) || previous != get(key)) {
-                setDirty();
-            }
-            return result;
-        }
-
-        @Override
-        public Satellite remove(Object key) {
-            boolean hadKey = containsKey(key);
-            Satellite previous = super.remove(key);
-            if (hadKey) {
-                setDirty();
-            }
-            return previous;
-        }
-
-        @Override
-        public boolean remove(Object key, Object value) {
-            boolean removed = super.remove(key, value);
-            if (removed) {
-                setDirty();
-            }
-            return removed;
-        }
-
-        @Override
-        public Satellite replace(Integer key, Satellite value) {
-            boolean hadKey = containsKey(key);
-            Satellite previous = super.replace(key, value);
-            if (hadKey && previous != value) {
-                setDirty();
-            }
-            return previous;
-        }
-
-        @Override
-        public boolean replace(Integer key, Satellite oldValue, Satellite newValue) {
-            boolean replaced = super.replace(key, oldValue, newValue);
-            if (replaced && oldValue != newValue) {
-                setDirty();
-            }
-            return replaced;
-        }
-
-        @Override
-        public void putAll(Map<? extends Integer, ? extends Satellite> map) {
-            if (!map.isEmpty()) {
-                super.putAll(map);
-                setDirty();
-            }
-        }
-
-        @Override
-        public Satellite computeIfAbsent(Integer key,
-                                         Function<? super Integer, ? extends Satellite> mappingFunction) {
-            boolean hadKey = containsKey(key);
-            Satellite previous = super.get(key);
-            Satellite result = super.computeIfAbsent(key, mappingFunction);
-            if (hadKey != containsKey(key) || previous != result) {
-                setDirty();
-            }
-            return result;
-        }
-
-        @Override
-        public Satellite compute(Integer key,
-                                 BiFunction<? super Integer, ? super Satellite, ? extends Satellite> remappingFunction) {
-            boolean hadKey = containsKey(key);
-            Satellite previous = super.get(key);
-            Satellite result = super.compute(key, remappingFunction);
-            if (hadKey != containsKey(key) || previous != result) {
-                setDirty();
-            }
-            return result;
-        }
-
-        @Override
-        public Satellite computeIfPresent(Integer key,
-                                          BiFunction<? super Integer, ? super Satellite,
-                                                  ? extends Satellite> remappingFunction) {
-            boolean hadKey = containsKey(key);
-            Satellite previous = super.get(key);
-            Satellite result = super.computeIfPresent(key, remappingFunction);
-            if (hadKey && (previous != result || !containsKey(key))) {
-                setDirty();
-            }
-            return result;
-        }
-
-        @Override
-        public Satellite merge(Integer key, Satellite value,
-                               BiFunction<? super Satellite, ? super Satellite, ? extends Satellite> remappingFunction) {
-            boolean hadKey = containsKey(key);
-            Satellite previous = super.get(key);
-            Satellite result = super.merge(key, value, remappingFunction);
-            if (!hadKey || previous != result) {
-                setDirty();
-            }
-            return result;
-        }
-
-        @Override
-        public void replaceAll(BiFunction<? super Integer, ? super Satellite, ? extends Satellite> function) {
-            if (!isEmpty()) {
-                super.replaceAll(function);
-                setDirty();
-            }
-        }
-
-        @Override
-        public void clear() {
-            if (!isEmpty()) {
-                super.clear();
-                setDirty();
-            }
-        }
-
-        @Override
-        public Set<Integer> keySet() {
-            Set<Integer> delegate = super.keySet();
-            return new AbstractSet<>() {
-                @Override
-                public Iterator<Integer> iterator() {
-                    Iterator<Integer> iterator = delegate.iterator();
-                    return new Iterator<>() {
-                        @Override
-                        public boolean hasNext() {
-                            return iterator.hasNext();
-                        }
-
-                        @Override
-                        public Integer next() {
-                            return iterator.next();
-                        }
-
-                        @Override
-                        public void remove() {
-                            iterator.remove();
-                            setDirty();
-                        }
-                    };
-                }
-
-                @Override
-                public int size() {
-                    return delegate.size();
-                }
-
-                @Override
-                public boolean contains(Object object) {
-                    return delegate.contains(object);
-                }
-
-                @Override
-                public boolean remove(Object object) {
-                    return markIfChanged(delegate.remove(object));
-                }
-
-                @Override
-                public boolean removeAll(Collection<?> collection) {
-                    return markIfChanged(delegate.removeAll(collection));
-                }
-
-                @Override
-                public boolean retainAll(Collection<?> collection) {
-                    return markIfChanged(delegate.retainAll(collection));
-                }
-
-                @Override
-                public void clear() {
-                    DirtyTrackingSatelliteMap.this.clear();
-                }
-            };
-        }
-
-        @Override
-        public Collection<Satellite> values() {
-            Collection<Satellite> delegate = super.values();
-            return new AbstractCollection<>() {
-                @Override
-                public Iterator<Satellite> iterator() {
-                    Iterator<Satellite> iterator = delegate.iterator();
-                    return new Iterator<>() {
-                        @Override
-                        public boolean hasNext() {
-                            return iterator.hasNext();
-                        }
-
-                        @Override
-                        public Satellite next() {
-                            return iterator.next();
-                        }
-
-                        @Override
-                        public void remove() {
-                            iterator.remove();
-                            setDirty();
-                        }
-                    };
-                }
-
-                @Override
-                public int size() {
-                    return delegate.size();
-                }
-
-                @Override
-                public boolean contains(Object object) {
-                    return delegate.contains(object);
-                }
-
-                @Override
-                public boolean remove(Object object) {
-                    return markIfChanged(delegate.remove(object));
-                }
-
-                @Override
-                public boolean removeAll(Collection<?> collection) {
-                    return markIfChanged(delegate.removeAll(collection));
-                }
-
-                @Override
-                public boolean retainAll(Collection<?> collection) {
-                    return markIfChanged(delegate.retainAll(collection));
-                }
-
-                @Override
-                public void clear() {
-                    DirtyTrackingSatelliteMap.this.clear();
-                }
-            };
-        }
-
-        @Override
-        public Set<Map.Entry<Integer, Satellite>> entrySet() {
-            Set<Map.Entry<Integer, Satellite>> delegate = super.entrySet();
-            return new AbstractSet<>() {
-                @Override
-                public Iterator<Map.Entry<Integer, Satellite>> iterator() {
-                    Iterator<Map.Entry<Integer, Satellite>> iterator = delegate.iterator();
-                    return new Iterator<>() {
-                        @Override
-                        public boolean hasNext() {
-                            return iterator.hasNext();
-                        }
-
-                        @Override
-                        public Map.Entry<Integer, Satellite> next() {
-                            Map.Entry<Integer, Satellite> entry = iterator.next();
-                            return new AbstractMap.SimpleEntry<>(entry) {
-                                @Override
-                                public Satellite setValue(Satellite value) {
-                                    Satellite previous = entry.setValue(value);
-                                    if (previous != value) {
-                                        setDirty();
-                                    }
-                                    super.setValue(value);
-                                    return previous;
-                                }
-                            };
-                        }
-
-                        @Override
-                        public void remove() {
-                            iterator.remove();
-                            setDirty();
-                        }
-                    };
-                }
-
-                @Override
-                public int size() {
-                    return delegate.size();
-                }
-
-                @Override
-                public boolean contains(Object object) {
-                    return delegate.contains(object);
-                }
-
-                @Override
-                public boolean remove(Object object) {
-                    return markIfChanged(delegate.remove(object));
-                }
-
-                @Override
-                public boolean removeAll(Collection<?> collection) {
-                    return markIfChanged(delegate.removeAll(collection));
-                }
-
-                @Override
-                public boolean retainAll(Collection<?> collection) {
-                    return markIfChanged(delegate.retainAll(collection));
-                }
-
-                @Override
-                public void clear() {
-                    DirtyTrackingSatelliteMap.this.clear();
-                }
-            };
-        }
     }
 
     private ListTag entriesTag() {

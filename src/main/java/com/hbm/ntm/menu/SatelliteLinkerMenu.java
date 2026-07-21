@@ -56,7 +56,12 @@ public class SatelliteLinkerMenu extends AbstractContainerMenu {
         ItemStack result = stack.copy();
 
         if (index <= SatelliteLinkerBlockEntity.SLOT_SOURCE) {
-            if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true)) {
+            // ContainerMachineSatLinker used [1, inventorySlots.size()), so the
+            // source slot's legacy range includes the two other machine slots and
+            // the player inventory; reverse iteration reaches those machine slots
+            // only after the player slots cannot accept the stack.
+            if (!HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack,
+                    SatelliteLinkerBlockEntity.SLOT_TARGET, slots.size(), true)) {
                 return ItemStack.EMPTY;
             }
         } else if (!HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack,

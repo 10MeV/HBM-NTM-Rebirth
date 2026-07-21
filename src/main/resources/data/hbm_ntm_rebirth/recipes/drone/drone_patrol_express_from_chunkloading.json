@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:shapeless_nbt",
+  "category": "misc",
+  "ingredients": [{ "type": "hbm_ntm_rebirth:drone_variant", "variant": "patrol_express_chunkloading" }],
+  "result": { "item": "hbm_ntm_rebirth:drone", "nbt": "{droneType:\"patrol_express\"}" }
+}

@@ -134,8 +134,20 @@ public class CondenserBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityCondenser#updateEntity retried its adjacent Fluid Mk2
+        // receiver/provider endpoints on every server tick.
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return FLUID_PORTS;
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
     }
 
     @Override

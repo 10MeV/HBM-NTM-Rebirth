@@ -2,11 +2,316 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "rolls": 1.0,
+      "rolls": 1,
       "entries": [
         {
-          "type": "minecraft:item",
-          "name": "hbm_ntm_rebirth:concrete_colored"
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:0}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "0"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:1}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "1"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:2}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:3}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:4}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "4"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:5}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "5"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:6}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "6"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:7}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "7"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:8}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "8"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:9}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "9"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:10}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "10"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:11}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "11"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:12}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "12"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:13}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "13"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:14}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "14"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:concrete_colored",
+              "functions": [
+                {
+                  "function": "minecraft:set_nbt",
+                  "tag": "{hbmLegacyVariant:15}"
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hbm_ntm_rebirth:concrete_colored",
+                  "properties": {
+                    "variant": "15"
+                  }
+                }
+              ]
+            }
+          ]
         }
       ],
       "conditions": [

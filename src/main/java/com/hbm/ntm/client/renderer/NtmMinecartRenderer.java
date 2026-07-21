@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.ObjVehicleModels;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.entity.cart.NtmMinecartEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -56,10 +56,10 @@ public class NtmMinecartRenderer extends EntityRenderer<NtmMinecartEntity> {
             }
         }
 
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(-pitch));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F - yaw);
+        LegacyPoseRotations.rotateZDegrees(poseStack, -pitch);
         poseStack.translate(0.0D, -0.4375D, 0.0D);
-        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
 
         ResourceLocation texture = getTextureLocation(entity);
         ObjVehicleModels.CART.renderPart("Carriage", texture, poseStack, buffer, packedLight,
@@ -72,8 +72,8 @@ public class NtmMinecartRenderer extends EntityRenderer<NtmMinecartEntity> {
         }
         if (hurtTime > 0.0F) {
             poseStack.translate(0.0D, 0.75D, 0.0D);
-            poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin(hurtTime) * hurtTime * damage / 10.0F
-                    * entity.getHurtDir()));
+            LegacyPoseRotations.rotateZDegrees(poseStack, Mth.sin(hurtTime) * hurtTime * damage / 10.0F
+                    * entity.getHurtDir());
             poseStack.translate(0.0D, -0.75D, 0.0D);
         }
 

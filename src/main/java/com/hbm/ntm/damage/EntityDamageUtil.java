@@ -408,6 +408,58 @@ public final class EntityDamageUtil {
         return ModDamageSources.source(entity.level(), legacyTypeOrId);
     }
 
+    /**
+     * Source-backed 1.7.10 {@code EntityDamageUtil#knockBack} carrier. The
+     * attacker and damage parameters were part of the old public signature but
+     * were not read by its implementation; callers supply the horizontal vector.
+     */
+    public static void knockBack(LivingEntity living, Entity attacker, float damage, double motionX, double motionZ,
+            double multiplier) {
+        if (living.getRandom().nextDouble() >= living.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE)) {
+            double horizontal = Math.sqrt(motionX * motionX + motionZ * motionZ);
+            double magnitude = 0.4D * multiplier;
+            Vec3 movement = living.getDeltaMovement().scale(0.5D)
+                    .add(-motionX / horizontal * magnitude, magnitude, -motionZ / horizontal * magnitude);
+            if (movement.y > 0.2D) {
+                movement = new Vec3(movement.x, 0.2D * multiplier, movement.z);
+            }
+            living.setDeltaMovement(movement);
+            living.hurtMarked = true;
+        }
+    }
+
+    /**
+     * Pure calculation carrier for the legacy SEDNA armor formula. Runtime
+     * damage still uses Forge/vanilla's single damage pipeline.
+     */
+    public static float applyArmorCalculationsNt(LivingEntity living, DamageSource source, float amount) {
+        if (!DamageResistanceHandler.isUnblockableForLegacyResistance(source)) {
+            float armorFactor = 25.0F - living.getArmorValue()
+                    * (1.0F - DamageResistanceHandler.currentPierceDr());
+            damageArmorNT(living, amount);
+            return amount * armorFactor / 25.0F;
+        }
+        return amount;
+    }
+
+    public static float applyArmorCalculationsNT(LivingEntity living, DamageSource source, float amount) {
+        return applyArmorCalculationsNt(living, source, amount);
+    }
+
+    /** The 1.7.10 implementation was intentionally empty. */
+    public static void damageArmorNT(LivingEntity living, float amount) {
+    }
+
+    public static void damageArmorNt(LivingEntity living, float amount) {
+        damageArmorNT(living, amount);
+    }
+
+    /** Source-backed carrier for the old velocity-sync decision. */
+    public static void setBeenAttacked(LivingEntity living) {
+        living.hurtMarked = living.getRandom().nextDouble()
+                >= living.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);
+    }
+
     private static void applyKnockback(LivingEntity target, Entity attacker, double multiplier) {
         if (attacker == null) {
             return;
@@ -427,7 +479,7 @@ public final class EntityDamageUtil {
         double magnitude = 0.4D * multiplier;
         Vec3 movement = target.getDeltaMovement().scale(0.5D)
                 .add(-deltaX / horizontal * magnitude, magnitude, -deltaZ / horizontal * magnitude);
-        if (movement.y > 0.2D * multiplier) {
+        if (movement.y > 0.2D) {
             movement = new Vec3(movement.x, 0.2D * multiplier, movement.z);
         }
         target.setDeltaMovement(movement);

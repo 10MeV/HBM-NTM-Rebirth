@@ -11,7 +11,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -41,8 +40,14 @@ public class StingerGunItem extends SednaGunItem {
         return isAiming(stack);
     }
 
-    public float legacyStingerLockonProgress(ItemStack stack) {
-        return Mth.clamp(lockonProgress(stack) / (float) LOCKON_TICKS, 0.0F, 1.0F);
+    /** Source NBT counter consumed by the client-only ItemGunStinger lock-on carrier. */
+    public int legacyLockonProgress(ItemStack stack) {
+        return lockonProgress(stack);
+    }
+
+    /** Source {@code Orchestras.ORCHESTRA_STINGER} loop-sound predicate. */
+    boolean isLegacyStingerLockAcquiring(ItemStack stack) {
+        return lockonProgress(stack) > 0 && !isLockedOn(stack);
     }
 
     @Override
@@ -92,7 +97,7 @@ public class StingerGunItem extends SednaGunItem {
             return;
         }
 
-        LivingEntity target = findLockonTarget(player, LOCKON_DISTANCE, LOCKON_ANGLE_DEGREES);
+        Entity target = findLockonTarget(player, LOCKON_DISTANCE, LOCKON_ANGLE_DEGREES);
         if (target == null) {
             if (!isLockedOn(stack)) {
                 resetLockon(stack);
@@ -124,6 +129,9 @@ public class StingerGunItem extends SednaGunItem {
             setGunState(stack, gun.mode().configIndex(), SednaGunConfig.GunState.COOLDOWN);
             setTimer(stack, gun.mode().configIndex(), gun.receiver().delayAfterFire());
         } else if (gun.receiver().doesDryFire()) {
+            // Lego.LAMBDA_LOCKON_CAN_FIRE returns false until lock-on completes;
+            // Lego.clickReceiver therefore emits the normal dry-cycle animation.
+            playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE_DRY);
             setGunState(stack, gun.mode().configIndex(), gun.receiver().refireAfterDry()
                     ? SednaGunConfig.GunState.COOLDOWN
                     : SednaGunConfig.GunState.DRAWING);
@@ -137,38 +145,51 @@ public class StingerGunItem extends SednaGunItem {
         BulletProjectileEntity bullet = super.createBullet(level, player, stack, gun, config, receiver, overrideDamage);
         if (bullet != null && level instanceof ServerLevel serverLevel && isLockedOn(stack)) {
             Entity target = serverLevel.getEntity(lockonTargetId(stack));
-            if (target instanceof LivingEntity living && living.isAlive()) {
-                bullet.setHomingTargetEntity(living);
+            if (target != null && target.isAlive()) {
+                bullet.setHomingTargetEntity(target);
             }
         }
         return bullet;
     }
 
     @Nullable
-    static LivingEntity findLockonTarget(ServerPlayer player, double distance, double angleThresholdDegrees) {
+    static Entity findLockonTarget(ServerPlayer player, double distance, double angleThresholdDegrees) {
         Vec3 origin = player.getEyePosition();
-        Vec3 look = player.getLookAngle();
-        Vec3 end = origin.add(look.scale(distance));
-        double searchInflate = distance * Math.sin(angleThresholdDegrees * Mth.DEG_TO_RAD) + 1.0D;
-        AABB search = new AABB(origin, end).inflate(searchInflate, 10.0D, searchInflate);
-        LivingEntity closest = null;
+        Vec3 delta = player.getLookAngle().scale(distance);
+        Vec3 end = origin.add(delta);
+        // ItemGunStinger#getLockonTarget rotates the already world-space end point around
+        // the world origin before deriving its candidate AABB. Retain that observable
+        // legacy quirk rather than broadening the scan cone with a modern approximation.
+        double angleRadians = angleThresholdDegrees * Mth.DEG_TO_RAD;
+        Vec3 left = rotateLegacyAroundY(end, -angleRadians).add(0.0D, 10.0D, 0.0D);
+        Vec3 right = rotateLegacyAroundY(end, angleRadians).add(0.0D, -10.0D, 0.0D);
+        AABB search = new AABB(
+                Math.min(Math.min(origin.x, end.x), Math.min(left.x, right.x)),
+                Math.min(Math.min(origin.y, end.y), Math.min(left.y, right.y)),
+                Math.min(Math.min(origin.z, end.z), Math.min(left.z, right.z)),
+                Math.max(Math.max(origin.x, end.x), Math.max(left.x, right.x)),
+                Math.max(Math.max(origin.y, end.y), Math.max(left.y, right.y)),
+                Math.max(Math.max(origin.z, end.z), Math.max(left.z, right.z)));
+        Entity closest = null;
         double closestAngle = 360.0D;
         for (Entity entity : player.level().getEntities(player, search,
-                candidate -> candidate instanceof LivingEntity && candidate.isPickable() && candidate.isAlive())) {
-            LivingEntity living = (LivingEntity) entity;
-            Vec3 toEntity = living.position().add(0.0D, living.getBbHeight() * 0.5D, 0.0D).subtract(origin);
-            double length = toEntity.length();
-            if (length <= 0.0D) {
-                continue;
-            }
-            double dot = toEntity.normalize().dot(look.normalize());
-            double angle = Math.toDegrees(Math.acos(Math.max(-1.0D, Math.min(1.0D, dot))));
+                candidate -> candidate.isPickable() && candidate.getBbHeight() >= 0.5F)) {
+            Vec3 toEntity = entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D).subtract(origin);
+            double angle = Math.abs(Math.acos(toEntity.dot(delta) / (toEntity.length() * delta.length()))
+                    * 180.0D / Math.PI);
             if (angle < closestAngle && angle < angleThresholdDegrees) {
                 closestAngle = angle;
-                closest = living;
+                closest = entity;
             }
         }
         return closest;
+    }
+
+    private static Vec3 rotateLegacyAroundY(Vec3 vector, double angleRadians) {
+        double cosine = Math.cos(angleRadians);
+        double sine = Math.sin(angleRadians);
+        return new Vec3(vector.x * cosine + vector.z * sine, vector.y,
+                vector.z * cosine - vector.x * sine);
     }
 
     private void progressLockon(ServerPlayer player, ItemStack stack) {

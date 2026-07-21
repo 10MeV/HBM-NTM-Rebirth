@@ -286,7 +286,7 @@ public final class LegacyGenericRecipeFormat {
             if (legacyMeta == HbmIngredient.WILDCARD_META) {
                 return HbmIngredient.legacyWildcard(legacyId, count);
             }
-            if (LegacyMetaItemMappings.item(legacyId, legacyMeta).isPresent()) {
+            if (LegacyMetaItemMappings.hasMapping(legacyId, legacyMeta)) {
                 return HbmIngredient.legacyMeta(legacyId, legacyMeta, count);
             }
         }

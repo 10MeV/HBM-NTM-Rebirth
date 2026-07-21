@@ -6,6 +6,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.LegacyFluidTankPacket;
@@ -132,7 +133,17 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
 
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
-        return fixedSurroundingPorts();
+        return HbmFluidPortLayouts.fluidTank();
+    }
+
+    @Override
+    protected void refreshFluidPorts() {
+        // TileEntityMachineCoker retries its input receiver only on the legacy
+        // 20-tick connection pass, while its byproduct remains an every-tick sender.
+        if (level != null && level.getGameTime() % 20L == 0L) {
+            refreshTrackedReceiverFluidPorts(getReceivingTanks(), this);
+        }
+        refreshTrackedProviderFluidPorts(getSendingTanks(), this);
     }
 
     @Override

@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "equipment",
+  "key": {
+    "B": { "item": "hbm_ntm_rebirth:bj_plate_jetpack" }, "C": { "item": "hbm_ntm_rebirth:singularity_spark" },
+    "P": { "item": "hbm_ntm_rebirth:plate_armor_dnt" }, "S": { "item": "hbm_ntm_rebirth:ingot_chainsteel" }
+  },
+  "pattern": ["PCP", "PBP", "PSP"], "result": { "item": "hbm_ntm_rebirth:dns_plate" }, "show_notification": true
+}

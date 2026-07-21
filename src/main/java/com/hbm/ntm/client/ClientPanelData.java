@@ -14,8 +14,9 @@ public final class ClientPanelData {
     private static final List<ClientPanelDataListener> LISTENERS = new ArrayList<>();
 
     public static void update(ResourceLocation panelType, int legacyType, CompoundTag tag) {
+        boolean hasNbt = tag != null;
         CompoundTag safeTag = tag == null ? new CompoundTag() : tag.copy();
-        DATA.put(panelType, new PanelData(legacyType, safeTag.copy()));
+        DATA.put(panelType, new PanelData(legacyType, safeTag.copy(), hasNbt));
         for (ClientPanelDataListener listener : List.copyOf(LISTENERS)) {
             listener.onClientPanelData(panelType, legacyType, safeTag.copy());
         }
@@ -23,7 +24,8 @@ public final class ClientPanelData {
 
     public static Optional<PanelData> get(ResourceLocation panelType) {
         PanelData data = DATA.get(panelType);
-        return data == null ? Optional.empty() : Optional.of(new PanelData(data.legacyType, data.data.copy()));
+        return data == null ? Optional.empty()
+                : Optional.of(new PanelData(data.legacyType, data.data.copy(), data.hasNbt));
     }
 
     public static int panelCount() {
@@ -49,7 +51,10 @@ public final class ClientPanelData {
         LISTENERS.clear();
     }
 
-    public record PanelData(int legacyType, CompoundTag data) {
+    public record PanelData(int legacyType, CompoundTag data, boolean hasNbt) {
+        public PanelData(int legacyType, CompoundTag data) {
+            this(legacyType, data, true);
+        }
     }
 
     private ClientPanelData() {

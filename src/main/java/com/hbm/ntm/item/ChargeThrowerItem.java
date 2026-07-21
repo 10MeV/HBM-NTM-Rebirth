@@ -7,6 +7,7 @@ import com.hbm.ntm.bullet.SednaReceiverConfig;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmServerKeybinds;
+import com.hbm.ntm.util.ArmorUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -78,6 +79,7 @@ public class ChargeThrowerItem extends SednaGunItem {
         if (player.getDeltaMovement().y > -0.1D) {
             player.fallDistance = 0.0F;
         }
+        ArmorUtil.resetFlightTime(player);
     }
 
     private void constrainToHookLength(ServerPlayer player, BulletProjectileEntity bullet, double line) {

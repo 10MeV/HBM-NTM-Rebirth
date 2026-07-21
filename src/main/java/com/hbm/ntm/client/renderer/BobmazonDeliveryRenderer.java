@@ -18,7 +18,7 @@ public class BobmazonDeliveryRenderer extends EntityRenderer<BobmazonDeliveryEnt
 
     public BobmazonDeliveryRenderer(EntityRendererProvider.Context context) {
         super(context);
-        shadowRadius = 0.5F;
+        shadowRadius = 0.0F;
     }
 
     @Override

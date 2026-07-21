@@ -190,6 +190,11 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type == deuteriumTank.getTankType() || type == tritiumTank.getTankType();
     }

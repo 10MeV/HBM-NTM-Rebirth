@@ -144,12 +144,6 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> MUSIC_TRANSMISSION = register("music.transmission");
     public static final RegistryObject<SoundEvent> ENTITY_CYBERCRAB = register("entity.cybercrab");
     public static final RegistryObject<SoundEvent> ENTITY_DUCC = register("entity.ducc");
-    public static final RegistryObject<SoundEvent> ENTITY_MEGAQUACC = register("entity.megaquacc");
-    public static final RegistryObject<SoundEvent> ENTITY_SIEGE_DEATH = register("entity.siege_death");
-    public static final RegistryObject<SoundEvent> ENTITY_SIEGE_HURT = register("entity.siege_hurt");
-    public static final RegistryObject<SoundEvent> ENTITY_SIEGE_IDLE = register("entity.siege_idle");
-    public static final RegistryObject<SoundEvent> ENTITY_UFO_BEAM = register("entity.ufo_beam");
-    public static final RegistryObject<SoundEvent> ENTITY_UFO_BLAST = register("entity.ufo_blast");
     public static final RegistryObject<SoundEvent> ENTITY_SLICER = register("entity.slicer");
     public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_FLYING_LOOP = register("entity.chopper_flying_loop");
     public static final RegistryObject<SoundEvent> ENTITY_CHOPPER_CRASHING_LOOP = register("entity.chopper_crashing_loop");
@@ -234,7 +228,6 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> WEAPON_SLICE = register("weapon.slice");
     public static final RegistryObject<SoundEvent> WEAPON_KAPENG = register("weapon.kapeng");
     public static final RegistryObject<SoundEvent> WEAPON_LEVER_ACTION_RELOAD = register("weapon.lever_action_reload");
-    public static final RegistryObject<SoundEvent> WEAPON_B92_RELOAD = register("weapon.b92_reload");
     public static final RegistryObject<SoundEvent> WEAPON_STINGER_LOCK_ON = register("weapon.stinger_lock_on");
     public static final RegistryObject<SoundEvent> WEAPON_SAW_SHOOT = register("weapon.saw_shoot");
     public static final RegistryObject<SoundEvent> WEAPON_SPINUP = register("weapon.spinup");

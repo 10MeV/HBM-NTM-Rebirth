@@ -1,10 +1,12 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
+import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeRecipeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
@@ -17,8 +19,11 @@ import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.ProcessingMachineMenu;
+import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
+import com.hbm.ntm.player.HbmPlayerProperties;
+import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.recipe.ItemProcessingRecipe;
 import com.hbm.ntm.recipe.ItemProcessingRecipeRuntime;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
@@ -193,15 +198,20 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
         HbmEnergyUtil.chargeStorageFromItem(machine.items.getStackInSlot(machine.batterySlot()),
                 machine.energy, machine.energy.getReceiverSpeed());
         if (machine.kind == Kind.CRYSTALLIZER) {
+            machine.markCrystallizerLadderPlayers(level, pos, state);
             HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(machine.items, 7, machine.crystallizerTank, level, pos);
             HbmFluidItemTransfer.loadTankFromSlot(machine.items, 3, 4, machine.crystallizerTank);
+            // TileEntityMachineCrystallizer#updateConnections refreshes its typed
+            // Fluid Mk2 receiver at all eight remote ports every server tick.
+            machine.fluidPortSubscriptions.refreshReceiver(level, pos, machine.crystallizerFluidPorts(),
+                    List.of(machine.crystallizerTank), machine);
         }
-        if (level.getGameTime() % 20L == 0L) {
+        if (machine.kind == Kind.CENTRIFUGE || level.getGameTime() % 20L == 0L) {
             if (machine.kind == Kind.CRYSTALLIZER) {
                 HbmEnergyUtil.subscribeReceiverToPorts(level, pos, machine.crystallizerEnergyPorts(), machine);
-                machine.fluidPortSubscriptions.refreshReceiver(level, pos, machine.crystallizerFluidPorts(),
-                        List.of(machine.crystallizerTank), machine);
             } else {
+                // TileEntityMachineCentrifuge#updateEntity retries all six
+                // adjacent Energy Mk2 receiver subscriptions every tick.
                 HbmEnergyUtil.subscribeReceiverToAllNeighborNetworks(level, pos, machine);
             }
         }
@@ -209,6 +219,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
         boolean changed = machine.kind == Kind.CENTRIFUGE
                 ? machine.tickCentrifuge(level)
                 : machine.tickCrystallizer(level);
+        machine.markCrystallizerFauxLadderPlayers(level, pos, state);
 
         changed |= oldPower != machine.energy.getPower()
                 || oldProgress != machine.progress
@@ -317,6 +328,43 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
             }
         }
         return changed || wasOn != isOn;
+    }
+
+    /**
+     * Carries TileEntityMachineCrystallizer's source-backed side ladder into
+     * the modern faux-ladder player-property path. ForgeDirection's old
+     * UP-axis rotation maps to Direction#getClockWise for horizontal facings.
+     */
+    private void markCrystallizerLadderPlayers(Level level, BlockPos pos, BlockState state) {
+        Direction side = state.getValue(HorizontalMachineBlock.FACING).getClockWise();
+        AABB ladder = new AABB(pos.getX() + 0.25D, pos.getY() + 1.0D, pos.getZ() + 0.25D,
+                pos.getX() + 0.75D, pos.getY() + 6.0D, pos.getZ() + 0.75D)
+                .move(side.getStepX() * 1.5D, 0.0D, side.getStepZ() * 1.5D);
+        for (Player player : level.getEntitiesOfClass(Player.class, ladder)) {
+            HbmPlayerProperties.markOnLadder(player);
+        }
+    }
+
+    /**
+     * {@code TileEntityMachineCrystallizer#updateEntity} marks players in its
+     * narrow side column as being on a faux ladder each tick.  This is not the
+     * controller block's local collision volume: the column is offset by the
+     * legacy facing rotated about UP.
+     */
+    private void markCrystallizerFauxLadderPlayers(Level level, BlockPos pos, BlockState state) {
+        if (kind != Kind.CRYSTALLIZER) {
+            return;
+        }
+        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
+                ? state.getValue(HorizontalMachineBlock.FACING) : Direction.NORTH;
+        Direction side = facing.getClockWise(); // ForgeDirection#getRotation(UP)
+        double centerX = pos.getX() + 0.5D + side.getStepX() * 1.5D;
+        double centerZ = pos.getZ() + 0.5D + side.getStepZ() * 1.5D;
+        AABB ladderColumn = new AABB(centerX - 0.25D, pos.getY() + 1.0D, centerZ - 0.25D,
+                centerX + 0.25D, pos.getY() + 6.0D, centerZ + 0.25D);
+        for (Player player : level.getEntitiesOfClass(Player.class, ladderColumn)) {
+            HbmPlayerProperties.markOnLadder(player);
+        }
     }
 
     private boolean canCrystallize(ItemProcessingRecipe recipe) {
@@ -433,15 +481,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     }
 
     private List<FluidPort> crystallizerFluidPorts() {
-        return List.of(
-                FluidPort.of(2, 0, 1, Direction.EAST),
-                FluidPort.of(2, 0, -1, Direction.EAST),
-                FluidPort.of(-2, 0, 1, Direction.WEST),
-                FluidPort.of(-2, 0, -1, Direction.WEST),
-                FluidPort.of(1, 0, 2, Direction.SOUTH),
-                FluidPort.of(-1, 0, 2, Direction.SOUTH),
-                FluidPort.of(1, 0, -2, Direction.NORTH),
-                FluidPort.of(-1, 0, -2, Direction.NORTH));
+        return LegacyMultiblockPorts.crystallizerFluidPorts();
     }
 
     private List<HbmEnergyUtil.EnergyPort> crystallizerEnergyPorts() {

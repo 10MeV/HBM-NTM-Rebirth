@@ -1,5 +1,6 @@
 package com.hbm.ntm.uninos.networkproviders.pneumatic;
 
+import com.hbm.ntm.blockentity.AutocrafterBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -29,7 +30,10 @@ public final class PneumaticUtil {
             return Optional.empty();
         }
         Optional<IItemHandler> handler = blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER, side).resolve();
-        return handler.map(itemHandler -> new PneumaticItemAccess(itemHandler, pos.immutable()));
+        int itemHardCap = blockEntity instanceof AutocrafterBlockEntity
+                ? 1
+                : PneumaticNetwork.ITEMS_PER_TRANSFER;
+        return handler.map(itemHandler -> new PneumaticItemAccess(itemHandler, pos.immutable(), itemHardCap));
     }
 
     public static Optional<PneumaticItemAccess> sourceAccess(Level level, BlockPos tubePos, Direction insertionDirection) {

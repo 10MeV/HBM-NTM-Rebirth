@@ -127,11 +127,11 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
         int previousHotFill = hotCoolant.getFill();
         float previousTemperature = temperature;
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(0), this, getReceiverSpeed());
-        if (level.getGameTime() % 20L == 0L) {
-            HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, energyPorts(), this);
-            fluidPortSubscriptions.refreshTransceiver(level, worldPosition, fluidPorts(),
-                    getReceivingTanks(), getSendingTanks(), this);
-        }
+        // TileEntityCooledBase refreshes its Energy receiver together with its
+        // cold/hot coolant endpoints on every server tick.
+        HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, energyPorts(), this);
+        fluidPortSubscriptions.refreshTransceiver(level, worldPosition, fluidPorts(),
+                getReceivingTanks(), getSendingTanks(), this);
         coolMachine();
         if (previousPower != energy.getPower()
                 || previousColdFill != coldCoolant.getFill()

@@ -154,6 +154,13 @@ public class DeuteriumTowerBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityDeuteriumExtractor#updateEntity, inherited by the tower,
+        // retried its eight remote receiver/provider endpoints every server tick.
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return towerFluidPorts();
     }
@@ -163,6 +170,11 @@ public class DeuteriumTowerBlockEntity extends HbmEnergyAndFluidBlockEntity
         return towerFluidPorts().stream()
                 .map(port -> new EnergyPort(port.offset(), port.direction()))
                 .toList();
+    }
+
+    @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
     }
 
     private List<FluidPort> towerFluidPorts() {

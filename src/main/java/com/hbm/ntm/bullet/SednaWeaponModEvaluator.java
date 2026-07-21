@@ -548,7 +548,7 @@ public final class SednaWeaponModEvaluator {
                 || isTestOverride(id) || isDrillHead(id)) {
             return 1_000_000;
         }
-        if (id == ID_LAS_CAPACITOR || id == ID_LAS_SHOTGUN || isGenericDamage(id)) {
+        if (id == ID_LAS_CAPACITOR || id == ID_LAS_SHOTGUN || isGenericDamage(id) || isGenericDurability(id)) {
             return 1_000;
         }
         if (id == ID_GREASEGUN_CLEAN || id == ID_UZI_SATURN) {
@@ -559,6 +559,9 @@ public final class SednaWeaponModEvaluator {
         }
         if (id == ID_CANISTERS || id == ID_TEST_FIRERATE || id == ID_TEST_DAMAGE || id == ID_TEST_MULTI) {
             return -1;
+        }
+        if (id == ID_NI4NI_NICKEL || id == ID_NI4NI_DOUBLOONS) {
+            return 1_000_000;
         }
         return 0;
     }
@@ -578,6 +581,12 @@ public final class SednaWeaponModEvaluator {
         return id == ID_IRON_DAMAGE || id == ID_STEEL_DAMAGE || id == ID_DURA_DAMAGE || id == ID_DESH_DAMAGE
                 || id == ID_WSTEEL_DAMAGE || id == ID_FERRO_DAMAGE || id == ID_TCALLOY_DAMAGE
                 || id == ID_BIGMT_DAMAGE || id == ID_BRONZE_DAMAGE;
+    }
+
+    private static boolean isGenericDurability(int id) {
+        return id == ID_IRON_DURABILITY || id == ID_STEEL_DURABILITY || id == ID_DURA_DURABILITY
+                || id == ID_DESH_DURABILITY || id == ID_WSTEEL_DURABILITY || id == ID_FERRO_DURABILITY
+                || id == ID_TCALLOY_DURABILITY || id == ID_BIGMT_DURABILITY || id == ID_BRONZE_DURABILITY;
     }
 
     private static boolean isTestOverride(int id) {

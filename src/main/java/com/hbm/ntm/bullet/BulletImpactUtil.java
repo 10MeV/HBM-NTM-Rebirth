@@ -1,6 +1,7 @@
 package com.hbm.ntm.bullet;
 
 import com.hbm.handler.radiation.ChunkRadiationManager;
+import com.hbm.ntm.block.LegacyLayeringBlock;
 import com.hbm.ntm.block.ShotDetonatableBlock;
 import com.hbm.ntm.compat.CompatExternal;
 import com.hbm.ntm.damage.DamageClass;
@@ -537,14 +538,26 @@ public final class BulletImpactUtil {
         if (hitSide != null && level.random.nextBoolean()) {
             target = target.relative(hitSide);
         }
-        BlockState placedState = config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_FOAM)
-                ? ModBlocks.legacyBlock("block_foam").get().defaultBlockState()
+        boolean foam = config.hasBehavior(BulletBehaviorTag.FIRE_EXTINGUISH_FOAM);
+        BlockState layerState = foam ? ModBlocks.FOAM_LAYER.get().defaultBlockState()
+                : ModBlocks.SAND_BORON_LAYER.get().defaultBlockState();
+        BlockState fullState = foam ? ModBlocks.BLOCK_FOAM.get().defaultBlockState()
                 : ModBlocks.SAND_BORON.get().defaultBlockState();
         BlockState currentState = level.getBlockState(target);
-        if (!currentState.canBeReplaced() || !placedState.canSurvive(level, target)) {
+        if (currentState.is(layerState.getBlock())) {
+            int layers = currentState.getValue(LegacyLayeringBlock.LAYERS);
+            // XFactoryTool increments legacy metadata 0..6, then replaces the
+            // seventh thin layer with the full foam/boron-sand block. Metadata
+            // 7 remains representable by LegacyLayeringBlock for generic legacy
+            // state fidelity, but this fire-extinguisher path never creates it.
+            return level.setBlock(target, layers < 7
+                    ? currentState.setValue(LegacyLayeringBlock.LAYERS, layers + 1)
+                    : fullState, 3);
+        }
+        if (!currentState.canBeReplaced() || !layerState.canSurvive(level, target)) {
             return false;
         }
-        return level.setBlock(target, placedState, 3);
+        return level.setBlock(target, layerState, 3);
     }
 
     private static boolean isExtinguishableFire(BlockState state) {
@@ -555,7 +568,7 @@ public final class BulletImpactUtil {
     }
 
     private static boolean isLegacyFoam(BlockState state) {
-        return "block_foam".equals(BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath());
+        return state.is(ModBlocks.BLOCK_FOAM.get()) || state.is(ModBlocks.FOAM_LAYER.get());
     }
 
     private static boolean applyEmp(BulletConfig config, Level level, Vec3 position) {
@@ -818,10 +831,6 @@ public final class BulletImpactUtil {
 
     private static boolean applyTaggedImpactEffects(BulletConfig config, Level level, Vec3 position,
             @Nullable Entity source, @Nullable Direction hitSide, float impactDamage) {
-        if (config.hasBehavior(BulletBehaviorTag.UFO_BLAST)) {
-            applyUfoBlast(level, position);
-            return true;
-        }
         if (hasAnyBehavior(config, BulletBehaviorTag.LIGHTNING_BEAM_HIT,
                 BulletBehaviorTag.LIGHTNING_BEAM_SPLIT)) {
             applyLightningBeamHit(level, offsetBeamBlockImpact(position, hitSide), source, impactDamage);
@@ -930,20 +939,6 @@ public final class BulletImpactUtil {
     private static int applyShredderBeamBlockDamage(BulletConfig config, Level level, Vec3 position,
             @Nullable Entity source, float impactDamage) {
         return applyShredderPulseDamage(config, level, position, source, impactDamage, 0.75D);
-    }
-
-    public static void applyUfoBlast(Level level, Vec3 position) {
-        if (level == null || level.isClientSide() || position == null) {
-            return;
-        }
-        LegacySoundPlayer.playLegacyUfoBlast(level, position, 5.0F, 0.9F, 0.2F);
-        LegacySoundPlayer.playLegacyFireworksBlast(level, position, 5.0F, 0.5F);
-        ExplosionNukeGeneric.dealDamage(level, position.x, position.y, position.z, 10.0D, 50.0F);
-
-        for (int i = 0; i < 3; i++) {
-            ParticleUtil.spawnPlasmaBlast(level, position.x, position.y, position.z,
-                    0.0F, 0.75F, 1.0F, -30.0F + 30.0F * i, level.random.nextFloat() * 180.0F, 5.0F);
-        }
     }
 
     private static BlockBreakResult applyBlockBreak(BulletConfig config, Level level,

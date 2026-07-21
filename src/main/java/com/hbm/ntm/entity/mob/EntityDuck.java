@@ -2,6 +2,7 @@ package com.hbm.ntm.entity.mob;
 
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import javax.annotation.Nullable;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -15,6 +16,11 @@ import net.minecraft.world.level.Level;
 public class EntityDuck extends Chicken {
     public EntityDuck(EntityType<? extends EntityDuck> type, Level level) {
         super(type, level);
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

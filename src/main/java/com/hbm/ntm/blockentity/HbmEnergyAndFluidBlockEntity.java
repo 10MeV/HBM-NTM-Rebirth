@@ -122,6 +122,23 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
         return canExtractEnergy(null);
     }
 
+    /**
+     * Opt-in for legacy hosts whose direct Energy Mk2 receiver subscription was
+     * retried from every production tick. Most hosts retain the staggered
+     * keepalive below; subclasses must have a matching 1.7.10 call site.
+     */
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return false;
+    }
+
+    /**
+     * Opt-in for legacy receivers whose only direct Energy Mk2 subscription
+     * pass ran on the world's exact twenty-tick boundary.
+     */
+    protected boolean usesLegacyTwentyTickEnergyPortSubscriptionCadence() {
+        return false;
+    }
+
     protected void refreshEnergyPortSubscriptions() {
         if (level == null || level.isClientSide) {
             return;
@@ -154,11 +171,20 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
     }
 
     private boolean shouldRefreshEnergyPortSubscriptions(boolean receiverActive, boolean providerActive) {
+        if (usesLegacyTwentyTickEnergyPortSubscriptionCadence()) {
+            // The old hosts did not subscribe early after loading or a same-position
+            // cable replacement. They retried only from their `% 20 == 0` pass,
+            // while an inactive endpoint must still be removed immediately.
+            return (energyPortReceiverSubscribed && !receiverActive)
+                    || (energyPortProviderSubscribed && !providerActive)
+                    || (level != null && level.getGameTime() % 20L == 0L);
+        }
         int portShapeSignature = energyPortShapeSignature(getEnergyPorts());
         return energyPortSubscriptionDirty
                 || energyPortReceiverSubscribed != receiverActive
                 || energyPortProviderSubscribed != providerActive
                 || portShapeSignature != lastEnergyPortShapeSignature
+                || shouldRefreshEnergyPortSubscriptionsEveryTick()
                 || isStaggeredEnergyPortKeepalive();
     }
 

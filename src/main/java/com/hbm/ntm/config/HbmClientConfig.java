@@ -1,5 +1,6 @@
 package com.hbm.ntm.config;
 
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class HbmClientConfig {
@@ -18,6 +19,9 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.BooleanValue LEGACY_LOOK_OVERLAY;
     public static final ForgeConfigSpec.BooleanValue SHOW_BLOCK_STATE_OVERLAY;
     public static final ForgeConfigSpec.DoubleValue GUN_ANIMATION_SPEED;
+    public static final ForgeConfigSpec.BooleanValue LEGACY_GUN_ANIMATIONS;
+    public static final ForgeConfigSpec.BooleanValue GUN_MODEL_FOV;
+    public static final ForgeConfigSpec.BooleanValue GUN_VISUAL_RECOIL;
     public static final ForgeConfigSpec.BooleanValue NUKE_WARP_SHOCKWAVE;
     public static final ForgeConfigSpec.DoubleValue NUKE_WARP_SHOCKWAVE_INTENSITY;
     public static final ForgeConfigSpec.IntValue NUKE_WARP_SHOCKWAVE_MESH_SEGMENTS;
@@ -89,6 +93,15 @@ public final class HbmClientConfig {
         GUN_ANIMATION_SPEED = builder
                 .comment("Legacy ClientConfig.GUN_ANIMATION_SPEED: divides legacy item/gun animation keyframe durations. Values above 1 play faster.")
                 .defineInRange("gunAnimationSpeed", 1.0D, 0.001D, 100.0D);
+        LEGACY_GUN_ANIMATIONS = builder
+                .comment("Legacy ClientConfig.GUN_ANIMS_LEGACY: use the original simple Sedna animation rails instead of authored per-weapon JSON animations.")
+                .define("legacyGunAnimations", false);
+        GUN_MODEL_FOV = builder
+                .comment("Legacy ClientConfig.GUN_MODEL_FOV: selects the first-person gun model projection; it does not disable the legacy world-FOV aiming curves.")
+                .define("gunModelFov", false);
+        GUN_VISUAL_RECOIL = builder
+                .comment("Legacy ClientConfig.GUN_VISUAL_RECOIL: applies source-backed Sedna camera recoil on CYCLE.")
+                .define("gunVisualRecoil", true);
         builder.pop();
 
         builder.push("effects");
@@ -111,11 +124,11 @@ public final class HbmClientConfig {
 
         builder.push("rendering");
         RENDER_MODEL_UPDATE_DISTANCE = builder
-                .comment("Modernized render pipeline: distance for animated/dynamic OBJ machine model parts, in chunks. The default preserves full-machine visibility at the older 512 block renderer distance.")
-                .defineInRange("modelUpdateDistance", 32, 2, 64);
+                .comment("Modernized render pipeline: fixed 512-block culling distance (32 chunks) for animated/dynamic OBJ machine model parts.")
+                .defineInRange("modelUpdateDistance", 32, 32, 32);
         RENDER_MODEL_STATIC_RENDER_DISTANCE = builder
-                .comment("Modernized render pipeline: distance for static OBJ machine model rendering, in chunks. The default preserves the existing 512 block renderer distance.")
-                .defineInRange("modelStaticRenderDistance", 32, 2, 64);
+                .comment("Modernized render pipeline: fixed 512-block model culling distance (32 chunks).")
+                .defineInRange("modelStaticRenderDistance", 32, 32, 32);
         RENDER_USE_SLICED_LIGHT = builder
                 .comment("Modernized render pipeline: use 2x4x2 sliced light probes for instanced OBJ lighting. Default false matches Modernized; enable only for tall machines that visibly need it.")
                 .define("useSlicedLight", false);
@@ -171,7 +184,7 @@ public final class HbmClientConfig {
 
         builder.push("jei");
         NEI_HIDE_SECRETS = builder
-                .comment("Legacy ClientConfig.NEI_HIDE_SECRETS: hides secret blueprint-pool machine recipes from JEI display.")
+                .comment("Legacy ClientConfig.NEI_HIDE_SECRETS: hides secret machine recipes and secret JEI ingredients.")
                 .define("hideSecretRecipes", true);
         builder.pop();
 
@@ -181,6 +194,18 @@ public final class HbmClientConfig {
     public static double legacyGunAnimationTimeMultiplier() {
         double speed = GUN_ANIMATION_SPEED == null ? 1.0D : GUN_ANIMATION_SPEED.get();
         return 1.0D / Math.max(0.001D, speed);
+    }
+
+    public static boolean legacyGunAnimations() {
+        return booleanValue(LEGACY_GUN_ANIMATIONS, false);
+    }
+
+    public static boolean gunModelFov() {
+        return booleanValue(GUN_MODEL_FOV, false);
+    }
+
+    public static boolean visualRecoil() {
+        return booleanValue(GUN_VISUAL_RECOIL, true);
     }
 
     public static int infoPosition() {
@@ -216,11 +241,11 @@ public final class HbmClientConfig {
     }
 
     public static int modelStaticRenderDistanceChunks() {
-        return Math.max(2, Math.min(64, intValue(RENDER_MODEL_STATIC_RENDER_DISTANCE, 32)));
+        return HbmModelRenderDistances.BLOCKS / 16;
     }
 
     public static int modelStaticRenderDistanceBlocks() {
-        return modelStaticRenderDistanceChunks() * 16;
+        return HbmModelRenderDistances.BLOCKS;
     }
 
     public static boolean useSlicedLight() {
@@ -232,11 +257,11 @@ public final class HbmClientConfig {
     }
 
     public static int modelUpdateDistanceChunks() {
-        return Math.max(2, Math.min(64, intValue(RENDER_MODEL_UPDATE_DISTANCE, 32)));
+        return HbmModelRenderDistances.BLOCKS / 16;
     }
 
     public static int modelUpdateDistanceBlocks() {
-        return modelUpdateDistanceChunks() * 16;
+        return HbmModelRenderDistances.BLOCKS;
     }
 
     public static boolean safeObjStaticBatching() {

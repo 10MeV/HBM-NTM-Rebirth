@@ -122,7 +122,10 @@ public class RadioTelexBlockEntity extends BlockEntity implements MenuProvider, 
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return tag != null && !tag.isEmpty();
+        // TileEntityRadioTelex#hasPermission: distanceSq < 16 * 16.
+        return tag != null && !tag.isEmpty()
+                && player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D) < 256.0D;
     }
 
     @Override

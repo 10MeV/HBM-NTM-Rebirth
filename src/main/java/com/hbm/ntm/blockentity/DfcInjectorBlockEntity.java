@@ -3,8 +3,10 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.block.DfcMachineBlock;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.menu.DfcInjectorMenu;
@@ -41,6 +43,8 @@ public class DfcInjectorBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int SLOT_TANK1_OUT = 3;
     public static final int SLOT_COUNT = 4;
     public static final int RANGE = 15;
+
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.allAdjacent();
 
     private static final String TAG_ITEMS = "items";
     private final HbmFluidTank fuel1;
@@ -138,6 +142,21 @@ public class DfcInjectorBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type != HbmFluids.NONE;
+    }
+
+    @Override
+    protected Iterable<FluidPort> getFluidPorts() {
+        return FLUID_PORTS;
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

@@ -50,6 +50,15 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
         return offset -> false;
     }
 
+    /**
+     * Legacy {@code BlockDummyable} subclasses normally used the shared dummy
+     * carrier. Blocks with source-backed per-dummy state (for example narrow
+     * rail segments) can override this without changing other multiblocks.
+     */
+    protected BlockState getLegacyDummyState(BlockState coreState, BlockPos offset) {
+        return com.hbm.ntm.registry.ModBlocks.DUMMY_BLOCK.get().defaultBlockState();
+    }
+
     protected MultiblockExtents getExtents(BlockState state) {
         return MultiblockExtents.ofLegacyXr(getLegacyXrDimensions(), state.getValue(FACING));
     }
@@ -182,13 +191,29 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
         });
     }
 
-    private boolean fillLayout(Level level, BlockPos corePos, BlockState state) {
+    /**
+     * Fills the legacy footprint after the core has moved into its source-backed
+     * position. A very small number of old {@code BlockDummyable} subclasses
+     * deliberately wrote additional blocks that were not part of their
+     * placement preflight; they override {@link #usesUncheckedLegacyDummyFill}
+     * to retain that behaviour.
+     */
+    protected boolean fillLayout(Level level, BlockPos corePos, BlockState state) {
         LegacyMultiblockLayout layout = getLayout(state);
-        boolean filled = MultiblockHelper.fillLayout(level, corePos, layout);
+        boolean filled = usesUncheckedLegacyDummyFill(state)
+                ? MultiblockHelper.fillOffsetsWithLegacySourceOverwrite(level, corePos, layout.offsets(),
+                        offset -> getLegacyDummyState(state, offset), layout::proxyMode, layout::isLegacyExtraOffset)
+                : MultiblockHelper.fillOffsetsWithProxyModes(level, corePos, layout.offsets(),
+                        offset -> getLegacyDummyState(state, offset), layout::proxyMode, layout::isLegacyExtraOffset);
         boolean complete = filled && MultiblockHelper.isLayoutComplete(level, corePos, layout);
         if (!complete && requiresCompleteLegacyLayout(state)) {
             onIncompleteLegacyLayout(level, corePos, state);
         }
         return complete;
+    }
+
+    /** Source-backed opt-in for legacy fill routines that wrote unchecked dummies. */
+    protected boolean usesUncheckedLegacyDummyFill(BlockState state) {
+        return false;
     }
 }

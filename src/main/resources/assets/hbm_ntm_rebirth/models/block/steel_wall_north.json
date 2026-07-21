@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/block","textures":{"texture":"hbm_ntm_rebirth:block/steel_wall","particle":"hbm_ntm_rebirth:block/steel_wall"},"elements":[{"from":[0,0,14],"to":[16,16,16],"faces":{"north":{"texture":"#texture"},"south":{"texture":"#texture"},"east":{"texture":"#texture"},"west":{"texture":"#texture"},"up":{"texture":"#texture"},"down":{"texture":"#texture"}}}]}

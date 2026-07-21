@@ -65,7 +65,7 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

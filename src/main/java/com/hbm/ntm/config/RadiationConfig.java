@@ -2,6 +2,8 @@ package com.hbm.ntm.config;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 
+import java.util.List;
+
 public final class RadiationConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_CONTAMINATION;
     public static ForgeConfigSpec.BooleanValue ENABLE_CHUNK_RADS;
@@ -30,6 +32,11 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.DoubleValue POLLUTION_SOOT_FOG_DIVISOR;
     public static ForgeConfigSpec.DoubleValue POLLUTION_SMOKE_STACK_SOOT_MULT;
     public static ForgeConfigSpec.BooleanValue ENABLE_MOB_GEAR;
+    public static ForgeConfigSpec.BooleanValue ENABLE_MOB_WEAPONS;
+    public static ForgeConfigSpec.DoubleValue MOB_WEAPON_SOOT_REDUCTION;
+    public static ForgeConfigSpec.BooleanValue ENABLE_GLYPHID_HIVES;
+    public static ForgeConfigSpec.IntValue GLYPHID_HIVE_SPAWN_CHUNKS;
+    public static ForgeConfigSpec.BooleanValue GLYPHID_WAYPOINT_DEBUG;
     public static ForgeConfigSpec.DoubleValue GLYPHID_TARGETING_THRESHOLD;
     public static ForgeConfigSpec.BooleanValue RAMPANT_MODE;
     public static ForgeConfigSpec.BooleanValue RAMPANT_NATURAL_SCOUT_SPAWN;
@@ -39,6 +46,21 @@ public final class RadiationConfig {
     public static ForgeConfigSpec.BooleanValue RAMPANT_DIG;
     public static ForgeConfigSpec.BooleanValue RAMPANT_GLYPHID_GUIDANCE;
     public static ForgeConfigSpec.DoubleValue RAMPANT_SMOKE_STACK_OVERRIDE;
+    public static ForgeConfigSpec.DoubleValue GLYPHID_SPAWN_MAX;
+    public static ForgeConfigSpec.DoubleValue GLYPHID_SCOUT_THRESHOLD;
+    public static ForgeConfigSpec.IntValue GLYPHID_SCOUT_SWARM_SPAWN_CHANCE;
+    public static ForgeConfigSpec.IntValue GLYPHID_BASE_SWARM_SIZE;
+    public static ForgeConfigSpec.DoubleValue GLYPHID_SWARM_SCALING_MULT;
+    public static ForgeConfigSpec.IntValue GLYPHID_SOOT_STEP;
+    public static ForgeConfigSpec.IntValue GLYPHID_SWARM_COOLDOWN_SECONDS;
+    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> GLYPHID_CHANCE;
+    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> GLYPHID_BRAWLER_CHANCE;
+    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> GLYPHID_BOMBARDIER_CHANCE;
+    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> GLYPHID_BLASTER_CHANCE;
+    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> GLYPHID_DIGGER_CHANCE;
+    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> GLYPHID_BEHEMOTH_CHANCE;
+    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> GLYPHID_BRENDA_CHANCE;
+    public static ForgeConfigSpec.ConfigValue<List<? extends Integer>> GLYPHID_NUCLEAR_CHANCE;
 
     public static ForgeConfigSpec.BooleanValue DISABLE_ASBESTOS;
     public static ForgeConfigSpec.BooleanValue DISABLE_BLINDING;
@@ -134,6 +156,21 @@ public final class RadiationConfig {
         ENABLE_MOB_GEAR = builder
                 .comment("Legacy MobConfig 12.D01_enableMobGear: allows naturally spawning mobs to receive old HBM gear branches.")
                 .define("enableMobGear", true);
+        ENABLE_MOB_WEAPONS = builder
+                .comment("Legacy MobConfig 12.D02_enableMobWeapons: lets high-soot Skeletons replace bows with Sedna guns.")
+                .define("enableMobWeapons", true);
+        MOB_WEAPON_SOOT_REDUCTION = builder
+                .comment("Legacy MobConfig 12.D03_mobWeaponSootReduction: subtracts soot before Skeleton gun selection.")
+                .defineInRange("mobWeaponSootReduction", 0.0D, -Double.MAX_VALUE, Double.MAX_VALUE);
+        ENABLE_GLYPHID_HIVES = builder
+                .comment("Legacy MobConfig 12.G00_enableHives: allows ordinary overworld Glyphid hive generation.")
+                .define("enableGlyphidHives", true);
+        GLYPHID_HIVE_SPAWN_CHUNKS = builder
+                .comment("Legacy MobConfig 12.G01_hiveSpawn: average generated chunks per ordinary Glyphid hive.")
+                .defineInRange("glyphidHiveSpawnChunks", 256, 1, Integer.MAX_VALUE);
+        GLYPHID_WAYPOINT_DEBUG = builder
+                .comment("Legacy MobConfig 12.G13_waypointDebug: shows client-side Glyphid waypoint tower particles.")
+                .define("glyphidWaypointDebug", false);
         GLYPHID_TARGETING_THRESHOLD = builder
                 .comment("Legacy MobConfig 12.G08_targetingThreshold: soot required for glyphids' extended targeting range.")
                 .defineInRange("glyphidTargetingThreshold", 1.0D, 0.0D, Double.MAX_VALUE);
@@ -161,6 +198,35 @@ public final class RadiationConfig {
         RAMPANT_SMOKE_STACK_OVERRIDE = builder
                 .comment("Legacy MobConfig 12.R06_rampantSmokeStackOverride: chimney pollution multiplier during rampant mode.")
                 .defineInRange("rampantSmokeStackOverride", 0.4D, 0.0D, Double.MAX_VALUE);
+        GLYPHID_SPAWN_MAX = builder
+                .comment("Legacy MobConfig 12.G07_spawnMax: global loaded-entity cap for glyphid-spawner swarms.")
+                .defineInRange("glyphidSpawnMax", 50.0D, 0.0D, Double.MAX_VALUE);
+        GLYPHID_SCOUT_THRESHOLD = builder
+                .comment("Legacy MobConfig 12.G02_scoutThreshold: soot required for a spawner scout roll.")
+                .defineInRange("glyphidScoutThreshold", 1.0D, 0.0D, Double.MAX_VALUE);
+        GLYPHID_SCOUT_SWARM_SPAWN_CHANCE = builder
+                .comment("Legacy MobConfig 12.G10_scoutSwarmSpawn: 1 in x source chance is evaluated with nextInt(x + 1).")
+                .defineInRange("glyphidScoutSwarmSpawnChance", 3, 0, Integer.MAX_VALUE);
+        GLYPHID_BASE_SWARM_SIZE = builder
+                .comment("Legacy MobConfig 12.GS01_baseSwarmSize: soot-less glyphid swarm size.")
+                .defineInRange("glyphidBaseSwarmSize", 5, 0, Integer.MAX_VALUE);
+        GLYPHID_SWARM_SCALING_MULT = builder
+                .comment("Legacy MobConfig 12.GS02_swarmScalingMult: swarm-size scaling multiplier.")
+                .defineInRange("glyphidSwarmScalingMult", 1.2D, 0.0D, Double.MAX_VALUE);
+        GLYPHID_SOOT_STEP = builder
+                .comment("Legacy MobConfig 12.GS03_sootStep: soot denominator for swarm-size scaling.")
+                .defineInRange("glyphidSootStep", 50, 1, Integer.MAX_VALUE);
+        GLYPHID_SWARM_COOLDOWN_SECONDS = builder
+                .comment("Legacy MobConfig 12.GS04_swarmCooldown: spawner cooldown in seconds; runtime converts it to ticks.")
+                .defineInRange("glyphidSwarmCooldownSeconds", 120, 1, Integer.MAX_VALUE);
+        GLYPHID_CHANCE = glyphidChance(builder, "glyphidChance", "12.GC01_glyphidChance", List.of(50, -45, 0));
+        GLYPHID_BRAWLER_CHANCE = glyphidChance(builder, "glyphidBrawlerChance", "12.GC02_brawlerChance", List.of(10, 30, 1));
+        GLYPHID_BOMBARDIER_CHANCE = glyphidChance(builder, "glyphidBombardierChance", "12.GC03_bombardierChance", List.of(20, -15, 1));
+        GLYPHID_BLASTER_CHANCE = glyphidChance(builder, "glyphidBlasterChance", "12.GC04_blasterChance", List.of(-5, 40, 5));
+        GLYPHID_DIGGER_CHANCE = glyphidChance(builder, "glyphidDiggerChance", "12.GC05_diggerChance", List.of(-15, 25, 5));
+        GLYPHID_BEHEMOTH_CHANCE = glyphidChance(builder, "glyphidBehemothChance", "12.GC06_behemothChance", List.of(-30, 45, 10));
+        GLYPHID_BRENDA_CHANCE = glyphidChance(builder, "glyphidBrendaChance", "12.GC07_brendaChance", List.of(-50, 60, 20));
+        GLYPHID_NUCLEAR_CHANCE = glyphidChance(builder, "glyphidNuclearChance", "12.GC08_johnsonChance", List.of(-50, 60, 50));
         builder.pop();
 
         builder.push("hazards");
@@ -292,6 +358,26 @@ public final class RadiationConfig {
         return ENABLE_MOB_GEAR.get();
     }
 
+    public static boolean mobWeaponsEnabled() {
+        return ENABLE_MOB_WEAPONS.get();
+    }
+
+    public static float mobWeaponSootReduction() {
+        return MOB_WEAPON_SOOT_REDUCTION.get().floatValue();
+    }
+
+    public static boolean glyphidHivesEnabled() {
+        return ENABLE_GLYPHID_HIVES.get();
+    }
+
+    public static int glyphidHiveSpawnChunks() {
+        return GLYPHID_HIVE_SPAWN_CHUNKS.get();
+    }
+
+    public static boolean glyphidWaypointDebugEnabled() {
+        return GLYPHID_WAYPOINT_DEBUG.get();
+    }
+
     public static float glyphidTargetingThreshold() {
         return GLYPHID_TARGETING_THRESHOLD.get().floatValue();
     }
@@ -326,6 +412,57 @@ public final class RadiationConfig {
 
     public static double rampantSmokeStackOverride() {
         return RAMPANT_SMOKE_STACK_OVERRIDE.get();
+    }
+
+    public static double glyphidSpawnMax() { return GLYPHID_SPAWN_MAX.get(); }
+
+    /**
+     * The legacy rampant aggregate toggle made the first scout roll effectively
+     * unconditional by assigning {@code scoutThreshold = 0.1}.
+     */
+    public static double glyphidScoutThreshold() {
+        return rampantModeEnabled() ? 0.1D : GLYPHID_SCOUT_THRESHOLD.get();
+    }
+
+    /**
+     * The old runtime rolls {@code nextInt(chance + 1)}; Rampant Mode assigns
+     * one here, preserving its one-in-two first-scout result.
+     */
+    public static int glyphidScoutSwarmSpawnChance() {
+        return rampantModeEnabled() ? 1 : GLYPHID_SCOUT_SWARM_SPAWN_CHANCE.get();
+    }
+    public static int glyphidBaseSwarmSize() { return GLYPHID_BASE_SWARM_SIZE.get(); }
+    public static double glyphidSwarmScalingMultiplier() { return GLYPHID_SWARM_SCALING_MULT.get(); }
+    public static int glyphidSootStep() { return GLYPHID_SOOT_STEP.get(); }
+    public static int glyphidSwarmCooldownTicks() { return GLYPHID_SWARM_COOLDOWN_SECONDS.get() * 20; }
+    public static int[] glyphidChance() { return chanceArray(GLYPHID_CHANCE, 50, -45, 0); }
+    public static int[] glyphidBrawlerChance() { return chanceArray(GLYPHID_BRAWLER_CHANCE, 10, 30, 1); }
+    public static int[] glyphidBombardierChance() {
+        int[] chance = chanceArray(GLYPHID_BOMBARDIER_CHANCE, 20, -15, 1);
+        // MobConfig#loadFromConfig only relaxes the default one-soot minimum.
+        if (rampantModeEnabled() && chance[2] == 1) {
+            chance[2] = 0;
+        }
+        return chance;
+    }
+    public static int[] glyphidBlasterChance() { return chanceArray(GLYPHID_BLASTER_CHANCE, -5, 40, 5); }
+    public static int[] glyphidDiggerChance() { return chanceArray(GLYPHID_DIGGER_CHANCE, -15, 25, 5); }
+    public static int[] glyphidBehemothChance() { return chanceArray(GLYPHID_BEHEMOTH_CHANCE, -30, 45, 10); }
+    public static int[] glyphidBrendaChance() { return chanceArray(GLYPHID_BRENDA_CHANCE, -50, 60, 20); }
+    public static int[] glyphidNuclearChance() { return chanceArray(GLYPHID_NUCLEAR_CHANCE, -50, 60, 50); }
+
+    private static ForgeConfigSpec.ConfigValue<List<? extends Integer>> glyphidChance(ForgeConfigSpec.Builder builder,
+            String key, String legacyKey, List<Integer> defaults) {
+        return builder.comment("Legacy MobConfig " + legacyKey
+                        + ": [base chance, soot modifier, minimum soot]. Exactly three integers are required.")
+                .defineList(key, defaults, value -> value instanceof Integer);
+    }
+
+    private static int[] chanceArray(ForgeConfigSpec.ConfigValue<List<? extends Integer>> configured,
+            int first, int second, int third) {
+        List<? extends Integer> values = configured.get();
+        if (values.size() != 3) return new int[] {first, second, third};
+        return new int[] {values.get(0), values.get(1), values.get(2)};
     }
 
     public static double chimneyPollutionMultiplier(boolean industrial) {

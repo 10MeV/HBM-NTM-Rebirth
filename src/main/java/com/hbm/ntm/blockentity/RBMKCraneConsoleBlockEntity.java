@@ -12,6 +12,7 @@ import com.hbm.ntm.neutron.RBMKFuelRodState;
 import com.hbm.ntm.neutron.RBMKStructureDimensions;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -272,7 +273,7 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
     }
 
     public double getViewDistance() {
-        return Math.sqrt(RBMKCranePlanner.MAX_RENDER_DISTANCE_SQ);
+        return HbmModelRenderDistances.BLOCKS;
     }
 
     @Override

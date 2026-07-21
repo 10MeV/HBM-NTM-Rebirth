@@ -43,7 +43,7 @@ public class LiquidatorArmorItem extends ArmorFSB {
                 ArmorModHandler.fixedUUIDs[legacySlot], "Liquidator armor modifier", 100.0D,
                 AttributeModifier.Operation.ADDITION));
         builder.put(Attributes.MOVEMENT_SPEED, new AttributeModifier(
-                ArmorModHandler.UUIDs[legacySlot], "Liquidator armor modifier", -0.1D,
+                ArmorModHandler.fixedUUIDs[legacySlot], "Liquidator armor modifier", -0.1D,
                 AttributeModifier.Operation.MULTIPLY_BASE));
         return builder.build();
     }

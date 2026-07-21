@@ -1,7 +1,6 @@
 package com.hbm.ntm.entity.missile;
 
 import com.hbm.ntm.api.entity.LegacyMissileRadarProfile;
-import com.hbm.ntm.compat.CompatCustomWarheadRegistry;
 import com.hbm.ntm.explosion.CustomMissileExplosion;
 import com.hbm.ntm.explosion.ExplosionLarge;
 import com.hbm.ntm.item.missile.CustomMissilePartProfile;
@@ -49,17 +48,10 @@ public class CustomMissileEntity extends MissileEntity {
         setPartValue(THRUSTER, assembly.thruster());
         setFuel(assembly.fuselage().profile().fuel());
         setConsumption(assembly.thruster().profile().consumption());
-        setHealth(assembly.entityHealth());
     }
 
     @Override
     public void tick() {
-        CustomMissilePartProfile warhead = warheadProfile();
-        if (warhead != null && warhead.warheadType() != null) {
-            CompatCustomWarheadRegistry.runUpdate(new CompatCustomWarheadRegistry.WarheadContext(
-                    level(), getX(), getY(), getZ(), getDeltaMovement(), warhead.strength(),
-                    warhead.warheadType(), this));
-        }
         if (!level().isClientSide && hasPropulsion()) {
             setFuel(fuel() - consumption());
         }
@@ -83,11 +75,14 @@ public class CustomMissileEntity extends MissileEntity {
 
     @Override
     public void killMissile() {
-        if (!level().isClientSide) {
+        // EntityMissileCustom#killMissile marks itself dead before running its
+        // destruction blast.  discard is deferred in 1.20.1, so use the base
+        // immediate legacy-isDead bridge rather than isRemoved as the re-entry
+        // guard while this explosion is still enumerating entities.
+        if (beginDestruction()) {
             ExplosionLarge.explode(level(), getX(), getY(), getZ(), 5.0F, true, false, true, this);
             ExplosionLarge.spawnShrapnelShower(level(), getX(), getY(), getZ(),
                     getDeltaMovement().x, getDeltaMovement().y, getDeltaMovement().z, 15, 0.075D, this);
-            discard();
         }
     }
 
@@ -97,18 +92,18 @@ public class CustomMissileEntity extends MissileEntity {
         if (type == null) {
             return;
         }
-        Vec3 trail = new Vec3(xo - getX(), yo - getY(), zo - getZ());
-        double len = trail.length();
-        Vec3 direction = len > 1.0E-7D ? trail.normalize() : Vec3.ZERO;
-        int count = Math.max(Math.min((int) len, 10), 1);
-        for (int i = 0; i < count; i++) {
+        Vec3 motion = getDeltaMovement();
+        Vec3 direction = motion.lengthSqr() > 1.0E-7D ? motion.normalize() : Vec3.ZERO;
+        // EntityMissileCustom emits one particle per integer below its unscaled
+        // EntityThrowableNT motion multiplier.  Using travelled distance changes
+        // the plume whenever the base missile's velocity multiplier changes.
+        for (int i = 0; i < flightVelocity(); i++) {
             CompoundTag data = new CompoundTag();
             data.putString("type", type);
-            double j = i - len;
             ParticleUtil.spawnAux(level(),
-                    getX() - direction.x * j,
-                    getY() - direction.y * j,
-                    getZ() - direction.z * j,
+                    getX() - direction.x * i,
+                    getY() - direction.y * i,
+                    getZ() - direction.z * i,
                     data, 150.0D);
         }
     }

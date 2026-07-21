@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["PSP", "P P"],
+  "key": { "P": { "tag": "forge:plates/steel" }, "S": { "item": "hbm_ntm_rebirth:steel_scaffold" } },
+  "result": { "item": "hbm_ntm_rebirth:mp_stability_10_flat" }
+}

@@ -136,8 +136,9 @@ public final class MachinePollutionBuffers implements IFluidStandardSender {
         return switch (type) {
             case SOOT -> smoke;
             case HEAVYMETAL -> smoke_leaded;
-            case POISON -> smoke_poison;
-            case FALLOUT -> null;
+            // Legacy TileEntityMachinePolluting routed its final catch-all
+            // branch, including FALLOUT, through the poison-smoke tank.
+            case POISON, FALLOUT -> smoke_poison;
         };
     }
 

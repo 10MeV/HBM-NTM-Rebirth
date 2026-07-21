@@ -33,7 +33,7 @@ public class HbmFueledAbilityToolItem extends HbmAbilityToolItem implements IFil
     private final int fillRate;
     private final Set<FluidType> acceptedFuels;
 
-    private HbmFueledAbilityToolItem(float attackDamageModifier, double movementModifier, Tier tier,
+    protected HbmFueledAbilityToolItem(float attackDamageModifier, double movementModifier, Tier tier,
                                      List<TagKey<Block>> mineableBlocks, Properties properties,
                                      int maxFuel, int consumption, int fillRate, FluidType... acceptedFuels) {
         super(attackDamageModifier, movementModifier, tier, mineableBlocks, properties);
@@ -57,33 +57,34 @@ public class HbmFueledAbilityToolItem extends HbmAbilityToolItem implements IFil
 
     @Override
     public void hurtAbilityTool(ItemStack stack, Player player) {
-        if (!player.getAbilities().instabuild) {
-            setFill(stack, Math.max(getFill(stack) - consumption, 0));
-        }
+        setFill(stack, Math.max(getFill(stack) - consumption, 0));
     }
 
     @Override
     public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
         if (!canOperate(stack)) {
-            return false;
+            // Legacy ItemToolAbilityFueled delegates the unpowered path to ItemTool, whose damageItem(1)
+            // still invokes its fuel-backed setDamage override.  Keep the normal bare-hand-speed mining
+            // gate from HbmAbilityToolItem, but consume a final partial fuel charge once the block breaks.
+            if (!level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F) {
+                consumeFuelForUse(stack, entity);
+            }
+            return true;
         }
         boolean mined = super.mineBlock(stack, level, state, pos, entity);
-        if (mined && !level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F && entity instanceof Player player) {
-            hurtAbilityTool(stack, player);
+        if (mined && !level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F) {
+            consumeFuelForUse(stack, entity);
         }
         return mined;
     }
 
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity victim, LivingEntity attacker) {
-        boolean operated = canOperate(stack);
         boolean result = super.hurtEnemy(stack, victim, attacker);
-        if (operated && !attacker.level().isClientSide) {
-            if (attacker instanceof Player player) {
-                hurtAbilityTool(stack, player);
-            } else {
-                setFill(stack, Math.max(getFill(stack) - consumption, 0));
-            }
+        // ItemToolAbility#hitEntity always calls damageItem(1), even when canOperate() is false;
+        // the legacy fueled override converts that damage into fuel consumption and clamps it to zero.
+        if (!attacker.level().isClientSide) {
+            consumeFuelForUse(stack, attacker);
         }
         return result;
     }
@@ -120,7 +121,7 @@ public class HbmFueledAbilityToolItem extends HbmAbilityToolItem implements IFil
 
     @Override
     public boolean acceptsFluid(FluidType type, ItemStack stack) {
-        return acceptedFuels.contains(type) && getFill(stack) < maxFuel;
+        return acceptedFuels.contains(type);
     }
 
     @Override
@@ -175,6 +176,14 @@ public class HbmFueledAbilityToolItem extends HbmAbilityToolItem implements IFil
 
     public int getMaxFuel() {
         return maxFuel;
+    }
+
+    private void consumeFuelForUse(ItemStack stack, LivingEntity user) {
+        if (user instanceof Player player) {
+            hurtAbilityTool(stack, player);
+        } else {
+            setFill(stack, Math.max(getFill(stack) - consumption, 0));
+        }
     }
 
     @Override

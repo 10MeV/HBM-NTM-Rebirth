@@ -2,10 +2,12 @@ package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.config.HbmClientConfig;
+import com.hbm.ntm.config.RtgConfig;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.fluid.HbmFluidCompressorRecipes;
 import com.hbm.ntm.item.ConveyorWandItem;
 import com.hbm.ntm.item.DepletedFuelItem;
+import com.hbm.ntm.item.DroneItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidDuctVariantBlockItem;
 import com.hbm.ntm.item.FluidIconItem;
@@ -67,15 +69,18 @@ import com.hbm.ntm.satellite.SatelliteChipItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.ingredients.subtypes.IIngredientSubtypeInterpreter;
 import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
+import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
+import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -182,8 +187,10 @@ public final class HbmJeiPlugin implements IModPlugin {
                     CrucibleCastingRecipeCategory.DisplayRecipe.class);
     public static final RecipeType<RadiolysisRecipes.DisplayRecipe> RADIOLYSIS =
             RecipeType.create(HbmNtm.MOD_ID, "radiolysis", RadiolysisRecipes.DisplayRecipe.class);
-    public static final RecipeType<ElectrolyserRecipeRuntime.DisplayRecipe> ELECTROLYSER =
-            RecipeType.create(HbmNtm.MOD_ID, "electrolyser", ElectrolyserRecipeRuntime.DisplayRecipe.class);
+    public static final RecipeType<ElectrolyserRecipeRuntime.DisplayRecipe> ELECTROLYSER_FLUID =
+            RecipeType.create(HbmNtm.MOD_ID, "electrolysis_fluid", ElectrolyserRecipeRuntime.DisplayRecipe.class);
+    public static final RecipeType<ElectrolyserRecipeRuntime.DisplayRecipe> ELECTROLYSER_METAL =
+            RecipeType.create(HbmNtm.MOD_ID, "electrolysis_metal", ElectrolyserRecipeRuntime.DisplayRecipe.class);
     public static final RecipeType<DeuteriumTowerRecipeRuntime.DisplayRecipe> DEUTERIUM_TOWER =
             RecipeType.create(HbmNtm.MOD_ID, "deuterium_tower", DeuteriumTowerRecipeRuntime.DisplayRecipe.class);
     public static final RecipeType<OreSlopperRecipeRuntime.DisplayRecipe> ORE_SLOPPER =
@@ -236,10 +243,6 @@ public final class HbmJeiPlugin implements IModPlugin {
     public static final RecipeType<GrenadeRecipeCategory.DisplayRecipe> GRENADE =
             RecipeType.create(HbmNtm.MOD_ID, "ntm_grenade",
                     GrenadeRecipeCategory.DisplayRecipe.class);
-    public static final RecipeType<SatelliteCargoRecipeCategory.DisplayRecipe> SATELLITE_CARGO =
-            RecipeType.create(HbmNtm.MOD_ID, "ntm_satellite",
-                    SatelliteCargoRecipeCategory.DisplayRecipe.class);
-
     @Override
     public ResourceLocation getPluginUid() {
         return new ResourceLocation(HbmNtm.MOD_ID, "jei_plugin");
@@ -253,6 +256,16 @@ public final class HbmJeiPlugin implements IModPlugin {
         }
         for (RegistryObject<? extends net.minecraft.world.level.block.Block> block : ModBlocks.BLOCKS.getEntries()) {
             registerHbmSubtype(registration, seen, block.get().asItem());
+        }
+    }
+
+    @Override
+    public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
+        List<ItemStack> hidden = LegacyJeiVisibility.hiddenRuntimeItems(
+                jeiRuntime.getIngredientManager().getAllItemStacks());
+        if (!hidden.isEmpty()) {
+            jeiRuntime.getIngredientManager().removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hidden);
+            HbmNtm.LOGGER.info("JEI hid {} legacy-internal item stacks.", hidden.size());
         }
     }
 
@@ -337,7 +350,10 @@ public final class HbmJeiPlugin implements IModPlugin {
                         guiHelper),
                 new CrucibleCastingRecipeCategory(CRUCIBLE_CASTING, ModBlocks.FOUNDRY_MOLD.get(), guiHelper),
                 new RadiolysisRecipeCategory(RADIOLYSIS, ModBlocks.MACHINE_RADIOLYSIS.get(), guiHelper),
-                new ElectrolyserRecipeCategory(ELECTROLYSER, ModBlocks.MACHINE_ELECTROLYSER.get(), guiHelper),
+                new ElectrolyserRecipeCategory(ELECTROLYSER_FLUID, ElectrolyserRecipeCategory.Mode.FLUID,
+                        ModBlocks.MACHINE_ELECTROLYSER.get(), guiHelper),
+                new ElectrolyserRecipeCategory(ELECTROLYSER_METAL, ElectrolyserRecipeCategory.Mode.METAL,
+                        ModBlocks.MACHINE_ELECTROLYSER.get(), guiHelper),
                 new DeuteriumTowerRecipeCategory(DEUTERIUM_TOWER,
                         ModBlocks.MACHINE_DEUTERIUM_EXTRACTOR.get(), guiHelper),
                 new OreSlopperRecipeCategory(ORE_SLOPPER, ModBlocks.MACHINE_ORE_SLOPPER.get(), guiHelper),
@@ -345,7 +361,6 @@ public final class HbmJeiPlugin implements IModPlugin {
                 new WoodBurnerRecipeCategory(WOOD_BURNER, ModBlocks.MACHINE_WOOD_BURNER.get(), guiHelper),
                 new TurbofanFuelRecipeCategory(TURBOFAN, ModBlocks.MACHINE_TURBOFAN.get(), guiHelper),
                 new TurbineGasFuelRecipeCategory(TURBINE_GAS, ModBlocks.MACHINE_TURBINEGAS.get(), guiHelper),
-                new RtgFuelRecipeCategory(RTG, ModBlocks.MACHINE_RTG_GREY.get(), guiHelper),
                 new ResearchReactorFuelRecipeCategory(RESEARCH_REACTOR, ModBlocks.REACTOR_RESEARCH.get(),
                         guiHelper),
                 new BreedingReactorRecipeCategory(BREEDING_REACTOR,
@@ -367,8 +382,11 @@ public final class HbmJeiPlugin implements IModPlugin {
                 new ToolingRecipeCategory(TOOLING, ModItems.BOLTGUN.get(), guiHelper),
                 new ConstructionRecipeCategory(CONSTRUCTION, ModItems.BOLTGUN.get(), guiHelper),
                 new GrenadeRecipeCategory(GRENADE,
-                        net.minecraft.world.level.block.Blocks.CRAFTING_TABLE, guiHelper),
-                new SatelliteCargoRecipeCategory(SATELLITE_CARGO, ModBlocks.SAT_DOCK.get(), guiHelper));
+                        net.minecraft.world.level.block.Blocks.CRAFTING_TABLE, guiHelper));
+        if (RtgConfig.doRtgsDecay()) {
+            registration.addRecipeCategories(new RtgFuelRecipeCategory(RTG, ModBlocks.MACHINE_RTG_GREY.get(),
+                    guiHelper));
+        }
     }
 
     @Override
@@ -422,14 +440,23 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipes(CRUCIBLE_SMELTING, CrucibleSmeltingRecipeRuntime.displayRecipes(recipeManager));
         registration.addRecipes(CRUCIBLE_CASTING, CrucibleCastingRecipeCategory.recipes());
         registration.addRecipes(RADIOLYSIS, RadiolysisRecipes.displayRecipes(recipeManager));
-        registration.addRecipes(ELECTROLYSER, ElectrolyserRecipeRuntime.displayRecipes(recipeManager));
+        List<ElectrolyserRecipeRuntime.DisplayRecipe> electrolyserRecipes =
+                ElectrolyserRecipeRuntime.displayRecipes(recipeManager);
+        registration.addRecipes(ELECTROLYSER_FLUID, electrolyserRecipes.stream()
+                .filter(ElectrolyserRecipeRuntime.DisplayRecipe::isFluid)
+                .toList());
+        registration.addRecipes(ELECTROLYSER_METAL, electrolyserRecipes.stream()
+                .filter(recipe -> !recipe.isFluid())
+                .toList());
         registration.addRecipes(DEUTERIUM_TOWER, DeuteriumTowerRecipeRuntime.displayRecipes());
         registration.addRecipes(ORE_SLOPPER, OreSlopperRecipeRuntime.displayRecipes());
         registration.addRecipes(RADGEN, RadGenRecipeRuntime.displayRecipes(recipeManager));
         registration.addRecipes(WOOD_BURNER, WoodBurnerRecipeRuntime.displayRecipes());
         registration.addRecipes(TURBOFAN, TurbofanRecipeRuntime.displayRecipes());
         registration.addRecipes(TURBINE_GAS, TurbineGasRecipeRuntime.displayRecipes());
-        registration.addRecipes(RTG, RtgRecipeRuntime.displayRecipes());
+        if (RtgConfig.doRtgsDecay()) {
+            registration.addRecipes(RTG, RtgRecipeRuntime.displayRecipes());
+        }
         registration.addRecipes(RESEARCH_REACTOR, ResearchReactorFuelRuntime.displayFuels());
         registration.addRecipes(BREEDING_REACTOR, BreedingReactorRecipeRuntime.displayRecipes(Minecraft.getInstance().level));
         registration.addRecipes(PWR, PWRFuelRuntime.displayFuels());
@@ -447,12 +474,16 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipes(TOOLING, ToolingRecipeCategory.recipes());
         registration.addRecipes(CONSTRUCTION, ConstructionRecipeCategory.recipes());
         registration.addRecipes(GRENADE, GrenadeRecipeCategory.recipes());
-        registration.addRecipes(SATELLITE_CARGO, SatelliteCargoRecipeCategory.recipes());
     }
 
     @Override
     public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
         registration.addRecipeTransferHandler(new AnvilConstructionRecipeTransferHandler(), ANVIL_CONSTRUCTION);
+    }
+
+    @Override
+    public void registerGuiHandlers(IGuiHandlerRegistration registration) {
+        LegacyJeiGuiInteractions.register(registration);
     }
 
     @Override
@@ -530,7 +561,8 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.FOUNDRY_BASIN.get()), CRUCIBLE_CASTING);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_STRAND_CASTER.get()), CRUCIBLE_CASTING);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_RADIOLYSIS.get()), RADIOLYSIS);
-        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ELECTROLYSER.get()), ELECTROLYSER);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ELECTROLYSER.get()), ELECTROLYSER_FLUID);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ELECTROLYSER.get()), ELECTROLYSER_METAL);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_DEUTERIUM_EXTRACTOR.get()), DEUTERIUM_TOWER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_DEUTERIUM_TOWER.get()), DEUTERIUM_TOWER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_ORE_SLOPPER.get()), ORE_SLOPPER);
@@ -538,8 +570,10 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_WOOD_BURNER.get()), WOOD_BURNER);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_TURBOFAN.get()), TURBOFAN);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_TURBINEGAS.get()), TURBINE_GAS);
-        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_RTG_GREY.get()), RTG);
-        registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_DIFURNACE_RTG.get()), RTG);
+        if (RtgConfig.doRtgsDecay()) {
+            registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_RTG_GREY.get()), RTG);
+            registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_DIFURNACE_RTG.get()), RTG);
+        }
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.REACTOR_RESEARCH.get()), RESEARCH_REACTOR);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_REACTOR_BREEDING.get()), BREEDING_REACTOR);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.PWR_CONTROLLER.get()), PWR);
@@ -573,7 +607,6 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModItems.ACETYLENE_TORCH.get()), CONSTRUCTION);
         registration.addRecipeCatalyst(new ItemStack(net.minecraft.world.level.block.Blocks.CRAFTING_TABLE),
                 GRENADE);
-        registration.addRecipeCatalyst(new ItemStack(ModBlocks.SAT_DOCK.get()), SATELLITE_CARGO);
     }
     private static List<GenericMachineRecipe> sorted(List<GenericMachineRecipe> recipes) {
         return recipes.stream()
@@ -595,8 +628,7 @@ public final class HbmJeiPlugin implements IModPlugin {
     }
 
     private static boolean isVisibleGenericRecipe(GenericMachineRecipe recipe) {
-        return !HbmClientConfig.hideSecretJeiRecipes()
-                || recipe.getPools().stream().noneMatch(pool -> LegacyBlueprintPools.kind(pool) == LegacyBlueprintPools.Kind.SECRET);
+        return LegacyJeiVisibility.isVisibleGenericRecipe(recipe);
     }
 
     private static List<ItemProcessingRecipe> sortedItemProcessing(List<ItemProcessingRecipe> recipes) {
@@ -718,6 +750,11 @@ public final class HbmJeiPlugin implements IModPlugin {
             registration.registerSubtypeInterpreter(item, (stack, context) -> "skin=" + SoyuzRocketItem.getSkin(stack));
         } else if (item instanceof ConveyorWandItem) {
             registration.registerSubtypeInterpreter(item, HbmJeiPlugin::conveyorWandSubtype);
+        } else if (item instanceof DroneItem) {
+            // The five legacy metadata variants are now encoded in droneType NBT.  Without
+            // this interpreter JEI merges them into the default patrol stack, which both
+            // hides the request/express variants and drops their localized search names.
+            registration.registerSubtypeInterpreter(item, HbmJeiPlugin::droneSubtype);
         }
     }
 
@@ -758,6 +795,10 @@ public final class HbmJeiPlugin implements IModPlugin {
         CompoundTag tag = stack.getTag();
         String type = tag == null || !tag.contains("Type") ? "REGULAR" : tag.getString("Type");
         return "type=" + type;
+    }
+
+    private static String droneSubtype(ItemStack stack, UidContext context) {
+        return "type=" + DroneItem.typeOf(stack).serializedName();
     }
 
     private static String satelliteChipSubtype(ISatelliteChip chip, ItemStack stack) {

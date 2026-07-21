@@ -150,13 +150,13 @@ public final class LegacyShredderRecipeImportProvider implements DataProvider {
         ResourceLocation legacyId = normalizeLegacyId(legacyInput.get(0).getAsString());
         int legacyMeta = legacyInput.size() > 2 ? legacyInput.get(2).getAsInt() : 0;
         if (legacyMeta == HbmIngredient.WILDCARD_META) {
-            if (!LegacyMetaItemMappings.variants(legacyId).isEmpty()) {
+            if (!LegacyMetaItemMappings.stacks(legacyId, 1).isEmpty()) {
                 return HbmIngredient.legacyWildcard(legacyId, 1);
             }
             return HbmIngredient.of(legacyItem(legacyId), 1);
         }
         if (legacyMeta != 0) {
-            if (LegacyMetaItemMappings.item(legacyId, legacyMeta).isPresent()) {
+            if (LegacyMetaItemMappings.hasMapping(legacyId, legacyMeta)) {
                 return HbmIngredient.legacyMeta(legacyId, legacyMeta, 1);
             }
             throw new JsonSyntaxException("Missing legacy shredder input meta mapping: "

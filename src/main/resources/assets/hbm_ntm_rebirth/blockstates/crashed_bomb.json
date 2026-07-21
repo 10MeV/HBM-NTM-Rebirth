@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "type=balefire": { "model": "hbm_ntm_rebirth:block/crashed_bomb" },
+    "type=conventional": { "model": "hbm_ntm_rebirth:block/crashed_bomb" },
+    "type=nuke": { "model": "hbm_ntm_rebirth:block/crashed_bomb" },
+    "type=salted": { "model": "hbm_ntm_rebirth:block/crashed_bomb" }
+  }
+}

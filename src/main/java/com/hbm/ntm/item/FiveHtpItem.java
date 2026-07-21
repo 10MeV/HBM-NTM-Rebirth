@@ -31,9 +31,6 @@ public class FiveHtpItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (PotionConfig.hasPotionSickness(player)) {
-            return InteractionResultHolder.fail(stack);
-        }
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(stack);
     }

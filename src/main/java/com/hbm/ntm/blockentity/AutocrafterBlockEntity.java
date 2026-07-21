@@ -176,6 +176,13 @@ public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityMachineAutocrafter subscribes all six adjacent Energy Mk2
+        // positions during every legacy server tick.
+        return true;
+    }
+
+    @Override
     public Component getDisplayName() {
         if (customName != null && !customName.isBlank()) {
             return Component.literal(customName);

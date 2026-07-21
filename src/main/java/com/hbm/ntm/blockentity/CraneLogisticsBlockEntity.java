@@ -1,8 +1,12 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.conveyor.IConveyorBelt;
+import com.hbm.ntm.api.conveyor.ConveyorMath;
+import com.hbm.ntm.api.conveyor.IEnterableBlock;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
+import com.hbm.ntm.item.ItemMachineUpgrade;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.CraneLogisticsMenu;
 import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.network.HbmLegacyBufPacketReceiver;
@@ -12,6 +16,7 @@ import com.hbm.ntm.recipe.ItemProcessingRecipe;
 import com.hbm.ntm.recipe.ItemProcessingRecipeRuntime;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import com.hbm.ntm.util.HbmItemStackUtil;
+import com.hbm.ntm.util.LegacyPatternMatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -19,6 +24,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -32,9 +38,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelProperty;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,6 +52,7 @@ import java.util.List;
 
 public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyControlReceiver,
         HbmLegacyBufPacketReceiver {
+    public static final ModelProperty<CraneRenderData> RENDER_DATA_PROPERTY = new ModelProperty<>();
     private static final String TAG_ITEMS = "items";
     private static final String TAG_INPUT_SIDE = "inputSide";
     private static final String TAG_OUTPUT_OVERRIDE = "CraneOutputOverride";
@@ -68,7 +78,7 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
     private byte mode;
     private boolean lastRedstone;
     private int[] routerModes = new int[6];
-    private byte[] patternModes;
+    private final LegacyPatternMatcher patternMatcher;
 
     public CraneLogisticsBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, Kind.fromBlock(state));
@@ -91,7 +101,7 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         this.itemCapability = LazyOptional.of(() -> items);
         this.inputSide = defaultInput(state);
         this.outputOverride = null;
-        this.patternModes = new byte[Math.max(kind.filterSlots, 1)];
+        this.patternMatcher = new LegacyPatternMatcher(kind.filterSlots);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, CraneLogisticsBlockEntity crane) {
@@ -118,6 +128,27 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         return items;
     }
 
+    public boolean isValidUpgradeForSlot(int slot, ItemStack stack) {
+        return isItemValid(slot, stack);
+    }
+
+    public int getComparatorSignal() {
+        float filled = 0.0F;
+        int nonEmpty = 0;
+        for (int slot = 0; slot < items.getSlots(); slot++) {
+            ItemStack stack = items.getStackInSlot(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            int capacity = Math.min(items.getSlotLimit(slot), stack.getMaxStackSize());
+            if (capacity > 0) {
+                filled += (float) stack.getCount() / capacity;
+            }
+            nonEmpty++;
+        }
+        return Mth.floor(filled / items.getSlots() * 14.0F) + (nonEmpty > 0 ? 1 : 0);
+    }
+
     public Direction getInputSide() {
         return inputSide == null ? Direction.NORTH : inputSide;
     }
@@ -128,6 +159,12 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
 
     public int getOutputOverrideOrdinal() {
         return outputOverride == null ? NO_OVERRIDE : outputOverride.get3DDataValue();
+    }
+
+    @Override
+    public @NotNull ModelData getModelData() {
+        return ModelData.builder().with(RENDER_DATA_PROPERTY, new CraneRenderData(getInputSide(), getOutputSide()))
+                .build();
     }
 
     public boolean isDestroyer() {
@@ -151,25 +188,28 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
     }
 
     public int getPatternMode(int slot) {
-        return slot >= 0 && slot < patternModes.length ? patternModes[slot] : 0;
+        return slot >= 0 && slot < kind.filterSlots
+                ? patternMatcher.getModeIndex(items.getStackInSlot(slot), slot)
+                : -1;
     }
 
     public void cyclePatternMode(int slot) {
-        if (slot < 0 || slot >= patternModes.length) {
+        if (slot < 0 || slot >= kind.filterSlots) {
             return;
         }
-        patternModes[slot] = (byte) ((patternModes[slot] + 1) % 4);
+        patternMatcher.nextMode(items.getStackInSlot(slot), slot);
         setChangedAndUpdate();
     }
 
     public void setPatternStack(int slot, ItemStack stack) {
-        if (slot < 0 || slot >= patternModes.length || slot >= items.getSlots()) {
+        if (slot < 0 || slot >= kind.filterSlots || slot >= items.getSlots()) {
             return;
         }
-        items.setStackInSlot(slot, stack.isEmpty() ? ItemStack.EMPTY : HbmItemStackUtil.carefulCopyWithSize(stack, 1));
+        ItemStack pattern = stack.isEmpty() ? ItemStack.EMPTY : HbmItemStackUtil.carefulCopyWithSize(stack, 1);
+        items.setStackInSlot(slot, pattern);
+        patternMatcher.initPatternSmart(pattern, slot);
         setChangedAndUpdate();
     }
-
     public void setInput(Direction direction) {
         if (direction == null) {
             return;
@@ -211,7 +251,9 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
 
     public boolean canPackageEnter(Direction side) {
         return switch (kind) {
-            case INSERTER, BOXER -> getInputSide() == side;
+            // Legacy CraneInserter/CraneBoxer accept moving packages from every side.
+            // Their package handlers still use the legacy output-side inventory access.
+            case INSERTER, BOXER -> true;
             case ROUTER -> true;
             case UNBOXER -> getOutputSide() == side;
             default -> false;
@@ -306,42 +348,68 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
     }
 
     private void tickExtractor(Level level) {
-        if (level.getGameTime() % 20L != 0L || level.hasNeighborSignal(worldPosition)) {
+        if (level.getGameTime() % ejectionDelay() != 0L || level.hasNeighborSignal(worldPosition)) {
             syncChanged(15);
             return;
         }
+        int amount = ejectionAmount();
         Direction input = getOutputSide();
         Direction output = getInputSide();
         BlockEntity source = level.getBlockEntity(worldPosition.relative(input));
-        if (source == null) {
-            syncChanged(15);
-            return;
-        }
         IConveyorBelt belt = beltAt(worldPosition.relative(output));
-        for (int slot = 0; slot < slotCount(source, input.getOpposite()); slot++) {
-            ItemStack available = extractFrom(source, slot, 1, input.getOpposite(), true);
-            if (available.isEmpty() || !filterAllows(available, 0, 9, whitelist)) {
-                continue;
-            }
-            ItemStack extracted = extractFrom(source, slot, 1, input.getOpposite(), false);
-            if (extracted.isEmpty()) {
-                continue;
-            }
-            if (belt != null) {
-                spawnMovingItem(worldPosition.relative(output), extracted);
-            } else {
-                ItemStack remainder = addToHandlerRange(extracted, 9, 17);
-                if (!remainder.isEmpty()) {
-                    HbmInventoryUtil.dropStack(level, worldPosition, remainder);
+        boolean sent = false;
+        if (source != null) {
+            for (int slot = 0; slot < slotCount(source, input.getOpposite()); slot++) {
+                ItemStack available = stackIn(source, slot, input.getOpposite());
+                if (available.isEmpty() || !filterAllows(available, 0, 9, whitelist)) {
+                    continue;
                 }
+                int targetAmount = Math.min(amount, available.getMaxStackSize());
+                if (maxEject && available.getCount() < targetAmount) {
+                    continue;
+                }
+                int toSend = Math.min(amount, available.getCount());
+                if (belt != null) {
+                    ItemStack extracted = extractFrom(source, slot, toSend, input.getOpposite(), false);
+                    if (!extracted.isEmpty()) {
+                        spawnMovingItemAndEnter(worldPosition.relative(output), extracted, output, output.getOpposite());
+                        sent = true;
+                    }
+                } else {
+                    int accepted = amountAcceptedByHandlerRange(available, 9, 17, toSend);
+                    if (accepted > 0) {
+                        ItemStack extracted = extractFrom(source, slot, accepted, input.getOpposite(), false);
+                        if (!extracted.isEmpty()) {
+                            addToHandlerRange(extracted, 9, 17);
+                        }
+                    }
+                    sent = true;
+                }
+                break;
             }
-            break;
+        }
+        if (!sent && belt != null) {
+            for (int slot = 9; slot < 18; slot++) {
+                ItemStack stack = items.getStackInSlot(slot);
+                if (stack.isEmpty()) {
+                    continue;
+                }
+                int targetAmount = Math.min(amount, stack.getMaxStackSize());
+                if (maxEject && stack.getCount() < targetAmount) {
+                    continue;
+                }
+                ItemStack extracted = items.extractItem(slot, Math.min(amount, stack.getCount()), false);
+                if (!extracted.isEmpty()) {
+                    spawnMovingItem(worldPosition.relative(output), extracted, output);
+                }
+                break;
+            }
         }
         syncChanged(15);
     }
 
     private void tickGrabber(Level level) {
-        if (level.getGameTime() < lastGrabbedTick + 20L || level.hasNeighborSignal(worldPosition)) {
+        if (level.getGameTime() < lastGrabbedTick + ejectionDelay() || level.hasNeighborSignal(worldPosition)) {
             syncChanged(15);
             return;
         }
@@ -356,6 +424,7 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         }
         IConveyorBelt belt = beltAt(worldPosition.relative(output));
         BlockEntity target = belt == null ? level.getBlockEntity(worldPosition.relative(output)) : null;
+        int remainingAmount = ejectionAmount();
         for (MovingItemEntity moving : movingItems) {
             ItemStack stack = moving.getItemStack();
             if (!filterAllows(stack, 0, 9, whitelist)) {
@@ -363,10 +432,11 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
             }
             lastGrabbedTick = level.getGameTime();
             if (belt != null) {
-                spawnMovingItem(worldPosition.relative(output), stack.copy());
+                spawnMovingItem(worldPosition.relative(output), stack.copy(), output);
                 moving.discard();
+                break;
             } else if (target != null) {
-                ItemStack toAdd = HbmItemStackUtil.carefulCopyWithSize(stack, Math.min(1, stack.getCount()));
+                ItemStack toAdd = HbmItemStackUtil.carefulCopyWithSize(stack, Math.min(remainingAmount, stack.getCount()));
                 ItemStack remainder = insertInto(target, toAdd, output.getOpposite());
                 int added = toAdd.getCount() - remainder.getCount();
                 if (added > 0) {
@@ -376,8 +446,11 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
                         moving.discard();
                     }
                 }
+                remainingAmount -= added;
+                if (remainingAmount <= 0) {
+                    break;
+                }
             }
-            break;
         }
         syncChanged(15);
     }
@@ -401,7 +474,7 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
                     fullStacks++;
                 }
             }
-            if (fullStacks >= pack) {
+            if (fullStacks >= pack && beltAt(worldPosition.relative(getOutputSide())) != null) {
                 ItemStack[] box = new ItemStack[pack];
                 for (int i = 0; i < 21 && pack > 0; i++) {
                     ItemStack stack = items.getStackInSlot(i);
@@ -410,14 +483,14 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
                         items.setStackInSlot(i, ItemStack.EMPTY);
                     }
                 }
-                spawnMovingPackage(worldPosition.relative(getOutputSide()), box);
+                spawnMovingPackage(worldPosition.relative(getOutputSide()), box, getOutputSide());
             }
         }
         syncChanged(15);
     }
 
     private void tickUnboxer(Level level) {
-        if (level.getGameTime() % 20L != 0L || level.hasNeighborSignal(worldPosition)) {
+        if (level.getGameTime() % ejectionDelay() != 0L || level.hasNeighborSignal(worldPosition)) {
             return;
         }
         Direction output = getInputSide();
@@ -429,9 +502,10 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
             if (stack.isEmpty()) {
                 continue;
             }
-            ItemStack toSend = HbmItemStackUtil.carefulCopyWithSize(stack, 1);
-            items.extractItem(i, 1, false);
-            spawnMovingItem(worldPosition.relative(output), toSend);
+            int toSendCount = Math.min(ejectionAmount(), stack.getCount());
+            ItemStack toSend = HbmItemStackUtil.carefulCopyWithSize(stack, toSendCount);
+            items.extractItem(i, toSendCount, false);
+            spawnMovingItem(worldPosition.relative(output), toSend, output);
             break;
         }
     }
@@ -474,7 +548,7 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
             }
         }
         if (!box.isEmpty()) {
-            spawnMovingPackage(worldPosition.relative(getOutputSide()), box.toArray(new ItemStack[0]));
+            spawnMovingPackage(worldPosition.relative(getOutputSide()), box.toArray(new ItemStack[0]), getOutputSide());
         }
     }
 
@@ -522,14 +596,32 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
                 for (ItemStack stack : sorted[i]) {
                     HbmInventoryUtil.dropStack(level, worldPosition, stack);
                 }
-            } else if (packageMode) {
-                spawnMovingPackage(worldPosition.relative(direction), sorted[i].toArray(new ItemStack[0]));
             } else {
-                for (ItemStack stack : sorted[i]) {
-                    spawnMovingItem(worldPosition.relative(direction), stack);
+                BlockPos output = worldPosition.relative(direction);
+                if (beltAt(output) != null) {
+                    if (packageMode) {
+                        spawnMovingPackage(output, sorted[i].toArray(new ItemStack[0]), direction);
+                    } else {
+                        for (ItemStack stack : sorted[i]) {
+                            spawnMovingItem(output, stack, direction);
+                        }
+                    }
+                } else {
+                    for (ItemStack stack : sorted[i]) {
+                        dropRouterOutput(direction, stack);
+                    }
                 }
             }
         }
+    }
+
+    private void dropRouterOutput(Direction direction, ItemStack stack) {
+        Vec3 origin = Vec3.atCenterOf(worldPosition);
+        HbmInventoryUtil.dropStack(level,
+                origin.x + direction.getStepX() * 0.55D,
+                origin.y + direction.getStepY() * 0.55D,
+                origin.z + direction.getStepZ() * 0.55D,
+                stack);
     }
 
     @Nullable
@@ -572,19 +664,8 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
     }
 
     private boolean filterMatches(ItemStack filter, ItemStack stack, int slot) {
-        if (filter.isEmpty() || stack.isEmpty()) {
-            return false;
-        }
-        int modeIndex = kind == Kind.ROUTER ? slot : slot - kind.filterStart;
-        int patternMode = getPatternMode(modeIndex);
-        return switch (patternMode) {
-            case 1 -> stack.is(filter.getItem());
-            case 2 -> ItemStack.isSameItemSameTags(stack, filter);
-            case 3 -> stack.getItem() == filter.getItem() && stack.getDamageValue() == filter.getDamageValue();
-            default -> ItemStack.isSameItemSameTags(stack, filter);
-        };
+        return patternMatcher.isValidForFilter(filter, slot, stack);
     }
-
     private void partitionerAccept(ItemStack stack) {
         int amount = partitionerAmount(stack);
         ItemStack remainder = amount > 0 ? addToHandlerRange(stack, 0, 44) : addToHandlerRange(stack, 45, 89);
@@ -621,34 +702,66 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         if (level == null) {
             return null;
         }
-        Block block = level.getBlockState(pos).getBlock();
-        return block instanceof IConveyorBelt belt ? belt : null;
+        return ConveyorMath.conveyorAt(level, pos);
     }
 
     private void spawnMovingItem(BlockPos pos, ItemStack stack) {
+        spawnMovingItem(pos, stack, null);
+    }
+
+    private void spawnMovingItem(BlockPos pos, ItemStack stack, @Nullable Direction approach) {
         if (level == null || stack.isEmpty()) {
             return;
         }
         MovingItemEntity moving = new MovingItemEntity(level, stack);
-        Vec3 snap = snapFor(pos);
+        Vec3 snap = snapFor(pos, approach);
         moving.moveTo(snap.x, snap.y, snap.z, 0.0F, 0.0F);
         level.addFreshEntity(moving);
     }
 
+    private void spawnMovingItemAndEnter(BlockPos pos, ItemStack stack, Direction approach, Direction side) {
+        if (level == null || stack.isEmpty()) {
+            return;
+        }
+        MovingItemEntity moving = new MovingItemEntity(level, stack);
+        Vec3 snap = snapFor(pos, approach);
+        moving.moveTo(snap.x, snap.y, snap.z, 0.0F, 0.0F);
+        level.addFreshEntity(moving);
+
+        IEnterableBlock enterable = ConveyorMath.enterableAt(level, pos);
+        if (enterable != null) {
+            moving.enterBlock(enterable, pos, side);
+        }
+    }
+
     private void spawnMovingPackage(BlockPos pos, ItemStack[] stacks) {
+        spawnMovingPackage(pos, stacks, null);
+    }
+
+    private void spawnMovingPackage(BlockPos pos, ItemStack[] stacks, @Nullable Direction approach) {
         if (level == null || stacks == null || stacks.length == 0 || beltAt(pos) == null) {
             return;
         }
         MovingPackageEntity moving = new MovingPackageEntity(level, stacks);
-        Vec3 snap = snapFor(pos);
+        Vec3 snap = snapFor(pos, approach);
         moving.moveTo(snap.x, snap.y, snap.z, 0.0F, 0.0F);
         level.addFreshEntity(moving);
     }
 
     private Vec3 snapFor(BlockPos pos) {
+        return snapFor(pos, null);
+    }
+
+    private Vec3 snapFor(BlockPos pos, @Nullable Direction approach) {
         IConveyorBelt belt = beltAt(pos);
         Vec3 center = Vec3.atCenterOf(pos);
-        return belt == null ? center : belt.getClosestSnappingPosition(level, pos, center);
+        if (belt == null || approach == null) {
+            return belt == null ? center : belt.getClosestSnappingPosition(level, pos, center);
+        }
+
+        Vec3 incoming = center.subtract(approach.getStepX() * 0.45D,
+                approach.getStepY() * 0.45D, approach.getStepZ() * 0.45D);
+        return belt.getClosestSnappingPosition(level, pos, incoming);
     }
 
     private ItemStack insertInto(BlockEntity target, ItemStack stack, Direction side) {
@@ -673,10 +786,70 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         return handler == null ? ItemStack.EMPTY : handler.extractItem(slot, amount, simulate);
     }
 
+    private ItemStack stackIn(BlockEntity source, int slot, Direction side) {
+        IItemHandler handler = source.getCapability(ForgeCapabilities.ITEM_HANDLER, side).orElse(null);
+        return handler == null ? ItemStack.EMPTY : handler.getStackInSlot(slot);
+    }
+
+    private int amountAcceptedByHandlerRange(ItemStack stack, int start, int end, int amount) {
+        ItemStack remainder = HbmItemStackUtil.carefulCopyWithSize(stack, amount);
+        for (int slot = start; slot <= end && !remainder.isEmpty(); slot++) {
+            remainder = items.insertItem(slot, remainder, true);
+        }
+        return amount - remainder.getCount();
+    }
+
+    private int ejectionDelay() {
+        return switch (upgradeTier(ejectorUpgradeSlot(), UpgradeType.EJECTOR)) {
+            case 1 -> 10;
+            case 2 -> 5;
+            case 3 -> 2;
+            default -> 20;
+        };
+    }
+
+    private int ejectionAmount() {
+        return switch (upgradeTier(stackUpgradeSlot(), UpgradeType.STACK)) {
+            case 1 -> 4;
+            case 2 -> 16;
+            case 3 -> 64;
+            default -> 1;
+        };
+    }
+
+    private int stackUpgradeSlot() {
+        return switch (kind) {
+            case EXTRACTOR -> 18;
+            case GRABBER -> 9;
+            case UNBOXER -> 21;
+            default -> -1;
+        };
+    }
+
+    private int ejectorUpgradeSlot() {
+        return switch (kind) {
+            case EXTRACTOR -> 19;
+            case GRABBER -> 10;
+            case UNBOXER -> 22;
+            default -> -1;
+        };
+    }
+
+    private int upgradeTier(int slot, UpgradeType expectedType) {
+        if (slot < 0 || slot >= items.getSlots()) {
+            return 0;
+        }
+        ItemStack stack = items.getStackInSlot(slot);
+        if (stack.getItem() instanceof ItemMachineUpgrade upgrade && upgrade.getUpgradeType() == expectedType) {
+            return upgrade.getTier();
+        }
+        return 0;
+    }
+
     private AABB grabBox(Direction input) {
         double reach = 1.0D;
         BlockPos target = worldPosition.relative(input);
-        if (level != null) {
+        if (level != null && input.getAxis().isHorizontal()) {
             Block block = level.getBlockState(target).getBlock();
             if (block == ModBlocks.CONVEYOR_DOUBLE.get()) {
                 reach = 0.5D;
@@ -693,19 +866,62 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
 
     private Direction partitionerTravelDirection() {
         BlockState state = getBlockState();
-        return state.hasProperty(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
-                ? state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
+        return state.hasProperty(com.hbm.ntm.block.CraneLogisticsBlock.FACING)
+                ? state.getValue(com.hbm.ntm.block.CraneLogisticsBlock.FACING)
                 : Direction.SOUTH;
     }
 
     private boolean isItemValid(int slot, ItemStack stack) {
         return switch (kind) {
-            case EXTRACTOR -> slot >= 9 && slot < 18;
+            case EXTRACTOR -> (slot >= 9 && slot < 18)
+                    || (slot == 18 && isUpgrade(stack, UpgradeType.STACK))
+                    || (slot == 19 && isUpgrade(stack, UpgradeType.EJECTOR));
+            case GRABBER -> slot < 9
+                    || (slot == 9 && isUpgrade(stack, UpgradeType.STACK))
+                    || (slot == 10 && isUpgrade(stack, UpgradeType.EJECTOR));
+            case UNBOXER -> slot < 21
+                    || (slot == 21 && isUpgrade(stack, UpgradeType.STACK))
+                    || (slot == 22 && isUpgrade(stack, UpgradeType.EJECTOR));
             case PARTITIONER -> slot < 45 && partitionerAmount(stack) > 0;
             default -> true;
         };
     }
 
+    private boolean isUpgrade(ItemStack stack, UpgradeType expectedType) {
+        return stack.getItem() instanceof ItemMachineUpgrade upgrade && upgrade.getUpgradeType() == expectedType;
+    }
+
+    private void writePatternModes(FriendlyByteBuf data) {
+        data.writeVarInt(kind.filterSlots);
+        for (int slot = 0; slot < kind.filterSlots; slot++) {
+            String mode = patternMatcher.getMode(slot);
+            data.writeBoolean(mode != null);
+            if (mode != null) {
+                data.writeUtf(mode);
+            }
+        }
+    }
+
+    private void readPatternModes(FriendlyByteBuf data) {
+        int count = data.readVarInt();
+        for (int slot = 0; slot < kind.filterSlots; slot++) {
+            patternMatcher.setMode(slot, null);
+        }
+        for (int slot = 0; slot < count; slot++) {
+            String mode = data.readBoolean() ? data.readUtf() : null;
+            if (slot < kind.filterSlots) {
+                patternMatcher.setMode(slot, mode);
+            }
+        }
+    }
+
+    private void migrateApproximatePatternModes(byte[] modes) {
+        for (int slot = 0; slot < modes.length && slot < kind.filterSlots; slot++) {
+            patternMatcher.setMode(slot, modes[slot] == 1
+                    ? LegacyPatternMatcher.MODE_WILDCARD
+                    : LegacyPatternMatcher.MODE_EXACT);
+        }
+    }
     private void syncChanged(int range) {
         setChanged();
         networkPackNT(range);
@@ -716,6 +932,15 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         if (level != null && !level.isClientSide) {
             BlockState state = getBlockState();
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
+            level.updateNeighbourForOutputSignal(worldPosition, state.getBlock());
+        }
+    }
+
+    private void refreshCraneModelData() {
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(),
+                    Block.UPDATE_CLIENTS | Block.UPDATE_IMMEDIATE);
         }
     }
 
@@ -762,7 +987,7 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         data.writeBoolean(maxEject);
         data.writeByte(mode);
         data.writeVarIntArray(routerModes);
-        data.writeByteArray(patternModes);
+        writePatternModes(data);
     }
 
     @Override
@@ -776,7 +1001,8 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         maxEject = data.readBoolean();
         mode = data.readByte();
         routerModes = data.readVarIntArray();
-        patternModes = data.readByteArray();
+        readPatternModes(data);
+        refreshCraneModelData();
     }
 
     @Override
@@ -801,11 +1027,17 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
             int[] loaded = tag.getIntArray(TAG_ROUTER_MODES);
             System.arraycopy(loaded, 0, routerModes, 0, Math.min(loaded.length, routerModes.length));
         }
-        if (tag.contains(TAG_PATTERN)) {
-            byte[] loaded = tag.getByteArray(TAG_PATTERN);
-            patternModes = new byte[Math.max(kind.filterSlots, 1)];
-            System.arraycopy(loaded, 0, patternModes, 0, Math.min(loaded.length, patternModes.length));
+        patternMatcher.readFromNbt(tag);
+        if (!tag.contains("mode0") && tag.contains(TAG_PATTERN)) {
+            migrateApproximatePatternModes(tag.getByteArray(TAG_PATTERN));
         }
+        refreshCraneModelData();
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        refreshCraneModelData();
     }
 
     @Override
@@ -821,7 +1053,7 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         tag.putByte(TAG_MODE, mode);
         tag.putBoolean(TAG_LAST_REDSTONE, lastRedstone);
         tag.putIntArray(TAG_ROUTER_MODES, routerModes);
-        tag.putByteArray(TAG_PATTERN, patternModes);
+        patternMatcher.writeToNbt(tag);
     }
 
     @Override
@@ -870,8 +1102,8 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
     }
 
     private static Direction defaultInput(BlockState state) {
-        return state.hasProperty(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
-                ? state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING)
+        return state.hasProperty(com.hbm.ntm.block.CraneLogisticsBlock.FACING)
+                ? state.getValue(com.hbm.ntm.block.CraneLogisticsBlock.FACING)
                 : Direction.NORTH;
     }
 
@@ -911,5 +1143,8 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
             if (state.is(ModBlocks.CRANE_PARTITIONER.get())) return PARTITIONER;
             return EXTRACTOR;
         }
+    }
+
+    public record CraneRenderData(Direction input, Direction output) {
     }
 }

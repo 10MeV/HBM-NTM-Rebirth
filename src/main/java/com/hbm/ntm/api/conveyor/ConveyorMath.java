@@ -1,9 +1,12 @@
 package com.hbm.ntm.api.conveyor;
 
+import com.hbm.ntm.multiblock.DummyBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 
 public final class ConveyorMath {
@@ -197,16 +200,31 @@ public final class ConveyorMath {
     }
 
     public static boolean isConveyor(BlockGetter level, BlockPos pos) {
-        return level.getBlockState(pos).getBlock() instanceof IConveyorBelt;
+        Block block = level.getBlockState(pos).getBlock();
+        return block instanceof DummyBlock
+                ? DummyBlock.forwardsConveyor(level, pos)
+                : block instanceof IConveyorBelt;
     }
 
     public static boolean isEnterable(BlockGetter level, BlockPos pos) {
-        return level.getBlockState(pos).getBlock() instanceof IEnterableBlock;
+        Block block = level.getBlockState(pos).getBlock();
+        return block instanceof DummyBlock
+                ? DummyBlock.forwardsEnterable(level, pos)
+                : block instanceof IEnterableBlock;
     }
 
     public static boolean isConveyorOrEnterable(BlockGetter level, BlockPos pos) {
-        Object block = level.getBlockState(pos).getBlock();
-        return block instanceof IConveyorBelt || block instanceof IEnterableBlock;
+        return isConveyor(level, pos) || isEnterable(level, pos);
+    }
+
+    public static IConveyorBelt conveyorAt(Level level, BlockPos pos) {
+        Block block = level.getBlockState(pos).getBlock();
+        return isConveyor(level, pos) && block instanceof IConveyorBelt belt ? belt : null;
+    }
+
+    public static IEnterableBlock enterableAt(Level level, BlockPos pos) {
+        Block block = level.getBlockState(pos).getBlock();
+        return isEnterable(level, pos) && block instanceof IEnterableBlock enterable ? enterable : null;
     }
 
     public static boolean isLiftTop(BlockGetter level, BlockPos pos) {

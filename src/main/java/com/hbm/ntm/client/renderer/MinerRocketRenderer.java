@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 public class MinerRocketRenderer extends EntityRenderer<MinerRocketEntity> {
     public MinerRocketRenderer(EntityRendererProvider.Context context) {
         super(context);
-        shadowRadius = 0.5F;
+        shadowRadius = 0.0F;
     }
 
     @Override

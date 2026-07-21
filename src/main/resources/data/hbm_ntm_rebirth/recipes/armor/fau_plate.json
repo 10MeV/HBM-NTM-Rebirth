@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "equipment",
+  "key": {
+    "B": { "item": "hbm_ntm_rebirth:starmetal_plate" }, "C": { "item": "hbm_ntm_rebirth:demon_core_closed" },
+    "M": { "item": "hbm_ntm_rebirth:motor_desh" }, "P": { "item": "hbm_ntm_rebirth:plate_armor_fau" },
+    "S": { "item": "hbm_ntm_rebirth:ancient_scrap" }
+  },
+  "pattern": ["MCM", "PBP", "PSP"], "result": { "item": "hbm_ntm_rebirth:fau_plate" }, "show_notification": true
+}

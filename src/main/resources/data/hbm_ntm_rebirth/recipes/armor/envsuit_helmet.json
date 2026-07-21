@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:circuit_chip" },
+    "G": { "tag": "forge:glass_panes" },
+    "R": { "tag": "forge:ingots/rubber" },
+    "T": { "tag": "forge:plates/titanium" }
+  },
+  "pattern": ["TCT", "TGT", "RRR"],
+  "result": { "item": "hbm_ntm_rebirth:envsuit_helmet" },
+  "show_notification": true
+}

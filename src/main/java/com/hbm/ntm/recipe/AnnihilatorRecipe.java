@@ -233,9 +233,9 @@ public class AnnihilatorRecipe implements Recipe<Container> {
         private static AnnihilatorSavedData.PoolKey readComparableKey(JsonObject key) {
             ResourceLocation legacyId = normalizeLegacyItemId(GsonHelper.getAsString(key, "item"));
             int legacyMeta = GsonHelper.getAsInt(key, "meta", 0);
-            Optional<RegistryObject<Item>> mapped = LegacyMetaItemMappings.item(legacyId, legacyMeta);
+            Optional<ItemStack> mapped = LegacyMetaItemMappings.stack(legacyId, legacyMeta, 1);
             if (mapped.isPresent()) {
-                return AnnihilatorSavedData.PoolKey.itemMeta(HbmRegistryUtil.itemKey(mapped.get().get()), 0);
+                return AnnihilatorSavedData.PoolKey.itemMeta(HbmRegistryUtil.itemKey(mapped.get().getItem()), 0);
             }
             return AnnihilatorSavedData.PoolKey.itemMeta(resolveItemKey(legacyId), legacyMeta);
         }

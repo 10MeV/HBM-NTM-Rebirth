@@ -430,8 +430,24 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type == HbmFluids.WATER;
+    }
+
+    /**
+     * Legacy {@code TileEntityMachineCyclotron#updateEntity()} scans all eight
+     * remote Fluid Mk2 endpoints on every server tick.  Keep a replacement
+     * duct retryable on the immediately following tick rather than waiting
+     * for the generic staggered keepalive.
+     */
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

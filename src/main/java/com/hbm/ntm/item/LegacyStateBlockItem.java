@@ -48,6 +48,10 @@ public class LegacyStateBlockItem extends BlockItem {
         return Math.max(0, Math.min(variants - 1, variant));
     }
 
+    public int getVariants() {
+        return variants;
+    }
+
     public BlockState stateForVariant(int variant) {
         int clamped = Math.max(0, Math.min(variants - 1, variant));
         return getBlock().defaultBlockState().setValue(property, clamped);

@@ -52,7 +52,7 @@ public abstract class HbmEnergyNodeBlockEntity extends BlockEntity implements Hb
             return;
         }
         if (energyNode != null) {
-            HbmEnergyNodespace.destroyNode(level, worldPosition);
+            HbmEnergyNodespace.destroyNode(level, energyNode);
             energyNode = null;
         }
         energyNode = HbmEnergyNodespace.createNode(level, createEnergyNode());
@@ -92,7 +92,7 @@ public abstract class HbmEnergyNodeBlockEntity extends BlockEntity implements Hb
             energyNode = null;
             return;
         }
-        HbmEnergyNodespace.destroyNode(level, worldPosition);
+        HbmEnergyNodespace.destroyNode(level, energyNode);
         energyNode = null;
     }
 

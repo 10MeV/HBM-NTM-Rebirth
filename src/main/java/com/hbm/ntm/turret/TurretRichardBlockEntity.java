@@ -71,7 +71,7 @@ public class TurretRichardBlockEntity extends TurretBlockEntityBase {
     }
 
     @Override
-    protected void updateServerTickAfterTargeting() {
+    protected void updateServerTickAfterLegacyNetworkPack() {
         if (reload > 0) {
             reload--;
             if (reload == 0) {

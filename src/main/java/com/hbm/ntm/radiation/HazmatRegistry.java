@@ -100,6 +100,26 @@ public final class HazmatRegistry {
         registerLegacyArmorSet("cmb", cmb);
         registerLegacyArmorSet("schrabidium", schrab);
         registerLegacyArmorSet("euphemium", euph);
+        registerLegacyArmorSet("t51", 1.0D);
+        registerLegacyArmorSet("steamsuit", 1.3D);
+        registerLegacyArmorSet("ajr", 1.3D);
+        registerLegacyArmorSet("ajro", 1.3D);
+        registerLegacyArmorSet("rpa", 2.0D);
+        registerLegacyArmorSet("ncrpa", 1.7D);
+        registerLegacyArmorSet("bj", 1.0D);
+        registerLegacyPiece("bj_plate_jetpack", 1.0D * chest);
+        registerLegacyArmorSet("envsuit", 1.0D);
+        registerLegacyArmorSet("hev", 2.3D);
+        registerLegacyPiece("fau_helmet", 4.0D * helmet);
+        registerLegacyPiece("fau_plate", 4.0D * chest);
+        registerLegacyPiece("fau_legs", 4.0D * legs);
+        registerLegacyPiece("fau_boots", 4.0D * boots);
+        registerLegacyPiece("dns_helmet", 5.0D * helmet);
+        registerLegacyPiece("dns_plate", 5.0D * chest);
+        registerLegacyPiece("dns_legs", 5.0D * legs);
+        registerLegacyPiece("dns_boots", 5.0D * boots);
+        registerLegacyArmorSet("taurun", 0.125D);
+        registerLegacyArmorSet("trenchmaster", 1.0D);
         registerLegacyPiece("paa_plate", paa * chest);
         registerLegacyPiece("paa_legs", paa * legs);
         registerLegacyPiece("paa_boots", paa * boots);
@@ -107,21 +127,6 @@ public final class HazmatRegistry {
         registerLegacyPiece("jackt2", 0.1D);
         registerLegacyPiece("gas_mask", 0.07D);
         registerLegacyPiece("gas_mask_m65", 0.095D);
-
-        registerLegacyFsbArmorSet("t51", 1.0D, ArmorUtil.FULL_NO_LIGHT);
-        registerLegacyFsbArmorSet("steamsuit", 1.3D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("ajr", 1.3D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("ajro", 1.3D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("rpa", 2.0D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("ncrpa", 1.7D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("bj", 1.0D);
-        registerLegacyPiece("bj_plate_jetpack", 1.0D * HazmatRegistry.chest);
-        registerLegacyFsbArmorSet("envsuit", 1.0D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("hev", 2.3D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("fau", 4.0D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("dns", 5.0D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("taurun", 0.125D, ArmorUtil.FULL_PACKAGE);
-        registerLegacyFsbArmorSet("trenchmaster", 1.0D, ArmorUtil.FULL_PACKAGE);
 
         registerDefaultProtections();
     }
@@ -683,13 +688,6 @@ public final class HazmatRegistry {
         registerLegacyPiece(boots, material * HazmatRegistry.boots);
     }
 
-    private static void registerLegacyFsbArmorSet(String prefix, double material, HazardClass... helmetProtections) {
-        registerLegacyArmorSet(prefix, material);
-        if (helmetProtections.length > 0) {
-            registerLegacyProtection(prefix + "_helmet", helmetProtections);
-        }
-    }
-
     private static void registerLegacyPiece(String name, double resistance) {
         RegistryObject<Item> item = ModItems.legacyItem(name);
         if (item != null) {
@@ -730,6 +728,18 @@ public final class HazmatRegistry {
         registerLegacyProtection("hazmat_helmet_grey", HazardClass.SAND);
         registerLegacyProtection("hazmat_paa_helmet", HazardClass.LIGHT, HazardClass.SAND);
         registerLegacyProtection("liquidator_helmet", HazardClass.LIGHT, HazardClass.SAND);
+        registerLegacyProtection("t51_helmet", ArmorRegistry.FULL_NO_LIGHT);
+        registerLegacyProtection("steamsuit_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("ajr_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("ajro_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("rpa_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("ncrpa_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("envsuit_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("hev_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("fau_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("dns_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("taurun_helmet", ArmorRegistry.FULL_PACKAGE);
+        registerLegacyProtection("trenchmaster_helmet", ArmorRegistry.FULL_PACKAGE);
         registerLegacyProtection("schrabidium_helmet",
                 HazardClass.PARTICLE_COARSE,
                 HazardClass.PARTICLE_FINE,

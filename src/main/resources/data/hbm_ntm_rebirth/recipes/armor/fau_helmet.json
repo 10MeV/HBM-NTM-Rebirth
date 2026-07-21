@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "equipment",
+  "key": {
+    "B": { "item": "hbm_ntm_rebirth:starmetal_helmet" }, "F": { "item": "hbm_ntm_rebirth:gas_mask_filter" },
+    "P": { "item": "hbm_ntm_rebirth:plate_armor_fau" }, "S": { "tag": "forge:pipes/steel" },
+    "W": { "item": "minecraft:red_wool" }
+  },
+  "pattern": ["PWP", "PBP", "FSF"], "result": { "item": "hbm_ntm_rebirth:fau_helmet" }, "show_notification": true
+}

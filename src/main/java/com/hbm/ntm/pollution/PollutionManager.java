@@ -1,8 +1,10 @@
 package com.hbm.ntm.pollution;
 
+import com.hbm.entity.mob.glyphid.EntityGlyphid;
 import com.hbm.entity.mob.glyphid.EntityGlyphidDigger;
 import com.hbm.entity.mob.glyphid.EntityGlyphidScout;
 import com.hbm.ntm.config.RadiationConfig;
+import com.hbm.ntm.entity.ai.SednaGunMobAttackGoal;
 import com.hbm.ntm.pollution.PollutionSavedData.PollutionGridPos;
 import com.hbm.ntm.pollution.PollutionSavedData.PollutionSample;
 import com.hbm.ntm.radiation.ArmorUtil;
@@ -24,6 +26,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.AbstractSkeleton;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -42,6 +45,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import net.minecraft.util.RandomSource;
+import net.minecraftforge.registries.RegistryObject;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +66,42 @@ public final class PollutionManager {
     private static int diffusionTimer;
     private static final Map<ResourceKey<Level>, BlockPos> RAMPANT_TARGETS = new HashMap<>();
     private static final Set<ResourceKey<Level>> LEGACY_ROOT_CHECKED = new HashSet<>();
+    private static final List<WeightedGear> SOOT_COMMON_HEAD = List.of(
+            gear(null, 8000), gear(ModItems.GAS_MASK_M65, 16), gear(ModItems.GAS_MASK_OLDE, 12),
+            gear(ModItems.MASK_OF_INFAMY, 8), gear(ModItems.GAS_MASK_MONO, 8), gear(ModItems.ROBES_HELMET, 32),
+            gear(ModItems.NO9, 16), gear(ModItems.COBALT_HELMET, 2), gear(ModItems.legacyItem("rag_piss"), 1),
+            gear(ModItems.HAT, 1), gear(ModItems.ALLOY_HELMET, 2), gear(ModItems.TITANIUM_HELMET, 4),
+            gear(ModItems.STEEL_HELMET, 8));
+    private static final List<WeightedGear> SOOT_RANGED_HEAD = List.of(
+            gear(null, 8000), gear(ModItems.GAS_MASK_M65, 16), gear(ModItems.GAS_MASK_OLDE, 12),
+            gear(ModItems.MASK_OF_INFAMY, 8), gear(ModItems.GAS_MASK_MONO, 8), gear(ModItems.ROBES_HELMET, 32),
+            gear(ModItems.NO9, 16), gear(ModItems.legacyItem("rag_piss"), 1), gear(ModItems.GOGGLES, 1),
+            gear(ModItems.ALLOY_HELMET, 2), gear(ModItems.TITANIUM_HELMET, 4), gear(ModItems.STEEL_HELMET, 8));
+    private static final List<WeightedGear> SOOT_COMMON_CHEST = List.of(
+            gear(null, 7000), gear(ModItems.STARMETAL_PLATE, 1), gear(ModItems.COBALT_PLATE, 2),
+            gear(ModItems.ROBES_PLATE, 32), gear(ModItems.JACKET, 32), gear(ModItems.JACKET2, 32),
+            gear(ModItems.ALLOY_PLATE, 2), gear(ModItems.STEEL_CHESTPLATE, 2));
+    private static final List<WeightedGear> SOOT_RANGED_CHEST = List.of(
+            gear(null, 7000), gear(ModItems.STARMETAL_PLATE, 1), gear(ModItems.COBALT_PLATE, 2),
+            gear(ModItems.ALLOY_PLATE, 2), gear(ModItems.STEEL_CHESTPLATE, 8), gear(ModItems.TITANIUM_CHESTPLATE, 4));
+    private static final List<WeightedGear> SOOT_COMMON_LEGS = List.of(
+            gear(null, 7000), gear(ModItems.ZIRCONIUM_LEGS, 1), gear(ModItems.COBALT_LEGS, 2),
+            gear(ModItems.STEEL_LEGS, 16), gear(ModItems.TITANIUM_LEGS, 8), gear(ModItems.ROBES_LEGS, 32),
+            gear(ModItems.ALLOY_LEGS, 2));
+    private static final List<WeightedGear> SOOT_COMMON_FEET = List.of(
+            gear(null, 7000), gear(ModItems.ROBES_BOOTS, 32), gear(ModItems.STEEL_BOOTS, 16),
+            gear(ModItems.COBALT_BOOTS, 2), gear(ModItems.ALLOY_BOOTS, 2));
+    // Four legacy melee items have no current runtime registry owner; their
+    // original weights remain empty rather than being reassigned to substitutes.
+    private static final List<WeightedGear> SOOT_COMMON_MAINHAND = List.of(
+            gear(null, 10000), gear(ModItems.PIPE_LEAD, 30), gear(ModItems.CROWBAR, 25),
+            gear(ModItems.GEIGER_COUNTER, 20), gear(null, 16), gear(ModItems.STEEL_PICKAXE, 12),
+            gear(null, 10), gear(null, 8), gear(null, 6), gear(ModItems.STEEL_SWORD, 15),
+            gear(ModItems.TITANIUM_SWORD, 8), gear(ModItems.LEAD_GAVEL, 4), gear(null, 2),
+            gear(ModItems.WRENCH, 20));
+    private static final List<WeightedGear> SOOT_RANGED_FEET = List.of(
+            gear(null, 10000), gear(ModItems.ROBES_BOOTS, 32), gear(ModItems.STEEL_BOOTS, 16),
+            gear(ModItems.COBALT_BOOTS, 2), gear(ModItems.ALLOY_BOOTS, 2), gear(ModItems.TITANIUM_BOOTS, 6));
 
     public static void incrementPollution(Level level, BlockPos pos, PollutionType type, float amount) {
         if (pos == null) {
@@ -519,7 +562,11 @@ public final class PollutionManager {
     }
 
     public static void decorateMob(Mob mob) {
-        if (!isEnabled() || mob.level().isClientSide) {
+        if (mob.level().isClientSide) {
+            return;
+        }
+        // 1.7.10 PollutionHandler decorates IMob instances except the entire glyphid family.
+        if (mob instanceof EntityGlyphid) {
             return;
         }
         if (!(mob instanceof Enemy)) {
@@ -527,18 +574,38 @@ public final class PollutionManager {
         }
 
         float soot = getPollution(mob.level(), mob.blockPosition(), PollutionType.SOOT);
-        if (RadiationConfig.mobGearEnabled()
+        boolean fullHazmatZombie = RadiationConfig.mobGearEnabled()
                 && mob instanceof Zombie zombie
                 && !zombie.isBaby()
                 && soot > 2.0F
-                && mob.getRandom().nextFloat() < 0.005F) {
+                && mob.getRandom().nextFloat() < 0.005F;
+        if (fullHazmatZombie) {
+            Zombie zombie = (Zombie) mob;
             HbmMobEquipmentUtil.equipFullSet(zombie,
                     ModItems.HAZMAT_HELMET.get(),
                     ModItems.HAZMAT_PLATE.get(),
                     ModItems.HAZMAT_LEGS.get(),
                     ModItems.HAZMAT_BOOTS.get());
         }
-        if (soot <= RadiationConfig.pollutionBuffMobThreshold()) {
+        if (RadiationConfig.mobGearEnabled() && !fullHazmatZombie) {
+            if (mob instanceof Zombie) {
+                equipSootArmor(mob, SOOT_COMMON_HEAD, SOOT_COMMON_CHEST, SOOT_COMMON_LEGS, SOOT_COMMON_FEET);
+                equipWeightedGear(mob, net.minecraft.world.entity.EquipmentSlot.MAINHAND, SOOT_COMMON_MAINHAND);
+            } else if (mob instanceof AbstractSkeleton) {
+                equipSootArmor(mob, SOOT_RANGED_HEAD, SOOT_RANGED_CHEST, SOOT_COMMON_LEGS, SOOT_RANGED_FEET);
+            }
+        }
+        if (RadiationConfig.mobGearEnabled() && mob instanceof AbstractSkeleton skeleton && !skeleton.isBaby()) {
+            ItemStack gun = selectSootSkeletonGun(soot, skeleton.getRandom());
+            if (!gun.isEmpty()) {
+                skeleton.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, gun);
+                SednaGunMobAttackGoal.ensureAttached(skeleton);
+            }
+        }
+        // ModEventHandler's zombie/skeleton gear branch is independent from
+        // POL_00_enablePollution.  With pollution disabled the legacy reader
+        // returns zero, so it only suppresses the separate soot-buff branch.
+        if (!isEnabled() || soot <= RadiationConfig.pollutionBuffMobThreshold()) {
             return;
         }
         if (mob.getAttribute(Attributes.MAX_HEALTH) != null
@@ -552,6 +619,113 @@ public final class PollutionManager {
                     ATTACK_DAMAGE_MODIFIER, "Soot Anger Damage Increase", 1.5D, AttributeModifier.Operation.MULTIPLY_BASE));
         }
         mob.heal(mob.getMaxHealth());
+    }
+
+    private static ItemStack selectSootSkeletonGun(float soot, RandomSource random) {
+        if (!RadiationConfig.mobWeaponsEnabled()) {
+            return ItemStack.EMPTY;
+        }
+        float adjustedSoot = soot - RadiationConfig.mobWeaponSootReduction();
+        if (random.nextDouble() > Math.log(adjustedSoot) * 0.25D) {
+            return ItemStack.EMPTY;
+        }
+        List<WeightedGun> pool;
+        if (adjustedSoot < 0.3F) {
+            pool = List.of(new WeightedGun(ModItems.GUN_PEPPERBOX, 5), WeightedGun.EMPTY.withWeight(20));
+        } else if (adjustedSoot > 0.3F && adjustedSoot < 1.0F) {
+            pool = List.of(
+                    new WeightedGun(ModItems.GUN_LIGHT_REVOLVER, 16),
+                    new WeightedGun(ModItems.GUN_GREASEGUN, 8),
+                    new WeightedGun(ModItems.GUN_MARESLEG, 2));
+        } else if (adjustedSoot < 3.0F) {
+            pool = List.of(
+                    new WeightedGun(ModItems.GUN_LIGHT_REVOLVER, 6),
+                    new WeightedGun(ModItems.GUN_GREASEGUN, 8),
+                    new WeightedGun(ModItems.GUN_MARESLEG, 4),
+                    new WeightedGun(ModItems.GUN_HENRY, 6));
+        } else if (adjustedSoot < 5.0F) {
+            pool = List.of(
+                    new WeightedGun(ModItems.GUN_UZI, 10),
+                    new WeightedGun(ModItems.GUN_MARESLEG, 8),
+                    new WeightedGun(ModItems.GUN_HENRY, 12),
+                    new WeightedGun(ModItems.GUN_HEAVY_REVOLVER, 4),
+                    new WeightedGun(ModItems.GUN_FLAREGUN, 2));
+        } else {
+            pool = List.of(
+                    new WeightedGun(ModItems.GUN_AM180, 6),
+                    new WeightedGun(ModItems.GUN_UZI, 10),
+                    new WeightedGun(ModItems.GUN_SPAS12, 8),
+                    new WeightedGun(ModItems.GUN_HENRY_LINCOLN, 2),
+                    new WeightedGun(ModItems.GUN_HEAVY_REVOLVER, 12),
+                    new WeightedGun(ModItems.GUN_FLAREGUN, 4),
+                    new WeightedGun(ModItems.GUN_FLAMER, 2));
+        }
+        int totalWeight = pool.stream().mapToInt(WeightedGun::weight).sum();
+        if (totalWeight <= 0) {
+            return ItemStack.EMPTY;
+        }
+        int roll = random.nextInt(totalWeight);
+        for (WeightedGun entry : pool) {
+            roll -= entry.weight();
+            if (roll < 0) {
+                return entry.item() == null ? ItemStack.EMPTY : new ItemStack(entry.item().get());
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    private static void equipSootArmor(Mob mob, List<WeightedGear> head, List<WeightedGear> chest,
+            List<WeightedGear> legs, List<WeightedGear> feet) {
+        equipWeightedGear(mob, net.minecraft.world.entity.EquipmentSlot.HEAD, head);
+        equipWeightedGear(mob, net.minecraft.world.entity.EquipmentSlot.CHEST, chest);
+        equipWeightedGear(mob, net.minecraft.world.entity.EquipmentSlot.LEGS, legs);
+        equipWeightedGear(mob, net.minecraft.world.entity.EquipmentSlot.FEET, feet);
+    }
+
+    private static void equipWeightedGear(Mob mob, net.minecraft.world.entity.EquipmentSlot slot,
+            List<WeightedGear> pool) {
+        ItemStack choice = selectWeightedGear(pool, mob.getRandom());
+        if (!choice.isEmpty()) {
+            installLegacyMobMaskFilter(choice);
+            mob.setItemSlot(slot, choice);
+        }
+    }
+
+    private static void installLegacyMobMaskFilter(ItemStack stack) {
+        if (stack.is(ModItems.GAS_MASK_M65.get()) || stack.is(ModItems.GAS_MASK_OLDE.get())
+                || stack.is(ModItems.GAS_MASK_MONO.get())) {
+            ArmorUtil.installGasMaskFilter(stack, new ItemStack(ModItems.GAS_MASK_FILTER.get()));
+        }
+    }
+
+    private static ItemStack selectWeightedGear(List<WeightedGear> pool, RandomSource random) {
+        int totalWeight = pool.stream().mapToInt(WeightedGear::weight).sum();
+        if (totalWeight <= 0) {
+            return ItemStack.EMPTY;
+        }
+        int roll = random.nextInt(totalWeight);
+        for (WeightedGear entry : pool) {
+            roll -= entry.weight();
+            if (roll < 0) {
+                return entry.item() == null ? ItemStack.EMPTY : new ItemStack(entry.item().get());
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    private static WeightedGear gear(RegistryObject<Item> item, int weight) {
+        return new WeightedGear(item, weight);
+    }
+
+    private record WeightedGear(RegistryObject<Item> item, int weight) {
+    }
+
+    private record WeightedGun(RegistryObject<Item> item, int weight) {
+        private static final WeightedGun EMPTY = new WeightedGun(null, 0);
+
+        private WeightedGun withWeight(int weight) {
+            return new WeightedGun(item, weight);
+        }
     }
 
     public static boolean applyLeadFromBlockBreak(Player player, Level level, BlockPos pos) {
@@ -598,8 +772,7 @@ public final class PollutionManager {
     }
 
     public static boolean canTryRampantScoutSpawn(Level level, BlockPos pos) {
-        return isEnabled()
-                && level instanceof ServerLevel serverLevel
+        return level instanceof ServerLevel serverLevel
                 && pos != null
                 && serverLevel.dimension().equals(Level.OVERWORLD)
                 && RadiationConfig.rampantNaturalScoutSpawnEnabled()
@@ -621,6 +794,10 @@ public final class PollutionManager {
         }
 
         EntityGlyphidDigger digger = new EntityGlyphidDigger(level);
+        // The legacy handler intentionally rolled the Scout yaw twice; the
+        // light test uses its first placement while spawning uses this one.
+        scoutYaw = level.random.nextFloat() * 360.0F;
+        scout.moveTo(pos.getX(), pos.getY(), pos.getZ(), scoutYaw, 0.0F);
         float diggerYaw = level.random.nextFloat() * 360.0F;
         digger.moveTo(pos.getX(), pos.getY(), pos.getZ(), diggerYaw, 0.0F);
 

@@ -10,6 +10,7 @@ import com.hbm.ntm.bullet.BulletKinematicsUtil;
 import com.hbm.ntm.bullet.BulletLaunchUtil;
 import com.hbm.ntm.bullet.LegacySednaRuntimeBulletConfigs;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
+import com.hbm.ntm.radiation.HazardExposureUtil;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.server.level.ServerLevel;
@@ -73,8 +74,14 @@ public final class ArmorModEvents {
         tickDirectWearablePlateMod(entity);
     }
 
-    @SubscribeEvent(priority = EventPriority.LOW)
-    public static void onLivingHurt(LivingHurtEvent event) {
+    /**
+     * Applies installed-module hurt callbacks at the source order owned by
+     * {@code CommonForgeEvents}: after the player shield/contagion adjustments
+     * and before FSB hurt handling. This is deliberately not a second Forge
+     * listener; 1.7.10 {@code ModEventHandler#onEntityDamaged} made the same
+     * ordered call from its single hurt event path.
+     */
+    public static void dispatchArmorModHurt(LivingHurtEvent event) {
         LivingEntity entity = event.getEntity();
         if (entity.level().isClientSide) {
             return;
@@ -198,6 +205,7 @@ public final class ArmorModEvents {
             for (ItemStack mod : ArmorModHandler.pryMods(armor)) {
                 if (mod.getItem() instanceof ArmorModItem armorMod) {
                     armorMod.onArmorModTick(entity, armor, mod);
+                    HazardExposureUtil.applyHazards(entity, mod);
                 }
             }
         }

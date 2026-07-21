@@ -10,6 +10,8 @@ import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.LegacyArtilleryAmmoItem;
+import com.hbm.ntm.item.LegacyBigSwordItem;
+import com.hbm.ntm.item.LegacyCrayonItem;
 import com.hbm.ntm.item.RBMKPelletItem;
 import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.item.WeaponModItem;
@@ -89,6 +91,14 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, ammo.type().itemTexture());
             return;
         }
+        if (item instanceof LegacyBigSwordItem) {
+            builtinEntityItem(path);
+            return;
+        }
+        if (item instanceof LegacyCrayonItem) {
+            layeredItem(path, "crayon", "crayon_overlay");
+            return;
+        }
         if (item instanceof com.hbm.ntm.item.FluidIdentifierItem) {
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
@@ -161,7 +171,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
             layeredItem(path, "fluid_icon", "fluid_identifier_overlay");
             return;
         }
-        if (path.equals("holotape_image_digamma") || path.equals("holotape_image_restored")) {
+        if (path.startsWith("holotape_image_")) {
             generatedItem(path, "holotape");
             return;
         }

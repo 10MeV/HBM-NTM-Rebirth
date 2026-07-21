@@ -30,9 +30,11 @@ import org.jetbrains.annotations.NotNull;
 public final class LegacyHeadArmorRenderer {
     private static final Model EMPTY_ARMOR_MODEL = new EmptyArmorModel();
 
+    private static final ModelPart GOGGLES = gogglesLayer().bakeRoot().getChild("goggles");
     private static final ModelPart GAS_MASK = gasMaskLayer().bakeRoot().getChild("mask");
     private static final ModelPart M65_ROOT = m65Layer().bakeRoot();
 
+    private static final ResourceLocation GOGGLES_TEXTURE = texture("models/goggles");
     private static final ResourceLocation GAS_MASK_TEXTURE = texture("models/gasmask");
     private static final ResourceLocation M65_TEXTURE = texture("models/model_m65");
     private static final ResourceLocation M65_MONO_TEXTURE = texture("models/model_m65_mono");
@@ -74,14 +76,27 @@ public final class LegacyHeadArmorRenderer {
     private static void renderSpec(LivingEntity entity, ItemStack stack, HumanoidModel<?> humanoid, PoseStack poseStack,
                                    MultiBufferSource buffer, int packedLight, Spec spec) {
         poseStack.pushPose();
+        if (entity.isBaby() && spec.model() != HeadModel.GOGGLES) {
+            // ModelGasMask/ModelM65 apply ModelBiped's legacy child transform.
+            // ModelGoggles renders its head-local part directly and has no child branch.
+            poseStack.scale(0.75F, 0.75F, 0.75F);
+            poseStack.translate(0.0D, 1.0D, 0.0D);
+        }
         humanoid.head.translateAndRotate(poseStack);
         switch (spec.model()) {
+            case GOGGLES -> renderGoggles(poseStack, buffer, packedLight, spec.texture());
             case GAS_MASK -> renderGasMask(poseStack, buffer, packedLight, spec.texture());
             case M65 -> renderM65(entity, stack, poseStack, buffer, packedLight, spec.texture());
             case NONE -> {
             }
         }
         poseStack.popPose();
+    }
+
+    private static void renderGoggles(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                      ResourceLocation texture) {
+        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(texture));
+        GOGGLES.render(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY);
     }
 
     private static void renderGasMask(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
@@ -122,6 +137,7 @@ public final class LegacyHeadArmorRenderer {
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         String path = id == null ? "" : id.getPath().toLowerCase(Locale.ROOT);
         return switch (path) {
+            case "goggles" -> new Spec(HeadModel.GOGGLES, GOGGLES_TEXTURE, true);
             case "gas_mask" -> new Spec(HeadModel.GAS_MASK, GAS_MASK_TEXTURE, true);
             case "gas_mask_m65", "attachment_mask" -> new Spec(HeadModel.M65, M65_TEXTURE, true);
             case "gas_mask_mono", "attachment_mask_mono" -> new Spec(HeadModel.M65, M65_MONO_TEXTURE, true);
@@ -131,6 +147,22 @@ public final class LegacyHeadArmorRenderer {
             case "liquidator_helmet" -> new Spec(HeadModel.M65, LIQUIDATOR_TEXTURE, true);
             default -> Spec.EMPTY;
         };
+    }
+
+    private static LayerDefinition gogglesLayer() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition goggles = mesh.getRoot().addOrReplaceChild("goggles", CubeListBuilder.create(), PartPose.ZERO);
+        cube(goggles, "top_band", 0, 0, 0.0F, 0.0F, 0.0F, 9.0F, 3.0F, 1.0F,
+                -4.5F, -5.0F, -4.5F, 0.0F, 0.0F, 0.0F);
+        cube(goggles, "head_cover", 0, 4, 0.0F, 0.0F, 0.0F, 9.0F, 2.0F, 5.0F,
+                -4.5F, -5.0F, -3.5F, 0.0F, 0.0F, 0.0F);
+        cube(goggles, "right_lens", 26, 0, 0.0F, 0.0F, 0.0F, 2.0F, 2.0F, 1.0F,
+                1.0F, -4.5F, -5.0F, 0.0F, 0.0F, 0.0F);
+        cube(goggles, "left_lens", 20, 0, 0.0F, 0.0F, 0.0F, 2.0F, 2.0F, 1.0F,
+                -3.0F, -4.5F, -5.0F, 0.0F, 0.0F, 0.0F);
+        cube(goggles, "rear_band", 0, 11, 0.0F, 0.0F, 0.0F, 9.0F, 1.0F, 4.0F,
+                -4.5F, -5.0F, 0.5F, 0.0F, 0.0F, 0.0F);
+        return LayerDefinition.create(mesh, 64, 32);
     }
 
     private static LayerDefinition gasMaskLayer() {
@@ -196,6 +228,7 @@ public final class LegacyHeadArmorRenderer {
 
     private enum HeadModel {
         NONE,
+        GOGGLES,
         GAS_MASK,
         M65
     }

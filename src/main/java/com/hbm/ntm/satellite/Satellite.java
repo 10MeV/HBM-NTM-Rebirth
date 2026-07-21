@@ -745,7 +745,17 @@ public abstract class Satellite {
         return satelliteClass == null ? null : narrowLegacyClass(satelliteClass);
     }
 
-    public abstract LegacySatelliteType type();
+    /**
+     * The 1.7.10 base class did not require a predefined enum identity: callers
+     * could register another {@code Satellite} subclass in the public class/item
+     * tables.  Built-in satellites override this modern lookup aid; an external
+     * legacy-style subclass deliberately remains untyped rather than being
+     * forced into one of the nine built-in IDs.
+     */
+    @Nullable
+    public LegacySatelliteType type() {
+        return null;
+    }
 
     public int legacyId() {
         return getLegacyIdFromSatellite(this);
@@ -756,7 +766,8 @@ public abstract class Satellite {
     }
 
     public String legacyName() {
-        return type().legacyName();
+        LegacySatelliteType type = type();
+        return type == null ? getClass().getSimpleName() : type.legacyName();
     }
 
     public String getName() {

@@ -10,6 +10,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
@@ -19,7 +20,11 @@ public class LegacyLanternBlockEntity extends BlockEntity implements HbmLegacyLo
     private int comTimer = -1;
 
     public LegacyLanternBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.LEGACY_LANTERN.get(), pos, state);
+        this(ModBlockEntities.LEGACY_LANTERN.get(), pos, state);
+    }
+
+    protected LegacyLanternBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, LegacyLanternBlockEntity blockEntity) {

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": { "item": "hbm_ntm_rebirth:glass_ash" },
+    "I": { "tag": "forge:ingots/any_rubber" },
+    "P": { "tag": "forge:ingots/any_plastic" }
+  },
+  "pattern": ["I I", "GPG"],
+  "result": { "item": "hbm_ntm_rebirth:ashglasses" },
+  "show_notification": true
+}

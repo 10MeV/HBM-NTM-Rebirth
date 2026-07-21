@@ -1844,6 +1844,70 @@ public final class HbmInventoryUtil {
         return moved;
     }
 
+    /**
+     * Mirrors the 1.7.10 {@code Container#mergeItemStack} stacking pass.
+     * Existing compatible stacks accept a merge before the legacy code asks a
+     * slot whether it accepts a new stack; only the later empty-slot pass is
+     * constrained by {@link Slot#mayPlace(ItemStack)}.
+     */
+    public static boolean mergeLegacyItemStack(List<Slot> slots, ItemStack stack, int start, int end,
+            boolean reverse) {
+        if (slots == null || stack == null || stack.isEmpty()) {
+            return false;
+        }
+        int boundedStart = Math.max(0, start);
+        int boundedEnd = Math.min(end, slots.size());
+        if (boundedStart >= boundedEnd) {
+            return false;
+        }
+
+        boolean moved = false;
+        if (stack.isStackable()) {
+            int index = reverse ? boundedEnd - 1 : boundedStart;
+            while (!stack.isEmpty() && inRange(index, boundedStart, boundedEnd, reverse)) {
+                Slot slot = slots.get(index);
+                ItemStack current = slot.getItem();
+                if (!current.isEmpty() && HbmItemStackUtil.doesStackDataMatch(stack, current)) {
+                    // 1.7.10 Container#mergeItemStack uses the slot's own
+                    // stack limit here.  Do not substitute Forge's
+                    // candidate-stack overload: that path can impose a
+                    // handler-specific placement limit even though the
+                    // legacy stacking pass deliberately precedes placement
+                    // validation.
+                    int max = Math.min(slot.getMaxStackSize(), stack.getMaxStackSize());
+                    int transfer = Math.min(stack.getCount(), max - current.getCount());
+                    if (transfer > 0) {
+                        stack.shrink(transfer);
+                        current.grow(transfer);
+                        slot.setByPlayer(current);
+                        slot.setChanged();
+                        moved = true;
+                    }
+                }
+                index += reverse ? -1 : 1;
+            }
+        }
+
+        if (!stack.isEmpty()) {
+            int index = reverse ? boundedEnd - 1 : boundedStart;
+            while (!stack.isEmpty() && inRange(index, boundedStart, boundedEnd, reverse)) {
+                Slot slot = slots.get(index);
+                ItemStack current = slot.getItem();
+                if (current.isEmpty()) {
+                    int transfer = Math.min(stack.getCount(),
+                            Math.min(slot.getMaxStackSize(), stack.getMaxStackSize()));
+                    if (transfer > 0 && slot.mayPlace(HbmItemStackUtil.carefulCopyWithSize(stack, transfer))) {
+                        slot.setByPlayer(stack.split(transfer));
+                        slot.setChanged();
+                        moved = true;
+                    }
+                }
+                index += reverse ? -1 : 1;
+            }
+        }
+        return moved;
+    }
+
     public static List<List<ItemStack>> extractDisplayStacks(Object object) {
         if (object == null) {
             return List.of();

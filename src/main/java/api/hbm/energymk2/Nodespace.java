@@ -1,6 +1,7 @@
 package api.hbm.energymk2;
 
 import com.hbm.ntm.energy.HbmEnergyNode;
+import com.hbm.ntm.uninos.networkproviders.PowerNetProvider;
 import com.hbm.ntm.util.fauxpointtwelve.DirPos;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -12,6 +13,12 @@ import net.minecraft.world.level.Level;
  */
 @Deprecated(forRemoval = false)
 public final class Nodespace {
+    /**
+     * Legacy public provider type key.  The modern enum is the single
+     * source-backed PowerNet factory used by the Energy nodespace.
+     */
+    public static final PowerNetProvider THE_POWER_PROVIDER = PowerNetProvider.THE_PROVIDER;
+
     public static HbmEnergyNode getNode(Level level, int x, int y, int z) {
         return com.hbm.ntm.energy.Nodespace.getNode(level, x, y, z);
     }

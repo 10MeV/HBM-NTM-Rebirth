@@ -38,6 +38,10 @@ public class FluidDuctGaugeBlockEntity extends FluidPipeBlockEntity implements R
         if (level.isClientSide) {
             return;
         }
+        // TileEntityPipeGauge#updateEntity calls TileEntityPipeBaseNT#updateEntity
+        // before calculating its gauge values, so a legacy nodespace reap is
+        // repaired before this tick observes the network.
+        FluidPipeBlockEntity.serverTick(level, pos, state, gauge);
         if (gauge.getFluidType() != HbmFluids.NONE) {
             HbmFluidNet net = gauge.getFluidNet();
             gauge.deltaTick = net == null ? 0L : Math.max(0L, net.getFluidTracker());

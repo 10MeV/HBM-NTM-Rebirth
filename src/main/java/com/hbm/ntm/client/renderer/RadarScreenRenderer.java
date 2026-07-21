@@ -42,7 +42,7 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
 
     @Override
     public int getViewDistance() {
-        return RadarScreenDisplayProfile.VIEW_DISTANCE;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

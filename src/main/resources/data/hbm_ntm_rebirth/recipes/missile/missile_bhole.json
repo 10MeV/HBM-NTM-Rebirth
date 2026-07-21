@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:missile_assembly" },
+    { "item": "hbm_ntm_rebirth:ducttape" },
+    { "item": "hbm_ntm_rebirth:black_hole" },
+    { "item": "hbm_ntm_rebirth:circuit_controller_advanced" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:missile_bhole" }
+}

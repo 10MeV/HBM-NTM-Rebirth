@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hbm_ntm_rebirth:block/boxcar" },
+    "facing=south": { "model": "hbm_ntm_rebirth:block/boxcar" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/boxcar" },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/boxcar" }
+  }
+}

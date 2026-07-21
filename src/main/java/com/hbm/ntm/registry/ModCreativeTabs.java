@@ -3,6 +3,7 @@ package com.hbm.ntm.registry;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.item.ConveyorWandItem;
+import com.hbm.ntm.item.DroneItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
 import com.hbm.ntm.item.FluidPipeBlockItem;
@@ -15,6 +16,7 @@ import com.hbm.ntm.item.FoundryScrapsItem;
 import com.hbm.ntm.item.GuideBookItem;
 import com.hbm.ntm.item.LegacyTemFlakesItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.item.CrashedBombBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.item.MarshmallowItem;
 import com.hbm.ntm.item.NuclearWasteItem;
@@ -67,6 +69,11 @@ public final class ModCreativeTabs {
                         ModBlocks.MACHINE_TAB_EXTRA_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
                         if (ModItems.CONVEYOR_WAND.get() instanceof ConveyorWandItem conveyorWand) {
                             ConveyorWandItem.addCreativeStacks(dedupedOutput, conveyorWand);
+                        }
+                        if (ModItems.DRONE.get() instanceof DroneItem drone) {
+                            for (DroneItem.DroneType type : DroneItem.DroneType.values()) {
+                                dedupedOutput.accept(DroneItem.withType(new ItemStack(drone), type));
+                            }
                         }
                     })
                     .build());
@@ -139,14 +146,27 @@ public final class ModCreativeTabs {
     public static final RegistryObject<CreativeModeTab> MISSILES = CREATIVE_TABS.register("missiles",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.hbm_ntm_rebirth.missiles"))
-                    .icon(() -> ModItems.MISSILE_GENERIC.get().getDefaultInstance())
-                    .displayItems((parameters, output) -> {
-                        CreativeModeTab.Output dedupedOutput = deduplicating(output);
-                        ModItems.MISSILE_TAB_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
-                        ModItems.SATELLITE_TAB_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
-                        ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
-                    })
+                    // MissileTab#getTabIconItem used missile_nuclear whenever the registry was ready.
+                    .icon(() -> ModItems.MISSILE_NUCLEAR.get().getDefaultInstance())
+                    .displayItems((parameters, output) -> populateMissileTabContents(output))
                     .build());
+
+    /**
+     * Produces the complete legacy MissileTab item sequence. Kept separate from
+     * Forge's client-side tab cache so the authoritative generator can also be
+     * verified on the dedicated GameTest server.
+     */
+    public static void populateMissileTabContents(CreativeModeTab.Output output) {
+        CreativeModeTab.Output dedupedOutput = deduplicating(output);
+        ModItems.MISSILE_TAB_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
+        ModItems.SATELLITE_TAB_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
+        ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+        // MissileTab first delegated all normal missile-tab content to
+        // CreativeTabs, including every mp_* component. Its nine named
+        // custom missiles were then manually appended at the very end.
+        ModItems.MISSILE_PART_ITEMS.forEach(item -> acceptItem(dedupedOutput, item));
+        ModItems.legacyMissileCreativePresets().forEach(dedupedOutput::accept);
+    }
 
     public static void register(IEventBus modBus) {
         CREATIVE_TABS.register(modBus);
@@ -158,6 +178,8 @@ public final class ModCreativeTabs {
         }
         if (item instanceof TrinketBlockItem trinket) {
             TrinketBlockItem.addCreativeStacks(output, trinket);
+        } else if (item instanceof CrashedBombBlockItem crashedBomb) {
+            crashedBomb.addCreativeStacks(output);
         } else if (item instanceof LegacyStateMultiblockBlockItem stateItem) {
             stateItem.addCreativeStacks(output);
         } else if (item instanceof LegacyStateBlockItem stateItem) {

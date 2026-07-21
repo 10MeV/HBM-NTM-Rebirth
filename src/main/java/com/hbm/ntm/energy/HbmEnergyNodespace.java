@@ -1,6 +1,7 @@
 package com.hbm.ntm.energy;
 
 import com.hbm.ntm.uninos.HbmNodespace;
+import com.hbm.ntm.uninos.networkproviders.PowerNetProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -14,7 +15,7 @@ public final class HbmEnergyNodespace {
             new HbmNodespace<BlockPos, HbmEnergyNode, HbmPowerNet>(
             HbmEnergyNode::getPositions,
             (node, connection) -> connection.pos(),
-            node -> new PowerNetMK2(),
+            node -> PowerNetProvider.THE_PROVIDER,
             HbmPowerNet::resetTrackers,
             HbmPowerNet::update,
             BlockPos::immutable);
@@ -23,7 +24,7 @@ public final class HbmEnergyNodespace {
     }
 
     public static HbmEnergyNode getNode(Level level, BlockPos pos) {
-        if (!isLoadedBlock(level, pos)) {
+        if (level == null || pos == null) {
             return null;
         }
         return NODESPACE.getNode(level, pos);
@@ -38,17 +39,15 @@ public final class HbmEnergyNodespace {
     }
 
     public static void destroyNode(Level level, HbmEnergyNode node) {
-        if (level == null || node == null) {
-            return;
-        }
-        for (BlockPos pos : node.getPositions()) {
-            NODESPACE.destroyNode(level, pos);
-            return;
-        }
+        NODESPACE.destroyNode(level, node);
     }
 
     public static void unloadLevel(Level level) {
         NODESPACE.unloadLevel(level);
+    }
+
+    public static void reapLevel(Level level) {
+        NODESPACE.reapLevel(level);
     }
 
     public static void tick(ServerLevel level) {
@@ -203,12 +202,8 @@ public final class HbmEnergyNodespace {
                 .collect(Collectors.joining(","));
     }
 
-    public static void unloadChunk(Level level, ChunkPos chunkPos) {
-        NODESPACE.unloadChunk(level, chunkPos);
-    }
-
     private static HbmPowerNet getPowerNet(Level level, BlockPos pos) {
-        if (!isLoadedBlock(level, pos)) {
+        if (level == null || pos == null) {
             return null;
         }
         return NODESPACE.getNetwork(level, pos);

@@ -7,13 +7,14 @@ import com.hbm.ntm.bullet.SednaMagazineConfig;
 import com.hbm.ntm.bullet.SednaReceiverConfig;
 import com.hbm.ntm.bullet.SednaWeaponModEvaluator;
 import com.hbm.ntm.damage.EntityDamageUtil;
+import com.hbm.ntm.network.HbmLegacyItemAnimationReceiver;
+import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.energy.HbmBatteryItemCapabilityProvider;
 import com.hbm.ntm.energy.IBatteryItem;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFillableItemCapabilityProvider;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.player.HbmPlayerProperties;
-import com.hbm.ntm.radiation.ModDamageSources;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -21,10 +22,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Tier;
-import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -36,16 +36,17 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.TierSortingRegistry;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatteryItem {
+public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatteryItem, HbmLegacyItemAnimationReceiver {
     private static final int LIQUID_CONSUMPTION = 10;
     private static final int TRANSFER_SPEED = 50;
     private static final double REACH = 5.0D;
@@ -61,6 +62,24 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
     }
 
     @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        super.inventoryTick(stack, level, entity, slot, selected);
+        if (level.isClientSide) {
+            int animation = legacyAnimation(stack, 0);
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                    () -> () -> com.hbm.ntm.client.DrillGunItemClient.tick(stack, level, entity, selected, animation));
+        }
+    }
+
+    @Override
+    public void handleLegacyItemAnimation(ItemStack stack, int selectedSlot, short animationType, int receiverIndex,
+            int itemIndex) {
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> () -> com.hbm.ntm.client.DrillGunItemClient.handleAnimation(
+                        stack, selectedSlot, animationType, receiverIndex, itemIndex));
+    }
+
+    @Override
     public @Nullable ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
         ICapabilityProvider fluid = new HbmFillableItemCapabilityProvider(stack, this, effectiveEngineMagazine(stack).capacity());
         ICapabilityProvider energy = new HbmBatteryItemCapabilityProvider(stack, this);
@@ -69,12 +88,31 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
 
     @Override
     public boolean isCorrectToolForDrops(ItemStack stack, BlockState state) {
-        return canDrillHarvest(stack, state, drillStats(stack));
+        // ItemGunDrill#canHarvestBlock in 1.7.10 returns true unconditionally.
+        // The drill's harvest-level mod hook was exposed separately, but it did
+        // not turn this player-held tool check into a tier gate.
+        return true;
     }
 
     @Override
     public float getDestroySpeed(ItemStack stack, BlockState state) {
-        return canDrillHarvest(stack, state, drillStats(stack)) ? Tiers.IRON.getSpeed() : super.getDestroySpeed(stack, state);
+        // The legacy item has no destroy-speed override. Its instant drill action
+        // is handled by XFactoryDrill#breakExtraBlock instead.
+        return super.getDestroySpeed(stack, state);
+    }
+
+    /**
+     * Client-side selection rendering must use the same mod-evaluated reach as the authoritative drill action.
+     */
+    public double highlightReach(ItemStack stack) {
+        return drillStats(stack).reach();
+    }
+
+    /**
+     * Client-side selection rendering must use the same mod-evaluated area as the authoritative drill action.
+     */
+    public int highlightArea(ItemStack stack) {
+        return drillStats(stack).area();
     }
 
     @Override
@@ -183,6 +221,8 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
         if (!(player instanceof ServerPlayer serverPlayer) || !(level instanceof ServerLevel serverLevel)) {
             return;
         }
+        playLegacyAnimation(stack, gun.mode().configIndex(), LEGACY_ANIM_CYCLE);
+        ModMessages.sendLegacyItemAnimation(serverPlayer, LEGACY_ANIM_CYCLE, 0, gun.mode().configIndex());
         SednaWeaponModEvaluator.DrillStats stats = drillStats(stack);
         HitResult hit = pick(serverPlayer, stats.reach());
         if (hit instanceof EntityHitResult entityHit) {
@@ -190,7 +230,7 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
         } else if (hit instanceof BlockHitResult blockHit) {
             breakDrillArea(serverLevel, serverPlayer, stack, blockHit.getBlockPos(), stats);
         }
-        consumeOperation(stack, player);
+        consumeOperation(stack);
     }
 
     @Override
@@ -204,6 +244,8 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
                 setGunState(stack, configIndex, SednaGunConfig.GunState.COOLDOWN);
                 setTimer(stack, configIndex, gun.receiver().delayAfterFire());
             } else if (gun.receiver().doesDryFire()) {
+                playLegacyAnimation(stack, configIndex, LEGACY_ANIM_CYCLE_DRY);
+                ModMessages.sendLegacyItemAnimation(player, LEGACY_ANIM_CYCLE_DRY, 0, configIndex);
                 setGunState(stack, configIndex, gun.receiver().refireAfterDry()
                         ? SednaGunConfig.GunState.COOLDOWN
                         : SednaGunConfig.GunState.DRAWING);
@@ -217,7 +259,11 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
         if (target == player) {
             return;
         }
-        EntityDamageUtil.attackEntityFromNt(target, ModDamageSources.bullet(level, player, player),
+        if (!(target instanceof LivingEntity)) {
+            target.hurt(level.damageSources().playerAttack(player), receiver.baseDamage());
+            return;
+        }
+        EntityDamageUtil.attackEntityFromNt(target, level.damageSources().playerAttack(player),
                 receiver.baseDamage(), true, true, 0.1D, stats.dtNegation(), stats.piercing());
     }
 
@@ -235,7 +281,7 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
                         if (state.isAir()) {
                             continue;
                         }
-                        if (!breakExtraBlock(level, player, stack, pos, origin, stats) && !didPlink) {
+                        if (!breakExtraBlock(level, player, pos, origin) && !didPlink) {
                             HbmPlayerProperties.plink(player, SoundEvents.ITEM_BREAK, 0.5F,
                                     0.8F + player.getRandom().nextFloat() * 0.6F);
                             didPlink = true;
@@ -248,10 +294,9 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
         }
     }
 
-    private boolean breakExtraBlock(ServerLevel level, ServerPlayer player, ItemStack stack, BlockPos pos,
-            BlockPos origin, SednaWeaponModEvaluator.DrillStats stats) {
+    private boolean breakExtraBlock(ServerLevel level, ServerPlayer player, BlockPos pos, BlockPos origin) {
         BlockState state = level.getBlockState(pos);
-        if (state.isAir() || state.getDestroySpeed(level, pos) < 0.0F || !canDrillHarvest(stack, state, stats)) {
+        if (state.isAir() || state.getDestroySpeed(level, pos) < 0.0F) {
             return false;
         }
         if (!pos.equals(origin)) {
@@ -270,22 +315,12 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
         return destroyed;
     }
 
-    private boolean canDrillHarvest(ItemStack stack, BlockState state, SednaWeaponModEvaluator.DrillStats stats) {
-        if (!state.requiresCorrectToolForDrops()) {
-            return true;
-        }
-        return TierSortingRegistry.isCorrectTierForDrops(tierForHarvestLevel(stats.harvestLevel()), state);
-    }
-
     private int availableOperations(ItemStack stack) {
         int cost = operationCost(stack);
         return cost <= 0 ? 0 : getFill(stack) / cost;
     }
 
-    private void consumeOperation(ItemStack stack, Player player) {
-        if (player.getAbilities().instabuild) {
-            return;
-        }
+    private void consumeOperation(ItemStack stack) {
         SednaMagazineConfig engine = effectiveEngineMagazine(stack);
         setMagazineCount(stack, engine, Math.max(0, getFill(stack) - operationCost(stack)));
     }
@@ -356,16 +391,6 @@ public class DrillGunItem extends SednaGunItem implements IFillableItem, IBatter
         return stack.isEmpty()
                 ? BASE_STATS
                 : SednaWeaponModEvaluator.effectiveDrillStats(stack, 0, BASE_STATS);
-    }
-
-    private Tier tierForHarvestLevel(int harvestLevel) {
-        if (harvestLevel >= Tiers.NETHERITE.getLevel()) {
-            return Tiers.NETHERITE;
-        }
-        if (harvestLevel >= Tiers.DIAMOND.getLevel()) {
-            return Tiers.DIAMOND;
-        }
-        return Tiers.IRON;
     }
 
     @Nullable

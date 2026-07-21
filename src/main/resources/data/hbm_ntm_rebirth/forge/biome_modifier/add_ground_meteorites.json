@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": "hbm_ntm_rebirth:ground_meteorite",
+  "step": "vegetal_decoration"
+}

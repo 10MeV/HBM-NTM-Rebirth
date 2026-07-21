@@ -76,11 +76,6 @@ public class BlockGasFlammable extends BlockGasBase {
         }
     }
 
-    @Override
-    protected boolean schedulesOnNeighborUpdates() {
-        return false;
-    }
-
     protected void combust(Level level, BlockPos pos) {
         level.setBlock(pos, Blocks.FIRE.defaultBlockState(), Block.UPDATE_ALL);
     }

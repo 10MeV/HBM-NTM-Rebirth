@@ -1,8 +1,8 @@
 package com.hbm.ntm.client.screen;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.WeaponTableMenu;
-import com.mojang.math.Axis;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -75,8 +75,8 @@ public class WeaponTableScreen extends AbstractContainerScreen<WeaponTableMenu> 
         }
         graphics.pose().pushPose();
         graphics.pose().translate(leftPos + 88.0D, topPos + 57.0D, 120.0D);
-        graphics.pose().mulPose(Axis.YP.rotationDegrees((float) yaw));
-        graphics.pose().mulPose(Axis.XP.rotationDegrees((float) pitch));
+        LegacyPoseRotations.rotateYDegrees(graphics.pose(), (float) yaw);
+        LegacyPoseRotations.rotateXDegrees(graphics.pose(), (float) pitch);
         graphics.pose().scale(4.5F, 4.5F, 1.0F);
         graphics.renderItem(gun, -8, -8);
         graphics.pose().popPose();

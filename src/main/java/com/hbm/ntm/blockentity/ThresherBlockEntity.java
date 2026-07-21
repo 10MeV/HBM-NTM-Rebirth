@@ -98,6 +98,9 @@ public class ThresherBlockEntity extends HbmFluidNetworkBlockEntity
         float oldAngle = thresher.angle;
         if (!thresher.suspended && level.getGameTime() % 20L == 0L) {
             thresher.on = thresher.acceptsFuel(thresher.tank.getTankType()) && thresher.tank.drain(1, false) > 0;
+            if (thresher.tank.getTankType() != HbmFluids.NONE) {
+                thresher.refreshTrackedReceiverFluidPorts(thresher.tank, thresher);
+            }
         } else if (thresher.suspended) {
             thresher.on = false;
         }
@@ -419,7 +422,9 @@ public class ThresherBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return acceptsFuel(type) && type == tank.getTankType();
+        // The legacy remote input is renewed only by its twenty-tick machine
+        // pass. Do not let the generic dirty/keepalive route subscribe early.
+        return false;
     }
 
     @Override

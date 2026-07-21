@@ -184,6 +184,12 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityTesla retries all adjacent Energy Mk2 receivers every tick.
+        return true;
+    }
+
+    @Override
     public AABB getRenderBoundingBox() {
         double sourceX = sourceX();
         double sourceY = sourceY();

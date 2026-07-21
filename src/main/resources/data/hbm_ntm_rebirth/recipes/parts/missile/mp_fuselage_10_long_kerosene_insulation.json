@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "misc", "pattern": ["CCC", "CTC", "CCC"],
+  "key": { "C": { "tag": "forge:ingots/any_rubber" }, "T": { "item": "hbm_ntm_rebirth:mp_fuselage_10_long_kerosene" } },
+  "result": { "item": "hbm_ntm_rebirth:mp_fuselage_10_long_kerosene_insulation" }
+}

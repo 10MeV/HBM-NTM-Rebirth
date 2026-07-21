@@ -1,5 +1,6 @@
 package com.hbm.ntm.entity.missile;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.entity.LegacyMissileRadarDetectable;
 import com.hbm.ntm.api.entity.LegacyMissileRadarProfile;
 import com.hbm.ntm.api.entity.RadarScanner;
@@ -8,16 +9,23 @@ import com.hbm.ntm.particle.ParticleUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.common.world.ForgeChunkManager;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class AntiBallisticMissileEntity extends Entity implements LegacyMissileRadarDetectable {
     private static final double BASE_SPEED = 1.5D;
@@ -31,6 +39,7 @@ public class AntiBallisticMissileEntity extends Entity implements LegacyMissileR
     private Entity tracking;
     private double velocity;
     private int activationTimer;
+    private final Set<Long> forcedChunks = new HashSet<>();
 
     public AntiBallisticMissileEntity(EntityType<? extends AntiBallisticMissileEntity> type, Level level) {
         super(type, level);
@@ -42,6 +51,7 @@ public class AntiBallisticMissileEntity extends Entity implements LegacyMissileR
     public void configureLaunch(double x, double y, double z) {
         setPos(x, y, z);
         setDeltaMovement(0.0D, BASE_SPEED, 0.0D);
+        loadNeighboringChunks();
     }
 
     public void setTrackingTarget(@Nullable Entity target) {
@@ -51,22 +61,32 @@ public class AntiBallisticMissileEntity extends Entity implements LegacyMissileR
     @Override
     public void tick() {
         super.tick();
+        if (level().isClientSide) {
+            // EntityThrowableInterp leaves client movement to entity interpolation;
+            // it only emits the local trail after receiving the server position.
+            spawnContrail();
+            updateRotationFromMotion(getDeltaMovement());
+            return;
+        }
+
         Vec3 move = getDeltaMovement().scale(velocity);
         HitResult hit = traceBlockHit(move);
         if (hit.getType() != HitResult.Type.MISS) {
-            setPos(hit.getLocation().x, hit.getLocation().y, hit.getLocation().z);
-            if (!level().isClientSide && activationTimer >= ACTIVATION_TICKS) {
+            // EntityThrowableNT calls onImpact before its normal movement and does
+            // not move onto mop.hitVec.  Before activation the legacy ABM ignores
+            // block impacts entirely; once active it explodes at its pre-move pos.
+            if (hit instanceof BlockHitResult blockHit
+                    && level().getBlockState(blockHit.getBlockPos()).is(Blocks.NETHER_PORTAL)) {
+                handleInsidePortal(blockHit.getBlockPos());
+            } else if (activationTimer >= ACTIVATION_TICKS) {
                 explode(20.0F);
                 return;
             }
-        } else {
-            setPos(getX() + move.x, getY() + move.y, getZ() + move.z);
         }
-
-        if (level().isClientSide) {
-            spawnContrail();
-        } else {
-            tickServerGuidance();
+        setPos(getX() + move.x, getY() + move.y, getZ() + move.z);
+        tickServerGuidance();
+        if (!isRemoved()) {
+            loadNeighboringChunks();
         }
         updateRotationFromMotion(getDeltaMovement());
     }
@@ -79,7 +99,9 @@ public class AntiBallisticMissileEntity extends Entity implements LegacyMissileR
 
     private void tickServerGuidance() {
         if (velocity < MAX_VELOCITY) {
-            velocity = Math.min(MAX_VELOCITY, velocity + 0.1D);
+            // Preserve the legacy guard-before-add form.  It may step just above
+            // six, which affects both the trace length and predictive intercept.
+            velocity += 0.1D;
         }
 
         if (activationTimer < ACTIVATION_TICKS) {
@@ -89,14 +111,14 @@ public class AntiBallisticMissileEntity extends Entity implements LegacyMissileR
         }
 
         Entity previous = tracking;
-        if (!isValidTarget(tracking)) {
+        if (tracking == null || tracking.isRemoved()) {
             targetMissile();
         }
         if (previous == null && tracking != null) {
             ExplosionLarge.spawnShock(level(), getX(), getY(), getZ(), 24, 3.0F);
         }
 
-        if (isValidTarget(tracking)) {
+        if (tracking != null && !tracking.isRemoved()) {
             aimAtTarget();
         } else if (tickCount > MAX_NO_TARGET_AGE || getY() > LEGACY_VOID_HEIGHT) {
             discard();
@@ -105,27 +127,30 @@ public class AntiBallisticMissileEntity extends Entity implements LegacyMissileR
 
     private void targetMissile() {
         Entity selected = null;
+        // EntityMissileAntiBallistic#targetMissile keeps its legacy initial distance
+        // threshold but never writes a newly accepted target's distance back.  As a
+        // result, the last eligible radar-cache missile within 1,000 blocks wins;
+        // do not substitute a nearest-target search or an unloaded-cache fallback.
+        double legacyDistanceThresholdSq = TARGET_RANGE * TARGET_RANGE;
         for (Entity entity : RadarScanner.matchingEntitiesSnapshot()) {
-            if (isValidTarget(entity) && entity.distanceToSqr(this) < TARGET_RANGE * TARGET_RANGE) {
+            double distanceSq = entity.distanceToSqr(this);
+            if (isRadarCacheMissileTarget(entity) && distanceSq < legacyDistanceThresholdSq) {
                 selected = entity;
-            }
-        }
-        if (selected == null) {
-            AABB bounds = getBoundingBox().inflate(TARGET_RANGE);
-            for (MissileEntity missile : level().getEntitiesOfClass(MissileEntity.class, bounds)) {
-                if (isValidTarget(missile) && missile.distanceToSqr(this) < TARGET_RANGE * TARGET_RANGE) {
-                    selected = missile;
-                }
             }
         }
         tracking = selected;
     }
 
-    private boolean isValidTarget(@Nullable Entity entity) {
+    private boolean isRadarCacheMissileTarget(@Nullable Entity entity) {
         return entity instanceof MissileEntity missile
                 && entity.isAlive()
                 && entity.level() == level()
                 && missile.radarProfile().canBeSeenBy(null);
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     private void aimAtTarget() {
@@ -154,6 +179,39 @@ public class AntiBallisticMissileEntity extends Entity implements LegacyMissileR
         discard();
     }
 
+    /**
+     * EntityMissileAntiBallistic owns a ticket for the current chunk and all eight
+     * neighbours.  It replaces the set on each server tick so guidance, the long
+     * ray trace and the target missile never cross into an unloaded edge chunk.
+     */
+    private void loadNeighboringChunks() {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        clearChunkLoader();
+        int centerX = Mth.floor(getX() / 16.0D);
+        int centerZ = Mth.floor(getZ() / 16.0D);
+        for (int offsetX = -1; offsetX <= 1; offsetX++) {
+            for (int offsetZ = -1; offsetZ <= 1; offsetZ++) {
+                ChunkPos chunk = new ChunkPos(centerX + offsetX, centerZ + offsetZ);
+                ForgeChunkManager.forceChunk(serverLevel, HbmNtm.MOD_ID, this, chunk.x, chunk.z, true, true);
+                forcedChunks.add(chunk.toLong());
+            }
+        }
+    }
+
+    private void clearChunkLoader() {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            forcedChunks.clear();
+            return;
+        }
+        for (long packed : forcedChunks) {
+            ChunkPos chunk = new ChunkPos(packed);
+            ForgeChunkManager.forceChunk(serverLevel, HbmNtm.MOD_ID, this, chunk.x, chunk.z, false, true);
+        }
+        forcedChunks.clear();
+    }
+
     private void spawnContrail() {
         Vec3 motion = getDeltaMovement();
         Vec3 offset = motion.lengthSqr() > 1.0E-7D ? motion.normalize() : Vec3.ZERO;
@@ -162,11 +220,19 @@ public class AntiBallisticMissileEntity extends Entity implements LegacyMissileR
 
     private void updateRotationFromMotion(Vec3 motion) {
         double horizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
-        if (horizontal > 1.0E-4D || Math.abs(motion.y) > 1.0E-4D) {
-            setYRot((float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG));
-            setXRot((float) (Mth.atan2(motion.y, horizontal) * Mth.RAD_TO_DEG));
-            yRotO = getYRot();
-            xRotO = getXRot();
+        setYRot((float) Math.toDegrees(Math.atan2(motion.x, motion.z)));
+        setXRot((float) Math.toDegrees(Math.atan2(motion.y, horizontal)) - 90.0F);
+        while (getXRot() - xRotO < -180.0F) {
+            xRotO -= 360.0F;
+        }
+        while (getXRot() - xRotO >= 180.0F) {
+            xRotO += 360.0F;
+        }
+        while (getYRot() - yRotO < -180.0F) {
+            yRotO -= 360.0F;
+        }
+        while (getYRot() - yRotO >= 180.0F) {
+            yRotO += 360.0F;
         }
     }
 
@@ -187,15 +253,17 @@ public class AntiBallisticMissileEntity extends Entity implements LegacyMissileR
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         velocity = tag.getDouble("veloc");
-        if (tag.contains("activationTimer")) {
-            activationTimer = tag.getInt("activationTimer");
-        }
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putDouble("veloc", velocity);
-        tag.putInt("activationTimer", activationTimer);
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        clearChunkLoader();
+        super.remove(reason);
     }
 
     @Override

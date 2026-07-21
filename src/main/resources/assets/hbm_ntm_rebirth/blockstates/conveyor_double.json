@@ -1,5 +1,16 @@
 {
   "multipart": [
-    { "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double" } }
+    { "when": { "facing": "north", "path": "straight" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double" } },
+    { "when": { "facing": "east", "path": "straight" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double", "y": 90 } },
+    { "when": { "facing": "south", "path": "straight" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double", "y": 180 } },
+    { "when": { "facing": "west", "path": "straight" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double", "y": 270 } },
+    { "when": { "facing": "north", "path": "left" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double_curve_left" } },
+    { "when": { "facing": "east", "path": "left" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double_curve_left", "y": 90 } },
+    { "when": { "facing": "south", "path": "left" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double_curve_left", "y": 180 } },
+    { "when": { "facing": "west", "path": "left" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double_curve_left", "y": 270 } },
+    { "when": { "facing": "north", "path": "right" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double_curve_right" } },
+    { "when": { "facing": "east", "path": "right" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double_curve_right", "y": 90 } },
+    { "when": { "facing": "south", "path": "right" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double_curve_right", "y": 180 } },
+    { "when": { "facing": "west", "path": "right" }, "apply": { "model": "hbm_ntm_rebirth:block/conveyor_double_curve_right", "y": 270 } }
   ]
 }

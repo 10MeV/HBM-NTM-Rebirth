@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:missile_assembly" },
+    { "item": "hbm_ntm_rebirth:ducttape" },
+    { "item": "hbm_ntm_rebirth:ammo_standard_nuke_high" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:missile_micro" }
+}

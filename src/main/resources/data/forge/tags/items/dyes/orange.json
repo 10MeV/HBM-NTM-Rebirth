@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "minecraft:orange_dye",
-    "hbm_ntm_rebirth:chemical_dye_orange"
+    "hbm_ntm_rebirth:chemical_dye_orange",
+    "hbm_ntm_rebirth:crayon_orange"
   ]
 }

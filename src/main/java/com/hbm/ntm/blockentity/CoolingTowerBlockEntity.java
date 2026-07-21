@@ -159,6 +159,13 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityCondenser, inherited by both legacy cooling towers,
+        // retried every remote Fluid Mk2 endpoint every server tick.
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return ports();
     }

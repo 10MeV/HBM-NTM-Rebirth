@@ -14,7 +14,7 @@ import net.minecraft.util.Mth;
 public class CustomMissileRenderer extends EntityRenderer<CustomMissileEntity> {
     public CustomMissileRenderer(EntityRendererProvider.Context context) {
         super(context);
-        shadowRadius = 0.75F;
+        shadowRadius = 0.0F;
     }
 
     @Override
@@ -30,8 +30,11 @@ public class CustomMissileRenderer extends EntityRenderer<CustomMissileEntity> {
                 ObjMissilePartModels.part(entity.thrusterLegacyName());
 
         poseStack.pushPose();
-        LegacyPoseRotations.rotateYDegrees(poseStack, Mth.lerp(partialTick, entity.yRotO, entity.getYRot()));
-        LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F - Mth.lerp(partialTick, entity.xRotO, entity.getXRot()));
+        float renderYaw = Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F;
+        float pitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+        LegacyPoseRotations.rotateYDegrees(poseStack, renderYaw);
+        LegacyPoseRotations.rotateZDegrees(poseStack, pitch);
+        LegacyPoseRotations.rotateYDegrees(poseStack, -renderYaw);
         ObjMissilePartModels.renderMissile(thruster, fins, fuselage, warhead, poseStack, buffer,
                 packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();

@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=south": { "model": "hbm_ntm_rebirth:block/rail_large_curve_9" },
+    "facing=east": { "model": "hbm_ntm_rebirth:block/rail_large_curve_9", "y": 90 },
+    "facing=north": { "model": "hbm_ntm_rebirth:block/rail_large_curve_9", "y": 180 },
+    "facing=west": { "model": "hbm_ntm_rebirth:block/rail_large_curve_9", "y": 270 }
+  }
+}

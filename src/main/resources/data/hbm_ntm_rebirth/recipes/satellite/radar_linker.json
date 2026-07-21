@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "S",
+    "C",
+    "P"
+  ],
+  "key": {
+    "S": {
+      "item": "hbm_ntm_rebirth:crt_display"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:radar_linker"
+  }
+}

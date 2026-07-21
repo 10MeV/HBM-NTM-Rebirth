@@ -1,5 +1,6 @@
 package com.hbm.ntm.fluid;
 
+import com.hbm.entity.mob.glyphid.EntityGlyphid;
 import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.util.HbmRegistryUtil;
 
@@ -277,7 +278,7 @@ public final class HbmFluidContactEffects {
                     float amount = damage.getAmount() * intensity;
                     report.addDirectDamage(damage.getDamageType().toString(), amount);
                     if (apply && amount > 0.0F) {
-                        EntityDamageUtil.attackEntityFromIgnoreIFrame(living, resolveDamage(living.level(), damage.getDamageType()), amount);
+                        EntityDamageUtil.attackEntityFromNt(living, resolveDamage(living.level(), damage.getDamageType()), amount);
                     }
                 }
             } else if (entry instanceof ToxinFluidTrait.EffectApplication effects) {
@@ -302,7 +303,7 @@ public final class HbmFluidContactEffects {
                     float amount = damage.getAmount() * intensity;
                     report.addDirectDamage(damage.getDamageType().toString(), amount);
                     if (apply && amount > 0.0F) {
-                        EntityDamageUtil.attackEntityFromIgnoreIFrame(living,
+                        EntityDamageUtil.attackEntityFromNt(living,
                                 resolveDamage(living.level(), damage.getDamageType()), amount);
                     }
                 }
@@ -336,13 +337,18 @@ public final class HbmFluidContactEffects {
             addEffect(living, MobEffects.DAMAGE_RESISTANCE, 2 * 60 * 20, 2, apply, report);
             addEffect(living, MobEffects.MOVEMENT_SPEED, 5 * 60 * 20, 1, apply, report);
             addEffect(living, MobEffects.DIG_SPEED, 2 * 60 * 20, 4, apply, report);
-            if (living instanceof Player && trait.getType() == 2) {
+            if (living instanceof EntityGlyphid && trait.getType() == 1) {
+                addEffect(living, MobEffects.DAMAGE_BOOST, 5 * 60 * 20, 4, apply, report);
+                addEffect(living, MobEffects.FIRE_RESISTANCE, 60 * 20, 0, apply, report);
+                addEffect(living, MobEffects.HEALTH_BOOST, 60 * 20, 19, apply, report);
+            } else if (living instanceof Player && trait.getType() == 2) {
                 addEffect(living, MobEffects.DAMAGE_BOOST, 2 * 60 * 20, 2, apply, report);
             }
             return;
         }
 
-        if (living instanceof Player && trait.getType() == 2) {
+        if ((living instanceof EntityGlyphid && trait.getType() == 1)
+                || (living instanceof Player && trait.getType() == 2)) {
             int mult = trait.getType();
             addEffect(living, MobEffects.MOVEMENT_SPEED, mult * 60 * 20, 1, apply, report);
             addEffect(living, MobEffects.DIG_SPEED, mult * 60 * 20, 1, apply, report);

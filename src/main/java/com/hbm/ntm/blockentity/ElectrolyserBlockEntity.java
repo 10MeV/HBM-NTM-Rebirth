@@ -199,8 +199,12 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
         boolean changed = electrolyser.setFluidTankTypeFromIdentifierSlot(electrolyser.items,
                 SLOT_FLUID_ID_INPUT, SLOT_FLUID_ID_OUTPUT, electrolyser.inputTank);
         changed |= electrolyser.processFluidItemTransfers(electrolyser.items, electrolyser.fluidItemTransfers);
-        electrolyser.refreshTrackedTransceiverFluidPorts(electrolyser.getReceivingTanks(),
-                electrolyser.getSendingTanks(), electrolyser);
+        // 1.7.10 TileEntityElectrolyser#updateEntity renews its six direct
+        // standard-fluid ports only on the twenty-tick connection pass.
+        if (level.getGameTime() % 20L == 0L) {
+            electrolyser.refreshTrackedTransceiverFluidPorts(electrolyser.getReceivingTanks(),
+                    electrolyser.getSendingTanks(), electrolyser);
+        }
 
         LegacyMachineUpgradeManager.Levels upgrades = electrolyser.upgradeLevels();
         electrolyser.usageFluid = usageFor(USAGE_FLUID_BASE, upgrades);
@@ -605,6 +609,11 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
                 .map(port -> EnergyPort.of(port.offset().getX(), port.offset().getY(), port.offset().getZ(),
                         port.direction()))
                 .toList();
+    }
+
+    @Override
+    protected boolean usesLegacyTwentyTickEnergyPortSubscriptionCadence() {
+        return true;
     }
 
     @Override

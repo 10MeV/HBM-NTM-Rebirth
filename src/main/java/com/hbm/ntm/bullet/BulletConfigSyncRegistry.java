@@ -10,14 +10,7 @@ import java.util.Optional;
 public final class BulletConfigSyncRegistry {
     public static final int TEST_CONFIG = 0;
     public static final int TURBINE = 1;
-    public static final int MASKMAN_BULLET = 2;
-    public static final int MASKMAN_ORB = 3;
     public static final int MASKMAN_BOLT = 4;
-    public static final int MASKMAN_ROCKET = 5;
-    public static final int MASKMAN_TRACER = 6;
-    public static final int WORM_BOLT = 8;
-    public static final int WORM_LASER = 9;
-    public static final int UFO_ROCKET = 10;
     public static final int G12_BP = 41;
     public static final int G12_BP_MAGNUM = 42;
     public static final int G12_BP_SLUG = 43;
@@ -38,14 +31,7 @@ public final class BulletConfigSyncRegistry {
             return;
         }
         register(TURBINE, LegacyBulletConfigs.TURBINE);
-        register(MASKMAN_BULLET, LegacyBulletConfigs.MASKMAN_BULLET);
-        register(MASKMAN_ORB, LegacyBulletConfigs.MASKMAN_ORB);
         register(MASKMAN_BOLT, LegacyBulletConfigs.MASKMAN_BOLT);
-        register(MASKMAN_ROCKET, LegacyBulletConfigs.MASKMAN_ROCKET);
-        register(MASKMAN_TRACER, LegacyBulletConfigs.MASKMAN_TRACER);
-        register(WORM_BOLT, LegacyBulletConfigs.WORM_BOLT);
-        register(WORM_LASER, LegacyBulletConfigs.WORM_LASER);
-        register(UFO_ROCKET, LegacyBulletConfigs.UFO_ROCKET);
         register(G12_BP, LegacySednaRuntimeBulletConfigs.G12_BP);
         register(G12_BP_MAGNUM, LegacySednaRuntimeBulletConfigs.G12_BP_MAGNUM);
         register(G12_BP_SLUG, LegacySednaRuntimeBulletConfigs.G12_BP_SLUG);

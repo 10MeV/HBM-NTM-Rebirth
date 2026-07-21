@@ -58,7 +58,7 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     private static float legacyYaw(Direction facing) {

@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    { "rolls": 1, "entries": [
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:cobalt_pickaxe", "weight": 10 },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ingot_zirconium", "weight": 10, "functions": [{ "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 1, "max": 16 } }] },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ingot_niobium", "weight": 10, "functions": [{ "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 1, "max": 16 } }] },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ingot_cobalt", "weight": 10, "functions": [{ "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 1, "max": 16 } }] },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ingot_boron", "weight": 10, "functions": [{ "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 1, "max": 16 } }] },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:ingot_starmetal", "weight": 5 },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:crystal_gold", "weight": 10, "functions": [{ "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 1, "max": 4 } }] },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:circuit_vacuum_tube", "weight": 10, "functions": [{ "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 4, "max": 8 } }] },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:circuit_chip", "weight": 10, "functions": [{ "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 2, "max": 4 } }] },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:definitelyfood", "weight": 25, "functions": [{ "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 16, "max": 32 } }] },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:pill_herbal", "weight": 10, "functions": [{ "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 1, "max": 2 } }] },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:serum", "weight": 5 },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:heart_piece", "weight": 5 },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:scrumpy", "weight": 5 },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:launch_code_piece", "weight": 5 },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:egg_glyphid", "weight": 5 },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:gem_alexandrite", "weight": 1 },
+      { "type": "minecraft:item", "name": "hbm_ntm_rebirth:blueprint_folder_discover", "weight": 1 }
+    ] }
+  ]
+}

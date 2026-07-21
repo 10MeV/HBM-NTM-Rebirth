@@ -5,6 +5,7 @@ import com.hbm.ntm.blockentity.CraneLogisticsBlockEntity;
 import com.hbm.ntm.menu.CraneLogisticsMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -14,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 
 import java.util.List;
 
@@ -92,6 +94,10 @@ public class CraneLogisticsScreen extends AbstractContainerScreen<CraneLogistics
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
+        if (menu.getCarried().isEmpty() && renderPatternTooltip(graphics, mouseX, mouseY)) {
+            renderTooltip(graphics, mouseX, mouseY);
+            return;
+        }
         renderTooltip(graphics, mouseX, mouseY);
         CraneLogisticsBlockEntity.Kind kind = menu.kind();
         if (kind == CraneLogisticsBlockEntity.Kind.EXTRACTOR
@@ -139,6 +145,18 @@ public class CraneLogisticsScreen extends AbstractContainerScreen<CraneLogistics
         return handled;
     }
 
+    private boolean renderPatternTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        for (int slotIndex = 0; slotIndex < menu.getPatternSlotCount(); slotIndex++) {
+            Slot slot = menu.slots.get(slotIndex);
+            if (slot.hasItem() && isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
+                graphics.renderComponentTooltip(font, List.of(
+                        Component.literal("Right click to change").withStyle(ChatFormatting.RED),
+                        menu.getPatternModeLabel(slotIndex)), mouseX, mouseY - 30);
+                return true;
+            }
+        }
+        return false;
+    }
     private void renderRouterTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
         for (int group = 0; group < 2; group++) {
             for (int row = 0; row < 3; row++) {

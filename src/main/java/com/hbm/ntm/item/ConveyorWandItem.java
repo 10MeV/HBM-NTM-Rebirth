@@ -6,7 +6,9 @@ import com.hbm.ntm.api.conveyor.ConveyorRoutePlanner;
 import com.hbm.ntm.api.conveyor.IConveyorBelt;
 import com.hbm.ntm.api.conveyor.IEnterableBlock;
 import com.hbm.ntm.api.item.LegacyLookOverlayItemProvider;
+import com.hbm.ntm.block.conveyor.ChuteConveyorBlock;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
+import com.hbm.ntm.block.conveyor.LiftConveyorBlock;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -29,6 +31,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.HashMap;
 
 public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvider {
     private static final String TAG_TYPE = "Type";
@@ -97,23 +101,15 @@ public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvi
             return placeSingle(context, stack, player, clickedPos, side);
         }
 
+        side = snapSideToConveyorEdge(level, player, stack, clickedPos, side);
+
         if (!hasStart(stack)) {
             saveStart(stack, clickedPos, side, countAvailable(player, stack));
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
         if (!level.isClientSide) {
-            RouteStart start = readStart(stack);
-            ConveyorRoutePlanner.RouteResult result = ConveyorRoutePlanner.plan(new ConveyorRoutePlanner.RouteContext(
-                    getType(stack),
-                    start.pos(),
-                    start.side(),
-                    clickedPos,
-                    side,
-                    start.count(),
-                    player.getYRot(),
-                    pos -> isReplaceable(level, player, stack, pos),
-                    pos -> blockKindAt(level, pos)));
+            ConveyorRoutePlanner.RouteResult result = planRoute(level, player, stack, clickedPos, side);
 
             switch (result.status()) {
                 case SUCCESS -> {
@@ -156,21 +152,44 @@ public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvi
 
     private InteractionResult placeSingle(UseOnContext context, ItemStack stack, Player player, BlockPos clickedPos, Direction side) {
         Level level = context.getLevel();
-        ConveyorRoutePlanner.ConveyorWandType type = getType(stack);
-        BlockPos placePos = clickedPos.relative(side);
-        ConveyorRoutePlanner.ConveyorBlockKind kind = type.hasVertical()
-                ? ConveyorRoutePlanner.blockKindForDirection(type, side)
-                : ConveyorRoutePlanner.blockKindForDirection(type, Direction.NORTH);
-        Block block = blockForKind(kind);
-        int metadata = ConveyorRoutePlanner.metadataForDirection(
-                kind,
-                side,
-                side,
-                Direction.from3DDataValue(ConveyorMath.legacyMetadataForPlacementYaw(player.getYRot())).getOpposite());
+        if (!level.isClientSide) {
+            ConveyorRoutePlanner.ConveyorWandType type = getType(stack);
+            BlockState clickedState = level.getBlockState(clickedPos);
+            Block clickedBlock = clickedState.getBlock();
+            Block toPlace = blockForType(type);
 
-        if (!level.isClientSide && isReplaceable(level, player, stack, placePos) && placeConveyor(level, player, stack, placePos, block, metadata)) {
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
+            if (type.hasVertical() && clickedBlock == ModBlocks.CONVEYOR.get()) {
+                ConveyorBlock conveyor = (ConveyorBlock) clickedBlock;
+                int clickedMetadata = conveyor.legacyMetadata(clickedState);
+                if (clickedMetadata < 6 && side == Direction.UP) {
+                    toPlace = ModBlocks.CONVEYOR_LIFT.get();
+                    level.setBlock(clickedPos,
+                            ((ConveyorBlock) ModBlocks.CONVEYOR_LIFT.get()).stateFromLegacyMetadata(clickedMetadata),
+                            Block.UPDATE_ALL);
+                    clickedBlock = toPlace;
+                } else if (clickedMetadata < 6 && side == Direction.DOWN) {
+                    toPlace = ModBlocks.CONVEYOR_CHUTE.get();
+                    level.setBlock(clickedPos,
+                            ((ConveyorBlock) ModBlocks.CONVEYOR_CHUTE.get()).stateFromLegacyMetadata(clickedMetadata),
+                            Block.UPDATE_ALL);
+                    clickedBlock = toPlace;
+                }
+            }
+
+            if (type.hasVertical()) {
+                if (clickedBlock == ModBlocks.CONVEYOR_LIFT.get() && side == Direction.UP) {
+                    toPlace = ModBlocks.CONVEYOR_LIFT.get();
+                } else if (clickedBlock == ModBlocks.CONVEYOR_CHUTE.get() && side == Direction.DOWN) {
+                    toPlace = ModBlocks.CONVEYOR_CHUTE.get();
+                }
+            }
+
+            BlockPos placePos = clickedPos.relative(side);
+            int metadata = ConveyorMath.legacyMetadataForPlacementYaw(player.getYRot());
+            if (isReplaceable(level, player, stack, placePos) && placeConveyor(level, player, stack, placePos, toPlace, metadata)) {
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
             }
         }
 
@@ -184,9 +203,7 @@ public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvi
     }
 
     private static boolean placeConveyor(Level level, Player player, ItemStack stack, BlockPos pos, Block block, int legacyMetadata) {
-        BlockState state = block instanceof ConveyorBlock conveyor
-                ? conveyor.stateFromLegacyMetadata(legacyMetadata)
-                : block.defaultBlockState();
+        BlockState state = blockStateFor(block, legacyMetadata);
         if (!level.setBlock(pos, state, 3)) {
             return false;
         }
@@ -219,10 +236,16 @@ public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvi
         if (block == ModBlocks.CONVEYOR_CHUTE.get()) {
             return ConveyorRoutePlanner.ConveyorBlockKind.CHUTE;
         }
-        if (block instanceof IEnterableBlock) {
-            return ConveyorRoutePlanner.ConveyorBlockKind.ENTERABLE;
+        // ItemConveyorWand only treated legacy BlockCraneBase subclasses as route endpoints.
+        // Router, partitioner, and splitter expose conveyor entry hooks, but were not endpoint targets.
+        if (block == ModBlocks.CRANE_EXTRACTOR.get()
+                || block == ModBlocks.CRANE_INSERTER.get()
+                || block == ModBlocks.CRANE_GRABBER.get()
+                || block == ModBlocks.CRANE_BOXER.get()
+                || block == ModBlocks.CRANE_UNBOXER.get()) {
+            return ConveyorRoutePlanner.ConveyorBlockKind.CRANE;
         }
-        if (block instanceof IConveyorBelt) {
+        if (ConveyorMath.isConveyor(level, pos)) {
             return ConveyorRoutePlanner.ConveyorBlockKind.OTHER;
         }
         return ConveyorRoutePlanner.ConveyorBlockKind.OTHER;
@@ -237,6 +260,26 @@ public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvi
             case CHUTE -> ModBlocks.CONVEYOR_CHUTE.get();
             default -> ModBlocks.CONVEYOR.get();
         };
+    }
+
+    private static Block blockForType(ConveyorRoutePlanner.ConveyorWandType type) {
+        return switch (type) {
+            case EXPRESS -> ModBlocks.CONVEYOR_EXPRESS.get();
+            case DOUBLE -> ModBlocks.CONVEYOR_DOUBLE.get();
+            case TRIPLE -> ModBlocks.CONVEYOR_TRIPLE.get();
+            default -> ModBlocks.CONVEYOR.get();
+        };
+    }
+
+    private static Direction snapSideToConveyorEdge(Level level, Player player, ItemStack stack, BlockPos clickedPos,
+            Direction side) {
+        BlockState state = level.getBlockState(clickedPos);
+        if (!(state.getBlock() instanceof ConveyorBlock conveyor) || !conveyor.supportsWandEdgeSnapping(state)) {
+            return side;
+        }
+
+        Direction moveDirection = hasStart(stack) ? conveyor.getInputDirection(state) : conveyor.getOutputDirection(state);
+        return isReplaceable(level, player, stack, clickedPos.relative(moveDirection)) ? moveDirection : side;
     }
 
     private static int countAvailable(Player player, ItemStack selected) {
@@ -275,9 +318,94 @@ public class ConveyorWandItem extends Item implements LegacyLookOverlayItemProvi
         player.containerMenu.broadcastChanges();
     }
 
-    private static boolean hasStart(ItemStack stack) {
+    public static boolean hasStart(ItemStack stack) {
         CompoundTag tag = stack.getTag();
         return tag != null && tag.contains(TAG_START);
+    }
+
+    /**
+     * Shared route construction for the authoritative placement and the client-only action preview.
+     */
+    public static ConveyorRoutePlanner.RouteResult planRoute(Level level, Player player, ItemStack stack,
+            BlockPos clickedPos, Direction clickedSide) {
+        if (!hasStart(stack)) {
+            return ConveyorRoutePlanner.RouteResult.obstructed();
+        }
+
+        Direction side = snapSideToConveyorEdge(level, player, stack, clickedPos, clickedSide);
+        RouteStart start = readStart(stack);
+        return ConveyorRoutePlanner.plan(new ConveyorRoutePlanner.RouteContext(
+                getType(stack),
+                start.pos(),
+                start.side(),
+                clickedPos,
+                side,
+                start.count(),
+                player.getYRot(),
+                pos -> isReplaceable(level, player, stack, pos),
+                pos -> blockKindAt(level, pos)));
+    }
+
+    public static BlockState blockStateForPlacement(ConveyorRoutePlanner.Placement placement) {
+        return blockStateFor(blockForKind(placement.kind()), placement.legacyMetadata());
+    }
+
+    /**
+     * Reconstructs the planned route's local conveyor neighborhood for the client preview.
+     * Legacy WorldInAJar rendered all planned blocks together, so lift and chute visuals could
+     * see their neighboring planned conveyors.
+     */
+    public static List<BlockState> blockStatesForPreview(Level level, List<ConveyorRoutePlanner.Placement> placements) {
+        Map<BlockPos, Block> plannedBlocks = new HashMap<>();
+        for (ConveyorRoutePlanner.Placement placement : placements) {
+            plannedBlocks.put(placement.pos(), blockForKind(placement.kind()));
+        }
+
+        return placements.stream()
+                .map(placement -> previewState(level, placement, plannedBlocks))
+                .toList();
+    }
+
+    private static BlockState previewState(Level level, ConveyorRoutePlanner.Placement placement,
+            Map<BlockPos, Block> plannedBlocks) {
+        BlockState state = blockStateForPlacement(placement);
+        BlockPos pos = placement.pos();
+        if (state.getBlock() instanceof LiftConveyorBlock) {
+            return LiftConveyorBlock.withSegmentState(state,
+                    isPlannedConveyor(level, plannedBlocks, pos.below()),
+                    isPlannedConveyor(level, plannedBlocks, pos.above()),
+                    isPlannedEnterable(level, plannedBlocks, pos.above()));
+        }
+        if (state.getBlock() instanceof ChuteConveyorBlock) {
+            return ChuteConveyorBlock.withVisualState(state, pos.getY() > level.getMinBuildHeight(),
+                    isPlannedConveyorOrEnterable(level, plannedBlocks, pos.below()),
+                    isPlannedConveyor(level, plannedBlocks, pos.west()),
+                    isPlannedConveyor(level, plannedBlocks, pos.east()),
+                    isPlannedConveyor(level, plannedBlocks, pos.north()),
+                    isPlannedConveyor(level, plannedBlocks, pos.south()));
+        }
+        return state;
+    }
+
+    private static boolean isPlannedConveyor(Level level, Map<BlockPos, Block> plannedBlocks, BlockPos pos) {
+        Block planned = plannedBlocks.get(pos);
+        return planned != null ? planned instanceof IConveyorBelt : ConveyorMath.isConveyor(level, pos);
+    }
+
+    private static boolean isPlannedEnterable(Level level, Map<BlockPos, Block> plannedBlocks, BlockPos pos) {
+        Block planned = plannedBlocks.get(pos);
+        return planned != null ? planned instanceof IEnterableBlock : ConveyorMath.isEnterable(level, pos);
+    }
+
+    private static boolean isPlannedConveyorOrEnterable(Level level, Map<BlockPos, Block> plannedBlocks,
+            BlockPos pos) {
+        return isPlannedConveyor(level, plannedBlocks, pos) || isPlannedEnterable(level, plannedBlocks, pos);
+    }
+
+    private static BlockState blockStateFor(Block block, int legacyMetadata) {
+        return block instanceof ConveyorBlock conveyor
+                ? conveyor.stateFromLegacyMetadata(legacyMetadata)
+                : block.defaultBlockState();
     }
 
     private static void saveStart(ItemStack stack, BlockPos pos, Direction side, int count) {

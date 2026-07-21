@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 
@@ -13,8 +14,9 @@ final class LegacyBlockEntityRenderCulling {
             return false;
         }
         AABB bounds = blockEntity.getRenderBoundingBox();
-        double maxDistanceSq = (double) viewDistance * (double) viewDistance;
-        return HbmRenderFrameCulling.shouldRender(blockEntity, bounds, maxDistanceSq);
+        // The argument remains to keep renderer call sites stable, but model culling is a
+        // global 512-block contract rather than a renderer-local override.
+        return HbmRenderFrameCulling.shouldRender(blockEntity, bounds, HbmModelRenderDistances.SQUARED_BLOCKS);
     }
 
     static void recordMachineSubmission(BlockEntity blockEntity) {

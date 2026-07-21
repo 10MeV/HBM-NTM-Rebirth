@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "equipment",
+  "key": {
+    "B": { "item": "hbm_ntm_rebirth:starmetal_boots" }, "D": { "item": "hbm_ntm_rebirth:billet_polonium" },
+    "P": { "item": "hbm_ntm_rebirth:plate_armor_fau" }
+  },
+  "pattern": ["PDP", "PBP"], "result": { "item": "hbm_ntm_rebirth:fau_boots" }, "show_notification": true
+}

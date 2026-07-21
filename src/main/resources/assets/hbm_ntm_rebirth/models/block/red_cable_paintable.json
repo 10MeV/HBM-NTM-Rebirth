@@ -1,0 +1,12 @@
+{
+  "loader": "hbm_ntm_rebirth:fluid_duct_paintable_loader",
+  "base": "hbm_ntm_rebirth:block/red_cable_base",
+  "overlay": "hbm_ntm_rebirth:block/red_cable_overlay",
+  "particle": "hbm_ntm_rebirth:block/red_cable_base",
+  "tinted_unpainted": false,
+  "unpainted_overlay": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/red_cable_base"
+  }
+}

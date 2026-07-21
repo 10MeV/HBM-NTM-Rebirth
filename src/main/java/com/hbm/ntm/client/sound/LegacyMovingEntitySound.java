@@ -89,6 +89,7 @@ public class LegacyMovingEntitySound extends AbstractSoundInstance implements Ti
         this.pitch = pitch;
     }
 
+
     public Entity getEntity() {
         return entity;
     }

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class ExplosionVnt {
     private BlockAllocator blockAllocator;
@@ -50,6 +51,9 @@ public class ExplosionVnt {
     private final DamageSource damageSource;
     private final ExplosionDamageCalculator damageCalculator;
     private final Explosion compat;
+    private boolean prepared;
+    private boolean finished;
+    private Set<BlockPos> affectedBlocks = Set.of();
 
     public ExplosionVnt(Level level, double x, double y, double z, float size) {
         this(level, x, y, z, size, null);
@@ -73,25 +77,56 @@ public class ExplosionVnt {
     }
 
     public void explode() {
+        prepare();
+        finish();
+    }
+
+    /**
+     * Runs the legacy Explosion#doExplosionA-equivalent allocation and entity pass.
+     * {@link #finish()} owns the corresponding terrain, packet and visual pass.
+     */
+    public void prepare() {
         if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) {
             return;
         }
+        if (prepared) {
+            return;
+        }
+        prepared = true;
 
         level.gameEvent(exploder, GameEvent.EXPLODE, position);
 
         boolean processBlocks = blockAllocator != null && blockProcessor != null && blockInteraction != Explosion.BlockInteraction.KEEP;
         boolean processEntities = entityProcessor != null && playerProcessor != null;
-        LinkedHashSet<BlockPos> affectedBlocks = new LinkedHashSet<>();
-        Map<net.minecraft.world.entity.player.Player, Vec3> affectedPlayers = Map.of();
+        LinkedHashSet<BlockPos> allocatedBlocks = new LinkedHashSet<>();
+        Map<net.minecraft.world.entity.player.Player, Vec3> hitPlayers = Map.of();
 
         if (processBlocks) {
-            affectedBlocks.addAll(blockAllocator.allocate(this, serverLevel, position, size));
-            compat.getToBlow().addAll(affectedBlocks);
+            allocatedBlocks.addAll(blockAllocator.allocate(this, serverLevel, position, size));
+            compat.getToBlow().addAll(allocatedBlocks);
         }
         if (processEntities) {
-            affectedPlayers = entityProcessor.process(this, serverLevel, position, size);
-            compat.getHitPlayers().putAll(affectedPlayers);
+            hitPlayers = entityProcessor.process(this, serverLevel, position, size);
+            compat.getHitPlayers().putAll(hitPlayers);
         }
+        affectedBlocks = allocatedBlocks;
+    }
+
+    /** Completes a prepared explosion with the legacy Explosion#doExplosionB-equivalent pass. */
+    public void finish() {
+        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel) || finished) {
+            return;
+        }
+        if (!prepared) {
+            prepare();
+            if (!prepared) {
+                return;
+            }
+        }
+        finished = true;
+
+        boolean processBlocks = blockAllocator != null && blockProcessor != null && blockInteraction != Explosion.BlockInteraction.KEEP;
+        boolean processEntities = entityProcessor != null && playerProcessor != null;
         if (processBlocks) {
             blockProcessor.process(this, serverLevel, position, affectedBlocks);
         }
@@ -99,7 +134,7 @@ public class ExplosionVnt {
             BlockProcessorStandard.placeFire(level, affectedBlocks);
         }
         if (processEntities) {
-            playerProcessor.process(this, serverLevel, position, affectedPlayers);
+            playerProcessor.process(this, serverLevel, position, compat.getHitPlayers());
         }
         if (effects != null) {
             for (ExplosionEffect effect : effects) {
@@ -161,6 +196,10 @@ public class ExplosionVnt {
 
     public Map<net.minecraft.world.entity.player.Player, Vec3> func_77277_b() {
         return compat.getHitPlayers();
+    }
+
+    public Set<BlockPos> affectedBlocks() {
+        return Set.copyOf(affectedBlocks);
     }
 
     public Level level() {

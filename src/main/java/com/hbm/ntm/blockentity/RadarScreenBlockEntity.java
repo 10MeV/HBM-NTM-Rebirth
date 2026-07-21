@@ -95,14 +95,16 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         writeLegacyLoadedTileNbt(tag);
-        tag.merge(snapshot.toTag(false));
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         readLegacyLoadedTileNbt(tag);
-        snapshot = RadarScreenSnapshot.fromTag(tag);
+        // TileEntityMachineRadarScreen never persisted its linked/ref/range/
+        // entry payload.  It is rebuilt only by the radar linker on the next
+        // server tick, so a world reload starts from the old unlinked state.
+        snapshot = RadarScreenSnapshot.UNLINKED;
     }
 
     @Override
@@ -112,7 +114,7 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        applyClientSyncTag(tag);
     }
 
     @Override
@@ -139,11 +141,19 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        applyClientSyncTag(packet.getTag());
     }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        applyClientSyncTag(tag);
+    }
+
+    private void applyClientSyncTag(CompoundTag tag) {
+        if (tag == null) {
+            return;
+        }
+        readLegacyLoadedTileNbt(tag);
+        snapshot = RadarScreenSnapshot.fromTag(tag);
     }
 }

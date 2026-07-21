@@ -358,8 +358,18 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type == inputTank.getTankType() && type != HbmFluids.NONE;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override
@@ -502,7 +512,6 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void onChunkUnloaded() {
-        destroyNodes();
         super.onChunkUnloaded();
     }
 
@@ -609,8 +618,10 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private void ensureNodes(Level level) {
         Direction facing = facing();
-        Direction receiverDirection = facing;
-        Direction providerDirection = facing.getOpposite();
+        // TileEntityFusionPlasmaForge#createNode uses the horizontal rotation
+        // of the machine facing, not the facing axis itself.
+        Direction receiverDirection = facing.getClockWise();
+        Direction providerDirection = receiverDirection.getOpposite();
         BlockPos receiverPos = worldPosition.relative(receiverDirection, 5).above(2);
         BlockPos providerPos = worldPosition.relative(providerDirection, 5).above(2);
         if (receiverNode == null || receiverNode.isExpired()) {
@@ -659,10 +670,10 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         if (receiverNode != null) {
-            PlasmaNodespace.destroyNode(level, receiverNode.getPos());
+            PlasmaNodespace.destroyNode(level, receiverNode);
         }
         if (providerNode != null) {
-            PlasmaNodespace.destroyNode(level, providerNode.getPos());
+            PlasmaNodespace.destroyNode(level, providerNode);
         }
         receiverNode = null;
         providerNode = null;

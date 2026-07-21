@@ -12,7 +12,6 @@ import com.hbm.ntm.util.HbmMenuDataSlots;
 import java.util.List;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -163,11 +162,7 @@ public class LaunchPadMenu extends AbstractContainerMenu {
     }
 
     private static boolean isDesignatorStack(ItemStack stack) {
-        if (stack.getItem() instanceof DesignatorItem) {
-            return true;
-        }
-        CompoundTag tag = stack.getTag();
-        return tag != null && tag.contains("xCoord") && tag.contains("zCoord");
+        return stack.getItem() instanceof DesignatorItem;
     }
 
     public ItemStack getMissileStack() {

@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "hbm_ntm_rebirth:chemical_dye_purple"
+    "hbm_ntm_rebirth:chemical_dye_purple",
+    "hbm_ntm_rebirth:crayon_purple"
   ]
 }

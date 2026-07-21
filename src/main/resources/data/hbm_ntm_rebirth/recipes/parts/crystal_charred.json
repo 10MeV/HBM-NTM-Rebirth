@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:powder_steel" },
+    { "item": "hbm_ntm_rebirth:powder_cobalt" },
+    { "item": "hbm_ntm_rebirth:powder_bromine" },
+    { "item": "hbm_ntm_rebirth:powder_niobium" },
+    { "item": "hbm_ntm_rebirth:powder_tennessine" },
+    { "item": "hbm_ntm_rebirth:powder_cerium" },
+    { "item": "hbm_ntm_rebirth:block_meteor" },
+    { "item": "hbm_ntm_rebirth:block_aluminium" },
+    { "item": "minecraft:water_bucket" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:crystal_charred" }
+}

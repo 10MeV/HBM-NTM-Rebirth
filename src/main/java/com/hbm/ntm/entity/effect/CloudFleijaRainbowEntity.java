@@ -1,6 +1,7 @@
 package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -77,7 +78,10 @@ public class CloudFleijaRainbowEntity extends Entity {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return distance < 25000.0D;
+        // This cloud is also used by source-backed FLEIJA and DFC meltdown paths.
+        // The excluded B92/pony callers are removed separately; every remaining
+        // model culling path uses the global 512-block contract.
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

@@ -69,6 +69,11 @@ public final class ModDamageSources {
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "shrapnel"));
     public static final ResourceKey<DamageType> RUBBLE = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "rubble"));
+    /**
+     * Registry-backed equivalent of the legacy mutable player damage source used
+     * exclusively by FSB hard landings.
+     */
+    public static final ResourceKey<DamageType> FSB_HARD_LANDING = key("fsb_hard_landing");
     public static final ResourceKey<DamageType> BLACKHOLE = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(HbmNtm.MOD_ID, "blackhole"));
     public static final ResourceKey<DamageType> VACUUM = key("vacuum");
@@ -85,12 +90,18 @@ public final class ModDamageSources {
     public static final ResourceKey<DamageType> SUBATOMIC_5 = key("subatomic_5");
     public static final ResourceKey<DamageType> REVOLVER_BULLET = key("revolver_bullet");
     public static final ResourceKey<DamageType> CHOPPER_BULLET = key("chopper_bullet");
+    /** Registry-backed carrier for ItemBoltgun's old armor-bypassing player damage source. */
+    public static final ResourceKey<DamageType> BOLT_GUN = key("boltgun");
     public static final ResourceKey<DamageType> TAU = key("tau");
     public static final ResourceKey<DamageType> COMBINE_BALL = key("combine_ball");
     public static final ResourceKey<DamageType> ACID_PLAYER = key("acid_player");
     public static final ResourceKey<DamageType> BOIL = key("boil");
     public static final ResourceKey<DamageType> ICE = key("ice");
     public static final ResourceKey<DamageType> FLAMETHROWER = key("flamethrower");
+    /** Legacy EntityFBI glass-helmet immunity source; no vanilla damage-type substitution is assumed. */
+    public static final ResourceKey<DamageType> OXYGEN_SUFFOCATION = key("oxygen_suffocation");
+    /** Legacy EntityFBI glass-helmet immunity source; no vanilla damage-type substitution is assumed. */
+    public static final ResourceKey<DamageType> THERMAL = key("thermal");
 
     private static final List<LegacyDamageType> LEGACY_DAMAGE_TYPES = List.of(
             legacy(NUCLEAR_BLAST, false, true, false, false, false, false),
@@ -148,7 +159,9 @@ public final class ModDamageSources {
             legacy(ACID_PLAYER, false, false, false, false, false, false),
             legacy(BOIL, false, false, false, false, false, false),
             legacy(ICE, false, false, false, false, false, false),
-            legacy(FLAMETHROWER, false, false, true, false, false, false)
+            legacy(FLAMETHROWER, false, false, true, false, false, false),
+            legacy(OXYGEN_SUFFOCATION, false, false, false, false, false, false),
+            legacy(THERMAL, false, false, false, false, false, false)
     );
     private static final Map<String, ResourceKey<DamageType>> LEGACY_DAMAGE_KEYS = createLegacyDamageKeys();
     private static final Map<ResourceKey<DamageType>, List<String>> LEGACY_DAMAGE_ALIASES = createLegacyDamageAliases();
@@ -891,6 +904,7 @@ public final class ModDamageSources {
         registerAlias(aliases, SUBATOMIC_5, "subAtomic5");
         registerAlias(aliases, ACID_PLAYER, "acidPlayer");
         registerAlias(aliases, FLAMETHROWER, "s_flamethrower");
+        registerAlias(aliases, OXYGEN_SUFFOCATION, "oxygenSuffocation");
         registerAlias(aliases, PLASMA, "immolator", "s_immolator");
         registerAlias(aliases, ICE, "cryolator", "s_cryolator");
         registerAlias(aliases, LASER, "s_laser");
@@ -941,6 +955,7 @@ public final class ModDamageSources {
         aliases.put(SUBATOMIC_5, List.of("subAtomic5"));
         aliases.put(ACID_PLAYER, List.of("acidPlayer", "s_acid"));
         aliases.put(FLAMETHROWER, List.of("s_flamethrower"));
+        aliases.put(OXYGEN_SUFFOCATION, List.of("oxygenSuffocation"));
         aliases.put(PLASMA, List.of("immolator", "s_immolator"));
         aliases.put(ICE, List.of("cryolator", "s_cryolator"));
         aliases.put(LASER, List.of("s_laser"));

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["PGP", "SSS", "BBB"],
+  "key": {
+    "P": { "tag": "forge:plates/steel" },
+    "G": { "tag": "forge:plates/gold" },
+    "S": { "item": "hbm_ntm_rebirth:steel_scaffold" },
+    "B": { "item": "hbm_ntm_rebirth:steel_beam" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:seg_20" }
+}

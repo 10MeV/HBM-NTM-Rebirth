@@ -18,7 +18,7 @@ public final class FluidNetProvider implements HbmNetworkProvider<HbmFluidNode, 
     }
 
     @Override
-    public HbmFluidNet provideNetwork(HbmFluidNode seedNode) {
+    public HbmFluidNet provideNetwork() {
         return new HbmFluidNet(type);
     }
 }

@@ -22,18 +22,24 @@ public record MissileMultipartSnapshot(ResourceLocation warhead, ResourceLocatio
 
     public static MissileMultipartSnapshot of(ResourceLocation warhead, ResourceLocation fuselage,
                                               ResourceLocation fins, ResourceLocation thruster) {
-        return new MissileMultipartSnapshot(warhead, fuselage, fins, thruster);
+        return new MissileMultipartSnapshot(partId(warhead, MissilePartItem.PartType.WARHEAD),
+                partId(fuselage, MissilePartItem.PartType.FUSELAGE),
+                partId(fins, MissilePartItem.PartType.FINS),
+                partId(thruster, MissilePartItem.PartType.THRUSTER));
     }
 
     public static MissileMultipartSnapshot of(ItemStack warhead, ItemStack fuselage, ItemStack fins, ItemStack thruster) {
-        return new MissileMultipartSnapshot(itemId(warhead), itemId(fuselage), itemId(fins), itemId(thruster));
+        return new MissileMultipartSnapshot(partId(warhead, MissilePartItem.PartType.WARHEAD),
+                partId(fuselage, MissilePartItem.PartType.FUSELAGE),
+                partId(fins, MissilePartItem.PartType.FINS),
+                partId(thruster, MissilePartItem.PartType.THRUSTER));
     }
 
     public static MissileMultipartSnapshot ofMissile(ItemStack missile) {
         if (!(missile.getItem() instanceof CustomMissileItem)) {
             return EMPTY;
         }
-        return new MissileMultipartSnapshot(
+        return of(
                 CustomMissileItem.getPartId(missile, CustomMissileItem.TAG_WARHEAD),
                 CustomMissileItem.getPartId(missile, CustomMissileItem.TAG_FUSELAGE),
                 CustomMissileItem.getPartId(missile, CustomMissileItem.TAG_STABILITY),
@@ -74,6 +80,20 @@ public record MissileMultipartSnapshot(ResourceLocation warhead, ResourceLocatio
             return null;
         }
         return ForgeRegistries.ITEMS.getKey(stack.getItem());
+    }
+
+    /**
+     * Legacy {@code MissileStruct#writeToByteBuffer} emitted zero for every
+     * slot whose {@code ItemCustomMissilePart} type did not match that
+     * multipart position. Keep that payload contract in the common snapshot,
+     * so assembly previews and both custom launchers cannot drift apart.
+     */
+    private static ResourceLocation partId(ItemStack stack, MissilePartItem.PartType expectedType) {
+        return partId(itemId(stack), expectedType);
+    }
+
+    private static ResourceLocation partId(ResourceLocation id, MissilePartItem.PartType expectedType) {
+        return CustomMissilePartProfile.resolve(id, expectedType) == null ? null : id;
     }
 
     private static ResourceLocation normalize(ResourceLocation id) {

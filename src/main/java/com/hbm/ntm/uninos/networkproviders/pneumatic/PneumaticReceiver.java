@@ -11,6 +11,8 @@ public record PneumaticReceiver(
         @Nullable PneumaticItemAccess access) {
 
     public PneumaticReceiver {
-        access = access == null ? new PneumaticItemAccess(handler, endpoint.getPneumaticPos()) : access;
+        // A legacy non-TileEntity IInventory has no sortable position. Keep
+        // that fact instead of manufacturing the endpoint tube position.
+        access = access == null ? new PneumaticItemAccess(handler, null) : access;
     }
 }

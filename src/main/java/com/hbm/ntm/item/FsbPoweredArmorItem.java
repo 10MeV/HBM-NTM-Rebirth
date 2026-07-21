@@ -111,9 +111,7 @@ public class FsbPoweredArmorItem extends ArmorFSB implements FsbPoweredArmor {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.literal("Charge: " + HbmTextUtil.shortNumber(getCharge(stack)) + " / "
-                + HbmTextUtil.shortNumber(getMaxCharge(stack)) + "HE").withStyle(ChatFormatting.YELLOW));
-        tooltip.add(Component.literal("Charge rate: " + HbmTextUtil.shortNumber(getChargeRate(stack)) + "HE/t")
-                .withStyle(ChatFormatting.GRAY));
+                + HbmTextUtil.shortNumber(getMaxCharge(stack))).withStyle(ChatFormatting.YELLOW));
         super.appendHoverText(stack, level, tooltip, flag);
     }
 }

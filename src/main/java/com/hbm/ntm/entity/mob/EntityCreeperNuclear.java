@@ -10,6 +10,7 @@ import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -29,6 +30,11 @@ public class EntityCreeperNuclear extends Creeper implements IRadiationImmune {
     public EntityCreeperNuclear(EntityType<? extends EntityCreeperNuclear> type, Level level) {
         super(type, level);
         this.maxSwell = LEGACY_FUSE_TIME;
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     public static AttributeSupplier.Builder createAttributes() {

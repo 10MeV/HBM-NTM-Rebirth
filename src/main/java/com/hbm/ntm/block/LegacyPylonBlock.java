@@ -70,9 +70,7 @@ public abstract class LegacyPylonBlock extends LegacyXrMultiblockBlock implement
         if (!pylon.setWireColor(color)) {
             return InteractionResult.PASS;
         }
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
+        stack.shrink(1);
         return InteractionResult.CONSUME;
     }
 

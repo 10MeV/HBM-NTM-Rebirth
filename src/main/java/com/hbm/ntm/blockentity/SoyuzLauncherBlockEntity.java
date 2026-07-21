@@ -87,13 +87,11 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return switch (slot) {
-                case SLOT_ROCKET -> stack.is(ModItems.MISSILE_SOYUZ.get());
-                case SLOT_DESIGNATOR -> stack.getItem() instanceof DesignatorItem || hasLegacyDesignatorCoords(stack);
-                case SLOT_SATELLITE, SLOT_ORBITAL -> true;
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
-                default -> true;
-            };
+            // TileEntitySoyuzLauncher inherits TileEntityMachineBase's all-false
+            // ISidedInventory insertion contract.  Its GUI separately used ordinary
+            // Slots, so manual placement must be expressed by SoyuzLauncherMenu rather
+            // than by opening an automation insertion path here.
+            return false;
         }
 
         @Override
@@ -103,7 +101,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     };
     private int mode;
     private boolean starting;
-    private int countdown = MAX_COUNTDOWN;
+    private int countdown;
     private String customName;
     private Object audioLoop;
     private List<LauncherPort> launcherPorts;
@@ -140,20 +138,28 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (!level.isClientSide) {
             return;
         }
-        launcher.updateAudioLoop();
+        // TileEntitySoyuzLauncher independently advances its client countdown.
+        // It only stops the loop on the !starting / !canLaunch branch; countdown
+        // reaching zero waits for the server's lift-off state sync.
+        if (!launcher.starting || !launcher.canLaunch()) {
+            launcher.countdown = MAX_COUNTDOWN;
+            launcher.updateAudioLoop(false);
+        } else if (launcher.countdown > 0) {
+            launcher.updateAudioLoop(true);
+            launcher.countdown--;
+        }
         if (LegacyClientAnimationLod.shouldSkipAnimationUpdate(level, pos)) {
             return;
         }
         if (!level.getEntitiesOfClass(SoyuzEntity.class,
-                        new AABB(pos.getX() - 5.0D, pos.getY(), pos.getZ() - 5.0D,
-                                pos.getX() + 5.0D, pos.getY() + 10.0D, pos.getZ() + 5.0D)).isEmpty()) {
+                        new AABB(pos.getX() - 0.5D, pos.getY(), pos.getZ() - 0.5D,
+                                pos.getX() + 1.5D, pos.getY() + 10.0D, pos.getZ() + 1.5D)).isEmpty()) {
             ParticleUtil.spawnSmokeShockRandom(level, pos.getX() + 0.5D, pos.getY() - 3.0D,
                     pos.getZ() + 0.5D, 50, level.random.nextGaussian() * 3.0D + 6.0D);
         }
     }
 
-    private void updateAudioLoop() {
-        boolean active = starting && countdown > 0 && canLaunch();
+    private void updateAudioLoop(boolean active) {
         audioLoop = LegacyMachineAudioBridge.updateLoop(audioLoop, this, "hbm:block.soyuzReady",
                 active, 100.0D, 100.0F, 2.0F, 1.0F);
     }
@@ -221,7 +227,10 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         } else if (mode == MODE_CARGO) {
             List<ItemStack> payload = new ArrayList<>();
             for (int slot = SLOT_CARGO_START; slot < SLOT_CARGO_END; slot++) {
-                payload.add(items.getStackInSlot(slot).copy());
+                // TileEntitySoyuzLauncher hands its slot reference straight to
+                // EntitySoyuz before clearing the launcher slot.  The entity and
+                // later recovered capsule therefore retain this exact stack.
+                payload.add(items.getStackInSlot(slot));
                 items.setStackInSlot(slot, ItemStack.EMPTY);
             }
             BlockPos target = designatorTarget();
@@ -315,18 +324,13 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (stack.getItem() instanceof DesignatorItem designator) {
             return designator.isReady(level, stack, worldPosition);
         }
-        return hasLegacyDesignatorCoords(stack);
+        return false;
     }
 
     private BlockPos designatorTarget() {
         ItemStack stack = items.getStackInSlot(SLOT_DESIGNATOR);
         if (level != null && stack.getItem() instanceof DesignatorItem designator) {
-            Vec3 coords = designator.getCoords(level, stack, worldPosition);
-            return BlockPos.containing(coords);
-        }
-        CompoundTag tag = stack.getTag();
-        if (tag != null) {
-            return new BlockPos(tag.getInt("xCoord"), 0, tag.getInt("zCoord"));
+            return designator.getHorizontalTarget(level, stack, worldPosition);
         }
         return worldPosition;
     }
@@ -365,7 +369,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public int getRocketType() {
-        return hasRocket() ? SoyuzRocketItem.getSkin(items.getStackInSlot(SLOT_ROCKET)) : -1;
+        return hasRocket() ? SoyuzRocketItem.getRawSkin(items.getStackInSlot(SLOT_ROCKET)) : -1;
     }
 
     public long getStoredPower() {
@@ -401,7 +405,12 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        return HbmFluidSideMode.INPUT;
+        // TileEntitySoyuzLauncher#canConnect rejected UNKNOWN, UP and DOWN.
+        // Keep the unsided view for internal/diagnostic callers, but do not
+        // expose a physical Forge-fluid endpoint on the vertical core faces.
+        return side == null || side.getAxis().isHorizontal()
+                ? HbmFluidSideMode.INPUT
+                : HbmFluidSideMode.NONE;
     }
 
     @Override
@@ -424,6 +433,20 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         return networkFluidPorts;
     }
 
+    /**
+     * Soyuz performs its legacy remote endpoint scan every 20 ticks in its
+     * outer ticker; keep every such pass retryable after duct topology changes.
+     */
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
         if (energyPorts == null) {
@@ -441,7 +464,8 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
-        return type == HbmFluids.KEROSENE || type == HbmFluids.OXYGEN;
+        return side != null && side.getAxis().isHorizontal()
+                && (type == HbmFluids.KEROSENE || type == HbmFluids.OXYGEN);
     }
 
     @Override
@@ -473,16 +497,23 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         return player.distanceToSqr(worldPosition.getX() + 0.5D,
                 worldPosition.getY() + 0.5D,
                 worldPosition.getZ() + 0.5D) <= 64.0D
-                && ((id == CONTROL_MODE && (value == MODE_SATELLITE || value == MODE_CARGO))
-                || (id == CONTROL_START && value == 0));
+                // AuxButtonPacket passed both integers through verbatim.  The
+                // Soyuz branch only distinguished the two button ids: id 0
+                // assigned `(byte) value`, while id 1 called startCountdown()
+                // regardless of its value.  Keep the modern proximity gate,
+                // but do not add an un-sourced value whitelist to this legacy
+                // machine control contract.
+                && (id == CONTROL_MODE || id == CONTROL_START);
     }
 
     @Override
     public void handleLegacyButton(ServerPlayer player, int value, int id) {
         if (id == CONTROL_MODE) {
-            mode = value;
-            starting = false;
-            countdown = MAX_COUNTDOWN;
+            // AuxButtonPacket#Handler assigned launcher.mode = (byte) value
+            // directly.  In particular, changing modes did not immediately
+            // cancel a running countdown or reset it; the normal following
+            // machine tick decides whether the retained start state is valid.
+            mode = (byte) value;
             setChanged();
         } else if (id == CONTROL_START) {
             startCountdown();
@@ -496,10 +527,11 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         keroseneTank().writeToNbt(tag, "fuel");
         oxygenTank().writeToNbt(tag, "oxidizer");
         tag.putLong(TAG_POWER, energy.getPower());
-        tag.putInt(TAG_MODE, mode);
-        tag.putBoolean(TAG_STARTING, starting);
-        tag.putInt(TAG_COUNTDOWN, countdown);
-        if (hasCustomName()) {
+        tag.putByte(TAG_MODE, (byte) mode);
+        // TileEntitySoyuzLauncher only persisted tanks, power, mode and items.
+        // Countdown/start are runtime state and are supplied separately in the
+        // modern client update tag below, not in world-save NBT.
+        if (customName != null) {
             tag.putString(TAG_CUSTOM_NAME, customName);
         }
     }
@@ -515,15 +547,21 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (tag.contains(TAG_POWER)) {
             energy.setPower(tag.getLong(TAG_POWER));
         }
-        mode = tag.getInt(TAG_MODE);
-        starting = tag.getBoolean(TAG_STARTING);
-        countdown = tag.contains(TAG_COUNTDOWN) ? tag.getInt(TAG_COUNTDOWN) : MAX_COUNTDOWN;
+        mode = tag.getByte(TAG_MODE);
+        // World saves deliberately omit these two old non-persistent fields.
+        // Update tags include them solely to keep the existing modern client
+        // animation/audio bridge in sync with the server.
+        starting = tag.contains(TAG_STARTING) && tag.getBoolean(TAG_STARTING);
+        countdown = tag.contains(TAG_COUNTDOWN) ? tag.getInt(TAG_COUNTDOWN) : 0;
         customName = tag.getString(TAG_CUSTOM_NAME);
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        CompoundTag tag = saveWithoutMetadata();
+        tag.putBoolean(TAG_STARTING, starting);
+        tag.putInt(TAG_COUNTDOWN, countdown);
+        return tag;
     }
 
     @Nullable
@@ -567,11 +605,6 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
             drops.add(new ItemStack(block, stackSize));
             remaining -= stackSize;
         }
-    }
-
-    private static boolean hasLegacyDesignatorCoords(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        return tag != null && tag.contains("xCoord") && tag.contains("zCoord");
     }
 
     private record LauncherPort(BlockPos offset, Direction direction) {

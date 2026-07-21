@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:missile_assembly" },
+    { "item": "hbm_ntm_rebirth:ducttape" },
+    { "item": "hbm_ntm_rebirth:cell_anti_schrabidium" },
+    { "item": "hbm_ntm_rebirth:circuit_quantum" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:missile_schrabidium" }
+}

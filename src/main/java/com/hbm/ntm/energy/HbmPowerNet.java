@@ -5,20 +5,14 @@ import com.hbm.ntm.api.tile.LoadedTile;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
+public class HbmPowerNet extends HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider, HbmEnergyNode> {
     public static final long DEFAULT_TIMEOUT_MS = 3_000L;
 
-    private static final Random RANDOM = new Random();
-
-    private final Map<HbmEnergyReceiver, Long> receiverEntries = new LinkedHashMap<>();
-    private final Map<HbmEnergyProvider, Long> providerEntries = new LinkedHashMap<>();
     private final long timeoutMs;
 
     private long energyTracker;
@@ -133,13 +127,18 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
     }
 
     @Override
+    protected void onLegacyReap() {
+        clearSubscriptions();
+    }
+
+    @Override
     public void destroy() {
         super.destroy();
         clearSubscriptions();
     }
 
     @Override
-    public void joinNetwork(com.hbm.ntm.uninos.HbmNodeNet<HbmEnergyNode> network) {
+    public void joinNetwork(com.hbm.ntm.uninos.HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider, HbmEnergyNode> network) {
         if (!(network instanceof HbmPowerNet powerNet) || powerNet == this) {
             super.joinNetwork(network);
             return;
@@ -278,7 +277,7 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyNode> {
         int iterationsLeft = 100;
         while (iterationsLeft > 0 && leftover > 0L && !providers.isEmpty()) {
             iterationsLeft--;
-            HbmEnergyProvider provider = providers.get(RANDOM.nextInt(providers.size())).value;
+            HbmEnergyProvider provider = providers.get(rand.nextInt(providers.size())).value;
             long toUse = Math.min(leftover, provider.getPower());
             provider.usePower(toUse);
             leftover -= toUse;

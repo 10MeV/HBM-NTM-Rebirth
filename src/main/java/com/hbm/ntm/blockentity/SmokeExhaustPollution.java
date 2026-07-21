@@ -106,8 +106,10 @@ final class SmokeExhaustPollution {
         return switch (type) {
             case SOOT -> HbmFluids.SMOKE;
             case HEAVYMETAL -> HbmFluids.SMOKE_LEADED;
-            case POISON -> HbmFluids.SMOKE_POISON;
-            case FALLOUT -> null;
+            // TileEntityMachinePolluting's final ternary branch handled every
+            // non-soot/non-heavy-metal type through smoke_poison.  Preserve
+            // that legacy fallback for dynamically configured FALLOUT traits.
+            case POISON, FALLOUT -> HbmFluids.SMOKE_POISON;
         };
     }
 
@@ -119,8 +121,9 @@ final class SmokeExhaustPollution {
         return switch (type) {
             case SOOT -> sootTank;
             case HEAVYMETAL -> heavyMetalTank;
-            case POISON -> poisonTank;
-            case FALLOUT -> null;
+            // Matches the old `type == SOOT ? ... : type == HEAVYMETAL ? ...
+            // : smoke_poison` selection exactly.
+            case POISON, FALLOUT -> poisonTank;
         };
     }
 

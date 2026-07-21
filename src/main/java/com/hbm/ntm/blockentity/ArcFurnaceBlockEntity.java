@@ -160,9 +160,7 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
 
         HbmEnergyUtil.chargeStorageFromItem(furnace.items.getStackInSlot(SLOT_BATTERY),
                 furnace.energy, furnace.energy.getReceiverSpeed());
-        if (level.getGameTime() % 20L == 0L) {
-            furnace.subscribeEnergyReceiverToPorts(furnace.energyPorts(state), furnace.energy);
-        }
+        furnace.subscribeEnergyReceiverToPorts(furnace.energyPorts(state), furnace.energy);
 
         furnace.upgrade = furnace.upgradeLevels().getLevel(UpgradeType.SPEED);
         furnace.progressing = false;
@@ -663,6 +661,12 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
         return energyPorts(getBlockState());
+    }
+
+    @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityMachineArcFurnaceLarge re-subscribes all six remote ports every server tick.
+        return true;
     }
 
     @Override

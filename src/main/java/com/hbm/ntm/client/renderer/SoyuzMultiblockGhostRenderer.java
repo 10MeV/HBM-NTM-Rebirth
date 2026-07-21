@@ -70,7 +70,7 @@ public class SoyuzMultiblockGhostRenderer implements BlockEntityRenderer<SoyuzSt
             poseStack.pushPose();
             poseStack.translate(1.0D, 1.0D, 0.0D);
             LegacyMachineEffectPresenter.enqueueAtlasSpriteQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES,
-                    poseStack, buffer, LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE, quads -> {
+                    poseStack, buffer, LegacyTexturedRenderMode.TRANSLUCENT_CULL_DEPTH_WRITE, quads -> {
                 for (GhostRange range : RANGES) {
                     renderRange(range, quads, light, alpha);
                 }

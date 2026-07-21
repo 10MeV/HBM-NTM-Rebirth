@@ -94,7 +94,11 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
         return SENDER_OFF;
     }
 
-    private static Rotation legacyRotation(Direction facing) {
+    /**
+     * Exact six-face transform used by legacy {@code RenderRTTY}. Kept public because
+     * drone waypoints were also rendered through that same ISBRH in 1.7.10.
+     */
+    public static Rotation legacyRotation(Direction facing) {
         float flip = 0.0F;
         float rotation = 0.0F;
         switch (facing) {
@@ -115,6 +119,6 @@ public class RadioTorchRenderer implements BlockEntityRenderer<RadioTorchBlockEn
         return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + name);
     }
 
-    private record Rotation(float yaw, float pitch) {
+    public record Rotation(float yaw, float pitch) {
     }
 }

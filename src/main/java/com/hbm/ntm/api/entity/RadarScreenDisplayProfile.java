@@ -1,5 +1,6 @@
 package com.hbm.ntm.api.entity;
 
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 
@@ -9,8 +10,8 @@ import java.util.function.Consumer;
 public final class RadarScreenDisplayProfile {
     public static final int SERVER_SYNC_INTERVAL_TICKS = 100;
     public static final int LINKED_SYNC_DELAY_TICKS = 25;
-    public static final double MAX_RENDER_DISTANCE_SQUARED = 65_536.0D;
-    public static final int VIEW_DISTANCE = 256;
+    public static final double MAX_RENDER_DISTANCE_SQUARED = HbmModelRenderDistances.SQUARED_BLOCKS;
+    public static final int VIEW_DISTANCE = HbmModelRenderDistances.BLOCKS;
     private static final int WORLD_SWEEP_PERIOD_TICKS = 56;
     private static final double WORLD_SWEEP_SPEED_DIVISOR = 30.0D;
     private static final long NOISE_TIME_MULTIPLIER = 31L;

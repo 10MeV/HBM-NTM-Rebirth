@@ -19,11 +19,14 @@ public final class HbmOptimizedRenderShaders {
             new ResourceLocation(HbmNtm.MOD_ID, "block_lit_instanced");
     private static final ResourceLocation BLOCK_LIT_STATIC =
             new ResourceLocation(HbmNtm.MOD_ID, "block_lit_static");
+    private static final ResourceLocation LEGACY_STANDARD_ITEM_LIT_STATIC =
+            new ResourceLocation(HbmNtm.MOD_ID, "legacy_standard_item_lit_static");
     private static final ResourceLocation BLOCK_UNTEXTURED_INSTANCED =
             new ResourceLocation(HbmNtm.MOD_ID, "block_untextured_instanced");
 
     private static ShaderInstance blockLitInstancedShader;
     private static ShaderInstance blockLitStaticShader;
+    private static ShaderInstance legacyStandardItemLitStaticShader;
     private static ShaderInstance blockUntexturedInstancedShader;
 
     private HbmOptimizedRenderShaders() {
@@ -32,6 +35,7 @@ public final class HbmOptimizedRenderShaders {
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         blockLitInstancedShader = null;
         blockLitStaticShader = null;
+        legacyStandardItemLitStaticShader = null;
         blockUntexturedInstancedShader = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(), BLOCK_LIT_INSTANCED,
                 blockLitInstancedFormat()), shader -> {
@@ -42,6 +46,11 @@ public final class HbmOptimizedRenderShaders {
                 DefaultVertexFormat.NEW_ENTITY), shader -> {
             blockLitStaticShader = shader;
             HbmNtm.LOGGER.info("Registered HBM optimized block_lit_static shader.");
+        });
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), LEGACY_STANDARD_ITEM_LIT_STATIC,
+                DefaultVertexFormat.NEW_ENTITY), shader -> {
+            legacyStandardItemLitStaticShader = shader;
+            HbmNtm.LOGGER.info("Registered HBM legacy standard-item-light static shader.");
         });
         event.registerShader(new ShaderInstance(event.getResourceProvider(), BLOCK_UNTEXTURED_INSTANCED,
                 blockLitInstancedFormat()), shader -> {
@@ -56,6 +65,13 @@ public final class HbmOptimizedRenderShaders {
 
     public static ShaderInstance blockLitStaticShader() {
         return blockLitStaticShader;
+    }
+
+    /**
+     * Fixed-function equivalent of 1.7.10 RenderHelper#enableStandardItemLighting for shared static OBJ draws.
+     */
+    public static ShaderInstance legacyStandardItemLitStaticShader() {
+        return legacyStandardItemLitStaticShader;
     }
 
     public static ShaderInstance blockUntexturedInstancedShader() {

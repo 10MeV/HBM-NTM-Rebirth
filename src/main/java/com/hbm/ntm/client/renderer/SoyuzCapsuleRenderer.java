@@ -13,14 +13,16 @@ import net.minecraft.resources.ResourceLocation;
 public class SoyuzCapsuleRenderer extends EntityRenderer<SoyuzCapsuleEntity> {
     public SoyuzCapsuleRenderer(EntityRendererProvider.Context context) {
         super(context);
-        shadowRadius = 0.8F;
+        shadowRadius = 0.0F;
     }
 
     @Override
     public void render(SoyuzCapsuleEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        double time = entity.level().getGameTime() + partialTick;
+        // RenderSoyuzCapsule samples only worldObj.getTotalWorldTime(); the
+        // legacy chute wobble advances on whole game ticks, not render partials.
+        double time = entity.level().getGameTime();
         float zWobble = (float) Math.sin(time * 0.05D) * 5.0F;
         float xWobble = (float) Math.sin(time * 0.05D + Math.PI * 0.5D) * 5.0F;
         poseStack.translate(0.0D, 7.0D, 0.0D);

@@ -188,6 +188,13 @@ public class ConveyorPressBlockEntity extends HbmEnergyBlockEntity implements Le
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityConveyorPress retries every declared remote receiver on
+        // each legacy server tick.
+        return true;
+    }
+
+    @Override
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         ItemStack stamp = getStamp();
         return LegacyLookOverlay.forBlock(this, List.of(

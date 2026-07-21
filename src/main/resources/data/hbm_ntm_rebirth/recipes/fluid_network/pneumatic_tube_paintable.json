@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["SAS", "A A", "SAS"],
+  "key": {
+    "S": {"tag": "forge:plates/steel"},
+    "A": {"item": "hbm_ntm_rebirth:pneumatic_tube"}
+  },
+  "result": {"item": "hbm_ntm_rebirth:pneumatic_tube_paintable", "count": 4}
+}

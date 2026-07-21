@@ -380,6 +380,11 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.INPUT;
     }

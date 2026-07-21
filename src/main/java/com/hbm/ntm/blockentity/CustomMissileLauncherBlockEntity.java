@@ -32,6 +32,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
@@ -67,8 +68,6 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
     private static final String TAG_POWER = "power";
     private static final String TAG_SOLID = "solidfuel";
     private static final String TAG_PAD_SIZE = "padSize";
-    private static final String TAG_REDSTONE = "redstonePower";
-    private static final String TAG_PREV_REDSTONE = "prevRedstonePower";
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -81,26 +80,19 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return switch (slot) {
-                case SLOT_MISSILE -> stack.getItem() instanceof CustomMissileItem && customAssembly(stack) != null;
-                case SLOT_DESIGNATOR -> stack.getItem() instanceof DesignatorItem || hasLegacyDesignatorCoords(stack);
-                case SLOT_FUEL_OUTPUT, SLOT_OXIDIZER_OUTPUT -> false;
-                case SLOT_SOLID_FUEL -> isRocketFuel(stack);
-                case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
-                default -> true;
-            };
-        }
-
-        @Override
-        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
+            // ContainerCompactLauncher and ContainerLaunchTable use ordinary
+            // net.minecraft.inventory.Slot instances.  Slot#isItemValid returns true
+            // in 1.7.10, so every one of their eight manual/shift-click GUI slots
+            // accepts an arbitrary stack (including the two displayed output slots).
+            // The old ISidedInventory automation surface was separately all-false;
+            // EmptyExternalItemHandler below is that modern capability boundary.
+            return true;
         }
     };
 
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new EmptyExternalItemHandler());
     private MissileMultipartSnapshot clientMultipart = MissileMultipartSnapshot.EMPTY;
     private boolean redstonePowered;
-    private boolean prevRedstonePowered;
     private int solidFuel;
     private PartSize padSize;
 
@@ -126,9 +118,7 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
         launcher.networkPackNT(50);
-        if (level.getGameTime() % 20L == 0L) {
-            launcher.syncMultipart();
-        }
+        launcher.syncMultipart();
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, CustomMissileLauncherBlockEntity launcher) {
@@ -153,17 +143,23 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
         int oldOxidizer = oxidizerTank().getFill();
         boolean oldRedstone = redstonePowered;
 
+        // Legacy updateEntity selects the fuselage's fuel/oxidizer types before
+        // it lets slots 2/3 load their containers.  HbmFluidItemTransfer rejects
+        // NONE-type tanks, so preserving this order also preserves same-tick
+        // loading immediately after a missile is inserted.
+        updateTankTypes();
         processFluidItemLoadTransfers(items, SLOT_FUEL_INPUT, SLOT_FUEL_OUTPUT, 2, fuelTank(), oxidizerTank());
         HbmEnergyUtil.chargeStorageFromItem(items.getStackInSlot(SLOT_BATTERY), energy, energy.getReceiverSpeed());
         loadSolidFuel();
-        updateTankTypes();
 
         redstonePowered = isPowered(level, pos);
-        if (redstonePowered && !prevRedstonePowered && canLaunch()) {
+        // Both TileEntityLaunchTable and TileEntityCompactLauncher test their
+        // powered footprint every server tick.  A missile or its fuel may be
+        // loaded after the redstone signal, and must launch on that later tick
+        // without requiring the player to pulse the signal again.
+        if (redstonePowered && canLaunch()) {
             launchFromDesignator();
         }
-        prevRedstonePowered = redstonePowered;
-
         return oldPower != energy.getPower()
                 || oldSolid != solidFuel
                 || oldFuel != fuelTank().getFill()
@@ -216,7 +212,12 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
         missile.configureParts(assembly);
         missile.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + 2.5D,
                 worldPosition.getZ() + 0.5D, adjustedTarget[0], adjustedTarget[1]);
-        serverLevel.addFreshEntity(missile);
+        // The legacy launchers commit fuel, power and the multipart stack only
+        // after handing the missile to the world. ServerLevel can reject that
+        // handoff, so preserve the complete launcher state on modern failure.
+        if (!serverLevel.addFreshEntity(missile)) {
+            return false;
+        }
         LegacySoundPlayer.playSoundEffect(serverLevel, worldPosition.getX(), worldPosition.getY(),
                 worldPosition.getZ(), "hbm:weapon.missileTakeOff", SoundSource.PLAYERS, 10.0F, 1.0F);
         subtractFuel(assembly);
@@ -234,6 +235,9 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
     @Override
     public boolean sendCommandEntity(Entity target) {
         return target != null && sendCommandPosition((int) Math.floor(target.getX()), worldPosition.getY(),
+                // The 1.7.10 launchers accidentally passed target.posX as Z here.
+                // Keep entity-target commands aligned with every other radar command
+                // carrier: X and Z remain independent world coordinates.
                 (int) Math.floor(target.getZ()));
     }
 
@@ -242,9 +246,12 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
         float inaccuracy = assembly.launchInaccuracy();
         double offsetX = (worldPosition.getX() - targetX) * inaccuracy;
         double offsetZ = (worldPosition.getZ() - targetZ) * inaccuracy;
-        double angle = level.random.nextFloat() * Math.PI * 2.0D;
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
+        // Preserve the legacy Vec3#rotateAroundY input verbatim: the old launcher
+        // supplied random * 360 as radians, so a conventional 2π turn changes the
+        // concrete integer target selected for an inaccurate custom missile.
+        float angle = level.random.nextFloat() * 360.0F;
+        double cos = Mth.cos(angle);
+        double sin = Mth.sin(angle);
         return new int[] {
                 targetX + (int) (offsetX * cos + offsetZ * sin),
                 targetZ + (int) (offsetZ * cos - offsetX * sin)
@@ -265,7 +272,16 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
     }
 
     public boolean isMissileValid() {
-        CustomMissilePartProfile.Assembly assembly = customAssembly();
+        return isMissileValid(items.getStackInSlot(SLOT_MISSILE));
+    }
+
+    /**
+     * Legacy launch-table validation for a concrete custom-missile stack. Keeping
+     * this separate from the slot accessor lets the runtime readiness check and
+     * regression checks use the same complete-assembly and pad-size contract.
+     */
+    public boolean isMissileValid(ItemStack stack) {
+        CustomMissilePartProfile.Assembly assembly = customAssembly(stack);
         return assembly != null && assembly.isCompleteForLaunch() && assembly.fuselage().profile().top() == padSize;
     }
 
@@ -339,11 +355,7 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
     private BlockPos designatorTarget(ItemStack stack) {
         if (level != null && stack.getItem() instanceof DesignatorItem designator
                 && designator.isReady(level, stack, worldPosition)) {
-            return BlockPos.containing(designator.getCoords(level, stack, worldPosition));
-        }
-        CompoundTag tag = stack.getTag();
-        if (tag != null && tag.contains("xCoord") && tag.contains("zCoord")) {
-            return new BlockPos(tag.getInt("xCoord"), worldPosition.getY(), tag.getInt("zCoord"));
+            return designator.getHorizontalTarget(level, stack, worldPosition);
         }
         return null;
     }
@@ -381,7 +393,8 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
             BlockState state = getBlockState();
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
             ModMessages.sendToAllAround(ModMessages.missileMultipartPacket(worldPosition, multipartSnapshot()),
-                    serverLevel, worldPosition, MULTIPART_SYNC_RANGE);
+                    serverLevel, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                    MULTIPART_SYNC_RANGE);
         }
     }
 
@@ -440,6 +453,16 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
 
     protected abstract PartSize defaultPadSize();
 
+    /**
+     * The legacy launch table rejects both vertical faces, whereas
+     * TileEntityCompactLauncher permits its four underside ports.  The null
+     * side used by modern internal subscription queries is deliberately not a
+     * physical UNKNOWN face and remains available in either case.
+     */
+    protected boolean allowsDownwardConnections() {
+        return false;
+    }
+
     protected boolean requiresDesignatorForCanLaunch() {
         return true;
     }
@@ -460,7 +483,7 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
 
     @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
-        return HbmFluidSideMode.INPUT;
+        return acceptsConnectionOn(side) ? HbmFluidSideMode.INPUT : HbmFluidSideMode.NONE;
     }
 
     @Override
@@ -478,6 +501,22 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
         return fluidPorts();
     }
 
+    /**
+     * Legacy compact launchers and launch tables call their remote
+     * {@code trySubscribe} loop every 20 ticks. Their outer server ticker
+     * preserves that cadence, so every invocation here must retry the remote
+     * ports even when an earlier scan ran before a duct was placed.
+     */
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
         return energyPorts();
@@ -485,13 +524,18 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
 
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
-        return HbmEnergySideMode.INPUT;
+        return acceptsConnectionOn(side) ? HbmEnergySideMode.INPUT : HbmEnergySideMode.NONE;
     }
 
     @Override
     public boolean canConnectFluid(FluidType type, Direction side) {
-        return type != null && type != HbmFluids.NONE
+        return acceptsConnectionOn(side)
+                && type != null && type != HbmFluids.NONE
                 && (type == fuelTank().getTankType() || type == oxidizerTank().getTankType());
+    }
+
+    private boolean acceptsConnectionOn(@Nullable Direction side) {
+        return side != Direction.UP && (side != Direction.DOWN || allowsDownwardConnections());
     }
 
     @Override
@@ -503,8 +547,6 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
         tag.putLong(TAG_POWER, energy.getPower());
         tag.putInt(TAG_SOLID, solidFuel);
         tag.putInt(TAG_PAD_SIZE, padSize.ordinal());
-        tag.putBoolean(TAG_REDSTONE, redstonePowered);
-        tag.putBoolean(TAG_PREV_REDSTONE, prevRedstonePowered);
     }
 
     @Override
@@ -522,8 +564,11 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
             PartSize[] values = PartSize.values();
             padSize = ordinal >= 0 && ordinal < values.length ? values[ordinal] : defaultPadSize();
         }
-        redstonePowered = tag.getBoolean(TAG_REDSTONE);
-        prevRedstonePowered = tag.getBoolean(TAG_PREV_REDSTONE);
+        // TileEntityLaunchTable and TileEntityCompactLauncher only persisted
+        // inventory, tanks, power, solid fuel and (for the table) pad size.
+        // Redstone was sampled afresh every server tick, so a world reload must
+        // not carry a stale powered edge into the next machine update.
+        redstonePowered = false;
     }
 
     @Override
@@ -566,11 +611,6 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
-    }
-
-    private static boolean hasLegacyDesignatorCoords(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        return tag != null && tag.contains("xCoord") && tag.contains("zCoord");
     }
 
     private static boolean isRocketFuel(ItemStack stack) {

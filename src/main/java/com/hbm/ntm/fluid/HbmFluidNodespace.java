@@ -1,10 +1,10 @@
 package com.hbm.ntm.fluid;
 
 import com.hbm.ntm.uninos.HbmNodespace;
+import com.hbm.ntm.uninos.networkproviders.FluidNetProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -18,7 +18,7 @@ public final class HbmFluidNodespace {
             new HbmNodespace<NodeKey, HbmFluidNode, HbmFluidNet>(
             HbmFluidNodespace::keysForNode,
             (node, connection) -> new NodeKey(connection.pos(), node.getFluidType()),
-            node -> new HbmFluidNet(node.getFluidType()),
+            node -> new FluidNetProvider(node.getFluidType()),
             HbmFluidNet::resetTrackers,
             HbmFluidNet::update,
             NodeKey::pos);
@@ -35,9 +35,18 @@ public final class HbmFluidNodespace {
         NODESPACE.destroyNode(level, new NodeKey(pos, type));
     }
 
+    public static void destroyNode(Level level, HbmFluidNode node) {
+        NODESPACE.destroyNode(level, node);
+    }
+
     public static void unloadLevel(Level level) {
         HbmFluidUtil.clearRemoteVisualPortConnections(level);
         NODESPACE.unloadLevel(level);
+    }
+
+    public static void reapLevel(Level level) {
+        HbmFluidUtil.clearRemoteVisualPortConnections(level);
+        NODESPACE.reapLevel(level);
     }
 
     public static void tick(ServerLevel level) {
@@ -232,10 +241,6 @@ public final class HbmFluidNodespace {
                 .map(direction -> direction.getName().toLowerCase())
                 .sorted()
                 .collect(Collectors.joining(","));
-    }
-
-    public static void unloadChunk(Level level, ChunkPos chunkPos) {
-        NODESPACE.unloadChunk(level, chunkPos);
     }
 
     private static HbmFluidNet getFluidNet(Level level, BlockPos pos, FluidType type) {

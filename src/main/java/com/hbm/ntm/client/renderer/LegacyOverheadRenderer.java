@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.LegacyLineRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.Font;
@@ -23,7 +24,11 @@ import org.joml.Quaternionf;
 public final class LegacyOverheadRenderer {
     public static final double LABEL_MAX_DISTANCE = 16.0D;
     public static final double LOOK_APPEND_THRESHOLD = 0.15D;
-    public static final double THERMAL_MAX_DISTANCE_SQ = 4096.0D;
+    /**
+     * Thermal entity boxes are world-space visual geometry, so they follow the shared 512-block
+     * visibility contract rather than retaining the former 64-block local exception.
+     */
+    public static final double THERMAL_MAX_DISTANCE_SQ = HbmModelRenderDistances.SQUARED_BLOCKS;
     public static final int DEFAULT_TAG_DISTANCE = 64;
     public static final float TAG_SCALE = 0.016666668F * 1.6F;
     public static final int TAG_BACKGROUND = 0x40000000;
@@ -236,6 +241,18 @@ public final class LegacyOverheadRenderer {
     public static void legacyDualPassLabel(Font font, MultiBufferSource buffer, PoseStack poseStack,
             Quaternionf cameraRotation, double labelX, double labelY, double labelZ, String label,
             int color, int seeThroughColor, int backgroundColor) {
+        legacyDualPassLabel(font, buffer, poseStack, cameraRotation, labelX, labelY, labelZ, label,
+                color, seeThroughColor, backgroundColor, true);
+    }
+
+    /**
+     * Draws the old overhead tag's translucent first pass, followed by its opaque depth-tested
+     * pass.  Thermal VATS tags deliberately make only the first pass see through walls; normal
+     * VATS tags retain the old depth-tested shadow pass.
+     */
+    public static void legacyDualPassLabel(Font font, MultiBufferSource buffer, PoseStack poseStack,
+            Quaternionf cameraRotation, double labelX, double labelY, double labelZ, String label,
+            int color, int seeThroughColor, int backgroundColor, boolean firstPassSeeThrough) {
         if (label == null || label.isEmpty()) {
             return;
         }
@@ -247,13 +264,18 @@ public final class LegacyOverheadRenderer {
         poseStack.scale(scale, scale, -scale);
 
         float textX = -font.width(label) * 0.5F;
-        int opaqueColor = 0xFF000000 | (color & 0xFFFFFF);
-        int opaqueSeeThroughColor = 0xFF000000 | (seeThroughColor & 0xFFFFFF);
-        font.drawInBatch(label, textX, 0.0F, opaqueSeeThroughColor, false,
-                poseStack.last().pose(), buffer, Font.DisplayMode.SEE_THROUGH, backgroundColor, LightTexture.FULL_BRIGHT);
+        int opaqueColor = colorWithDefaultAlpha(color);
+        int firstPassColor = colorWithDefaultAlpha(seeThroughColor);
+        Font.DisplayMode firstPassMode = firstPassSeeThrough ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
+        font.drawInBatch(label, textX, 0.0F, firstPassColor, false,
+                poseStack.last().pose(), buffer, firstPassMode, backgroundColor, LightTexture.FULL_BRIGHT);
         font.drawInBatch(label, textX, 0.0F, opaqueColor, false,
                 poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
         poseStack.popPose();
+    }
+
+    private static int colorWithDefaultAlpha(int color) {
+        return (color & 0xFF000000) == 0 ? 0xFF000000 | (color & 0xFFFFFF) : color;
     }
 
     public record MarkerBounds(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {

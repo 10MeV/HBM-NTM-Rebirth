@@ -6,7 +6,6 @@ import com.hbm.ntm.client.sound.LegacyClientSoundPlayer;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
-import com.hbm.ntm.satellite.SatelliteInterfaceItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -14,8 +13,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
+import org.apache.commons.lang3.math.NumberUtils;
 
 public class SatelliteCoordScreen extends Screen {
     private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
@@ -45,16 +44,6 @@ public class SatelliteCoordScreen extends Screen {
         addRenderableWidget(xField);
         addRenderableWidget(yField);
         addRenderableWidget(zField);
-        setInitialFocus(xField);
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        if (!isHeldSatelliteInterface()) {
-            onClose();
-        }
-        updateYFieldState();
     }
 
     @Override
@@ -63,7 +52,7 @@ public class SatelliteCoordScreen extends Screen {
         updateYFieldState();
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
         renderFocus(graphics);
-        ClientSatelliteData.current(currentFrequency()).ifPresent(snapshot -> {
+        ClientSatelliteData.current().ifPresent(snapshot -> {
             Satellite satellite = snapshot.satellite();
             if (!satellite.coordActions().contains(Satellite.CoordAction.HAS_Y)) {
                 graphics.blit(TEXTURE, leftPos + 61, topPos + 52, 0, 144, 54, 18);
@@ -78,11 +67,18 @@ public class SatelliteCoordScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // GUIScreenSatCoord rejects all field clicks before it forwards a
+        // click to GuiTextField when ItemSatInterface.currentSat is absent.
+        // Keep the visible X/Z fields inert until the current snapshot arrives.
+        if (ClientSatelliteData.current().isEmpty()) {
+            return false;
+        }
         if (super.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT
-                && mouseX >= leftPos + 133 && mouseX < leftPos + 151
+        // GUIScreenSatCoord also ignored its mouse-button parameter for the
+        // submit hitbox: any click here sends the source-shaped coord packet.
+        if (mouseX >= leftPos + 133 && mouseX < leftPos + 151
                 && mouseY >= topPos + 52 && mouseY < topPos + 70) {
             return sendCoordinateAction();
         }
@@ -111,7 +107,11 @@ public class SatelliteCoordScreen extends Screen {
         if (xField.isFocused()) {
             graphics.blit(TEXTURE, leftPos + 61, topPos + 16, 0, 126, 54, 18);
         }
-        if (yField.visible && yField.isFocused()) {
+        // GUIScreenSatCoord draws the focused-frame before checking whether
+        // HAS_Y currently permits the text field itself to be drawn.  A
+        // recently lost panel snapshot therefore leaves an existing Y focus
+        // outline visible; only clicks/typing are gated by the snapshot.
+        if (yField.isFocused()) {
             graphics.blit(TEXTURE, leftPos + 61, topPos + 52, 0, 126, 54, 18);
         }
         if (zField.isFocused()) {
@@ -120,8 +120,11 @@ public class SatelliteCoordScreen extends Screen {
     }
 
     private boolean sendCoordinateAction() {
-        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current(currentFrequency()).orElse(null);
-        if (snapshot == null || snapshot.satellite().satelliteInterface() != Satellite.SatelliteInterface.SAT_COORD) {
+        ClientSatelliteData.SatelliteSnapshot snapshot = ClientSatelliteData.current().orElse(null);
+        // The old GUI's captured EntityPlayer is part of the submit guard; do
+        // not turn a stale client snapshot during teardown into a frequency-0
+        // packet when the local player is absent.
+        if (minecraft == null || minecraft.player == null || snapshot == null) {
             return false;
         }
         Integer x = parseLegacyCoordinate(xField.getValue());
@@ -144,8 +147,14 @@ public class SatelliteCoordScreen extends Screen {
     }
 
     private Integer parseLegacyCoordinate(String value) {
+        // GUIScreenSatCoord first used NumberUtils.isNumber without trimming
+        // its text fields. Double.parseDouble alone would incorrectly accept
+        // values with leading/trailing whitespace.
+        if (!NumberUtils.isNumber(value)) {
+            return null;
+        }
         try {
-            double parsed = Double.parseDouble(value.trim());
+            double parsed = Double.parseDouble(value);
             if (!Double.isFinite(parsed)) {
                 return null;
             }
@@ -156,14 +165,11 @@ public class SatelliteCoordScreen extends Screen {
     }
 
     private void updateYFieldState() {
-        boolean hasY = ClientSatelliteData.current(currentFrequency())
+        boolean hasY = ClientSatelliteData.current()
                 .map(snapshot -> snapshot.satellite().coordActions().contains(Satellite.CoordAction.HAS_Y))
                 .orElse(false);
         yField.visible = hasY;
         yField.active = hasY;
-        if (!hasY && yField.isFocused()) {
-            yField.setFocused(false);
-        }
     }
 
     private int currentFrequency() {
@@ -173,12 +179,4 @@ public class SatelliteCoordScreen extends Screen {
         return ISatelliteChip.getFrequencyFromStack(minecraft.player.getItemInHand(hand));
     }
 
-    private boolean isHeldSatelliteInterface() {
-        if (minecraft == null || minecraft.player == null) {
-            return false;
-        }
-        ItemStack stack = minecraft.player.getItemInHand(hand);
-        return stack.getItem() instanceof SatelliteInterfaceItem item
-                && item.mode() == SatelliteInterfaceItem.Mode.COORD;
-    }
 }

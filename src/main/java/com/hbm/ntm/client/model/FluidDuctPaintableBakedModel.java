@@ -2,6 +2,8 @@ package com.hbm.ntm.client.model;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.FluidDuctPaintableBlock;
+import com.hbm.ntm.block.PneumaticTubePaintableBlock;
+import com.hbm.ntm.block.RedCablePaintableBlock;
 import com.hbm.ntm.blockentity.PaintableDuctBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.ArrayList;
@@ -42,18 +44,22 @@ public class FluidDuctPaintableBakedModel implements BakedModel {
     private final TextureAtlasSprite colorOverlaySprite;
     private final TextureAtlasSprite particleSprite;
     private final boolean exhaust;
+    private final boolean tintedUnpainted;
+    private final boolean unpaintedOverlay;
     private final ItemTransforms transforms;
     private final Map<CubeKey, List<BakedQuad>> cubeCache = new ConcurrentHashMap<>();
     private final Map<UnpaintedKey, List<BakedQuad>> unpaintedCache = new ConcurrentHashMap<>();
 
     public FluidDuctPaintableBakedModel(TextureAtlasSprite baseSprite, TextureAtlasSprite overlaySprite,
             TextureAtlasSprite colorOverlaySprite, TextureAtlasSprite particleSprite, boolean exhaust,
-            ItemTransforms transforms) {
+            boolean tintedUnpainted, boolean unpaintedOverlay, ItemTransforms transforms) {
         this.baseSprite = baseSprite;
         this.overlaySprite = overlaySprite;
         this.colorOverlaySprite = colorOverlaySprite;
         this.particleSprite = particleSprite;
         this.exhaust = exhaust;
+        this.tintedUnpainted = tintedUnpainted;
+        this.unpaintedOverlay = unpaintedOverlay;
         this.transforms = transforms;
     }
 
@@ -81,7 +87,7 @@ public class FluidDuctPaintableBakedModel implements BakedModel {
         }
 
         boolean item = state == null;
-        if (exhaust) {
+        if (exhaust && !unpaintedOverlay) {
             return cubeQuads(baseSprite, -1, side, item);
         }
 
@@ -100,13 +106,22 @@ public class FluidDuctPaintableBakedModel implements BakedModel {
         Direction side = key.side();
         boolean item = key.item();
         quads.addAll(cubeQuads(baseSprite, -1, side, item));
-        quads.addAll(cubeQuads(colorOverlaySprite, FLUID_TINT_INDEX, side, item));
+        if (tintedUnpainted) {
+            quads.addAll(cubeQuads(colorOverlaySprite, FLUID_TINT_INDEX, side, item));
+        }
+        if (unpaintedOverlay) {
+            quads.addAll(cubeQuads(overlaySprite, -1, side, item));
+        }
         return List.copyOf(quads);
     }
 
     private static boolean overlayEnabled(BlockState state) {
-        return state.hasProperty(FluidDuctPaintableBlock.OVERLAY)
-                && state.getValue(FluidDuctPaintableBlock.OVERLAY);
+        return (state.hasProperty(FluidDuctPaintableBlock.OVERLAY)
+                && state.getValue(FluidDuctPaintableBlock.OVERLAY))
+                || (state.hasProperty(PneumaticTubePaintableBlock.OVERLAY)
+                && state.getValue(PneumaticTubePaintableBlock.OVERLAY))
+                || (state.hasProperty(RedCablePaintableBlock.OVERLAY)
+                && state.getValue(RedCablePaintableBlock.OVERLAY));
     }
 
     private static void addPaintedQuads(List<BakedQuad> quads, BlockState painted, @Nullable Direction side,

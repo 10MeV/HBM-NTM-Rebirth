@@ -15,13 +15,10 @@ import org.joml.Matrix4f;
 
 public class DeathBlastRenderer extends EntityRenderer<DeathBlastEntity> {
     private static final double BEAM_HEIGHT = 250.0D;
-    private static final float DIAGONAL = 0.70710677F;
-    private static final float[] BEAM_UNIT_X = {
-            1.0F, DIAGONAL, 0.0F, -DIAGONAL, -1.0F, -DIAGONAL, 0.0F, DIAGONAL, 1.0F
-    };
-    private static final float[] BEAM_UNIT_Z = {
-            0.0F, DIAGONAL, 1.0F, DIAGONAL, 0.0F, -DIAGONAL, -1.0F, -DIAGONAL, 0.0F
-    };
+    private static final int BEAM_SEGMENTS = 8;
+    // RenderDeathBlast passed the raw float literal 45 to Vec3#rotateAroundY.
+    // That API takes radians, so this is intentionally not 45 degrees / PI / 4.
+    private static final float LEGACY_BEAM_ROTATION_RADIANS = 45.0F;
 
     public DeathBlastRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -33,20 +30,24 @@ public class DeathBlastRenderer extends EntityRenderer<DeathBlastEntity> {
         VertexConsumer beamConsumer = buffer.getBuffer(LegacyUntexturedQuadRenderer.type(
                 LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE, 180));
         PoseStack.Pose beamPose = poseStack.last();
-        renderBeam(beamConsumer, beamPose, 0.5F, 255, 0, 0, 180);
-        renderBeam(beamConsumer, beamPose, 0.25F, 255, 0, 255, 180);
-        renderOrb(entity, partialTick, poseStack, buffer);
+        renderBeam(beamConsumer, beamPose, 0.5F, 0.0F, 255, 0, 0, 255);
+        // The legacy renderer keeps rotating the same Vec3 after the red loop.
+        renderBeam(beamConsumer, beamPose, 0.25F, BEAM_SEGMENTS * LEGACY_BEAM_ROTATION_RADIANS,
+                255, 0, 255, 255);
+        renderOrb(entity, poseStack, buffer);
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }
 
-    private static void renderBeam(VertexConsumer consumer, PoseStack.Pose pose, float radius,
+    private static void renderBeam(VertexConsumer consumer, PoseStack.Pose pose, float radius, float startAngle,
             int red, int green, int blue, int alpha) {
         int color = (red << 16) | (green << 8) | blue;
-        for (int i = 0; i < 8; i++) {
-            float x1 = BEAM_UNIT_X[i] * radius;
-            float z1 = BEAM_UNIT_Z[i] * radius;
-            float x2 = BEAM_UNIT_X[i + 1] * radius;
-            float z2 = BEAM_UNIT_Z[i + 1] * radius;
+        for (int i = 0; i < BEAM_SEGMENTS; i++) {
+            float firstAngle = startAngle + i * LEGACY_BEAM_ROTATION_RADIANS;
+            float secondAngle = firstAngle + LEGACY_BEAM_ROTATION_RADIANS;
+            float x1 = Mth.cos(firstAngle) * radius;
+            float z1 = -Mth.sin(firstAngle) * radius;
+            float x2 = Mth.cos(secondAngle) * radius;
+            float z2 = -Mth.sin(secondAngle) * radius;
             LegacyUntexturedQuadRenderer.quad(consumer, pose,
                     x1, BEAM_HEIGHT, z1,
                     x1, 0.0D, z1,
@@ -56,9 +57,8 @@ public class DeathBlastRenderer extends EntityRenderer<DeathBlastEntity> {
         }
     }
 
-    private static void renderOrb(DeathBlastEntity entity, float partialTick, PoseStack poseStack,
-            MultiBufferSource buffer) {
-        double age = Math.min(entity.tickCount + partialTick, DeathBlastEntity.MAX_AGE);
+    private static void renderOrb(DeathBlastEntity entity, PoseStack poseStack, MultiBufferSource buffer) {
+        double age = Math.min(entity.legacyRenderAge(), DeathBlastEntity.MAX_AGE);
         double progress = age / DeathBlastEntity.MAX_AGE;
         double scale = Math.max(10.0D - 10.0D * progress, 0.0D);
         int alpha = Mth.clamp((int) (progress * 255.0D), 0, 255);

@@ -130,7 +130,11 @@ public class RadioAutocalBlockEntity extends BlockEntity implements MenuProvider
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return tag != null && !tag.isEmpty();
+        // TileEntityRadioAUTOCAL#hasPermission: distanceSq <= 15 * 15,
+        // measured from the machine's y + 1 center.
+        return tag != null && !tag.isEmpty()
+                && player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D,
+                worldPosition.getZ() + 0.5D) <= 225.0D;
     }
 
     @Override

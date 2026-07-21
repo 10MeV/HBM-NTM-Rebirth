@@ -96,7 +96,7 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     public static void renderStaticSegment(BlockRenderDispatcher blockRenderer, BlockState state, int segment,

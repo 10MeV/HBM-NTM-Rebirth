@@ -1,8 +1,10 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjMissilePartModels;
 import com.hbm.ntm.entity.missile.MissileEntity;
+import com.hbm.ntm.item.missile.MissileItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -15,7 +17,7 @@ import net.minecraft.util.Mth;
 public class MissileRenderer extends EntityRenderer<MissileEntity> {
     public MissileRenderer(EntityRendererProvider.Context context) {
         super(context);
-        shadowRadius = 0.75F;
+        shadowRadius = 0.0F;
     }
 
     @Override
@@ -27,7 +29,19 @@ public class MissileRenderer extends EntityRenderer<MissileEntity> {
         LegacyPoseRotations.rotateYDegrees(poseStack, renderYaw);
         LegacyPoseRotations.rotateZDegrees(poseStack, pitch);
         LegacyPoseRotations.rotateYDegrees(poseStack, -(renderYaw));
-        model(entity).renderAll(texture(entity), poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+        if (entity.variant().formFactor() == MissileItem.FormFactor.STRONG) {
+            // RenderMissileStrong applies this before the legacy launch-facing rotation.
+            poseStack.scale(1.5F, 1.5F, 1.5F);
+        }
+        applyLegacyLaunchFacing(poseStack, entity.launchFacing());
+        // RenderMissileTaint, the shared old renderer for every Tier0/micro
+        // missile, explicitly enables GL_CULL_FACE.  The remaining legacy
+        // missile renderers do not impose that state, so keep the cull path
+        // scoped to the exact former RenderMissileTaint registration family.
+        LegacyTexturedRenderMode renderMode = entity.variant().formFactor() == MissileItem.FormFactor.MICRO
+                ? LegacyTexturedRenderMode.CUTOUT_CULL
+                : LegacyTexturedRenderMode.CUTOUT_NO_CULL;
+        model(entity).renderAll(texture(entity), poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, renderMode);
         poseStack.popPose();
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
     }
@@ -40,6 +54,9 @@ public class MissileRenderer extends EntityRenderer<MissileEntity> {
     private static LegacyWavefrontModel model(MissileEntity entity) {
         if (entity.variant() == MissileEntity.Variant.STEALTH) {
             return ObjMissilePartModels.MISSILE_STEALTH;
+        }
+        if (entity.variant() == MissileEntity.Variant.SHUTTLE) {
+            return ObjMissilePartModels.MISSILE_SHUTTLE;
         }
         return switch (entity.variant().formFactor()) {
             case STRONG -> ObjMissilePartModels.MISSILE_STRONG;
@@ -72,12 +89,30 @@ public class MissileRenderer extends EntityRenderer<MissileEntity> {
             case BHOLE -> ObjMissilePartModels.MISSILE_MICRO_BHOLE_TEXTURE;
             case SCHRABIDIUM -> ObjMissilePartModels.MISSILE_MICRO_SCHRAB_TEXTURE;
             case EMP -> ObjMissilePartModels.MISSILE_MICRO_EMP_TEXTURE;
+            case TEST -> ObjMissilePartModels.MISSILE_MICRO_TEST_TEXTURE;
             case NUCLEAR -> ObjMissilePartModels.MISSILE_ATLAS_NUCLEAR_TEXTURE;
             case MIRV -> ObjMissilePartModels.MISSILE_ATLAS_THERMO_TEXTURE;
             case VOLCANO -> ObjMissilePartModels.MISSILE_ATLAS_VOLCANO_TEXTURE;
+            case SHUTTLE -> ObjMissilePartModels.MISSILE_SHUTTLE_TEXTURE;
             case DOOMSDAY -> ObjMissilePartModels.MISSILE_ATLAS_DOOMSDAY_TEXTURE;
             case DOOMSDAY_RUSTED -> ObjMissilePartModels.MISSILE_ATLAS_DOOMSDAY_RUSTED_TEXTURE;
             case GENERIC -> ObjMissilePartModels.MISSILE_V2_HE_TEXTURE;
         };
+    }
+
+    /**
+     * RenderMissileGeneric/Strong/Huge/Nuclear/Taint rotated prebuilt missiles by
+     * EntityMissileBaseNT data watcher 3 after applying flight yaw/pitch.  The
+     * watcher stores ForgeDirection ordinals, not horizontal 0..3 indices.
+     */
+    private static void applyLegacyLaunchFacing(PoseStack poseStack, int facing) {
+        switch (facing) {
+            case 2 -> LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
+            case 4 -> LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+            case 3 -> LegacyPoseRotations.rotateYDegrees(poseStack, 270.0F);
+            default -> {
+                // Legacy EAST (5), the watcher default, applies no extra rotation.
+            }
+        }
     }
 }

@@ -65,6 +65,22 @@ public class CompactLauncherBlockEntity extends CustomMissileLauncherBlockEntity
         return PartSize.SIZE_10;
     }
 
+    /**
+     * {@code TileEntityCompactLauncher#canLaunch()} explicitly requires a ready
+     * designator. Keep that machine-specific gate here as well as in the shared
+     * launcher baseline: {@link LaunchTableBlockEntity} deliberately opts out
+     * so that radar coordinate commands can launch without one.
+     */
+    @Override
+    public boolean canLaunch() {
+        return super.canLaunch() && hasDesignator();
+    }
+
+    @Override
+    protected boolean allowsDownwardConnections() {
+        return true;
+    }
+
     @Override
     protected List<FluidPort> fluidPorts() {
         return FLUID_PORTS;

@@ -7,6 +7,7 @@ public final class WeaponConfig {
     public static ForgeConfigSpec.BooleanValue DROP_ANTIMATTER_CELLS;
     public static ForgeConfigSpec.BooleanValue DROP_SINGULARITY;
     public static ForgeConfigSpec.BooleanValue DROP_XEN_CRYSTALS;
+    public static ForgeConfigSpec.BooleanValue DROP_DEAD_MAN_EXPLOSIVES;
     public static ForgeConfigSpec.IntValue CIWS_HITRATE;
 
     static void define(ForgeConfigSpec.Builder builder) {
@@ -26,6 +27,9 @@ public final class WeaponConfig {
         DROP_XEN_CRYSTALS = builder
                 .comment("Legacy 10.04_dropCrys: whether artificial xen crystals should move nearby blocks when dropped.")
                 .define("dropXenCrystals", true);
+        DROP_DEAD_MAN_EXPLOSIVES = builder
+                .comment("Legacy 10.05_dropDead: whether dead man's explosives should explode when dropped.")
+                .define("dropDeadManExplosives", true);
         builder.pop();
 
         builder.push("turrets");
@@ -49,6 +53,10 @@ public final class WeaponConfig {
 
     public static boolean droppedXenCrystalsEnabled() {
         return booleanValue(DROP_XEN_CRYSTALS, true);
+    }
+
+    public static boolean droppedDeadManExplosivesEnabled() {
+        return booleanValue(DROP_DEAD_MAN_EXPLOSIVES, true);
     }
 
     public static int ciwsHitrate() {

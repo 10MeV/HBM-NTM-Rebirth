@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north,variant=0": { "model": "hbm_ntm_rebirth:block/deco_crt" },
+    "facing=north,variant=1": { "model": "hbm_ntm_rebirth:block/deco_crt" },
+    "facing=north,variant=2": { "model": "hbm_ntm_rebirth:block/deco_crt" },
+    "facing=north,variant=3": { "model": "hbm_ntm_rebirth:block/deco_crt" },
+    "facing=east,variant=0": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 90 },
+    "facing=east,variant=1": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 90 },
+    "facing=east,variant=2": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 90 },
+    "facing=east,variant=3": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 90 },
+    "facing=south,variant=0": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 180 },
+    "facing=south,variant=1": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 180 },
+    "facing=south,variant=2": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 180 },
+    "facing=south,variant=3": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 180 },
+    "facing=west,variant=0": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 270 },
+    "facing=west,variant=1": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 270 },
+    "facing=west,variant=2": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 270 },
+    "facing=west,variant=3": { "model": "hbm_ntm_rebirth:block/deco_crt", "y": 270 }
+  }
+}

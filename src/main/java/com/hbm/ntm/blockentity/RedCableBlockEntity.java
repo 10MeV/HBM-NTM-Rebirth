@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.RedWireCoatedCt;
 import com.hbm.ntm.block.RedWireCoatedBlock;
+import com.hbm.ntm.energy.HbmEnergyNode;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
@@ -20,6 +21,17 @@ public class RedCableBlockEntity extends HbmEnergyNodeBlockEntity {
 
     public RedCableBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    /**
+     * {@code TileEntityCableBaseNT} uses IEnergyConductorMK2's default
+     * PowerNode: its six legacy endpoints are declared independently from the
+     * currently visible/compatible neighbours.  Nodespace performs the actual
+     * reciprocal-node check when it joins a network.
+     */
+    @Override
+    protected HbmEnergyNode createEnergyNode() {
+        return HbmEnergyNode.withStandardLegacyConnections(worldPosition);
     }
 
     @Override

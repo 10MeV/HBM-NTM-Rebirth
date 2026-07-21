@@ -84,6 +84,11 @@ public class EntityRADBeast extends Monster implements IRadiationImmune {
     }
 
     @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
+    }
+
+    @Override
     public void tick() {
         if (legacyAttackCooldown > 0) {
             legacyAttackCooldown--;

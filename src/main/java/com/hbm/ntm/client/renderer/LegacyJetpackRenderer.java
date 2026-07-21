@@ -21,33 +21,49 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public final class LegacyJetpackRenderer {
-    private static final ResourceLocation JETPACK_TEXTURE =
+    private static final ResourceLocation JETPACK_RED_TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/models/jetpack_red.png");
+    private static final ResourceLocation JETPACK_BLUE_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/jetpack_blue.png");
+    private static final ResourceLocation JETPACK_GREEN_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/jetpack_green.png");
+    private static final ResourceLocation JETPACK_BOOST_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/jetpack.png");
     private static final ModelPart JETPACK = jetpackLayer().bakeRoot().getChild("jetpack");
 
     public static void renderEquippedJetpack(Player player, HumanoidModel<?> humanoid, PoseStack poseStack,
                                              MultiBufferSource buffer, int packedLight) {
-        if (!hasDirectOrInstalledJetpack(player)) {
+        ArmorModItems.Jetpack jetpack = directOrInstalledJetpack(player);
+        if (jetpack == null) {
             return;
         }
 
         poseStack.pushPose();
         humanoid.body.translateAndRotate(poseStack);
-        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(JETPACK_TEXTURE));
+        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(textureFor(jetpack)));
         JETPACK.render(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }
 
-    private static boolean hasDirectOrInstalledJetpack(Player player) {
+    private static ArmorModItems.Jetpack directOrInstalledJetpack(Player player) {
         ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
-        if (chest.getItem() instanceof ArmorModItems.Jetpack) {
-            return true;
+        if (chest.getItem() instanceof ArmorModItems.Jetpack jetpack) {
+            return jetpack;
         }
         if (!ArmorModHandler.hasMods(chest)) {
-            return false;
+            return null;
         }
         ItemStack mod = ArmorModHandler.pryMod(chest, ArmorModHandler.plate_only);
-        return mod.getItem() instanceof ArmorModItems.Jetpack;
+        return mod.getItem() instanceof ArmorModItems.Jetpack jetpack ? jetpack : null;
+    }
+
+    private static ResourceLocation textureFor(ArmorModItems.Jetpack jetpack) {
+        return switch (jetpack.type()) {
+            case REGULAR -> JETPACK_RED_TEXTURE;
+            case HOVER -> JETPACK_BLUE_TEXTURE;
+            case VECTORED -> JETPACK_GREEN_TEXTURE;
+            case BOOST -> JETPACK_BOOST_TEXTURE;
+        };
     }
 
     private static LayerDefinition jetpackLayer() {

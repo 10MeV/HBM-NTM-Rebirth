@@ -67,7 +67,9 @@ public class LegacyToolItem extends Item {
             return InteractionResult.PASS;
         }
 
-        if (!level.isClientSide && player != null && !player.getAbilities().instabuild) {
+        onLegacyToolUseSuccess(context);
+        if (!level.isClientSide && player != null && !player.getAbilities().instabuild
+                && consumesDurabilityOnLegacyToolUse()) {
             ItemStack stack = context.getItemInHand();
             stack.hurtAndBreak(1, player, owner -> owner.broadcastBreakEvent(context.getHand()));
         }
@@ -122,6 +124,15 @@ public class LegacyToolItem extends Item {
 
     public Toolable.ToolType getToolType() {
         return toolType;
+    }
+
+    /** Source-specific tool actions (such as {@code ItemBoltgun}) hook here after {@link Toolable} accepts use. */
+    protected void onLegacyToolUseSuccess(UseOnContext context) {
+    }
+
+    /** Ordinary legacy tools consume durability; ItemBoltgun's old onItemUse did not. */
+    protected boolean consumesDurabilityOnLegacyToolUse() {
+        return true;
     }
 
     private static InteractionResult usePipeAnchorWrench(UseOnContext context) {

@@ -5,6 +5,7 @@ import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.LegacyFluidTankPacket;
@@ -102,7 +103,17 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
 
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
-        return fixedSurroundingPorts();
+        return HbmFluidPortLayouts.fluidTank();
+    }
+
+    @Override
+    protected void refreshFluidPorts() {
+        // TileEntityMachineHydrotreater retries both input tanks only from its
+        // 20-tick updateConnections() pass; its outputs remain every-tick senders.
+        if (level != null && level.getGameTime() % 20L == 0L) {
+            refreshTrackedReceiverFluidPorts(getReceivingTanks(), this);
+        }
+        refreshTrackedProviderFluidPorts(getSendingTanks(), this);
     }
 
     @Override

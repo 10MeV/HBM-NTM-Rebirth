@@ -2,6 +2,7 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.SatelliteLinkerBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,11 +35,15 @@ public class SatelliteLinkerBlock extends Block implements EntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
                                  BlockHitResult hit) {
-        if (!level.isClientSide && !player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (!player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof SatelliteLinkerBlockEntity linker) {
             NetworkHooks.openScreen(serverPlayer, linker, pos);
+            return InteractionResult.CONSUME;
         }
-        return player.isShiftKeyDown() ? InteractionResult.PASS : InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.PASS;
     }
 
     @Nullable
@@ -54,9 +59,7 @@ public class SatelliteLinkerBlock extends Block implements EntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide
                 && level.getBlockEntity(pos) instanceof SatelliteLinkerBlockEntity linker) {
-            for (ItemStack stack : linker.getDrops()) {
-                Block.popResource(level, pos, stack);
-            }
+            HbmInventoryMenuHelper.spillItems(level, pos, linker.getItems());
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

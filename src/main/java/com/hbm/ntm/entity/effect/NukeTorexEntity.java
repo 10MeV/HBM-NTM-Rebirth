@@ -411,7 +411,7 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return true;
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

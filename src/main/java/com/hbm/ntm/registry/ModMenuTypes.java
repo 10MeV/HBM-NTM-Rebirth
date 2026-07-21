@@ -28,8 +28,12 @@ import com.hbm.ntm.menu.CombustionEngineMenu;
 import com.hbm.ntm.menu.CombinationOvenMenu;
 import com.hbm.ntm.menu.ContainmentBoxMenu;
 import com.hbm.ntm.menu.CartCrateMenu;
+import com.hbm.ntm.menu.CargoTramMenu;
+import com.hbm.ntm.menu.CargoTramTrailerMenu;
 import com.hbm.ntm.menu.CartDestroyerMenu;
 import com.hbm.ntm.menu.CraneLogisticsMenu;
+import com.hbm.ntm.menu.DroneLogisticsMenu;
+import com.hbm.ntm.menu.DroneCrateMenu;
 import com.hbm.ntm.menu.CrucibleMenu;
 import com.hbm.ntm.menu.CrateMenu;
 import com.hbm.ntm.menu.CustomNukeMenu;
@@ -82,6 +86,8 @@ import com.hbm.ntm.menu.OilburnerMenu;
 import com.hbm.ntm.menu.OreSlopperMenu;
 import com.hbm.ntm.menu.ParticleAcceleratorMenu;
 import com.hbm.ntm.menu.PneumaticTubeMenu;
+import com.hbm.ntm.menu.PneumaticStorageAccessMenu;
+import com.hbm.ntm.menu.PneumaticStorageClutterMenu;
 import com.hbm.ntm.menu.PlasticBagMenu;
 import com.hbm.ntm.menu.PWRMenu;
 import com.hbm.ntm.menu.PyroOvenMenu;
@@ -429,6 +435,12 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<PneumaticTubeMenu>> PNEUMATIC_TUBE =
             MENUS.register("pneumatic_tube", () -> IForgeMenuType.create(PneumaticTubeMenu::new));
 
+    public static final RegistryObject<MenuType<PneumaticStorageAccessMenu>> PNEUMATIC_STORAGE_ACCESS =
+            MENUS.register("pneumatic_storage_access", () -> IForgeMenuType.create(PneumaticStorageAccessMenu::new));
+
+    public static final RegistryObject<MenuType<PneumaticStorageClutterMenu>> PNEUMATIC_STORAGE_CLUTTER =
+            MENUS.register("pneumatic_storage_clutter", () -> IForgeMenuType.create(PneumaticStorageClutterMenu::new));
+
     public static final RegistryObject<MenuType<RemoteFluidMachineMenu>> REMOTE_FLUID_MACHINE =
             MENUS.register("remote_fluid_machine", () -> IForgeMenuType.create(RemoteFluidMachineMenu::new));
 
@@ -444,6 +456,12 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<CartCrateMenu>> CART_CRATE =
             MENUS.register("cart_crate", () -> IForgeMenuType.create(CartCrateMenu::new));
 
+    public static final RegistryObject<MenuType<CargoTramMenu>> CARGO_TRAM =
+            MENUS.register("cargo_tram", () -> IForgeMenuType.create(CargoTramMenu::new));
+
+    public static final RegistryObject<MenuType<CargoTramTrailerMenu>> CARGO_TRAM_TRAILER =
+            MENUS.register("cargo_tram_trailer", () -> IForgeMenuType.create(CargoTramTrailerMenu::new));
+
     public static final RegistryObject<MenuType<CartDestroyerMenu>> CART_DESTROYER =
             MENUS.register("cart_destroyer", () -> IForgeMenuType.create(CartDestroyerMenu::new));
 
@@ -458,6 +476,10 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<CraneLogisticsMenu>> CRANE_LOGISTICS =
             MENUS.register("crane_logistics", () -> IForgeMenuType.create(CraneLogisticsMenu::new));
+    public static final RegistryObject<MenuType<DroneLogisticsMenu>> DRONE_LOGISTICS =
+            MENUS.register("drone_logistics", () -> IForgeMenuType.create(DroneLogisticsMenu::new));
+    public static final RegistryObject<MenuType<DroneCrateMenu>> DRONE_CRATE =
+            MENUS.register("drone_crate", () -> IForgeMenuType.create(DroneCrateMenu::new));
 
     public static final RegistryObject<MenuType<TurretMenu>> TURRET =
             MENUS.register("turret", () -> IForgeMenuType.create(TurretMenu::new));

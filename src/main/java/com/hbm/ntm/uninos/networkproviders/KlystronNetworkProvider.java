@@ -6,7 +6,7 @@ public enum KlystronNetworkProvider implements HbmNetworkProvider<KlystronNode, 
     THE_PROVIDER;
 
     @Override
-    public KlystronNetwork provideNetwork(KlystronNode seedNode) {
+    public KlystronNetwork provideNetwork() {
         return new KlystronNetwork();
     }
 }

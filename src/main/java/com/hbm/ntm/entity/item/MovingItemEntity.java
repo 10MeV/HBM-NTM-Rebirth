@@ -64,7 +64,8 @@ public class MovingItemEntity extends MovingConveyorObjectEntity implements ICon
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (!level().isClientSide && !isRemoved()) {
-            dropAsItem(position(), getDeltaMovement().multiply(2.0D, 0.0D, 2.0D).add(0.0D, 0.1D, 0.0D));
+            // EntityMovingItem#hitByEntity dropped in place; only onLeaveConveyor carries motion.
+            dropAsItem(position(), Vec3.ZERO);
             discard();
         }
         return true;

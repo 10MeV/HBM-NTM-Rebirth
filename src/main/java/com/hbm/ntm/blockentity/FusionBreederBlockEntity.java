@@ -187,6 +187,11 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type == inputTank.getTankType() && type != HbmFluids.NONE;
     }
@@ -194,6 +199,13 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected boolean shouldSubscribeAsFluidProvider(FluidType type) {
         return type == outputTank.getTankType() && outputTank.getFill() > 0;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityFusionBreeder#updateEntity retried its five remote Fluid
+        // Mk2 input/output ports on every server tick.
+        return true;
     }
 
     @Override
@@ -298,13 +310,12 @@ public class FusionBreederBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public void onChunkUnloaded() {
-        destroyNode();
         super.onChunkUnloaded();
     }
 
     private void destroyNode() {
         if (level != null && !level.isClientSide && plasmaNode != null) {
-            PlasmaNodespace.destroyNode(level, plasmaNode.getPos());
+            PlasmaNodespace.destroyNode(level, plasmaNode);
         }
         plasmaNode = null;
     }

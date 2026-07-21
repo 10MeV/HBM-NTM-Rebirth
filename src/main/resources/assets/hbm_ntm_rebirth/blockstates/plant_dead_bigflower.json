@@ -1,0 +1,9 @@
+{
+  "variants": {
+    "type=generic": { "model": "hbm_ntm_rebirth:block/plant_dead_bigflower_generic" },
+    "type=grass": { "model": "hbm_ntm_rebirth:block/plant_dead_bigflower_grass" },
+    "type=flower": { "model": "hbm_ntm_rebirth:block/plant_dead_bigflower_flower" },
+    "type=bigflower": { "model": "hbm_ntm_rebirth:block/plant_dead_bigflower_bigflower" },
+    "type=fern": { "model": "hbm_ntm_rebirth:block/plant_dead_bigflower_fern" }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "export_dir": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports",
   "exported_file_count": 6,
-  "exported_recipe_count": 763,
+  "exported_recipe_count": 764,
   "handlers": [
     {
       "export_file": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports/hbmAssemblyMachine.json",
@@ -64,7 +64,7 @@
     },
     {
       "export_file": "E:/mchbm/code/HBM-NTM-Rebirth/reports/legacy_recipe_exports/hbmPlasmaForge.json",
-      "exported_recipe_count": 33,
+      "exported_recipe_count": 34,
       "failures": [],
       "legacy_file": "hbmPlasmaForge.json",
       "modern_recipe_type": "PLASMA_FORGE",

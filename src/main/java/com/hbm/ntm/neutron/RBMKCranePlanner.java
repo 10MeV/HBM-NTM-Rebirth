@@ -1,5 +1,6 @@
 package com.hbm.ntm.neutron;
 
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
@@ -11,7 +12,7 @@ public final class RBMKCranePlanner {
     public static final int CRANE_HEIGHT = 7;
     public static final int ROTATION_STEP = 90;
     public static final int NETWORK_RANGE = 250;
-    public static final double MAX_RENDER_DISTANCE_SQ = 65536.0D;
+    public static final double MAX_RENDER_DISTANCE_SQ = HbmModelRenderDistances.SQUARED_BLOCKS;
     public static final String HELD_ITEM_NBT_KEY = "held";
 
     private RBMKCranePlanner() {

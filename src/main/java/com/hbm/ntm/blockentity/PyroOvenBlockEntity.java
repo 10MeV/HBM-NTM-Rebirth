@@ -277,6 +277,12 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachinePyroOven#updateEntity refreshes its process and smoke ports every server tick.
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return fluidPorts(getBlockState());
     }
@@ -284,6 +290,11 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected Iterable<EnergyPort> getEnergyPorts() {
         return energyPorts(getBlockState());
+    }
+
+    @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

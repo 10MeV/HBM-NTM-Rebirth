@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "building",
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:concrete_smooth" },
+    "D": { "tag": "forge:dyes/light_gray" }
+  },
+  "pattern": ["CCC", "CDC", "CCC"],
+  "result": {
+    "item": "hbm_ntm_rebirth:concrete_colored",
+    "count": 8,
+    "nbt": "{hbmLegacyVariant:8}"
+  },
+  "show_notification": true
+}

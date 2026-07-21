@@ -1,5 +1,52 @@
 {
   "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/concrete_colored" }
+    "variant=0": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_white"
+    },
+    "variant=1": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_orange"
+    },
+    "variant=2": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_magenta"
+    },
+    "variant=3": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_light_blue"
+    },
+    "variant=4": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_yellow"
+    },
+    "variant=5": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_lime"
+    },
+    "variant=6": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_pink"
+    },
+    "variant=7": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_gray"
+    },
+    "variant=8": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_silver"
+    },
+    "variant=9": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_cyan"
+    },
+    "variant=10": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_purple"
+    },
+    "variant=11": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_blue"
+    },
+    "variant=12": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_brown"
+    },
+    "variant=13": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_green"
+    },
+    "variant=14": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_red"
+    },
+    "variant=15": {
+      "model": "hbm_ntm_rebirth:block/concrete_colored_black"
+    }
   }
 }

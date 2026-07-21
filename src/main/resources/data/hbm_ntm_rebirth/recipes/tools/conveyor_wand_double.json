@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "redstone",
+  "pattern": [
+    "CPC"
+  ],
+  "key": {
+    "C": {
+      "type": "forge:nbt",
+      "item": "hbm_ntm_rebirth:conveyor_wand",
+      "nbt": "{Type:\"REGULAR\"}"
+    },
+    "P": {
+      "tag": "forge:plates/iron"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:conveyor_wand",
+    "count": 1,
+    "nbt": "{Type:\"DOUBLE\"}"
+  },
+  "show_notification": true
+}

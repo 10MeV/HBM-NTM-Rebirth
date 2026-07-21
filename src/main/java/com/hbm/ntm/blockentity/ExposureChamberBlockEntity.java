@@ -115,6 +115,10 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
         HbmEnergyUtil.chargeStorageFromItem(chamber.items.getStackInSlot(SLOT_BATTERY),
                 chamber.energy, chamber.energy.getReceiverSpeed());
         if (level.getGameTime() % 20L == 0L) {
+            // Legacy TileEntityMachineExposureChamber retries every remote
+            // port directly on each twentieth tick, even when its geometry
+            // is unchanged.
+            chamber.markEnergyPortSubscriptionsDirty();
             chamber.subscribeEnergyReceiverToPorts();
         }
 

@@ -649,6 +649,11 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.INPUT;
     }
@@ -660,6 +665,18 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
                 FluidPort.of(-2, 0, 0, Direction.WEST),
                 FluidPort.of(0, 0, 2, Direction.SOUTH),
                 FluidPort.of(0, 0, -2, Direction.NORTH));
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachineMiningLaser retried its four remote OIL outputs
+        // during every legacy server tick.
+        return true;
     }
 
     @Override

@@ -2,9 +2,13 @@ package com.hbm.ntm.item;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.hbm.interfaces.IItemHUD;
+import com.hbm.interfaces.ItemHudRenderContext;
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.item.DepthRockTool;
 import com.hbm.ntm.ability.AvailableAbilities;
 import com.hbm.ntm.ability.IBaseAbility;
+import com.hbm.ntm.ability.ToolAreaAbilities;
 import com.hbm.ntm.ability.ToolAbilityConfiguration;
 import com.hbm.ntm.ability.ToolDigContext;
 import com.hbm.ntm.ability.ToolHarvestAbilities;
@@ -20,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -57,11 +62,13 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
-public class HbmAbilityToolItem extends DiggerItem implements DepthRockTool, HbmKeybindReceiver {
+public class HbmAbilityToolItem extends DiggerItem implements DepthRockTool, HbmKeybindReceiver, IItemHUD {
     private static final int NOTICE_TOOL_ABILITY = 14;
     private static final int NOTICE_MILLIS = 2_000;
     private static final UUID MOVEMENT_SPEED_UUID = UUID.fromString("44a80d25-66e4-44ff-9f07-5da03ea6ce3e");
     private static final ThreadLocal<Boolean> HANDLING_ABILITY_BREAK = ThreadLocal.withInitial(() -> false);
+    private static final ResourceLocation TOOL_ABILITY_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/tool/gui_tool_ability.png");
 
     protected final AvailableAbilities availableAbilities = new AvailableAbilities().addToolAbilities();
     private final Multimap<Attribute, AttributeModifier> defaultModifiers;
@@ -157,6 +164,27 @@ public class HbmAbilityToolItem extends DiggerItem implements DepthRockTool, Hbm
 
     public ToolAbilityConfiguration getConfiguration(ItemStack stack) {
         return ToolAbilityConfiguration.get(stack::getTag, availableAbilities);
+    }
+
+    @Override
+    public void renderHUD(ItemHudRenderContext context, Player player, ItemStack stack) {
+        ToolPreset preset = getConfiguration(stack).getActivePreset();
+        int u;
+        if (preset.areaAbility == ToolAreaAbilities.RECURSION) {
+            u = 0;
+        } else if (preset.areaAbility == ToolAreaAbilities.HAMMER) {
+            u = 16;
+        } else if (preset.areaAbility == ToolAreaAbilities.HAMMER_FLAT) {
+            u = 32;
+        } else if (preset.areaAbility == ToolAreaAbilities.EXPLOSION) {
+            u = 48;
+        } else {
+            return;
+        }
+        int x = context.screenWidth() / 2 - 24 + context.toolAbilityHudOffsetX();
+        int y = context.screenHeight() / 2 + 8 + context.toolAbilityHudOffsetY();
+        context.blit(TOOL_ABILITY_TEXTURE, x, y, u, 138, 16, 16, 256, 256,
+                ItemHudRenderContext.BlendMode.LEGACY_INVERTED);
     }
 
     public void setConfiguration(ItemStack stack, ToolAbilityConfiguration configuration) {

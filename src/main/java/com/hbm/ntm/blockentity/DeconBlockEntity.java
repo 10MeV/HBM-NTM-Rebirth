@@ -33,7 +33,6 @@ public class DeconBlockEntity extends BlockEntity {
             RadiationUtil.applyRadaway(entity, 0.5F);
             entity.removeEffect(ModEffects.RADIATION.get());
             HbmLivingProperties.clearCont(entity);
-            HbmLivingProperties.setRadBuf(entity, 0.0F);
         }
     }
 

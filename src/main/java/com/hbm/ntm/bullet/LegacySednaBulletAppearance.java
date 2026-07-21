@@ -25,6 +25,9 @@ public final class LegacySednaBulletAppearance {
     public static final int CHARGE_MORTAR = 130;
     public static final int CHARGE_MORTAR_CHARGE = 131;
     public static final int GRENADE = 132;
+    public static final int ROCKET_RPZB = 133;
+    public static final int ROCKET_QD = 134;
+    public static final int ROCKET_ML = 135;
 
     private LegacySednaBulletAppearance() {
     }

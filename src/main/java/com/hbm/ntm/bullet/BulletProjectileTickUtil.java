@@ -79,8 +79,7 @@ public final class BulletProjectileTickUtil {
         int flameTrailParticles = BulletFlightVisualUtil.spawnFlamethrowerTrail(config, level, position);
         int fireExtinguisherParticles = BulletFlightVisualUtil.spawnFireExtinguisherTrail(config, level, position,
                 motion, roll);
-        List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests = new ArrayList<>(
-                BulletSpecialSpawnUtil.collectPreMoveSpawnRequests(config, projectile, shooter, ticksExisted, roll));
+        List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests = new ArrayList<>();
 
         BulletUpdateBehaviorUtil.KnownUpdateResult update =
                 BulletUpdateBehaviorUtil.applyKnownPreMoveUpdate(config, projectile, shooter, motion,

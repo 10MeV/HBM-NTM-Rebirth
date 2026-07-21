@@ -10,6 +10,7 @@ import com.hbm.ntm.item.FluidPipeStyleBlockItem;
 import com.hbm.ntm.network.HbmKeybind;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,6 +25,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -73,6 +76,20 @@ public class FluidPipeBlock extends HbmFluidNodeBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new FluidPipeBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
+            BlockEntityType<T> type) {
+        if (level.isClientSide || (type != ModBlockEntities.FLUID_PIPE.get()
+                && type != ModBlockEntities.FLUID_PIPE_ANCHOR.get()
+                && type != ModBlockEntities.FLUID_DUCT_BOX.get()
+                && type != ModBlockEntities.FLUID_DUCT_PAINTABLE.get())) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) ->
+                FluidPipeBlockEntity.serverTick(tickLevel, tickPos, tickState, (FluidPipeBlockEntity) blockEntity);
     }
 
     @Override

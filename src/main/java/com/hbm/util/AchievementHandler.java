@@ -19,6 +19,7 @@ public final class AchievementHandler {
     public static final ResourceLocation RAD_DEATH = com.hbm.ntm.util.AchievementHandler.RAD_DEATH;
     public static final ResourceLocation RADIUM = com.hbm.ntm.util.AchievementHandler.RADIUM;
     public static final ResourceLocation NO9 = com.hbm.ntm.util.AchievementHandler.NO9;
+    public static final ResourceLocation SOME_WOUNDS = com.hbm.ntm.util.AchievementHandler.SOME_WOUNDS;
     public static final ResourceLocation DIGAMMA_SEE = com.hbm.ntm.util.AchievementHandler.DIGAMMA_SEE;
     public static final ResourceLocation DIGAMMA_FEEL = com.hbm.ntm.util.AchievementHandler.DIGAMMA_FEEL;
     public static final ResourceLocation DIGAMMA_KNOW = com.hbm.ntm.util.AchievementHandler.DIGAMMA_KNOW;
@@ -29,6 +30,11 @@ public final class AchievementHandler {
     public static final ResourceLocation CHEMPLANT = com.hbm.ntm.util.AchievementHandler.CHEMPLANT;
     public static final ResourceLocation DESH = com.hbm.ntm.util.AchievementHandler.DESH;
     public static final ResourceLocation TECHNETIUM = com.hbm.ntm.util.AchievementHandler.TECHNETIUM;
+    public static final ResourceLocation FOEQ = com.hbm.ntm.util.AchievementHandler.FOEQ;
+    public static final ResourceLocation HORIZONS_START = com.hbm.ntm.util.AchievementHandler.HORIZONS_START;
+    public static final ResourceLocation HORIZONS_END = com.hbm.ntm.util.AchievementHandler.HORIZONS_END;
+    public static final ResourceLocation HORIZONS_BONUS = com.hbm.ntm.util.AchievementHandler.HORIZONS_BONUS;
+    public static final ResourceLocation SOYUZ = com.hbm.ntm.util.AchievementHandler.SOYUZ;
 
     private AchievementHandler() {
     }

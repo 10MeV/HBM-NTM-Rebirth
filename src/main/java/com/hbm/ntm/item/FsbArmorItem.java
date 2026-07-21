@@ -2,12 +2,14 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.item.ArmorDashProvider;
+import com.hbm.ntm.armor.FsbPoweredArmor;
 import com.hbm.ntm.client.renderer.LegacyObjArmorRenderer;
 import com.hbm.ntm.radiation.HazmatRegistry;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.radiation.RadiationData;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.HbmShadyUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +32,8 @@ import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
@@ -39,6 +43,9 @@ import org.jetbrains.annotations.Nullable;
 public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
     private static final String TAG_NEXT_STEP_SOUND_DISTANCE = "hbm_fsb_next_step_sound_distance";
     private static final UUID STEP_HEIGHT_UUID = UUID.fromString("81746137-8b5a-44f9-a89b-ad48dcc7dc11");
+    private static final FullSetTraits LEGACY_CONTRIBUTOR_POWERED_STEP = FullSetTraits.builder()
+            .step("hbm:step.powered")
+            .build();
     private final ArmorMaterial fsbMaterial;
     private final ResourceLocation fsbMaterialId;
     private final List<FullSetEffect> fullSetEffects;
@@ -110,8 +117,38 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
                 player.addEffect(effect.create());
             }
             playArmorGeiger(level, player);
+        }
+    }
+
+    /**
+     * The legacy {@code ArmorFSB#handleTick} deliberately ran its step-sound branch only on the
+     * local client.  Keep it separate from the server-authoritative full-set effects so it is not
+     * broadcast to nearby players by {@link net.minecraft.world.level.Level#playSound}.
+     */
+    public void tickClientEquippedArmor(ItemStack stack, Player player) {
+        if (getType() == Type.CHESTPLATE && hasFullSet(player) && !isLegacyContributorPoweredStep(player)) {
             fullSetTraits.handleStepSound(player);
         }
+    }
+
+    /**
+     * Preserves ArmorFSB#handleTick's two source-backed contributor overrides:
+     * their local ground steps always use the powered sound, including when no
+     * FSB set is worn, and their normal FSB step branch is suppressed above.
+     */
+    public static void tickLegacyContributorPoweredStep(Player player) {
+        if (player == null || !player.level().isClientSide || !isLegacyContributorPoweredStep(player)) {
+            return;
+        }
+        LEGACY_CONTRIBUTOR_POWERED_STEP.handleStepSound(player);
+    }
+
+    private static boolean isLegacyContributorPoweredStep(Player player) {
+        if (player == null) {
+            return false;
+        }
+        String uuid = player.getUUID().toString();
+        return HbmShadyUtil.THE_NCR.equals(uuid) || HbmShadyUtil.BARNABY99_X.equals(uuid);
     }
 
     @Override
@@ -167,6 +204,28 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
         chestplate.fullSetTraits.playFall(player);
     }
 
+    /**
+     * Replays the 1.7.10 vanilla armor-wear callback used by the powered and fueled FSB variants.
+     * Modern vanilla's armor durability calculation is different, while these items deliberately do
+     * not take ordinary durability damage.
+     */
+    public static void applyLegacyPoweredArmorWear(Player player, DamageSource source, float amount) {
+        if (player == null || player.getAbilities().instabuild || source == null
+                || source.is(DamageTypeTags.BYPASSES_ARMOR)) {
+            return;
+        }
+
+        int wear = Math.max(1, (int) (amount / 4.0F));
+        for (EquipmentSlot slot : ARMOR_SLOTS) {
+            ItemStack armor = player.getItemBySlot(slot);
+            if (armor.getItem() instanceof FsbPoweredArmor powered) {
+                powered.applyLegacyDamage(armor, wear);
+            } else if (armor.getItem() instanceof FsbFueledArmorItem fueled) {
+                fueled.applyLegacyDamage(armor, wear);
+            }
+        }
+    }
+
     public static void reconcileStepHeight(Player player) {
         AttributeInstance stepHeight = player.getAttribute(ForgeMod.STEP_HEIGHT_ADDITION.get());
         if (stepHeight == null) {
@@ -207,6 +266,13 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
         }
         return true;
     }
+
+    private static final EquipmentSlot[] ARMOR_SLOTS = {
+            EquipmentSlot.HEAD,
+            EquipmentSlot.CHEST,
+            EquipmentSlot.LEGS,
+            EquipmentSlot.FEET
+    };
 
     public static boolean hasSameFsbMaterial(FsbArmorItem first, FsbArmorItem second) {
         return first != null && second != null && first.fsbMaterial == second.fsbMaterial;
@@ -367,7 +433,7 @@ public class FsbArmorItem extends ArmorItem implements ArmorDashProvider {
                 }
                 double intensity = 3.0D - distance;
                 entity.push(offset.x * intensity * -2.0D, 0.1D * intensity, offset.z * intensity * -2.0D);
-                entity.hurt(ModDamageSources.source(player.level(), ModDamageSources.RUBBLE, player),
+                entity.hurt(ModDamageSources.source(player.level(), ModDamageSources.FSB_HARD_LANDING, player),
                         (float) (intensity * 10.0D));
             }
         }

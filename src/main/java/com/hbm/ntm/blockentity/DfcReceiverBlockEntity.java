@@ -7,8 +7,10 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.menu.DfcReceiverMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -31,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 public class DfcReceiverBlockEntity extends HbmEnergyAndFluidBlockEntity
         implements MenuProvider, HbmStandardFluidReceiver, Laserable {
     public static final int CRYOGEL_CAPACITY = 64_000;
+    private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.allAdjacent();
+
     private final HbmFluidTank cryogel;
     private long joules;
 
@@ -111,6 +115,21 @@ public class DfcReceiverBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type == cryogel.getTankType();
+    }
+
+    @Override
+    protected Iterable<FluidPort> getFluidPorts() {
+        return FLUID_PORTS;
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

@@ -949,6 +949,78 @@
       "power": 10000000
     },
     {
+      "blueprintpool": "discover.gerald",
+      "duration": 12000,
+      "ignitionTemp": 25000000,
+      "inputItem": [
+        [
+          "dict",
+          "plateCastSchrabidium",
+          64
+        ],
+        [
+          "dict",
+          "plateCastSchrabidium",
+          64
+        ],
+        [
+          "dict",
+          "wireDenseBSCCO",
+          64
+        ],
+        [
+          "dict",
+          "wireDenseBSCCO",
+          64
+        ],
+        [
+          "item",
+          "hbm:det_nuke",
+          64
+        ],
+        [
+          "item",
+          "hbm:part_generic",
+          64,
+          4
+        ],
+        [
+          "item",
+          "hbm:part_generic",
+          64,
+          4
+        ],
+        [
+          "item",
+          "hbm:part_generic",
+          64,
+          4
+        ],
+        [
+          "item",
+          "hbm:part_generic",
+          64,
+          4
+        ],
+        [
+          "item",
+          "hbm:circuit",
+          64,
+          17
+        ]
+      ],
+      "name": "plsm.gerald",
+      "outputItem": [
+        [
+          "single",
+          [
+            "hbm:sat_gerald"
+          ]
+        ]
+      ],
+      "power": 50000000
+    },
+    {
       "duration": 12000,
       "ignitionTemp": 50000000,
       "inputFluid": [

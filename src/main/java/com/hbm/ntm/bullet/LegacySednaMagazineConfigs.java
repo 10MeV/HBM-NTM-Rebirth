@@ -30,12 +30,6 @@ public final class LegacySednaMagazineConfigs {
     private static final List<String> G10 = cfg("g10", "g10_shrapnel", "g10_du", "g10_slug", "g10_explosive");
     private static final List<String> G12 = cfg("g12_bp", "g12_bp_magnum", "g12_bp_slug", "g12", "g12_slug",
             "g12_flechette", "g12_magnum", "g12_explosive", "g12_phosphorus");
-    private static final List<String> G12_BROKEN = cfg("g12_equestrian_tkr", "g12_bp", "g12_bp_magnum",
-            "g12_bp_slug", "g12", "g12_slug", "g12_flechette", "g12_magnum", "g12_explosive",
-            "g12_phosphorus");
-    private static final List<String> G12_SEXY = cfg("g12_equestrian_bj", "g12_bp", "g12_bp_magnum",
-            "g12_bp_slug", "g12", "g12_slug", "g12_flechette", "g12_magnum", "g12_explosive",
-            "g12_phosphorus");
     private static final List<String> G12_SHREDDER = cfg("g12_shredder", "g12_shredder_slug",
             "g12_shredder_flechette", "g12_shredder_magnum", "g12_shredder_explosive",
             "g12_shredder_phosphorus");
@@ -95,10 +89,10 @@ public final class LegacySednaMagazineConfigs {
             "gun_heavy_revolver", "XFactory44", 0, 6, M44));
     public static final SednaMagazineConfig GUN_HEAVY_REVOLVER_LILMAC = register(full(
             "gun_heavy_revolver_lilmac.receiver0", "gun_heavy_revolver_lilmac", "XFactory44", 0, 6,
-            prepend("m44_equestrian_pip", M44)));
+            M44));
     public static final SednaMagazineConfig GUN_HEAVY_REVOLVER_PROTEGE = register(full(
             "gun_heavy_revolver_protege.receiver0", "gun_heavy_revolver_protege", "XFactory44", 0, 6,
-            prepend("m44_equestrian_mn7", M44)));
+            M44));
     public static final SednaMagazineConfig GUN_HANGMAN = register(full("gun_hangman.receiver0",
             "gun_hangman", "XFactory44", 0, 8, M44));
 
@@ -149,7 +143,7 @@ public final class LegacySednaMagazineConfigs {
     public static final SednaMagazineConfig GUN_MARESLEG_AKIMBO_SECONDARY = register(single(
             "gun_maresleg_akimbo.receiver1", "gun_maresleg_akimbo", "XFactory12ga", 1, 6, G12));
     public static final SednaMagazineConfig GUN_MARESLEG_BROKEN = register(single("gun_maresleg_broken.receiver0",
-            "gun_maresleg_broken", "XFactory12ga", 0, 6, G12_BROKEN));
+            "gun_maresleg_broken", "XFactory12ga", 0, 6, G12));
     public static final SednaMagazineConfig GUN_LIBERATOR = register(single("gun_liberator.receiver0",
             "gun_liberator", "XFactory12ga", 0, 4, G12));
     public static final SednaMagazineConfig GUN_SPAS12 = register(single("gun_spas12.receiver0",
@@ -160,7 +154,7 @@ public final class LegacySednaMagazineConfigs {
             "gun_autoshotgun_shredder.receiver0", "gun_autoshotgun_shredder", "XFactory12ga", G12_SHREDDER,
             "Shredder belt scans inventory for beam configs."));
     public static final SednaMagazineConfig GUN_AUTOSHOTGUN_SEXY = register(full(
-            "gun_autoshotgun_sexy.receiver0", "gun_autoshotgun_sexy", "XFactory12ga", 0, 100, G12_SEXY));
+            "gun_autoshotgun_sexy.receiver0", "gun_autoshotgun_sexy", "XFactory12ga", 0, 100, G12));
 
     public static final SednaMagazineConfig GUN_DOUBLE_BARREL = register(full("gun_double_barrel.receiver0",
             "gun_double_barrel", "XFactory10ga", 0, 2, G10));
@@ -180,7 +174,7 @@ public final class LegacySednaMagazineConfigs {
     public static final SednaMagazineConfig GUN_AMAT = register(full("gun_amat.receiver0", "gun_amat",
             "XFactory50", 0, 7, BMG50));
     public static final SednaMagazineConfig GUN_AMAT_SUBTLETY = register(full("gun_amat_subtlety.receiver0",
-            "gun_amat_subtlety", "XFactory50", 0, 7, prepend("bmg50_equestrian", BMG50)));
+            "gun_amat_subtlety", "XFactory50", 0, 7, BMG50));
     public static final SednaMagazineConfig GUN_AMAT_PENANCE = register(full("gun_amat_penance.receiver0",
             "gun_amat_penance", "XFactory50", 0, 7, append(BMG50, "bmg50_black")));
     public static final SednaMagazineConfig GUN_M2 = register(belt("gun_m2.receiver0", "gun_m2",

@@ -51,7 +51,7 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity implements HbmEnerg
         long demand = charger.collectChargeDemand(level, pos);
         charger.energy.setMaxPower(demand);
         charger.energy.setTransferRates(demand, 0L);
-        if (demand > 0L && (demand != charger.lastEnergySubscriptionDemand || charger.isEnergyPortKeepalive())) {
+        if (demand != charger.lastEnergySubscriptionDemand || charger.isEnergyPortKeepalive()) {
             charger.subscribeEnergyReceiverToSide(charger.inputSide());
         }
         charger.lastEnergySubscriptionDemand = demand;
@@ -188,6 +188,13 @@ public class ChargerBlockEntity extends HbmEnergyBlockEntity implements HbmEnerg
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return side == null || side == inputSide() ? HbmEnergySideMode.INPUT : HbmEnergySideMode.NONE;
+    }
+
+    @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityCharger retries its sole facing-opposite Energy Mk2 side on
+        // every legacy tick, including zero-demand ticks.
+        return true;
     }
 
     @Override

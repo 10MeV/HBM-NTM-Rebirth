@@ -355,6 +355,23 @@ public final class EntityDamageUtil {
         com.hbm.ntm.util.EntityDamageUtil.damageArmorNt(living, amount);
     }
 
+    public static void knockBack(LivingEntity living, Entity attacker, float damage, double motionX, double motionZ,
+            double multiplier) {
+        com.hbm.ntm.util.EntityDamageUtil.knockBack(living, attacker, damage, motionX, motionZ, multiplier);
+    }
+
+    public static float applyArmorCalculationsNT(LivingEntity living, DamageSource source, float amount) {
+        return com.hbm.ntm.util.EntityDamageUtil.applyArmorCalculationsNT(living, source, amount);
+    }
+
+    public static float applyArmorCalculationsNt(LivingEntity living, DamageSource source, float amount) {
+        return com.hbm.ntm.util.EntityDamageUtil.applyArmorCalculationsNt(living, source, amount);
+    }
+
+    public static void setBeenAttacked(LivingEntity living) {
+        com.hbm.ntm.util.EntityDamageUtil.setBeenAttacked(living);
+    }
+
     public static HitResult getMouseOver(Player attacker, double reach) {
         return com.hbm.ntm.util.EntityDamageUtil.getMouseOver(attacker, reach);
     }

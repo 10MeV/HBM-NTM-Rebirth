@@ -377,7 +377,7 @@ public final class HbmInventoryMenuHelper {
 
     public static boolean legacyMergeItemStack(java.util.List<Slot> slots, ItemStack stack, int start, int end,
             boolean reverse) {
-        return HbmInventoryUtil.mergeItemStack(slots, stack, start, end, reverse);
+        return HbmInventoryUtil.mergeLegacyItemStack(slots, stack, start, end, reverse);
     }
 
     public static boolean shouldBlockOpenItemContainerClick(int slotId, int button, ClickType clickType,

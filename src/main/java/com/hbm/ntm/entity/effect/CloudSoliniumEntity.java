@@ -81,6 +81,11 @@ public class CloudSoliniumEntity extends Entity {
     }
 
     @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
+    }
+
+    @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         age = tag.getShort("age");
         scale = tag.getShort("scale");

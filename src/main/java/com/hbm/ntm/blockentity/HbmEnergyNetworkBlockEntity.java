@@ -109,7 +109,7 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
             return;
         }
         if (energyNode != null) {
-            HbmEnergyNodespace.destroyNode(level, worldPosition);
+            HbmEnergyNodespace.destroyNode(level, energyNode);
             energyNode = null;
         }
         energyNode = HbmEnergyNodespace.createNode(level, createEnergyNode());
@@ -324,7 +324,7 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
             energyNode = null;
             return;
         }
-        HbmEnergyNodespace.destroyNode(level, worldPosition);
+        HbmEnergyNodespace.destroyNode(level, energyNode);
         energyNode = null;
         energyNodeDirty = true;
         energySubscriptionDirty = true;
@@ -345,7 +345,6 @@ public abstract class HbmEnergyNetworkBlockEntity extends HbmEnergyBlockEntity i
 
     @Override
     public void onChunkUnloaded() {
-        removeEnergyNode();
         super.onChunkUnloaded();
     }
 }

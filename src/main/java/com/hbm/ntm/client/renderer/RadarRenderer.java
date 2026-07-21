@@ -67,7 +67,8 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
                 poseStack.pushPose();
                 LegacyPoseRotations.rotateYDegrees(poseStack, -interpolatedRotation(radar, partialTick));
                 poseStack.translate(-0.125D, 0.0D, 0.0D);
-                SMALL_MODEL.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, SMALL_DISH);
+                SMALL_MODEL.renderOnlyInCallOrder(ObjModelLibrary.MACHINE_RADAR_DISH_TEXTURE,
+                        poseStack, buffer, modelLight, packedOverlay, SMALL_DISH);
                 poseStack.popPose();
             }
         }

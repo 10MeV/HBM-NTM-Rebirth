@@ -50,11 +50,10 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
         }
 
         Direction inputSide = state.getValue(LegacyDirectionalShapeBlock.FACE).getOpposite();
-        if (blockEntity.lastSubscribedInputSide != inputSide
-                || Math.floorMod(level.getGameTime() + pos.hashCode(), 20) == 0L) {
-            HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, inputSide, blockEntity);
-            blockEntity.lastSubscribedInputSide = inputSide;
-        }
+        // Floodlight's legacy TileEntity retries its one back-side receiver
+        // every server tick, including immediately after a cable replacement.
+        HbmEnergyUtil.subscribeReceiverToNeighborNetwork(level, pos, inputSide, blockEntity);
+        blockEntity.lastSubscribedInputSide = inputSide;
 
         if (blockEntity.delay > 0) {
             blockEntity.delay--;

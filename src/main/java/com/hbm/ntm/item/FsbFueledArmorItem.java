@@ -139,7 +139,7 @@ public class FsbFueledArmorItem extends ArmorFSB implements IFillableItem {
 
     @Override
     public boolean acceptsFluid(FluidType type, ItemStack stack) {
-        return acceptedFuelTypes.contains(type) && getFill(stack) < maxFuel;
+        return acceptedFuelTypes.contains(type);
     }
 
     @Override
@@ -173,16 +173,16 @@ public class FsbFueledArmorItem extends ArmorFSB implements IFillableItem {
             return 0;
         }
         CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains(TAG_FUEL)) {
+        if (tag == null) {
             setFill(stack, maxFuel);
             return maxFuel;
         }
-        return Math.max(0, Math.min(maxFuel, tag.getInt(TAG_FUEL)));
+        return tag.getInt(TAG_FUEL);
     }
 
     public void setFill(ItemStack stack, int fill) {
         if (!stack.isEmpty()) {
-            stack.getOrCreateTag().putInt(TAG_FUEL, Math.max(0, Math.min(maxFuel, fill)));
+            stack.getOrCreateTag().putInt(TAG_FUEL, fill);
         }
     }
 

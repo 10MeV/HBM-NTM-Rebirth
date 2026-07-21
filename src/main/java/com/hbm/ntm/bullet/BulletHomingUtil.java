@@ -14,16 +14,9 @@ import java.util.Optional;
 public final class BulletHomingUtil {
     public static final double CHLOROPHYTE_RANGE = 30.0D;
     public static final double CHLOROPHYTE_ANGLE = 180.0D;
-    public static final double UFO_RANGE = 100.0D;
-    public static final double UFO_ANGLE = 90.0D;
-    public static final double UFO_BLAST_DISTANCE_SQR = 5.0D;
 
     public static Optional<LivingEntity> findChlorophyteTarget(Entity projectile, @Nullable Entity shooter, Vec3 motion) {
         return findTarget(projectile, shooter, motion, CHLOROPHYTE_RANGE, CHLOROPHYTE_ANGLE);
-    }
-
-    public static Optional<LivingEntity> findUfoTarget(Entity projectile, @Nullable Entity shooter, Vec3 motion) {
-        return findTarget(projectile, shooter, motion, UFO_RANGE, UFO_ANGLE);
     }
 
     public static Optional<LivingEntity> findTarget(Entity projectile, @Nullable Entity shooter, Vec3 motion,
@@ -111,10 +104,6 @@ public final class BulletHomingUtil {
 
     private static double lerp(double from, double to, float amount) {
         return from + (to - from) * amount;
-    }
-
-    public static boolean shouldTriggerUfoBlast(Entity projectile, Entity target) {
-        return projectile != null && target != null && projectile.distanceToSqr(target) < UFO_BLAST_DISTANCE_SQR;
     }
 
     public static Vec3 center(Entity entity) {

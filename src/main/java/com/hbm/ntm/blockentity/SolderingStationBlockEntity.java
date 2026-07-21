@@ -174,7 +174,9 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
             station.progress = 0;
         }
 
-        if (station.tank.getTankType() != HbmFluids.NONE) {
+        // TileEntityMachineSolderingStation performs both ordinary and typed
+        // remote fluid subscriptions only in its legacy twenty-tick outer pass.
+        if (level.getGameTime() % 20L == 0L && station.tank.getTankType() != HbmFluids.NONE) {
             station.refreshTrackedReceiverFluidPorts(station.tank, station);
         }
 
@@ -431,6 +433,11 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean usesLegacyTwentyTickEnergyPortSubscriptionCadence() {
+        return true;
+    }
+
+    @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.INPUT;
     }
@@ -442,12 +449,15 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected boolean shouldCreateFluidNode() {
-        return tank.getTankType() != HbmFluids.NONE;
+        return false;
     }
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return type != HbmFluids.NONE && type == tank.getTankType();
+        // The legacy remote input is owned by the explicit twenty-tick tracker
+        // pass in serverTick. Do not let the generic dirty/keepalive route
+        // subscribe this machine early.
+        return false;
     }
 
     @Override

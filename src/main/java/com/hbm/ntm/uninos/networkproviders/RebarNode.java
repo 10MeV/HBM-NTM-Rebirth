@@ -19,6 +19,12 @@ public class RebarNode extends HbmNetworkNode {
         super(positions, connections);
     }
 
+    @Override
+    public RebarNode setConnections(com.hbm.ntm.util.fauxpointtwelve.DirPos... connections) {
+        super.setConnections(connections);
+        return this;
+    }
+
     public RebarNetwork getRebarNet() {
         return getNet() instanceof RebarNetwork rebarNetwork ? rebarNetwork : null;
     }

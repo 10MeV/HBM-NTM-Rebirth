@@ -25,6 +25,8 @@ public final class AchievementHandler {
     public static final ResourceLocation RAD_DEATH = new ResourceLocation(HbmNtm.MOD_ID, "rad_death");
     public static final ResourceLocation RADIUM = new ResourceLocation(HbmNtm.MOD_ID, "radium");
     public static final ResourceLocation NO9 = new ResourceLocation(HbmNtm.MOD_ID, "no9");
+    public static final ResourceLocation SOME_WOUNDS = new ResourceLocation(HbmNtm.MOD_ID, "some_wounds");
+    public static final ResourceLocation GO_FISH = new ResourceLocation(HbmNtm.MOD_ID, "go_fish");
     public static final ResourceLocation DIGAMMA_SEE =
             new ResourceLocation(HbmNtm.MOD_ID, "digamma_see");
     public static final ResourceLocation DIGAMMA_FEEL =
@@ -39,6 +41,11 @@ public final class AchievementHandler {
     public static final ResourceLocation CHEMPLANT = new ResourceLocation(HbmNtm.MOD_ID, "chemplant");
     public static final ResourceLocation DESH = new ResourceLocation(HbmNtm.MOD_ID, "desh");
     public static final ResourceLocation TECHNETIUM = new ResourceLocation(HbmNtm.MOD_ID, "technetium");
+    public static final ResourceLocation FOEQ = new ResourceLocation(HbmNtm.MOD_ID, "foeq");
+    public static final ResourceLocation HORIZONS_START = new ResourceLocation(HbmNtm.MOD_ID, "horizons_start");
+    public static final ResourceLocation HORIZONS_END = new ResourceLocation(HbmNtm.MOD_ID, "horizons_end");
+    public static final ResourceLocation HORIZONS_BONUS = new ResourceLocation(HbmNtm.MOD_ID, "horizons_bonus");
+    public static final ResourceLocation SOYUZ = new ResourceLocation(HbmNtm.MOD_ID, "soyuz");
 
     private AchievementHandler() {
     }

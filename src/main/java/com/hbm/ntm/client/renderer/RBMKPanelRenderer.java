@@ -18,6 +18,11 @@ public class RBMKPanelRenderer implements BlockEntityRenderer<RBMKPanelBlockEnti
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
     public boolean shouldRender(RBMKPanelBlockEntity panel, Vec3 cameraPos) {
         return BlockEntityRenderer.super.shouldRender(panel, cameraPos)
                 && LegacyBlockEntityRenderCulling.shouldRenderMachine(panel, getViewDistance());

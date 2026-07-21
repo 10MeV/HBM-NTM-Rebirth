@@ -21,8 +21,22 @@ public class LandmineRenderer implements BlockEntityRenderer<LandmineBlockEntity
     }
 
     @Override
+    public int getViewDistance() {
+        return LegacyBlockEntityRenderDistances.machine();
+    }
+
+    @Override
+    public boolean shouldRender(LandmineBlockEntity mine, Vec3 cameraPos) {
+        return BlockEntityRenderer.super.shouldRender(mine, cameraPos)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(mine, getViewDistance());
+    }
+
+    @Override
     public void render(LandmineBlockEntity mine, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(mine, getViewDistance())) {
+            return;
+        }
         if (!(mine.getBlockState().getBlock() instanceof LandmineBlock block)) {
             return;
         }
@@ -31,20 +45,22 @@ public class LandmineRenderer implements BlockEntityRenderer<LandmineBlockEntity
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
-        switch (block.kind()) {
-            case AP -> renderApMine(mine, poseStack, buffer, modelLight, packedOverlay, ObjBombModels.MINE_AP,
-                    apMineTexture(mine));
-            case HE -> {
-                LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
-                renderModel(ObjBombModels.MINE_MARELET, ObjBombModels.texture("mine_marelet"), poseStack, buffer,
-                        modelLight, packedOverlay);
-            }
-            case SHRAP -> renderApMine(mine, poseStack, buffer, modelLight, packedOverlay, ObjBombModels.MINE_AP,
-                    ObjBombModels.MINE_SHRAP_TEXTURE);
-            case FAT -> {
-                poseStack.scale(0.25F, 0.25F, 0.25F);
-                renderModel(ObjBombModels.MINE_FAT, ObjBombModels.rootTexture("mine_fat"), poseStack, buffer,
-                        modelLight, packedOverlay);
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(mine)) {
+            switch (block.kind()) {
+                case AP -> renderApMine(mine, poseStack, buffer, modelLight, packedOverlay, ObjBombModels.MINE_AP,
+                        apMineTexture(mine));
+                case HE -> {
+                    LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
+                    renderModel(ObjBombModels.MINE_MARELET, ObjBombModels.texture("mine_marelet"), poseStack, buffer,
+                            modelLight, packedOverlay);
+                }
+                case SHRAP -> renderApMine(mine, poseStack, buffer, modelLight, packedOverlay, ObjBombModels.MINE_AP,
+                        ObjBombModels.MINE_SHRAP_TEXTURE);
+                case FAT -> {
+                    poseStack.scale(0.25F, 0.25F, 0.25F);
+                    renderModel(ObjBombModels.MINE_FAT, ObjBombModels.rootTexture("mine_fat"), poseStack, buffer,
+                            modelLight, packedOverlay);
+                }
             }
         }
         poseStack.popPose();
@@ -77,10 +93,5 @@ public class LandmineRenderer implements BlockEntityRenderer<LandmineBlockEntity
         return climate.temperature() >= 1.5F && climate.downfall() <= 0.1F
                 ? ObjBombModels.MINE_AP_DESERT_TEXTURE
                 : ObjBombModels.MINE_AP_GRASS_TEXTURE;
-    }
-
-    @Override
-    public boolean shouldRender(LandmineBlockEntity mine, Vec3 cameraPos) {
-        return BlockEntityRenderer.super.shouldRender(mine, cameraPos);
     }
 }

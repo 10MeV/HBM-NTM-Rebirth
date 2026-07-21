@@ -1,0 +1,9 @@
+{
+  "loader": "hbm_ntm_rebirth:pneumatic_tube_loader",
+  "paintable": true,
+  "base": "hbm_ntm_rebirth:block/pneumatic_tube_paintable",
+  "overlay": "hbm_ntm_rebirth:block/pneumatic_tube_paintable_overlay",
+  "overlay_input": "hbm_ntm_rebirth:block/pneumatic_tube_paintable_overlay_in",
+  "overlay_output": "hbm_ntm_rebirth:block/pneumatic_tube_paintable_overlay_out",
+  "textures": {"particle": "hbm_ntm_rebirth:block/pneumatic_tube_paintable"}
+}

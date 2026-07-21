@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    "C",
+    "W",
+    "P"
+  ],
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "W": {
+      "tag": "forge:dense_wires/gold"
+    },
+    "P": {
+      "tag": "forge:ingots/any_plastic"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:gun_pa_ranged"
+  }
+}

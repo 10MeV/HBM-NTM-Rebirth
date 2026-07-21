@@ -193,6 +193,11 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
         return List.of(waterTank);
     }

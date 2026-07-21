@@ -1,8 +1,11 @@
 package com.hbm.ntm.explosion;
 
+import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.energy.HbmEnergyHandler;
 import com.hbm.ntm.entity.projectile.BulletProjectileEntity;
+import com.hbm.ntm.entity.projectile.DynamiteStickEntity;
+import com.hbm.ntm.particle.LegacyConfettiUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.util.HbmBlockStateUtil;
@@ -81,10 +84,18 @@ public final class ExplosionNukeGeneric {
 
             double linearDistance = Math.sqrt(distance);
             float damage = (float) (maxDamage * (radius - linearDistance) / radius);
-            EntityDamageUtil.DamageApplication application = EntityDamageUtil.attackEntityFromNtDetailed(entity,
-                    ModDamageSources.source(level, ModDamageSources.NUCLEAR_BLAST), damage, true, true,
-                    0.0D, 100.0F, 0.0F);
-            boolean doKnockback = !(entity instanceof LivingEntity) || application.damaged();
+            boolean doKnockback = true;
+            if (entity instanceof LivingEntity living && living.isAlive()) {
+                EntityDamageUtil.DamageApplication application = EntityDamageUtil.attackEntityFromNtDetailed(entity,
+                        ModDamageSources.source(level, ModDamageSources.NUCLEAR_BLAST), damage, true, true,
+                        0.0D, 100.0F, 0.0F);
+                doKnockback = application.damaged();
+                if (!living.isAlive()) {
+                    LegacyConfettiUtil.decideConfetti(living, DamageClass.EXPLOSIVE);
+                }
+            } else {
+                doKnockback = entity.hurt(ModDamageSources.source(level, ModDamageSources.NUCLEAR_BLAST), damage);
+            }
             entity.setSecondsOnFire(5);
 
             Vec3 knockback = target.subtract(origin);
@@ -360,7 +371,7 @@ public final class ExplosionNukeGeneric {
     }
 
     private static boolean isExplosionExempt(Entity entity) {
-        if (entity instanceof Ocelot || entity instanceof BulletProjectileEntity) {
+        if (entity instanceof Ocelot || entity instanceof BulletProjectileEntity || entity instanceof DynamiteStickEntity) {
             return true;
         }
         if (entity instanceof Player player) {

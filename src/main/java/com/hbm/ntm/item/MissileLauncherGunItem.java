@@ -9,7 +9,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -40,7 +39,7 @@ public class MissileLauncherGunItem extends SednaGunItem {
             return;
         }
         if (isAiming(stack)) {
-            LivingEntity target = StingerGunItem.findLockonTarget(player, LOCKON_DISTANCE, LOCKON_ANGLE_DEGREES);
+            Entity target = StingerGunItem.findLockonTarget(player, LOCKON_DISTANCE, LOCKON_ANGLE_DEGREES);
             if (target != null) {
                 setLockonTargetId(stack, target.getId());
                 setLockedOn(stack, true);
@@ -56,8 +55,8 @@ public class MissileLauncherGunItem extends SednaGunItem {
         BulletProjectileEntity bullet = super.createBullet(level, player, stack, gun, config, receiver, overrideDamage);
         if (bullet != null && level instanceof ServerLevel serverLevel && isLockedOn(stack)) {
             Entity target = serverLevel.getEntity(lockonTargetId(stack));
-            if (target instanceof LivingEntity living && living.isAlive()) {
-                bullet.setHomingTargetEntity(living);
+            if (target != null && target.isAlive()) {
+                bullet.setHomingTargetEntity(target);
             }
         }
         return bullet;

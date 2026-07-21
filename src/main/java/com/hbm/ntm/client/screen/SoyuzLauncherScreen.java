@@ -63,9 +63,18 @@ public class SoyuzLauncherScreen extends AbstractContainerScreen<SoyuzLauncherMe
         graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
 
-        int secs = menu.getCountdown() / 20;
-        int cents = (menu.getCountdown() % 20) * 5;
-        String timer = String.format("%02d:%02d", secs, cents);
+        // GUISoyuzLauncher did not use a conventional zero-padded fractional
+        // formatter: its single-character fraction has a zero *appended*.
+        // Keep that visible source quirk (e.g. countdown 1 -> "00:50").
+        String secs = "" + menu.getCountdown() / 20;
+        String cents = "" + (menu.getCountdown() % 20) * 5;
+        if (secs.length() == 1) {
+            secs = "0" + secs;
+        }
+        if (cents.length() == 1) {
+            cents += "0";
+        }
+        String timer = secs + ":" + cents;
         graphics.pose().pushPose();
         graphics.pose().scale(0.5F, 0.5F, 1.0F);
         graphics.drawString(font, timer, 307, 75, 0xFF0000, false);
@@ -76,13 +85,28 @@ public class SoyuzLauncherScreen extends AbstractContainerScreen<SoyuzLauncherMe
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(8, 36, 16, 52, mouseX, mouseY)) {
+        // GUISoyuzLauncher uses GuiInfoContainer#drawCustomInfoStat for these
+        // six source-defined hints.  Unlike the linker side panels, each old
+        // call deliberately anchors its tooltip to the live cursor.
+        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
+                leftPos + 43, topPos + 17, 18, 18, mouseX, mouseY, "The Soyuz goes here");
+        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
+                leftPos + 43, topPos + 35, 18, 18, mouseX, mouseY, "Designator only for CARGO MODE");
+        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
+                leftPos + 133, topPos + 17, 18, 18, mouseX, mouseY, "The payload for SATELLITE MODE");
+        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
+                leftPos + 133, topPos + 35, 18, 18, mouseX, mouseY, "The orbital module for special payloads");
+        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
+                leftPos + 88, topPos + 17, 18, 18, mouseX, mouseY, "SATELLITE MODE");
+        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
+                leftPos + 88, topPos + 35, 18, 18, mouseX, mouseY, "CARGO MODE");
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 8, topPos + 36, 16, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getKeroseneTankData(),
                     menu.getKeroseneTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(26, 36, 16, 52, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 26, topPos + 36, 16, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOxygenTankData(),
                     menu.getOxygenTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(49, 72, 6, 34, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 49, topPos + 72, 6, 34)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 49, topPos + 72, 6, 34, menu.getPower(), menu.getMaxPower());
         }
@@ -91,17 +115,20 @@ public class SoyuzLauncherScreen extends AbstractContainerScreen<SoyuzLauncherMe
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(88, 17, 18, 18, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 88, 17, 18, 18)) {
+            LegacyGuiElements.playClickSound();
             ModMessages.sendAuxButton(menu.getBlockEntity().getBlockPos(),
                     SoyuzLauncherBlockEntity.MODE_SATELLITE, SoyuzLauncherBlockEntity.CONTROL_MODE);
             return true;
         }
-        if (isHovering(88, 35, 18, 18, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 88, 35, 18, 18)) {
+            LegacyGuiElements.playClickSound();
             ModMessages.sendAuxButton(menu.getBlockEntity().getBlockPos(),
                     SoyuzLauncherBlockEntity.MODE_CARGO, SoyuzLauncherBlockEntity.CONTROL_MODE);
             return true;
         }
-        if (isHovering(151, 17, 18, 18, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 151, 17, 18, 18)) {
+            LegacyGuiElements.playClickSound();
             ModMessages.sendAuxButton(menu.getBlockEntity().getBlockPos(), 0,
                     SoyuzLauncherBlockEntity.CONTROL_START);
             return true;

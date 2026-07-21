@@ -2,5 +2,19 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "hbm_ntm_rebirth:item/soyuz_0"
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:soyuz_skin": 1
+      },
+      "model": "hbm_ntm_rebirth:item/missile_soyuz_skin_1"
+    },
+    {
+      "predicate": {
+        "hbm_ntm_rebirth:soyuz_skin": 2
+      },
+      "model": "hbm_ntm_rebirth:item/missile_soyuz_skin_2"
+    }
+  ]
 }

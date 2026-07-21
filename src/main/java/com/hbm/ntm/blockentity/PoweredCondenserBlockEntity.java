@@ -189,6 +189,13 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityCondenserPowered inherits TileEntityCondenser#updateEntity,
+        // which calls subscribeToAllAround(...) on every server tick.
+        return true;
+    }
+
+    @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
         return List.of(inputTank);
     }

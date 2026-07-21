@@ -25,6 +25,7 @@ public record CustomMissilePartProfile(
         float inaccuracy,
         float health) {
     private static final Map<String, CustomMissilePartProfile> BY_LEGACY_NAME = profiles();
+    private static final Map<String, PartLore> LORE_BY_LEGACY_NAME = lore();
 
     public static Map<String, CustomMissilePartProfile> profilesByLegacyName() {
         return BY_LEGACY_NAME;
@@ -33,6 +34,16 @@ public record CustomMissilePartProfile(
     @Nullable
     public static CustomMissilePartProfile byLegacyName(String legacyName) {
         return BY_LEGACY_NAME.get(legacyName);
+    }
+
+    @Nullable
+    public static PartLore loreByLegacyName(String legacyName) {
+        return LORE_BY_LEGACY_NAME.get(legacyName);
+    }
+
+    @Nullable
+    public static PartLore loreFromPartItem(MissilePartItem item) {
+        return item == null ? null : loreByLegacyName(item.legacyModelKey());
     }
 
     @Nullable
@@ -78,11 +89,11 @@ public record CustomMissilePartProfile(
     private static Map<String, CustomMissilePartProfile> profiles() {
         Map<String, CustomMissilePartProfile> profiles = new LinkedHashMap<>();
 
-        chip(profiles, "mp_chip_1", 0.1F);
-        chip(profiles, "mp_chip_2", 0.05F);
-        chip(profiles, "mp_chip_3", 0.01F);
-        chip(profiles, "mp_chip_4", 0.005F);
-        chip(profiles, "mp_chip_5", 0.0F);
+        chip(profiles, "mp_c_1", 0.1F);
+        chip(profiles, "mp_c_2", 0.05F);
+        chip(profiles, "mp_c_3", 0.01F);
+        chip(profiles, "mp_c_4", 0.005F);
+        chip(profiles, "mp_c_5", 0.0F);
 
         thruster(profiles, "mp_thruster_10_kerosene", FuelType.KEROSENE, 1F, 1.5F, PartSize.SIZE_10, 10F);
         thruster(profiles, "mp_thruster_10_solid", FuelType.SOLID, 1F, 1.5F, PartSize.SIZE_10, 15F);
@@ -111,7 +122,7 @@ public record CustomMissilePartProfile(
         fins(profiles, "mp_stability_15_flat", 0.5F, PartSize.SIZE_15, 10F);
         fins(profiles, "mp_stability_15_thin", 0.35F, PartSize.SIZE_15, 5F);
         fins(profiles, "mp_stability_15_soyuz", 0.25F, PartSize.SIZE_15, 15F);
-        fins(profiles, "mp_stability_20_flat", 0.5F, PartSize.SIZE_20, 0F);
+        fins(profiles, "mp_s_20", 0.5F, PartSize.SIZE_20, 0F);
 
         fuselageGroup(profiles, FuelType.KEROSENE, 2500F, PartSize.SIZE_10, PartSize.SIZE_10,
                 "mp_fuselage_10_kerosene", "mp_fuselage_10_kerosene_camo", "mp_fuselage_10_kerosene_desert",
@@ -180,6 +191,103 @@ public record CustomMissilePartProfile(
         warhead(profiles, "mp_warhead_15_turbine", CustomMissileExplosion.WarheadType.TURBINE, 200F, 5F, PartSize.SIZE_15, 250F);
 
         return Collections.unmodifiableMap(profiles);
+    }
+
+    /**
+     * Purely visual metadata from the 1.7.10 ModItems registration chains.  In
+     * particular, ItemCustomMissilePart#copy deliberately does not carry these
+     * four fields, so only setters written on each source registration appear here.
+     */
+    private static Map<String, PartLore> lore() {
+        Map<String, PartLore> lore = new LinkedHashMap<>();
+
+        lore(lore, "mp_thruster_15_solid_hexdecuple", Rarity.UNCOMMON, null, null, null);
+        lore(lore, "mp_thruster_15_balefire_large_rad", Rarity.UNCOMMON, null, "The Master", null);
+        lore(lore, "mp_thruster_20_solid", null, null, null, "It's basically just a big hole at the end of the fuel tank.");
+        lore(lore, "mp_thruster_20_solid_multier", null, null, null, "Did I miscount? Hope not.");
+        lore(lore, "mp_stability_10_space", Rarity.COMMON, null, null, "Standing there alone, the ship is waiting / All systems are go, are you sure?");
+        lore(lore, "mp_stability_15_soyuz", Rarity.COMMON, null, null, "Союз!");
+        lore(lore, "mp_fuselage_10_kerosene", null, null, "Hoboy", null);
+        lore(lore, "mp_fuselage_10_kerosene_camo", Rarity.COMMON, "Camo", null, null);
+        lore(lore, "mp_fuselage_10_kerosene_desert", Rarity.COMMON, "Desert Camo", null, null);
+        lore(lore, "mp_fuselage_10_kerosene_sky", Rarity.COMMON, "Sky Camo", null, null);
+        lore(lore, "mp_fuselage_10_kerosene_flames", Rarity.UNCOMMON, "Sick Flames", null, null);
+        lore(lore, "mp_fuselage_10_kerosene_insulation", Rarity.COMMON, "Orange Insulation", null, null);
+        lore(lore, "mp_fuselage_10_kerosene_sleek", Rarity.RARE, "IF-R&D", null, null);
+        lore(lore, "mp_fuselage_10_kerosene_metal", Rarity.UNCOMMON, "Bolted Metal", "Hoboy", null);
+        lore(lore, "mp_fuselage_10_kerosene_taint", Rarity.UNCOMMON, "Tainted", "Sam", null);
+        lore(lore, "mp_fuselage_10_solid_flames", Rarity.UNCOMMON, "Sick Flames", null, null);
+        lore(lore, "mp_fuselage_10_solid_insulation", Rarity.COMMON, "Orange Insulation", null, null);
+        lore(lore, "mp_fuselage_10_solid_sleek", Rarity.RARE, "IF-R&D", null, null);
+        lore(lore, "mp_fuselage_10_solid_soviet_glory", Rarity.EPIC, "Soviet Glory", "Hoboy", null);
+        lore(lore, "mp_fuselage_10_solid_cathedral", Rarity.RARE, "Unholy Cathedral", "Satan", "Quakeesque!");
+        lore(lore, "mp_fuselage_10_solid_moonlit", Rarity.UNCOMMON, "Moonlit", "The Master & Hoboy", null);
+        lore(lore, "mp_fuselage_10_solid_battery", Rarity.UNCOMMON, "Ecstatic", "wolfmonster222", "I got caught eating batteries again :(");
+        lore(lore, "mp_fuselage_10_solid_duracell", Rarity.RARE, "Duracell", "Hoboy", "The crunchiest battery on the market!");
+        lore(lore, "mp_fuselage_10_xenon_bhole", Rarity.RARE, "Morceus-1457", "Sten89", null);
+        lore(lore, "mp_fuselage_10_long_kerosene", null, null, "Hoboy", null);
+        lore(lore, "mp_fuselage_10_long_kerosene_camo", Rarity.COMMON, "Camo", null, null);
+        lore(lore, "mp_fuselage_10_long_kerosene_desert", Rarity.COMMON, "Desert Camo", null, null);
+        lore(lore, "mp_fuselage_10_long_kerosene_sky", Rarity.COMMON, "Sky Camo", null, null);
+        lore(lore, "mp_fuselage_10_long_kerosene_flames", Rarity.UNCOMMON, "Sick Flames", null, null);
+        lore(lore, "mp_fuselage_10_long_kerosene_insulation", Rarity.COMMON, "Orange Insulation", null, null);
+        lore(lore, "mp_fuselage_10_long_kerosene_sleek", Rarity.RARE, "IF-R&D", null, null);
+        lore(lore, "mp_fuselage_10_long_kerosene_metal", Rarity.UNCOMMON, null, "Hoboy", null);
+        lore(lore, "mp_fuselage_10_long_kerosene_dash", Rarity.EPIC, "Dash", "Sam", "I wash my hands of it.");
+        lore(lore, "mp_fuselage_10_long_kerosene_taint", Rarity.UNCOMMON, "Tainted", "Sam", null);
+        lore(lore, "mp_fuselage_10_long_kerosene_vap", Rarity.EPIC, "Minty Contrail", "VT-6/24", "Upper rivet!");
+        lore(lore, "mp_fuselage_10_long_solid_flames", Rarity.UNCOMMON, "Sick Flames", null, null);
+        lore(lore, "mp_fuselage_10_long_solid_insulation", Rarity.COMMON, "Orange Insulation", null, null);
+        lore(lore, "mp_fuselage_10_long_solid_sleek", Rarity.RARE, "IF-R&D", null, null);
+        lore(lore, "mp_fuselage_10_long_solid_soviet_glory", Rarity.EPIC, "Soviet Glory", "Hoboy", "Fully Automated Luxury Gay Space Communism!");
+        lore(lore, "mp_fuselage_10_long_solid_bullet", Rarity.COMMON, "Bullet Bill", "Sam", null);
+        lore(lore, "mp_fuselage_10_long_solid_silvermoonlight", Rarity.UNCOMMON, "Silver Moonlight", "The Master", null);
+        lore(lore, "mp_fuselage_15_kerosene", null, null, "Hoboy", null);
+        lore(lore, "mp_fuselage_15_kerosene_camo", Rarity.COMMON, "Camo", null, null);
+        lore(lore, "mp_fuselage_15_kerosene_desert", Rarity.COMMON, "Desert Camo", null, null);
+        lore(lore, "mp_fuselage_15_kerosene_sky", Rarity.COMMON, "Sky Camo", null, null);
+        lore(lore, "mp_fuselage_15_kerosene_insulation", Rarity.COMMON, "Orange Insulation", null, "Rest in spaghetti Columbia :(");
+        lore(lore, "mp_fuselage_15_kerosene_metal", Rarity.UNCOMMON, "Bolted Metal", "Hoboy", "Metal frame with metal plating reinforced with bolted metal sheets and metal.");
+        lore(lore, "mp_fuselage_15_kerosene_decorated", Rarity.UNCOMMON, "Decorated", "Hoboy", null);
+        lore(lore, "mp_fuselage_15_kerosene_steampunk", Rarity.RARE, "Steampunk", "Hoboy", null);
+        lore(lore, "mp_fuselage_15_kerosene_polite", Rarity.LEGENDARY, "Polite", "Hoboy", null);
+        lore(lore, "mp_fuselage_15_kerosene_blackjack", Rarity.LEGENDARY, "Queen Whiskey", null, null);
+        lore(lore, "mp_fuselage_15_kerosene_lambda", Rarity.RARE, "Lambda Complex", "VT-6/24", "MAGNIFICENT MICROWAVE CASSEROLE");
+        lore(lore, "mp_fuselage_15_kerosene_minuteman", Rarity.UNCOMMON, "MX 1702", "Spexta", null);
+        lore(lore, "mp_fuselage_15_kerosene_pip", Rarity.EPIC, "LittlePip", "The Doctor", "31!");
+        lore(lore, "mp_fuselage_15_kerosene_taint", Rarity.UNCOMMON, "Tainted", "Sam", "DUN-DUN!");
+        lore(lore, "mp_fuselage_15_kerosene_yuck", Rarity.EPIC, "Flesh", "Hoboy", "Note: Never clean DNA vials with your own spit.");
+        lore(lore, "mp_fuselage_15_solid_insulation", Rarity.COMMON, "Orange Insulation", null, null);
+        lore(lore, "mp_fuselage_15_solid_desh", Rarity.RARE, "Desh Plating", "Hoboy", null);
+        lore(lore, "mp_fuselage_15_solid_soviet_glory", Rarity.RARE, "Soviet Glory", "Hoboy", null);
+        lore(lore, "mp_fuselage_15_solid_soviet_stank", Rarity.EPIC, "Soviet Stank", "Hoboy", "Aged like a fine wine! Well, almost.");
+        lore(lore, "mp_fuselage_15_solid_faust", Rarity.LEGENDARY, "Mighty Lauren", "Dr.Nostalgia", "Welcome to Subway, may I take your order?");
+        lore(lore, "mp_fuselage_15_solid_silvermoonlight", Rarity.UNCOMMON, "Silver Moonlight", "The Master", null);
+        lore(lore, "mp_fuselage_15_solid_snowy", Rarity.UNCOMMON, "Chilly Day", "Dr.Nostalgia", null);
+        lore(lore, "mp_fuselage_15_solid_panorama", Rarity.RARE, "Panorama", "Hoboy", null);
+        lore(lore, "mp_fuselage_15_solid_roses", Rarity.UNCOMMON, "Bed of roses", "Hoboy", null);
+        lore(lore, "mp_fuselage_15_solid_mimi", Rarity.RARE, "Mimi-chan", null, null);
+        lore(lore, "mp_fuselage_15_hydrogen_cathedral", Rarity.UNCOMMON, "Unholy Cathedral", "Satan", null);
+        lore(lore, "mp_fuselage_15_20_kerosene", null, null, "Hoboy", null);
+        lore(lore, "mp_fuselage_15_20_kerosene_magnusson", Rarity.RARE, "White Forest Rocket", "VT-6/24", "And get your cranio-conjugal parasite away from my nose cone!");
+        lore(lore, "mp_warhead_10_nuclear", null, "Tater Tot", null, null);
+        lore(lore, "mp_warhead_10_nuclear_large", null, "Chernobyl Boris", null, null);
+        lore(lore, "mp_warhead_10_taint", Rarity.UNCOMMON, null, null, "Eat my taint! Bureaucracy is dead and we killed it!");
+        lore(lore, "mp_warhead_10_cloud", Rarity.RARE, null, null, null);
+        lore(lore, "mp_warhead_15_nuclear", null, "Auntie Bertha", null, null);
+        lore(lore, "mp_warhead_15_nuclear_shark", Rarity.UNCOMMON, "Discount Bullet Bill", null, "Nose art on a cannon bullet? Who does that?");
+        lore(lore, "mp_warhead_15_nuclear_mimi", Rarity.RARE, "FASHIONABLE MISSILE", null, null);
+        lore(lore, "mp_warhead_15_boxcar", Rarity.LEGENDARY, null, null, "?!?!");
+        lore(lore, "mp_warhead_15_n2", Rarity.RARE, null, null, "[screams geometrically]");
+        lore(lore, "mp_warhead_15_balefire", Rarity.LEGENDARY, null, "VT-6/24", "Hightower, never forgetti.");
+        lore(lore, "mp_warhead_15_turbine", Rarity.STRANGE, null, null, null);
+
+        return Collections.unmodifiableMap(lore);
+    }
+
+    private static void lore(Map<String, PartLore> lore, String name, @Nullable Rarity rarity,
+            @Nullable String title, @Nullable String author, @Nullable String witty) {
+        lore.put(name, new PartLore(rarity, title, author, witty));
     }
 
     private static void chip(Map<String, CustomMissilePartProfile> profiles, String name, float inaccuracy) {
@@ -254,6 +362,19 @@ public record CustomMissilePartProfile(
         BALEFIRE
     }
 
+    public enum Rarity {
+        COMMON,
+        UNCOMMON,
+        RARE,
+        EPIC,
+        LEGENDARY,
+        STRANGE
+    }
+
+    public record PartLore(@Nullable Rarity rarity, @Nullable String title, @Nullable String author,
+                           @Nullable String witty) {
+    }
+
     public record ResolvedPart(ResourceLocation itemId, String legacyName, CustomMissilePartProfile profile) {
     }
 
@@ -266,10 +387,6 @@ public record CustomMissilePartProfile(
                     && thruster.profile().top() == fuselage.profile().bottom()
                     && thruster.profile().fuelType() == fuselage.profile().fuelType()
                     && (fins == null || fins.profile().top() == fuselage.profile().bottom());
-        }
-
-        public float entityHealth() {
-            return 50.0F;
         }
 
         public float displayHealth() {

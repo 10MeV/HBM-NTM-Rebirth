@@ -30,7 +30,7 @@ public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlock
 
     @Override
     public int getViewDistance() {
-        return 96;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

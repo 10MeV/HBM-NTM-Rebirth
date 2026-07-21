@@ -1,6 +1,7 @@
 package com.hbm.ntm.entity.item;
 
 import com.hbm.ntm.util.HbmRegistryUtil;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 
 import com.hbm.ntm.api.block.ChainExplodable;
 import com.hbm.ntm.particle.ParticleUtil;
@@ -145,6 +146,11 @@ public class LegacyPrimedExplosiveEntity extends Entity {
     @Override
     public boolean isPickable() {
         return !isRemoved();
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

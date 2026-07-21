@@ -188,6 +188,17 @@ public abstract class TurretBlockEntityBase extends HbmEnergyBlockEntity impleme
         return energy.getReceiverSpeed();
     }
 
+    /**
+     * {@code TileEntityTurretBaseNT#updateEntity()} retries all eight remote
+     * Energy Mk2 receiver ports on every server tick.  A same-block cable
+     * replacement is invisible to the port signature, so the shared staggered
+     * keepalive would otherwise delay that legacy retry.
+     */
+    @Override
+    protected boolean isEnergyPortKeepalive() {
+        return true;
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, TurretBlockEntityBase turret) {
         long oldPower = turret.getPower();
         boolean oldOn = turret.isActive();

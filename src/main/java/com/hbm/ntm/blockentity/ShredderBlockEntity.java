@@ -171,6 +171,13 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityMachineShredder#updateConnections retries all adjacent
+        // Energy Mk2 receivers on every legacy server tick.
+        return true;
+    }
+
+    @Override
     public Component getDisplayName() {
         if (customName != null && !customName.isBlank()) {
             return Component.literal(customName);

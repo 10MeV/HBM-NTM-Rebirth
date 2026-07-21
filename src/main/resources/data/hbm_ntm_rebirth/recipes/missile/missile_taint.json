@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:missile_assembly" },
+    { "type": "hbm_ntm_rebirth:fluid_container", "fluid": "hbm_ntm_rebirth:watz", "amount": 1000 },
+    { "item": "hbm_ntm_rebirth:powder_spark_mix" },
+    { "item": "hbm_ntm_rebirth:powder_magic" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:missile_taint" }
+}

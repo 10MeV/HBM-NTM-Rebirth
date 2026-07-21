@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IEntityAdditionalSpawnData {
-    private static final int LEGACY_MIN_CHUNK_WORK_MS = 10;
+    private static final int CHUNK_COLUMN_COUNT = 16 * 16;
 
     private static final EntityDataAccessor<Integer> SCALE =
             SynchedEntityData.defineId(FalloutRainEntity.class, EntityDataSerializers.INT);
@@ -55,6 +55,10 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     private boolean firstTick = true;
     private int tickDelay = BombConfig.falloutDelayTicks();
     private int scale = 1;
+    private long activeChunk = Long.MIN_VALUE;
+    private boolean activeOuterChunk;
+    private int activeColumnIndex;
+    private boolean activeBiomeModified;
 
     public FalloutRainEntity(EntityType<? extends FalloutRainEntity> type, Level level) {
         super(type, level);
@@ -95,8 +99,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         if (tickDelay == 0) {
             tickDelay = BombConfig.falloutDelayTicks();
             long deadline = start + BombConfig.mk5BudgetMs();
-            int chunkBudget = legacyChunkBudget();
-            while (chunkBudget-- > 0 && System.currentTimeMillis() < deadline) {
+            while (System.currentTimeMillis() < deadline) {
                 if (!processNextChunk()) {
                     syncQueueProgress();
                     discard();
@@ -109,20 +112,47 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         tickDelay--;
     }
 
-    private static int legacyChunkBudget() {
-        return Math.max(1, BombConfig.mk5BudgetMs() / LEGACY_MIN_CHUNK_WORK_MS);
-    }
-
     private boolean processNextChunk() {
-        if (!chunksToProcess.isEmpty()) {
-            processChunk(chunksToProcess.remove(chunksToProcess.size() - 1), false);
+        if (activeChunk == Long.MIN_VALUE) {
+            if (!chunksToProcess.isEmpty()) {
+                activeChunk = chunksToProcess.get(chunksToProcess.size() - 1);
+                activeOuterChunk = false;
+            } else if (!outerChunksToProcess.isEmpty()) {
+                activeChunk = outerChunksToProcess.get(outerChunksToProcess.size() - 1);
+                activeOuterChunk = true;
+            } else {
+                return false;
+            }
+        }
+
+        ChunkPos chunkPos = new ChunkPos(activeChunk);
+        loadChunk(chunkPos.x, chunkPos.z);
+        int x = chunkPos.getMinBlockX() + activeColumnIndex / 16;
+        int z = chunkPos.getMinBlockZ() + activeColumnIndex % 16;
+        double distance = Math.hypot(x - getX(), z - getZ());
+        if (!activeOuterChunk || distance <= getScale()) {
+            double percent = distance * 100.0D / getScale();
+            stomp(x, z, percent);
+            activeBiomeModified |= applyCraterRadiationMarker(x, z, percent);
+        }
+
+        activeColumnIndex++;
+        if (activeColumnIndex < CHUNK_COLUMN_COUNT) {
             return true;
         }
-        if (!outerChunksToProcess.isEmpty()) {
-            processChunk(outerChunksToProcess.remove(outerChunksToProcess.size() - 1), true);
-            return true;
+
+        if (activeBiomeModified && level() instanceof ServerLevel serverLevel) {
+            CraterBiomeUtil.resendCraterBiomes(serverLevel, chunkPos);
         }
-        return false;
+        List<Long> queue = activeOuterChunk ? outerChunksToProcess : chunksToProcess;
+        if (!queue.isEmpty() && queue.get(queue.size() - 1) == activeChunk) {
+            queue.remove(queue.size() - 1);
+        }
+        activeChunk = Long.MIN_VALUE;
+        activeOuterChunk = false;
+        activeColumnIndex = 0;
+        activeBiomeModified = false;
+        return true;
     }
 
     private void gatherChunks() {
@@ -148,27 +178,6 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         Collections.reverse(chunksToProcess);
         Collections.reverse(outerChunksToProcess);
         entityData.set(TOTAL_CHUNKS, chunksToProcess.size() + outerChunksToProcess.size());
-    }
-
-    private void processChunk(long packedChunk, boolean checkDistance) {
-        ChunkPos chunkPos = new ChunkPos(packedChunk);
-        loadChunk(chunkPos.x, chunkPos.z);
-        boolean biomeModified = false;
-        for (int x = chunkPos.getMinBlockX(); x <= chunkPos.getMaxBlockX(); x++) {
-            for (int z = chunkPos.getMinBlockZ(); z <= chunkPos.getMaxBlockZ(); z++) {
-                double distance = Math.hypot(x - getX(), z - getZ());
-                if (checkDistance && distance > getScale()) {
-                    continue;
-                }
-
-                double percent = distance * 100.0D / getScale();
-                stomp(x, z, percent);
-                biomeModified |= applyCraterRadiationMarker(x, z, percent);
-            }
-        }
-        if (biomeModified && level() instanceof ServerLevel serverLevel) {
-            CraterBiomeUtil.resendCraterBiomes(serverLevel, chunkPos);
-        }
     }
 
     private void stomp(int x, int z, double percent) {
@@ -336,7 +345,7 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return true;
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override
@@ -354,6 +363,10 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         firstTick = !tag.contains("firstTick") || tag.getBoolean("firstTick");
         readChunkList(tag.getLongArray("chunks"), chunksToProcess);
         readChunkList(tag.getLongArray("outerChunks"), outerChunksToProcess);
+        activeChunk = tag.contains("activeChunk") ? tag.getLong("activeChunk") : Long.MIN_VALUE;
+        activeOuterChunk = tag.getBoolean("activeOuterChunk");
+        activeColumnIndex = Math.max(0, Math.min(CHUNK_COLUMN_COUNT - 1, tag.getInt("activeColumnIndex")));
+        activeBiomeModified = tag.getBoolean("activeBiomeModified");
         readChunkLoader(tag);
         int savedTotal = tag.contains("totalChunks") ? tag.getInt("totalChunks") : chunksToProcess.size() + outerChunksToProcess.size();
         entityData.set(TOTAL_CHUNKS, Math.max(savedTotal, chunksToProcess.size() + outerChunksToProcess.size()));
@@ -367,6 +380,12 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
         tag.putBoolean("firstTick", firstTick);
         tag.putLongArray("chunks", chunksToProcess);
         tag.putLongArray("outerChunks", outerChunksToProcess);
+        if (activeChunk != Long.MIN_VALUE) {
+            tag.putLong("activeChunk", activeChunk);
+            tag.putBoolean("activeOuterChunk", activeOuterChunk);
+            tag.putInt("activeColumnIndex", activeColumnIndex);
+            tag.putBoolean("activeBiomeModified", activeBiomeModified);
+        }
         tag.putInt("totalChunks", entityData.get(TOTAL_CHUNKS));
         saveChunkLoader(tag);
     }

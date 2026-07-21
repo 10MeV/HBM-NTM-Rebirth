@@ -291,6 +291,11 @@ public class AirstrikeBomberEntity extends Entity {
     }
 
     @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
+    }
+
+    @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         bombStart = tag.getInt("bombStart");
         bombStop = tag.getInt("bombStop");

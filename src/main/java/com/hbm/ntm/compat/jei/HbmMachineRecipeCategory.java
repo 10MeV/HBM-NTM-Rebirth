@@ -337,18 +337,17 @@ public final class HbmMachineRecipeCategory implements HbmJeiRecipeCategory<Gene
     public void draw(GenericMachineRecipe recipe, IRecipeSlotsView recipeSlotsView,
             net.minecraft.client.gui.GuiGraphics guiGraphics, double mouseX, double mouseY) {
         drawBackground(guiGraphics);
-        if (displayMode == DisplayMode.LEGACY_UNIVERSAL) {
-            var font = Minecraft.getInstance().font;
-            String duration = BobMathUtil.getShortNumber(recipe.getDuration()) + " ticks";
-            String consumption = BobMathUtil.getShortNumber(recipe.getPower()) + "HE/t";
-            int side = 164;
-            guiGraphics.drawString(font, duration, side - font.width(duration), 45, 0x404040, false);
-            guiGraphics.drawString(font, consumption, side - font.width(consumption), 57, 0x404040, false);
+        if (displayMode == DisplayMode.ARC_FURNACE_SOLID || displayMode == DisplayMode.ARC_FURNACE_FLUID) {
             return;
         }
-        if (displayMode.usesLegacyUniversalLayout()) {
-            return;
-        }
+
+        // GenericRecipe#printNEIExtras rendered these two lines for every generic handler.
+        var font = Minecraft.getInstance().font;
+        String duration = BobMathUtil.getShortNumber(recipe.getDuration()) + " ticks";
+        String consumption = BobMathUtil.getShortNumber(recipe.getPower()) + "HE/t";
+        int side = 164;
+        guiGraphics.drawString(font, duration, side - font.width(duration), 45, 0x404040, false);
+        guiGraphics.drawString(font, consumption, side - font.width(consumption), 57, 0x404040, false);
     }
 
     @Override

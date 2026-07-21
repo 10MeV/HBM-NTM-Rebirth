@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [" C ", "PUP", " C "],
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:circuit_capacitor" },
+    "P": { "item": "hbm_ntm_rebirth:part_generic_piston_hydraulic" },
+    "U": { "item": "hbm_ntm_rebirth:upgrade_stack_1" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:upgrade_stack_2" }
+}

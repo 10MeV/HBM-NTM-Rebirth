@@ -34,15 +34,15 @@ public class MissileAssemblyMenu extends AbstractContainerMenu {
         super(ModMenuTypes.MISSILE_ASSEMBLY.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 MissileAssemblyBlockEntity.SLOT_CHIP, 8, 36));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 MissileAssemblyBlockEntity.SLOT_WARHEAD, 26, 36));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 MissileAssemblyBlockEntity.SLOT_FUSELAGE, 44, 36));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 MissileAssemblyBlockEntity.SLOT_STABILITY, 62, 36));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
                 MissileAssemblyBlockEntity.SLOT_THRUSTER, 80, 36));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
                 MissileAssemblyBlockEntity.SLOT_OUTPUT, 152, 36));

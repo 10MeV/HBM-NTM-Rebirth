@@ -487,12 +487,6 @@ public final class LegacyGuiElements {
         if (boundY + tooltipHeight + 6 > graphics.guiHeight()) {
             boundY = graphics.guiHeight() - tooltipHeight - 6;
         }
-        if (boundX < 4) {
-            boundX = 4;
-        }
-        if (boundY < 4) {
-            boundY = 4;
-        }
 
         PoseStack pose = graphics.pose();
         pose.pushPose();
@@ -696,6 +690,10 @@ public final class LegacyGuiElements {
                     " * Centrifuge");
             case CRYSTALLIZER -> Component.translatableWithFallback("upgrade.gui.crystallizer",
                     " * Crystallizer");
+            case STACK -> Component.translatableWithFallback("upgrade.gui.stack",
+                    " * Stack Ejection: Stacks to level %s", maxLevel);
+            case EJECTOR -> Component.translatableWithFallback("upgrade.gui.ejector",
+                    " * Ejection Speed: Stacks to level %s", maxLevel);
         };
     }
 

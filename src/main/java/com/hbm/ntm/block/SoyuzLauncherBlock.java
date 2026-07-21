@@ -2,6 +2,7 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.SoyuzLauncherBlockEntity;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -37,8 +38,18 @@ public class SoyuzLauncherBlock extends LegacyVisibleMultiblockMachineBlock {
     }
 
     @Override
+    protected boolean usesUncheckedLegacyDummyFill(BlockState state) {
+        // SoyuzLauncher#fillSpace overwrites the completed structure's pad blocks.
+        // The automatic struct-core conversion reaches the same source fill path.
+        return true;
+    }
+
+    @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof SoyuzLauncherBlockEntity launcher) {
             NetworkHooks.openScreen(serverPlayer, launcher, launcher.getBlockPos());
@@ -64,6 +75,7 @@ public class SoyuzLauncherBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     protected void onCoreRemoved(Level level, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof SoyuzLauncherBlockEntity launcher) {
+            HbmInventoryMenuHelper.spillItems(level, pos, launcher.getItems());
             for (ItemStack stack : launcher.getDrops()) {
                 Block.popResource(level, pos, stack);
             }

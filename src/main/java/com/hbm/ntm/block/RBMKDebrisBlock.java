@@ -185,10 +185,10 @@ public class RBMKDebrisBlock extends Block {
         if (state.isAir()) {
             return DebrisNeighborKind.AIR;
         }
-        if (state.is(ModBlocks.BLOCK_FOAM.get())) {
+        if (state.is(ModBlocks.BLOCK_FOAM.get()) || state.is(ModBlocks.FOAM_LAYER.get())) {
             return DebrisNeighborKind.FOAM;
         }
-        if (state.is(ModBlocks.SAND_BORON.get())) {
+        if (state.is(ModBlocks.SAND_BORON.get()) || state.is(ModBlocks.SAND_BORON_LAYER.get())) {
             return DebrisNeighborKind.BORON;
         }
         if (state.is(ModBlocks.PRIBRIS.get())) {

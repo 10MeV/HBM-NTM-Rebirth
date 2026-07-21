@@ -6,7 +6,9 @@ import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,6 +21,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,6 +33,7 @@ public final class TomImpactWorldEffects {
     private static final float ENTITY_BURN_DUST_LIMIT = 0.75F;
     private static final float LEGACY_LARGE_MOB_SIZE = 0.85F;
     private static final Method CHUNK_MAP_GET_CHUNKS = findChunkMapGetChunks();
+    private static final Map<ServerLevel, Map<Long, Boolean>> PENDING_POST_POPULATION = new HashMap<>();
     private static boolean warnedMissingLoadedChunkCarrier;
 
     public static TomImpactSavedData.ClimateTickResult tickLegacyWorldStart(ServerLevel level) {
@@ -75,6 +79,45 @@ public final class TomImpactWorldEffects {
         }
     }
 
+    /**
+     * Captures the one TOM worldgen clause with an exact modern event carrier.
+     * Forge raises new-chunk Load before FULL promotion, so the mutation itself
+     * is delayed to the server tick and never performed against a partial chunk.
+     */
+    public static void queuePostPopulation(ServerLevel level, ChunkPos chunkPos) {
+        TomImpactSavedData data = TomImpactSavedData.forLevel(level);
+        if (!data.impact() || (data.dust() <= 0.25F && data.fire() <= 0.0F)) {
+            return;
+        }
+        PENDING_POST_POPULATION.computeIfAbsent(level, ignored -> new HashMap<>()).put(chunkPos.toLong(), Boolean.TRUE);
+    }
+
+    public static void applyQueuedPostPopulation(ServerLevel level) {
+        Map<Long, Boolean> pending = PENDING_POST_POPULATION.get(level);
+        if (pending == null || pending.isEmpty()) {
+            return;
+        }
+
+        List<Long> completed = new ArrayList<>();
+        for (long packedPos : pending.keySet()) {
+            ChunkPos chunkPos = new ChunkPos(packedPos);
+            LevelChunk chunk = level.getChunkSource().getChunkNow(chunkPos.x, chunkPos.z);
+            if (chunk == null) {
+                continue;
+            }
+            applyLegacyPostPopulation(level, chunk);
+            completed.add(packedPos);
+        }
+        completed.forEach(pending::remove);
+        if (pending.isEmpty()) {
+            PENDING_POST_POPULATION.remove(level);
+        }
+    }
+
+    public static void unloadLevel(ServerLevel level) {
+        PENDING_POST_POPULATION.remove(level);
+    }
+
     private static void impactEffects(ServerLevel level, TomImpactSavedData data) {
         if (level.dimension() != Level.OVERWORLD || (data.dust() <= 0.0F && data.fire() <= 0.0F)) {
             return;
@@ -114,6 +157,33 @@ public final class TomImpactWorldEffects {
                 }
             }
         }
+    }
+
+    private static void applyLegacyPostPopulation(ServerLevel level, LevelChunk chunk) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        int minX = chunk.getPos().getMinBlockX();
+        int minZ = chunk.getPos().getMinBlockZ();
+        for (int y = level.getMinBuildHeight(); y < level.getMaxBuildHeight(); y++) {
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    pos.set(minX + x, y, minZ + z);
+                    BlockState state = chunk.getBlockState(pos);
+                    if (state.is(Blocks.GRASS_BLOCK)) {
+                        chunk.setBlockState(pos, ModBlocks.IMPACT_DIRT.get().defaultBlockState(), false);
+                    } else if (LegacyBurningEarthBlock.isLegacyVanillaLog(state)
+                            || isLegacyPostPopulationPlantOrLeaves(state)) {
+                        chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false);
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isLegacyPostPopulationPlantOrLeaves(BlockState state) {
+        // 1.7.10 tested Material.leaves / Material.plants and then BlockBush.
+        // In 1.20.1, the existing leaves/bush bridge plus sugar cane is its
+        // source-backed material equivalent.
+        return LegacyBurningEarthBlock.isLegacyLeavesOrBush(state) || state.is(Blocks.SUGAR_CANE);
     }
 
     private static List<LevelChunk> loadedFullChunks(ServerLevel level) {

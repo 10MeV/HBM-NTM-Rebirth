@@ -20,6 +20,246 @@
                             "namespace": "hbm_ntm_rebirth",
                             "path": "^block/(?:b29|mops_morda)$"
                         }
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:block/machines/ashpit"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:block/utility/geiger"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/bomb_generic"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/bombs/fstbmb"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/bombs/mine_ap_grass"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/bombs/mine_marelet"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/bombs/mine_shrapnel"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/file_cabinet"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/file_cabinet_steel"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/boiler"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/breeder"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/collector"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/coupler"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/klystron"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/klystron_creative"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/mhdt"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/launchpad/pad"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/launchpad/silo"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/launchpad/silo_rusted"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/bat9000"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/bigasstank"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/boiler"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/catalytic_cracker"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/catalytic_reformer"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/centrifuge"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/chimney_brick"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/chimney_industrial"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/derrick"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/drain"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/electric_heater"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/electrolyser"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/fel"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/fraction_spacer"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/fraction_tower"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/gascent"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/heater_heatex"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/hydrotreater"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/industrial_boiler"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/machine_deuterium_tower"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/mining_laser_base"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/oilburner"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/radar_screen"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/rbmk_control"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/silex"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/solar_boiler"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/tower_small"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/vacuum_distill"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/watz"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/watz_pump"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/wood_burner"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/mine_fat"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/model_radio"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/model_radio_receiver"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/network/pipe_anchor"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/particleaccelerator/detector"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/particleaccelerator/dipole"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/particleaccelerator/quadrupole"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/particleaccelerator/rfc"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/particleaccelerator/source"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/radiolysis"
                     }
                 ]
 }

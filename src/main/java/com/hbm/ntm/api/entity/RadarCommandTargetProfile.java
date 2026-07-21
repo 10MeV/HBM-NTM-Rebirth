@@ -6,8 +6,8 @@ import net.minecraft.world.phys.Vec3;
 
 public enum RadarCommandTargetProfile {
     LAUNCH_PAD_BASE(EntityMode.FLOOR_XZ, PositionMode.BLOCK),
-    LAUNCH_TABLE(EntityMode.LEGACY_X_MIRRORED, PositionMode.BLOCK),
-    COMPACT_LAUNCHER(EntityMode.LEGACY_X_MIRRORED, PositionMode.BLOCK),
+    LAUNCH_TABLE(EntityMode.FLOOR_XZ, PositionMode.BLOCK),
+    COMPACT_LAUNCHER(EntityMode.FLOOR_XZ, PositionMode.BLOCK),
     ARTILLERY_TURRET(EntityMode.EXACT, PositionMode.CENTERED);
 
     private final EntityMode entityMode;
@@ -19,10 +19,7 @@ public enum RadarCommandTargetProfile {
     }
 
     public BlockPos entityBlockTarget(Entity target, int receiverY) {
-        if (entityMode == EntityMode.LEGACY_X_MIRRORED) {
-            return RadarCommandReceiver.legacyXMirroredEntityTarget(target, receiverY);
-        }
-        return RadarCommandReceiver.entityTarget(target);
+        return RadarCommandReceiver.entityTargetAtY(target, receiverY);
     }
 
     public Vec3 entityVectorTarget(Entity target, int receiverY) {
@@ -46,7 +43,6 @@ public enum RadarCommandTargetProfile {
 
     private enum EntityMode {
         FLOOR_XZ,
-        LEGACY_X_MIRRORED,
         EXACT
     }
 

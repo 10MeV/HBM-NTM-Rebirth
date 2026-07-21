@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "R": { "tag": "forge:ingots/rubber" },
+    "T": { "tag": "forge:plates/titanium" }
+  },
+  "pattern": ["R R", "T T"],
+  "result": { "item": "hbm_ntm_rebirth:envsuit_boots" },
+  "show_notification": true
+}

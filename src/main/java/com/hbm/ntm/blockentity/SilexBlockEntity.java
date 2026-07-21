@@ -323,6 +323,11 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
         return side == null ? HbmFluidSideMode.INPUT : HbmFluidSideMode.NONE;
     }

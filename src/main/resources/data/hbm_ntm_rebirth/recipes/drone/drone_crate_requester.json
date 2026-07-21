@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["T", "C", "B"],
+  "key": { "T": { "item": "hbm_ntm_rebirth:drone_waypoint_request" }, "C": { "item": "hbm_ntm_rebirth:crate_steel" }, "B": { "tag": "forge:dyes/yellow" } },
+  "result": { "item": "hbm_ntm_rebirth:drone_crate_requester" }
+}

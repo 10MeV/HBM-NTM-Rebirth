@@ -459,8 +459,20 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
     protected boolean shouldCreateFluidNode() {
-        return tank.getTankType() != HbmFluids.NONE;
+        return false;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachineGasCent#updateEntity retried its five remote UF6
+        // receiver ports through updateConnections on every server tick.
+        return true;
     }
 
     @Override

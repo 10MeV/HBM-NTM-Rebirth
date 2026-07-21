@@ -16,11 +16,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNet<N>> {
+public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNet<?, ?, N>> {
     private final Map<ResourceKey<Level>, NodeWorld<K, N, T>> worlds = new HashMap<>();
     private final Function<N, Collection<K>> keyFactory;
     private final ConnectionKeyFactory<K, N> connectionKeyFactory;
-    private final HbmNetworkProvider<N, T> networkProvider;
+    private final Function<N, HbmNetworkProvider<N, T>> networkProviderFactory;
     private final Consumer<T> resetNetwork;
     private final Consumer<T> updateNetwork;
     private final Function<K, BlockPos> keyPosition;
@@ -28,13 +28,13 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
     public HbmNodespace(
             Function<N, Collection<K>> keyFactory,
             ConnectionKeyFactory<K, N> connectionKeyFactory,
-            HbmNetworkProvider<N, T> networkProvider,
+            Function<N, HbmNetworkProvider<N, T>> networkProviderFactory,
             Consumer<T> resetNetwork,
             Consumer<T> updateNetwork,
             Function<K, BlockPos> keyPosition) {
         this.keyFactory = keyFactory;
         this.connectionKeyFactory = connectionKeyFactory;
-        this.networkProvider = networkProvider;
+        this.networkProviderFactory = networkProviderFactory;
         this.resetNetwork = resetNetwork;
         this.updateNetwork = updateNetwork;
         this.keyPosition = keyPosition;
@@ -57,23 +57,12 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
 
     public N createNode(Level level, N node) {
         NodeWorld<K, N, T> nodeWorld = worlds.computeIfAbsent(level.dimension(), ignored -> new NodeWorld<>());
-        Set<N> replacedNodes = new LinkedHashSet<>();
-        for (K key : keyFactory.apply(node)) {
-            N oldNode = nodeWorld.nodes.get(key);
-            if (oldNode != null && oldNode != node) {
-                replacedNodes.add(oldNode);
-            }
-        }
-        for (N oldNode : replacedNodes) {
-            T oldNet = castNet(oldNode.getNet());
-            popNode(nodeWorld, oldNode);
-            rebuildNetworkAfterRemoval(nodeWorld, oldNet);
-        }
-        node.setExpired(false);
+        // 1.7.10 UniNodeWorld#pushNode only overwrote map entries. It did not
+        // implicitly pop an existing node, destroy its network, revive it, or
+        // change its recentlyChanged state.
         for (K key : keyFactory.apply(node)) {
             nodeWorld.nodes.put(key, node);
         }
-        checkNodeConnection(nodeWorld, node);
         return node;
     }
 
@@ -91,6 +80,24 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
         }
     }
 
+    /**
+     * Removes the exact node instance, including every key it owns. This is the
+     * direct equivalent of 1.7.10 {@code UniNodespace.destroyNode(World, GenNode)}.
+     */
+    public void destroyNode(Level level, N node) {
+        if (node == null) {
+            return;
+        }
+        NodeWorld<K, N, T> nodeWorld = worlds.get(level.dimension());
+        if (nodeWorld == null) {
+            return;
+        }
+        T net = castNet(node.getNet());
+        popNode(nodeWorld, node);
+        rebuildNetworkAfterRemoval(nodeWorld, net);
+        markConnectionNeighborsChanged(nodeWorld, node);
+    }
+
     public void unloadLevel(Level level) {
         NodeWorld<K, N, T> nodeWorld = worlds.remove(level.dimension());
         if (nodeWorld == null) {
@@ -103,13 +110,28 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
         nodeWorld.activeNetworks.clear();
     }
 
+    /**
+     * Mirrors 1.7.10 {@code CommandReapNetworks}: expire linked nodes and
+     * clear mappings/active networks without calling {@link HbmNodeNet#destroy()}.
+     * A real level unload deliberately remains the stronger lifecycle path.
+     */
+    public void reapLevel(Level level) {
+        NodeWorld<K, N, T> nodeWorld = worlds.remove(level.dimension());
+        if (nodeWorld == null) {
+            return;
+        }
+        for (T net : new ArrayList<>(nodeWorld.activeNetworks)) {
+            net.reapLegacy();
+        }
+        nodeWorld.nodes.clear();
+        nodeWorld.activeNetworks.clear();
+    }
+
     public void tick(ServerLevel level) {
         NodeWorld<K, N, T> nodeWorld = worlds.get(level.dimension());
         if (nodeWorld == null) {
             return;
         }
-
-        pruneUnloadedChunks(level, nodeWorld);
 
         for (N node : new LinkedHashSet<>(nodeWorld.nodes.values())) {
             if (!node.hasValidNet() || node.isRecentlyChanged()) {
@@ -154,25 +176,6 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
             marked = markConnectionNeighborsChanged(nodeWorld, node) || marked;
         }
         return marked;
-    }
-
-    public void unloadChunk(Level level, ChunkPos chunkPos) {
-        NodeWorld<K, N, T> nodeWorld = worlds.get(level.dimension());
-        if (nodeWorld == null) {
-            return;
-        }
-        Set<N> toRemove = new LinkedHashSet<>();
-        for (Map.Entry<K, N> entry : nodeWorld.nodes.entrySet()) {
-            if (new ChunkPos(keyPosition.apply(entry.getKey())).equals(chunkPos)) {
-                toRemove.add(entry.getValue());
-            }
-        }
-        for (N node : toRemove) {
-            T net = castNet(node.getNet());
-            popNode(nodeWorld, node);
-            rebuildNetworkAfterRemoval(nodeWorld, net);
-            markConnectionNeighborsChanged(nodeWorld, node);
-        }
     }
 
     public ForceRebuildResult forceRebuild(Level level) {
@@ -329,19 +332,18 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
             resetNetwork.accept(net);
         }
         for (T net : new ArrayList<>(nodeWorld.activeNetworks)) {
-            if (net.isValid()) {
-                updateNetwork.accept(net);
-            }
+            updateNetwork.accept(net);
         }
 
         if (nodeWorld.reapTimer <= 0) {
-            nodeWorld.activeNetworks.removeIf(net -> {
-                if (!net.isValid() || net.linkCount() <= 0) {
-                    net.destroy();
-                    return true;
-                }
-                return false;
-            });
+            // 1.7.10 UniNodespace#updateNetworks only drops expired links and
+            // removes empty networks from its active set.  It deliberately
+            // does not call NodeNet#destroy here: an externally retained
+            // network (and its subscriptions/caches) keeps its own state.
+            for (T net : nodeWorld.activeNetworks) {
+                net.links.removeIf(HbmNetworkNode::isExpired);
+            }
+            nodeWorld.activeNetworks.removeIf(net -> net.links.isEmpty());
             nodeWorld.reapTimer = 5 * 60 * 20;
         } else {
             nodeWorld.reapTimer--;
@@ -358,7 +360,9 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
         }
 
         if (!node.hasValidNet()) {
-            T net = networkProvider.provideNetwork(node);
+            HbmNetworkProvider<N, T> provider = networkProviderFactory.apply(node);
+            T net = provider.provideNetwork();
+            net.setInvalidationHook(() -> nodeWorld.activeNetworks.remove(net));
             nodeWorld.activeNetworks.add(net);
             net.joinLink(node);
         }
@@ -373,10 +377,10 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
                 return;
             }
             if (originNet.linkCount() > connectionNet.linkCount()) {
-                originNet.joinNetwork(connectionNet);
+                joinNetworks(originNet, connectionNet);
                 nodeWorld.activeNetworks.remove(connectionNet);
             } else {
-                connectionNet.joinNetwork(originNet);
+                joinNetworks(connectionNet, originNet);
                 nodeWorld.activeNetworks.remove(originNet);
             }
         } else if ((originNet == null || !originNet.isValid()) && connectionNet != null && connectionNet.isValid()) {
@@ -426,26 +430,22 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
         node.setExpired(true);
         node.setNet(null);
         for (K key : keyFactory.apply(node)) {
-            if (nodeWorld.nodes.get(key) == node) {
-                nodeWorld.nodes.remove(key);
-            }
+            // UniNodeWorld#popNode removes every held-node key unconditionally,
+            // including a key a later pushNode call has overwritten.
+            nodeWorld.nodes.remove(key);
         }
     }
 
-    private void pruneUnloadedChunks(ServerLevel level, NodeWorld<K, N, T> nodeWorld) {
-        Set<N> toRemove = new LinkedHashSet<>();
-        for (Map.Entry<K, N> entry : nodeWorld.nodes.entrySet()) {
-            BlockPos pos = keyPosition.apply(entry.getKey());
-            if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
-                toRemove.add(entry.getValue());
-            }
-        }
-        for (N node : toRemove) {
-            T net = castNet(node.getNet());
-            popNode(nodeWorld, node);
-            rebuildNetworkAfterRemoval(nodeWorld, net);
-            markConnectionNeighborsChanged(nodeWorld, node);
-        }
+    /**
+     * The legacy {@code UniNodespace} stores every provider's network behind
+     * one raw {@code NodeNet} type before invoking {@code joinNetworks}.
+     * This is the equivalent erasure boundary: both values are the same
+     * nodespace-owned {@code T}, while the public net still retains typed
+     * receiver/provider state for ordinary callers.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void joinNetworks(T receiving, T absorbed) {
+        ((HbmNodeNet) receiving).joinNetworks((HbmNodeNet) absorbed);
     }
 
     private boolean containsNode(NodeWorld<K, N, T> nodeWorld, N node) {
@@ -458,7 +458,7 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
     }
 
     @SuppressWarnings("unchecked")
-    private T castNet(HbmNodeNet<?> net) {
+    private T castNet(HbmNodeNet<?, ?, ?> net) {
         return (T) net;
     }
 
@@ -467,7 +467,7 @@ public final class HbmNodespace<K, N extends HbmNetworkNode, T extends HbmNodeNe
         K keyForConnection(N node, HbmNetworkNode.NodeConnection connection);
     }
 
-    private static final class NodeWorld<K, N extends HbmNetworkNode, T extends HbmNodeNet<N>> {
+    private static final class NodeWorld<K, N extends HbmNetworkNode, T extends HbmNodeNet<?, ?, N>> {
         private final Map<K, N> nodes = new LinkedHashMap<>();
         private final Set<T> activeNetworks = new LinkedHashSet<>();
         private int reapTimer;

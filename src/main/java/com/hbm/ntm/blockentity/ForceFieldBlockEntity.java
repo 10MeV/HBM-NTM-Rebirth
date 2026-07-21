@@ -323,6 +323,13 @@ public class ForceFieldBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityForceField retries its five source-allowed sides each tick;
+        // getEnergySideMode still excludes UP as the legacy canConnect contract.
+        return true;
+    }
+
+    @Override
     public Component getDisplayName() {
         return customName != null && !customName.isBlank()
                 ? Component.literal(customName)

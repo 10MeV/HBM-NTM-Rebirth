@@ -292,6 +292,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         if (this.mode != clamped) {
             this.mode = clamped;
             invalidateFluidHandlers();
+            markTankTypesDirty();
             onFluidContentsChanged();
             if (level != null) {
                 level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
@@ -589,6 +590,18 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return !exploded && (mode == MODE_INPUT || mode == MODE_BUFFER) && tank.getTankType() == type;
+    }
+
+    /**
+     * TileEntityMachineFluidTank reapplied its mode-0 receiver and mode-2
+     * provider at every legacy server tick; FluidBarrel inherits that same
+     * contract. Buffer-mode local-node recovery remains owned by the base
+     * node lifecycle, while this hook keeps remote ducts recoverable on the
+     * next machine tick.
+     */
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

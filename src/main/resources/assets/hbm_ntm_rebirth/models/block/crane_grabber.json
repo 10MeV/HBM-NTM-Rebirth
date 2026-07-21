@@ -1,8 +1,4 @@
 {
-  "parent": "minecraft:block/orientable",
-  "textures": {
-    "top": "hbm_ntm_rebirth:block/crane_grabber_top",
-    "front": "hbm_ntm_rebirth:block/crane_pull",
-    "side": "hbm_ntm_rebirth:block/crane_side_pull"
-  }
+  "loader": "hbm_ntm_rebirth:crane_logistics_loader",
+  "style": "grabber"
 }

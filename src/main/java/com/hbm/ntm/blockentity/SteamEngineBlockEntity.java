@@ -213,6 +213,12 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntitySteamEngine updates both STEAM input and SPENTSTEAM output at every legacy port each tick.
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         Direction facing = facing();
         Direction rot = LegacyMultiblockOffsets.legacyUpSide(facing);

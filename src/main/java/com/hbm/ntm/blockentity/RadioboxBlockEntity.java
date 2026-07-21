@@ -75,6 +75,12 @@ public class RadioboxBlockEntity extends HbmEnergyBlockEntity {
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityRadiobox performs its six-way Energy Mk2 retry every tick.
+        return true;
+    }
+
+    @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putLong(TAG_POWER, energy.getPower());

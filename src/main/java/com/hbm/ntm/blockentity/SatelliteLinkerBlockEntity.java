@@ -45,6 +45,14 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            // TileEntityMachineSatLinker#isItemValidForSlot returns false for
+            // all three slots.  The old container uses ordinary Slots, which
+            // delegate their placement check to that inventory contract.
+            return false;
+        }
+
+        @Override
         protected void onContentsChanged(int slot) {
             setChanged();
         }
@@ -72,9 +80,15 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
         ItemStack source = linker.items.getStackInSlot(SLOT_SOURCE);
         ItemStack target = linker.items.getStackInSlot(SLOT_TARGET);
         if (source.getItem() instanceof ISatelliteChip && target.getItem() instanceof ISatelliteChip) {
+            // TileEntityMachineSatLinker unconditionally calls setFreqS on the
+            // target after reading the source.  Besides copying a changed value,
+            // that call materializes the target's legacy "freq" tag when both
+            // chips currently report the default zero.  Do not skip this write
+            // merely because the two numeric values compare equal.
+            ItemStack before = target.copy();
             int sourceFrequency = ISatelliteChip.getFrequencyFromStack(source);
-            if (ISatelliteChip.getFrequencyFromStack(target) != sourceFrequency) {
-                ISatelliteChip.setFrequencyOnStack(target, sourceFrequency);
+            ISatelliteChip.setFrequencyOnStack(target, sourceFrequency);
+            if (!ItemStack.matches(target, before)) {
                 changed = true;
             }
         }
@@ -82,11 +96,16 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
         ItemStack randomize = linker.items.getStackInSlot(SLOT_RANDOMIZE);
         if (randomize.getItem() instanceof ISatelliteChip) {
             OptionalInt availableFrequency = SatelliteSavedData.get(serverLevel).randomAvailableFrequency(level.random);
-            if (availableFrequency.isPresent()
-                    && ISatelliteChip.getFrequencyFromStack(randomize) != availableFrequency.getAsInt()) {
-                int frequency = availableFrequency.getAsInt();
-                ISatelliteChip.setFrequencyOnStack(randomize, frequency);
-                changed = true;
+            // The legacy linker does not read the randomizer stack before the
+            // availability check.  A taken candidate therefore leaves a
+            // tag-less chip untouched; an available candidate is written even
+            // when it happens to equal the chip's current numeric frequency.
+            if (availableFrequency.isPresent()) {
+                ItemStack before = randomize.copy();
+                ISatelliteChip.setFrequencyOnStack(randomize, availableFrequency.getAsInt());
+                if (!ItemStack.matches(randomize, before)) {
+                    changed = true;
+                }
             }
         }
 
@@ -106,7 +125,7 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public Component getDisplayName() {
-        if (customName != null && !customName.isBlank()) {
+        if (customName != null && !customName.isEmpty()) {
             return Component.literal(customName);
         }
         return Component.translatable("container.satLinker");
@@ -122,7 +141,10 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
-        if (customName != null && !customName.isBlank()) {
+        // TileEntityMachineSatLinker writes every non-null customName, while
+        // hasCustomInventoryName separately decides that an empty value should
+        // display the default title.
+        if (customName != null) {
             tag.putString(TAG_CUSTOM_NAME, customName);
         }
     }

@@ -68,6 +68,14 @@ public class PneumaticSlotMonitor {
         availabilityChanged = true;
     }
 
+    /**
+     * Releases every cache view that currently aggregates this storage slot.
+     * Storage endpoints call this when their backing block entity leaves a loaded level.
+     */
+    public void detachFromCaches() {
+        clearViewedBy();
+    }
+
     public void checkUpdate() {
         PneumaticNetwork pneumaticNetwork = parent.getRelevantNetwork();
         if (availabilityChanged) {
@@ -92,7 +100,13 @@ public class PneumaticSlotMonitor {
             availabilityChanged = false;
         }
 
+        // The 1.7.10 ISlotMonitorProvider contract used null for an empty
+        // inventory slot.  Native 1.20 handlers use ItemStack.EMPTY, but the
+        // legacy-name provider bridge must retain that null boundary.
         ItemStack stack = parent.getSlotAt(index);
+        if (stack == null) {
+            stack = ItemStack.EMPTY;
+        }
         long amount = parent.getAmountAt(index);
         if (hasTypeChanged(stack)) {
             clearViewedBy();

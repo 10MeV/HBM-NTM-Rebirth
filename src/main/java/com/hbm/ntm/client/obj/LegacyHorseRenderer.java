@@ -1,8 +1,8 @@
 package com.hbm.ntm.client.obj;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 
@@ -222,9 +222,9 @@ public final class LegacyHorseRenderer {
         double[] rotation = pose[id];
         HorsePoseTransform transform = transformFor(id, rotation[0], rotation[1], rotation[2]);
         poseStack.translate(transform.offsetX(), transform.offsetY(), transform.offsetZ());
-        poseStack.mulPose(Axis.YP.rotationDegrees((float) transform.yaw()));
-        poseStack.mulPose(Axis.XP.rotationDegrees((float) transform.pitch()));
-        poseStack.mulPose(Axis.ZP.rotationDegrees((float) transform.roll()));
+        LegacyPoseRotations.rotateYDegrees(poseStack, (float) transform.yaw());
+        LegacyPoseRotations.rotateXDegrees(poseStack, (float) transform.pitch());
+        LegacyPoseRotations.rotateZDegrees(poseStack, (float) transform.roll());
         poseStack.translate(-transform.offsetX(), -transform.offsetY(), -transform.offsetZ());
     }
 

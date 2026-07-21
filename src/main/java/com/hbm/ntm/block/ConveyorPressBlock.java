@@ -99,7 +99,9 @@ public class ConveyorPressBlock extends LegacyXrMultiblockBlock
 
     @Override
     public boolean canItemStay(Level level, BlockPos pos, Vec3 itemPos) {
-        return resolveCoreBlockEntity(level, pos.below()) instanceof ConveyorPressBlockEntity;
+        BlockPos conveyorBase = pos.below();
+        return level.getBlockState(conveyorBase).is(this)
+                && level.getBlockEntity(conveyorBase) instanceof ConveyorPressBlockEntity;
     }
 
     @Override

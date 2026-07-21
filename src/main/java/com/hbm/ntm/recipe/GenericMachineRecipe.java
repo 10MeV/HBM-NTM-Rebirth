@@ -270,10 +270,6 @@ public class GenericMachineRecipe implements Recipe<Container> {
                     .append(Component.literal(": " + (int) (fusion.outputFlux() * 10.0D) / 10.0D + " flux/t"))
                     .withStyle(ChatFormatting.LIGHT_PURPLE));
         });
-        extraData.pollution().ifPresent(pollution -> lines.add(
-                Component.translatableWithFallback("gui.recipe.pollution", "Pollution")
-                        .append(Component.literal(": " + pollution.type().id() + " " + pollution.amount()))
-                        .withStyle(ChatFormatting.DARK_GRAY)));
     }
 
     private void addAutoSwitchLines(List<Component> lines) {

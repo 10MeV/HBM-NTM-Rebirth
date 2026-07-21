@@ -6,6 +6,7 @@ import com.hbm.ntm.block.BlastFurnaceBlock;
 import com.hbm.ntm.block.CableDiodeBlock;
 import com.hbm.ntm.block.CapacitorBlock;
 import com.hbm.ntm.block.CargoElevatorBlock;
+import com.hbm.ntm.block.ConcreteColoredBlock;
 import com.hbm.ntm.block.ConcreteColoredExtBlock;
 import com.hbm.ntm.block.DfcMachineBlock;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
@@ -21,6 +22,7 @@ import com.hbm.ntm.block.ICFAssembledBlock;
 import com.hbm.ntm.block.LegacyBarbedWireBlock;
 import com.hbm.ntm.block.LegacyChargeBlock;
 import com.hbm.ntm.block.LegacyChainBlock;
+import com.hbm.ntm.block.LegacyDeadPlantBlock;
 import com.hbm.ntm.block.LegacyFanBlock;
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
 import com.hbm.ntm.block.LegacyFrameRenderState;
@@ -34,6 +36,7 @@ import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
 import com.hbm.ntm.block.LegacyWoodStructureBlock;
 import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
 import com.hbm.ntm.block.LegacyNtmFlowerBlock;
+import com.hbm.ntm.block.LegacyTallPlantBlock;
 import com.hbm.ntm.block.MassStorageBlock;
 import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.PowerDetectorBlock;
@@ -136,6 +139,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         fanFrameWithItemRenderer();
         filingCabinetWithItemRenderer();
         pedestalWithItem();
+        existingModelWithCustomItemNoRotation(ModBlocks.BOXCAR, "boxcar");
         simpleSidedCubeWithItem(ModBlocks.MACHINE_WEAPON_TABLE,
                 "gun_table_bottom",
                 "gun_table_top",
@@ -145,6 +149,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "gun_table_side");
         redCableWithItem();
         redCableClassicWithItem();
+        redCablePaintableWithItem();
         redWireCoatedWithItem();
         redCableBoxWithItem();
         redCableGaugeWithItem();
@@ -554,6 +559,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem("block_meteor", "meteor");
         simpleCubeWithItem("block_meteor_cobble", "meteor_cobble");
         simpleCubeWithItem("block_meteor_broken", "meteor_crushed");
+        simpleCubeWithItem(ModBlocks.BLOCK_METEOR_MOLTEN, "block_meteor_molten");
+        simpleCubeWithItem("block_meteor_treasure", "meteor_treasure");
+        simpleCubeWithItem(ModBlocks.ORE_METEOR_IRON, "ore_meteor_iron");
+        simpleCubeWithItem(ModBlocks.ORE_METEOR_COPPER, "ore_meteor_copper");
+        simpleCubeWithItem(ModBlocks.ORE_METEOR_ALUMINIUM, "ore_meteor_aluminium");
+        simpleCubeWithItem(ModBlocks.ORE_METEOR_RAREEARTH, "ore_meteor_rareearth");
+        simpleCubeWithItem(ModBlocks.ORE_METEOR_COBALT, "ore_meteor_cobalt");
         radAbsorberWithItem();
         simpleCubeWithItem(ModBlocks.DUMMY_BLOCK, "block_steel");
         steelScaffoldWithItem();
@@ -566,6 +578,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         existingModelWithItem(ModBlocks.POLE_SATELLITE_RECEIVER, "pole_satellite_receiver");
         glowingMushWithItem();
         ntmFlowersWithItem();
+        tallPlantsWithItem();
+        deadPlantVariants();
         wasteLogWithItem();
         simpleCubeWithItem(ModBlocks.WASTE_PLANKS, "waste_planks");
         burningEarthWithItem();
@@ -596,9 +610,11 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         pribrisDebrisAllStatesWithItem(ModBlocks.PRIBRIS_RADIATING, "rbmk/rbmk_debris_radiating");
         pribrisDebrisWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk/rbmk_debris_digamma");
         cokeBlockWithItem();
+        concreteColoredWithItem();
         concreteColoredExtWithItem();
         woodStructureWithItem();
         basaltOreWithItem();
+        fissureWithItem();
         liquidBlockOnly(ModBlocks.VOLCANIC_LAVA_BLOCK, "volcanic_lava_still", "volcanic_lava_flowing");
         liquidBlockOnly(ModBlocks.RAD_LAVA_BLOCK, "rad_lava_still", "rad_lava_flowing");
         volcanoCoreWithItem(ModBlocks.VOLCANO_CORE, "volcano_core");
@@ -615,6 +631,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         plasticExplosiveWithItem(ModBlocks.BLOCK_C4, "block_c4");
         simpleCubeWithItem("crystal_virus", "legacy_blocks/crystal_virus");
         simpleCubeWithItem("crystal_hardened", "legacy_blocks/crystal_hardened");
+        simpleCubeWithItem("crystal_pulsar", "legacy_blocks/crystal_pulsar");
         glyphidBaseWithItem();
         glyphidSpawnerWithItem();
         existingModelWithCustomItem(ModBlocks.NUKE_GADGET, "nuke_gadget");
@@ -1940,6 +1957,35 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         return models().cubeAll(variant.modelName(), modLoc("block/" + variant.textureName()));
     }
 
+    private void concreteColoredWithItem() {
+        RegistryObject<? extends Block> block = requireLegacyBlock("concrete_colored");
+        getVariantBuilder(block.get());
+        for (ConcreteColoredBlock.Variant variant : ConcreteColoredBlock.Variant.values()) {
+            ModelFile model = models().cubeAll(variant.modelName(), modLoc("block/" + variant.textureName()));
+            getVariantBuilder(block.get())
+                    .partialState().with(ConcreteColoredBlock.VARIANT, variant.legacyMeta())
+                    .modelForState().modelFile(model).addModel();
+        }
+
+        var itemModel = itemModels().withExistingParent("concrete_colored", modLoc("block/concrete_colored_white"));
+        for (ConcreteColoredBlock.Variant variant : ConcreteColoredBlock.Variant.values()) {
+            if (variant.legacyMeta() == 0) {
+                continue;
+            }
+            itemModel.override()
+                    .predicate(modLoc("legacy_variant"), variant.legacyMeta())
+                    .model(itemModels().getExistingFile(modLoc("block/" + variant.modelName())))
+                    .end();
+        }
+    }
+
+    private void fissureWithItem() {
+        ModelFile model = models().getExistingFile(modLoc("block/ore_volcano"));
+        getVariantBuilder(ModBlocks.ORE_VOLCANO.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        simpleBlockItem(ModBlocks.ORE_VOLCANO.get(), model);
+    }
+
     private void woodStructureWithItem() {
         ModelFile roof = models().getExistingFile(modLoc("block/wood_structure_roof"));
         ModelFile ceiling = models().getExistingFile(modLoc("block/wood_structure_ceiling"));
@@ -2340,6 +2386,41 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         builder.part().modelFile(up).addModel().condition(HbmEnergyNodeBlock.UP, true).end();
         builder.part().modelFile(down).addModel().condition(HbmEnergyNodeBlock.DOWN, true).end();
         simpleBlockItem(ModBlocks.RED_CABLE_CLASSIC.get(), core);
+    }
+
+    private void tallPlantsWithItem() {
+        for (LegacyTallPlantBlock.Kind kind : LegacyTallPlantBlock.Kind.values()) {
+            RegistryObject<Block> block = ModBlocks.PLANT_TALL_BLOCKS.get(kind.legacyMeta());
+            String name = block.getId().getPath();
+            ModelFile lower = models().cross(name + "_lower", modLoc("block/" + kind.textureName() + ".lower"))
+                    .renderType("minecraft:cutout");
+            ModelFile upper = models().cross(name + "_upper", modLoc("block/" + kind.textureName() + ".upper"))
+                    .renderType("minecraft:cutout");
+            getVariantBuilder(block.get())
+                    .partialState().with(LegacyTallPlantBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER)
+                    .setModels(new ConfiguredModel(lower))
+                    .partialState().with(LegacyTallPlantBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER)
+                    .setModels(new ConfiguredModel(upper));
+            simpleBlockItem(block.get(), lower);
+        }
+    }
+
+    private void deadPlantVariants() {
+        for (LegacyDeadPlantBlock.Type type : LegacyDeadPlantBlock.Type.values()) {
+            String name = "plant_dead_bigflower_" + type.getSerializedName();
+            ModelFile model = models().cross(name, modLoc("block/plant_dead." + type.getSerializedName()))
+                    .renderType("minecraft:cutout");
+            getVariantBuilder(ModBlocks.PLANT_DEAD_BIGFLOWER.get())
+                    .partialState().with(LegacyDeadPlantBlock.TYPE, type)
+                    .setModels(new ConfiguredModel(model));
+        }
+    }
+
+    private void redCablePaintableWithItem() {
+        ModelFile model = new ModelFile.UncheckedModelFile(ModBlocks.RED_CABLE_PAINTABLE.getId()
+                .withPrefix("block/"));
+        getMultipartBuilder(ModBlocks.RED_CABLE_PAINTABLE.get()).part().modelFile(model).addModel().end();
+        itemModels().getBuilder(ModBlocks.RED_CABLE_PAINTABLE.getId().getPath()).parent(model);
     }
 
     private void redWireCoatedWithItem() {

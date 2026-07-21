@@ -321,6 +321,13 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachineGasFlare#updateEntity retried all four remote Fluid
+        // Mk2 input ports on every server tick.
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return FLUID_PORTS;
     }

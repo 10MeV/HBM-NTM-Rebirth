@@ -69,7 +69,8 @@ public class MovingPackageEntity extends MovingConveyorObjectEntity implements I
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (!level().isClientSide && !isRemoved()) {
-            dropContents(position(), getDeltaMovement().multiply(2.0D, 0.0D, 2.0D).add(0.0D, 0.1D, 0.0D));
+            // EntityMovingPackage#hitByEntity dropped contents in place at its raised pickup height.
+            dropContents(position().add(0.0D, 0.125D, 0.0D), Vec3.ZERO);
             discard();
         }
         return true;

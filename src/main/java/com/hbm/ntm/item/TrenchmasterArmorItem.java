@@ -42,7 +42,9 @@ public class TrenchmasterArmorItem extends ArmorFSB {
             return false;
         }
         ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
-        return chest.getItem() instanceof TrenchmasterArmorItem armor && armor.hasFullSet(player);
+        return chest.is(ModItems.TRENCHMASTER_PLATE.get())
+                && chest.getItem() instanceof TrenchmasterArmorItem armor
+                && armor.hasFullSet(player);
     }
 
     public static boolean hasAceOfSpades(Player player) {
@@ -65,11 +67,11 @@ public class TrenchmasterArmorItem extends ArmorFSB {
         if (!(event.getEntity() instanceof Player player) || !hasTrenchmasterFullSet(player)) {
             return false;
         }
-        Level level = player.level();
-        if (level.random.nextInt(3) != 0) {
+        if (player.getRandom().nextInt(3) != 0) {
             return false;
         }
-        HbmPlayerProperties.plink(player, SoundEvents.ITEM_BREAK, 0.5F, 1.0F + level.random.nextFloat() * 0.5F);
+        HbmPlayerProperties.plink(player, SoundEvents.ITEM_BREAK, 0.5F,
+                1.0F + player.getRandom().nextFloat() * 0.5F);
         event.setCanceled(true);
         return true;
     }
@@ -79,6 +81,6 @@ public class TrenchmasterArmorItem extends ArmorFSB {
                 || !source.is(DamageTypeTags.IS_EXPLOSION)) {
             return false;
         }
-        return source.getDirectEntity() == player || source.getEntity() == player;
+        return source.getDirectEntity() == player;
     }
 }

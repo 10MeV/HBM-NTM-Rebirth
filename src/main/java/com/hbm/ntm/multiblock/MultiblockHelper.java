@@ -26,6 +26,8 @@ import java.util.function.Predicate;
 
 public final class MultiblockHelper {
     private static final ThreadLocal<Set<ClearingKey>> CLEARING = ThreadLocal.withInitial(HashSet::new);
+    /** Legacy {@code BlockDummyable.safeRem} equivalent for source routines that overwrite dummy positions. */
+    private static final ThreadLocal<Integer> LEGACY_SOURCE_OVERWRITE = ThreadLocal.withInitial(() -> 0);
 
     public static final MultiblockExtents IGEN_DIMENSION_NORTH = MultiblockExtents.ofLegacy(new int[] { 1, 1, 2, 0, 3, 2 });
     public static final MultiblockExtents IGEN_DIMENSION_EAST = MultiblockExtents.ofLegacy(new int[] { 2, 3, 2, 0, 1, 1 });
@@ -175,6 +177,18 @@ public final class MultiblockHelper {
     public static boolean fillOffsetsWithProxyModes(Level level, BlockPos corePos, Iterable<BlockPos> offsets,
             BlockState dummyState, Function<BlockPos, LegacyProxyMode> proxyModes,
             Predicate<BlockPos> legacyExtraOffsets) {
+        return fillOffsetsWithProxyModes(level, corePos, offsets, ignored -> dummyState, proxyModes,
+                legacyExtraOffsets);
+    }
+
+    /**
+     * Fills a legacy layout whose dummy state depends on the individual offset.
+     * This is required by source-backed multiblocks that used their own block
+     * metadata for every dummy, rather than the shared modern dummy appearance.
+     */
+    public static boolean fillOffsetsWithProxyModes(Level level, BlockPos corePos, Iterable<BlockPos> offsets,
+            Function<BlockPos, BlockState> dummyStates, Function<BlockPos, LegacyProxyMode> proxyModes,
+            Predicate<BlockPos> legacyExtraOffsets) {
         if (level.isClientSide) {
             return false;
         }
@@ -188,13 +202,48 @@ public final class MultiblockHelper {
                 continue;
             }
             BlockPos pos = corePos.offset(offset);
-            if (!placeOrConfigureDummy(level, corePos, pos, dummyState, proxyModes.apply(offset),
+            if (!placeOrConfigureDummy(level, corePos, pos, dummyStates.apply(offset), proxyModes.apply(offset),
                     legacyExtraOffsets.test(offset))) {
                 complete = false;
             }
         }
         refreshLayoutProxyNeighbors(level, corePos, fillOffsets);
         return complete;
+    }
+
+    /**
+     * Mirrors legacy {@code fillSpace} calls that ran under the global
+     * {@code BlockDummyable.safeRem} guard and nevertheless wrote an unchecked
+     * dummy position. This intentionally bypasses modern replaceability checks
+     * for that explicitly audited source behaviour only.
+     */
+    public static boolean fillOffsetsWithLegacySourceOverwrite(Level level, BlockPos corePos, Iterable<BlockPos> offsets,
+            Function<BlockPos, BlockState> dummyStates, Function<BlockPos, LegacyProxyMode> proxyModes,
+            Predicate<BlockPos> legacyExtraOffsets) {
+        if (level.isClientSide) {
+            return false;
+        }
+        List<BlockPos> fillOffsets = new ArrayList<>();
+        for (BlockPos offset : offsets) {
+            fillOffsets.add(offset);
+        }
+        boolean[] complete = {true};
+        withLegacySourceOverwrite(() -> {
+            for (BlockPos offset : fillOffsets) {
+                if (offset.equals(BlockPos.ZERO)) {
+                    continue;
+                }
+                BlockPos pos = corePos.offset(offset);
+                if (!level.setBlock(pos, dummyStates.apply(offset), Block.UPDATE_ALL)
+                        || !(level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy)) {
+                    complete[0] = false;
+                    continue;
+                }
+                configureDummy(dummy, corePos, proxyModes.apply(offset), legacyExtraOffsets.test(offset));
+            }
+        });
+        refreshLayoutProxyNeighbors(level, corePos, fillOffsets);
+        return complete[0];
     }
 
     public static boolean fillLayout(Level level, BlockPos corePos, LegacyMultiblockLayout layout) {
@@ -713,6 +762,25 @@ public final class MultiblockHelper {
             return false;
         }
         return CLEARING.get().contains(new ClearingKey(level, dummy.getCorePos()));
+    }
+
+    /** Whether a source-backed legacy multiblock fill is replacing a dummy block. */
+    public static boolean isLegacySourceOverwrite() {
+        return LEGACY_SOURCE_OVERWRITE.get() > 0;
+    }
+
+    private static void withLegacySourceOverwrite(Runnable action) {
+        LEGACY_SOURCE_OVERWRITE.set(LEGACY_SOURCE_OVERWRITE.get() + 1);
+        try {
+            action.run();
+        } finally {
+            int remaining = LEGACY_SOURCE_OVERWRITE.get() - 1;
+            if (remaining == 0) {
+                LEGACY_SOURCE_OVERWRITE.remove();
+            } else {
+                LEGACY_SOURCE_OVERWRITE.set(remaining);
+            }
+        }
     }
 
     private record ClearingKey(Level level, BlockPos corePos) {

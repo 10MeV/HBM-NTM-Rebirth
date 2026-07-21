@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "misc",
+  "pattern": ["E", "D"],
+  "key": { "E": { "tag": "forge:circuits/chip" }, "D": { "type": "hbm_ntm_rebirth:drone_variant", "variant": "patrol" } },
+  "result": { "item": "hbm_ntm_rebirth:drone", "nbt": "{droneType:\"request\"}" }
+}

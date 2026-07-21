@@ -371,6 +371,18 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityPWRController retried assembled coolant receivers from
+        // updateEntity on every legacy server tick.
+        return true;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type == coolantTank.getTankType() && assembled;
     }

@@ -9,7 +9,7 @@ public enum PowerNetProvider implements HbmNetworkProvider<HbmEnergyNode, HbmPow
     THE_PROVIDER;
 
     @Override
-    public HbmPowerNet provideNetwork(HbmEnergyNode seedNode) {
+    public HbmPowerNet provideNetwork() {
         return new PowerNetMK2();
     }
 }

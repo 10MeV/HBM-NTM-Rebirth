@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": ["T", "C"],
+  "key": { "T": { "item": "hbm_ntm_rebirth:drone_waypoint" }, "C": { "tag": "forge:circuits/basic" } },
+  "result": { "item": "hbm_ntm_rebirth:drone_linker" }
+}

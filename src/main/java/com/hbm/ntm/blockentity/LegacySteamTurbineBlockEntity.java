@@ -238,6 +238,13 @@ public abstract class LegacySteamTurbineBlockEntity extends HbmEnergyAndFluidBlo
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachineTurbine and TileEntityMachineLargeTurbine retried
+        // their direct Fluid Mk2 input/output endpoints every server tick.
+        return true;
+    }
+
+    @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
         return List.of(inputTank);
     }

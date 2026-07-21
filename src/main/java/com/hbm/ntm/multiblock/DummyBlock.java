@@ -95,6 +95,22 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
                 && belt.canItemStay(level, pos, itemPos);
     }
 
+    /**
+     * Dummy blocks expose conveyor hooks only when their resolved core exposes the same legacy API.
+     */
+    public static boolean forwardsConveyor(BlockGetter level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
+        return core != null && core.state().getBlock() instanceof IConveyorBelt;
+    }
+
+    /**
+     * Dummy blocks expose enterable hooks only when their resolved core exposes the same legacy API.
+     */
+    public static boolean forwardsEnterable(BlockGetter level, BlockPos pos) {
+        MultiblockHelper.CoreLookup core = operationalCore(level, pos);
+        return core != null && core.state().getBlock() instanceof IEnterableBlock;
+    }
+
     @Override
     public Vec3 getTravelLocation(Level level, BlockPos pos, Vec3 itemPos, double speed) {
         MultiblockHelper.CoreLookup core = operationalCore(level, pos);
@@ -223,6 +239,7 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide
                 && !MultiblockHelper.isClearing(level, pos)
+                && !MultiblockHelper.isLegacySourceOverwrite()
                 && level.getBlockEntity(pos) instanceof MultiblockDummyBlockEntity dummy) {
             dummy.destroyCore();
         }

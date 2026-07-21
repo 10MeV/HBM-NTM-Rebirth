@@ -170,13 +170,12 @@ public class FusionKlystronCreativeBlockEntity extends BlockEntity
 
     @Override
     public void onChunkUnloaded() {
-        destroyNode();
         super.onChunkUnloaded();
     }
 
     private void destroyNode() {
         if (level != null && !level.isClientSide && klystronNode != null) {
-            KlystronNodespace.destroyNode(level, klystronNode.getPos());
+            KlystronNodespace.destroyNode(level, klystronNode);
             klystronNode = null;
         }
     }

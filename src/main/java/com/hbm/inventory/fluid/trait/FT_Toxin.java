@@ -245,7 +245,7 @@ public class FT_Toxin extends ToxinFluidTrait {
                 return;
             }
             if (delay == 0 || entity.level().getGameTime() % delay == 0) {
-                EntityDamageUtil.attackEntityFromIgnoreIFrame(entity,
+                EntityDamageUtil.attackEntityFromNt(entity,
                         ModDamageSources.source(entity.level(), legacyDamageName(damageType)),
                         (float) (amount * intensity));
             }

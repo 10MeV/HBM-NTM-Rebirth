@@ -99,7 +99,9 @@ public final class HbmRenderFrameCulling {
             stats.visibleQueries++;
             return true;
         }
-        if (maxDistanceSq > 0.0D && distanceToCenterSq(bounds, cameraPosition) > maxDistanceSq) {
+        // Keep BER/OBJ cutoff semantics identical to entity model culling: the
+        // 512-block boundary itself is outside the renderable range.
+        if (maxDistanceSq > 0.0D && distanceToCenterSq(bounds, cameraPosition) >= maxDistanceSq) {
             stats.distanceCulledQueries++;
             return false;
         }
@@ -323,7 +325,7 @@ public final class HbmRenderFrameCulling {
         double dz = blockPos.getZ() + 0.5D - cameraPosition.z;
         double distanceSq = dx * dx + dy * dy + dz * dz;
         double maxDistanceSq = (double) maxBlocks * (double) maxBlocks;
-        if (distanceSq > maxDistanceSq) {
+        if (distanceSq >= maxDistanceSq) {
             return -1.0F;
         }
         double fadeStartBlocks = Math.max(0.0D, maxBlocks - MODEL_FADE_ZONE_BLOCKS);

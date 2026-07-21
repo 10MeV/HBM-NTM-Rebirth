@@ -130,6 +130,16 @@ public class CatalyticReformerBlockEntity extends LegacyRemoteFluidMachineBlockE
                 EnergyPort.of(-rot.getStepX() * 3, 0, -rot.getStepZ() * 3, rot.getOpposite()));
     }
 
+    @Override
+    protected void refreshFluidPorts() {
+        // TileEntityMachineCatalyticReformer runs updateConnections() every 20
+        // ticks, but sends its three output tanks every server tick.
+        if (level != null && level.getGameTime() % 20L == 0L) {
+            refreshTrackedReceiverFluidPorts(getReceivingTanks(), this);
+        }
+        refreshTrackedProviderFluidPorts(getSendingTanks(), this);
+    }
+
     private boolean setInputTypeFromIdentifier() {
         ItemStackHandler items = getItems();
         return items != null && setFluidTankTypeFromIdentifierSlot(items, SLOT_IDENTIFIER, inputTank);

@@ -38,12 +38,8 @@ public class HbmPoweredAbilitySwordItem extends HbmAbilitySwordItem implements I
 
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity victim, LivingEntity attacker) {
-        boolean operated = canOperate(stack);
         boolean result = super.hurtEnemy(stack, victim, attacker);
-        if (operated && !attacker.level().isClientSide) {
-            if (attacker instanceof Player player && player.getAbilities().instabuild) {
-                return result;
-            }
+        if (!attacker.level().isClientSide) {
             dischargeBattery(stack, consumption);
         }
         return result;

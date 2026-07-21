@@ -441,7 +441,7 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        RadarHostStateProfile.writeSyncSnapshot(tag, syncSnapshot(RadarMapUpdate.NONE), false);
+        RadarHostStateProfile.writePersistentState(tag, energy.getPower(), scanParams(), redMode, showMap);
         normalizeMap();
         RadarHostStateProfile.writeFullMap(tag, map);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
@@ -450,15 +450,24 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        applySyncSnapshot(RadarHostStateProfile.applySyncSnapshot(RadarHostStateProfile.syncSnapshotFromTag(tag),
-                map, RadarHostStateProfile.hasLegacyPower(tag), false));
+        RadarHostStateProfile.PersistentState persistentState = RadarHostStateProfile.persistentStateFromTag(tag);
+        energy.setPower(persistentState.power());
+        setControlState(RadarHostStateProfile.controlState(persistentState.scanSettings(),
+                persistentState.redstoneProximityMode(), persistentState.showMap()));
         map = RadarHostStateProfile.fullMapFromTag(tag, map);
+        // The 1.7.10 host did not save live scan output. The next server tick
+        // rebuilds it before any new update packet is emitted.
+        jammed = false;
+        lastRedPower = 0;
+        entries.clear();
+        clearFlag = false;
+        mapClearDirty = false;
+        lastMapSlice = -1;
+        pingTimer = 0;
+        previousRotation = 0.0F;
+        rotation = 0.0F;
         if (tag.contains(TAG_ITEMS, Tag.TAG_COMPOUND)) {
             HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
-        }
-        if (RadarHostStateProfile.hasEntries(tag)) {
-            entries.clear();
-            entries.addAll(RadarHostStateProfile.entriesFromTag(tag));
         }
     }
 

@@ -9,6 +9,11 @@ public class EntityCyberCrab extends com.hbm.entity.mob.EntityCyberCrab {
         super(type, level);
     }
 
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         return com.hbm.entity.mob.EntityCyberCrab.createAttributes();
     }

@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "minecraft:black_dye",
-    "hbm_ntm_rebirth:chemical_dye_black"
+    "hbm_ntm_rebirth:chemical_dye_black",
+    "hbm_ntm_rebirth:crayon_black"
   ]
 }

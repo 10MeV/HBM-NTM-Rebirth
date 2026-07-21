@@ -42,6 +42,11 @@ minecraft {
         }
 
         client {
+            // Keep interactive development on run/, while allowing automated
+            // client resource verification to avoid a user's active world and log.
+            if (project.hasProperty('clientRunDir')) {
+                workingDirectory project.file(project.property('clientRunDir'))
+            }
             property 'forge.enabledGameTestNamespaces', gameTestNamespaces
         }
 
@@ -51,6 +56,12 @@ minecraft {
         }
 
         gameTestServer {
+            // A shared `run` directory can be held by an active client/server.  Keep
+            // the normal directory as the default, but let isolated verification use
+            // `-PgameTestRunDir=<project-relative-directory>` without perturbing it.
+            if (project.hasProperty('gameTestRunDir')) {
+                workingDirectory project.file(project.property('gameTestRunDir'))
+            }
             property 'forge.enabledGameTestNamespaces', gameTestNamespaces
         }
 
@@ -68,6 +79,9 @@ sourceSets.main.resources {
 repositories {
     maven { url = 'https://maven.aliyun.com/repository/public' }
     maven { url = 'https://maven.blamejared.com' }
+    // Performance mods remain external to the published HBM jar. Modrinth's
+    // Maven endpoint supplies the exact Forge 1.20.1 artifacts to dev runs.
+    maven { url = 'https://api.modrinth.com/maven' }
     mavenCentral()
 }
 
@@ -82,12 +96,38 @@ configurations.configureEach {
     }
 }
 
+configurations {
+    // External Forge optimization mods are production/modpack artifacts. They
+    // cannot run against the Parchment-named userdev classpath without their
+    // own remapped development builds, so keep their version lock resolvable
+    // but outside normal compile, client, server, and GameTest classpaths.
+    performanceMods {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
+
 dependencies {
     minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}"
 
     compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
     compileOnly fg.deobf("mezz.jei:jei-${mc_version}-forge-api:${jei_version}")
     runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
+
+    // Optional production/modpack optimization stack. HBM has no hard API
+    // linkage, so these must not pollute the Parchment-named userdev runtime.
+    performanceMods "maven.modrinth:embeddium:${embeddium_version}"
+    performanceMods "maven.modrinth:modernfix:${modernfix_version}"
+    performanceMods "maven.modrinth:ferrite-core:${ferritecore_version}"
+}
+
+tasks.register('resolvePerformanceMods') {
+    group = 'verification'
+    description = 'Resolves the pinned optional Forge optimization mod artifacts.'
+    doLast {
+        configurations.performanceMods.files.each { file -> logger.lifecycle("Resolved optional performance mod: ${file.name}") }
+    }
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -121,7 +161,13 @@ tasks.register('runEnergyMk2SelfTest', JavaExec) {
 
 tasks.register('copyGameTestStructures', Copy) {
     from file('src/gametest/resources/gameteststructures')
-    into file('run/gameteststructures')
+    // Keep test templates beside the actual GameTest server world.  Isolated
+    // verification selects this directory with -PgameTestRunDir, while the
+    // normal run continues to use run/.
+    def gameTestRunDirectory = project.hasProperty('gameTestRunDir')
+            ? project.file(project.property('gameTestRunDir'))
+            : project.file('run')
+    into new File(gameTestRunDirectory, 'gameteststructures')
 }
 
 tasks.matching { it.name == 'prepareRunGameTestServer' || it.name == 'runGameTestServer' }.configureEach {

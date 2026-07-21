@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:deuterium_filter" }, "count": 2 },
+    { "ingredient": { "tag": "forge:shells/steel" }, "count": 5 },
+    { "ingredient": { "tag": "forge:pipes/steel" }, "count": 12 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:concrete_asbestos" }, "count": 8 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:steel_scaffold" }, "count": 16 },
+    {
+      "ingredient": { "type": "hbm_ntm_rebirth:fluid_container", "fluid": "hbm_ntm_rebirth:sourgas", "amount": 1000 },
+      "count": 8,
+      "fluid_container": { "fluid": "hbm_ntm_rebirth:sourgas", "amount": 1000 }
+    }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:machine_deuterium_tower" },
+  "tier_lower": 4,
+  "overlay": "construction"
+}

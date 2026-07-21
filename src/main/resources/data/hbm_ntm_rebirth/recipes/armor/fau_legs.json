@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "equipment",
+  "key": {
+    "B": { "item": "hbm_ntm_rebirth:starmetal_legs" }, "D": { "item": "hbm_ntm_rebirth:billet_polonium" },
+    "M": { "item": "hbm_ntm_rebirth:motor_desh" }, "P": { "item": "hbm_ntm_rebirth:plate_armor_fau" }
+  },
+  "pattern": ["MPM", "PBP", "PDP"], "result": { "item": "hbm_ntm_rebirth:fau_legs" }, "show_notification": true
+}

@@ -1,5 +1,6 @@
 package com.hbm.ntm.item;
 
+import com.hbm.ntm.util.LegacyPolaroidVariant;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +18,13 @@ public class LegacyLoreItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        String key = getDescriptionId() + ".desc";
+        String defaultKey = getDescriptionId() + ".desc";
+        String p11Key = defaultKey + ".P11";
+        Component p11Description = Component.translatable(p11Key);
+        String key = LegacyPolaroidVariant.isActive(LegacyPolaroidVariant.P11)
+                && !p11Description.getString().equals(p11Key)
+                ? p11Key
+                : defaultKey;
         Component description = Component.translatable(key);
         if (!description.getString().equals(key)) {
             for (String line : description.getString().split("\\$")) {

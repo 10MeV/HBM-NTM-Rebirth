@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "tag": "forge:nuggets/plutonium239" },
+    { "tag": "forge:nuggets/plutonium239" },
+    { "tag": "forge:nuggets/plutonium239" },
+    { "tag": "forge:nuggets/plutonium239" },
+    { "tag": "forge:nuggets/plutonium239" },
+    { "tag": "forge:nuggets/plutonium239" },
+    { "tag": "forge:nuggets/plutonium240" },
+    { "tag": "forge:nuggets/plutonium240" },
+    { "tag": "forge:nuggets/plutonium240" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:ingot_pu_mix" }
+}

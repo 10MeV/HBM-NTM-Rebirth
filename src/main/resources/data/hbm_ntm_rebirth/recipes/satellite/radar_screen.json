@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": ["PCP", "SRS", "PCP"],
+  "key": {
+    "P": { "tag": "forge:ingots/any_plastic" },
+    "C": { "item": "hbm_ntm_rebirth:circuit_basic" },
+    "S": { "tag": "forge:plates/steel" },
+    "R": { "item": "hbm_ntm_rebirth:crt_display" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:radar_screen" }
+}

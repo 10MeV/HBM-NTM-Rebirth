@@ -621,7 +621,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
             ProcessingResult result = GenericMachineRecipeRuntime.update(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
                     selectedRecipes[i], progress[i], items.getStackInSlot(blueprintSlot(i)), energy, items,
                     inputSlotsFor(i), outputSlotsFor(i), inputTankListFor(i), outputTankListFor(i),
-                    upgradeFactors(), canCool(), TANK_CAPACITY, worldPosition);
+                    upgradeFactors(), canCool(), TANK_CAPACITY);
             selectedRecipes[i] = result.selectedRecipe();
             progress[i] = result.progress();
             didProcess[i] = result.didProcess();
@@ -689,7 +689,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private int subscribeEnergyReceiverToPorts() {
-        return level == null || level.isClientSide || Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) != 0L
+        return level == null || level.isClientSide
                 ? 0
                 : HbmEnergyUtil.subscribeReceiverToPorts(level, worldPosition, energyPorts(), this);
     }

@@ -1,12 +1,12 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.entity.effect.LegacyVentCloudEntity;
 import com.hbm.entity.particle.EntityOrangeFX;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -40,7 +40,7 @@ public class VentCloudRenderer extends EntityRenderer<LegacyVentCloudEntity> {
             poseStack.translate(x, y, z);
             poseStack.scale(size, size, size);
             poseStack.mulPose(entityRenderDispatcher.cameraOrientation());
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
             LegacyTexturedQuadRenderer.spriteQuad(sprite, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY,
                     LegacyTexturedRenderMode.TRANSLUCENT, 0.0F, 1.0F, 0.0F,
                     LegacyTexturedQuadRenderer.spriteUnitVertex(-0.5D, -0.25D, 0.0D, 0.0F, 1.0F,

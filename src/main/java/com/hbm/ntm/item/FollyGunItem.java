@@ -58,6 +58,12 @@ public class FollyGunItem extends SednaGunItem {
 
     @Override
     protected void clickPrimary(ServerPlayer player, ItemStack stack, GunParts gun) {
+        // Lego.clickReceiver handles reload cancellation outside its IDLE can-fire
+        // predicate.  Folly's aim/spin-up gate must not swallow that branch.
+        if (gunState(stack, CONFIG_INDEX) == SednaGunConfig.GunState.RELOADING) {
+            super.clickPrimary(player, stack, gun);
+            return;
+        }
         if (!isAiming(stack)
                 || legacyAnimation(stack, CONFIG_INDEX) != LEGACY_ANIM_SPINUP
                 || legacyAnimationTimer(stack, CONFIG_INDEX) < SPINUP_TICKS) {

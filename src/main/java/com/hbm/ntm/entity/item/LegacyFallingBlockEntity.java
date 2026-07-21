@@ -2,6 +2,7 @@ package com.hbm.ntm.entity.item;
 
 import com.hbm.ntm.block.LegacySpotlightBlock;
 import com.hbm.ntm.registry.ModEntityTypes;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -234,6 +235,11 @@ public class LegacyFallingBlockEntity extends Entity {
     @Override
     public boolean isPickable() {
         return !isRemoved();
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

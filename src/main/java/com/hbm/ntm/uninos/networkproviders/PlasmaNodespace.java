@@ -4,7 +4,6 @@ import com.hbm.ntm.uninos.HbmNodespace;
 import com.hbm.ntm.uninos.HbmUninosDiagnostics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 public final class PlasmaNodespace {
@@ -12,7 +11,7 @@ public final class PlasmaNodespace {
             new HbmNodespace<BlockPos, PlasmaNode, PlasmaNetwork>(
                     PlasmaNode::getPositions,
                     (node, connection) -> connection.pos(),
-                    node -> new PlasmaNetwork(),
+                    node -> PlasmaNetworkProvider.THE_PROVIDER,
                     PlasmaNetwork::resetTrackers,
                     PlasmaNetwork::update,
                     BlockPos::immutable);
@@ -29,12 +28,16 @@ public final class PlasmaNodespace {
         NODESPACE.destroyNode(level, pos);
     }
 
+    public static void destroyNode(Level level, PlasmaNode node) {
+        NODESPACE.destroyNode(level, node);
+    }
+
     public static void unloadLevel(Level level) {
         NODESPACE.unloadLevel(level);
     }
 
-    public static void unloadChunk(Level level, ChunkPos chunkPos) {
-        NODESPACE.unloadChunk(level, chunkPos);
+    public static void reapLevel(Level level) {
+        NODESPACE.reapLevel(level);
     }
 
     public static void tick(ServerLevel level) {

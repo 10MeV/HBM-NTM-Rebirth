@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "redstone",
+  "pattern": [
+    "LLL",
+    "I I",
+    "LLL"
+  ],
+  "key": {
+    "L": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "I": {
+      "tag": "forge:ingots/iron"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:conveyor_wand",
+    "count": 64,
+    "nbt": "{Type:\"REGULAR\"}"
+  },
+  "show_notification": true
+}

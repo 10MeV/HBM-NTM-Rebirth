@@ -108,6 +108,20 @@ public final class LegacyUntexturedQuadRenderer {
                     .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
                     .createCompositeState(false));
 
+    private static final RenderType LEGACY_TRANSLUCENT_DEPTH_WRITE_CULL = RenderType.create(
+            "hbm_legacy_translucent_depth_write_cull",
+            DefaultVertexFormat.POSITION_COLOR,
+            VertexFormat.Mode.QUADS,
+            LEGACY_EFFECT_BUFFER_SIZE,
+            false,
+            true,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                    .setTransparencyState(NORMAL_ALPHA_TRANSPARENCY)
+                    .setCullState(new RenderStateShard.CullStateShard(true))
+                    .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
+                    .createCompositeState(false));
+
     private static final RenderType LEGACY_SOLID_NO_CULL = RenderType.create(
             "hbm_legacy_solid_no_cull",
             DefaultVertexFormat.POSITION_COLOR,
@@ -170,6 +184,14 @@ public final class LegacyUntexturedQuadRenderer {
             true,
             true,
             VertexFormat.Mode.TRIANGLES);
+    private static final RenderType LEGACY_TRANSLUCENT_DEPTH_WRITE_CULL_TRIANGLES = createType(
+            "hbm_legacy_translucent_depth_write_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
+            NORMAL_ALPHA_TRANSPARENCY,
+            true,
+            true,
+            VertexFormat.Mode.TRIANGLES,
+            true);
     private static final RenderType LEGACY_SOLID_NO_CULL_TRIANGLES = createType(
             "hbm_legacy_solid_no_cull_triangles",
             new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
@@ -253,8 +275,10 @@ public final class LegacyUntexturedQuadRenderer {
             case ADDITIVE_CULL_NO_DEPTH_WRITE -> triangles ? LEGACY_ADDITIVE_CULL_TRIANGLES : LEGACY_ADDITIVE_CULL;
             case ADDITIVE_NO_DEPTH_WRITE -> triangles ? LEGACY_ADDITIVE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_NO_CULL;
             case TRANSLUCENT_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL_TRIANGLES : LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL;
+            case TRANSLUCENT_CULL_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_DEPTH_WRITE_CULL_TRIANGLES : LEGACY_TRANSLUCENT_DEPTH_WRITE_CULL;
             case TRANSLUCENT, TRANSLUCENT_NO_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_NO_CULL_TRIANGLES : LEGACY_TRANSLUCENT_NO_CULL;
-            case CUTOUT_REVERSED_CULL, CUTOUT_CULL -> triangles ? LEGACY_SOLID_CULL_TRIANGLES : LEGACY_SOLID_CULL;
+            case CUTOUT_REVERSED_CULL, CUTOUT_CULL, RAW_LIGHTMAP_CUTOUT_CULL ->
+                    triangles ? LEGACY_SOLID_CULL_TRIANGLES : LEGACY_SOLID_CULL;
             case CUTOUT_NO_CULL, CUTOUT_DOUBLE_SIDED -> triangles ? LEGACY_SOLID_NO_CULL_TRIANGLES : LEGACY_SOLID_NO_CULL;
             case GLINT_NO_DEPTH_WRITE, GLINT_EQUAL_DEPTH -> triangles ? LEGACY_ADDITIVE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_NO_CULL;
         };

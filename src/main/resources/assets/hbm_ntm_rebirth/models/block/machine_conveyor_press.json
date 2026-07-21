@@ -16,7 +16,7 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/conveyor_press",
-    "default": "hbm_ntm_rebirth:models/machines/conveyor_press",
-    "texture0": "hbm_ntm_rebirth:models/machines/conveyor_press"
+    "default": "hbm_ntm_rebirth:block/machines/conveyor_press",
+    "texture0": "hbm_ntm_rebirth:block/machines/conveyor_press"
   }
 }

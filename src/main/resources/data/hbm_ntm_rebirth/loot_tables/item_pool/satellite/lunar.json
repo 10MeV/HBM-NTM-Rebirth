@@ -97,7 +97,8 @@
               "function": "minecraft:set_count"
             }
           ],
-          "name": "hbm_ntm_rebirth:crystal_iron"
+          "name": "hbm_ntm_rebirth:crystal_iron",
+          "weight": 1
         },
         {
           "type": "minecraft:item",
@@ -112,11 +113,11 @@
               "function": "minecraft:set_count"
             }
           ],
-          "name": "hbm_ntm_rebirth:crystal_lithium"
+          "name": "hbm_ntm_rebirth:crystal_lithium",
+          "weight": 1
         }
       ],
       "rolls": 1.0
     }
-  ],
-  "random_sequence": "hbm_ntm_rebirth:item_pool/satellite/lunar"
+  ]
 }

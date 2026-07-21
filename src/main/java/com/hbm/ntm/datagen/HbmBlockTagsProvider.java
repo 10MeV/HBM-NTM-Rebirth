@@ -33,10 +33,24 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         ModBlocks.SATELLITE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DUMMY_BLOCK.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DUMMY_BLOCK.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.RAIL_NARROW_STRAIGHT.get(),
+                ModBlocks.RAIL_LARGE_STRAIGHT.get(), ModBlocks.RAIL_LARGE_STRAIGHT_SHORT.get(),
+                ModBlocks.RAIL_NARROW_CURVE.get(), ModBlocks.RAIL_LARGE_CURVE.get(),
+                ModBlocks.RAIL_LARGE_CURVE_7.get(), ModBlocks.RAIL_LARGE_CURVE_9.get(),
+                ModBlocks.RAIL_LARGE_RAMP.get(), ModBlocks.RAIL_LARGE_BUFFER.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.RAIL_NARROW_STRAIGHT.get(),
+                ModBlocks.RAIL_LARGE_STRAIGHT.get(), ModBlocks.RAIL_LARGE_STRAIGHT_SHORT.get(),
+                ModBlocks.RAIL_NARROW_CURVE.get(), ModBlocks.RAIL_LARGE_CURVE.get(),
+                ModBlocks.RAIL_LARGE_CURVE_7.get(), ModBlocks.RAIL_LARGE_CURVE_9.get(),
+                ModBlocks.RAIL_LARGE_RAMP.get(), ModBlocks.RAIL_LARGE_BUFFER.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_SCAFFOLD.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_SCAFFOLD.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_BEAM.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_BEAM.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_POLES.get(), ModBlocks.STEEL_WALL.get(),
+                ModBlocks.STEEL_CORNER.get(), ModBlocks.STEEL_ROOF.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_POLES.get(), ModBlocks.STEEL_WALL.get(),
+                ModBlocks.STEEL_CORNER.get(), ModBlocks.STEEL_ROOF.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_GRATE.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_GRATE.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_GRATE_WIDE.get());
@@ -126,7 +140,9 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 "cluster_iron", "cluster_titanium", "cluster_aluminium", "cluster_copper",
                 "ore_nether_uranium", "ore_nether_tungsten", "ore_nether_sulfur", "ore_nether_fire",
                 "ore_nether_coal", "ore_nether_cobalt", "ore_nether_plutonium", "ore_tikite",
-                "block_meteor", "block_meteor_cobble", "block_meteor_broken");
+                "block_meteor", "block_meteor_cobble", "block_meteor_broken", "block_meteor_molten", "block_meteor_treasure",
+                "ore_meteor_iron", "ore_meteor_copper", "ore_meteor_aluminium", "ore_meteor_rareearth", "ore_meteor_cobalt",
+                "crystal_virus", "crystal_hardened", "crystal_pulsar");
         addLegacyMineable(BlockTags.NEEDS_IRON_TOOL,
                 "ore_uranium", "deepslate_ore_uranium", "ore_thorium", "deepslate_ore_thorium",
                 "ore_titanium", "deepslate_ore_titanium", "ore_sulfur", "deepslate_ore_sulfur",
@@ -145,13 +161,16 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 "cluster_iron", "cluster_titanium", "cluster_aluminium", "cluster_copper",
                 "ore_nether_uranium", "ore_nether_tungsten", "ore_nether_sulfur", "ore_nether_fire",
                 "ore_nether_coal", "ore_nether_cobalt", "ore_nether_plutonium", "ore_tikite",
-                "block_meteor", "block_meteor_cobble", "block_meteor_broken");
+                "block_meteor", "block_meteor_cobble", "block_meteor_broken", "block_meteor_molten", "block_meteor_treasure",
+                "ore_meteor_iron", "ore_meteor_copper", "ore_meteor_aluminium", "ore_meteor_rareearth", "ore_meteor_cobalt");
         tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.FROZEN_LOG.get(), ModBlocks.FROZEN_PLANKS.get(),
                 ModBlocks.WOOD_STRUCTURE.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CONCRETE_COLORED_EXT.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.CONCRETE_COLORED_EXT.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.legacyBlock("concrete_colored").get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.legacyBlock("concrete_colored").get());
         tag(BlockTags.MINEABLE_WITH_AXE).add(
                 ModBlocks.RED_PYLON_MEDIUM_WOOD.get(),
                 ModBlocks.RED_PYLON_MEDIUM_WOOD_TRANSFORMER.get());

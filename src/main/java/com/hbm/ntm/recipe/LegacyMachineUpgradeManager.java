@@ -46,6 +46,8 @@ public final class LegacyMachineUpgradeManager {
                 case SHREDDER -> shredder = cappedLevel(shredder, tier, maxLevel);
                 case CENTRIFUGE -> centrifuge = cappedLevel(centrifuge, tier, maxLevel);
                 case CRYSTALLIZER -> crystallizer = cappedLevel(crystallizer, tier, maxLevel);
+                case STACK, EJECTOR -> {
+                }
             }
         }
         if ((speed | effect | power | overdrive | afterburn | fortune | smelter | nullifier | shredder
@@ -150,6 +152,7 @@ public final class LegacyMachineUpgradeManager {
                 case SHREDDER -> shredder;
                 case CENTRIFUGE -> centrifuge;
                 case CRYSTALLIZER -> crystallizer;
+                case STACK, EJECTOR -> 0;
             };
         }
 

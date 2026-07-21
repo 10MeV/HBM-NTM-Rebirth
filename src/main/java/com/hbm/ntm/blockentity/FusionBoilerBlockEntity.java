@@ -156,6 +156,11 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type != HbmFluids.NONE && type == waterTank.getTankType();
     }
@@ -240,13 +245,12 @@ public class FusionBoilerBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public void onChunkUnloaded() {
-        destroyNode();
         super.onChunkUnloaded();
     }
 
     private void destroyNode() {
         if (level != null && !level.isClientSide && plasmaNode != null) {
-            PlasmaNodespace.destroyNode(level, plasmaNode.getPos());
+            PlasmaNodespace.destroyNode(level, plasmaNode);
         }
         plasmaNode = null;
     }

@@ -15,6 +15,8 @@ import com.hbm.ntm.explosion.vnt.standard.EntityProcessorStandard;
 import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectStandard;
 import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.radiation.ModDamageSources;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
@@ -30,6 +32,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ExplosionNT {
     public static final EnumSet<ExAttrib> NUKE_ATTRIBS = EnumSet.of(
@@ -48,9 +51,14 @@ public class ExplosionNT {
     private final double y;
     private final double z;
     private final float size;
-    private final EnumSet<ExAttrib> attributes = EnumSet.noneOf(ExAttrib.class);
+    /**
+     * Kept with the legacy misspelling because old HBM callers mutated this set directly.
+     */
+    public final Set<ExAttrib> atttributes = EnumSet.noneOf(ExAttrib.class);
     private Map<Player, Vec3> affectedEntities = new HashMap<>();
     private int resolution = 16;
+    @Nullable
+    private ExplosionVnt preparedExplosion;
 
     public ExplosionNT(Level level, double x, double y, double z, float size) {
         this(level, null, x, y, z, size);
@@ -66,17 +74,17 @@ public class ExplosionNT {
     }
 
     public ExplosionNT addAttrib(ExAttrib attribute) {
-        attributes.add(attribute);
+        atttributes.add(attribute);
         return this;
     }
 
     public ExplosionNT addAttrib(ExAttrib... attributes) {
-        this.attributes.addAll(Arrays.asList(attributes));
+        this.atttributes.addAll(Arrays.asList(attributes));
         return this;
     }
 
     public ExplosionNT addAttrib(Collection<ExAttrib> attributes) {
-        this.attributes.addAll(attributes);
+        this.atttributes.addAll(attributes);
         return this;
     }
 
@@ -93,7 +101,7 @@ public class ExplosionNT {
     }
 
     public boolean hasAttrib(ExAttrib attribute) {
-        return attributes.contains(attribute);
+        return atttributes.contains(attribute);
     }
 
     public boolean has(ExAttrib attribute) {
@@ -106,21 +114,24 @@ public class ExplosionNT {
     }
 
     public void explode() {
-        BlockMutatorErode erodeMutator = attributes.contains(ExAttrib.ERRODE) ? new BlockMutatorErode() : null;
-        ExplosionVnt explosion = new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.DESTROY_WITH_DECAY)
-                .setBlockAllocator(erodeMutator == null
-                        ? new BlockAllocatorStandard(resolution)
-                        : new BlockAllocatorStandard(resolution, erodeMutator::canErode))
-                .setBlockProcessor(createBlockProcessor(erodeMutator))
-                .setEffects(new ExplosionEffectStandard(!attributes.contains(ExAttrib.NOSOUND), !attributes.contains(ExAttrib.NOPARTICLE)));
+        doExplosionA();
+        doExplosionB(false);
+    }
 
-        if (!attributes.contains(ExAttrib.NOHURT)) {
-            explosion.setEntityProcessor(new EntityProcessorStandard())
-                    .setPlayerProcessor(new PlayerProcessorStandard());
-        }
+    /**
+     * Legacy phase-A API: ray allocation and entity damage run through the sole VNT/DT-DR runtime.
+     */
+    public void doExplosionA() {
+        ExplosionVnt explosion = ensurePreparedExplosion();
+        explosion.prepare();
+        affectedEntities = new HashMap<>(explosion.func_77277_b());
+    }
 
-        explosion.explode();
-        affectedEntities = new HashMap<>(explosion.compat().getHitPlayers());
+    /** Legacy phase-B API; the old implementation did not read its boolean argument. */
+    public void doExplosionB(boolean spawnParticles) {
+        ExplosionVnt explosion = ensurePreparedExplosion();
+        explosion.finish();
+        affectedEntities = new HashMap<>(explosion.func_77277_b());
     }
 
     public Map<Player, Vec3> func_77277_b() {
@@ -141,38 +152,64 @@ public class ExplosionNT {
         return null;
     }
 
+    /** Modern equivalent of the old static ExplosionNT damage-source helper. */
+    public static DamageSource setExplosionSource(Level level, @Nullable Entity source) {
+        return ModDamageSources.explosion(level, source);
+    }
+
+    private ExplosionVnt ensurePreparedExplosion() {
+        if (preparedExplosion != null) {
+            return preparedExplosion;
+        }
+
+        BlockMutatorErode erodeMutator = atttributes.contains(ExAttrib.ERRODE) ? new BlockMutatorErode() : null;
+        ExplosionVnt explosion = new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.DESTROY_WITH_DECAY)
+                .setBlockAllocator(erodeMutator == null
+                        ? new BlockAllocatorStandard(resolution)
+                        : new BlockAllocatorStandard(resolution, erodeMutator::canErode))
+                .setBlockProcessor(createBlockProcessor(erodeMutator))
+                .setEffects(new ExplosionEffectStandard(!atttributes.contains(ExAttrib.NOSOUND), !atttributes.contains(ExAttrib.NOPARTICLE)));
+
+        if (!atttributes.contains(ExAttrib.NOHURT)) {
+            explosion.setEntityProcessor(new EntityProcessorStandard())
+                    .setPlayerProcessor(new PlayerProcessorStandard());
+        }
+        preparedExplosion = explosion;
+        return explosion;
+    }
+
     private BlockProcessorStandard createBlockProcessor(@Nullable BlockMutatorErode erodeMutator) {
         BlockProcessorStandard processor = new BlockProcessorStandard();
-        if (attributes.contains(ExAttrib.NODROP)) {
+        if (atttributes.contains(ExAttrib.NODROP)) {
             processor.setNoDrop();
-        } else if (attributes.contains(ExAttrib.ALLDROP)) {
+        } else if (atttributes.contains(ExAttrib.ALLDROP)) {
             processor.setAllDrop();
         }
 
         CompositeBlockMutator mutators = new CompositeBlockMutator();
-        boolean allMod = attributes.contains(ExAttrib.ALLMOD);
-        boolean placeAllSurfaceEffects = allMod || attributes.contains(ExAttrib.DIGAMMA);
+        boolean allMod = atttributes.contains(ExAttrib.ALLMOD);
+        boolean placeAllSurfaceEffects = allMod || atttributes.contains(ExAttrib.DIGAMMA);
         if (erodeMutator != null) {
             mutators.add(erodeMutator);
         }
-        if (attributes.contains(ExAttrib.FIRE)) {
+        if (atttributes.contains(ExAttrib.FIRE)) {
             mutators.add(new BlockMutatorFire(placeAllSurfaceEffects));
         }
-        if (attributes.contains(ExAttrib.BALEFIRE)) {
+        if (atttributes.contains(ExAttrib.BALEFIRE)) {
             mutators.add(new BlockMutatorBalefire(placeAllSurfaceEffects));
         }
-        if (attributes.contains(ExAttrib.LAVA)) {
+        if (atttributes.contains(ExAttrib.LAVA)) {
             mutators.add(new BlockMutatorLava(placeAllSurfaceEffects));
         }
-        if (attributes.contains(ExAttrib.DIGAMMA_CIRCUIT)) {
+        if (atttributes.contains(ExAttrib.DIGAMMA_CIRCUIT)) {
             mutators.add(new BlockMutatorDigamma(true));
-        } else if (attributes.contains(ExAttrib.DIGAMMA)) {
+        } else if (atttributes.contains(ExAttrib.DIGAMMA)) {
             mutators.add(new BlockMutatorDigamma(false));
         }
-        if (attributes.contains(ExAttrib.LAVA_V)) {
+        if (atttributes.contains(ExAttrib.LAVA_V)) {
             mutators.add(new BlockMutatorPlaceBlock(ModBlocks.VOLCANIC_LAVA_BLOCK.get().defaultBlockState()));
         }
-        if (attributes.contains(ExAttrib.LAVA_R)) {
+        if (atttributes.contains(ExAttrib.LAVA_R)) {
             mutators.add(new BlockMutatorPlaceBlock(ModBlocks.RAD_LAVA_BLOCK.get().defaultBlockState()));
         }
         if (!mutators.isEmpty()) {

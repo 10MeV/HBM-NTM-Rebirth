@@ -93,9 +93,7 @@ public class LegacySubstationBlock extends LegacyXrMultiblockBlock implements En
         if (!substation.setWireColor(color)) {
             return InteractionResult.PASS;
         }
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
+        stack.shrink(1);
         return InteractionResult.CONSUME;
     }
 

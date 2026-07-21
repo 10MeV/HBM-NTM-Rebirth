@@ -482,8 +482,18 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return connectionPorts();
+    }
+
+    @Override
+    protected boolean shouldCreateFluidNode() {
+        return false;
     }
 
     private List<FluidPort> connectionPorts() {

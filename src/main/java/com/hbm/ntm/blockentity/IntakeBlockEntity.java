@@ -161,8 +161,20 @@ public class IntakeBlockEntity extends HbmEnergyAndFluidBlockEntity implements H
     }
 
     @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
     protected boolean shouldCreateFluidNode() {
         return false;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachineIntake retried its non-empty AIR sender at all
+        // source-backed remote endpoints every server tick.
+        return true;
     }
 
     @Override

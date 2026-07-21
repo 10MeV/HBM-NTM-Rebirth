@@ -65,6 +65,7 @@ public record BulletConfig(
         int trail,
         BulletPlink plink,
         String vanillaParticle,
+        boolean renderRotations,
         String spentCasingName,
         String casingItemName,
         int casingItemStackSize,
@@ -181,6 +182,7 @@ public record BulletConfig(
         private int trail;
         private BulletPlink plink = BulletPlink.NONE;
         private String vanillaParticle = "";
+        private boolean renderRotations = true;
         private String spentCasingName = "";
         private String casingItemName = "";
         private int casingItemStackSize = 1;
@@ -250,6 +252,7 @@ public record BulletConfig(
             this.trail = config.trail;
             this.plink = config.plink;
             this.vanillaParticle = config.vanillaParticle;
+            this.renderRotations = config.renderRotations;
             this.spentCasingName = config.spentCasingName;
             this.casingItemName = config.casingItemName;
             this.casingItemStackSize = config.casingItemStackSize;
@@ -458,6 +461,11 @@ public record BulletConfig(
             return this;
         }
 
+        public Builder renderRotations(boolean renderRotations) {
+            this.renderRotations = renderRotations;
+            return this;
+        }
+
         public Builder setToBolt(BulletTrail trail) {
             this.style = BulletStyle.BOLT;
             this.trail = trail.legacyId();
@@ -511,7 +519,7 @@ public record BulletConfig(
                     penetrates, spectral, breaksGlass, liveAfterImpact, blackPowder, incendiaryTicks, emp,
                     blockDamage, explosive, jolt, rainbow, nuke, shrapnel, chlorine, leadChance, caustic,
                     copyEffects(effects),
-                    destroysBlocks, instakill, style, trail, plink, vanillaParticle, spentCasingName,
+                    destroysBlocks, instakill, style, trail, plink, vanillaParticle, renderRotations, spentCasingName,
                     casingItemName, casingItemStackSize, casingItemAmount,
                     dischargePerShot, modeName, chatColorName, firingRate, damageType, damageProjectile,
                     damageFire, damageExplosion, damageBypass, behaviors);

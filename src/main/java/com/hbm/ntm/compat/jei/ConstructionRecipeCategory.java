@@ -1,6 +1,5 @@
 package com.hbm.ntm.compat.jei;
 
-import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.FusionTorusStructCoreBlockEntity;
 import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.registry.ModBlocks;
@@ -22,9 +21,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public final class ConstructionRecipeCategory
         implements HbmJeiRecipeCategory<ConstructionRecipeCategory.DisplayRecipe> {
@@ -119,18 +115,6 @@ public final class ConstructionRecipeCategory
 
         recipes.add(new DisplayRecipe(
                 List.of(
-                        stack(ModBlocks.STRUCT_LAUNCHER.get(), 30),
-                        labeledStack(ModBlocks.STRUCT_LAUNCHER.get(), 384),
-                        stack(ModBlocks.STRUCT_SCAFFOLD.get(), 63),
-                        labeledStack(ModBlocks.STRUCT_SCAFFOLD.get(), 384),
-                        stack(block("concrete_smooth"), 38),
-                        labeledStack(block("concrete_smooth"), 320)),
-                new ItemStack(ModBlocks.SOYUZ_LAUNCHER.get()),
-                new ItemStack(ModBlocks.STRUCT_SOYUZ_CORE.get()),
-                3));
-
-        recipes.add(new DisplayRecipe(
-                List.of(
                         stack(ModBlocks.ICF_COMPONENT_SCAFFOLD.get(), 50),
                         labeledStack(ModBlocks.ICF_COMPONENT_STRUCTURE_BOLTED.get(), 240),
                         tagStacks(DURA_BOLTS, 960),
@@ -221,15 +205,6 @@ public final class ConstructionRecipeCategory
                 .map(ItemStack::copy)
                 .map(HbmItemStackUtil::addStackSizeLabel)
                 .toList();
-    }
-
-    private static Block block(String name) {
-        ResourceLocation id = new ResourceLocation(HbmNtm.MOD_ID, name);
-        Block block = ForgeRegistries.BLOCKS.getValue(id);
-        if (block == null || block == Blocks.AIR) {
-            throw new IllegalStateException("Missing construction display block: " + id);
-        }
-        return block;
     }
 
     public record DisplayRecipe(List<List<ItemStack>> inputs, ItemStack output, ItemStack machine,

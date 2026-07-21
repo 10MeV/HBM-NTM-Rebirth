@@ -128,6 +128,11 @@ public class RBMKSteamOutletBlockEntity extends HbmFluidNetworkBlockEntity imple
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
     protected List<HbmFluidTank> getInputTanks(@Nullable Direction side) {
         return List.of();
     }

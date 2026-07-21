@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "equipment",
+  "key": {
+    "B": { "item": "hbm_ntm_rebirth:bj_legs" }, "P": { "item": "hbm_ntm_rebirth:plate_armor_dnt" },
+    "S": { "item": "hbm_ntm_rebirth:ingot_chainsteel" }
+  },
+  "pattern": ["P P", "PBP", "PSP"], "result": { "item": "hbm_ntm_rebirth:dns_legs" }, "show_notification": true
+}

@@ -150,10 +150,8 @@ public final class LegacyBeamRenderer {
         if (!lineBeamRenderable(x, y, z, segments)) {
             return;
         }
-        VertexConsumer consumer = LegacyLineRenderer.consumer(buffer, LegacyLineRenderer.DEFAULT_LINE_WIDTH,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
-        lineBeam(consumer, poseStack.last(), 0.0D, 0.0D, 0.0D, x, y, z, wave, outerColor, innerColor,
-                start, segments, size);
+        lineBeam(poseStack, buffer, beamPlan(x, y, z, wave, BeamType.LINE, outerColor, innerColor,
+                start, segments, size, 0, 0.0F));
     }
 
     public static DirectLineBeamBatch directLineBeamBatch(PoseStack poseStack, MultiBufferSource buffer) {
@@ -259,15 +257,16 @@ public final class LegacyBeamRenderer {
             return;
         }
 
-        VertexConsumer consumer = LegacyLineRenderer.consumer(buffer, LegacyLineRenderer.DEFAULT_LINE_WIDTH,
-                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
-        PoseStack.Pose pose = poseStack.last();
+        List<LegacyWavefrontModel.UntexturedLineTransient> lines = new ArrayList<>(
+                plan.lineSegments().size() + (plan.centralLine() == null ? 0 : 1));
         for (BeamLinePlan line : plan.lineSegments()) {
-            renderLinePlan(consumer, pose, line);
+            addLinePlan(lines, line);
         }
         if (plan.centralLine() != null) {
-            renderLinePlan(consumer, pose, plan.centralLine());
+            addLinePlan(lines, plan.centralLine());
         }
+        LegacyLineRenderer.lines(poseStack, buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
+                LegacyLineRenderer.DEFAULT_LINE_WIDTH, lines);
     }
 
     public static List<BeamPoint> beamPoints(double x, double y, double z,
@@ -620,6 +619,13 @@ public final class LegacyBeamRenderer {
         BeamVector end = line.end();
         LegacyLineRenderer.line(consumer, pose, start.x(), start.y(), start.z(), end.x(), end.y(), end.z(),
                 line.color(), 255);
+    }
+
+    private static void addLinePlan(List<LegacyWavefrontModel.UntexturedLineTransient> lines, BeamLinePlan line) {
+        BeamVector start = line.start();
+        BeamVector end = line.end();
+        lines.add(new LegacyWavefrontModel.UntexturedLineTransient(
+                start.x(), start.y(), start.z(), end.x(), end.y(), end.z(), line.color(), 255));
     }
 
     public static int interpolateColor(int outerColor, int innerColor, float inter) {

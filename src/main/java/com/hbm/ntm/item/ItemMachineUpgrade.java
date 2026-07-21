@@ -50,6 +50,8 @@ public class ItemMachineUpgrade extends Item {
         NULLIFIER,
         SHREDDER,
         CENTRIFUGE,
-        CRYSTALLIZER
+        CRYSTALLIZER,
+        STACK,
+        EJECTOR
     }
 }

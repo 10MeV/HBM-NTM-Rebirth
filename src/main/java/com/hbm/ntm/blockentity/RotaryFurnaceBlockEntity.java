@@ -10,6 +10,7 @@ import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.ForgeFluidHandlerAdapter;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidTransceiver;
@@ -369,7 +370,7 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
 
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
-        return fluidPorts(getBlockState());
+        return allFluidPorts(getBlockState());
     }
 
     @Override
@@ -514,12 +515,18 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
         boolean oldVenting = isVenting;
 
         setFluidTankTypeFromIdentifierSlot(items, SLOT_FLUID_ID, inputTank);
-        refreshTrackedTransceiverFluidPorts(getReceivingTanks(), getSendingTanks(), this);
+        List<FluidPort> steamPorts = steamFluidPorts(state);
+        HbmFluidUtil.subscribeReceiverToPorts(level, pos, steamPorts, steamTank.getTankType(), this);
+        if (inputTank.getTankType() != HbmFluids.NONE) {
+            HbmFluidUtil.subscribeReceiverToPorts(level, pos, processFluidPorts(state), inputTank.getTankType(), this);
+        }
         if (spentSteamTank.getFill() > 0) {
-            tryProvideFluidToPorts(spentSteamTank.getTankType(), spentSteamTank.getPressure(), this);
+            HbmFluidUtil.tryProvideToPorts(level, pos, steamPorts, spentSteamTank.getTankType(),
+                    spentSteamTank.getPressure(), this);
         }
         if (smokeTank.getFill() > 0) {
-            tryProvideFluidToPorts(smokeTank.getTankType(), smokeTank.getPressure(), this);
+            HbmFluidUtil.tryProvideToPorts(level, pos, smokeFluidPorts(state), smokeTank.getTankType(),
+                    smokeTank.getPressure(), this);
         }
 
         pourOutput(level, pos, state);
@@ -707,16 +714,34 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
                 facing.getStepZ() * forward + rot.getStepZ() * side);
     }
 
-    private static List<FluidPort> fluidPorts(BlockState state) {
+    private static List<FluidPort> allFluidPorts(BlockState state) {
+        List<FluidPort> ports = new ArrayList<>(5);
+        ports.addAll(steamFluidPorts(state));
+        ports.addAll(processFluidPorts(state));
+        ports.addAll(smokeFluidPorts(state));
+        return ports;
+    }
+
+    private static List<FluidPort> steamFluidPorts(BlockState state) {
         Direction facing = facing(state);
         Direction rot = legacyDownSide(facing);
-        List<FluidPort> ports = new ArrayList<>();
-        ports.add(port(relative(facing, rot, -1, -1, 0), facing.getOpposite()));
-        ports.add(port(relative(facing, rot, -1, -2, 0), facing.getOpposite()));
-        ports.add(port(relative(facing, rot, 1, 2, 0), rot));
-        ports.add(port(relative(facing, rot, -1, 2, 0), rot));
-        ports.add(port(relative(facing, rot, 0, 1, 4), Direction.UP));
-        return ports;
+        return List.of(
+                port(relative(facing, rot, -1, -1, 0), facing.getOpposite()),
+                port(relative(facing, rot, -1, -2, 0), facing.getOpposite()));
+    }
+
+    private static List<FluidPort> processFluidPorts(BlockState state) {
+        Direction facing = facing(state);
+        Direction rot = legacyDownSide(facing);
+        return List.of(
+                port(relative(facing, rot, 1, 2, 0), rot),
+                port(relative(facing, rot, -1, 2, 0), rot));
+    }
+
+    private static List<FluidPort> smokeFluidPorts(BlockState state) {
+        Direction facing = facing(state);
+        Direction rot = legacyDownSide(facing);
+        return List.of(port(relative(facing, rot, 0, 1, 4), Direction.UP));
     }
 
     private static FluidPort port(BlockPos offset, Direction direction) {

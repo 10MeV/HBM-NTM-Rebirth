@@ -73,28 +73,32 @@ public class HbmPoweredAbilityToolItem extends HbmAbilityToolItem implements IBa
 
     @Override
     public void hurtAbilityTool(ItemStack stack, Player player) {
-        if (!player.getAbilities().instabuild) {
-            dischargeBattery(stack, consumption);
-        }
+        dischargeBattery(stack, consumption);
     }
 
     @Override
     public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
         if (!canOperate(stack)) {
-            return false;
+            // Legacy ItemToolAbilityPower delegates this unpowered path to ItemTool. Its setDamage override
+            // still converts the normal block-break damage into one clamped battery consumption.
+            if (!level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F) {
+                dischargeBattery(stack, consumption);
+            }
+            return true;
         }
         boolean mined = super.mineBlock(stack, level, state, pos, entity);
         if (mined && !level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F && entity instanceof Player player) {
             hurtAbilityTool(stack, player);
+        } else if (mined && !level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F) {
+            dischargeBattery(stack, consumption);
         }
         return mined;
     }
 
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity victim, LivingEntity attacker) {
-        boolean operated = canOperate(stack);
         boolean result = super.hurtEnemy(stack, victim, attacker);
-        if (operated && !attacker.level().isClientSide) {
+        if (!attacker.level().isClientSide) {
             if (attacker instanceof Player player) {
                 hurtAbilityTool(stack, player);
             } else {

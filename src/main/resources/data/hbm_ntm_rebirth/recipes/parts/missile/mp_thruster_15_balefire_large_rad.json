@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["CCC", "CTC", "CCC"],
+  "key": { "C": { "tag": "forge:cast_plates/copper" }, "T": { "item": "hbm_ntm_rebirth:mp_thruster_15_balefire_large" } },
+  "result": { "item": "hbm_ntm_rebirth:mp_thruster_15_balefire_large_rad" }
+}

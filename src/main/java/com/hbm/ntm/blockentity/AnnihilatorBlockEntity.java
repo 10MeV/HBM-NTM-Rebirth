@@ -324,6 +324,11 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        return true;
+    }
+
+    @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
         return type != null && type != HbmFluids.NONE && type == tank.getTankType();
     }

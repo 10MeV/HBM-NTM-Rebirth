@@ -57,6 +57,20 @@ public class EnvSuitArmorItem extends FsbPoweredArmorItem {
         }
     }
 
+    @Override
+    public void tickClientEquippedArmor(ItemStack stack, Player player) {
+        super.tickClientEquippedArmor(stack, player);
+        if (getType() != Type.CHESTPLATE || !hasFullSet(player) || !player.isInWater()) {
+            return;
+        }
+
+        // ArmorEnvsuit#onArmorTick applied this motion on both sides; the server remains authoritative,
+        // while this preserves the original local movement prediction.
+        double thrust = 0.1D * player.zza;
+        player.setDeltaMovement(player.getDeltaMovement().add(player.getLookAngle().scale(thrust)));
+        player.hasImpulse = true;
+    }
+
     private static boolean canRemoveEnvNightVision(Player player) {
         ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
         ItemStack helmetMod = ArmorModHandler.pryMod(helmet, ArmorModHandler.helmet_only);

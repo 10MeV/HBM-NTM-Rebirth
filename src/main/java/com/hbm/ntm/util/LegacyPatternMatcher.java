@@ -117,6 +117,13 @@ public class LegacyPatternMatcher {
         return slot >= 0 && slot < modes.length ? modes[slot] : null;
     }
 
+    /** Restores a synchronized or persisted legacy mode without bypassing this matcher. */
+    public void setMode(int slot, String mode) {
+        if (slot >= 0 && slot < modes.length) {
+            modes[slot] = mode;
+        }
+    }
+
     public int getModeIndex(ItemStack pattern, int slot) {
         String mode = getMode(slot);
         if (mode == null || pattern.isEmpty()) {

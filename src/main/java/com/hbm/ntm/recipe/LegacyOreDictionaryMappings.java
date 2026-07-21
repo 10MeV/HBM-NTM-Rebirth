@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -156,6 +157,19 @@ public final class LegacyOreDictionaryMappings {
 
     public static ResourceLocation itemTagId(String legacyName) {
         return resolve(legacyName).tagId();
+    }
+
+    /**
+     * Modern tag equivalent of the legacy satellite scanner's {@code ore*}
+     * OreDictionary-name fallback. The root {@code forge:ores} tag alone is
+     * insufficient because a compatible datapack may only publish a material
+     * subtag such as {@code forge:ores/foo}.
+     */
+    public static boolean isAnyLegacyOre(ItemStack stack) {
+        return stack != null && !stack.isEmpty() && stack.getTags()
+                .map(TagKey::location)
+                .anyMatch(tag -> FORGE.equals(tag.getNamespace())
+                        && ("ores".equals(tag.getPath()) || tag.getPath().startsWith("ores/")));
     }
 
     public static Mapping resolve(String legacyName) {

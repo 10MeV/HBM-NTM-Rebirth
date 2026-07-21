@@ -29,7 +29,7 @@ public class BedrockOreDepositRenderer implements BlockEntityRenderer<BedrockOre
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override

@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:tag_output_shapeless",
+  "category": "misc",
+  "ingredient": {
+    "item": "hbm_ntm_rebirth:pellet_rtg_depleted_nickel"
+  },
+  "output_tag": "forge:ingots/nickel",
+  "count": 2
+}

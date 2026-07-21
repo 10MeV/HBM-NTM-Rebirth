@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:crafting_shaped", "category": "misc", "pattern": ["ICI", "CTC", "ICI"],
+  "key": { "C": { "tag": "forge:plates/steel" }, "I": { "tag": "forge:plates/iron" }, "T": { "item": "hbm_ntm_rebirth:mp_fuselage_15_kerosene" } },
+  "result": { "item": "hbm_ntm_rebirth:mp_fuselage_15_kerosene_metal" }
+}

@@ -3,9 +3,6 @@ package com.hbm.ntm.bullet;
 public enum BulletBehaviorTag {
     CHLOROPHYTE_HOMING,
     PENETRATION_HOMING_RESET,
-    MASKMAN_ORB_BOLT_VOLLEY,
-    UFO_HOMING,
-    UFO_BLAST,
     ARTILLERY_RADAR_TARGET,
     STANDARD_RICOCHET,
     STANDARD_ENTITY_HIT,

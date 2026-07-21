@@ -317,6 +317,12 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
     }
 
     private boolean shouldRefreshEnergyPortSubscription(Level level, boolean receiverActive) {
+        // TileEntityICFController calls trySubscribe for every assembled port
+        // face each server tick. Its fixed port shape must not turn that into a
+        // 20-tick retry after a same-position cable replacement.
+        if (receiverActive) {
+            return true;
+        }
         int portSignature = energyPortSignature(getEnergyPorts());
         return energySubscriptionDirty
                 || energyReceiverSubscribed != receiverActive

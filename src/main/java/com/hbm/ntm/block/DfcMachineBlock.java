@@ -55,6 +55,10 @@ public class DfcMachineBlock extends DirectionalBlock implements EntityBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
+        if (kind == Kind.CORE) {
+            // CoreCore returned -1 in 1.7.10: its complete visual is owned by RenderCore.
+            return RenderShape.ENTITYBLOCK_ANIMATED;
+        }
         return usesChunkBakedStaticModel()
                 ? LegacyMachineRenderShapes.chunkBakedStaticOrEntity()
                 : super.getRenderShape(state);

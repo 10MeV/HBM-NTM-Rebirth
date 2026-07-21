@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyLanternBlock;
+import com.hbm.ntm.block.LanternBehemothBlock;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -38,7 +39,8 @@ public class LegacyLanternItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.pushPose();
         applyDisplay(displayContext, poseStack);
-        MODEL.renderOnlyInCallOrder(ObjTrinketModels.LANTERN_TEXTURE, poseStack, buffer,
+        MODEL.renderOnlyInCallOrder(blockItem.getBlock() instanceof LanternBehemothBlock
+                        ? ObjTrinketModels.LANTERN_RUSTY_TEXTURE : ObjTrinketModels.LANTERN_TEXTURE, poseStack, buffer,
                 packedLight, packedOverlay, LANTERN);
 
         LegacyTileRenderPlans.LanternLightPlan lightPlan =

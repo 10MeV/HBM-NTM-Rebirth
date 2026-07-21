@@ -29,3 +29,27 @@ mandatory=false
 versionRange="[15.20.0,)"
 ordering="AFTER"
 side="BOTH"
+
+# The performance stack is intentionally optional. HBM's unified OBJ backend
+# preserves the source-backed CPU fallback, while these mods accelerate the
+# normal Forge client/runtime without becoming a server or packaging requirement.
+[[dependencies."${mod_id}"]]
+modId="embeddium"
+mandatory=false
+versionRange="[0.3.31,)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies."${mod_id}"]]
+modId="modernfix"
+mandatory=false
+versionRange="[5.27.63,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies."${mod_id}"]]
+modId="ferritecore"
+mandatory=false
+versionRange="[6.0.1,)"
+ordering="NONE"
+side="BOTH"

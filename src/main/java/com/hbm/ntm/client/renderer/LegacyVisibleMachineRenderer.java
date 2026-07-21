@@ -83,6 +83,7 @@ import com.hbm.ntm.energy.HbmEnergyConnector;
 import com.hbm.ntm.item.LaserWavelength;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.util.BobMathUtil;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.Minecraft;
@@ -329,7 +330,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 || !BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)) {
             return false;
         }
-        return !rendersEmptyDynamicProfile(blockEntity, state);
+        return !rendersEmptyDynamicProfile(blockEntity, state)
+                && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
     @Override
@@ -346,8 +348,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             return;
         }
         AABB renderBounds = blockEntity.getRenderBoundingBox();
-        double maxDistanceSq = (double) getViewDistance() * (double) getViewDistance();
-        if (!HbmRenderFrameCulling.shouldRender(blockEntity, renderBounds, maxDistanceSq)) {
+        if (!HbmRenderFrameCulling.shouldRender(blockEntity, renderBounds,
+                HbmModelRenderDistances.SQUARED_BLOCKS)) {
             return;
         }
 

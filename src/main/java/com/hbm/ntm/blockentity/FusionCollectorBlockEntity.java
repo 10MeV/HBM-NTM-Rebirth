@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
-import com.hbm.ntm.fusion.FusionPowerReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.uninos.networkproviders.PlasmaNetwork;
 import com.hbm.ntm.uninos.networkproviders.PlasmaNode;
@@ -14,7 +13,13 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
-public class FusionCollectorBlockEntity extends BlockEntity implements FusionPowerReceiver {
+/**
+ * Legacy {@code TileEntityFusionCollector} is a Plasma-network marker only:
+ * it registers itself as a receiver so a connected Torus can count collector
+ * ports, but it does not implement {@code IFusionPowerReceiver}.  In
+ * particular, it must not enter the Torus' fusion-power distribution loop.
+ */
+public class FusionCollectorBlockEntity extends BlockEntity {
     private PlasmaNode plasmaNode;
 
     public FusionCollectorBlockEntity(BlockPos pos, BlockState state) {
@@ -23,15 +28,6 @@ public class FusionCollectorBlockEntity extends BlockEntity implements FusionPow
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionCollectorBlockEntity collector) {
         collector.ensureNode(level);
-    }
-
-    @Override
-    public boolean receivesFusionPower() {
-        return false;
-    }
-
-    @Override
-    public void receiveFusionPower(long fusionPower, double neutronPower, float r, float g, float b) {
     }
 
     @Override
@@ -47,13 +43,12 @@ public class FusionCollectorBlockEntity extends BlockEntity implements FusionPow
 
     @Override
     public void onChunkUnloaded() {
-        destroyNode();
         super.onChunkUnloaded();
     }
 
     private void destroyNode() {
         if (level != null && !level.isClientSide && plasmaNode != null) {
-            PlasmaNodespace.destroyNode(level, plasmaNode.getPos());
+            PlasmaNodespace.destroyNode(level, plasmaNode);
         }
         plasmaNode = null;
     }

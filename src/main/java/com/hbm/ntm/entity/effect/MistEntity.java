@@ -239,6 +239,11 @@ public class MistEntity extends Entity {
     }
 
     @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
+    }
+
+    @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         setFluidType(HbmFluids.fromId(tag.getInt("type")));
         setArea(tag.getFloat("width"), tag.getFloat("height"));

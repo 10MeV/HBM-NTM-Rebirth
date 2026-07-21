@@ -2,6 +2,7 @@ package com.hbm.ntm.entity.effect;
 
 import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -38,6 +39,11 @@ public abstract class LegacyVentCloudEntity extends Entity {
         this(type, level, minimumAge, ageVariance);
         setPos(x, y, z);
         setDeltaMovement(motionX, motionY, motionZ);
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     @Override

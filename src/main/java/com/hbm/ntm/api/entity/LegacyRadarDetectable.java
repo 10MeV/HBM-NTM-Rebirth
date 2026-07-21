@@ -23,14 +23,19 @@ public interface LegacyRadarDetectable {
         PLAYER("Player"),
         ARTILLERY("Artillery Shell");
 
-        private final String radarName;
+        /**
+         * Legacy {@code IRadarDetectable.RadarTargetType} exposed this display value as a public field.
+         * Keep that source-facing contract so old callers can use {@code type.name} without a second
+         * compatibility enum.
+         */
+        public String name;
 
-        RadarTargetType(String radarName) {
-            this.radarName = radarName;
+        RadarTargetType(String name) {
+            this.name = name;
         }
 
         public String radarName() {
-            return radarName;
+            return name;
         }
     }
 }

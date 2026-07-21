@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    " C ",
+    "MWM"
+  ],
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    "M": {
+      "item": "hbm_ntm_rebirth:motor"
+    },
+    "W": {
+      "tag": "forge:dense_wires/gold"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:gun_pa_melee"
+  }
+}

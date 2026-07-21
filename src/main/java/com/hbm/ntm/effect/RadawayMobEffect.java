@@ -12,7 +12,9 @@ public class RadawayMobEffect extends MobEffect {
 
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
-        RadiationUtil.applyRadaway(entity, amplifier + 1.0F);
+        if (!entity.level().isClientSide()) {
+            RadiationUtil.applyRadaway(entity, amplifier + 1.0F);
+        }
     }
 
     @Override

@@ -8,7 +8,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import com.hbm.ntm.util.BufferUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -129,7 +128,8 @@ public record RadarEntry(String name, int blipLevel, BlockPos pos, ResourceLocat
     }
 
     public void writeLegacyWire(FriendlyByteBuf buffer) {
-        BufferUtil.writeString(buffer, name);
+        // 1.7.10 ByteBufUtils.writeUTF8String uses a VarInt-prefixed UTF-8 payload.
+        buffer.writeUtf(name);
         buffer.writeShort(blipLevel);
         buffer.writeInt(pos.getX());
         buffer.writeInt(pos.getY());
@@ -140,7 +140,7 @@ public record RadarEntry(String name, int blipLevel, BlockPos pos, ResourceLocat
 
     public static RadarEntry readLegacyWire(FriendlyByteBuf buffer) {
         return new RadarEntry(
-                BufferUtil.readString(buffer),
+                buffer.readUtf(),
                 buffer.readShort(),
                 new BlockPos(buffer.readInt(), buffer.readInt(), buffer.readInt()),
                 dimensionFromLegacyId(buffer.readShort()),

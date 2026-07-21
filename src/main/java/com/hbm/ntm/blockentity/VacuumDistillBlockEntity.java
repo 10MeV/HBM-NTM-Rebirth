@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidRecipeIO;
 import com.hbm.ntm.fluid.HbmFluidStack;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -113,7 +114,10 @@ public class VacuumDistillBlockEntity extends LegacyRemoteFluidMachineBlockEntit
 
     @Override
     protected Iterable<FluidPort> getFluidPorts() {
-        return fixedSurroundingPorts();
+        // TileEntityMachineVacuumDistill#getConPos has two declared ports per
+        // side.  The generic perimeter helper adds side midpoints (twelve in
+        // total), which is not the old eight-port Fluid Mk2 topology.
+        return HbmFluidPortLayouts.fluidTank();
     }
 
     @Override

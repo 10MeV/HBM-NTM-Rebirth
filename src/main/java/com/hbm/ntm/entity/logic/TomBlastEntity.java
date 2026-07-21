@@ -24,7 +24,6 @@ public class TomBlastEntity extends ExplosionChunkLoadingEntity {
 
     public TomBlastEntity(EntityType<? extends TomBlastEntity> type, Level level) {
         super(type, level);
-        noPhysics = true;
     }
 
     public TomBlastEntity(Level level, int destructionRange) {
@@ -46,7 +45,7 @@ public class TomBlastEntity extends ExplosionChunkLoadingEntity {
             return;
         }
 
-        if (expiredFromSave || destructionRange <= 0) {
+        if (expiredFromSave) {
             discard();
             return;
         }
@@ -59,24 +58,30 @@ public class TomBlastEntity extends ExplosionChunkLoadingEntity {
 
         speed += 1;
         boolean complete = false;
-        for (int i = 0; i < speed && !complete; i++) {
-            loadChunkForCurrentColumn();
+        for (int i = 0; i < speed; i++) {
+            // The legacy loop continues after setDead(), but this modern port
+            // also owns a movable Forge chunk ticket.  Once discard() releases
+            // that ticket, do not recreate a work-column ticket for remaining
+            // same-tick legacy updates.
+            if (!isRemoved()) {
+                loadChunkForCurrentColumn();
+            }
             complete = explosion.update();
-        }
-
-        if (complete) {
-            markTomImpact();
-            discard();
-            return;
+            if (complete) {
+                markTomImpact();
+                discard();
+            }
         }
 
         if (random.nextInt(5) == 0) {
             LegacySoundPlayer.playSoundEffect(level(), getX(), getY(), getZ(), "random.explode",
                     SoundSource.BLOCKS, 10000.0F, 0.8F + random.nextFloat() * 0.2F);
         }
-        level().playSound(null, getX(), getY(), getZ(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER,
-                10000.0F, 0.8F + random.nextFloat() * 0.2F);
-        ExplosionNukeGeneric.dealDamage(level(), getX(), getY(), getZ(), destructionRange * 2.0D);
+        if (!complete) {
+            level().playSound(null, getX(), getY(), getZ(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER,
+                    10000.0F, 0.8F + random.nextFloat() * 0.2F);
+            ExplosionNukeGeneric.dealDamage(level(), getX(), getY(), getZ(), destructionRange * 2.0D);
+        }
         age++;
     }
 
@@ -112,7 +117,7 @@ public class TomBlastEntity extends ExplosionChunkLoadingEntity {
         readChunkLoader(tag);
         expiredFromSave = shouldExpireFromSave(tag);
 
-        if (!expiredFromSave && destructionRange > 0) {
+        if (!expiredFromSave) {
             initializeExplosion(false);
             explosion.readFromNbt(tag, "exp_");
         }

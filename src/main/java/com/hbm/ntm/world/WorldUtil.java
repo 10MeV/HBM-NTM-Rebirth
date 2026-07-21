@@ -1,20 +1,27 @@
 package com.hbm.ntm.world;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 
 import java.util.ArrayList;
@@ -90,6 +97,82 @@ public final class WorldUtil {
         return provideChunk(level, blockToChunkCoord(pos.getX()), blockToChunkCoord(pos.getZ()));
     }
 
+    /**
+     * Modernized carrier for the legacy biome-mutation surface.
+     *
+     * <p>Minecraft 1.20.1 stores biome data in 4x4x4 quart cells rather than
+     * 1.7.10's one 16x16 byte/short column. The user-approved compatibility
+     * contract is therefore to replace the target X/Z quart in every section
+     * of the containing chunk, then use {@link #syncBiomeChange(ServerLevel,
+     * int, int)} for native client synchronization. This deliberately has no
+     * EIDS, BiomeGenBase, byte-array or short-array compatibility carrier.</p>
+     *
+     * @return {@code true} only when at least one stored quart biome changed
+     */
+    public static boolean setBiome(ServerLevel level, int blockX, int blockZ, Holder<Biome> biome) {
+        Objects.requireNonNull(level, "level");
+        Objects.requireNonNull(biome, "biome");
+
+        LevelChunk chunk = level.getChunk(blockToChunkCoord(blockX), blockToChunkCoord(blockZ));
+        int quartX = QuartPos.fromBlock(blockX);
+        int quartZ = QuartPos.fromBlock(blockZ);
+        int baseQuartX = QuartPos.fromBlock(chunk.getPos().getMinBlockX());
+        int baseQuartZ = QuartPos.fromBlock(chunk.getPos().getMinBlockZ());
+        boolean changed = false;
+
+        for (int sectionIndex = 0; sectionIndex < chunk.getSections().length; sectionIndex++) {
+            LevelChunkSection section = chunk.getSection(sectionIndex);
+            boolean sectionChanged = false;
+            for (int quartY = 0; quartY < 4; quartY++) {
+                if (!section.getNoiseBiome(quartX & 3, quartY, quartZ & 3).equals(biome)) {
+                    sectionChanged = true;
+                    break;
+                }
+            }
+            if (!sectionChanged) {
+                continue;
+            }
+
+            int baseQuartY = QuartPos.fromSection(chunk.getSectionYFromSectionIndex(sectionIndex));
+            section.fillBiomesFromNoise((noiseX, noiseY, noiseZ, sampler) -> {
+                if (noiseX == quartX && noiseZ == quartZ) {
+                    return biome;
+                }
+                return section.getNoiseBiome(noiseX & 3, noiseY & 3, noiseZ & 3);
+            }, null, baseQuartX, baseQuartY, baseQuartZ);
+            changed = true;
+        }
+
+        if (changed) {
+            chunk.setUnsaved(true);
+        }
+        return changed;
+    }
+
+    /** Resolves a registered biome key before applying {@link #setBiome(ServerLevel, int, int, Holder)}. */
+    public static boolean setBiome(ServerLevel level, int blockX, int blockZ, ResourceKey<Biome> biomeKey) {
+        Objects.requireNonNull(biomeKey, "biomeKey");
+        Registry<Biome> registry = level.registryAccess().registryOrThrow(Registries.BIOME);
+        return registry.getHolder(biomeKey).map(biome -> setBiome(level, blockX, blockZ, biome)).orElse(false);
+    }
+
+    /** Re-sends the containing chunk's native biome container to its tracking clients. */
+    public static void syncBiomeChange(ServerLevel level, int blockX, int blockZ) {
+        Objects.requireNonNull(level, "level");
+        int chunkX = blockToChunkCoord(blockX);
+        int chunkZ = blockToChunkCoord(blockZ);
+        level.getChunkSource().chunkMap.resendBiomesForChunks(List.of(level.getChunk(chunkX, chunkZ)));
+    }
+
+    /**
+     * Named compatibility entry for the former single-block packet. Native
+     * 1.20.1 synchronization is chunk-granular, so it intentionally delegates
+     * to {@link #syncBiomeChange(ServerLevel, int, int)}.
+     */
+    public static void syncBiomeChangeBlock(ServerLevel level, int blockX, int blockZ) {
+        syncBiomeChange(level, blockX, blockZ);
+    }
+
     public static boolean isChunkLoaded(Level level, int chunkX, int chunkZ) {
         return level != null && level.hasChunk(chunkX, chunkZ);
     }
@@ -108,10 +191,10 @@ public final class WorldUtil {
                 || x >= LEGACY_WORLD_XZ_LIMIT || z >= LEGACY_WORLD_XZ_LIMIT) {
             return LEGACY_OUT_OF_BOUNDS_HEIGHT;
         }
-        if (!isChunkLoaded(level, blockToChunkCoord(x), blockToChunkCoord(z))) {
-            return 0;
-        }
-
+        // World#getHeightValue in 1.7.10 obtains the target chunk through the
+        // world provider before consulting its height map.  Do not turn an
+        // unloaded-chunk observation into the unrelated legacy value zero:
+        // callers such as OilSpot must still scan the actual coordinate.
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, topBlockY(level), z);
         for (int y = topBlockY(level); y >= bottomBlockY(level); y--) {
             cursor.setY(y);

@@ -1,6 +1,8 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.PoweredRedCableBlockEntity;
+import com.hbm.ntm.blockentity.HbmEnergyNodeBlockEntity;
+import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -11,6 +13,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -45,6 +49,19 @@ public class PoweredRedCableBlock extends HbmEnergyNodeBlock {
         return kind == Kind.SWITCH
                 ? PoweredRedCableBlockEntity.switchEntity(pos, state)
                 : PoweredRedCableBlockEntity.detectorEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
+            BlockEntityType<T> type) {
+        if (level.isClientSide || (type != ModBlockEntities.CABLE_SWITCH.get()
+                && type != ModBlockEntities.CABLE_DETECTOR.get())) {
+            return null;
+        }
+        return (tickLevel, tickPos, tickState, blockEntity) ->
+                HbmEnergyNodeBlockEntity.serverTick(tickLevel, tickPos, tickState,
+                        (PoweredRedCableBlockEntity) blockEntity);
     }
 
     @Override

@@ -258,6 +258,12 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
     }
 
     @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsEveryTick() {
+        // TileEntityMachineLiquefactor#updateEntity sends its non-empty output on every legacy tick.
+        return true;
+    }
+
+    @Override
     protected Iterable<FluidPort> getFluidPorts() {
         return FLUID_PORTS;
     }
@@ -271,6 +277,11 @@ public class LiquefactorBlockEntity extends HbmEnergyAndFluidBlockEntity impleme
                 EnergyPort.of(-2, 1, 0, Direction.WEST),
                 EnergyPort.of(0, 1, 2, Direction.SOUTH),
                 EnergyPort.of(0, 1, -2, Direction.NORTH));
+    }
+
+    @Override
+    protected boolean shouldRefreshEnergyPortSubscriptionsEveryTick() {
+        return true;
     }
 
     @Override

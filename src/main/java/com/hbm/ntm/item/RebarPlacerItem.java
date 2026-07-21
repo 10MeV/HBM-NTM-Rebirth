@@ -109,7 +109,11 @@ public class RebarPlacerItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        Block targetConcrete = ((BlockItem) concreteStack.getItem()).getBlock();
+        BlockItem concreteItem = (BlockItem) concreteStack.getItem();
+        Block targetConcrete = concreteItem.getBlock();
+        BlockState targetConcreteState = concreteItem instanceof LegacyStateBlockItem stateItem
+                ? stateItem.stateForStack(concreteStack)
+                : targetConcrete.defaultBlockState();
         BlockPos min = new BlockPos(
                 Math.min(first[0], target.getX()),
                 Math.min(first[1], target.getY()),
@@ -137,7 +141,7 @@ public class RebarPlacerItem extends Item {
                         level.setBlock(cursor, ModBlocks.legacyBlock("rebar").get().defaultBlockState(),
                                 Block.UPDATE_ALL);
                         if (level.getBlockEntity(cursor) instanceof RebarBlockEntity rebar) {
-                            rebar.setup(targetConcrete.defaultBlockState());
+                            rebar.setup(targetConcreteState);
                         }
                         placed++;
                         rebarLeft--;
@@ -192,7 +196,13 @@ public class RebarPlacerItem extends Item {
     private static void addConcreteStack(List<ItemStack> stacks, String name) {
         RegistryObject<? extends Block> block = ModBlocks.legacyBlock(name);
         if (block != null && block.isPresent()) {
-            stacks.add(new ItemStack(block.get()));
+            if (block.get().asItem() instanceof LegacyStateBlockItem stateItem) {
+                for (int variant = 0; variant < stateItem.getVariants(); variant++) {
+                    stacks.add(LegacyStateBlockItem.createStack(stateItem, variant));
+                }
+            } else {
+                stacks.add(new ItemStack(block.get()));
+            }
         }
     }
 

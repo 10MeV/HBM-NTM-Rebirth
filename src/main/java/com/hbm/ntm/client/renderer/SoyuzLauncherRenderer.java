@@ -5,6 +5,7 @@ import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SoyuzLauncherBlockEntity;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.hbm.ntm.client.obj.ObjSoyuzModels;
+import com.hbm.ntm.satellite.SoyuzRocketItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -47,7 +48,7 @@ public class SoyuzLauncherRenderer implements BlockEntityRenderer<SoyuzLauncherB
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             renderLauncher(blockEntity.getTowerRotation(partialTick), poseStack, buffer, modelLight,
                     LegacyMachineRenderShapes.renderChunkBakedStaticsInBer());
-            if (blockEntity.getRocketType() >= 0) {
+            if (SoyuzRocketItem.isValidSkin(blockEntity.getRocketType())) {
                 poseStack.translate(0.0D, 5.0D, 0.0D);
                 ObjSoyuzModels.renderSoyuz(ObjSoyuzModels.textureSetForSkin(blockEntity.getRocketType()), poseStack,
                         buffer, modelLight, OverlayTexture.NO_OVERLAY);

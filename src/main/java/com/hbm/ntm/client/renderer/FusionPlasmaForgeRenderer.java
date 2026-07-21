@@ -40,7 +40,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.LEGACY_65536_SQUARED;
+        return LegacyBlockEntityRenderDistances.machine();
     }
 
     @Override
@@ -71,7 +71,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
             renderLegacyActivePlasma(blockEntity, poseStack, buffer, packedOverlay);
         }
         double iconDistanceSq = LegacyRecipeIconRenderer.playerDistanceSq(blockEntity);
-        if (LegacyRecipeIconRenderer.shouldRenderWithinDistance(iconDistanceSq, 50.0D)) {
+        if (LegacyRecipeIconRenderer.shouldRenderAtDistance(iconDistanceSq)) {
             GenericMachineRecipe recipe = blockEntity.getSelectedRecipeDefinition();
             if (LegacyRecipeIconRenderer.shouldRenderAtDistance(iconDistanceSq)) {
                 LegacyRecipeIconRenderer.renderPlasmaForgeIcon(recipe, blockEntity.getLevel(), poseStack, buffer,

@@ -14,6 +14,7 @@ import com.hbm.ntm.item.FoundryMoldItem;
 import com.hbm.ntm.item.FoundryMoldItem.Mold;
 import com.hbm.ntm.item.FoundryScrapsItem;
 import com.hbm.ntm.compat.CompatRecipeRegistry;
+import com.hbm.ntm.config.RtgConfig;
 import com.hbm.ntm.recipe.LegacySerializableRecipeHandlers;
 import com.hbm.ntm.recipe.BoilerRecipeRuntime;
 import com.hbm.ntm.recipe.PWRFuelRuntime;
@@ -72,6 +73,7 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
             "plsm.icfstructural",
             "plsm.icfcore",
             "plsm.icfpress",
+            "plsm.gerald",
             "plsm.dfccore",
             "plsm.dfcemitter",
             "plsm.dfcreceiver",
@@ -198,7 +200,8 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
             CountRecipeFamily.displayOnly("tooling", "handler/nei/ToolingHandler.java", 4,
                     "display-only structure tool conversion list from BlockToolConversion; no 1.7.10 SerializableRecipe JSON surface"),
             CountRecipeFamily.displayOnly("construction", "handler/nei/ConstructionHandler.java", 6,
-                    "display-only multiblock construction helper list for WATZ, launcher, Soyuz, ICF, and fusion torus rows; no 1.7.10 SerializableRecipe JSON surface"),
+                    "display-only multiblock construction helper list; Soyuz source order 3 is excluded as a frozen recipe-viewer integration",
+                    Map.of(3, "Soyuz launcher material checklist is a frozen NEI/JEI integration; real structure and recipe gameplay remains active")),
             CountRecipeFamily.displayOnly("ashpit", "handler/nei/AshpitHandler.java", 9,
                     "NEIUniversalHandler display-only ash byproduct table built from oven/chimney item and smoke-fluid families; no 1.7.10 SerializableRecipe JSON surface"),
             CountRecipeFamily.displayOnly("sawmill", "handler/nei/SawmillHandler.java", 4,
@@ -210,7 +213,7 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
             CountRecipeFamily.displayOnly("rbmk_waste_decay", "handler/nei/RBMKWasteDecayHandler.java", 26,
                     "NEIUniversalHandler display-only nuclear waste short/long decay table; no 1.7.10 SerializableRecipe JSON surface"),
             CountRecipeFamily.displayOnly("satellite_cargo", "handler/nei/SatelliteHandler.java", 2,
-                    "display-only satellite miner and lunar miner cargo-pool rows; old ItemPool live/config lifecycle is not restored"),
+                    "archival-only satellite miner and lunar miner cargo-pool rows; recipe-viewer integration is excluded, while runtime cargo remains in the item-pool/Dock path"),
             CountRecipeFamily.special("rbmk_fuel_disassembly", "crafting/handlers/RBMKFuelCraftingHandler.java",
                     "rbmk/rbmk_fuel_disassembly",
                     "1.7.10 IRecipe special crafting handler materialized as a datapack CustomRecipe JSON"),
@@ -240,9 +243,10 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
                     () -> BoilerRecipeRuntime.displayRecipes().size(),
                     "dynamic NEI/list surface generated from Fluids.getInNiceOrder() heatable traits with positive BOILER efficiency"),
             new DynamicDisplaySurface("rtg", "handler/nei/RTGRecipeHandler.java", "ntmRTG",
-                    "RtgRecipeRuntime.displayRecipes()",
-                    () -> RtgRecipeRuntime.displayRecipes().size(),
-                    "dynamic NEI/list surface generated from ItemRTGPellet.getRecipeMap() / accepted RTG pellet specs"),
+                    "RtgConfig.doRtgsDecay() ? RtgRecipeRuntime.displayRecipes() : none",
+                    () -> RtgConfig.doRtgsDecay() ? RtgRecipeRuntime.displayRecipes().size() : 0,
+                    "dynamic NEI/list surface generated from ItemRTGPellet.getRecipeMap() / accepted RTG pellet specs; "
+                            + "the legacy handler and modern category are absent while RTG decay is disabled"),
             new DynamicDisplaySurface("pwr", "handler/nei/PWRRecipeHandler.java", "ntmPWR",
                     "PWRFuelRuntime.displayFuels()",
                     () -> PWRFuelRuntime.displayFuels().size(),
@@ -273,10 +277,22 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
                     "main/NEIConfig.java", "AnvilConstructionRecipeTransferHandler + AnvilScreen.focusRecipe(...)",
                     "modern_transfer_focus_bridge",
                     "1.7.10 registers this outside NEIRegistry#listAllHandlers(); selecting an AnvilRecipeHandler row in GUIAnvil focuses that construction recipe without crafting it"),
+            new NeiRegistrationSurface("nei_machine_gui_recipe_clicks", "main/NEIConfig.java",
+                    "main/NEIRegistry.java", "LegacyJeiGuiInteractions + HbmJeiPlugin#registerGuiHandlers",
+                    "modern_gui_click_bridge",
+                    "modern JEI restores the legacy GUI recipe entry points for the 22 migrated handler classes and 23 "
+                            + "category endpoints (Anvil exposes construction and smithing together) that "
+                            + "bind guiGui/transferRectsGui; current screen process bounds replace obsolete 1.7.10 texture coordinates, "
+                            + "and shared remote-fluid/processing screens expose only the category selected by their "
+                            + "COKER profile or machine kind"),
             new NeiRegistrationSurface("custom_machine_nei", "handler/nei/CustomMachineHandler.java",
                     "main/NEIConfig.java", "",
                     "excluded",
                     "registered per CustomMachineConfigJSON.niceList in 1.7.10, but the whole custom-machine feature family is hard-excluded by project rule"),
+            new NeiRegistrationSurface("nei_config_visibility", "main/NEIConfig.java", "main/NEIConfig.java",
+                    "LegacyJeiVisibility + HbmJeiPlugin#onRuntimeAvailable",
+                    "modern_visibility_bridge",
+                    "modern JEI removes the old hidden-item set at runtime and applies NEI_HIDE_SECRETS to secret guns/ammo/items and generic-machine recipes"),
             new NeiRegistrationSurface("book_magic_nei", "handler/nei/BookRecipeHandler.java",
                     "main/NEIRegistry.java",
                     "magic recipe family excluded by MagicRecipes.java / frozen book_of_ GUI carrier",
@@ -392,10 +408,10 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
                     "DeuteriumTowerRecipeCategory",
                     "old display-only deuterium water conversion row is tracked by the deuterium_tower display family"),
             registeredHandler("ElectrolyserFluidHandler.java", "electrolyzer_fluid",
-                    "ElectrolyserRecipeCategory fluid / ModRecipes.ELECTROLYZER_FLUID",
+                    "ElectrolyserRecipeCategory fluid / HbmJeiPlugin.ELECTROLYSER_FLUID / ModRecipes.ELECTROLYZER_FLUID",
                     "old universal fluid electrolysis handler is covered by the electrolyzer_fluid datapack recipe family"),
             registeredHandler("ElectrolyserMetalHandler.java", "electrolyzer_metal",
-                    "ElectrolyserRecipeCategory metal / ModRecipes.ELECTROLYZER_METAL",
+                    "ElectrolyserRecipeCategory metal / HbmJeiPlugin.ELECTROLYSER_METAL / ModRecipes.ELECTROLYZER_METAL",
                     "old universal metal electrolysis handler is covered by the electrolyzer_metal datapack recipe family"),
             registeredHandler("ExposureChamberHandler.java", "exposure_chamber",
                     "ExposureChamberRecipeCategory / ModRecipes.EXPOSURE_CHAMBER",
@@ -477,10 +493,9 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
                     "old universal rotary furnace handler is covered by the rotary_furnace datapack recipe family"),
             registeredDynamicHandler("RTGRecipeHandler.java", "rtg",
                     "RtgFuelRecipeCategory / RtgRecipeRuntime.displayRecipes()",
-                    "old conditional RTG NEI handler is dynamic display data tracked under dynamic_display_surfaces"),
-            registeredDisplayHandler("SatelliteHandler.java", "satellite_cargo",
-                    "SatelliteCargoRecipeCategory",
-                    "old satellite cargo display rows are tracked by the satellite_cargo display family"),
+                    "old conditional RTG NEI handler is registered only while RTG decay is enabled and is tracked under dynamic_display_surfaces"),
+            registeredExclusionHandler("SatelliteHandler.java", "satellite_cargo", "",
+                    "old satellite cargo display rows are a frozen recipe-viewer integration; runtime cargo remains in the item-pool/Dock path"),
             registeredDisplayHandler("SawmillHandler.java", "sawmill",
                     "SawmillRecipeCategory",
                     "old sawmill display rows are tracked by the sawmill display family"),
@@ -1450,6 +1465,13 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
                 String legacyFormatNote) {
             return new CountRecipeFamily(machine, legacyFileName, null, null, legacyDefaultCount,
                     legacyFormatNote, Map.of(), legacyDefaultCount, List.of());
+        }
+
+        private static CountRecipeFamily displayOnly(String machine, String legacyFileName, int legacyDefaultCount,
+                String legacyFormatNote, Map<Integer, String> excludedSourceOrders) {
+            int activeCount = Math.max(0, legacyDefaultCount - excludedSourceOrders.size());
+            return new CountRecipeFamily(machine, legacyFileName, null, null, legacyDefaultCount,
+                    legacyFormatNote, Map.copyOf(excludedSourceOrders), activeCount, List.of());
         }
 
         private static CountRecipeFamily special(String machine, String legacyFileName, String materializedRecipePath,

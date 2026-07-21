@@ -252,6 +252,13 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityMachineEPress#updateConnections retries every adjacent
+        // Energy Mk2 receiver from its every-tick server update.
+        return true;
+    }
+
+    @Override
     public Component getDisplayName() {
         return Component.translatableWithFallback("container.epress", "Electric Press");
     }

@@ -66,7 +66,7 @@ public final class ObjWeaponModels {
     public static final LegacyWavefrontModel DRILL = model("drill").asVBO();
     public static final LegacyWavefrontModel N_I_4_N_I = model("n_i_4_n_i").asVBO();
     public static final LegacyWavefrontModel LANCE = model("lance");
-    public static final LegacyWavefrontModel GRENADES = model("grenades");
+    public static final LegacyWavefrontModel GRENADES = model("grenades").asVBO();
     public static final LegacyWavefrontModel BUILDING = model("building");
     public static final LegacyWavefrontModel TORPEDO = model("torpedo");
     public static final LegacyWavefrontModel TOM_MAIN = model("tom_main").asVBO();

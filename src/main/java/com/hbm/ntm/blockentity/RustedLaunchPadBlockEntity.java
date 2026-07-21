@@ -62,7 +62,7 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
                 case SLOT_RELEASED_MISSILE -> false;
                 case SLOT_CODE -> stack.is(ModItems.LAUNCH_CODE.get());
                 case SLOT_KEY -> stack.is(ModItems.LAUNCH_KEY.get());
-                case SLOT_DESIGNATOR -> stack.getItem() instanceof DesignatorItem || hasLegacyDesignatorCoords(stack);
+                case SLOT_DESIGNATOR -> stack.getItem() instanceof DesignatorItem;
                 default -> false;
             };
         }
@@ -72,7 +72,8 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> itemHandler =
+            LazyOptional.of(() -> new RustedLaunchPadExternalItemHandler(items));
 
     private boolean missileLoaded;
     private boolean redstonePowered;
@@ -142,7 +143,12 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
                 MissileEntity.Variant.DOOMSDAY_RUSTED);
         missile.configureLaunch(worldPosition.getX() + 0.5D, worldPosition.getY() + 1.0D,
                 worldPosition.getZ() + 0.5D, target.getX(), target.getZ());
-        serverLevel.addFreshEntity(missile);
+        // The legacy launch commits its state only after giving the missile to
+        // the world.  Modern ServerLevel can reject that handoff; preserve the
+        // loaded missile and launch code when it does.
+        if (!serverLevel.addFreshEntity(missile)) {
+            return false;
+        }
         LegacySoundPlayer.playSoundEffect(serverLevel, worldPosition.getX() + 0.5D, worldPosition.getY(),
                 worldPosition.getZ() + 0.5D, "hbm:weapon.missileTakeOff", SoundSource.PLAYERS, 2.0F, 1.0F);
         missileLoaded = false;
@@ -171,12 +177,7 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
     private BlockPos designatorTarget(ItemStack stack) {
         if (level != null && stack.getItem() instanceof DesignatorItem designator
                 && designator.isReady(level, stack, worldPosition)) {
-            Vec3 coords = designator.getCoords(level, stack, worldPosition);
-            return BlockPos.containing(coords.x, worldPosition.getY(), coords.z);
-        }
-        CompoundTag tag = stack.getTag();
-        if (tag != null && tag.contains("xCoord") && tag.contains("zCoord")) {
-            return new BlockPos(tag.getInt("xCoord"), worldPosition.getY(), tag.getInt("zCoord"));
+            return designator.getHorizontalTarget(level, stack, worldPosition);
         }
         return null;
     }
@@ -219,7 +220,11 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public boolean canReceiveLegacyButton(ServerPlayer player, int value, int id) {
-        return id == BUTTON_RELEASE;
+        return id == BUTTON_RELEASE
+                && player.distanceToSqr(
+                worldPosition.getX() + 0.5D,
+                worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D) <= 64.0D;
     }
 
     @Override
@@ -284,8 +289,47 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
         }
     }
 
-    private static boolean hasLegacyDesignatorCoords(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        return tag != null && tag.contains("xCoord") && tag.contains("zCoord");
+    /**
+     * {@code TileEntityLaunchPadRusted} exposed only legacy slot 0 to sided
+     * inventory queries, and its inherited sided insert/extract hooks rejected
+     * every transfer.  Code, key, and designator remain player-GUI-only.
+     */
+    private static final class RustedLaunchPadExternalItemHandler implements IItemHandler {
+        private final ItemStackHandler items;
+
+        private RustedLaunchPadExternalItemHandler(ItemStackHandler items) {
+            this.items = items;
+        }
+
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot == 0 ? items.getStackInSlot(SLOT_RELEASED_MISSILE) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot == 0 ? items.getSlotLimit(SLOT_RELEASED_MISSILE) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return false;
+        }
     }
+
 }

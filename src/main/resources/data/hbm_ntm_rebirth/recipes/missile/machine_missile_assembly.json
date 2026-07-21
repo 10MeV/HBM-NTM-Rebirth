@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "PWP",
+    "SSS",
+    "CCC"
+  ],
+  "key": {
+    "P": {
+      "item": "hbm_ntm_rebirth:pedestal_steel"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:wrench"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:steel_scaffold"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_missile_assembly"
+  }
+}

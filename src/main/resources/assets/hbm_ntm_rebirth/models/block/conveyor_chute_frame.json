@@ -1,0 +1,10 @@
+{
+  "parent": "block/block",
+  "textures": { "concrete": "hbm_ntm_rebirth:block/concrete" },
+  "elements": [
+    { "from": [0, 0, 0], "to": [4, 16, 4], "faces": { "down": { "texture": "#concrete" }, "up": { "texture": "#concrete" }, "north": { "texture": "#concrete" }, "south": { "texture": "#concrete" }, "west": { "texture": "#concrete" }, "east": { "texture": "#concrete" } } },
+    { "from": [12, 0, 0], "to": [16, 16, 4], "faces": { "down": { "texture": "#concrete" }, "up": { "texture": "#concrete" }, "north": { "texture": "#concrete" }, "south": { "texture": "#concrete" }, "west": { "texture": "#concrete" }, "east": { "texture": "#concrete" } } },
+    { "from": [0, 0, 12], "to": [4, 16, 16], "faces": { "down": { "texture": "#concrete" }, "up": { "texture": "#concrete" }, "north": { "texture": "#concrete" }, "south": { "texture": "#concrete" }, "west": { "texture": "#concrete" }, "east": { "texture": "#concrete" } } },
+    { "from": [12, 0, 12], "to": [16, 16, 16], "faces": { "down": { "texture": "#concrete" }, "up": { "texture": "#concrete" }, "north": { "texture": "#concrete" }, "south": { "texture": "#concrete" }, "west": { "texture": "#concrete" }, "east": { "texture": "#concrete" } } }
+  ]
+}

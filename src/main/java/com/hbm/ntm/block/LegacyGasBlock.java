@@ -11,7 +11,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
@@ -46,14 +45,6 @@ public abstract class LegacyGasBlock extends Block {
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
-        if (!level.isClientSide && schedulesOnNeighborUpdates()) {
-            level.scheduleTick(pos, this, 10);
-        }
-    }
-
-    @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.tick(state, level, pos, random);
         if (!tryMove(level, pos, firstDirection(level, pos, random))
@@ -83,14 +74,6 @@ public abstract class LegacyGasBlock extends Block {
         return 2;
     }
 
-    /**
-     * Most legacy gases re-check their movement after every neighbor update. Flammable gas
-     * has its own legacy ignition-only neighbor contract instead.
-     */
-    protected boolean schedulesOnNeighborUpdates() {
-        return true;
-    }
-
     protected Direction randomHorizontal(RandomSource random) {
         return Direction.Plane.HORIZONTAL.getRandomDirection(random);
     }
@@ -98,14 +81,6 @@ public abstract class LegacyGasBlock extends Block {
     @Override
     public boolean canBeReplaced(BlockState state, BlockPlaceContext context) {
         return true;
-    }
-
-    @Override
-    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
-        if (!level.isClientSide() && schedulesOnNeighborUpdates()) {
-            level.scheduleTick(pos, this, 10);
-        }
-        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override

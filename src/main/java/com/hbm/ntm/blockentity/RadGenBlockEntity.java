@@ -126,10 +126,10 @@ public class RadGenBlockEntity extends BlockEntity
     }
 
     private boolean shouldRefreshEnergyPorts(Level level, List<EnergyPort> ports) {
-        int signature = energyPortSignature(ports);
-        return energyPortSubscriptionDirty
-                || signature != lastEnergyPortSignature
-                || Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) == 0L;
+        // TileEntityMachineRadGen invokes tryProvide at its remote output on
+        // every server tick. Keep the provider visible on the first tick after
+        // a same-position conductor replacement.
+        return true;
     }
 
     private int energyPortSignature(List<EnergyPort> ports) {

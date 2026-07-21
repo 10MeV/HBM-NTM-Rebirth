@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [{ "type": "minecraft:item", "name": "hbm_ntm_rebirth:plant_flower_cd0" }],
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" },
+        { "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:plant_tall_cd2", "properties": { "half": "upper" } }
+      ]
+    }
+  ]
+}

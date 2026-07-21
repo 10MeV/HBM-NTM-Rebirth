@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "radioactive=false": { "model": "hbm_ntm_rebirth:block/ore_volcano" },
+    "radioactive=true": { "model": "hbm_ntm_rebirth:block/ore_volcano" }
+  }
+}

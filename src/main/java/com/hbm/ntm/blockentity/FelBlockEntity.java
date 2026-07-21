@@ -7,6 +7,9 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.item.LaserWavelength;
 import com.hbm.ntm.menu.FelMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.radiation.HazardType;
+import com.hbm.ntm.radiation.RadiationUtil;
+import com.hbm.ntm.radiation.RadiationUtil.ContaminationType;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
@@ -182,9 +185,15 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
                 facing.getStepX() * beamDistance, 1.0D, facing.getStepZ() * beamDistance).inflate(0.2D);
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box)) {
             switch (mode) {
-                case VISIBLE -> entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60 * 20, 0));
+                // TileEntityFEL intentionally falls through from VISIBLE into IR in 1.7.10.
+                case VISIBLE -> {
+                    entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60 * 20, 0));
+                    entity.setSecondsOnFire(10);
+                }
                 case IR, UV -> entity.setSecondsOnFire(10);
-                case GAMMA, DRX -> entity.hurt(level.damageSources().magic(), mode == LaserWavelength.DRX ? 8.0F : 4.0F);
+                case GAMMA -> RadiationUtil.contaminate(entity, HazardType.RADIATION,
+                        ContaminationType.CREATIVE, 25.0F);
+                case DRX -> RadiationUtil.applyDigammaData(entity, 0.1F);
                 default -> {
                 }
             }
@@ -252,6 +261,13 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
         Direction facing = getBlockState().getValue(HorizontalMachineBlock.FACING);
         return List.of(new HbmEnergyUtil.EnergyPort(new BlockPos(-facing.getStepX() * 5, 1,
                 -facing.getStepZ() * 5), facing.getOpposite()));
+    }
+
+    @Override
+    protected boolean isEnergyPortKeepalive() {
+        // TileEntityFEL retries its single remote Energy Mk2 receiver every
+        // legacy server tick.
+        return true;
     }
 
     @Override

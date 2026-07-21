@@ -38,11 +38,20 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
                 .build();
     }
 
+    /** Legacy TileEntityCableGauge inherits TileEntityCableBaseNT's six-way node. */
+    @Override
+    protected HbmEnergyNode createEnergyNode() {
+        return HbmEnergyNode.withStandardLegacyConnections(worldPosition);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, RedCableGaugeBlockEntity gauge) {
         if (level.isClientSide) {
             return;
         }
 
+        // TileEntityCableGauge#updateEntity runs TileEntityCableBaseNT's
+        // null/expired PowerNode recovery before observing its network tracker.
+        HbmEnergyNodeBlockEntity.serverTick(level, pos, state, gauge);
         HbmEnergyNode node = gauge.getEnergyNode();
         HbmPowerNet net = node == null ? null : node.getPowerNet();
         gauge.deltaTick = net == null ? 0L : Math.max(0L, net.getEnergyTracker());

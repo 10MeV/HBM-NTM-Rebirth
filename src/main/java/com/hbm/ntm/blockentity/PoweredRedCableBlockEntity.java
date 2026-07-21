@@ -1,6 +1,7 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.PoweredRedCableBlock;
+import com.hbm.ntm.energy.HbmEnergyNode;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,6 +19,12 @@ public class PoweredRedCableBlockEntity extends HbmEnergyNodeBlockEntity {
 
     public static PoweredRedCableBlockEntity detectorEntity(BlockPos pos, BlockState state) {
         return new PoweredRedCableBlockEntity(ModBlockEntities.CABLE_DETECTOR.get(), pos, state);
+    }
+
+    /** An active legacy CableSwitch is still a TileEntityCableBaseNT conductor. */
+    @Override
+    protected HbmEnergyNode createEnergyNode() {
+        return HbmEnergyNode.withStandardLegacyConnections(worldPosition);
     }
 
     @Override

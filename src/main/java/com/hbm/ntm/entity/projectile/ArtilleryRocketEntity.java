@@ -60,7 +60,7 @@ public class ArtilleryRocketEntity extends LegacyThrowableEntity implements Rada
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return true;
+        return com.hbm.ntm.util.HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     public ArtilleryRocketEntity setType(int type) {

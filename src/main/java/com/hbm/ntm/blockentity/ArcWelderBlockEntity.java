@@ -318,8 +318,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         ProcessingResult result = GenericMachineRecipeRuntime.update(level, GenericMachineRecipe.Machine.ARC_WELDER,
                 selectedRecipe, progress / (double) Math.max(processTime, 1), ItemStack.EMPTY, energy, items,
                 INPUT_SLOTS, OUTPUT_SLOTS, inputTanksFor(recipe), NO_TANKS,
-                new ProcessingFactors(factors.progressPerTick(), factors.powerMultiplier()), true, TANK_CAPACITY,
-                worldPosition);
+                new ProcessingFactors(factors.progressPerTick(), factors.powerMultiplier()), true, TANK_CAPACITY);
         selectedRecipe = result.selectedRecipe();
         didProcess = result.didProcess();
         progress = (int) Math.round(result.progress() * Math.max(processTime, 1));

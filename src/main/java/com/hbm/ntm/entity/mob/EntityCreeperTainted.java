@@ -3,6 +3,7 @@ package com.hbm.ntm.entity.mob;
 import com.hbm.ntm.api.entity.IRadiationImmune;
 import com.hbm.ntm.block.LegacyTaintBlock;
 import com.hbm.ntm.config.ServerConfig;
+import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
@@ -17,6 +18,11 @@ import net.minecraft.world.level.block.state.BlockState;
 public class EntityCreeperTainted extends Creeper implements IRadiationImmune {
     public EntityCreeperTainted(EntityType<? extends EntityCreeperTainted> type, Level level) {
         super(type, level);
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return HbmModelRenderDistances.shouldRenderAtSqrDistance(distance);
     }
 
     public static AttributeSupplier.Builder createAttributes() {

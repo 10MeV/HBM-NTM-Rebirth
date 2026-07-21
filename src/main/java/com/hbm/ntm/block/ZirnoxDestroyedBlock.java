@@ -88,7 +88,6 @@ public class ZirnoxDestroyedBlock extends StaticLegacyMultiblockMachineBlock imp
         if (state.is(ModBlocks.BLOCK_FOAM.get())) {
             return true;
         }
-        RegistryObject<? extends Block> foamLayer = ModBlocks.legacyBlock("foam_layer");
-        return foamLayer != null && state.is(foamLayer.get());
+        return state.is(ModBlocks.FOAM_LAYER.get());
     }
 }
