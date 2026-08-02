@@ -16,7 +16,10 @@ public enum LegacySatelliteType {
     RELAY(5, "foeq", Satellite.SatelliteInterface.NONE, "relay"),
     MINER(6, "miner", Satellite.SatelliteInterface.NONE),
     LUNAR_MINER(7, "lunar_miner", Satellite.SatelliteInterface.NONE, "lunar"),
-    HORIZONS(8, "gerald", Satellite.SatelliteInterface.SAT_COORD, "horizons");
+    HORIZONS(8, "gerald", Satellite.SatelliteInterface.SAT_COORD, "horizons"),
+    PRECISION_LASER(9, "precision_laser", Satellite.SatelliteInterface.NONE),
+    DETECTOR(10, "detector", Satellite.SatelliteInterface.NONE),
+    RAY_SCAN(11, "ray_scan", Satellite.SatelliteInterface.NONE);
 
     private static final List<String> NAMES = Arrays.stream(values())
             .flatMap(type -> type.names.stream())

@@ -4,6 +4,7 @@ import com.hbm.ntm.util.HbmRegistryUtil;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.bullet.BulletConfig;
+import com.hbm.ntm.bullet.LegacyBulletConfigs;
 import com.hbm.ntm.bullet.BulletPlink;
 import com.hbm.ntm.bullet.BulletProjectileTickUtil;
 import com.hbm.ntm.bullet.BulletStyle;
@@ -22,6 +23,7 @@ import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjEffectModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
+import com.hbm.ntm.client.obj.ObjProjectileModels;
 import com.hbm.ntm.client.obj.ObjWeaponModels;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.render.LegacyRenderRandom;
@@ -165,10 +167,15 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
     public void render(BulletProjectileEntity entity, float yaw, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight) {
         BulletStyle style = BulletStyle.fromLegacyId(entity.styleId());
+        BulletConfig config = entity.config();
+        if (config == LegacyBulletConfigs.PILE_DEBRIS) {
+            renderLegacyPileDebris(entity, partialTick, poseStack, buffer, packedLight);
+            super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
+            return;
+        }
         if (style == BulletStyle.NONE) {
             return;
         }
-        BulletConfig config = entity.config();
         int trail = Byte.toUnsignedInt(entity.trailId());
         if (config != null && config.plink() == BulletPlink.ENERGY
                 && (style == BulletStyle.BOLT || style == BulletStyle.TAU)) {
@@ -239,6 +246,23 @@ public class BulletProjectileRenderer extends EntityRenderer<BulletProjectileEnt
         }
         poseStack.popPose();
         super.render(entity, yaw, partialTick, poseStack, buffer, packedLight);
+    }
+
+    /** Exact RenderBulletMK4 + LegoClient.RENDER_GRAPHITE transform chain. */
+    private static void renderLegacyPileDebris(BulletProjectileEntity entity, float partialTick, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        try {
+            LegacyPoseRotations.rotateYDegrees(poseStack,
+                    Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F);
+            LegacyPoseRotations.rotateZDegrees(poseStack,
+                    Mth.lerp(partialTick, entity.xRotO, entity.getXRot()) + 180.0F);
+            poseStack.scale(2.0F, 2.0F, 2.0F);
+            ObjProjectileModels.DEBRIS_GRAPHITE.renderAll(ObjProjectileModels.GRAPHITE_TEXTURE, poseStack, buffer,
+                    packedLight, OverlayTexture.NO_OVERLAY);
+        } finally {
+            poseStack.popPose();
+        }
     }
 
     private static void renderLegacySednaBeam(BulletStyle style, BulletTrail trail, BulletProjectileEntity entity,

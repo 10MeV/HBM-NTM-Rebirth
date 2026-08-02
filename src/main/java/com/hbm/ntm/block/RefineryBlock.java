@@ -2,10 +2,12 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.blockentity.RefineryBlockEntity;
+import com.hbm.ntm.entity.projectile.AirstrikeBombletEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.AchievementHandler;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -35,6 +37,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,9 +119,21 @@ public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
             return;
         }
         if (!refinery.isExploded()) {
+            awardInfernoForZetaStrike(level, refinery, explosion);
             refinery.explode();
         } else {
             level.setBlock(refinery.getBlockPos(), Blocks.AIR.defaultBlockState(), 3);
+        }
+    }
+
+    /** MachineRefinery#onBlockExploded awards Inferno for a legacy Zeta hit. */
+    private static void awardInfernoForZetaStrike(Level level, RefineryBlockEntity refinery, Explosion explosion) {
+        if (!(explosion.getExploder() instanceof AirstrikeBombletEntity)) {
+            return;
+        }
+        AABB range = new AABB(refinery.getBlockPos()).inflate(100.0D);
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, range)) {
+            AchievementHandler.award(player, AchievementHandler.INFERNO);
         }
     }
 

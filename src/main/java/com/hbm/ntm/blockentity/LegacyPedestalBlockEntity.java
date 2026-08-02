@@ -1,12 +1,16 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.armor.ArmorModItems;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,6 +42,17 @@ public class LegacyPedestalBlockEntity extends BlockEntity {
         setChangedAndSync();
     }
 
+    /** Source {@code TileEntityPedestal#updateEntity}: passive gold-defuser scan every 60 ticks. */
+    public static void serverTick(Level level, BlockPos pos, BlockState state, LegacyPedestalBlockEntity pedestal) {
+        if (level.getGameTime() % 60 != 0 || !pedestal.item.is(ModItems.DEFUSER_GOLD.get())) {
+            return;
+        }
+        for (Creeper creeper : level.getEntitiesOfClass(Creeper.class,
+                new net.minecraft.world.phys.AABB(pos).inflate(25.0D))) {
+            ArmorModItems.Defuser.defuse(creeper, null, false);
+        }
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
@@ -54,10 +69,8 @@ public class LegacyPedestalBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        saveAdditional(tag);
-        return tag;
-    }
+        return new CompoundTag();
+}
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {

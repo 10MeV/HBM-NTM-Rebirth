@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["CRC"],
+  "key": {
+    "C": {"tag": "forge:welded_plates/copper"},
+    "R": {"tag": "forge:ingots/any_rubber"}
+  },
+  "result": {"item": "hbm_ntm_rebirth:pneumatic_tube", "count": 24}
+}

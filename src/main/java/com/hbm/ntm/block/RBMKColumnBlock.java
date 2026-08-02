@@ -187,7 +187,7 @@ public class RBMKColumnBlock extends BaseEntityBlock
         VoxelShape shape = Shapes.empty();
         int heightAbove = columnHeightAbove();
         for (int y = 0; y <= heightAbove; y++) {
-            double segmentHeight = y == heightAbove && state.getValue(LID).hasLid() ? 1.25D : 1.0D;
+            double segmentHeight = state.getValue(LID).hasLid() ? 1.25D : 1.0D;
             shape = Shapes.or(shape, Shapes.box(0.0D, y, 0.0D, 1.0D, y + segmentHeight, 1.0D));
         }
         return shape.optimize();
@@ -476,8 +476,11 @@ public class RBMKColumnBlock extends BaseEntityBlock
     }
 
     private static VoxelShape localColumnSegmentShape(BlockState state, BlockPos offset) {
-        boolean topSegment = offset.getX() == 0 && offset.getZ() == 0 && offset.getY() == columnHeightAbove();
-        double height = topSegment && state.hasProperty(LID) && state.getValue(LID).hasLid() ? 1.25D : 1.0D;
+        // RBMKBase#getCollisionBoundingBoxFromPool adds the lid height after
+        // resolving the core, so the same +0.25 box applies when looking at
+        // the core or any vertical dummy segment. The lid is still rendered
+        // only on the top segment by RBMKColumnRenderer.
+        double height = state.hasProperty(LID) && state.getValue(LID).hasLid() ? 1.25D : 1.0D;
         return Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, height, 1.0D);
     }
 

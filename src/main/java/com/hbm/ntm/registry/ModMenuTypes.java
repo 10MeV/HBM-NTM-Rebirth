@@ -31,6 +31,7 @@ import com.hbm.ntm.menu.CartCrateMenu;
 import com.hbm.ntm.menu.CargoTramMenu;
 import com.hbm.ntm.menu.CargoTramTrailerMenu;
 import com.hbm.ntm.menu.CartDestroyerMenu;
+import com.hbm.ntm.menu.CableDiodeMenu;
 import com.hbm.ntm.menu.CraneLogisticsMenu;
 import com.hbm.ntm.menu.DroneLogisticsMenu;
 import com.hbm.ntm.menu.DroneCrateMenu;
@@ -43,8 +44,6 @@ import com.hbm.ntm.menu.DfcEmitterMenu;
 import com.hbm.ntm.menu.DfcInjectorMenu;
 import com.hbm.ntm.menu.DfcReceiverMenu;
 import com.hbm.ntm.menu.DfcStabilizerMenu;
-import com.hbm.ntm.menu.DiFurnaceMenu;
-import com.hbm.ntm.menu.DiFurnaceRtgMenu;
 import com.hbm.ntm.menu.DieselGeneratorMenu;
 import com.hbm.ntm.menu.ElectrolyserMenu;
 import com.hbm.ntm.menu.ElectricFurnaceMenu;
@@ -70,6 +69,7 @@ import com.hbm.ntm.menu.ICFReactorMenu;
 import com.hbm.ntm.menu.KeyForgeMenu;
 import com.hbm.ntm.menu.LaunchPadMenu;
 import com.hbm.ntm.menu.LaunchTableMenu;
+import com.hbm.ntm.menu.LemegetonMenu;
 import com.hbm.ntm.menu.LegacyLargeTurbineMenu;
 import com.hbm.ntm.menu.LegacyFurnaceMenu;
 import com.hbm.ntm.menu.LiquefactorMenu;
@@ -88,6 +88,8 @@ import com.hbm.ntm.menu.ParticleAcceleratorMenu;
 import com.hbm.ntm.menu.PneumaticTubeMenu;
 import com.hbm.ntm.menu.PneumaticStorageAccessMenu;
 import com.hbm.ntm.menu.PneumaticStorageClutterMenu;
+import com.hbm.ntm.menu.PneumaticStorageImporterMenu;
+import com.hbm.ntm.menu.PneumaticStorageExporterMenu;
 import com.hbm.ntm.menu.PlasticBagMenu;
 import com.hbm.ntm.menu.PWRMenu;
 import com.hbm.ntm.menu.PyroOvenMenu;
@@ -165,6 +167,9 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<AmmoBagMenu>> AMMO_BAG =
             MENUS.register("ammo_bag", () -> IForgeMenuType.create(AmmoBagMenu::new));
 
+    public static final RegistryObject<MenuType<LemegetonMenu>> LEMEGETON =
+            MENUS.register("lemegeton", () -> IForgeMenuType.create(LemegetonMenu::new));
+
     public static final RegistryObject<MenuType<CasingBagMenu>> CASING_BAG =
             MENUS.register("casing_bag", () -> IForgeMenuType.create(CasingBagMenu::new));
 
@@ -240,14 +245,8 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE =
             MENUS.register("electric_furnace", () -> IForgeMenuType.create(ElectricFurnaceMenu::new));
 
-    public static final RegistryObject<MenuType<DiFurnaceMenu>> DIFURNACE =
-            MENUS.register("difurnace", () -> IForgeMenuType.create(DiFurnaceMenu::new));
-
     public static final RegistryObject<MenuType<BrickFurnaceMenu>> BRICK_FURNACE =
             MENUS.register("brick_furnace", () -> IForgeMenuType.create(BrickFurnaceMenu::new));
-
-    public static final RegistryObject<MenuType<DiFurnaceRtgMenu>> DIFURNACE_RTG =
-            MENUS.register("difurnace_rtg", () -> IForgeMenuType.create(DiFurnaceRtgMenu::new));
 
     public static final RegistryObject<MenuType<RtgFurnaceMenu>> RTG_FURNACE =
             MENUS.register("rtg_furnace", () -> IForgeMenuType.create(RtgFurnaceMenu::new));
@@ -441,6 +440,12 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<PneumaticStorageClutterMenu>> PNEUMATIC_STORAGE_CLUTTER =
             MENUS.register("pneumatic_storage_clutter", () -> IForgeMenuType.create(PneumaticStorageClutterMenu::new));
 
+    public static final RegistryObject<MenuType<PneumaticStorageImporterMenu>> PNEUMATIC_STORAGE_IMPORTER =
+            MENUS.register("pneumatic_storage_importer", () -> IForgeMenuType.create(PneumaticStorageImporterMenu::new));
+
+    public static final RegistryObject<MenuType<PneumaticStorageExporterMenu>> PNEUMATIC_STORAGE_EXPORTER =
+            MENUS.register("pneumatic_storage_exporter", () -> IForgeMenuType.create(PneumaticStorageExporterMenu::new));
+
     public static final RegistryObject<MenuType<RemoteFluidMachineMenu>> REMOTE_FLUID_MACHINE =
             MENUS.register("remote_fluid_machine", () -> IForgeMenuType.create(RemoteFluidMachineMenu::new));
 
@@ -531,6 +536,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<ToolAbilityMenu>> TOOL_ABILITY =
             MENUS.register("tool_ability", () -> IForgeMenuType.create(ToolAbilityMenu::new));
+
+    public static final RegistryObject<MenuType<CableDiodeMenu>> CABLE_DIODE =
+            MENUS.register("cable_diode", () -> IForgeMenuType.create(CableDiodeMenu::new));
 
     public static final RegistryObject<MenuType<RadioTorchMenu>> RADIO_TORCH =
             MENUS.register("radio_torch", () -> IForgeMenuType.create(RadioTorchMenu::new));

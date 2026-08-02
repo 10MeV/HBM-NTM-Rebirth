@@ -34,6 +34,7 @@ public final class HbmInventoryMenuHelper {
     public static final String LEGACY_ITEMS_TAG = HbmItemStackUtil.LEGACY_ITEMS_TAG;
     public static final String LEGACY_SLOT_TAG = HbmItemStackUtil.LEGACY_SLOT_TAG;
     public static final double LEGACY_MACHINE_USE_DISTANCE_SQR = 128.0D;
+    public static final double LEGACY_CLOSE_MENU_USE_DISTANCE_SQR = 64.0D;
 
     private HbmInventoryMenuHelper() {
     }
@@ -83,6 +84,12 @@ public final class HbmInventoryMenuHelper {
             @Override
             protected void checkTakeAchievements(ItemStack stack) {
                 stack.onCraftedBy(player.level(), player, removeCount);
+                // Forge only emits ItemCraftedEvent for the crafting grid.  Machine output
+                // slots must explicitly enter the legacy achievement bridge when the player
+                // actually takes their result.
+                HbmCraftingAdvancementUtil.fireCraftingAdvancement(
+                        player instanceof net.minecraft.server.level.ServerPlayer serverPlayer ? serverPlayer : null,
+                        stack);
                 if (experienceGetter != null && player.level() instanceof ServerLevel serverLevel) {
                     awardOutputExperience(player, serverLevel, stack, removeCount, experienceGetter);
                 }
@@ -302,6 +309,26 @@ public final class HbmInventoryMenuHelper {
                 blockEntity.getBlockPos().getX() + 0.5D,
                 blockEntity.getBlockPos().getY() + 0.5D,
                 blockEntity.getBlockPos().getZ() + 0.5D) <= maxDistanceSqr;
+    }
+
+    /**
+     * Resolves the 1.7.10 container contract for the migrated menu's backing tile.
+     * Most machine and inventory bases used 128 squared blocks; the listed tiles
+     * explicitly overrode that base contract with 64, while Radar NT was unbounded.
+     */
+    public static double legacyMenuUseDistanceSqr(BlockEntity blockEntity) {
+        return switch (blockEntity.getClass().getSimpleName()) {
+            case "BalefireBombBlockEntity", "BombMultiBlockEntity", "CustomMissileLauncherBlockEntity",
+                    "CustomNukeBlockEntity", "ForceFieldBlockEntity", "KeyForgeBlockEntity",
+                    "MissileAssemblyBlockEntity", "NuclearDeviceBlockEntity", "RtgBlockEntity",
+                    "RtgFurnaceBlockEntity", "SatelliteDockBlockEntity", "SatelliteLinkerBlockEntity",
+                    "ShredderBlockEntity", "SirenBlockEntity", "SteamTurbineBlockEntity",
+                    // No old Container exists for these two port-only menus; retain their
+                    // pre-existing close-range restriction rather than inventing a wider one.
+                    "CableDiodeBlockEntity", "RadioReceiverBlockEntity" -> LEGACY_CLOSE_MENU_USE_DISTANCE_SQR;
+            case "RadarBlockEntity" -> Double.MAX_VALUE;
+            default -> LEGACY_MACHINE_USE_DISTANCE_SQR;
+        };
     }
 
     public static boolean stillValidMultiblockMachine(Player player, BlockEntity blockEntity, double maxDistanceSqr) {

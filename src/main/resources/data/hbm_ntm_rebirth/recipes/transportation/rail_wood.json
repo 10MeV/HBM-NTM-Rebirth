@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"transportation","key":{"R":{"item":"hbm_ntm_rebirth:plant_item_rope"},"S":{"item":"minecraft:stick"}},"pattern":["S S","SRS","S S"],"result":{"item":"hbm_ntm_rebirth:rail_wood","count":16},"show_notification":true}

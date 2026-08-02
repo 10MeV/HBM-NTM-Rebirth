@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.network.ServerResyncRequestRateLimiter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
@@ -48,6 +49,9 @@ public record TileSyncRequestPacket(BlockPos pos) {
             return;
         }
         if (blockEntity instanceof HbmTileSyncable syncable && syncable.canSendClientSyncTo(player)) {
+            if (!ServerResyncRequestRateLimiter.tryAcquireTile(player, receiverPos, level.getGameTime())) {
+                return;
+            }
             ModMessages.syncTileToPlayer(syncable, blockEntity, player);
         }
     }

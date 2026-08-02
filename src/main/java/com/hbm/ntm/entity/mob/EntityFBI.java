@@ -53,8 +53,8 @@ public final class EntityFBI extends Monster {
             ModBlocks.MACHINE_CRYSTALLIZER.get(), ModBlocks.MACHINE_TURBINE.get(),
             ModBlocks.MACHINE_INDUSTRIAL_TURBINE.get(), ModBlocks.MACHINE_CHUNGUS.get(),
             ModBlocks.MACHINE_PUREX.get(), ModBlocks.CRATE_IRON.get(), ModBlocks.CRATE_STEEL.get(),
-            ModBlocks.MACHINE_DIESEL.get(), ModBlocks.MACHINE_RTG_GREY.get(), ModBlocks.MACHINE_MINIRTG.get(),
-            ModBlocks.MACHINE_POWERRTG.get(), ModBlocks.MACHINE_CYCLOTRON.get(), Blocks.CHEST, Blocks.TRAPPED_CHEST);
+            ModBlocks.MACHINE_DIESEL.get(), ModBlocks.MACHINE_RTG_GREY.get(), ModBlocks.MACHINE_CYCLOTRON.get(),
+            Blocks.CHEST, Blocks.TRAPPED_CHEST);
 
     public EntityFBI(EntityType<? extends EntityFBI> type, Level level) {
         super(type, level);

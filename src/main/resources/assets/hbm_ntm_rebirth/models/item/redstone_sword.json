@@ -1,0 +1,17 @@
+{
+  "loader": "forge:separate_transforms",
+  "base": {
+    "parent": "minecraft:item/generated",
+    "textures": {
+      "layer0": "hbm_ntm_rebirth:item/redstone_sword"
+    }
+  },
+  "perspectives": {
+    "firstperson_lefthand": { "parent": "minecraft:builtin/entity" },
+    "firstperson_righthand": { "parent": "minecraft:builtin/entity" },
+    "thirdperson_lefthand": { "parent": "minecraft:builtin/entity" },
+    "thirdperson_righthand": { "parent": "minecraft:builtin/entity" },
+    "ground": { "parent": "minecraft:builtin/entity" },
+    "fixed": { "parent": "minecraft:builtin/entity" }
+  }
+}

@@ -11,11 +11,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.RegisterGameTestsEvent;
-import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 /** Source-backed regression coverage for harvest abilities that consume stateful block-item recipes. */
-@GameTestHolder(HbmNtm.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class AbilityGameTests {
     private AbilityGameTests() {
@@ -30,7 +28,7 @@ public final class AbilityGameTests {
      * quantities 1, 2, 3, 5, 7 and 15.  The modern ability bridge carries the
      * same metadata through {@link LegacyStateBlockItem#TAG_VARIANT}.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "abilityHarvest")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "abilityHarvest")
     public static void sellafieldVariantsResolveToLegacyShredderOutputs(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         if (!(ModBlocks.SELLAFIELD.get().asItem() instanceof LegacyStateBlockItem sellafieldItem)) {

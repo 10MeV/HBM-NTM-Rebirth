@@ -358,9 +358,13 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyBareIngotAliases("ingot_phosphorus", "WhitePhosphorus");
 
         addLegacyMaterialAliases("ingot", "ingots", "ingot_titanium", "Titanium");
-        addLegacyMaterialAliases("ingot", "ingots", "ingot_copper", "Copper");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_red_copper", "Mingrade");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_redstone", "Redstone");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_neodymium", "Neodymium");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_borax", "Borax");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_sodium", "Sodium");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_strontium", "Strontium");
+        addLegacyMaterialAliases("ingot", "ingots", "ingot_slag", "Slag");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_tungsten", "Tungsten");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_aluminium", "Aluminum");
         addLegacyMaterialAliases("ingot", "ingots", "ingot_steel", "Steel");

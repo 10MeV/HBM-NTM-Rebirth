@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "building",
+  "key": {
+    "B": { "item": "minecraft:iron_bars" },
+    "I": { "item": "minecraft:iron_ingot" }
+  },
+  "pattern": ["BIB", "BIB"],
+  "result": { "item": "hbm_ntm_rebirth:fence_metal", "count": 6, "nbt": "{hbmLegacyVariant:0}" },
+  "show_notification": true
+}

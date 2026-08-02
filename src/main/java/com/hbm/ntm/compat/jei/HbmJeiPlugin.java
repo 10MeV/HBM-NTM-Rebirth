@@ -1,6 +1,7 @@
 package com.hbm.ntm.compat.jei;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.ParticleAcceleratorBlock;
 import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.config.RtgConfig;
 import com.hbm.ntm.energy.HbmBatteryItem;
@@ -16,6 +17,9 @@ import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.ICFPelletItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
+import com.hbm.ntm.item.LegacyTemFlakesItem;
+import com.hbm.ntm.item.MarshmallowItem;
+import com.hbm.ntm.item.Mk2PileDeviceBlockItem;
 import com.hbm.ntm.item.NuclearWasteItem;
 import com.hbm.ntm.item.RBMKFuelRodItem;
 import com.hbm.ntm.item.RBMKPelletItem;
@@ -64,6 +68,44 @@ import com.hbm.ntm.recipe.PressRecipe;
 import com.hbm.ntm.recipe.PyroOvenRecipe;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.menu.AmmoPressMenu;
+import com.hbm.ntm.menu.AnnihilatorMenu;
+import com.hbm.ntm.menu.AnvilMenu;
+import com.hbm.ntm.menu.ArcFurnaceMenu;
+import com.hbm.ntm.menu.ArcWelderMenu;
+import com.hbm.ntm.menu.AssemblyMachineMenu;
+import com.hbm.ntm.menu.BasicMachineMenu;
+import com.hbm.ntm.menu.BlastFurnaceMenu;
+import com.hbm.ntm.menu.BreedingReactorMenu;
+import com.hbm.ntm.menu.ChemicalPlantMenu;
+import com.hbm.ntm.menu.CombinationOvenMenu;
+import com.hbm.ntm.menu.CrucibleMenu;
+import com.hbm.ntm.menu.CyclotronMenu;
+import com.hbm.ntm.menu.ElectricPressMenu;
+import com.hbm.ntm.menu.ElectrolyserMenu;
+import com.hbm.ntm.menu.ExposureChamberMenu;
+import com.hbm.ntm.menu.FusionPlasmaForgeMenu;
+import com.hbm.ntm.menu.MixerMenu;
+import com.hbm.ntm.menu.OreSlopperMenu;
+import com.hbm.ntm.menu.LiquefactorMenu;
+import com.hbm.ntm.menu.PrecassMenu;
+import com.hbm.ntm.menu.ParticleAcceleratorMenu;
+import com.hbm.ntm.menu.ProcessingMachineMenu;
+import com.hbm.ntm.menu.PurexMenu;
+import com.hbm.ntm.menu.PyroOvenMenu;
+import com.hbm.ntm.menu.RBMKOutgasserMenu;
+import com.hbm.ntm.menu.RadGenMenu;
+import com.hbm.ntm.menu.ResearchReactorMenu;
+import com.hbm.ntm.menu.RotaryFurnaceMenu;
+import com.hbm.ntm.menu.RtgMenu;
+import com.hbm.ntm.menu.ShredderMenu;
+import com.hbm.ntm.menu.SilexMenu;
+import com.hbm.ntm.menu.SolderingStationMenu;
+import com.hbm.ntm.menu.PWRMenu;
+import com.hbm.ntm.menu.WasteDrumMenu;
+import com.hbm.ntm.menu.WatzReactorMenu;
+import com.hbm.ntm.menu.WoodBurnerMenu;
+import com.hbm.ntm.menu.ZirnoxReactorMenu;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.SatelliteChipItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
@@ -479,6 +521,108 @@ public final class HbmJeiPlugin implements IModPlugin {
     @Override
     public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
         registration.addRecipeTransferHandler(new AnvilConstructionRecipeTransferHandler(), ANVIL_CONSTRUCTION);
+        registerItemRecipeTransferHandlers(registration);
+    }
+
+    /**
+     * Registers every current JEI category whose menu has source-backed physical item input slots.
+     * Fluid-only pages stay display-only: HBM fluid icons are explanatory UI stacks, not transferable
+     * inventory ingredients.
+     */
+    private static void registerItemRecipeTransferHandlers(IRecipeTransferRegistration registration) {
+        HbmItemRecipeTransferHandler.register(registration, AssemblyMachineMenu.class, ASSEMBLY_MACHINE,
+                slots(4, 15), 17, 36);
+        HbmItemRecipeTransferHandler.register(registration, ChemicalPlantMenu.class, CHEMICAL_PLANT,
+                slots(4, 6), 22, 36);
+        HbmItemRecipeTransferHandler.register(registration, PurexMenu.class, PUREX,
+                slots(4, 6), 13, 36);
+        HbmItemRecipeTransferHandler.register(registration, PrecassMenu.class, PRECASS,
+                slots(4, 12), 22, 36);
+        HbmItemRecipeTransferHandler.register(registration, ArcWelderMenu.class, ARC_WELDER,
+                slots(0, 2), 8, 36);
+        HbmItemRecipeTransferHandler.register(registration, ArcFurnaceMenu.class, ARC_FURNACE,
+                slots(5, 24), 30, 36);
+        HbmItemRecipeTransferHandler.register(registration, ArcFurnaceMenu.class, ARC_FURNACE_FLUID,
+                slots(5, 24), 30, 36);
+        HbmItemRecipeTransferHandler.register(registration, FusionPlasmaForgeMenu.class, PLASMA_FORGE,
+                slots(3, 14), 16, 36);
+        HbmItemRecipeTransferHandler.register(registration, BasicMachineMenu.class, PRESS,
+                new int[] {2, 1}, 13, 36);
+        HbmItemRecipeTransferHandler.register(registration, ElectricPressMenu.class, PRESS,
+                new int[] {2, 1}, 5, 36);
+        HbmItemRecipeTransferHandler.register(registration, CombinationOvenMenu.class, COMBINATION_OVEN,
+                new int[] {0}, 4, 36);
+        HbmItemRecipeTransferHandler.register(registration, MixerMenu.class, MIXER,
+                new int[] {1}, 5, 36);
+        HbmItemRecipeTransferHandler.register(registration, AmmoPressMenu.class, AMMO_PRESS,
+                slots(0, 8), 10, 36);
+        HbmItemRecipeTransferHandler.register(registration, ProcessingMachineMenu.class, CENTRIFUGE,
+                new int[] {0}, 8, 36);
+        HbmItemRecipeTransferHandler.register(registration, ProcessingMachineMenu.class, CRYSTALLIZER,
+                new int[] {0}, 8, 36);
+        HbmItemRecipeTransferHandler.register(registration, CyclotronMenu.class, CYCLOTRON,
+                new int[] {0, 3}, 12, 36);
+        HbmItemRecipeTransferHandler.register(registration, ExposureChamberMenu.class, EXPOSURE_CHAMBER,
+                new int[] {2, 0}, 7, 36);
+        HbmItemRecipeTransferHandler.register(registration, PyroOvenMenu.class, PYRO_OVEN,
+                new int[] {1}, 6, 36);
+        HbmItemRecipeTransferHandler.register(registration, RBMKOutgasserMenu.class, OUTGASSER,
+                new int[] {0}, 2, 36);
+        HbmItemRecipeTransferHandler.register(registration, RotaryFurnaceMenu.class, ROTARY_FURNACE,
+                slots(0, 2), 5, 36);
+        HbmItemRecipeTransferHandler.register(registration, ShredderMenu.class, SHREDDER,
+                slots(0, 8), 30, 36);
+        HbmItemRecipeTransferHandler.register(registration, SilexMenu.class, SILEX,
+                new int[] {0}, 11, 36);
+        HbmItemRecipeTransferHandler.register(registration, SolderingStationMenu.class, SOLDERING_STATION,
+                slots(0, 8), 14, 36);
+        HbmItemRecipeTransferHandler.register(registration, BreedingReactorMenu.class, BREEDING_REACTOR,
+                new int[] {0}, 2, 36);
+        HbmItemRecipeTransferHandler.register(registration, ElectrolyserMenu.class, ELECTROLYSER_METAL,
+                new int[] {14}, 21, 36);
+        HbmItemRecipeTransferHandler.register(registration, AnvilMenu.class, ANVIL_SMITHING,
+                new int[] {0, 1}, 3, 36);
+        HbmItemRecipeTransferHandler.register(registration, BlastFurnaceMenu.class, BLAST_FURNACE,
+                new int[] {1, 2}, 5, 36);
+        HbmItemRecipeTransferHandler.register(registration, CrucibleMenu.class, CRUCIBLE,
+                slots(0, 8), 9, 36);
+        HbmItemRecipeTransferHandler.register(registration, CrucibleMenu.class, CRUCIBLE_SMELTING,
+                slots(0, 8), 9, 36);
+        HbmItemRecipeTransferHandler.register(registration, RadGenMenu.class, RADGEN,
+                slots(0, 11), 24, 36);
+        HbmItemRecipeTransferHandler.register(registration, ResearchReactorMenu.class, RESEARCH_REACTOR,
+                slots(0, 11), 12, 36);
+        HbmItemRecipeTransferHandler.register(registration, PWRMenu.class, PWR,
+                new int[] {0}, 3, 36);
+        HbmItemRecipeTransferHandler.register(registration, WasteDrumMenu.class, FUEL_POOL,
+                slots(0, 23), 24, 36);
+        HbmItemRecipeTransferHandler.register(registration, ZirnoxReactorMenu.class, ZIRNOX,
+                slots(0, 23), 28, 36);
+        HbmItemRecipeTransferHandler.register(registration, WatzReactorMenu.class, WATZ,
+                slots(0, 23), 24, 36);
+        HbmItemRecipeTransferHandler.register(registration, AnnihilatorMenu.class, ANNIHILATOR,
+                new int[] {0}, 11, 36);
+        HbmItemRecipeTransferHandler.register(registration, OreSlopperMenu.class, ORE_SLOPPER,
+                new int[] {2}, 12, 36);
+        HbmItemRecipeTransferHandler.register(registration, WoodBurnerMenu.class, WOOD_BURNER,
+                new int[] {0}, 6, 36);
+        HbmItemRecipeTransferHandler.register(registration, LiquefactorMenu.class, LIQUEFACTION,
+                new int[] {0}, 4, 36);
+        HbmItemRecipeTransferHandler.register(registration, ParticleAcceleratorMenu.class, PARTICLE_ACCELERATOR,
+                new int[] {1, 2}, 5, 36,
+                menu -> menu.getVariant() == ParticleAcceleratorBlock.Variant.DETECTOR);
+        if (RtgConfig.doRtgsDecay()) {
+            HbmItemRecipeTransferHandler.register(registration, RtgMenu.class, RTG,
+                    slots(0, 14), 15, 36);
+        }
+    }
+
+    private static int[] slots(int first, int last) {
+        int[] slots = new int[last - first + 1];
+        for (int index = 0; index < slots.length; index++) {
+            slots[index] = first + index;
+        }
+        return slots;
     }
 
     @Override
@@ -572,7 +716,6 @@ public final class HbmJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_TURBINEGAS.get()), TURBINE_GAS);
         if (RtgConfig.doRtgsDecay()) {
             registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_RTG_GREY.get()), RTG);
-            registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_DIFURNACE_RTG.get()), RTG);
         }
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.REACTOR_RESEARCH.get()), RESEARCH_REACTOR);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.MACHINE_REACTOR_BREEDING.get()), BREEDING_REACTOR);
@@ -740,8 +883,17 @@ public final class HbmJeiPlugin implements IModPlugin {
             registration.registerSubtypeInterpreter(item, (stack, context) -> "variant=" + stateItem.getVariant(stack));
         } else if (item instanceof LegacyStateMultiblockBlockItem stateItem) {
             registration.registerSubtypeInterpreter(item, (stack, context) -> "variant=" + stateItem.getVariant(stack));
+        } else if (item instanceof Mk2PileDeviceBlockItem) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "kind="
+                    + Mk2PileDeviceBlockItem.kind(stack).getSerializedName());
         } else if (item instanceof TrinketBlockItem trinket) {
             registration.registerSubtypeInterpreter(item, (stack, context) -> "variant=" + TrinketBlockItem.getVariant(stack));
+        } else if (item instanceof LegacyTemFlakesItem) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "legacyDamage="
+                    + LegacyTemFlakesItem.legacyDamage(stack));
+        } else if (item instanceof MarshmallowItem) {
+            registration.registerSubtypeInterpreter(item, (stack, context) -> "roasted="
+                    + MarshmallowItem.isRoasted(stack));
         } else if (item instanceof SatelliteChipItem chip) {
             registration.registerSubtypeInterpreter(item, (stack, context) -> satelliteChipSubtype(chip, stack));
         } else if (item instanceof ISatelliteChip chip) {

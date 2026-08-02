@@ -10,6 +10,13 @@ import com.hbm.ntm.entity.logic.ExplosionChunkLoading;
 import com.hbm.ntm.entity.mob.EntityCyberCrab;
 import com.hbm.ntm.entity.mob.EntityCreeperNuclear;
 import com.hbm.ntm.entity.mob.EntityCreeperTainted;
+import com.hbm.ntm.entity.mob.EntityCreeperPhosgene;
+import com.hbm.ntm.entity.mob.EntityCreeperVolatile;
+import com.hbm.ntm.entity.mob.EntityCreeperGold;
+import com.hbm.ntm.entity.mob.EntityGhost;
+import com.hbm.ntm.entity.mob.EntityPlasticBag;
+import com.hbm.ntm.entity.mob.EntityPigeon;
+import com.hbm.ntm.entity.mob.EntityBlockSpider;
 import com.hbm.ntm.entity.mob.EntityDuck;
 import com.hbm.ntm.entity.mob.EntityFBI;
 import com.hbm.ntm.entity.mob.EntityFBIDrone;
@@ -35,10 +42,16 @@ import com.hbm.ntm.fluid.HbmFluidForgeMappings;
 import com.hbm.ntm.fluid.HbmFluidTypeConfig;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.gametest.EnergyMk2GameTests;
+import com.hbm.ntm.gametest.LemegetonGameTests;
+import com.hbm.ntm.gametest.MaterialGameTests;
 import com.hbm.ntm.gametest.ConveyorGameTests;
 import com.hbm.ntm.gametest.DroneLogisticsGameTests;
 import com.hbm.ntm.gametest.AbilityGameTests;
 import com.hbm.ntm.gametest.OilSpotGameTests;
+import com.hbm.ntm.gametest.Mk2PileGameTests;
+import com.hbm.ntm.gametest.LegacySurfacePlantGameTests;
+import com.hbm.ntm.gametest.RuntimeLifecycleGameTests;
+import com.hbm.ntm.gametest.RBMKConsoleGameTests;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModCreativeTabs;
@@ -55,6 +68,7 @@ import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.neutron.RBMKDialRuntime;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.util.AchievementHandler;
+import com.hbm.ntm.util.CrashHelper;
 import com.hbm.ntm.util.LegacyPolaroidVariant;
 import com.hbm.ntm.radiation.HazmatResistanceConfig;
 import com.hbm.ntm.radiation.ItemRadiationRegistry;
@@ -63,6 +77,9 @@ import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.recipe.HbmFluidContainerIngredient;
 import com.hbm.ntm.recipe.DroneVariantIngredient;
 import com.mojang.logging.LogUtils;
+import java.util.Arrays;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraftforge.event.RegisterGameTestsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -104,17 +121,56 @@ public class HbmNtm {
         modBus.addListener(this::commonSetup);
         modBus.addListener(this::registerEntityAttributes);
         modBus.addListener(HbmDataGenerators::gatherData);
-        modBus.addListener(EnergyMk2GameTests::register);
-        modBus.addListener(ConveyorGameTests::register);
-        modBus.addListener(DroneLogisticsGameTests::register);
-        modBus.addListener(AbilityGameTests::register);
-        modBus.addListener(OilSpotGameTests::register);
+        modBus.addListener(this::registerGameTests);
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, HbmCommonConfig.SPEC, "hbm_ntm_rebirth-common.toml");
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, HbmClientConfig.SPEC, "hbm_ntm_rebirth-client.toml");
     }
 
+    /**
+     * Registers the ordinary complete suite by default.  The property is set
+     * only by opt-in dedicated GameTest run profiles; it never changes normal
+     * game or default GameTest behaviour.
+     */
+    private void registerGameTests(RegisterGameTestsEvent event) {
+        if (Boolean.getBoolean("hbm_ntm.gametest.materialOnly")) {
+            MaterialGameTests.register(event);
+            LOGGER.info("Registered only material GameTest batches for this opt-in verification run.");
+            return;
+        }
+
+        if (Boolean.getBoolean("hbm_ntm.gametest.surfacePlantsOnly")) {
+            LegacySurfacePlantGameTests.register(event);
+            LOGGER.info("Registered only legacy surface-plant GameTest batches for this opt-in verification run.");
+            return;
+        }
+
+        if (Boolean.getBoolean("hbm_ntm.gametest.missileOnly")) {
+            Arrays.stream(EnergyMk2GameTests.class.getDeclaredMethods())
+                    .filter(method -> {
+                        GameTest gameTest = method.getAnnotation(GameTest.class);
+                        return gameTest != null && gameTest.batch().startsWith("missile");
+                    })
+                    .forEach(event::register);
+            LOGGER.info("Registered only missile GameTest batches for this opt-in verification run.");
+            return;
+        }
+
+        EnergyMk2GameTests.register(event);
+        MaterialGameTests.register(event);
+        LemegetonGameTests.register(event);
+        ConveyorGameTests.register(event);
+        DroneLogisticsGameTests.register(event);
+        AbilityGameTests.register(event);
+        OilSpotGameTests.register(event);
+        Mk2PileGameTests.register(event);
+        LegacySurfacePlantGameTests.register(event);
+        RuntimeLifecycleGameTests.register(event);
+        RBMKConsoleGameTests.register(event);
+    }
+
     private void commonSetup(final FMLCommonSetupEvent event) {
+        CrashHelper.init();
         event.enqueueWork(() -> {
             // 1.7.10 MainRegistry performs ArmorUtil registration before loading hbmRadResist.json.
             // This replays the legacy public external protection list into the single Hazmat registry.
@@ -165,6 +221,13 @@ public class HbmNtm {
     private void registerEntityAttributes(EntityAttributeCreationEvent event) {
         event.put(ModEntityTypes.NUCLEAR_CREEPER.get(), EntityCreeperNuclear.createAttributes().build());
         event.put(ModEntityTypes.TAINTED_CREEPER.get(), EntityCreeperTainted.createAttributes().build());
+        event.put(ModEntityTypes.PHOSGENE_CREEPER.get(), EntityCreeperPhosgene.createAttributes().build());
+        event.put(ModEntityTypes.VOLATILE_CREEPER.get(), EntityCreeperVolatile.createAttributes().build());
+        event.put(ModEntityTypes.GOLD_CREEPER.get(), EntityCreeperGold.createAttributes().build());
+        event.put(ModEntityTypes.GHOST.get(), EntityGhost.createAttributes().build());
+        event.put(ModEntityTypes.PLASTIC_BAG.get(), EntityPlasticBag.createAttributes().build());
+        event.put(ModEntityTypes.PIGEON.get(), EntityPigeon.createAttributes().build());
+        event.put(ModEntityTypes.TAINTCRAWLER.get(), EntityBlockSpider.createAttributes().build());
         event.put(ModEntityTypes.CYBER_CRAB.get(), EntityCyberCrab.createAttributes().build());
         event.put(ModEntityTypes.TESLA_CRAB.get(), EntityTeslaCrab.createAttributes().build());
         event.put(ModEntityTypes.TAINT_CRAB.get(), EntityTaintCrab.createAttributes().build());

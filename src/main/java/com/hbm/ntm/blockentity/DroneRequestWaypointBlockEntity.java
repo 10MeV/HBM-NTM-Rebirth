@@ -33,8 +33,8 @@ public class DroneRequestWaypointBlockEntity extends BlockEntity {
 
     @Override protected void saveAdditional(CompoundTag tag) { super.saveAdditional(tag); tag.putInt("height", height); }
     @Override public void load(CompoundTag tag) { super.load(tag); height = tag.contains("height") ? Math.max(1, Math.min(15, tag.getInt("height"))) : 5; }
-    @Override public CompoundTag getUpdateTag() { CompoundTag tag = super.getUpdateTag(); saveAdditional(tag); return tag; }
-    @Override public void handleUpdateTag(CompoundTag tag) { load(tag); }
+    @Override public CompoundTag getUpdateTag() { CompoundTag tag = new CompoundTag(); tag.putInt("height", height); return tag; }
+    @Override public void handleUpdateTag(CompoundTag tag) { height = tag.contains("height") ? Math.max(1, Math.min(15, tag.getInt("height"))) : 5; }
     @Override public Packet<ClientGamePacketListener> getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
-    @Override public void onDataPacket(net.minecraft.network.Connection connection, ClientboundBlockEntityDataPacket packet) { load(packet.getTag()); }
+    @Override public void onDataPacket(net.minecraft.network.Connection connection, ClientboundBlockEntityDataPacket packet) { handleUpdateTag(packet.getTag()); }
 }

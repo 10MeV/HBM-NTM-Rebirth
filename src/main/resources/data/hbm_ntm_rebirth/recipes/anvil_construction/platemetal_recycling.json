@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:platemetal" },
+      "count": 4,
+      "partial_nbt": "{hbmLegacyVariant:0}"
+    }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:plate_iron" },
+  "tier_lower": 1,
+  "overlay": "construction"
+}

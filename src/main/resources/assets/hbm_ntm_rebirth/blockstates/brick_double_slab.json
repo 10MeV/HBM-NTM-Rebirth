@@ -1,0 +1,76 @@
+{
+  "variants": {
+    "type=bottom,variant=0": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_0_bottom"
+    },
+    "type=bottom,variant=1": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_1_bottom"
+    },
+    "type=bottom,variant=2": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_2_bottom"
+    },
+    "type=bottom,variant=3": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_3_bottom"
+    },
+    "type=bottom,variant=4": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_4_bottom"
+    },
+    "type=bottom,variant=5": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_5_bottom"
+    },
+    "type=bottom,variant=6": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_6_bottom"
+    },
+    "type=bottom,variant=7": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_7_bottom"
+    },
+    "type=double,variant=0": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_0_double"
+    },
+    "type=double,variant=1": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_1_double"
+    },
+    "type=double,variant=2": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_2_double"
+    },
+    "type=double,variant=3": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_3_double"
+    },
+    "type=double,variant=4": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_4_double"
+    },
+    "type=double,variant=5": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_5_double"
+    },
+    "type=double,variant=6": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_6_double"
+    },
+    "type=double,variant=7": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_7_double"
+    },
+    "type=top,variant=0": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_0_top"
+    },
+    "type=top,variant=1": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_1_top"
+    },
+    "type=top,variant=2": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_2_top"
+    },
+    "type=top,variant=3": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_3_top"
+    },
+    "type=top,variant=4": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_4_top"
+    },
+    "type=top,variant=5": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_5_top"
+    },
+    "type=top,variant=6": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_6_top"
+    },
+    "type=top,variant=7": {
+      "model": "hbm_ntm_rebirth:block/brick_slab_7_top"
+    }
+  }
+}

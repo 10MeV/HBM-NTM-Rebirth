@@ -135,6 +135,10 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
         if (silex.currentFill <= 0) {
             silex.clearCurrent();
         }
+        // TileEntitySILEX serializes its one-tick FEL wavelength before it
+        // clears the server-side handshake state.  The client packet is what
+        // drives the legacy GUI's wavelength label and waveform.
+        silex.networkPackNT(50);
         silex.mode = LaserWavelength.NULL;
         if (oldFill != silex.currentFill || oldProgress != silex.progress || oldTank != silex.tank.getFill()
                 || oldType != silex.tank.getTankType()) {
@@ -397,7 +401,7 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
         readLegacyLoadedTileBinary(data);
         currentFill = Math.max(0, data.readInt());
         progress = Math.max(0, data.readInt());
-        mode = LaserWavelength.valueOf(BufferUtil.readString(data));
+        mode = safeWavelength(BufferUtil.readString(data));
         LegacyFluidTankPacket.read(data, tank);
         readLegacyCurrentSource(data);
     }
@@ -494,5 +498,16 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
         Item item = Item.byId(legacyItem);
         currentStack = item == null ? ItemStack.EMPTY : new ItemStack(item);
         currentFluid = HbmFluids.NONE;
+    }
+
+    private static LaserWavelength safeWavelength(String value) {
+        if (value == null) {
+            return LaserWavelength.NULL;
+        }
+        try {
+            return LaserWavelength.valueOf(value);
+        } catch (IllegalArgumentException ignored) {
+            return LaserWavelength.NULL;
+        }
     }
 }

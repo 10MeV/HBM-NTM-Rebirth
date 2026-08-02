@@ -2,6 +2,7 @@ package com.hbm.ntm.entity.projectile;
 
 import com.hbm.items.weapon.ItemGenericGrenade;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
+import com.hbm.ntm.item.UniversalGrenadeItem;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
@@ -90,15 +91,35 @@ public class DynamiteStickEntity extends ThrowableItemProjectile {
         }
         Direction face = hit.getDirection();
         Vec3 motion = getDeltaMovement();
-        double x = face.getAxis() == Direction.Axis.X ? -motion.x : motion.x;
-        double y = face.getAxis() == Direction.Axis.Y ? -motion.y : motion.y;
-        double z = face.getAxis() == Direction.Axis.Z ? -motion.z : motion.z;
-        Vec3 bounced = new Vec3(x, y, z).scale(getBounceMod(stack));
+        Vec3 bounced;
+        if (grenade instanceof UniversalGrenadeItem) {
+            // EntityGrenadeUniversal#onImpact: the surface-normal component
+            // uses the shell bounce factor while tangential components retain
+            // 80 percent. EntityGrenadeBouncyBase has a different all-axis
+            // damping contract, so it remains on the branch below.
+            double bounce = getBounceMod(stack);
+            bounced = new Vec3(
+                    face.getAxis() == Direction.Axis.X ? -motion.x * bounce : motion.x * 0.8D,
+                    face.getAxis() == Direction.Axis.Y ? -motion.y * bounce : motion.y * 0.8D,
+                    face.getAxis() == Direction.Axis.Z ? -motion.z * bounce : motion.z * 0.8D);
+            Vec3 hitLocation = hit.getLocation();
+            setPos(hitLocation.x + face.getStepX() * 0.05D, hitLocation.y + face.getStepY() * 0.05D,
+                    hitLocation.z + face.getStepZ() * 0.05D);
+            if (motion.length() > 0.2D) {
+                LegacySoundPlayer.playSoundAtEntity(this, "hbm:weapon.grenadeBounce", SoundSource.PLAYERS,
+                        1.0F, 1.0F);
+            }
+        } else {
+            double x = face.getAxis() == Direction.Axis.X ? -motion.x : motion.x;
+            double y = face.getAxis() == Direction.Axis.Y ? -motion.y : motion.y;
+            double z = face.getAxis() == Direction.Axis.Z ? -motion.z : motion.z;
+            bounced = new Vec3(x, y, z).scale(getBounceMod(stack));
+            if (bounced.lengthSqr() > 0.05D * 0.05D) {
+                LegacySoundPlayer.playSoundAtEntity(this, "hbm:weapon.gBounce", SoundSource.PLAYERS, 2.0F, 1.0F);
+            }
+        }
         setDeltaMovement(bounced);
         entityData.set(BOUNCES, bounceCount() + 1);
-        if (bounced.lengthSqr() > 0.05D * 0.05D) {
-            LegacySoundPlayer.playSoundAtEntity(this, "hbm:weapon.gBounce", SoundSource.PLAYERS, 2.0F, 1.0F);
-        }
     }
 
     @Override

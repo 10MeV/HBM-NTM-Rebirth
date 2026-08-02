@@ -29,8 +29,6 @@ public final class HbmDataGenerators {
         generator.addProvider(event.includeServer(), new HbmRecipeProvider(output));
         generator.addProvider(event.includeServer(), new LegacyPressRecipeImportProvider(output, projectRoot()));
         generator.addProvider(event.includeServer(), new LegacyPressRecipeExportProvider(output, projectRoot()));
-        generator.addProvider(event.includeServer(), new LegacyDiFurnaceRecipeImportProvider(output, projectRoot()));
-        generator.addProvider(event.includeServer(), new LegacyDiFurnaceRecipeExportProvider(output, projectRoot()));
         generator.addProvider(event.includeServer(), new LegacyBlastFurnaceRecipeImportProvider(output, projectRoot()));
         generator.addProvider(event.includeServer(), new LegacyBlastFurnaceRecipeExportProvider(output, projectRoot()));
         generator.addProvider(event.includeServer(), new LegacyAmmoPressRecipeImportProvider(output, projectRoot()));

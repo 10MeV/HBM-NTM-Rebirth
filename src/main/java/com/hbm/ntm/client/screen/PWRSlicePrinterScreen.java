@@ -54,6 +54,9 @@ public class PWRSlicePrinterScreen extends Screen {
     }
 
     public static void open(PWRPrinterSnapshotPacket packet) {
+        if (!PWRPrinterSnapshotPacket.isValidSnapshot(packet)) {
+            return;
+        }
         Minecraft.getInstance().setScreen(new PWRSlicePrinterScreen(packet));
     }
 
@@ -132,7 +135,7 @@ public class PWRSlicePrinterScreen extends Screen {
     }
 
     private void saveSlice() {
-        if (minecraft == null) {
+        if (minecraft == null || yIndex >= PWRPrinterSnapshotPacket.MAX_SCREENSHOT_SLICES) {
             return;
         }
         File directory = new File(new File(minecraft.gameDirectory, "printer"), directoryName);

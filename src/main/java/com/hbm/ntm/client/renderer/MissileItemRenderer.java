@@ -202,7 +202,8 @@ public class MissileItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
-            LegacyPoseRotations.rotateZDegrees(poseStack, 135.0F);
+            // User-requested GUI orientation: legacy 135° plus 90° clockwise.
+            LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
             LegacyPoseRotations.rotateYDegrees(poseStack, (System.currentTimeMillis() / 15L) % 360L);
         } else {
             LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);

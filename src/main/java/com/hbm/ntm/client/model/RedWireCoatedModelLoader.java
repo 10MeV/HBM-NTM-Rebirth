@@ -4,6 +4,8 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.RedWireCoatedCt;
+import com.hbm.ntm.blockentity.RedCableBlockEntity;
 import java.util.function.Function;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -18,19 +20,37 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
 import net.minecraftforge.client.model.geometry.IGeometryLoader;
 import net.minecraftforge.client.model.geometry.IUnbakedGeometry;
+import net.minecraftforge.client.model.data.ModelProperty;
 
 public class RedWireCoatedModelLoader implements IGeometryLoader<RedWireCoatedModelLoader.Geometry> {
     private static final ResourceLocation DEFAULT_BASE = new ResourceLocation(HbmNtm.MOD_ID,
             "block/red_wire_coated");
     private static final ResourceLocation DEFAULT_CT = new ResourceLocation(HbmNtm.MOD_ID,
             "block/red_wire_coated_ct");
+    private final ResourceLocation defaultBase;
+    private final ResourceLocation defaultCt;
+    private final ModelProperty<RedWireCoatedCt.Data> dataProperty;
+    private final ResourceLocation bakedModelId;
+
+    public RedWireCoatedModelLoader() {
+        this(DEFAULT_BASE, DEFAULT_CT, RedCableBlockEntity.RED_WIRE_COATED_CT_PROPERTY,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/red_wire_coated"));
+    }
+
+    protected RedWireCoatedModelLoader(ResourceLocation defaultBase, ResourceLocation defaultCt,
+            ModelProperty<RedWireCoatedCt.Data> dataProperty, ResourceLocation bakedModelId) {
+        this.defaultBase = defaultBase;
+        this.defaultCt = defaultCt;
+        this.dataProperty = dataProperty;
+        this.bakedModelId = bakedModelId;
+    }
 
     @Override
     public Geometry read(JsonObject json, JsonDeserializationContext context) throws JsonParseException {
-        ResourceLocation base = texture(json, "base", DEFAULT_BASE);
-        ResourceLocation ct = texture(json, "ct", DEFAULT_CT);
+        ResourceLocation base = texture(json, "base", defaultBase);
+        ResourceLocation ct = texture(json, "ct", defaultCt);
         ResourceLocation particle = texture(json, "particle", base);
-        return new Geometry(base, ct, particle);
+        return new Geometry(base, ct, particle, dataProperty, bakedModelId);
     }
 
     private static ResourceLocation texture(JsonObject json, String key, ResourceLocation fallback) {
@@ -42,7 +62,8 @@ public class RedWireCoatedModelLoader implements IGeometryLoader<RedWireCoatedMo
         return location;
     }
 
-    public record Geometry(ResourceLocation base, ResourceLocation ct, ResourceLocation particle)
+    public record Geometry(ResourceLocation base, ResourceLocation ct, ResourceLocation particle,
+            ModelProperty<RedWireCoatedCt.Data> dataProperty, ResourceLocation bakedModelId)
             implements IUnbakedGeometry<Geometry> {
         @Override
         public void resolveParents(Function<ResourceLocation, UnbakedModel> modelGetter,
@@ -56,7 +77,8 @@ public class RedWireCoatedModelLoader implements IGeometryLoader<RedWireCoatedMo
             TextureAtlasSprite baseSprite = spriteGetter.apply(new Material(InventoryMenu.BLOCK_ATLAS, base));
             TextureAtlasSprite ctSprite = spriteGetter.apply(new Material(InventoryMenu.BLOCK_ATLAS, ct));
             TextureAtlasSprite particleSprite = spriteGetter.apply(new Material(InventoryMenu.BLOCK_ATLAS, particle));
-            return new RedWireCoatedBakedModel(baseSprite, ctSprite, particleSprite, context.getTransforms());
+            return new RedWireCoatedBakedModel(baseSprite, ctSprite, particleSprite, context.getTransforms(),
+                    dataProperty, bakedModelId);
         }
     }
 }

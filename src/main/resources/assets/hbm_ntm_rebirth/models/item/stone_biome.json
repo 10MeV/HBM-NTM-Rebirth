@@ -1,0 +1,9 @@
+{
+  "parent": "hbm_ntm_rebirth:block/stone_biome_desert_layer",
+  "overrides": [
+    {
+      "predicate": { "hbm_ntm_rebirth:legacy_variant": 1.0 },
+      "model": "hbm_ntm_rebirth:block/stone_biome_woodland_layer"
+    }
+  ]
+}

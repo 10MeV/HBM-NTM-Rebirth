@@ -41,15 +41,24 @@ public final class DrillGunItemClient {
     }
 
     public static void tick(ItemStack stack, Level level, Entity entity, boolean selected, int animationType) {
-        if (!selected || entity == null) {
+        if (entity == null) {
             return;
         }
 
-        AudioWrapper running = LOOPED_SOUNDS.get(entity.getId());
+        int entityId = entity.getId();
+        if (!selected) {
+            stopAndRemove(entityId);
+            return;
+        }
+
+        AudioWrapper running = LOOPED_SOUNDS.get(entityId);
+        if (running != null && !running.isPlaying()) {
+            LOOPED_SOUNDS.remove(entityId, running);
+            running.stopSound();
+            running = null;
+        }
         if (animationType != CYCLE && animationType != CYCLE_DRY) {
-            if (running != null && running.isPlaying()) {
-                running.stopSound();
-            }
+            stopAndRemove(entityId);
             return;
         }
 
@@ -65,7 +74,7 @@ public final class DrillGunItemClient {
             AudioWrapper audio = AudioWrapper.getLoopedSound(level,
                     electric ? "TURBINE_LARGE_LOOP" : "ENGINE_LOOP",
                     entity.getX(), entity.getY(), entity.getZ(), (float) speed, 15.0F, (float) speed, 25);
-            LOOPED_SOUNDS.put(entity.getId(), audio);
+            LOOPED_SOUNDS.put(entityId, audio);
             audio.startSound();
             audio.attachTo(entity);
             return;
@@ -74,6 +83,27 @@ public final class DrillGunItemClient {
         running.keepAlive();
         running.updateVolume((float) speed);
         running.updatePitch((float) speed);
+    }
+
+    /**
+     * Entity ids are only unique within a client level. Every stop path must
+     * discard its map entry as well as stopping the facade, otherwise a later
+     * level can retain or reuse the old client entity through the wrapper.
+     */
+    public static void clearRuntimeState() {
+        for (AudioWrapper sound : LOOPED_SOUNDS.values()) {
+            if (sound != null) {
+                sound.stopSound();
+            }
+        }
+        LOOPED_SOUNDS.clear();
+    }
+
+    private static void stopAndRemove(int entityId) {
+        AudioWrapper sound = LOOPED_SOUNDS.remove(entityId);
+        if (sound != null) {
+            sound.stopSound();
+        }
     }
 
     private static LegacyBusAnimation cycleAnimation() {

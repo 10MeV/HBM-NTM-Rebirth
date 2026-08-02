@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -105,16 +106,25 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
             HbmClientRenderUtil.renderBlockModel(blockRenderer, state, poseStack, buffer, packedLight);
             return;
         }
-        BlockState segmentState = segment == heightAbove
-                ? state
-                : state.setValue(RBMKColumnBlock.LID, RBMKColumnBlock.LidType.NONE);
-        if (state.getBlock() instanceof RBMKColumnBlock block && block.kind().rod()) {
-            renderFuelChannelStaticSegment(block.kind(), segmentState, segment == heightAbove,
+        if (!(state.getBlock() instanceof RBMKColumnBlock block)) {
+            HbmClientRenderUtil.renderBlockModel(blockRenderer, state, poseStack, buffer, packedLight);
+            return;
+        }
+        BlockState baseState = state.setValue(RBMKColumnBlock.LID, RBMKColumnBlock.LidType.NONE);
+        if (block.kind().rod()) {
+            renderFuelChannelStaticSegment(block.kind(), state, segment == heightAbove,
                     poseStack, buffer, packedLight);
             return;
         }
-        HbmClientRenderUtil.renderBlockModel(blockRenderer, segmentState, poseStack, buffer, packedLight);
+        // Legacy RenderBlocks culls the horizontal faces shared by adjacent
+        // column sections.  The modern column uses independent BER calls, so
+        // explicitly keep only the bottom of the core and the top of the cap.
+        HbmClientRenderUtil.renderBlockModelFaces(blockRenderer, baseState, poseStack, buffer, packedLight,
+                segment == 0, segment == heightAbove);
         if (segment == heightAbove) {
+            if (state.getValue(RBMKColumnBlock.LID).hasLid() && !block.kind().control()) {
+                renderColumnLidSlab(block, state.getValue(RBMKColumnBlock.LID), poseStack, buffer, packedLight);
+            }
             renderTopPipePadsIfNeeded(state, poseStack, buffer, packedLight);
         }
     }
@@ -129,7 +139,10 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
 
     public static void renderDynamicSegment(RBMKColumnBlockEntity column, int segmentIndex, float partialTick,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (segmentIndex < 0 || !hasDynamicSegments(column.kind()) || !column.hasOperationalLayout()) {
+        // The legacy TESRs render the complete moving assembly from the core tile.
+        // Rendering a piece from every dummy makes the independently sampled light and
+        // transparent Cherenkov seam overlap at each one-block boundary.
+        if (segmentIndex != 0 || !hasDynamicSegments(column.kind()) || !column.hasOperationalLayout()) {
             return;
         }
         BlockState state = column.getBlockState();
@@ -152,28 +165,20 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
                 column.fuelRodRenderColor(),
                 arrays.sameColumnAbove(),
                 arrays.emptyMetadataAbove());
-        if (segmentIndex > plan.columnOffset()) {
-            return;
-        }
-
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         if (column.hasFuelRod()) {
             int color = plan.rodRgb() == 0 ? DEFAULT_FUEL_COLOR : plan.rodRgb();
-            int red = color >> 16 & 255;
-            int green = color >> 8 & 255;
-            int blue = color & 255;
             try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(column)) {
-                ObjRbmkModels.renderFuelRodPart(plan.part(), ObjRbmkModels.ELEMENT_FUEL_TEXTURE, poseStack, buffer,
-                        packedLight, packedOverlay, red, green, blue);
+                ObjRbmkModels.renderFuelChannelRods(color, plan.columnOffset(), poseStack, buffer,
+                        packedLight, packedOverlay);
             }
         }
         if (plan.cherenkov()) {
-            int frozenSegmentIndex = segmentIndex;
             int frozenColumnOffset = plan.columnOffset();
             LegacyMachineEffectPresenter.enqueueUntexturedQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
                     buffer, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
-                    group -> renderCherenkovSegment(group, frozenSegmentIndex, frozenColumnOffset));
+                    group -> renderCherenkovColumn(group, frozenColumnOffset));
         }
         poseStack.popPose();
     }
@@ -189,32 +194,23 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
                 column.controlState().level(),
                 partialTick,
                 columnRenderArrays().sameColumnAbove());
-        if (segmentIndex != plan.columnOffset()) {
-            return;
-        }
         ResourceLocation texture = controlTexture(kind.automatic(), color);
 
         poseStack.pushPose();
-        poseStack.translate(0.5D, plan.lidWorldY() - segmentIndex, 0.5D);
+        poseStack.translate(0.5D, plan.lidWorldY(), 0.5D);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(column)) {
             ObjRbmkModels.renderControlRodPart(plan.part(), texture, poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }
 
-    private static void renderCherenkovSegment(UntexturedQuadGroup group,
-            int segmentIndex, int columnOffset) {
-        double globalMax = columnOffset + ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_START_Y;
-        double localMin = Math.max(0.0D, ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_START_Y - segmentIndex);
-        double localMax = Math.min(1.0D, globalMax - segmentIndex);
-        if (localMax < localMin) {
-            return;
-        }
+    private static void renderCherenkovColumn(UntexturedQuadGroup group, int columnOffset) {
         double step = ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_STEP;
         if (step <= 0.0D) {
             return;
         }
-        for (double y = localMin; y <= localMax + 1.0E-6D; y += step) {
+        for (double y = ObjRbmkModels.FUEL_CHANNEL_CHERENKOV_START_Y;
+                y <= columnOffset + 1.0E-6D; y += step) {
             group.add(
                     -0.5D, y, -0.5D,
                     -0.5D, y, 0.5D,
@@ -289,6 +285,17 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
             PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         TextureAtlasSprite top = lid == RBMKColumnBlock.LidType.GLASS ? sprites.glassTop() : sprites.coverTop();
         TextureAtlasSprite side = lid == RBMKColumnBlock.LidType.GLASS ? sprites.glassSide() : sprites.coverSide();
+        LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side,
+                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, 255,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0D, 1.0D, 0.0D, 1.0D, 1.25D, 1.0D);
+    }
+
+    private static void renderColumnLidSlab(RBMKColumnBlock block, RBMKColumnBlock.LidType lid,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        String prefix = BuiltInRegistries.BLOCK.getKey(block).getPath();
+        String material = prefix + (lid == RBMKColumnBlock.LidType.GLASS ? "_glass" : "_cover");
+        TextureAtlasSprite top = blockSprite(material + "_top");
+        TextureAtlasSprite side = blockSprite(material + "_side");
         LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, 255,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0D, 1.0D, 0.0D, 1.0D, 1.25D, 1.0D);

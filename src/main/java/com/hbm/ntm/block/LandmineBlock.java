@@ -1,5 +1,7 @@
 package com.hbm.ntm.block;
 
+import com.hbm.saveddata.satellites.SatelliteDetector;
+import com.hbm.saveddata.satellites.SatelliteDetector.BurstIntensity;
 import com.hbm.config.ServerConfig;
 import com.hbm.ntm.api.block.IBomb;
 import com.hbm.ntm.api.block.Toolable;
@@ -216,6 +218,7 @@ public class LandmineBlock extends BaseEntityBlock implements IBomb, Toolable {
                         .explode();
                 addLegacyFatMineRadiation(level, pos);
                 ParticleUtil.spawnRbmkMush(level, x, y, z, 5.0F);
+                SatelliteDetector.reportEvent(level, SatelliteDetector.DURATION_LOW, BurstIntensity.LOW, x, z);
                 level.playSound(null, x, y, z, ModSounds.WEAPON_MUKE_EXPLOSION.get(), SoundSource.BLOCKS, 25.0F, 0.9F);
             }
         }

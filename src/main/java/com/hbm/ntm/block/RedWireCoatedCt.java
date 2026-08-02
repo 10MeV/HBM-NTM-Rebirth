@@ -16,7 +16,7 @@ public final class RedWireCoatedCt {
     }
 
     public static Data compute(BlockGetter level, BlockPos pos, BlockState state) {
-        if (level == null || !(state.getBlock() instanceof RedWireCoatedBlock)) {
+        if (level == null) {
             return DEFAULT_DATA;
         }
         int visibleMask = 0;

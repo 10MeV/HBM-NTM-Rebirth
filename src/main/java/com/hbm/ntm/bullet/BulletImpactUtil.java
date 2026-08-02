@@ -1,5 +1,7 @@
 package com.hbm.ntm.bullet;
 
+import com.hbm.saveddata.satellites.SatelliteDetector;
+import com.hbm.saveddata.satellites.SatelliteDetector.BurstIntensity;
 import com.hbm.handler.radiation.ChunkRadiationManager;
 import com.hbm.ntm.block.LegacyLayeringBlock;
 import com.hbm.ntm.block.ShotDetonatableBlock;
@@ -708,18 +710,24 @@ public final class BulletImpactUtil {
             explodeMiniNukeVnt(level, position, 10.0F, 2.0D, impactDamage, false, false);
             incrementMiniNukeRadiation(level, position, 1.0F);
             spawnMiniNukeMush(level, position, false);
+            SatelliteDetector.reportEvent(level, SatelliteDetector.DURATION_LOW, BurstIntensity.LOW, position.x,
+                    position.z);
             return true;
         }
         if (config.hasBehavior(BulletBehaviorTag.MINI_NUKE_DEMO)) {
             explodeMiniNukeVnt(level, position, 15.0F, 2.0D, impactDamage, true, false);
             incrementMiniNukeRadiation(level, position, 1.5F);
             spawnMiniNukeMush(level, position, false);
+            SatelliteDetector.reportEvent(level, SatelliteDetector.DURATION_LOW, BurstIntensity.LOW, position.x,
+                    position.z);
             return true;
         }
         if (config.hasBehavior(BulletBehaviorTag.MINI_NUKE_TINYTOT)) {
             explodeMiniNukeVnt(level, position, 5.0F, 2.0D, impactDamage, false, false);
             incrementMiniNukeRadiation(level, position, 0.25F);
             spawnMiniNukeTinyTot(level, position);
+            SatelliteDetector.reportEvent(level, SatelliteDetector.DURATION_LOW, BurstIntensity.LOW, position.x,
+                    position.z);
             return true;
         }
         if (config.hasBehavior(BulletBehaviorTag.MINI_NUKE_HIVE)) {

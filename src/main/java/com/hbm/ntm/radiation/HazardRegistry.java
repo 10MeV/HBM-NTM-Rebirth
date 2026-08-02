@@ -3,6 +3,7 @@ package com.hbm.ntm.radiation;
 import com.hbm.ntm.config.RadiationConfig;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.item.Mk2PileRodItem;
 import com.hbm.ntm.neutron.RBMKFuelRodRegistry;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.registry.ModBlocks;
@@ -736,10 +737,19 @@ public final class HazardRegistry {
         registerLegacyRadSourceWaste("waste_plate_ra226be", RadiationConstants.PO210_BE * RadiationConstants.NUGGET * 3.0F);
         registerLegacyRadSourceWaste("waste_plate_pu238be", RadiationConstants.PU238_BE * RadiationConstants.NUGGET);
 
-        registerByName("pile_rod_uranium", HazardType.RADIATION, RadiationConstants.U * RadiationConstants.BILLET * 3.0F);
-        registerByName("pile_rod_pu239", HazardType.RADIATION, RadiationConstants.PU_REACTOR_GRADE * RadiationConstants.BILLET + RadiationConstants.PU239 * RadiationConstants.BILLET + RadiationConstants.U * RadiationConstants.BILLET);
-        registerByName("pile_rod_plutonium", HazardType.RADIATION, RadiationConstants.PU_REACTOR_GRADE * RadiationConstants.BILLET * 2.0F + RadiationConstants.U * RadiationConstants.BILLET);
-        registerByName("pile_rod_source", HazardType.RADIATION, RadiationConstants.RA226_BE * RadiationConstants.BILLET * 3.0F);
+        registerMk2PileRodRadiation(Mk2PileRodItem.RodType.RA226BE,
+                RadiationConstants.RA226_BE * RadiationConstants.BILLET * 3.0F);
+        registerMk2PileRodRadiation(Mk2PileRodItem.RodType.PO210BE,
+                RadiationConstants.PO210_BE * RadiationConstants.BILLET * 3.0F);
+        // ZR is the legacy non-radioactive carrier variant and deliberately has no hazard entry.
+        registerMk2PileRodRadiation(Mk2PileRodItem.RodType.NU,
+                RadiationConstants.U * RadiationConstants.BILLET * 3.0F);
+        registerMk2PileRodRadiation(Mk2PileRodItem.RodType.PU239,
+                RadiationConstants.PU239 * RadiationConstants.BILLET * 3.0F);
+        registerMk2PileRodRadiation(Mk2PileRodItem.RodType.RGP,
+                RadiationConstants.PU_REACTOR_GRADE * RadiationConstants.BILLET * 3.0F);
+        registerMk2PileRodRadiation(Mk2PileRodItem.RodType.WASTE,
+                RadiationConstants.WASTE * RadiationConstants.BILLET * 3.0F);
 
         registerLegacyZirnoxFuelHazards();
 
@@ -1163,6 +1173,12 @@ public final class HazardRegistry {
     public static void registerLegacyFuelMeta(ResourceLocation legacyId, int legacyMeta, float base, float target, boolean blinding) {
         LegacyMetaItemMappings.stack(legacyId, legacyMeta, 1)
                 .ifPresent(stack -> registerFuelRadiation(stack, base, target, blinding));
+    }
+
+    private static void registerMk2PileRodRadiation(Mk2PileRodItem.RodType type, float level) {
+        ItemStack stack = new ItemStack(ModItems.PILE_ROD.get());
+        stack.setDamageValue(type.ordinal());
+        registerStack(stack, HazardType.RADIATION, level);
     }
 
     private static void registerBreedingRodRadiation(int legacyMeta, float base) {

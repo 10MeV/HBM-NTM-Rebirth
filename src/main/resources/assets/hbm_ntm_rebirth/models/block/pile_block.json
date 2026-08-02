@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "hbm_ntm_rebirth:block/pile_block",
+    "bottom": "hbm_ntm_rebirth:block/pile_block_top",
+    "top": "hbm_ntm_rebirth:block/pile_block_top"
+  }
+}

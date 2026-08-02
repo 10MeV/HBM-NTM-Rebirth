@@ -11,6 +11,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -59,6 +61,8 @@ public class AnvilMenu extends AbstractContainerMenu implements HbmTypedMenuActi
             public void onTake(Player player, ItemStack stack) {
                 super.onTake(player, stack);
                 if (AnvilSmithingRecipeRuntime.consume(player.level(), input, tier)) {
+                    player.level().playSound(null, player.blockPosition(), SoundEvents.ANVIL_USE,
+                            SoundSource.BLOCKS, 0.8F, 1.0F);
                     updateSmithingOutput();
                 }
             }
@@ -139,7 +143,12 @@ public class AnvilMenu extends AbstractContainerMenu implements HbmTypedMenuActi
     }
 
     private void craftConstruction(ServerPlayer player, AnvilConstructionRecipe recipe, boolean batch) {
-        AnvilConstructionRecipeRuntime.craft(player, recipe, tier, batch);
+        AnvilConstructionRecipeRuntime.CraftResult result = AnvilConstructionRecipeRuntime.craft(player, recipe, tier,
+                batch);
+        if (result.craftedAny()) {
+            player.level().playSound(null, player.blockPosition(), SoundEvents.ANVIL_USE,
+                    SoundSource.BLOCKS, 0.8F, 1.0F);
+        }
         player.inventoryMenu.broadcastChanges();
     }
 

@@ -136,6 +136,44 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
     }
 
     @Override
+    public long useUpItem(int index, long amount) {
+        if (amount <= 0L || index < 0 || index >= SLOT_COUNT) {
+            return Math.max(0L, amount);
+        }
+        ItemStack extracted = items.extractItem(index, (int) Math.min(Integer.MAX_VALUE, amount), false);
+        return amount - extracted.getCount();
+    }
+
+    @Override
+    public long addItem(int index, long amount) {
+        if (amount <= 0L || index < 0 || index >= SLOT_COUNT) {
+            return Math.max(0L, amount);
+        }
+        ItemStack current = items.getStackInSlot(index);
+        if (current.isEmpty()) {
+            return amount;
+        }
+        ItemStack offered = current.copy();
+        offered.setCount((int) Math.min(Integer.MAX_VALUE, amount));
+        return items.insertItem(index, offered, false).getCount();
+    }
+
+    @Override
+    public boolean allowTypeSetting() {
+        return true;
+    }
+
+    @Override
+    public long setupType(int index, ItemStack stack, long amount) {
+        if (amount <= 0L || index < 0 || index >= SLOT_COUNT || !items.getStackInSlot(index).isEmpty()) {
+            return Math.max(0L, amount);
+        }
+        ItemStack offered = stack.copy();
+        offered.setCount((int) Math.min(Integer.MAX_VALUE, amount));
+        return items.insertItem(index, offered, false).getCount();
+    }
+
+    @Override
     public boolean isAvailableToCache(PneumaticStackCache cache) {
         return isAvailable();
     }

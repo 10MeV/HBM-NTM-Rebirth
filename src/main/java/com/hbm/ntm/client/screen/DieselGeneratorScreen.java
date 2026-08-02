@@ -1,7 +1,9 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.DieselGeneratorBlockEntity;
 import com.hbm.ntm.menu.DieselGeneratorMenu;
+import com.hbm.ntm.network.ModMessages;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -27,12 +29,15 @@ public class DieselGeneratorScreen extends AbstractContainerScreen<DieselGenerat
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         int power = menu.getPowerBarHeight(52);
         if (power > 0) {
-            graphics.blit(TEXTURE, leftPos + 152, topPos + 69 - power, 176, 52 - power, 16, power);
+            graphics.blit(TEXTURE, leftPos + 141, topPos + 69 - power, 176, 52 - power, 16, power);
+        }
+        if (menu.isOn()) {
+            graphics.blit(TEXTURE, leftPos + 79, topPos + 61, 192, 16, 35, 14);
         }
         if (menu.wasOn()) {
-            graphics.blit(TEXTURE, leftPos + 115, topPos + 34, 208, 0, 18, 18);
+            graphics.blit(TEXTURE, leftPos + 89, topPos + 42, 192, 0, 16, 16);
         }
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 80, topPos + 69, 16, 52,
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 35, topPos + 69, 16, 52,
                 menu.getTankData());
     }
 
@@ -46,12 +51,12 @@ public class DieselGeneratorScreen extends AbstractContainerScreen<DieselGenerat
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(80, 17, 16, 52, mouseX, mouseY)) {
+        if (isHovering(35, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
                     menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(152, 17, 16, 52, mouseX, mouseY)) {
+        } else if (isHovering(141, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
-                    leftPos + 152, topPos + 17, 16, 52, menu.getPower(), menu.getMaxPower());
+                    leftPos + 141, topPos + 17, 16, 52, menu.getPower(), menu.getMaxPower());
         } else if (isHovering(-16, 36, 16, 16, mouseX, mouseY)) {
             graphics.renderTooltip(font, split(List.of(
                     Component.literal("Fuel consumption rate:"),
@@ -62,11 +67,21 @@ public class DieselGeneratorScreen extends AbstractContainerScreen<DieselGenerat
             graphics.renderTooltip(font, split(List.of(
                     Component.literal("Error: The currently set fuel type"),
                     Component.literal("is not supported by this engine!"))), mouseX, mouseY);
-        } else if (isHovering(115, 34, 18, 18, mouseX, mouseY)) {
+        } else if (isHovering(89, 42, 16, 16, mouseX, mouseY)) {
             graphics.renderTooltip(font, split(List.of(
                     Component.literal(menu.getOutput() + " HE/t"))), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (isHovering(89, 61, 16, 14, mouseX, mouseY)) {
+            ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0,
+                    DieselGeneratorBlockEntity.CONTROL_TOGGLE);
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     private static List<net.minecraft.util.FormattedCharSequence> split(List<Component> tooltip) {

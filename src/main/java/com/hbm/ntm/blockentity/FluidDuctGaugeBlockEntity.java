@@ -92,8 +92,8 @@ public class FluidDuctGaugeBlockEntity extends FluidPipeBlockEntity implements R
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

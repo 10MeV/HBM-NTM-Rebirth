@@ -2651,6 +2651,21 @@
       }
     ]
   },
+  "block.platemetal_place": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.platemetal",
+    "sounds": [
+      "hbm_ntm_rebirth:block/platemetal_bar1",
+      "hbm_ntm_rebirth:block/platemetal_bar2",
+      "hbm_ntm_rebirth:block/platemetal_bar3",
+      "hbm_ntm_rebirth:block/platemetal_bar4",
+      "hbm_ntm_rebirth:block/platemetal_bar5",
+      "hbm_ntm_rebirth:block/platemetal_bar6"
+    ]
+  },
+  "step.platemetal": {
+    "subtitle": "subtitles.hbm_ntm_rebirth.block.platemetal",
+    "sounds": ["hbm_ntm_rebirth:block/platemetal_step"]
+  },
   "door.sliding_seal_stop": {
     "subtitle": "subtitles.hbm_ntm_rebirth.door.stop",
     "sounds": [

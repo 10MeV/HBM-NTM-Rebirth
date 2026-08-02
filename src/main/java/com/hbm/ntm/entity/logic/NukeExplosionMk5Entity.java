@@ -1,5 +1,7 @@
 package com.hbm.ntm.entity.logic;
 
+import com.hbm.saveddata.satellites.SatelliteDetector;
+import com.hbm.saveddata.satellites.SatelliteDetector.BurstIntensity;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.config.HbmCommonConfig;
@@ -104,6 +106,7 @@ public class NukeExplosionMk5Entity extends ExplosionChunkLoadingEntity {
         if (explosion == null) {
             explosionStart = System.currentTimeMillis();
             explosion = createExplosionWorker();
+            SatelliteDetector.reportEvent(level(), SatelliteDetector.DURATION_HIGH, BurstIntensity.HIGH, getX(), getZ());
             initialized = true;
         }
 

@@ -16,7 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 
 /**
  * Server-only lease registry for request-network nodes.  This replaces the legacy static
@@ -27,7 +26,7 @@ public final class DroneLogisticsNetwork {
     public static final int MAX_RANGE = 24;
     /** Legacy RequestNetwork.maxAge was 2,000 ms; use the equivalent two game seconds, not 2,000 ticks. */
     public static final int LEASE_TICKS = 40;
-    private static final Map<ServerLevel, DroneLogisticsNetwork> NETWORKS = new WeakHashMap<>();
+    private static final Map<ServerLevel, DroneLogisticsNetwork> NETWORKS = new HashMap<>();
 
     private final Map<Long, Node> nodes = new HashMap<>();
 
@@ -45,6 +44,22 @@ public final class DroneLogisticsNetwork {
         if (network != null) {
             network.cleanup(level.getGameTime());
         }
+    }
+
+    /** Releases the process-local network as soon as its server level unloads. */
+    public static void unloadLevel(ServerLevel level) {
+        DroneLogisticsNetwork network = NETWORKS.remove(level);
+        if (network != null) {
+            network.nodes.clear();
+        }
+    }
+
+    /** Releases every process-local network when the integrated or dedicated server stops. */
+    public static void clearAll() {
+        for (DroneLogisticsNetwork network : NETWORKS.values()) {
+            network.nodes.clear();
+        }
+        NETWORKS.clear();
     }
 
     public Node publish(ServerLevel level, BlockPos pos, NodeKind kind, boolean active,

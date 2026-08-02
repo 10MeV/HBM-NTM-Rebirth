@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "IPI",
+    "I I",
+    "IPI"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:plates/saturnite"
+    },
+    "P": {
+      "tag": "forge:dense_wires/bscco"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:barrel_antimatter"
+  },
+  "show_notification": true
+}

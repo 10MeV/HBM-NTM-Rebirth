@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_forest",
+  "features": "hbm_ntm_rebirth:legacy_flower_foxglove",
+  "step": "vegetal_decoration"
+}

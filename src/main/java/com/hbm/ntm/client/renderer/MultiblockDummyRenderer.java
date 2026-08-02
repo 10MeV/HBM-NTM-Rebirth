@@ -25,23 +25,23 @@ public class MultiblockDummyRenderer implements BlockEntityRenderer<MultiblockDu
 
     @Override
     public boolean shouldRender(MultiblockDummyBlockEntity dummy, Vec3 cameraPos) {
-        return BlockEntityRenderer.super.shouldRender(dummy, cameraPos)
+        Level level = dummy.getLevel();
+        return level != null
+                && resolveColumnCore(level, dummy) != null
+                && BlockEntityRenderer.super.shouldRender(dummy, cameraPos)
                 && LegacyBlockEntityRenderCulling.shouldRenderMachine(dummy, getViewDistance());
     }
 
     @Override
     public void render(MultiblockDummyBlockEntity dummy, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(dummy, getViewDistance())) {
-            return;
-        }
         Level level = dummy.getLevel();
         if (level == null) {
             return;
         }
         BlockPos dummyPos = dummy.getBlockPos();
         MultiblockHelper.CoreLookup core = resolveColumnCore(level, dummy);
-        if (core == null) {
+        if (core == null || !LegacyBlockEntityRenderCulling.shouldRenderMachine(dummy, getViewDistance())) {
             return;
         }
         BlockPos corePos = core.pos();
@@ -64,12 +64,6 @@ public class MultiblockDummyRenderer implements BlockEntityRenderer<MultiblockDu
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(dummy)) {
             RBMKColumnRenderer.renderStaticSegment(blockRenderer, coreState, segment, heightAbove, poseStack, buffer,
                     modelLight);
-            if (coreEntity instanceof RBMKColumnBlockEntity column
-                    && RBMKColumnRenderer.hasDynamicSegments(column.kind())
-                    && MultiblockHelper.isOperationalCoreLayoutComplete(level, corePos)) {
-                RBMKColumnRenderer.renderDynamicSegment(column, segment, partialTick, poseStack, buffer, modelLight,
-                        packedOverlay);
-            }
         }
     }
 
@@ -87,11 +81,11 @@ public class MultiblockDummyRenderer implements BlockEntityRenderer<MultiblockDu
         BlockPos corePos = dummy.getCorePos();
         if (corePos != null) {
             MultiblockHelper.CoreLookup core = MultiblockHelper.findCoreAt(level, corePos);
-            if (core != null && core.state().getBlock() instanceof RBMKColumnBlock
+            return core != null && core.state().getBlock() instanceof RBMKColumnBlock
                     && core.pos().getX() == dummy.getBlockPos().getX()
-                    && core.pos().getZ() == dummy.getBlockPos().getZ()) {
-                return core;
-            }
+                    && core.pos().getZ() == dummy.getBlockPos().getZ()
+                    ? core
+                    : null;
         }
         return RBMKStructureDimensions.findVerticalColumnCore(level, dummy.getBlockPos());
     }

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:rangefinder" },
+    { "item": "hbm_ntm_rebirth:circuit_advanced" },
+    { "tag": "forge:ingots/rubber" },
+    { "tag": "forge:dense_wires/gold" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:detonator_laser" }
+}

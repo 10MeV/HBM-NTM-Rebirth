@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/brick_concrete",
+    "side": "hbm_ntm_rebirth:block/brick_concrete",
+    "top": "hbm_ntm_rebirth:block/brick_concrete"
+  }
+}
+

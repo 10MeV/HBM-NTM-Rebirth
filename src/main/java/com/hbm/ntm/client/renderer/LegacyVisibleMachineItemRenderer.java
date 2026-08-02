@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.block.ChargerBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
@@ -21,6 +22,12 @@ import com.hbm.ntm.block.LargeLaunchPadBlock;
 import com.hbm.ntm.block.LaunchPadBlock;
 import com.hbm.ntm.block.RadioAutocalBlock;
 import com.hbm.ntm.block.RadioTelexBlock;
+import com.hbm.ntm.block.RadioTorchBlock;
+import com.hbm.ntm.block.RadioTorchControllerBlock;
+import com.hbm.ntm.block.RadioTorchCounterBlock;
+import com.hbm.ntm.block.RadioTorchLogicBlock;
+import com.hbm.ntm.block.RadioTorchReaderBlock;
+import com.hbm.ntm.block.RadioTorchReceiverBlock;
 import com.hbm.ntm.block.RustedLaunchPadBlock;
 import com.hbm.ntm.block.AssemblyMachineBlock;
 import com.hbm.ntm.block.MachineBatterySocketBlock;
@@ -42,7 +49,9 @@ import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
@@ -61,6 +70,7 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -153,6 +163,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             displaySpec(RadioAutocalRenderer.MODEL.boundsAll(), 0.58F, 6.25F);
     private static final DisplaySpec TELEX_DISPLAY_SPEC =
             displaySpec(translateBounds(RadioTelexRenderer.MODEL.boundsAll(), 0.0D, 0.0D, -0.5D), 0.58F, 6.0F);
+    private static final LegacyWavefrontModel RTTY_MODEL = ObjBlockModels.RTTY.asVBO();
+    private static final DisplaySpec RTTY_DISPLAY_SPEC = displaySpec(RTTY_MODEL.boundsAll(), 0.58F, 0.0F);
 
     public static final LegacyVisibleMachineItemRenderer INSTANCE = new LegacyVisibleMachineItemRenderer(
             Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -199,7 +211,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 || blockItem.getBlock() instanceof LegacyLargePylonBlock
                 || blockItem.getBlock() instanceof LegacySubstationBlock
                 || blockItem.getBlock() instanceof RadioAutocalBlock
-                || blockItem.getBlock() instanceof RadioTelexBlock)) {
+                || blockItem.getBlock() instanceof RadioTelexBlock
+                || blockItem.getBlock() instanceof RadioTorchBlock)) {
             return;
         }
 
@@ -276,6 +289,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             renderAutocalItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof RadioTelexBlock) {
             renderTelexItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof RadioTorchBlock torch) {
+            renderRadioTorchItem(torch, displayContext, poseStack, buffer, packedLight, packedOverlay);
         }
     }
 
@@ -407,8 +422,14 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
             Vec3 translation = fusionInventoryTranslation(kind);
-            applyLegacyInventoryObjTransform(poseStack, translation.x, translation.y, translation.z,
-                    fusionInventoryScale(kind));
+            if (kind == FusionMachineBlock.Kind.KLYSTRON
+                    || kind == FusionMachineBlock.Kind.KLYSTRON_CREATIVE) {
+                applyLegacyInventoryObjTransformAtGuiY(poseStack, 0.5D, translation.x, translation.y,
+                        translation.z, fusionInventoryScale(kind));
+            } else {
+                applyCenteredLegacyInventoryObjTransform(poseStack, translation.x, translation.y, translation.z,
+                        fusionInventoryScale(kind));
+            }
             if (fusionInventoryRotates(kind)) {
                 LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
             }
@@ -530,7 +551,11 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             return false;
         }
 
-        applyLegacyInventoryObjTransform(poseStack, profile.yOffsetPixels(), profile.inventoryScale());
+        if (profile.centeredInGui()) {
+            applyCenteredLegacyInventoryObjTransform(poseStack, profile.yOffsetPixels(), profile.inventoryScale());
+        } else {
+            applyLegacyInventoryObjTransform(poseStack, profile.yOffsetPixels(), profile.inventoryScale());
+        }
         if (profile.commonScale() != 1.0D) {
             poseStack.scale((float) profile.commonScale(), (float) profile.commonScale(), (float) profile.commonScale());
         }
@@ -552,11 +577,13 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static LegacyVisibleInventoryProfile legacyVisibleInventoryProfile(LegacyMachineDefinition definition) {
         String path = definition.modelLocation().getPath();
         return switch (path) {
-            case "models/machines/fluidtank.obj" -> new LegacyVisibleInventoryProfile(-2.0D, 3.5D, 0.75D, 90.0D);
-            case "models/reactors/watz.obj" -> new LegacyVisibleInventoryProfile(-1.0D, 2.0D, 1.0D, 0.0D);
-            case "models/machines/watz_pump.obj" -> new LegacyVisibleInventoryProfile(-1.5D, 5.0D, 1.0D, 0.0D);
-            case "models/zirnox.obj" -> new LegacyVisibleInventoryProfile(-2.0D, 2.8D, 0.75D, 0.0D);
-            case "models/reactors/icf.obj" -> new LegacyVisibleInventoryProfile(-1.5D, 2.125D, 0.5D, 90.0D);
+            case "models/machines/fluidtank.obj" -> new LegacyVisibleInventoryProfile(-2.0D, 3.5D, 0.75D, 90.0D,
+                    false);
+            case "models/reactors/watz.obj" -> new LegacyVisibleInventoryProfile(-1.0D, 2.0D, 1.0D, 0.0D, true);
+            case "models/machines/watz_pump.obj" -> new LegacyVisibleInventoryProfile(-1.5D, 5.0D, 1.0D, 0.0D,
+                    true);
+            case "models/zirnox.obj" -> new LegacyVisibleInventoryProfile(-2.0D, 2.8D, 0.75D, 0.0D, true);
+            case "models/reactors/icf.obj" -> new LegacyVisibleInventoryProfile(-1.5D, 2.125D, 0.5D, 90.0D, true);
             default -> null;
         };
     }
@@ -583,7 +610,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
-            applyLegacyInventoryObjTransform(poseStack, -4.0D, 4.5D);
+            applyCenteredLegacyInventoryObjTransform(poseStack, -4.0D, 4.5D);
         } else {
             applyLegacyItemBaseNonInventoryTransform(displayContext, poseStack);
         }
@@ -619,7 +646,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
-            applyLegacyInventoryObjTransform(poseStack, -7.0D, 10.0D);
+            applyCenteredLegacyInventoryObjTransform(poseStack, -7.0D, 10.0D);
         } else {
             applyDisplayTransform(displayContext, poseStack, CHARGER_DISPLAY_SPEC);
         }
@@ -763,7 +790,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
         poseStack.pushPose();
         if (displayContext == ItemDisplayContext.GUI) {
-            applyLegacyInventoryObjTransform(poseStack, particleAcceleratorInventoryYOffset(variant),
+            applyLegacyInventoryObjTransformAtGuiY(poseStack, 0.375D, 0.0D,
+                    particleAcceleratorInventoryYOffset(variant), 0.0D,
                     particleAcceleratorInventoryScale(variant));
         } else {
             applyLegacyItemBaseNonInventoryTransform(displayContext, poseStack);
@@ -979,6 +1007,30 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.popPose();
     }
 
+    /**
+     * The old RenderRTTY deliberately skipped inventory rendering. The modern item has a
+     * visible model, so all display contexts use that exact shared RTTY OBJ and its legacy
+     * inactive texture instead of the temporary cuboid item model.
+     */
+    private static void renderRadioTorchItem(RadioTorchBlock torch, ItemDisplayContext displayContext,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        applyDisplayTransform(displayContext, poseStack, RTTY_DISPLAY_SPEC);
+        RTTY_MODEL.renderWithSprite(rttyItemSprite(torch), poseStack, buffer, packedLight, packedOverlay,
+                0.0F, 0.0F, 0.0F, false);
+        poseStack.popPose();
+    }
+
+    private static TextureAtlasSprite rttyItemSprite(RadioTorchBlock torch) {
+        String texture = torch instanceof RadioTorchReceiverBlock ? "rtty_rec_off"
+                : torch instanceof RadioTorchLogicBlock ? "rtty_logic_off"
+                : torch instanceof RadioTorchReaderBlock ? "rtty_reader"
+                : torch instanceof RadioTorchCounterBlock ? "rtty_counter"
+                : torch instanceof RadioTorchControllerBlock ? "rtty_controller"
+                : "rtty_sender_off";
+        return LegacyTexturedQuadRenderer.blockSprite(HbmNtm.MOD_ID, "block/" + texture);
+    }
+
     private static BlockState itemState(BlockState state) {
         if (state.hasProperty(HorizontalMachineBlock.FACING)) {
             state = state.setValue(HorizontalMachineBlock.FACING, Direction.SOUTH);
@@ -1072,6 +1124,31 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static void applyLegacyInventoryObjTransform(PoseStack poseStack, double yOffsetPixels,
             double inventoryScale) {
         applyLegacyInventoryObjTransform(poseStack, 0.0D, yOffsetPixels, 0.0D, inventoryScale);
+    }
+
+    /**
+     * Applies the legacy OBJ rotation and pixel-space offsets while anchoring the model to the modern GUI slot
+     * center.  Kept opt-in because most legacy item previews intentionally retain their original 10px baseline.
+     */
+    private static void applyCenteredLegacyInventoryObjTransform(PoseStack poseStack, double yOffsetPixels,
+            double inventoryScale) {
+        applyCenteredLegacyInventoryObjTransform(poseStack, 0.0D, yOffsetPixels, 0.0D, inventoryScale);
+    }
+
+    private static void applyCenteredLegacyInventoryObjTransform(PoseStack poseStack, double xOffsetPixels,
+            double yOffsetPixels, double zOffsetPixels, double inventoryScale) {
+        applyLegacyInventoryObjTransformAtGuiY(poseStack, 0.375D, xOffsetPixels, yOffsetPixels, zOffsetPixels,
+                inventoryScale);
+    }
+
+    private static void applyLegacyInventoryObjTransformAtGuiY(PoseStack poseStack, double guiY,
+            double xOffsetPixels, double yOffsetPixels, double zOffsetPixels, double inventoryScale) {
+        poseStack.translate(0.5D, guiY, 0.0D);
+        LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
+        LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
+        poseStack.scale(0.0625F, 0.0625F, 0.0625F);
+        poseStack.translate(xOffsetPixels, yOffsetPixels, zOffsetPixels);
+        poseStack.scale((float) inventoryScale, (float) inventoryScale, (float) inventoryScale);
     }
 
     private static void applyLegacyInventoryObjTransform(PoseStack poseStack, double xOffsetPixels,
@@ -1463,7 +1540,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     }
 
     private record LegacyVisibleInventoryProfile(double yOffsetPixels, double inventoryScale,
-            double commonScale, double commonYRotationDegrees) {
+            double commonScale, double commonYRotationDegrees, boolean centeredInGui) {
     }
 
 }

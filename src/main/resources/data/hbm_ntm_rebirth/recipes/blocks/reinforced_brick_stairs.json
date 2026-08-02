@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "X  ",
+    "XX ",
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "item": "hbm_ntm_rebirth:reinforced_brick"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:reinforced_brick_stairs",
+    "count": 4
+  }
+}

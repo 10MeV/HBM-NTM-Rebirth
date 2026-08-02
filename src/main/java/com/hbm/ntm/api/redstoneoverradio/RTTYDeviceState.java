@@ -8,6 +8,7 @@ import com.hbm.ntm.util.BufferUtil;
 
 public class RTTYDeviceState {
     public static final String SELF_DESTRUCT_SIGNAL = "selfdestruct";
+    public static final int MAX_CHANNEL_LENGTH = 15;
 
     private static final String TAG_POLLING = "p";
     private static final String TAG_CUSTOM_MAP = "m";
@@ -150,7 +151,7 @@ public class RTTYDeviceState {
         customMap = tag.getBoolean(TAG_CUSTOM_MAP);
         lastState = Mth.clamp(tag.getInt(TAG_LAST_STATE), 0, 15);
         lastUpdate = tag.getLong(TAG_LAST_UPDATE);
-        channel = tag.getString(TAG_CHANNEL);
+        channel = clean(tag.getString(TAG_CHANNEL));
         loadMapping(tag);
     }
 
@@ -205,9 +206,9 @@ public class RTTYDeviceState {
     public void readLegacyWire(FriendlyByteBuf buffer) {
         polling = buffer.readBoolean();
         customMap = buffer.readBoolean();
-        channel = BufferUtil.readString(buffer);
+        channel = clean(BufferUtil.readString(buffer));
         for (int index = 0; index < mapping.length; index++) {
-            mapping[index] = BufferUtil.readString(buffer);
+            mapping[index] = clean(BufferUtil.readString(buffer));
         }
     }
 
@@ -225,12 +226,15 @@ public class RTTYDeviceState {
 
     protected void loadMapping(CompoundTag tag) {
         for (int i = 0; i < mapping.length; i++) {
-            mapping[i] = tag.getString(TAG_MAPPING_PREFIX + i);
+            mapping[i] = clean(tag.getString(TAG_MAPPING_PREFIX + i));
         }
     }
 
     protected static String clean(String value) {
-        return value == null ? "" : value;
+        if (value == null) {
+            return "";
+        }
+        return value.length() <= MAX_CHANNEL_LENGTH ? value : value.substring(0, MAX_CHANNEL_LENGTH);
     }
 
     public record BroadcastDecision(boolean stateChanged, boolean shouldBroadcast, String channel, String signal) {

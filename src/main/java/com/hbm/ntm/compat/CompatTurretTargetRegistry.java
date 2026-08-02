@@ -2,6 +2,7 @@ package com.hbm.ntm.compat;
 
 import com.hbm.ntm.api.entity.RadarContext;
 import com.hbm.ntm.api.entity.RadarDetectable;
+import com.hbm.ntm.entity.logic.AirstrikeBomberEntity;
 import com.hbm.ntm.entity.missile.MissileEntity;
 import com.hbm.ntm.turret.TurretBlockEntityBase;
 import net.minecraft.server.level.ServerLevel;
@@ -51,6 +52,8 @@ public final class CompatTurretTargetRegistry {
                 && !(entity instanceof EnderDragonPart)));
         registerHostile(entity -> entity instanceof Enemy);
         registerMachine(entity -> entity instanceof AbstractMinecart);
+        // TileEntityTurretBaseNT explicitly accepts EntityBomber while targetMachines is enabled.
+        registerMachine(entity -> entity instanceof AirstrikeBomberEntity);
         registerPlayer(entity -> entity instanceof Player && !(entity instanceof FakePlayer));
     }
 

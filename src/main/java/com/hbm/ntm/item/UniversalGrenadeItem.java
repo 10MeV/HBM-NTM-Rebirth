@@ -2,6 +2,8 @@ package com.hbm.ntm.item;
 
 import com.hbm.items.weapon.ItemGenericGrenade;
 import com.hbm.handler.radiation.ChunkRadiationManager;
+import com.hbm.saveddata.satellites.SatelliteDetector;
+import com.hbm.saveddata.satellites.SatelliteDetector.BurstIntensity;
 import com.hbm.ntm.bullet.BulletSpecialSpawnUtil;
 import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.entity.effect.FireLingeringEntity;
@@ -88,8 +90,14 @@ public class UniversalGrenadeItem extends ItemGenericGrenade implements HbmLegac
         if (!level.isClientSide) {
             DynamiteStickEntity grenade = new DynamiteStickEntity(level, player);
             grenade.setItem(stack.copyWithCount(1));
+            // EntityGrenadeUniversal starts at (0.25, -0.25, 0) rotated by
+            // -yaw + 180 degrees; this is intentionally not the generic
+            // bouncy-grenade constructor position.
+            double yawRadians = Math.toRadians(player.getYRot());
+            grenade.setPos(player.getX() - 0.25D * Math.cos(yawRadians), player.getEyeY() - 0.25D,
+                    player.getZ() - 0.25D * Math.sin(yawRadians));
             grenade.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F,
-                    (float) getThrowForce(stack), 1.0F);
+                    (float) getThrowForce(stack), 0.0F);
             level.addFreshEntity(grenade);
 
             if (!player.getAbilities().instabuild) {
@@ -501,6 +509,7 @@ public class UniversalGrenadeItem extends ItemGenericGrenade implements HbmLegac
 
     private static void nuclearExplode(Level level, LivingEntity thrower, double x, double y, double z,
             boolean blockDamage) {
+        SatelliteDetector.reportEvent(level, SatelliteDetector.DURATION_LOW, BurstIntensity.LOW, x, z);
         ExplosionVnt explosion = new ExplosionVnt(level, x, y, z, 10.0F, thrower, false,
                 blockDamage ? Explosion.BlockInteraction.DESTROY_WITH_DECAY : Explosion.BlockInteraction.KEEP);
         if (blockDamage) {

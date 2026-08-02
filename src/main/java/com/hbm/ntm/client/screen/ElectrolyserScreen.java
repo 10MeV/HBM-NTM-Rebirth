@@ -2,6 +2,7 @@ package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.ElectrolyserBlockEntity;
+import com.hbm.ntm.client.RemoteDesktopMouseCapture;
 import com.hbm.ntm.menu.ElectrolyserMenu;
 import com.hbm.ntm.network.ModMessages;
 import java.util.List;
@@ -113,6 +114,9 @@ public class ElectrolyserScreen extends AbstractContainerScreen<ElectrolyserMenu
             int control = menu.isMetalMode()
                     ? ElectrolyserBlockEntity.CONTROL_FLUID_MODE
                     : ElectrolyserBlockEntity.CONTROL_METAL_MODE;
+            // The mode change keeps this menu open, but an RDP client can
+            // otherwise expose a pending world-input centre warp here.
+            RemoteDesktopMouseCapture.suspendForScreen(minecraft);
             ModMessages.sendLegacyButton(menu.getBlockEntity(), 0, control);
             return true;
         }

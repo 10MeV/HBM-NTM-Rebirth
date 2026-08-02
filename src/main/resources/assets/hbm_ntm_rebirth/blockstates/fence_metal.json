@@ -1,0 +1,37 @@
+{
+  "multipart": [
+    {
+      "when": { "north": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/fence_metal_north" }
+    },
+    {
+      "when": { "south": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/fence_metal_south" }
+    },
+    {
+      "when": { "west": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/fence_metal_west" }
+    },
+    {
+      "when": { "east": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/fence_metal_east" }
+    },
+    {
+      "when": { "force_post": "true" },
+      "apply": { "model": "hbm_ntm_rebirth:block/fence_metal_post" }
+    },
+    {
+      "when": {
+        "OR": [
+          { "force_post": "false", "north": "true", "south": "false" },
+          { "force_post": "false", "north": "false", "south": "true" },
+          { "force_post": "false", "west": "true", "east": "false" },
+          { "force_post": "false", "west": "false", "east": "true" },
+          { "force_post": "false", "north": "false", "south": "false", "west": "false", "east": "false" },
+          { "force_post": "false", "north": "true", "south": "true", "west": "true", "east": "true" }
+        ]
+      },
+      "apply": { "model": "hbm_ntm_rebirth:block/fence_metal_post" }
+    }
+  ]
+}

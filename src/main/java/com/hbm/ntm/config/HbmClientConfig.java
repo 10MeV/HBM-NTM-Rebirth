@@ -43,6 +43,11 @@ public final class HbmClientConfig {
     public static final ForgeConfigSpec.BooleanValue RENDER_BACKEND_DIAGNOSTICS;
     public static final ForgeConfigSpec.BooleanValue RENDER_MDI_DEBUG_LOG_DISPATCH;
     public static final ForgeConfigSpec.BooleanValue RENDER_MDI_VERBOSE_SUBDRAWS;
+    public static final ForgeConfigSpec.BooleanValue RENDER_CABLE_HANG;
+    public static final ForgeConfigSpec.BooleanValue RENDER_REEDS;
+    public static final ForgeConfigSpec.IntValue RENDER_HELIOSTAT_BEAM_LIMIT;
+    public static final ForgeConfigSpec.BooleanValue RENDER_REBAR_SIMPLE;
+    public static final ForgeConfigSpec.IntValue RENDER_REBAR_LIMIT;
     public static final ForgeConfigSpec.BooleanValue ITEM_TOOLTIP_SHOW_TAGS;
     public static final ForgeConfigSpec.BooleanValue ITEM_TOOLTIP_SHOW_CUSTOM_NUKE;
     public static final ForgeConfigSpec.BooleanValue NEI_HIDE_SECRETS;
@@ -171,6 +176,21 @@ public final class HbmClientConfig {
         RENDER_MDI_VERBOSE_SUBDRAWS = builder
                 .comment("Modernized render pipeline: logs every OBJ MDI sub-draw at info level when dispatch diagnostics are needed.")
                 .define("mdiVerboseSubdraws", false);
+        RENDER_CABLE_HANG = builder
+                .comment("Legacy ClientConfig.RENDER_CABLE_HANG: renders pylon wires as the source-backed sagging cable curve instead of straight segments.")
+                .define("renderCableHang", true);
+        RENDER_REEDS = builder
+                .comment("Legacy ClientConfig.RENDER_REEDS: renders the full source-backed underwater reeds stack instead of only its top layer.")
+                .define("renderReeds", true);
+        RENDER_HELIOSTAT_BEAM_LIMIT = builder
+                .comment("Legacy ClientConfig.RENDER_HELIOSTAT_BEAM_LIMIT: maximum solar-mirror beams rendered by one solar boiler; 0 disables the visual beams.")
+                .defineInRange("heliostatBeamLimit", 250, 0, Integer.MAX_VALUE);
+        RENDER_REBAR_SIMPLE = builder
+                .comment("Legacy ClientConfig.RENDER_REBAR_SIMPLE: renders three center bars instead of the default twelve-bar rebar lattice.")
+                .define("renderRebarSimple", false);
+        RENDER_REBAR_LIMIT = builder
+                .comment("Legacy ClientConfig.RENDER_REBAR_LIMIT: maximum partially concrete-filled rebar overlays rendered per frame; 0 disables only the fill overlay.")
+                .defineInRange("rebarRenderLimit", 250, 0, Integer.MAX_VALUE);
         builder.pop();
 
         builder.push("tooltips");
@@ -241,11 +261,11 @@ public final class HbmClientConfig {
     }
 
     public static int modelStaticRenderDistanceChunks() {
-        return HbmModelRenderDistances.BLOCKS / 16;
+        return fixedModelRenderDistanceChunks(RENDER_MODEL_STATIC_RENDER_DISTANCE);
     }
 
     public static int modelStaticRenderDistanceBlocks() {
-        return HbmModelRenderDistances.BLOCKS;
+        return modelStaticRenderDistanceChunks() * 16;
     }
 
     public static boolean useSlicedLight() {
@@ -257,11 +277,11 @@ public final class HbmClientConfig {
     }
 
     public static int modelUpdateDistanceChunks() {
-        return HbmModelRenderDistances.BLOCKS / 16;
+        return fixedModelRenderDistanceChunks(RENDER_MODEL_UPDATE_DISTANCE);
     }
 
     public static int modelUpdateDistanceBlocks() {
-        return HbmModelRenderDistances.BLOCKS;
+        return modelUpdateDistanceChunks() * 16;
     }
 
     public static boolean safeObjStaticBatching() {
@@ -310,6 +330,26 @@ public final class HbmClientConfig {
 
     public static boolean mdiVerboseSubdraws() {
         return booleanValue(RENDER_MDI_VERBOSE_SUBDRAWS, false);
+    }
+
+    public static boolean renderCableHang() {
+        return booleanValue(RENDER_CABLE_HANG, true);
+    }
+
+    public static boolean renderReeds() {
+        return booleanValue(RENDER_REEDS, true);
+    }
+
+    public static int renderHeliostatBeamLimit() {
+        return Math.max(0, intValue(RENDER_HELIOSTAT_BEAM_LIMIT, 250));
+    }
+
+    public static boolean renderRebarSimple() {
+        return booleanValue(RENDER_REBAR_SIMPLE, false);
+    }
+
+    public static int renderRebarLimit() {
+        return Math.max(0, intValue(RENDER_REBAR_LIMIT, 250));
     }
 
     public static boolean nukeHudFlash() {
@@ -382,6 +422,16 @@ public final class HbmClientConfig {
         } catch (IllegalStateException ignored) {
             return fallback;
         }
+    }
+
+    /**
+     * The two model-distance entries remain Forge config values so their persisted values are loaded and
+     * validated. Their range is intentionally pinned to the project-wide 32 chunk / 512 block contract.
+     */
+    private static int fixedModelRenderDistanceChunks(ForgeConfigSpec.IntValue value) {
+        int fixedDistance = HbmModelRenderDistances.BLOCKS / 16;
+        int configuredDistance = intValue(value, fixedDistance);
+        return configuredDistance == fixedDistance ? configuredDistance : fixedDistance;
     }
 
     private HbmClientConfig() {

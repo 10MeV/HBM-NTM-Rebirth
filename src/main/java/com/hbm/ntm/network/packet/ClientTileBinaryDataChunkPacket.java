@@ -21,7 +21,13 @@ public record ClientTileBinaryDataChunkPacket(
         int chunkCount,
         byte[] payload) implements HbmPreparablePacket {
     public static final int MAX_CHUNK_BYTES = 262_144;
-    private static final int MAX_CHUNKS = 512;
+    public static final int MAX_CHUNKS = 512;
+    /**
+     * The largest payload that can be represented by the registered tile-binary
+     * chunk wire format.  Keep this shared by both sender and reassembler: a
+     * server must never queue chunks the client will necessarily reject.
+     */
+    public static final int MAX_REASSEMBLED_PAYLOAD_BYTES = MAX_CHUNK_BYTES * MAX_CHUNKS;
 
     public ClientTileBinaryDataChunkPacket {
         transferId = transferId == null ? new UUID(0L, 0L) : transferId;

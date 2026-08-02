@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "hbm_ntm_rebirth:block/lightstone.chiseled",
+    "east": "hbm_ntm_rebirth:block/lightstone.chiseled",
+    "north": "hbm_ntm_rebirth:block/lightstone.chiseled",
+    "particle": "hbm_ntm_rebirth:block/lightstone.chiseled",
+    "south": "hbm_ntm_rebirth:block/lightstone.chiseled",
+    "up": "hbm_ntm_rebirth:block/lightstone.chiseled.top",
+    "west": "hbm_ntm_rebirth:block/lightstone.chiseled"
+  }
+}

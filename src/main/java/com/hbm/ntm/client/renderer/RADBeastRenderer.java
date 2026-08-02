@@ -52,11 +52,13 @@ public class RADBeastRenderer extends MobRenderer<EntityRADBeast, BlazeModel<Ent
 
     private static void renderBeam(EntityRADBeast entity, PoseStack poseStack, MultiBufferSource buffer) {
         Entity victim = entity.getUnfortunateSoul();
-        if (victim == null || entity.getY() <= 0.1D) {
+        Level level = entity.level();
+        // RenderRADBeast used Y > 0.1 solely as the 1.7.10 bottom-of-world guard.
+        // Negative modern terrain must not suppress the beam above its real floor.
+        if (victim == null || entity.getY() <= level.getMinBuildHeight() + 0.1D) {
             return;
         }
 
-        Level level = entity.level();
         double sourceY = entity.getY() + 1.25D;
         double targetY = victim.getY() + victim.getBbHeight() / 2.0D;
         if (victim == Minecraft.getInstance().player) {

@@ -1,5 +1,7 @@
 package com.hbm.ntm.entity.logic;
 
+import com.hbm.saveddata.satellites.SatelliteDetector;
+import com.hbm.saveddata.satellites.SatelliteDetector.BurstIntensity;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.config.BombConfig;
 import com.hbm.ntm.config.HbmCommonConfig;
@@ -98,6 +100,40 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
         ANTI_TELEPORT_ENTRIES.put(new ATEntry(level.dimension(), x, y, z), level.getGameTime() + ticks);
     }
 
+    /**
+     * Removes transient F.L.E.I.J.A. anti-teleport markers for an unloading
+     * level.  The legacy map was process-local; a modern integrated server can
+     * reopen a different save with the same dimension key, so expiration by
+     * game time alone is not a safe lifecycle boundary.
+     */
+    public static void clearAntiTeleportEntries(Level level) {
+        if (level == null) {
+            return;
+        }
+        ResourceKey<Level> dimension = level.dimension();
+        ANTI_TELEPORT_ENTRIES.keySet().removeIf(entry -> entry.dimension.equals(dimension));
+    }
+
+    /** Clears all transient markers when the owning server has stopped. */
+    public static void clearAllAntiTeleportEntries() {
+        ANTI_TELEPORT_ENTRIES.clear();
+    }
+
+    /**
+     * Periodically removes expired markers for one loaded server level.  This
+     * keeps the process-local map bounded even when no later F.L.E.I.J.A.
+     * overlap query reaches that dimension.
+     */
+    public static void pruneExpiredAntiTeleportEntries(Level level) {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+        ResourceKey<Level> dimension = level.dimension();
+        long gameTime = level.getGameTime();
+        ANTI_TELEPORT_ENTRIES.entrySet().removeIf(entry -> entry.getKey().dimension.equals(dimension)
+                && entry.getValue() < gameTime);
+    }
+
     public static boolean hasAntiTeleportOverlap(Level level, double x, double y, double z) {
         return findAntiTeleportOverlap(level, x, y, z) != null;
     }
@@ -133,6 +169,7 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
             }
             AchievementHandler.fireManhattan(level());
             initProcessors();
+            SatelliteDetector.reportEvent(level(), SatelliteDetector.DURATION_HIGH, BurstIntensity.HIGH, getX(), getZ());
             initialized = true;
         }
 
@@ -279,15 +316,10 @@ public class NukeExplosionMk3Entity extends ExplosionChunkLoadingEntity {
             return null;
         }
 
-        long gameTime = level.getGameTime();
+        pruneExpiredAntiTeleportEntries(level);
         Iterator<Map.Entry<ATEntry, Long>> iterator = ANTI_TELEPORT_ENTRIES.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<ATEntry, Long> next = iterator.next();
-            if (next.getValue() < gameTime) {
-                iterator.remove();
-                continue;
-            }
-
             ATEntry entry = next.getKey();
             if (!entry.dimension.equals(level.dimension())) {
                 continue;

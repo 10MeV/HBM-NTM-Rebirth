@@ -23,6 +23,8 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
+        ModBlocks.LEGACY_STAIRS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
+        ModBlocks.LEGACY_SLAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         ModBlocks.TURRET_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
@@ -56,11 +58,18 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STEEL_GRATE_WIDE.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.STEEL_GRATE_WIDE.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CHAIN.get());
-        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.BARBED_WIRE.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.BARBED_WIRE.get(), ModBlocks.BARBED_WIRE_FIRE.get(),
+                ModBlocks.BARBED_WIRE_POISON.get(), ModBlocks.BARBED_WIRE_ACID.get(), ModBlocks.BARBED_WIRE_WITHER.get(),
+                ModBlocks.BARBED_WIRE_ULTRADEATH.get(), ModBlocks.SPIKES.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.RED_PYLON_STEEL.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PISTON_INSERTER.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.PISTON_INSERTER.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PEDESTAL.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.PEDESTAL.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DECO_TOASTER.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DECO_TOASTER.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DECO_COMPUTER.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DECO_COMPUTER.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.STRUCT_ICF_CORE.get(),
                 ModBlocks.ICF_COMPONENT_SCAFFOLD.get(),
                 ModBlocks.ICF_COMPONENT_VESSEL.get(),
@@ -136,11 +145,14 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 "ore_gneiss_lithium", "ore_gneiss_schrabidium", "ore_gneiss_rare", "ore_gneiss_gas",
                 "stone_resource_sulfur", "stone_resource_asbestos", "stone_resource_hematite",
                 "stone_resource_malachite", "stone_resource_limestone", "stone_resource_bauxite",
+                "stone_biome",
+                "platemetal",
                 "stalactite_sulfur", "stalactite_asbestos", "stalagmite_sulfur", "stalagmite_asbestos",
                 "cluster_iron", "cluster_titanium", "cluster_aluminium", "cluster_copper",
                 "ore_nether_uranium", "ore_nether_tungsten", "ore_nether_sulfur", "ore_nether_fire",
                 "ore_nether_coal", "ore_nether_cobalt", "ore_nether_plutonium", "ore_tikite",
                 "block_meteor", "block_meteor_cobble", "block_meteor_broken", "block_meteor_molten", "block_meteor_treasure",
+                "meteor_polished", "meteor_brick", "meteor_brick_mossy", "meteor_brick_cracked", "meteor_pillar", "meteor_battery",
                 "ore_meteor_iron", "ore_meteor_copper", "ore_meteor_aluminium", "ore_meteor_rareearth", "ore_meteor_cobalt",
                 "crystal_virus", "crystal_hardened", "crystal_pulsar");
         addLegacyMineable(BlockTags.NEEDS_IRON_TOOL,
@@ -158,17 +170,24 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 "ore_gneiss_lithium", "ore_gneiss_schrabidium", "ore_gneiss_rare", "ore_gneiss_gas",
                 "stone_resource_sulfur", "stone_resource_asbestos", "stone_resource_hematite",
                 "stone_resource_malachite", "stone_resource_limestone", "stone_resource_bauxite",
+                "stone_biome",
+                "platemetal",
                 "cluster_iron", "cluster_titanium", "cluster_aluminium", "cluster_copper",
                 "ore_nether_uranium", "ore_nether_tungsten", "ore_nether_sulfur", "ore_nether_fire",
                 "ore_nether_coal", "ore_nether_cobalt", "ore_nether_plutonium", "ore_tikite",
                 "block_meteor", "block_meteor_cobble", "block_meteor_broken", "block_meteor_molten", "block_meteor_treasure",
+                "meteor_polished", "meteor_brick", "meteor_brick_mossy", "meteor_brick_cracked", "meteor_pillar", "meteor_battery",
                 "ore_meteor_iron", "ore_meteor_copper", "ore_meteor_aluminium", "ore_meteor_rareearth", "ore_meteor_cobalt");
         tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.FROZEN_LOG.get(), ModBlocks.FROZEN_PLANKS.get(),
-                ModBlocks.WOOD_STRUCTURE.get());
+                ModBlocks.WOOD_STRUCTURE.get(), ModBlocks.RAIL_WOOD.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.RAIL_NARROW.get(), ModBlocks.RAIL_HIGHSPEED.get(),
+                ModBlocks.RAIL_BOOSTER.get());
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CONVEYOR_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CONCRETE_COLORED_EXT.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CONCRETE_SUPER.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.CONCRETE_COLORED_EXT.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.CONCRETE_SUPER.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.legacyBlock("concrete_colored").get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.legacyBlock("concrete_colored").get());
         tag(BlockTags.MINEABLE_WITH_AXE).add(
@@ -191,25 +210,9 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 ModBlocks.RED_PYLON_LARGE.get(),
                 ModBlocks.SUBSTATION.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(
-                ModBlocks.BLOCK_GRAPHITE.get(),
-                ModBlocks.BLOCK_GRAPHITE_DRILLED.get(),
-                ModBlocks.BLOCK_GRAPHITE_FUEL.get(),
-                ModBlocks.BLOCK_GRAPHITE_PLUTONIUM.get(),
-                ModBlocks.BLOCK_GRAPHITE_ROD.get(),
-                ModBlocks.BLOCK_GRAPHITE_SOURCE.get(),
-                ModBlocks.BLOCK_GRAPHITE_LITHIUM.get(),
-                ModBlocks.BLOCK_GRAPHITE_TRITIUM.get(),
-                ModBlocks.BLOCK_GRAPHITE_DETECTOR.get());
+                ModBlocks.BLOCK_GRAPHITE.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(
-                ModBlocks.BLOCK_GRAPHITE.get(),
-                ModBlocks.BLOCK_GRAPHITE_DRILLED.get(),
-                ModBlocks.BLOCK_GRAPHITE_FUEL.get(),
-                ModBlocks.BLOCK_GRAPHITE_PLUTONIUM.get(),
-                ModBlocks.BLOCK_GRAPHITE_ROD.get(),
-                ModBlocks.BLOCK_GRAPHITE_SOURCE.get(),
-                ModBlocks.BLOCK_GRAPHITE_LITHIUM.get(),
-                ModBlocks.BLOCK_GRAPHITE_TRITIUM.get(),
-                ModBlocks.BLOCK_GRAPHITE_DETECTOR.get());
+                ModBlocks.BLOCK_GRAPHITE.get());
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(forgeBlockTag("glass")).add(Blocks.GLASS, Blocks.WHITE_STAINED_GLASS,

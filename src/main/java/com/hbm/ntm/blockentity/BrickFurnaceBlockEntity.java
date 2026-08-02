@@ -7,7 +7,9 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmInventoryUtil;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -63,6 +65,7 @@ public class BrickFurnaceBlockEntity extends BlockEntity implements MenuProvider
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    private final Map<Direction, LazyOptional<IItemHandler>> sidedItemHandlers = new EnumMap<>(Direction.class);
 
     private int burnTime;
     private int maxBurnTime;
@@ -251,12 +254,16 @@ public class BrickFurnaceBlockEntity extends BlockEntity implements MenuProvider
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        sidedItemHandlers.values().forEach(LazyOptional::invalidate);
+        sidedItemHandlers.clear();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return side == null ? itemHandler.cast() : LazyOptional.of(() -> new AccessibleItemHandler(side)).cast();
+            return side == null ? itemHandler.cast()
+                    : sidedItemHandlers.computeIfAbsent(side, direction -> LazyOptional.of(
+                            () -> new AccessibleItemHandler(direction))).cast();
         }
         return super.getCapability(capability, side);
     }

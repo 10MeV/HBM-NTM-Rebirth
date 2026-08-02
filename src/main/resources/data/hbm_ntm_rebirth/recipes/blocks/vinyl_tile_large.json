@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "building",
+  "key": {
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "B": { "item": "hbm_ntm_rebirth:brick_light" }
+  },
+  "pattern": [" I ", "IBI", " I "],
+  "result": { "item": "hbm_ntm_rebirth:vinyl_tile", "count": 4, "nbt": "{hbmLegacyVariant:0}" },
+  "show_notification": true
+}

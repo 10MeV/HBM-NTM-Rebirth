@@ -1,6 +1,16 @@
 package com.hbm.ntm.util;
 
 import com.hbm.ntm.item.BedrockOreItem;
+import com.hbm.ntm.item.FluidDuctVariantBlockItem;
+import com.hbm.ntm.item.FluidIconItem;
+import com.hbm.ntm.item.FluidPipeBlockItem;
+import com.hbm.ntm.item.FoundryMoldItem;
+import com.hbm.ntm.item.HbmFluidContainerItem;
+import com.hbm.ntm.item.HbmInfiniteFluidItem;
+import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.item.NuclearWasteItem;
+import com.hbm.ntm.item.RBMKPelletItem;
+import com.hbm.ntm.item.SirenCassetteItem;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.nbt.CompoundTag;
@@ -44,7 +54,7 @@ public class LegacyPatternMatcher {
             modes[slot] = null;
         } else if (stack.getItem() instanceof BedrockOreItem) {
             modes[slot] = MODE_BEDROCK;
-        } else if (stack.isDamageableItem()) {
+        } else if (hasLegacySubtypes(stack)) {
             modes[slot] = MODE_EXACT;
         } else {
             modes[slot] = MODE_WILDCARD;
@@ -102,8 +112,7 @@ public class LegacyPatternMatcher {
             modes[slot] = mode;
         }
         return switch (mode) {
-            case MODE_EXACT -> ItemStack.isSameItem(input, filter)
-                    && input.getDamageValue() == filter.getDamageValue();
+            case MODE_EXACT -> matchesLegacyExact(input, filter);
             case MODE_WILDCARD -> ItemStack.isSameItem(input, filter);
             case MODE_BEDROCK -> ItemStack.isSameItem(input, filter)
                     && input.getItem() instanceof BedrockOreItem
@@ -115,6 +124,65 @@ public class LegacyPatternMatcher {
 
     public String getMode(int slot) {
         return slot >= 0 && slot < modes.length ? modes[slot] : null;
+    }
+
+    /**
+     * Mirrors 1.7.10 {@code Item#getHasSubtypes()}, not modern durability.
+     * Legacy metadata is now carried by damage, a state-backed block item, or
+     * source-backed NBT replacement fields where 1.20.1 can no longer use
+     * {@code ItemStack} damage for an item variant.  Ordinary NBT remains
+     * deliberately excluded: 1.7.10 {@code isItemEqual} did not compare it.
+     */
+    public static boolean hasLegacySubtypes(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        return stack.getItem() instanceof LegacyStateBlockItem
+                || stack.getItem() instanceof FluidDuctVariantBlockItem
+                || stack.getItem() instanceof NuclearWasteItem
+                || stack.getItem() instanceof RBMKPelletItem
+                || stack.getItem() instanceof BedrockOreItem
+                || stack.getItem() instanceof FoundryMoldItem
+                || stack.getItem() instanceof FluidIconItem
+                || stack.getItem() instanceof FluidPipeBlockItem
+                || stack.getItem() instanceof SirenCassetteItem
+                || stack.getItem() instanceof HbmFluidContainerItem
+                        && !(stack.getItem() instanceof HbmInfiniteFluidItem);
+    }
+
+    /** Equivalent to legacy {@code ItemStack#isItemEqual}: item plus legacy metadata, never arbitrary NBT. */
+    public static boolean matchesLegacyExact(ItemStack input, ItemStack filter) {
+        return !input.isEmpty() && !filter.isEmpty() && ItemStack.isSameItem(input, filter)
+                && legacyMetadata(input) == legacyMetadata(filter);
+    }
+
+    private static int legacyMetadata(ItemStack stack) {
+        if (stack.getItem() instanceof LegacyStateBlockItem stateItem) {
+            return stateItem.getVariant(stack);
+        }
+        if (stack.getItem() instanceof FluidDuctVariantBlockItem ductItem) {
+            return ductItem.getLegacyMetadata(stack);
+        }
+        if (stack.getItem() instanceof BedrockOreItem) {
+            return BedrockOreItem.getGrade(stack).ordinal() << 4 | BedrockOreItem.getType(stack).ordinal();
+        }
+        if (stack.getItem() instanceof FoundryMoldItem) {
+            return FoundryMoldItem.getMold(stack).id();
+        }
+        if (stack.getItem() instanceof FluidIconItem) {
+            return FluidIconItem.getFluidType(stack).getId();
+        }
+        if (stack.getItem() instanceof FluidPipeBlockItem) {
+            return FluidPipeBlockItem.getFluidType(stack).getId();
+        }
+        if (stack.getItem() instanceof SirenCassetteItem) {
+            return SirenCassetteItem.track(stack).id();
+        }
+        if (stack.getItem() instanceof HbmFluidContainerItem container
+                && !(container instanceof HbmInfiniteFluidItem)) {
+            return container.getFirstFluidType(stack).getId();
+        }
+        return stack.getDamageValue();
     }
 
     /** Restores a synchronized or persisted legacy mode without bypassing this matcher. */

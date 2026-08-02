@@ -77,7 +77,7 @@ public class BombMultiMenu extends AbstractContainerMenu {
         if (blockEntity != null && blockEntity.getLevel() != null && blockEntity.isRemoved()) {
             return false;
         }
-        return player.distanceToSqr(blockPos.getX() + 0.5D, blockPos.getY() + 0.5D, blockPos.getZ() + 0.5D) <= 64.0D;
+        return player.distanceToSqr(blockPos.getX() + 0.5D, blockPos.getY() + 0.5D, blockPos.getZ() + 0.5D) <= HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity);
     }
 
     @Override

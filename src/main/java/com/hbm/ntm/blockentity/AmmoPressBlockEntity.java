@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.menu.AmmoPressMenu;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmGuiControlSecurity;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.recipe.AmmoPressRecipe;
 import com.hbm.ntm.recipe.AmmoPressRecipeRuntime;
@@ -272,12 +273,12 @@ public class AmmoPressBlockEntity extends BlockEntity implements MenuProvider, H
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        return new CompoundTag();
     }
 
     @Override
@@ -303,7 +304,8 @@ public class AmmoPressBlockEntity extends BlockEntity implements MenuProvider, H
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return tag.contains(TAG_SELECTION);
+        return HbmGuiControlSecurity.hasLegacyMachineUsePermission(player, this)
+                && tag.contains(TAG_SELECTION);
     }
 
     @Override

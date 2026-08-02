@@ -1,4 +1,5 @@
 {
+  "parent": "hbm_ntm_rebirth:polymer",
   "display": {
     "icon": {
       "item": "hbm_ntm_rebirth:nuke_boy"

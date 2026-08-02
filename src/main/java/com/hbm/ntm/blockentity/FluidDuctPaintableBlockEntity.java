@@ -142,8 +142,8 @@ public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implemen
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

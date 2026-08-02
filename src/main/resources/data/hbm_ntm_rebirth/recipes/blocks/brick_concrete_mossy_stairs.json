@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "X  ",
+    "XX ",
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "item": "hbm_ntm_rebirth:brick_concrete_mossy"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:brick_concrete_mossy_stairs",
+    "count": 4
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "render_type": "minecraft:cutout",
+  "textures": { "particle": "hbm_ntm_rebirth:block/fence_metal", "all": "hbm_ntm_rebirth:block/fence_metal" },
+  "elements": [{ "from": [7, 0, 7], "to": [16, 16, 9], "faces": { "north": { "texture": "#all" }, "south": { "texture": "#all" }, "west": { "texture": "#all" }, "east": { "texture": "#all" } } }]
+}

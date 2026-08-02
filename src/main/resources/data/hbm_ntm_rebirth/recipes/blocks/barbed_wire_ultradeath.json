@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","key":{"B":{"item":"hbm_ntm_rebirth:barbed_wire"},"C":{"item":"hbm_ntm_rebirth:powder_yellowcake"},"I":{"item":"hbm_ntm_rebirth:nuclear_waste"}},"pattern":["BCB","CIC","BCB"],"result":{"item":"hbm_ntm_rebirth:barbed_wire_ultradeath","count":4},"show_notification":true}

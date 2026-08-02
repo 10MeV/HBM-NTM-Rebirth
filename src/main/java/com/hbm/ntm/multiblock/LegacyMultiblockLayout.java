@@ -18,6 +18,7 @@ import java.util.function.Predicate;
  */
 public final class LegacyMultiblockLayout {
     private final List<BlockPos> offsets;
+    private final Set<BlockPos> offsetSet;
     private final List<BlockPos> checkOnlyOffsets;
     private final Set<BlockPos> legacyExtraOffsets;
     private final Function<BlockPos, LegacyProxyMode> proxyModes;
@@ -30,6 +31,7 @@ public final class LegacyMultiblockLayout {
             Iterable<BlockPos> legacyExtraOffsets,
             Function<BlockPos, LegacyProxyMode> proxyModes) {
         this.offsets = List.copyOf(copyOffsets(offsets));
+        this.offsetSet = Set.copyOf(this.offsets);
         this.checkOnlyOffsets = List.copyOf(copyOffsets(checkOnlyOffsets));
         this.legacyExtraOffsets = Set.copyOf(copyOffsets(legacyExtraOffsets));
         this.proxyModes = proxyModes;
@@ -195,7 +197,7 @@ public final class LegacyMultiblockLayout {
     }
 
     public boolean containsOffset(BlockPos offset) {
-        return offsets.contains(offset);
+        return offsetSet.contains(offset);
     }
 
     public List<BlockPos> checkOffsets() {

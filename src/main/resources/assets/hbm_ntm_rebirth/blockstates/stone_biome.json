@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "same_above=false,variant=0": { "model": "hbm_ntm_rebirth:block/stone_biome_desert_layer" },
+    "same_above=true,variant=0": { "model": "hbm_ntm_rebirth:block/stone_biome_desert_base" },
+    "same_above=false,variant=1": { "model": "hbm_ntm_rebirth:block/stone_biome_woodland_layer" },
+    "same_above=true,variant=1": { "model": "hbm_ntm_rebirth:block/stone_biome_woodland_base" }
+  }
+}

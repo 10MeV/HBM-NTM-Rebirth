@@ -91,12 +91,12 @@ public final class PollutionManager {
     private static final List<WeightedGear> SOOT_COMMON_FEET = List.of(
             gear(null, 7000), gear(ModItems.ROBES_BOOTS, 32), gear(ModItems.STEEL_BOOTS, 16),
             gear(ModItems.COBALT_BOOTS, 2), gear(ModItems.ALLOY_BOOTS, 2));
-    // Four legacy melee items have no current runtime registry owner; their
+    // One legacy melee item has no current runtime registry owner; its
     // original weights remain empty rather than being reassigned to substitutes.
     private static final List<WeightedGear> SOOT_COMMON_MAINHAND = List.of(
             gear(null, 10000), gear(ModItems.PIPE_LEAD, 30), gear(ModItems.CROWBAR, 25),
             gear(ModItems.GEIGER_COUNTER, 20), gear(null, 16), gear(ModItems.STEEL_PICKAXE, 12),
-            gear(null, 10), gear(null, 8), gear(null, 6), gear(ModItems.STEEL_SWORD, 15),
+            gear(ModItems.STOPSIGN, 10), gear(ModItems.SOPSIGN, 8), gear(ModItems.CHERNOBYLSIGN, 6), gear(ModItems.STEEL_SWORD, 15),
             gear(ModItems.TITANIUM_SWORD, 8), gear(ModItems.LEAD_GAVEL, 4), gear(null, 2),
             gear(ModItems.WRENCH, 20));
     private static final List<WeightedGear> SOOT_RANGED_FEET = List.of(

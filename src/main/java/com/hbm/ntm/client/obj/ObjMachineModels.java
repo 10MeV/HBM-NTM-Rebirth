@@ -27,7 +27,7 @@ public final class ObjMachineModels {
             "machine_deuterium_tower", "microwave", "mining_drill", "mining_laser", "mixer",
             "oilburner", "orbus", "ore_slopper", "piston_inserter", "pump", "pumpjack",
             "purex", "pyrooven", "radar", "radar_large", "radar_screen", "radgen",
-            "rotary_furnace", "rtg", "sawmill", "silex", "solar_boiler", "solar_mirror",
+            "rotary_furnace", "rtg", "satlink", "sawmill", "silex", "solar_boiler", "solar_mirror",
             "soldering_station", "solidifier", "steam_engine", "stirling", "strand_caster", "telex",
             "thresher",
             "tower_large", "tower_small", "turbine", "turbinegas", "turbofan",
@@ -49,7 +49,7 @@ public final class ObjMachineModels {
             "mining_laser_laser", "mining_laser_pivot", "mixer", "oilburner",
             "orbus", "ore_slopper", "piston_inserter", "pump_electric", "pump_steam", "pumpjack",
             "purex", "pyrooven", "radar_base", "radar_large", "radar_screen", "radgen", "refueler",
-            "rotary_furnace", "rtg", "sawmill", "silex", "solar_boiler",
+            "rotary_furnace", "rtg", "satlink", "sawmill", "silex", "solar_boiler",
             "solar_mirror", "soldering_station", "solidifier", "steam_engine", "strand_caster", "telex",
             "thresher",
             "stirling", "tower_large", "tower_small", "turbine", "turbinegas", "turbofan",
@@ -133,8 +133,6 @@ public final class ObjMachineModels {
     public static final ObjModelPart TELEX = directPart("telex")
             .withOrigin(ObjPartTransform.BLOCK_CENTER);
     public static final ObjModelPart FRACTION_TOWER = directPart("fraction_tower")
-            .withOrigin(ObjPartTransform.BLOCK_CENTER);
-    public static final ObjModelPart FAN = directPart("fan")
             .withOrigin(ObjPartTransform.BLOCK_CENTER);
     public static final ObjModelPart FURNACE_IRON = directPart("furnace_iron")
             .withOrigin(ObjPartTransform.BLOCK_CENTER);
@@ -281,10 +279,11 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel BATTERY_SOCKET_LEGACY = legacyModel("battery", "battery_socket").asVBO();
     public static final LegacyWavefrontModel BATTERY_REDD_LEGACY = legacyModel("fensu2").asVBO();
     public static final LegacyWavefrontModel FENSU_LEGACY = legacyModel("fensu").asVBO();
-    public static final LegacyWavefrontModel FAN_LEGACY = legacyModel("fan").asVBO();
     public static final LegacyWavefrontModel RADAR_BODY_LEGACY = legacyModel("radar_base").noSmooth().asVBO();
     public static final LegacyWavefrontModel RADAR_LEGACY = legacyModel("radar", "radar_base").noSmooth().asVBO();
     public static final LegacyWavefrontModel RADAR_LARGE_LEGACY = legacyModel("radar_large").noSmooth().asVBO();
+    public static final ResourceLocation SATLINK_TEXTURE = machineTexture("satlink");
+    public static final LegacyWavefrontModel SATLINK = legacyModel("satlink").noSmooth().asVBO();
     public static final LegacyWavefrontModel RADAR_SCREEN_LEGACY = legacyModel("radar_screen").noSmooth().asVBO();
     public static final LegacyWavefrontModel SOLAR_MIRROR_LEGACY = legacyModel("solar_mirror").noSmooth().asVBO();
     public static final LegacyWavefrontModel TELEX_LEGACY = legacyModel("telex").asVBO();
@@ -399,7 +398,6 @@ public final class ObjMachineModels {
     public static final ResourceLocation EPRESS_HEAD_TEXTURE = machineTexture("epress_head");
     public static final ResourceLocation ELEVATOR_TEXTURE = machineTexture("elevator");
     public static final ResourceLocation FENSU_TEXTURE = machineTexture("fensu");
-    public static final ResourceLocation FAN_TEXTURE = machineTexture("fan");
     public static final ResourceLocation SOLAR_MIRROR_TEXTURE = machineTexture("solar_mirror");
     public static final ResourceLocation TELEX_TEXTURE = machineTexture("telex");
     public static final ResourceLocation AUTOCAL_TEXTURE = machineTexture("autocal");

@@ -1,5 +1,7 @@
 package com.hbm.ntm.neutron;
 
+import com.hbm.ntm.api.redstoneoverradio.RORInfo;
+import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import java.util.Arrays;
 
 public final class RBMKPanelPlanner {
@@ -260,6 +262,32 @@ public final class RBMKPanelPlanner {
         }
         TerminalEvalPlan eval = evalTerminal(state, command);
         return new TerminalControlPlan(eval.state(), eval.broadcast(), eval.action(), PanelControlPersistence.MARK_CHANGED);
+    }
+
+    /**
+     * Applies the legacy {@code TileEntityRBMKTerminal#runRORFunction} contract without letting the shared panel
+     * block entity expose terminal-only behavior on the other panel variants.
+     */
+    public static TerminalRorFunctionPlan planTerminalRorFunction(TerminalState state, String name, String[] params) {
+        TerminalState safe = state == null ? TerminalState.empty() : state;
+        String[] safeParams = params == null ? new String[0] : params;
+        String allParams = String.join(" ", safeParams);
+        if ((RORInfo.PREFIX_FUNCTION + "clear").equals(name)) {
+            return new TerminalRorFunctionPlan(safe.clearHistory(), null, TerminalAction.CLEAR, true);
+        }
+        if ((RORInfo.PREFIX_FUNCTION + "write").equals(name)) {
+            return new TerminalRorFunctionPlan(safe.push(allParams), null, TerminalAction.NONE, true);
+        }
+        if (name != null && name.startsWith(RORInfo.PREFIX_FUNCTION + "set")) {
+            int line = RORInteractive.parseInt(name.substring(RORInfo.PREFIX_FUNCTION.length() + 3),
+                    1, TERMINAL_HISTORY_SIZE) - 1;
+            return new TerminalRorFunctionPlan(safe.withHistoryLine(line, allParams), null, TerminalAction.NONE, true);
+        }
+        if ((RORInfo.PREFIX_FUNCTION + "submit").equals(name)) {
+            TerminalEvalPlan eval = evalTerminal(safe, allParams);
+            return new TerminalRorFunctionPlan(eval.state(), eval.broadcast(), eval.action(), true);
+        }
+        return new TerminalRorFunctionPlan(safe, null, TerminalAction.NONE, false);
     }
 
     public static TerminalNbtSnapshot terminalNbtSnapshot(TerminalState state) {
@@ -1023,6 +1051,12 @@ public final class RBMKPanelPlanner {
         TerminalState clearHistory() {
             return new TerminalState(new String[TERMINAL_HISTORY_SIZE], channel, repeatCommand, ocMode);
         }
+
+        TerminalState withHistoryLine(int line, String value) {
+            String[] next = Arrays.copyOf(history, history.length);
+            next[line] = value == null ? "" : value;
+            return new TerminalState(next, channel, repeatCommand, ocMode);
+        }
     }
 
     public enum TerminalAction {
@@ -1049,6 +1083,10 @@ public final class RBMKPanelPlanner {
             RttyBroadcast broadcast,
             TerminalAction action,
             PanelControlPersistence persistence) {
+    }
+
+    public record TerminalRorFunctionPlan(TerminalState state, RttyBroadcast broadcast, TerminalAction action,
+            boolean changed) {
     }
 
     public record TerminalNbtSnapshot(String channel, String repeatCommand, String[] history) {

@@ -49,6 +49,7 @@ public class AirstrikeBomberEntity extends Entity {
     private int bombStop = 125;
     private int bombRate = 3;
     private int lifetime = 200;
+    private int flightTicks;
     private long forcedChunk = Long.MIN_VALUE;
 
     public AirstrikeBomberEntity(EntityType<? extends AirstrikeBomberEntity> type, Level level) {
@@ -144,6 +145,8 @@ public class AirstrikeBomberEntity extends Entity {
             return;
         }
 
+        flightTicks++;
+
         Vec3 motion = getDeltaMovement();
         setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
         updateRotationFromMotion();
@@ -153,11 +156,11 @@ public class AirstrikeBomberEntity extends Entity {
             tickCrash();
             return;
         }
-        if (tickCount > lifetime) {
+        if (flightTicks > lifetime) {
             discard();
             return;
         }
-        if (tickCount > bombStart && tickCount < bombStop && tickCount % bombRate == 0) {
+        if (flightTicks > bombStart && flightTicks < bombStop && flightTicks % bombRate == 0) {
             dropPayload();
         }
     }
@@ -301,6 +304,7 @@ public class AirstrikeBomberEntity extends Entity {
         bombStop = tag.getInt("bombStop");
         bombRate = Math.max(1, tag.getInt("bombRate"));
         lifetime = tag.contains("timer") ? tag.getInt("timer") : 200;
+        flightTicks = tag.getInt("flightTicks");
         entityData.set(BOMB_TYPE, Mth.clamp(tag.getInt("type"), TYPE_CARPET, TYPE_ATOMIC));
         entityData.set(STYLE, tag.getByte("style"));
         entityData.set(HEALTH, tag.getFloat("health"));
@@ -312,6 +316,7 @@ public class AirstrikeBomberEntity extends Entity {
         tag.putInt("bombStop", bombStop);
         tag.putInt("bombRate", bombRate);
         tag.putInt("timer", lifetime);
+        tag.putInt("flightTicks", flightTicks);
         tag.putInt("type", bombType());
         tag.putByte("style", (byte) style());
         tag.putFloat("health", getHealth());

@@ -101,8 +101,6 @@ public final class ModRecipes {
             register("combination_oven", CombinationOvenRecipe.Serializer::new);
     public static final RecipeHolder<BlastFurnaceRecipe> BLAST_FURNACE =
             register("blast_furnace", BlastFurnaceRecipe.Serializer::new);
-    public static final RecipeHolder<DiFurnaceRecipe> DIFURNACE =
-            register("difurnace", DiFurnaceRecipe.Serializer::new);
     public static final RecipeHolder<MixerRecipe> MIXER =
             register("mixer", MixerRecipe.Serializer::new);
     public static final RecipeHolder<ItemProcessingRecipe> SHREDDER =

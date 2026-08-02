@@ -19,6 +19,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.trait.CombustibleFluidTrait;
 import com.hbm.ntm.menu.DieselGeneratorMenu;
+import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
@@ -33,6 +34,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -51,13 +53,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements HbmStandardFluidReceiver, HbmFluidCopiable, MenuProvider {
+        implements HbmStandardFluidReceiver, HbmFluidCopiable, HbmLegacyButtonReceiver, MenuProvider {
     public static final int SLOT_FLUID_INPUT = 0;
     public static final int SLOT_FLUID_OUTPUT = 1;
     public static final int SLOT_BATTERY = 2;
     public static final int SLOT_IDENTIFIER = 3;
     public static final int SLOT_IDENTIFIER_OUTPUT = 4;
     public static final int SLOT_COUNT = 5;
+    public static final int CONTROL_TOGGLE = 0;
     public static final long MAX_POWER = 50_000L;
     public static final int TANK_CAPACITY = 16_000;
     private static final String TAG_LEGACY_ITEMS = "items";
@@ -108,6 +111,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final LazyOptional<IItemHandler> sideItemHandler =
             LazyOptional.of(() -> new AccessibleItemHandler(items, new int[] {SLOT_BATTERY}, true));
 
+    private boolean on;
     private boolean wasOn;
     private long powerCap = MAX_POWER;
     private long lastPowerProduced;
@@ -131,6 +135,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, diesel);
         long oldPower = diesel.energy.getPower();
         int oldFill = diesel.tank.getFill();
+        boolean oldOn = diesel.on;
         boolean oldWasOn = diesel.wasOn;
         FluidType oldType = diesel.tank.getTankType();
 
@@ -152,7 +157,9 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         HbmEnergyUtil.chargeItemFromStorage(diesel.items.getStackInSlot(SLOT_BATTERY),
                 diesel.energy, diesel.energy.getProviderSpeed());
-        diesel.generate(level, pos);
+        if (diesel.on) {
+            diesel.generate(level, pos);
+        }
         diesel.tryProvideEnergyToPorts();
         diesel.sendSmokeToPorts(level, pos);
         if (diesel.tank.getTankType() != HbmFluids.NONE) {
@@ -161,7 +168,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         diesel.networkPackNT(50);
 
         if (oldPower != diesel.energy.getPower() || oldFill != diesel.tank.getFill()
-                || oldWasOn != diesel.wasOn) {
+                || oldOn != diesel.on || oldWasOn != diesel.wasOn) {
             diesel.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
@@ -176,7 +183,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void generate(Level level, BlockPos pos) {
-        if (level.hasNeighborSignal(pos) || !hasAcceptableFuel() || tank.getFill() <= 0) {
+        if (!on || level.hasNeighborSignal(pos) || !hasAcceptableFuel() || tank.getFill() <= 0) {
             return;
         }
         wasOn = true;
@@ -243,8 +250,17 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         return wasOn;
     }
 
+    public boolean isOn() {
+        return on;
+    }
+
     public long getLastPowerProduced() {
         return lastPowerProduced;
+    }
+
+    public void toggleOn() {
+        on = !on;
+        setChanged();
     }
 
     public int getPowerBarHeight(int height) {
@@ -349,6 +365,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         writeLegacyLoadedTileBinary(data);
         data.writeInt((int) energy.getPower());
         data.writeInt((int) powerCap);
+        data.writeBoolean(on);
         data.writeBoolean(wasOn);
         LegacyFluidTankPacket.write(data, tank);
     }
@@ -358,6 +375,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         readLegacyLoadedTileBinary(data);
         energy.setPower(data.readInt());
         powerCap = data.readInt();
+        on = data.readBoolean();
         wasOn = data.readBoolean();
         LegacyFluidTankPacket.read(data, tank);
     }
@@ -369,6 +387,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_MODERN_INVENTORY, items);
         tag.putLong("powerTime", energy.getPower());
         tag.putLong("powerCap", powerCap);
+        tag.putBoolean("isOn", on);
         tank.writeToNbt(tag, "fuel");
         pollution.writeLegacyNbt(tag);
     }
@@ -385,6 +404,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
             energy.setPower(tag.getLong("powerTime"));
         }
         powerCap = tag.contains("powerCap") ? tag.getLong("powerCap") : MAX_POWER;
+        on = tag.getBoolean("isOn");
         tank.readFromNbt(tag, "fuel");
         pollution.readLegacyNbt(tag);
         readRuntimeSync(tag);
@@ -398,6 +418,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean("isOn", on);
         tag.putBoolean("wasOn", wasOn);
         tag.putLong("lastPowerProduced", lastPowerProduced);
         return tag;
@@ -410,6 +431,9 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("isOn")) {
+            on = tag.getBoolean("isOn");
+        }
         if (tag.contains("wasOn")) {
             wasOn = tag.getBoolean("wasOn");
         }
@@ -454,6 +478,18 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
+    }
+
+    @Override
+    public boolean canReceiveLegacyButton(ServerPlayer player, int value, int id) {
+        return id == CONTROL_TOGGLE;
+    }
+
+    @Override
+    public void handleLegacyButton(ServerPlayer player, int value, int id) {
+        if (id == CONTROL_TOGGLE) {
+            toggleOn();
+        }
     }
 
     private static final class AccessibleItemHandler implements IItemHandler {

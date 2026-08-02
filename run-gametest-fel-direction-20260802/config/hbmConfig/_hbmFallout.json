@@ -1,0 +1,2000 @@
+{
+  "entries": [
+    {
+      "matchesBlock": "minecraft:mushroom_stem",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:waste_log",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:log",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:waste_log",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:red_mushroom_block",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "minecraft:air",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:brown_mushroom_block",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "minecraft:air",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:snow",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "minecraft:air",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:planks",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:waste_planks",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "wood",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "minecraft:air",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "leaves",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "minecraft:air",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "plants",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "minecraft:air",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "vine",
+      "maximumDistancePercent": 65.0,
+      "primarySubstitution": [
+        [
+          "minecraft:air",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:leaves",
+      "minimumDistancePercent": 60.0,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:waste_leaves",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:mossy_cobblestone",
+      "primarySubstitution": [
+        [
+          "minecraft:coal_ore",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:glyphid_base",
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:glyphid_base",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:glyphid_spawner",
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:glyphid_spawner",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_nether_uranium",
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_nether_schrabidium",
+          0,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_nether_uranium_scorched",
+          0,
+          99
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          9,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          9,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          9,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_uranium",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          9,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          9,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_gneiss_uranium",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          9,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          9,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "grass",
+      "maximumDistancePercent": 5.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          8,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          8,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          8,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_uranium",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          8,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          8,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_gneiss_uranium",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          8,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          8,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "grass",
+      "maximumDistancePercent": 10.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          7,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          7,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          7,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_uranium",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          7,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          7,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_gneiss_uranium",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          7,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          7,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "grass",
+      "maximumDistancePercent": 15.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          7,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          6,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          6,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          6,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_uranium",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          6,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          6,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_gneiss_uranium",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          6,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          6,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "grass",
+      "maximumDistancePercent": 20.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          6,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          5,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          5,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          5,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_uranium",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          5,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          5,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_gneiss_uranium",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_schrabidium",
+          5,
+          1
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_uranium_scorched",
+          5,
+          9
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "grass",
+      "maximumDistancePercent": 25.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          4,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          4,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          4,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "grass",
+      "maximumDistancePercent": 30.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          4,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          3,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          3,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          3,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "grass",
+      "maximumDistancePercent": 35.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          2,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          2,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          2,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "grass",
+      "maximumDistancePercent": 40.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          1,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          1,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          1,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "grass",
+      "maximumDistancePercent": 45.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:coal_ore",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          0,
+          3
+        ],
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          0,
+          2
+        ]
+      ],
+      "chance": 0.5
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_lignite",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_diamond",
+          0,
+          1
+        ]
+      ],
+      "chance": 0.2
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_beryllium",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_emerald",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:diamond_ore",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:ore_sellafield_radgem",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:bedrock",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:ore_bedrock_oil",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "hbm_ntm_rebirth:sellafield_bedrock",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_bedrock",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "iron",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "ground",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "rock",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesMaterial": "sand",
+      "maximumDistancePercent": 50.0,
+      "restrictDepth": true,
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:sellafield_slaked",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:mycelium",
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:waste_mycelium",
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "matchesBlock": "minecraft:sand",
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:waste_trinitite",
+          0,
+          1
+        ]
+      ],
+      "chance": 0.05
+    },
+    {
+      "matchesBlock": "minecraft:red_sand",
+      "primarySubstitution": [
+        [
+          "hbm_ntm_rebirth:waste_trinitite_red",
+          0,
+          1
+        ]
+      ],
+      "chance": 0.05
+    },
+    {
+      "matchesBlock": "minecraft:clay",
+      "primarySubstitution": [
+        [
+          "minecraft:terracotta",
+          0,
+          1
+        ]
+      ]
+    }
+  ]
+}

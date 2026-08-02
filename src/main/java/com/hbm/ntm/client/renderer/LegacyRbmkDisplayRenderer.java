@@ -60,9 +60,19 @@ public final class LegacyRbmkDisplayRenderer {
         if (column == null) {
             return;
         }
-        double x = columnX();
-        double y = columnY(index);
-        double z = columnZ(index);
+        renderColumn(batch, index, column, columnX(), columnY(index), columnZ(index));
+    }
+
+    /**
+     * Draws a source-identical RBMK status cell at a caller-owned display position.
+     * Console and display-panel layouts differ, while their cell, color, and dot
+     * contract is the same.
+     */
+    public static void renderColumn(LegacyUntexturedQuadRenderer.DirectQuadBatch batch, int index,
+            RBMKConsolePlanner.ColumnSnapshot column, double x, double y, double z) {
+        if (column == null) {
+            return;
+        }
         CompoundTag data = column.data() == null ? EMPTY_COLUMN_DATA : column.data();
         int baseColor = baseColor(index, data);
         LegacyUntexturedQuadRenderer.xPlaneCenteredRect(batch, x, y, z, COLUMN_WIDTH, COLUMN_WIDTH, baseColor, 255);

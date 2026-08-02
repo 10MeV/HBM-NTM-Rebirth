@@ -279,6 +279,12 @@ public class CrucibleBlockEntity extends BlockEntity
     }
 
     @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        itemHandler.invalidate();
+    }
+
+    @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {

@@ -42,7 +42,8 @@ public class WatzReactorScreen extends AbstractContainerScreen<WatzReactorMenu> 
         if (menu.isLocked()) {
             graphics.blit(TEXTURE, leftPos + 142, topPos + 70, 210, 0, 18, 18);
         }
-        renderRoundHeatGauge(graphics, 1.0F - color);
+        LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 22, topPos + 109, 1.0D - color,
+                5.0D, 2.0D, 1.0D, 0x7F0000);
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 143, topPos + 69, 4, 43,
                 menu.getCoolantTank());
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 149, topPos + 69, 4, 43,
@@ -98,11 +99,6 @@ public class WatzReactorScreen extends AbstractContainerScreen<WatzReactorMenu> 
     private float heatColor() {
         return Math.max(0.0F, Math.min(1.0F,
                 1.0F - (float) Math.log(menu.getHeat() / 100_000.0D + 1.0D) * 0.4F));
-    }
-
-    private void renderRoundHeatGauge(GuiGraphics graphics, float amount) {
-        int frame = Math.max(0, Math.min(12, Math.round(amount * 12.0F)));
-        graphics.blit(TEXTURE, leftPos + 13, topPos + 100, 184, frame * 18, 18, 18);
     }
 
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY, HbmFluidGuiHelper.TankData tank,

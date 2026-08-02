@@ -27,8 +27,9 @@
     },
     {
       "ingredient": {
-        "item": "hbm_ntm_rebirth:upgrade_speed_3"
-      }
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
     }
   ],
   "solder": [

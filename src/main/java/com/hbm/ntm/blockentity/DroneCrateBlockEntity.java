@@ -253,7 +253,20 @@ public class DroneCrateBlockEntity extends HbmFluidNetworkBlockEntity
         nextTarget = tag.contains("next") ? BlockPos.of(tag.getLong("next")) : null; sendingMode = tag.getBoolean("mode"); itemType = !tag.contains("type") || tag.getBoolean("type");
         if (tag.contains("t")) tank.readFromNbt(tag, "t"); markTankTypesDirty();
     }
-    @Override public CompoundTag getUpdateTag() { return saveWithoutMetadata(); }
+    @Override public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        if (nextTarget != null) tag.putLong("next", nextTarget.asLong());
+        tag.putBoolean("mode", sendingMode);
+        tag.putBoolean("type", itemType);
+        return tag;
+    }
+    @Override public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        nextTarget = tag.contains("next") ? BlockPos.of(tag.getLong("next")) : null;
+        sendingMode = tag.getBoolean("mode");
+        itemType = !tag.contains("type") || tag.getBoolean("type");
+    }
+    @Override public CompoundTag getUpdateTag() { return getClientSyncTag(); }
     @Override public void invalidateCaps() { super.invalidateCaps(); itemHandler.invalidate(); }
     @Override public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) return itemHandler.cast();

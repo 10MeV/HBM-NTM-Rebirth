@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_beach",
+  "features": "hbm_ntm_rebirth:legacy_reeds_beach",
+  "step": "vegetal_decoration"
+}

@@ -143,11 +143,8 @@ public class LegacyEmitterBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        saveAdditional(tag);
-        tag.putInt("beam", beam);
-        return tag;
-    }
+        return new CompoundTag();
+}
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

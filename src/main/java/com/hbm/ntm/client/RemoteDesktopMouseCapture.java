@@ -67,6 +67,17 @@ public final class RemoteDesktopMouseCapture {
         }
     }
 
+    /**
+     * A menu action may occur while a screen is being replaced by the client.
+     * Stop the RDP-only relative capture before that transition so a pending
+     * world-input centre warp cannot become visible as a GUI cursor jump.
+     */
+    public static void suspendForScreen(Minecraft minecraft) {
+        if (captureActive) {
+            deactivate(minecraft);
+        }
+    }
+
     private static void detectRemoteSession() {
         if (detectionComplete) {
             return;

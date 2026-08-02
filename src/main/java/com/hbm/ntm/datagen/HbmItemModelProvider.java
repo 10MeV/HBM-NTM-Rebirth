@@ -46,7 +46,9 @@ public class HbmItemModelProvider extends ItemModelProvider {
         ModItems.SATELLITE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONSUMABLE_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.HIDDEN_RECIPE_ITEMS.forEach(item -> itemModel(item.get()));
+        ModItems.MOB_SPAWN_EGGS.forEach(item -> spawnEggModel(item.get()));
         itemModel(ModItems.CONVEYOR_WAND.get());
+        itemModel(ModItems.MEMORY.get());
         fluidDuctVariantItemModels();
     }
 
@@ -79,6 +81,10 @@ public class HbmItemModelProvider extends ItemModelProvider {
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
                     .texture("layer0", modLoc("item/battery_creative_new"));
+            return;
+        }
+        if (path.equals("memory")) {
+            generatedItem(path, "mo8_anim");
             return;
         }
         if (item instanceof HbmSelfChargingBatteryItem battery) {
@@ -203,7 +209,8 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "nugget_mercury");
             return;
         }
-        if (path.equals("ingot_redstone")) {
+        if (path.equals("ingot_redstone") || path.equals("ingot_borax")
+                || path.equals("ingot_sodium") || path.equals("ingot_slag")) {
             generatedItem(path, "ingot_raw");
             return;
         }
@@ -504,6 +511,18 @@ public class HbmItemModelProvider extends ItemModelProvider {
             generatedItem(path, "circuit_star_piece." + path.substring("circuit_star_piece_".length()));
             return;
         }
+        if (path.startsWith("circuit_star_component_")) {
+            generatedItem(path, "circuit_star_component." + path.substring("circuit_star_component_".length()));
+            return;
+        }
+        if (path.equals("circuit_star")) {
+            generatedItem(path, path);
+            return;
+        }
+        if (path.startsWith("ingot_metal_")) {
+            generatedItem(path, "ingot_metal." + path.substring("ingot_metal_".length()));
+            return;
+        }
         if (path.startsWith("chemical_dye_")) {
             layeredItem(path, "chemical_dye", "chemical_dye_overlay");
             return;
@@ -563,7 +582,8 @@ public class HbmItemModelProvider extends ItemModelProvider {
                     .parent(new ModelFile.UncheckedModelFile(modLoc("block/network/pipe_anchor")));
             return;
         }
-        if (path.equals("shimmer_sledge") || path.equals("shimmer_axe")) {
+        if (path.equals("shimmer_sledge") || path.equals("shimmer_axe")
+                || path.equals("stopsign") || path.equals("sopsign") || path.equals("chernobylsign")) {
             builtinEntityItem(path);
             return;
         }
@@ -585,6 +605,11 @@ public class HbmItemModelProvider extends ItemModelProvider {
             return;
         }
         basicItem(item);
+    }
+
+    private void spawnEggModel(Item item) {
+        String path = ForgeRegistries.ITEMS.getKey(item).getPath();
+        getBuilder(path).parent(new ModelFile.UncheckedModelFile("minecraft:item/template_spawn_egg"));
     }
 
     private static boolean hasManualItemModel(String path) {

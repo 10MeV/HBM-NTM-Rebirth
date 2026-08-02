@@ -34,6 +34,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -44,7 +45,10 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergyConnector, HbmFluidConnector,
         HbmFluidReceiver, HeatSource, RORValueProvider, RORInteractive {
@@ -67,9 +71,24 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     private LegacyProxyMode proxyMode = LegacyProxyMode.none();
     private boolean legacyExtra;
     private boolean dropCoreOnRemoval;
+    /**
+     * Capability consumers cache the optional returned by this dummy position.
+     * Do not expose a core/delegate-owned optional directly: its lifecycle is
+     * longer than this proxy position when the layout is repaired or removed.
+     */
+    private final Map<ProxyCapabilityKey, LazyOptional<?>> forwardedCapabilities = new HashMap<>();
 
     public MultiblockDummyBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MULTIBLOCK_DUMMY.get(), pos, state);
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        // The only world renderer attached to this shared carrier draws one
+        // local RBMK column segment. Do not let Forge derive this box from the
+        // dummy collision shape: that path resolves the owning core and can
+        // rebuild a large legacy layout once per dummy per render frame.
+        return new AABB(worldPosition);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, MultiblockDummyBlockEntity blockEntity) {
@@ -92,7 +111,11 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     }
 
     public void setCorePos(BlockPos corePos) {
-        this.corePos = corePos.immutable();
+        BlockPos newCorePos = corePos.immutable();
+        if (!newCorePos.equals(this.corePos)) {
+            invalidateForwardedCapabilities();
+        }
+        this.corePos = newCorePos;
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -101,8 +124,14 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     public void configure(BlockPos corePos, LegacyProxyMode proxyMode, boolean legacyExtra) {
         LegacyProxyMode previousProxyMode = this.proxyMode;
-        this.corePos = corePos.immutable();
-        this.proxyMode = proxyMode == null ? LegacyProxyMode.none() : proxyMode;
+        BlockPos newCorePos = corePos.immutable();
+        LegacyProxyMode newProxyMode = proxyMode == null ? LegacyProxyMode.none() : proxyMode;
+        if (!newCorePos.equals(this.corePos) || !newProxyMode.equals(previousProxyMode)
+                || this.legacyExtra != legacyExtra) {
+            invalidateForwardedCapabilities();
+        }
+        this.corePos = newCorePos;
+        this.proxyMode = newProxyMode;
         this.legacyExtra = legacyExtra;
         setChanged();
         if (level != null) {
@@ -138,7 +167,11 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     public void setProxyMode(LegacyProxyMode proxyMode) {
         LegacyProxyMode previousProxyMode = this.proxyMode;
-        this.proxyMode = proxyMode == null ? LegacyProxyMode.none() : proxyMode;
+        LegacyProxyMode newProxyMode = proxyMode == null ? LegacyProxyMode.none() : proxyMode;
+        if (!newProxyMode.equals(previousProxyMode)) {
+            invalidateForwardedCapabilities();
+        }
+        this.proxyMode = newProxyMode;
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -412,10 +445,57 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         if (proxyMode.allows(capability) && level != null && core != null && !core.pos().equals(worldPosition)) {
             ICapabilityProvider target = legacyProxyTarget(level.getBlockEntity(core.pos()));
             if (target != null) {
-                return target.getCapability(capability, side);
+                return forwardedCapability(capability, side, target);
             }
         }
         return super.getCapability(capability, side);
+    }
+
+    private <T> LazyOptional<T> forwardedCapability(Capability<T> capability, @Nullable Direction side,
+            ICapabilityProvider target) {
+        ProxyCapabilityKey key = new ProxyCapabilityKey(capability, side);
+        LazyOptional<?> cached = forwardedCapabilities.get(key);
+        if (cached != null) {
+            if (cached.isPresent()) {
+                return cached.cast();
+            }
+            forwardedCapabilities.remove(key, cached);
+        }
+
+        LazyOptional<T> targetCapability = target.getCapability(capability, side);
+        if (!targetCapability.isPresent()) {
+            return LazyOptional.empty();
+        }
+        LazyOptional<T> forwarded = LazyOptional.of(() -> targetCapability.resolve().orElseThrow());
+        forwardedCapabilities.put(key, forwarded);
+        targetCapability.addListener(ignored -> {
+            forwarded.invalidate();
+            forwardedCapabilities.remove(key, forwarded);
+        });
+        return forwarded;
+    }
+
+    private void invalidateForwardedCapabilities() {
+        forwardedCapabilities.values().forEach(LazyOptional::invalidate);
+        forwardedCapabilities.clear();
+    }
+
+    @Override
+    public void invalidateCaps() {
+        invalidateForwardedCapabilities();
+        super.invalidateCaps();
+    }
+
+    @Override
+    public void setRemoved() {
+        invalidateForwardedCapabilities();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        invalidateForwardedCapabilities();
+        super.onChunkUnloaded();
     }
 
     @Nullable
@@ -482,6 +562,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     @Override
     public void load(CompoundTag tag) {
+        invalidateForwardedCapabilities();
         super.load(tag);
         proxyMode = readProxyMode(tag);
         legacyExtra = tag.getBoolean(TAG_LEGACY_EXTRA);
@@ -522,8 +603,8 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Override
     public void onLoad() {
@@ -536,5 +617,11 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    private record ProxyCapabilityKey(Capability<?> capability, @Nullable Direction side) {
+        private ProxyCapabilityKey {
+            Objects.requireNonNull(capability, "capability");
+        }
     }
 }

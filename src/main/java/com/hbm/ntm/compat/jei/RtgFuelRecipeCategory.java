@@ -29,9 +29,7 @@ public final class RtgFuelRecipeCategory implements HbmJeiRecipeCategory<RtgBloc
         this.background = LegacyNeiUniversalLayout.background(guiHelper);
         this.slotBackground = LegacyNeiUniversalLayout.slotBackground(guiHelper);
         this.machineBackground = LegacyNeiUniversalLayout.machineBackground(guiHelper);
-        this.catalysts = List.of(
-                new ItemStack(ModBlocks.MACHINE_RTG_GREY.get()),
-                new ItemStack(ModBlocks.MACHINE_DIFURNACE_RTG.get()));
+        this.catalysts = List.of(new ItemStack(ModBlocks.MACHINE_RTG_GREY.get()));
     }
 
     @Override

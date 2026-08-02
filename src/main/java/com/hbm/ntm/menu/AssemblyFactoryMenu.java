@@ -60,8 +60,8 @@ public class AssemblyFactoryMenu extends AbstractContainerMenu {
                             7 + ox + column * 16, 20 + oy + row * 16));
                 }
             }
-            addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), AssemblyFactoryBlockEntity.outputSlot(module),
-                    87 + ox, 54 + oy));
+            addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
+                    AssemblyFactoryBlockEntity.outputSlot(module), 87 + ox, 54 + oy));
         }
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 33, 158, 216);
         addDataSlots();
@@ -125,7 +125,7 @@ public class AssemblyFactoryMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity));
     }
 
     @Override
@@ -147,6 +147,9 @@ public class AssemblyFactoryMenu extends AbstractContainerMenu {
             return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        if (index < MACHINE_SLOT_COUNT) {
+            com.hbm.ntm.util.AchievementHandler.fire(player, original);
+        }
         return original;
     }
 

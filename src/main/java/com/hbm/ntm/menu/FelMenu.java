@@ -72,7 +72,7 @@ public class FelMenu extends AbstractContainerMenu {
     }
 
     public boolean isBeamActive() {
-        return isOn() && mode > 0 && power > FelBlockEntity.visualBeamPowerRequest(mode) && distance > 0;
+        return isOn() && mode > 0 && power > FelBlockEntity.visualBeamPowerRequest(mode) && distance > 3;
     }
 
     public FelBlockEntity getBlockEntity() {
@@ -81,7 +81,7 @@ public class FelMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity));
     }
 
     @Override

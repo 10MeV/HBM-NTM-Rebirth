@@ -107,8 +107,16 @@ public class DroneWaypointBlockEntity extends BlockEntity implements DroneLinkab
         nextTarget = tag.contains("next") ? BlockPos.of(tag.getLong("next")) : null;
     }
 
-    @Override public CompoundTag getUpdateTag() { CompoundTag tag = super.getUpdateTag(); saveAdditional(tag); return tag; }
-    @Override public void handleUpdateTag(CompoundTag tag) { load(tag); }
+    @Override public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("height", height);
+        if (nextTarget != null) tag.putLong("next", nextTarget.asLong());
+        return tag;
+    }
+    @Override public void handleUpdateTag(CompoundTag tag) {
+        height = tag.contains("height") ? Math.max(1, Math.min(15, tag.getInt("height"))) : 5;
+        nextTarget = tag.contains("next") ? BlockPos.of(tag.getLong("next")) : null;
+    }
     @Override public Packet<ClientGamePacketListener> getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
-    @Override public void onDataPacket(net.minecraft.network.Connection connection, ClientboundBlockEntityDataPacket packet) { load(packet.getTag()); }
+    @Override public void onDataPacket(net.minecraft.network.Connection connection, ClientboundBlockEntityDataPacket packet) { handleUpdateTag(packet.getTag()); }
 }

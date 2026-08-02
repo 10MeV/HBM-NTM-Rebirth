@@ -24,6 +24,7 @@ public class DieselGeneratorMenu extends AbstractContainerMenu {
     private HbmFluidGuiHelper.TankData tank;
     private long power;
     private long maxPower;
+    private boolean on;
     private boolean wasOn;
     private long output;
 
@@ -66,6 +67,10 @@ public class DieselGeneratorMenu extends AbstractContainerMenu {
 
     public boolean wasOn() {
         return wasOn;
+    }
+
+    public boolean isOn() {
+        return on;
     }
 
     public long getOutput() {
@@ -123,6 +128,7 @@ public class DieselGeneratorMenu extends AbstractContainerMenu {
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
+        HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::isOn, value -> on = value);
         HbmMenuDataSlots.addBoolean(this::addDataSlot, blockEntity::wasOn, value -> wasOn = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getLastPowerProduced,
                 () -> output, value -> output = value);

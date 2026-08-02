@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmTileBinarySyncProvider;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.network.ServerResyncRequestRateLimiter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -55,6 +56,10 @@ public record ClientTileBinarySyncRequestPacket(BlockPos pos, ResourceLocation c
         }
         if (blockEntity instanceof HbmTileBinarySyncProvider provider
                 && provider.canSendClientTileBinaryDataTo(player, packet.channel)) {
+            if (!ServerResyncRequestRateLimiter.tryAcquireTileBinary(player, receiverPos, packet.channel,
+                    level.getGameTime())) {
+                return;
+            }
             ModMessages.syncTileBinaryToPlayer(provider, blockEntity, player, packet.channel);
         }
     }

@@ -22,11 +22,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraftforge.event.RegisterGameTestsEvent;
-import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 /** Source-contract regression coverage for {@code world.feature.OilSpot}. */
-@GameTestHolder(HbmNtm.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class OilSpotGameTests {
     // Minecraft's empty GameTest template has a top barrier at relative Y=122.
@@ -42,7 +40,7 @@ public final class OilSpotGameTests {
     }
 
     /** Vanilla flowers become {@code plant_dead:FLOWER}; mustard willow is explicitly protected. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "oilSpot")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "oilSpot")
     public static void oilSpotConvertsFlowersButPreservesMustardWillow(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         // Empty-template cells are cleared independently while the full suite is
@@ -80,7 +78,7 @@ public final class OilSpotGameTests {
     }
 
     /** Old metadata only removes a leaf when its decay-check bit is set. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "oilSpot")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "oilSpot")
     public static void oilSpotRemovesOnlyNaturallyDecayingLeaves(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos fixtureBase = helper.absolutePos(new BlockPos(0, TEST_SURFACE_Y, 640_000));
@@ -119,7 +117,7 @@ public final class OilSpotGameTests {
      * User-approved replacement for old WorldUtil#setBiome: write the target
      * X/Z quart through every modern biome section and use native chunk sync.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "worldBiomeBridge")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "worldBiomeBridge")
     public static void worldUtilBiomeBridgeWritesEverySectionQuartAndUsesNativeSync(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos target = helper.absolutePos(new BlockPos(4, 8, 2_700_000));
@@ -128,19 +126,36 @@ public final class OilSpotGameTests {
             LevelChunk chunk = level.getChunk(target.getX() >> 4, target.getZ() >> 4);
             Holder<Biome> desert = level.registryAccess().registryOrThrow(Registries.BIOME)
                     .getHolderOrThrow(Biomes.DESERT);
-            boolean changed = WorldUtil.setBiome(level, target.getX(), target.getZ(), Biomes.DESERT);
+            Holder<Biome> requestedBiome = desert;
+            int localQuartX = QuartPos.fromBlock(target.getX()) & 3;
+            int localQuartZ = QuartPos.fromBlock(target.getZ()) & 3;
+            boolean everyTargetQuartIsDesert = true;
+            for (LevelChunkSection section : chunk.getSections()) {
+                for (int quartY = 0; quartY < 4; quartY++) {
+                    if (!section.getNoiseBiome(localQuartX, quartY, localQuartZ).equals(desert)) {
+                        everyTargetQuartIsDesert = false;
+                        break;
+                    }
+                }
+                if (!everyTargetQuartIsDesert) {
+                    break;
+                }
+            }
+            if (everyTargetQuartIsDesert) {
+                requestedBiome = level.registryAccess().registryOrThrow(Registries.BIOME)
+                        .getHolderOrThrow(Biomes.PLAINS);
+            }
+            boolean changed = WorldUtil.setBiome(level, target.getX(), target.getZ(), requestedBiome);
             if (!changed) {
-                throw new AssertionError("quart biome bridge must report a changed target for a fresh test chunk");
+                throw new AssertionError("quart biome bridge must report a changed target for its selected target biome");
             }
             if (!chunk.isUnsaved()) {
                 throw new AssertionError("quart biome bridge must mark its changed LevelChunk unsaved");
             }
-            int localQuartX = QuartPos.fromBlock(target.getX()) & 3;
-            int localQuartZ = QuartPos.fromBlock(target.getZ()) & 3;
             for (int sectionIndex = 0; sectionIndex < chunk.getSections().length; sectionIndex++) {
                 LevelChunkSection section = chunk.getSection(sectionIndex);
                 for (int quartY = 0; quartY < 4; quartY++) {
-                    if (!section.getNoiseBiome(localQuartX, quartY, localQuartZ).equals(desert)) {
+                    if (!section.getNoiseBiome(localQuartX, quartY, localQuartZ).equals(requestedBiome)) {
                         throw new AssertionError("quart biome bridge did not update section=" + sectionIndex
                                 + ", quartY=" + quartY);
                     }

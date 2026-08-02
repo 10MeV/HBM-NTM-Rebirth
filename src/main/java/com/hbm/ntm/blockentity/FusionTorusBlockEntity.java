@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.saveddata.satellites.SatelliteRayScan;
+import com.hbm.saveddata.satellites.SatelliteRayScan.RayEvent;
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
@@ -738,6 +740,10 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
             bonus -= 1.0D;
         }
         didProcess = true;
+        if (level.getGameTime() % 20L == 15L) {
+            SatelliteRayScan.reportEvent(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                    RayEvent.INFO_PARTICLE, 200);
+        }
         plasmaEnergy = (long) Math.ceil(fusion.outputTemp() * factor);
         fuelConsumption = factor;
         plasmaR = fusion.r();

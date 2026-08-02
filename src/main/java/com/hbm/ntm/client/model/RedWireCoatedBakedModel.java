@@ -25,12 +25,12 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 public class RedWireCoatedBakedModel implements BakedModel {
-    private static final ResourceLocation MODEL_ID = new ResourceLocation(HbmNtm.MOD_ID, "block/red_wire_coated");
     private static final FaceBakery FACE_BAKERY = new FaceBakery();
     private static final FaceSection[][] FACE_SECTIONS = buildFaceSections();
 
@@ -38,14 +38,25 @@ public class RedWireCoatedBakedModel implements BakedModel {
     private final TextureAtlasSprite ctSprite;
     private final TextureAtlasSprite particleSprite;
     private final ItemTransforms transforms;
+    private final ModelProperty<RedWireCoatedCt.Data> dataProperty;
+    private final ResourceLocation modelId;
     private final Map<RedWireCoatedCt.Data, List<BakedQuad>> quadCache = new ConcurrentHashMap<>();
 
     public RedWireCoatedBakedModel(TextureAtlasSprite baseSprite, TextureAtlasSprite ctSprite,
             TextureAtlasSprite particleSprite, ItemTransforms transforms) {
+        this(baseSprite, ctSprite, particleSprite, transforms, RedCableBlockEntity.RED_WIRE_COATED_CT_PROPERTY,
+                new ResourceLocation(HbmNtm.MOD_ID, "block/red_wire_coated"));
+    }
+
+    public RedWireCoatedBakedModel(TextureAtlasSprite baseSprite, TextureAtlasSprite ctSprite,
+            TextureAtlasSprite particleSprite, ItemTransforms transforms, ModelProperty<RedWireCoatedCt.Data> dataProperty,
+            ResourceLocation modelId) {
         this.baseSprite = baseSprite;
         this.ctSprite = ctSprite;
         this.particleSprite = particleSprite;
         this.transforms = transforms;
+        this.dataProperty = dataProperty;
+        this.modelId = modelId;
     }
 
     @Override
@@ -60,7 +71,7 @@ public class RedWireCoatedBakedModel implements BakedModel {
         if (side != null || renderType != null && renderType != RenderType.cutout()) {
             return List.of();
         }
-        RedWireCoatedCt.Data data = modelData.get(RedCableBlockEntity.RED_WIRE_COATED_CT_PROPERTY);
+        RedWireCoatedCt.Data data = modelData.get(dataProperty);
         if (data == null) {
             data = RedWireCoatedCt.DEFAULT_DATA;
         }
@@ -86,7 +97,7 @@ public class RedWireCoatedBakedModel implements BakedModel {
     private BakedQuad bakeSubFace(Direction face, FaceSection section, int fragment) {
         BlockElementFace blockFace = new BlockElementFace(null, -1, "#ct", new BlockFaceUV(fragmentUv(fragment), 0));
         return FACE_BAKERY.bakeQuad(section.from(), section.to(), blockFace, sprite(fragment), face,
-                BlockModelRotation.X0_Y0, null, true, MODEL_ID);
+                BlockModelRotation.X0_Y0, null, true, modelId);
     }
 
     private TextureAtlasSprite sprite(int fragment) {

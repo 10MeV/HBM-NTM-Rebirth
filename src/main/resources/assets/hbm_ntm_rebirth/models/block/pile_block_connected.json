@@ -1,0 +1,14 @@
+{
+  "loader": "hbm_ntm_rebirth:mk2_pile_connected_texture_loader",
+  "side": "hbm_ntm_rebirth:block/pile_block",
+  "top": "hbm_ntm_rebirth:block/pile_block_top",
+  "side_ct": "hbm_ntm_rebirth:block/pile_block_ct",
+  "top_ct": "hbm_ntm_rebirth:block/pile_block_top_ct",
+  "input_ct": "hbm_ntm_rebirth:block/pile_block_input_ct",
+  "output_ct": "hbm_ntm_rebirth:block/pile_block_output_ct",
+  "control_top_ct": "hbm_ntm_rebirth:block/pile_block_control_top_ct",
+  "core_ct": "hbm_ntm_rebirth:block/pile_block_core_ct",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/pile_block"
+  }
+}

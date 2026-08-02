@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_card_board" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_card_processor" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:circuit_star_component_card" }
+}

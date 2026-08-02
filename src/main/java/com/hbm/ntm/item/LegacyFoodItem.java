@@ -50,7 +50,12 @@ public class LegacyFoodItem extends Item {
                 tooltip.add(Component.translatable(getDescriptionId() + ".desc.0"));
                 tooltip.add(Component.translatable(getDescriptionId() + ".desc.1"));
             }
-            case MUCHO_MANGO, QUESADILLA -> tooltip.add(Component.translatable(getDescriptionId() + ".desc"));
+            case LEMON, MUCHO_MANGO, QUESADILLA -> tooltip.add(Component.translatable(getDescriptionId() + ".desc"));
+            case PUDDING -> {
+                tooltip.add(Component.translatable(getDescriptionId() + ".desc.0"));
+                tooltip.add(Component.translatable(getDescriptionId() + ".desc.1"));
+                tooltip.add(Component.translatable(getDescriptionId() + ".desc.2"));
+            }
         }
     }
 
@@ -62,15 +67,17 @@ public class LegacyFoodItem extends Item {
                 LegacySoundPlayer.playSoundAtEntity(player, "hbm:player.vomit", SoundSource.HOSTILE, 1.0F, 1.0F);
             }
             case MUCHO_MANGO -> player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 200, 0));
-            case QUESADILLA -> {
+            case QUESADILLA, PUDDING -> {
             }
         }
     }
 
     public enum Kind {
+        LEMON,
         MED_IPECAC,
         MED_PTSD,
         MUCHO_MANGO,
-        QUESADILLA
+        QUESADILLA,
+        PUDDING
     }
 }

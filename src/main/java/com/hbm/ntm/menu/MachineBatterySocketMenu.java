@@ -82,7 +82,7 @@ public class MachineBatterySocketMenu extends AbstractContainerMenu {
         return !blockEntity.isRemoved() && player.distanceToSqr(
                 blockEntity.getBlockPos().getX() + 0.5D,
                 blockEntity.getBlockPos().getY() + 0.5D,
-                blockEntity.getBlockPos().getZ() + 0.5D) <= 64.0D;
+                blockEntity.getBlockPos().getZ() + 0.5D) <= HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity);
     }
 
     @Override

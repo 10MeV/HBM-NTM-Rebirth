@@ -304,7 +304,7 @@ public class AnvilScreen extends AbstractContainerScreen<AnvilMenu> {
 
     private void playClick() {
         if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.ANVIL_USE, 0.8F));
         }
     }
 

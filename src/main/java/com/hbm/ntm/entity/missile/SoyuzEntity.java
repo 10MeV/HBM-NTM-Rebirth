@@ -3,9 +3,9 @@ package com.hbm.ntm.entity.missile;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModEntityTypes;
-import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.Satellite;
+import com.hbm.ntm.satellite.SatelliteItem;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.util.HbmItemStackUtil;
@@ -126,7 +126,8 @@ public class SoyuzEntity extends Entity {
         if (level() instanceof ServerLevel serverLevel) {
             if (mode == MODE_SATELLITE) {
                 ItemStack load = payload[0];
-                if (load != null && load.is(ModItems.SAT_FOEQ.get())) {
+                if (load != null && load.getItem() instanceof SatelliteItem
+                        && SatelliteItem.variantOf(load) == SatelliteItem.Variant.RELAY) {
                     // EntitySoyuz awarded FOEQ before entering the generic
                     // ISatChip orbit path.  Keep this distinct source-backed
                     // launch-side award even though SatelliteRelay's onOrbit
@@ -137,8 +138,7 @@ public class SoyuzEntity extends Entity {
                 }
                 if (load != null && load.getItem() instanceof ISatelliteChip) {
                     int frequency = ISatelliteChip.getFrequencyFromStack(load);
-                    Satellite.orbit(serverLevel, Satellite.getIDFromItem(load.getItem()), frequency,
-                            getX(), getY(), getZ());
+                    Satellite.orbit(serverLevel, load, frequency, getX(), getY(), getZ());
                 }
             } else if (mode == MODE_CAPSULE) {
                 SoyuzCapsuleEntity capsule = new SoyuzCapsuleEntity(serverLevel);

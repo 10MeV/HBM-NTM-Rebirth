@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"misc","key":{"F":{"item":"minecraft:flint"},"I":{"item":"hbm_ntm_rebirth:plate_iron"},"T":{"item":"hbm_ntm_rebirth:ball_dynamite"}},"pattern":["FFF","ITI","ITI"],"result":{"item":"hbm_ntm_rebirth:det_miner","count":4},"show_notification":true}

@@ -307,7 +307,10 @@ public class FalloutRainEntity extends ExplosionChunkLoadingEntity implements IE
     }
 
     private int legacyFalloutTopY() {
-        return Math.min(255, level().getMaxBuildHeight() - 1);
+        // Legacy EntityFalloutRain scanned the complete 0..255 world column.  In a
+        // modern world the ceiling is dimension-dependent, so do not silently skip
+        // fallout on terrain or structures above the old build limit.
+        return level().getMaxBuildHeight() - 1;
     }
 
     private boolean isLegacyFalloutWritableY(BlockPos pos) {

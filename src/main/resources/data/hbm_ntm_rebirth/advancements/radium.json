@@ -1,4 +1,5 @@
 {
+  "parent": "hbm_ntm_rebirth:centrifuge",
   "display": {
     "icon": {
       "item": "hbm_ntm_rebirth:coffee_radium"

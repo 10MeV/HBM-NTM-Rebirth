@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "P": {
+      "item": "hbm_ntm_rebirth:billet_pu239"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:ingot_tantalium"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:semtex"
+    },
+    "U": {
+      "item": "hbm_ntm_rebirth:ingot_u238"
+    }
+  },
+  "pattern": [
+    "SUS",
+    "RPR",
+    "SUS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:fissure_bomb"
+  },
+  "show_notification": true
+}

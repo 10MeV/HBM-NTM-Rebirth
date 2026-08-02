@@ -94,8 +94,8 @@ public class ZirnoxDestroyedBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

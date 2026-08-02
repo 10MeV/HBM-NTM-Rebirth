@@ -747,10 +747,15 @@ public final class ParticleUtil {
     }
 
     public static void spawnSweat(Entity entity, Block block, int meta, int count) {
+        spawnSweat(entity, block, meta, count, 25.0D);
+    }
+
+    /** Range overload for source-backed callers whose old TargetPoint radius differed from the common 25-block path. */
+    public static void spawnSweat(Entity entity, Block block, int meta, int count, double range) {
         if (block == null) {
             return;
         }
-        spawnSweat(entity, block.defaultBlockState(), meta, count);
+        spawnSweat(entity, block.defaultBlockState(), meta, count, range);
     }
 
     public static void spawnSweat(Entity entity, BlockState state, int count) {
@@ -758,6 +763,10 @@ public final class ParticleUtil {
     }
 
     private static void spawnSweat(Entity entity, BlockState state, int meta, int count) {
+        spawnSweat(entity, state, meta, count, 25.0D);
+    }
+
+    private static void spawnSweat(Entity entity, BlockState state, int meta, int count, double range) {
         if (entity == null) {
             return;
         }
@@ -767,7 +776,7 @@ public final class ParticleUtil {
         putBlockState(data, state);
         data.putInt("meta", meta);
         data.putInt("entity", entity.getId());
-        spawnAuxThreaded(entity.level(), entity.getX(), entity.getY(), entity.getZ(), data, 25.0D);
+        spawnAuxThreaded(entity.level(), entity.getX(), entity.getY(), entity.getZ(), data, range);
     }
 
     public static void spawnSweat(Entity entity, String legacyBlockName, int meta, int count) {

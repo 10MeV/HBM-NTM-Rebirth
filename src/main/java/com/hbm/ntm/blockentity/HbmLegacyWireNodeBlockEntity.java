@@ -95,8 +95,8 @@ public abstract class HbmLegacyWireNodeBlockEntity extends HbmEnergyNodeBlockEnt
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

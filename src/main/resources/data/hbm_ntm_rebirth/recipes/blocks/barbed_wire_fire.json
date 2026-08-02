@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","key":{"B":{"item":"hbm_ntm_rebirth:barbed_wire"},"I":{"item":"minecraft:redstone"}},"pattern":["BBB","BIB","BBB"],"result":{"item":"hbm_ntm_rebirth:barbed_wire_fire","count":8},"show_notification":true}

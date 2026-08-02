@@ -26,7 +26,6 @@ public final class ObjModelLibrary {
     public static final ObjModelPart MACHINE_RTG = ObjMachineModels.RTG;
     public static final ObjModelPart MACHINE_TELEX = ObjMachineModels.TELEX;
     public static final ObjModelPart MACHINE_FRACTION_TOWER = ObjMachineModels.FRACTION_TOWER;
-    public static final ObjModelPart MACHINE_FAN = ObjMachineModels.FAN;
     public static final ObjModelPart MACHINE_FURNACE_IRON = ObjMachineModels.FURNACE_IRON;
     public static final ObjModelPart MACHINE_ELEVATOR = ObjMachineModels.ELEVATOR;
     public static final ObjModelPart MACHINE_CRUCIBLE = ObjMachineModels.CRUCIBLE;
@@ -138,6 +137,8 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel MACHINE_RADAR_LEGACY = ObjMachineModels.RADAR_LEGACY;
     public static final ResourceLocation MACHINE_RADAR_DISH_TEXTURE = ObjMachineModels.machineTexture("radar_dish");
     public static final LegacyWavefrontModel MACHINE_RADAR_LARGE_LEGACY = ObjMachineModels.RADAR_LARGE_LEGACY;
+    public static final LegacyWavefrontModel MACHINE_SATLINK = ObjMachineModels.SATLINK;
+    public static final ResourceLocation MACHINE_SATLINK_TEXTURE = ObjMachineModels.SATLINK_TEXTURE;
     public static final LegacyWavefrontModel MACHINE_RADAR_SCREEN_LEGACY = ObjMachineModels.RADAR_SCREEN_LEGACY;
     public static final LegacyWavefrontModel MACHINE_SOLAR_MIRROR_LEGACY = ObjMachineModels.SOLAR_MIRROR_LEGACY;
     public static final LegacyWavefrontModel MACHINE_ARC_WELDER_LEGACY = ObjMachineModels.ARC_WELDER;
@@ -329,7 +330,6 @@ public final class ObjModelLibrary {
     public static final LegacyWavefrontModel BLOCK_PIPE_NEO = ObjBlockModels.PIPE_NEO;
     public static final ResourceLocation BLOCK_PIPE_NEO_TEXTURE = ObjBlockModels.PIPE_NEO_TEXTURE;
     public static final ResourceLocation BLOCK_PIPE_SILVER_TEXTURE = ObjBlockModels.PIPE_SILVER_TEXTURE;
-    public static final LegacyWavefrontModel BLOCK_DIFURNACE_EXTENSION = ObjBlockModels.DIFURNACE_EXTENSION;
     public static final LegacyWavefrontModel BLOCK_SPLITTER = ObjBlockModels.SPLITTER;
     public static final LegacyWavefrontModel BLOCK_CRANE_BUFFER = ObjBlockModels.CRANE_BUFFER;
     public static final LegacyWavefrontModel BLOCK_RAIL_NARROW_STRAIGHT = ObjBlockModels.RAIL_NARROW_STRAIGHT;

@@ -21,15 +21,6 @@ public abstract class Satellite extends com.hbm.ntm.satellite.Satellite {
 
     public static void register() {
         registerDefaults();
-        registerSatellite(SatelliteMapper.class, ModItems.SAT_MAPPER.get());
-        registerSatellite(SatelliteScanner.class, ModItems.SAT_SCANNER.get());
-        registerSatellite(SatelliteRadar.class, ModItems.SAT_RADAR.get());
-        registerSatellite(SatelliteLaser.class, ModItems.SAT_LASER.get());
-        registerSatellite(SatelliteResonator.class, ModItems.SAT_RESONATOR.get());
-        registerSatellite(SatelliteRelay.class, ModItems.SAT_FOEQ.get());
-        registerSatellite(SatelliteMiner.class, ModItems.SAT_MINER.get());
-        registerSatellite(SatelliteLunarMiner.class, ModItems.SAT_LUNAR_MINER.get());
-        registerSatellite(SatelliteHorizons.class, ModItems.SAT_GERALD.get());
     }
 
     public static void registerSatellite(Class<? extends com.hbm.ntm.satellite.Satellite> satelliteClass, Item item) {
@@ -97,6 +88,10 @@ public abstract class Satellite extends com.hbm.ntm.satellite.Satellite {
         return satellites.indexOf(satelliteClass);
     }
 
+    public static int getIDFromStack(ItemStack stack) {
+        return com.hbm.ntm.satellite.Satellite.getIDFromStack(stack);
+    }
+
     @Override
     public int getID() {
         return satellites.indexOf(getClass());
@@ -112,6 +107,9 @@ public abstract class Satellite extends com.hbm.ntm.satellite.Satellite {
         registerDefault(SatelliteMiner.class, LegacySatelliteType.MINER);
         registerDefault(SatelliteLunarMiner.class, LegacySatelliteType.LUNAR_MINER);
         registerDefault(SatelliteHorizons.class, LegacySatelliteType.HORIZONS);
+        registerDefault(SatellitePrecisionLaser.class, LegacySatelliteType.PRECISION_LASER);
+        registerDefault(SatelliteDetector.class, LegacySatelliteType.DETECTOR);
+        registerDefault(SatelliteRayScan.class, LegacySatelliteType.RAY_SCAN);
     }
 
     private static void registerDefault(Class<? extends Satellite> satelliteClass, LegacySatelliteType type) {
@@ -130,7 +128,10 @@ public abstract class Satellite extends com.hbm.ntm.satellite.Satellite {
                 || satelliteClass == SatelliteRelay.class
                 || satelliteClass == SatelliteMiner.class
                 || satelliteClass == SatelliteLunarMiner.class
-                || satelliteClass == SatelliteHorizons.class;
+                || satelliteClass == SatelliteHorizons.class
+                || satelliteClass == SatellitePrecisionLaser.class
+                || satelliteClass == SatelliteDetector.class
+                || satelliteClass == SatelliteRayScan.class;
     }
 
     private static Class<? extends Satellite> legacyClassFromType(LegacySatelliteType type) {
@@ -147,6 +148,9 @@ public abstract class Satellite extends com.hbm.ntm.satellite.Satellite {
             case MINER -> SatelliteMiner.class;
             case LUNAR_MINER -> SatelliteLunarMiner.class;
             case HORIZONS -> SatelliteHorizons.class;
+            case PRECISION_LASER -> SatellitePrecisionLaser.class;
+            case DETECTOR -> SatelliteDetector.class;
+            case RAY_SCAN -> SatelliteRayScan.class;
         };
     }
 }

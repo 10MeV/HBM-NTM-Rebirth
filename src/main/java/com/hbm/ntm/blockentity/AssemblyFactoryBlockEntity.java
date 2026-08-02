@@ -3,6 +3,8 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayPorts;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.block.LegacyFrameRenderState;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyPortInspectable;
@@ -27,6 +29,7 @@ import com.hbm.ntm.menu.AssemblyFactoryMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.multiblock.LegacyProxyDelegateProvider;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmGuiControlSecurity;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
@@ -74,7 +77,7 @@ import java.util.Random;
 
 public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
         HbmEnergyPortInspectable, HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider,
-        LegacyProxyDelegateProvider {
+        LegacyProxyDelegateProvider, RORValueProvider {
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_ENERGY = "Energy";
     private static final String TAG_LEGACY_POWER = "power";
@@ -160,8 +163,8 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new MappedItemHandler(allExternalSlots()));
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler;
-    private final ICapabilityProvider coolingDelegate;
-    private final ICapabilityProvider[] moduleDelegates = new ICapabilityProvider[MODULES];
+    private final CapabilityDelegate coolingDelegate;
+    private final CapabilityDelegate[] moduleDelegates = new CapabilityDelegate[MODULES];
     private final double[] progress = new double[MODULES];
     private final String[] selectedRecipes = new String[] {
             GenericMachineRecipeRuntime.NULL_RECIPE,
@@ -178,6 +181,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Nullable
     private ProcessingFactors cachedUpgradeFactors;
     private long appliedMaxPower = Long.MIN_VALUE;
+    private final RORDispatcher ror = createRorDispatcher();
 
     @SuppressWarnings("unchecked")
     public AssemblyFactoryBlockEntity(BlockPos pos, BlockState state) {
@@ -323,6 +327,18 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         return true;
     }
 
+    @Override
+    public String[] getFunctionInfo() {
+        return new String[] {
+                "VAL:progress1", "VAL:progress2", "VAL:progress3", "VAL:progress4",
+                "VAL:recipe1", "VAL:recipe2", "VAL:recipe3", "VAL:recipe4",
+                "VAL:anyactive", "VAL:active1", "VAL:active2", "VAL:active3", "VAL:active4"
+        };
+    }
+
+    @Override
+    public String provideRORValue(String name) { return ror.provideValue(name); }
+
     public static CompoundTag recipeSelectionTag(int module, String selection) {
         return GenericMachineRecipeSelector.selectionTag(module, selection);
     }
@@ -432,11 +448,11 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-    }
+}
 
     @Override
     public CompoundTag getClientSyncTag() {
-        CompoundTag tag = saveWithoutMetadata();
+        CompoundTag tag = new CompoundTag();
         writeClientSyncFields(tag);
         return tag;
     }
@@ -525,7 +541,8 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
         int module = GenericMachineRecipeSelector.readIndex(tag);
-        return GenericMachineRecipeSelector.hasSelection(tag)
+        return HbmGuiControlSecurity.hasLegacyMachineUsePermission(player, this)
+                && GenericMachineRecipeSelector.hasSelection(tag)
                 && module >= 0 && module < MODULES
                 && GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE,
                 GenericMachineRecipeSelector.readSelection(tag), items.getStackInSlot(blueprintSlot(module)));
@@ -595,6 +612,10 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         itemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
+        coolingDelegate.invalidate();
+        for (CapabilityDelegate delegate : moduleDelegates) {
+            delegate.invalidate();
+        }
     }
 
     @Override
@@ -841,6 +862,25 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         setChanged();
     }
 
+    private RORDispatcher createRorDispatcher() {
+        RORDispatcher.Builder builder = RORDispatcher.builder()
+                .value("anyactive", () -> anyProcessing() ? "1" : "0");
+        for (int module = 0; module < MODULES; module++) {
+            final int index = module;
+            builder.value("progress" + index, () -> Integer.toString((int) Math.round(progress[index] * 100.0D)))
+                    .value("recipe" + index, () -> selectedRecipes[index])
+                    .value("active" + index, () -> didProcess[index] ? "1" : "0");
+        }
+        return builder.build();
+    }
+
+    private boolean anyProcessing() {
+        for (boolean processing : didProcess) {
+            if (processing) return true;
+        }
+        return false;
+    }
+
     private class MappedItemHandler implements IItemHandler {
         private final int[] slots;
 
@@ -930,18 +970,28 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
         private CapabilityDelegate(@Nullable IItemHandler itemHandler, IFluidHandler fluidHandler) {
             this.itemHandler = itemHandler;
             this.fluidHandler = fluidHandler;
+            this.itemCapability = itemHandler == null ? LazyOptional.empty() : LazyOptional.of(() -> itemHandler);
+            this.fluidCapability = LazyOptional.of(() -> fluidHandler);
+        }
+
+        private final LazyOptional<IItemHandler> itemCapability;
+        private final LazyOptional<IFluidHandler> fluidCapability;
+
+        private void invalidate() {
+            itemCapability.invalidate();
+            fluidCapability.invalidate();
         }
 
         @Override
         public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
             if (capability == ForgeCapabilities.ITEM_HANDLER && itemHandler != null) {
-                return LazyOptional.of(() -> itemHandler).cast();
+                return itemCapability.cast();
             }
             if (capability == ForgeCapabilities.ENERGY) {
                 return energyHandler.cast();
             }
             if (capability == ForgeCapabilities.FLUID_HANDLER) {
-                return LazyOptional.of(() -> fluidHandler).cast();
+                return fluidCapability.cast();
             }
             return LazyOptional.empty();
         }

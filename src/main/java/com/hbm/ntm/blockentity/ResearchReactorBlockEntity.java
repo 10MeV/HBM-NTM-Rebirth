@@ -402,12 +402,12 @@ public class ResearchReactorBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        return new CompoundTag();
     }
 
     @Override

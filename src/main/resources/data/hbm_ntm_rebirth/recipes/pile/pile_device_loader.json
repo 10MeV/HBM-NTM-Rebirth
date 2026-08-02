@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "misc",
+  "pattern": [" A ", "CBS"],
+  "key": {
+    "A": { "item": "hbm_ntm_rebirth:plate_aluminium" },
+    "C": { "item": "hbm_ntm_rebirth:plate_cast_steel" },
+    "B": { "item": "hbm_ntm_rebirth:ingot_boron" },
+    "S": { "item": "hbm_ntm_rebirth:shell_steel" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:pile_device", "nbt": "{hbmPileDeviceKind:\"loader\"}" }
+}

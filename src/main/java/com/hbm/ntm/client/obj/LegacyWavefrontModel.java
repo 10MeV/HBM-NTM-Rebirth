@@ -6,6 +6,7 @@ import com.hbm.ntm.client.render.HbmOptimizedRenderShaders;
 import com.hbm.ntm.client.render.HbmGlVaoSafety;
 import com.hbm.ntm.client.render.HbmMdiRenderDiag;
 import com.hbm.ntm.client.render.HbmRenderFrameLight;
+import com.hbm.ntm.client.renderer.LegacyItemRenderContext;
 import com.hbm.ntm.client.render.HbmRenderFrameFlags;
 import com.hbm.ntm.client.render.HbmRenderBackendDiagnostics;
 import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
@@ -4153,10 +4154,16 @@ public final class LegacyWavefrontModel {
                 return RenderBackendFallbackReason.GPU_RAW_LIGHTMAP_COORDINATES;
             }
             HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
-            if (!flags.experimentalGpuBackendEnabled()) {
+            RenderBackendFallbackReason immediateFallback = safeImmediateSingleMeshFallbackReason(flags);
+            boolean safeImmediateSingleMesh = immediateFallback == RenderBackendFallbackReason.NONE
+                    && flags.frameGeneration() == 0L;
+            if (immediateFallback != RenderBackendFallbackReason.NONE) {
+                return immediateFallback;
+            }
+            if (!flags.experimentalGpuBackendEnabled() && !safeImmediateSingleMesh) {
                 return RenderBackendFallbackReason.GPU_DISABLED;
             }
-            if (flags.shaderPackDetected() || flags.shaderShadowPass()) {
+            if (!safeImmediateSingleMesh && (flags.shaderPackDetected() || flags.shaderShadowPass())) {
                 return canUseIrisSingleMeshPath(flags, renderMode, alpha, legacyShadow, uvTransform)
                         || canQueueIrisCompanionPath(flags, renderMode, alpha, legacyShadow, uvTransform)
                         || canUseIrisDynamicUvTransientCompanionPath(flags, renderMode, alpha, legacyShadow,
@@ -4165,7 +4172,7 @@ public final class LegacyWavefrontModel {
                         ? RenderBackendFallbackReason.NONE
                         : irisCompanionMaterialFallbackReason(renderMode, alpha, legacyShadow, uvTransform);
             }
-            if (!flags.gpuBackendAllowed()) {
+            if (!flags.gpuBackendAllowed() && !safeImmediateSingleMesh) {
                 return RenderBackendFallbackReason.GPU_SHADER_ACTIVE;
             }
             if (!RenderSystem.isOnRenderThread()) {
@@ -4202,10 +4209,16 @@ public final class LegacyWavefrontModel {
                 return RenderBackendFallbackReason.NONE;
             }
             HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
-            if (!flags.experimentalGpuBackendEnabled()) {
+            RenderBackendFallbackReason immediateFallback = safeImmediateSingleMeshFallbackReason(flags);
+            boolean safeImmediateSingleMesh = immediateFallback == RenderBackendFallbackReason.NONE
+                    && flags.frameGeneration() == 0L;
+            if (immediateFallback != RenderBackendFallbackReason.NONE) {
+                return immediateFallback;
+            }
+            if (!flags.experimentalGpuBackendEnabled() && !safeImmediateSingleMesh) {
                 return RenderBackendFallbackReason.GPU_DISABLED;
             }
-            if (flags.shaderPackDetected() || flags.shaderShadowPass()) {
+            if (!safeImmediateSingleMesh && (flags.shaderPackDetected() || flags.shaderShadowPass())) {
                 return canUseIrisSingleMeshPath(flags, renderMode, alpha, legacyShadow, uvTransform)
                         || canQueueIrisCompanionPath(flags, renderMode, alpha, legacyShadow, uvTransform)
                         || canUseIrisDynamicUvTransientCompanionPath(flags, renderMode, alpha, legacyShadow,
@@ -4213,7 +4226,7 @@ public final class LegacyWavefrontModel {
                         ? RenderBackendFallbackReason.NONE
                         : irisCompanionMaterialFallbackReason(renderMode, alpha, legacyShadow, uvTransform);
             }
-            if (!flags.gpuBackendAllowed()) {
+            if (!flags.gpuBackendAllowed() && !safeImmediateSingleMesh) {
                 return RenderBackendFallbackReason.GPU_SHADER_ACTIVE;
             }
             if (!RenderSystem.isOnRenderThread()) {
@@ -4253,16 +4266,22 @@ public final class LegacyWavefrontModel {
                 return RenderBackendFallbackReason.NONE;
             }
             HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
-            if (!flags.experimentalGpuBackendEnabled()) {
+            RenderBackendFallbackReason immediateFallback = safeImmediateSingleMeshFallbackReason(flags);
+            boolean safeImmediateSingleMesh = immediateFallback == RenderBackendFallbackReason.NONE
+                    && flags.frameGeneration() == 0L;
+            if (immediateFallback != RenderBackendFallbackReason.NONE) {
+                return immediateFallback;
+            }
+            if (!flags.experimentalGpuBackendEnabled() && !safeImmediateSingleMesh) {
                 return RenderBackendFallbackReason.GPU_DISABLED;
             }
-            if (flags.shaderPackDetected() || flags.shaderShadowPass()) {
+            if (!safeImmediateSingleMesh && (flags.shaderPackDetected() || flags.shaderShadowPass())) {
                 return canUseIrisUntexturedSingleMeshPath(flags, renderMode, alpha)
                         || canQueueIrisUntexturedCompanionPath(flags, renderMode, alpha)
                         ? RenderBackendFallbackReason.NONE
                         : untexturedMaterialFallbackReason(renderMode, alpha);
             }
-            if (!flags.gpuBackendAllowed()) {
+            if (!flags.gpuBackendAllowed() && !safeImmediateSingleMesh) {
                 return RenderBackendFallbackReason.GPU_SHADER_ACTIVE;
             }
             if (!RenderSystem.isOnRenderThread()) {
@@ -4273,6 +4292,38 @@ public final class LegacyWavefrontModel {
             }
             if (alpha != 255 && !supportsSingleMeshUntexturedTransparent(renderMode)) {
                 return RenderBackendFallbackReason.GPU_UNSUPPORTED_ALPHA;
+            }
+            return RenderBackendFallbackReason.NONE;
+        }
+
+        /**
+         * Item/hand rendering happens after {@code AFTER_LEVEL}; other
+         * immediate render stages can also sit outside the optimized BER frame
+         * window. At that point there is no later instancing flush. Keep the
+         * conservative no-shader static OBJ route available there, but only
+         * for immediate cached single-mesh draws. The initial snapshot must
+         * not be trusted for shader state, so sample Iris/Oculus directly.
+         */
+        private static RenderBackendFallbackReason safeImmediateSingleMeshFallbackReason(
+                HbmRenderFrameFlags.Snapshot flags) {
+            // GUI BEWLRs must submit to the caller-owned MultiBufferSource. A
+            // direct draw here can be cleared or reordered by ItemRenderer's
+            // later buffer flush, making every builtin/entity OBJ disappear.
+            if (LegacyItemRenderContext.isGui()) {
+                return RenderBackendFallbackReason.GPU_DISABLED;
+            }
+            if (flags.frameGeneration() != 0L) {
+                return RenderBackendFallbackReason.NONE;
+            }
+            if (!HbmClientConfig.safeObjStaticBatching()) {
+                return RenderBackendFallbackReason.GPU_DISABLED;
+            }
+            if (!RenderSystem.isOnRenderThread()) {
+                return RenderBackendFallbackReason.GPU_NOT_RENDER_THREAD;
+            }
+            if (HbmShaderCompatibilityDetector.isExternalShaderActive()
+                    || HbmShaderCompatibilityDetector.isRenderingShadowPass()) {
+                return RenderBackendFallbackReason.GPU_SHADER_ACTIVE;
             }
             return RenderBackendFallbackReason.NONE;
         }

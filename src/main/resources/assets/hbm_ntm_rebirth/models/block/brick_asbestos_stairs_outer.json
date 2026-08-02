@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/brick_asbestos",
+    "side": "hbm_ntm_rebirth:block/brick_asbestos",
+    "top": "hbm_ntm_rebirth:block/brick_asbestos"
+  }
+}
+

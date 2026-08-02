@@ -9,6 +9,7 @@ import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.util.RayTraceUtil;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -133,7 +134,7 @@ public final class BulletUpdateBehaviorUtil {
         int x = Mth.floor(postMovePosition.x);
         int z = Mth.floor(postMovePosition.z);
         int y = projectile.level().getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
-        projectile.level().addFreshEntity(C130Entity.create(projectile.level(), x, y, z, payload));
+        WorldUtil.loadAndSpawnEntityInWorld(C130Entity.create(projectile.level(), x, y, z, payload));
     }
 
     private static void applyFollySupermatterBeam(BulletConfig config, Entity projectile, @Nullable Entity shooter,

@@ -431,10 +431,8 @@ public class StorageCrateBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        saveAdditional(tag);
-        return tag;
-    }
+        return new CompoundTag();
+}
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {

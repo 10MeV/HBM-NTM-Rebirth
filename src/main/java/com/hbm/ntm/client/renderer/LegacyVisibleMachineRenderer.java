@@ -2,7 +2,6 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.config.ClientConfig;
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.block.BlastFurnaceBlock;
 import com.hbm.ntm.block.ChimneyBlock;
 import com.hbm.ntm.block.CoolingTowerBlock;
 import com.hbm.ntm.block.DeuteriumTowerBlock;
@@ -886,11 +885,6 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     private static boolean rendersChunkBakedStaticBodyOnly(BlockState state) {
         if (renderChunkBakedStaticsInBer()) {
             return false;
-        }
-        if (state.getBlock() instanceof BlastFurnaceBlock
-                && state.hasProperty(BlastFurnaceBlock.TILTED)
-                && !state.getValue(BlastFurnaceBlock.TILTED)) {
-            return true;
         }
         if (state.getBlock() instanceof GasFlareBlock
                 && state.hasProperty(GasFlareBlock.TILTED)

@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:legacy_flower_patch",
+  "config": {
+    "flower": "tobacco",
+    "chance": 8
+  }
+}

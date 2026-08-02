@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.conveyor.IConveyorBelt;
 import com.hbm.ntm.api.conveyor.ConveyorMath;
 import com.hbm.ntm.api.conveyor.IEnterableBlock;
+import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
 import com.hbm.ntm.item.ItemMachineUpgrade;
@@ -20,6 +21,8 @@ import com.hbm.ntm.util.LegacyPatternMatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -51,7 +54,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyControlReceiver,
-        HbmLegacyBufPacketReceiver {
+        HbmLegacyBufPacketReceiver, CopiableSettings {
     public static final ModelProperty<CraneRenderData> RENDER_DATA_PROPERTY = new ModelProperty<>();
     private static final String TAG_ITEMS = "items";
     private static final String TAG_INPUT_SIDE = "inputSide";
@@ -64,6 +67,8 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
     private static final String TAG_LAST_REDSTONE = "lastRedstone";
     private static final String TAG_ROUTER_MODES = "modes";
     private static final String TAG_PATTERN = "patternModes";
+    private static final String TAG_SETTINGS_OUTPUT_SIDE = "outputSide";
+    private static final String TAG_SETTINGS_SLOT = "slot";
     private static final int NO_OVERRIDE = -1;
 
     private final Kind kind;
@@ -237,6 +242,124 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
         } else {
             setChangedAndUpdate();
         }
+    }
+
+    /**
+     * Source-backed settings-tool bridge for {@code TileEntityCraneBase} and
+     * {@code TileEntityCraneRouter}.  The legacy tool stores filter slots
+     * relative to the crane's filter range, then uses its selected copy index
+     * for either the normal orientation branch or one router pattern lane.
+     */
+    @Override
+    public CompoundTag getSettings(Level level, BlockPos pos) {
+        CompoundTag tag = new CompoundTag();
+        if (kind == Kind.ROUTER) {
+            writeCopiedFilterItems(tag);
+            tag.putIntArray(TAG_ROUTER_MODES, routerModes);
+            return tag;
+        }
+
+        tag.putInt(TAG_INPUT_SIDE, getInputSide().get3DDataValue());
+        tag.putInt(TAG_SETTINGS_OUTPUT_SIDE, getOutputSide().get3DDataValue());
+        writeCopiedFilterItems(tag);
+        return tag;
+    }
+
+    @Override
+    public void pasteSettings(CompoundTag tag, int index, Level level, Player player, BlockPos pos) {
+        if (tag == null) {
+            return;
+        }
+        if (kind == Kind.ROUTER) {
+            pasteRouterSettings(tag, index);
+            return;
+        }
+        if (index == 1) {
+            // TileEntityCraneBase first applied outputSide, then inputSide.
+            if (tag.contains(TAG_SETTINGS_OUTPUT_SIDE, Tag.TAG_ANY_NUMERIC)) {
+                setOutputOverride(Direction.from3DDataValue(tag.getInt(TAG_SETTINGS_OUTPUT_SIDE)));
+            }
+            if (tag.contains(TAG_INPUT_SIDE, Tag.TAG_ANY_NUMERIC)) {
+                setInput(Direction.from3DDataValue(tag.getInt(TAG_INPUT_SIDE)));
+            }
+            return;
+        }
+        pasteCopiedFilterItems(tag);
+    }
+
+    @Override
+    public List<Component> infoForDisplay(Level level, BlockPos pos) {
+        if (kind == Kind.ROUTER) {
+            List<Component> patterns = new ArrayList<>(6);
+            for (int pattern = 0; pattern < 6; pattern++) {
+                patterns.add(Component.translatable("copytool.pattern" + pattern));
+            }
+            return patterns;
+        }
+        return List.of(Component.translatable("copytool.filter"), Component.translatable("copytool.orientation"));
+    }
+
+    private void writeCopiedFilterItems(CompoundTag tag) {
+        if (kind.filterSlots <= 0) {
+            return;
+        }
+        ListTag copied = new ListTag();
+        for (int slot = 0; slot < kind.filterSlots; slot++) {
+            ItemStack stack = items.getStackInSlot(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            CompoundTag slotTag = new CompoundTag();
+            slotTag.putByte(TAG_SETTINGS_SLOT, (byte) slot);
+            stack.save(slotTag);
+            copied.add(slotTag);
+        }
+        tag.put(TAG_ITEMS, copied);
+    }
+
+    private void pasteCopiedFilterItems(CompoundTag tag) {
+        if (kind.filterSlots <= 0) {
+            return;
+        }
+        ListTag copied = tag.getList(TAG_ITEMS, Tag.TAG_COMPOUND);
+        // TileEntityCraneBase only changes slots represented in its sparse NBT list.
+        for (int entry = 0; entry < copied.size(); entry++) {
+            CompoundTag slotTag = copied.getCompound(entry);
+            int slot = slotTag.getByte(TAG_SETTINGS_SLOT);
+            ItemStack copiedStack = ItemStack.of(slotTag);
+            if (slot < 0 || slot >= kind.filterSlots || copiedStack.isEmpty()) {
+                continue;
+            }
+            items.setStackInSlot(slot, copiedStack);
+            patternMatcher.nextMode(copiedStack, slot);
+        }
+        if (!copied.isEmpty()) {
+            setChangedAndUpdate();
+        }
+    }
+
+    private void pasteRouterSettings(CompoundTag tag, int index) {
+        ListTag copied = tag.getList(TAG_ITEMS, Tag.TAG_COMPOUND);
+        if (copied.isEmpty() || !tag.contains(TAG_ROUTER_MODES, Tag.TAG_INT_ARRAY)) {
+            return;
+        }
+        int start = index * 5;
+        int end = Math.min(start + 5, kind.filterSlots);
+        for (int entry = 0; entry < copied.size(); entry++) {
+            CompoundTag slotTag = copied.getCompound(entry);
+            int slot = slotTag.getByte(TAG_SETTINGS_SLOT);
+            ItemStack copiedStack = ItemStack.of(slotTag);
+            // Preserve the strict legacy router comparison: the first slot of
+            // a selected five-slot group is intentionally not overwritten.
+            if (slot <= start || slot >= end || copiedStack.isEmpty()) {
+                continue;
+            }
+            items.setStackInSlot(slot, copiedStack);
+            patternMatcher.nextMode(copiedStack, slot);
+        }
+        int[] copiedModes = tag.getIntArray(TAG_ROUTER_MODES);
+        routerModes = Arrays.copyOf(copiedModes, routerModes.length);
+        setChangedAndUpdate();
     }
 
     public boolean canItemEnter(Direction side) {
@@ -1058,10 +1181,8 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        saveAdditional(tag);
-        return tag;
-    }
+        return new CompoundTag();
+}
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

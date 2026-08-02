@@ -11,17 +11,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.network.PacketDistributor;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class ThreadedPacketDispatcher {
@@ -29,9 +21,14 @@ public final class ThreadedPacketDispatcher {
     private static final int WAIT_TIMEOUT_MILLIS = 50;
     private static final int MAX_PENDING_OPERATIONS = 4096;
     private static final int MAX_CONSECUTIVE_CLEARS_BEFORE_FALLBACK = 5;
-    private static final AtomicInteger THREAD_IDS = new AtomicInteger();
-    private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(1, new PacketThreadFactory());
-    private static final List<CompletableFuture<Void>> PENDING = new ArrayList<>();
+    /*
+     * Modern Forge's SimpleChannel/PacketDistributor path is server-thread
+     * owned. The old 1.7.10 worker contract cannot safely call it from a
+     * background executor, then block the server tick on Future#get. Keep the
+     * legacy "prepare now, send in order at tick end" contract as a bounded
+     * main-thread deferred queue instead.
+     */
+    private static final List<Runnable> PENDING = new ArrayList<>();
     private static final AtomicLong TOTAL_QUEUED = new AtomicLong();
     private static final AtomicLong TOTAL_SENT = new AtomicLong();
     private static final AtomicLong TOTAL_FAILED = new AtomicLong();
@@ -277,16 +274,19 @@ public final class ThreadedPacketDispatcher {
 
     private static void enqueue(Runnable sendOperation) {
         TOTAL_QUEUED.incrementAndGet();
-        if (!isEnabled() || isFallbackToMainThread()) {
+        if (!isEnabled()) {
             runSendOperation(sendOperation);
             return;
         }
         if (PENDING.size() >= maxPendingOperations()) {
-            discardPending("Threaded packet queue exceeded " + maxPendingOperations() + " pending operations.");
-            runSendOperation(sendOperation);
-            return;
+            // Preserve packet order and avoid loss. A pathological burst is
+            // drained on the current (normally server) thread instead of
+            // spawning work or blocking on another thread.
+            lastFailureMessage = "Deferred packet queue reached " + maxPendingOperations()
+                    + " operations; draining early on the server thread.";
+            flush();
         }
-        PENDING.add(CompletableFuture.runAsync(() -> runSendOperation(sendOperation), EXECUTOR));
+        PENDING.add(sendOperation);
     }
 
     public static synchronized void flush() {
@@ -298,42 +298,19 @@ public final class ThreadedPacketDispatcher {
             return;
         }
 
-        List<CompletableFuture<Void>> tasks = List.copyOf(PENDING);
+        List<Runnable> tasks = List.copyOf(PENDING);
         PENDING.clear();
         long startNanos = System.nanoTime();
         lastObservedWaitMillis = 0L;
         int completed = 0;
-        int discarded = 0;
-        for (int index = 0; index < tasks.size(); index++) {
-            CompletableFuture<Void> task = tasks.get(index);
-            try {
-                lastObservedWaitMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
-                task.get(waitTimeoutMillis(), TimeUnit.MILLISECONDS);
-                completed++;
-            } catch (TimeoutException exception) {
-                discarded = cancelRemaining(tasks, index);
-                registerClear("Threaded packet operation exceeded " + waitTimeoutMillis() + " ms wait budget.", discarded, exception);
-                break;
-            } catch (Exception exception) {
-                completed++;
-                TOTAL_FAILED.incrementAndGet();
-                lastFailureMessage = exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage();
-                HbmNtm.LOGGER.warn("Threaded packet operation failed during flush.", exception);
-            }
+        for (Runnable task : tasks) {
+            runSendOperation(task);
+            completed++;
         }
-        int queuedExecutorTasks = EXECUTOR.getQueue().size();
-        if (queuedExecutorTasks > 0) {
-            EXECUTOR.getQueue().clear();
-            discarded += queuedExecutorTasks;
-            registerClear("Threaded packet executor still had " + queuedExecutorTasks + " queued operations after flush.", queuedExecutorTasks, null);
-        } else if (discarded == 0) {
-            consecutiveClears = 0;
-        }
-        DISCARDED_QUEUE_CLEAR.addAndGet(discarded);
-        TOTAL_DISCARDED.addAndGet(discarded);
+        consecutiveClears = 0;
         lastFlushQueued = tasks.size();
         lastFlushCompleted = completed;
-        lastFlushDiscarded = discarded;
+        lastFlushDiscarded = 0;
         lastFlushWaitMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
         lastObservedWaitMillis = lastFlushWaitMillis;
     }
@@ -349,13 +326,10 @@ public final class ThreadedPacketDispatcher {
     public static synchronized boolean setEnabled(boolean enabled) {
         ThreadedPacketDispatcher.enabled = enabled;
         if (!enabled) {
-            int discarded = clearPendingOperations();
-            if (discarded > 0) {
-                DISCARDED_DISABLE_CLEAR.addAndGet(discarded);
-                TOTAL_DISCARDED.addAndGet(discarded);
-                lastFlushDiscarded = discarded;
-                lastFailureMessage = "Packet threading disabled with pending operations.";
-            }
+            // Disabling the deferred bridge must not silently lose already
+            // prepared packets. The command/config path runs on the server
+            // thread, so finish the current ordered batch synchronously.
+            flush();
         }
         return ThreadedPacketDispatcher.enabled;
     }
@@ -424,12 +398,12 @@ public final class ThreadedPacketDispatcher {
                 PREPARED_COPY_INSTANCE.get(),
                 MANUAL_CLEARS.get(),
                 PENDING.size(),
-                EXECUTOR.getPoolSize(),
-                EXECUTOR.getCorePoolSize(),
-                EXECUTOR.getMaximumPoolSize(),
-                EXECUTOR.getActiveCount(),
-                EXECUTOR.getQueue().size(),
-                EXECUTOR.getCompletedTaskCount(),
+                0,
+                0,
+                0,
+                0,
+                0,
+                TOTAL_SENT.get(),
                 lastFlushQueued,
                 lastFlushCompleted,
                 lastFlushDiscarded,
@@ -444,23 +418,11 @@ public final class ThreadedPacketDispatcher {
     }
 
     public static List<ThreadSnapshot> threadSnapshots() {
-        List<ThreadSnapshot> snapshots = new ArrayList<>();
-        for (ThreadInfo thread : ManagementFactory.getThreadMXBean().dumpAllThreads(false, false)) {
-            if (thread.getThreadName().startsWith(THREAD_PREFIX)) {
-                snapshots.add(new ThreadSnapshot(
-                        thread.getThreadName(),
-                        thread.getThreadId(),
-                        thread.getThreadState().name(),
-                        thread.getLockOwnerName() == null ? "" : thread.getLockOwnerName()));
-            }
-        }
-        return List.copyOf(snapshots);
+        return List.of();
     }
 
     public static synchronized void resetState() {
-        PENDING.forEach(task -> task.cancel(false));
         PENDING.clear();
-        EXECUTOR.getQueue().clear();
         TOTAL_QUEUED.set(0L);
         TOTAL_SENT.set(0L);
         TOTAL_FAILED.set(0L);
@@ -501,29 +463,10 @@ public final class ThreadedPacketDispatcher {
         }
     }
 
-    private static int cancelRemaining(List<CompletableFuture<Void>> tasks, int firstIndex) {
-        int discarded = 0;
-        for (int index = firstIndex; index < tasks.size(); index++) {
-            CompletableFuture<Void> task = tasks.get(index);
-            if (!task.isDone()) {
-                task.cancel(false);
-                discarded++;
-            }
-        }
-        EXECUTOR.getQueue().clear();
-        return discarded;
-    }
-
     private static int clearPendingOperations() {
-        int queuedExecutorTasks = EXECUTOR.getQueue().size();
-        for (CompletableFuture<Void> task : PENDING) {
-            if (!task.isDone()) {
-                task.cancel(false);
-            }
-        }
+        int pendingOperations = PENDING.size();
         PENDING.clear();
-        EXECUTOR.getQueue().clear();
-        return queuedExecutorTasks;
+        return pendingOperations;
     }
 
     private static void discardPending(String reason) {
@@ -547,15 +490,6 @@ public final class ThreadedPacketDispatcher {
     }
 
     private ThreadedPacketDispatcher() {
-    }
-
-    private static final class PacketThreadFactory implements ThreadFactory {
-        @Override
-        public Thread newThread(Runnable runnable) {
-            Thread thread = new Thread(runnable, THREAD_PREFIX + THREAD_IDS.incrementAndGet());
-            thread.setDaemon(true);
-            return thread;
-        }
     }
 
     public record Snapshot(

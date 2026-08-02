@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.saveddata.satellites.SatelliteRayScan;
+import com.hbm.saveddata.satellites.SatelliteRayScan.RayEvent;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
@@ -618,6 +620,10 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
         approachRods();
         int newFlux = sourceCount * 20;
         if (typeLoaded != -1 && amountLoaded > 0) {
+            if (level.getGameTime() % 100L == 0L) {
+                SatelliteRayScan.reportEvent(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                        RayEvent.INFO_NUCLEAR, 200);
+            }
             PWRFuelRuntime.Type fuel = PWRFuelRuntime.type(typeLoaded);
             double usedRods = getTotalProcessMultiplier();
             double fluxPerRod = flux / rodCount;

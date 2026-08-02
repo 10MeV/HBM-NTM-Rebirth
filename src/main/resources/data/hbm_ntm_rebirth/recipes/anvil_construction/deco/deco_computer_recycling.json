@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "item": "hbm_ntm_rebirth:deco_computer" } },
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:crt_display" },
+    { "item": "hbm_ntm_rebirth:scrap", "count": 3 },
+    { "item": "hbm_ntm_rebirth:wire_fine_copper", "count": 4 },
+    { "item": "hbm_ntm_rebirth:circuit_pcb", "count": 2 },
+    { "item": "hbm_ntm_rebirth:circuit_vacuum_tube", "chance": 0.5 }
+  ],
+  "tier_lower": 3,
+  "overlay": "recycling"
+}

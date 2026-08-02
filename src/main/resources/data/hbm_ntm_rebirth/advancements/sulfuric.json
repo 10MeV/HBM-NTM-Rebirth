@@ -1,4 +1,5 @@
 {
+  "parent": "hbm_ntm_rebirth:slimeball",
   "display": {
     "icon": {
       "item": "minecraft:slime_ball"

@@ -1,7 +1,9 @@
 package com.hbm.ntm.worldgen;
 
 import com.hbm.config.GeneralConfig;
+import com.hbm.config.WorldConfig;
 import com.hbm.ntm.blockentity.BedrockOreDepositBlockEntity;
+import com.hbm.ntm.config.WorldgenConfig;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.item.BedrockOreBaseItem;
@@ -44,11 +46,10 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     private static final RuleTest DEEPSLATE_REPLACEABLES = new TagMatchTest(BlockTags.DEEPSLATE_ORE_REPLACEABLES);
     private static final RuleTest NETHERRACK = new BlockMatchTest(Blocks.NETHERRACK);
     private static final RuleTest END_STONE = new BlockMatchTest(Blocks.END_STONE);
+    private static final RuleTest VANILLA_STONE = new BlockMatchTest(Blocks.STONE);
     private static final double SCHIST_SCALE = 0.01D;
     private static final double ORE_CAVE_SCALE = 0.01D;
     private static final int SCHIST_THRESHOLD = 5;
-    private static final int OIL_BUBBLE_FREQUENCY = 100;
-    private static final int BEDROCK_OIL_FREQUENCY = 200;
     private static final int OIL_SAND_FREQUENCY = 200;
     private static final int NEW_BEDROCK_ORE_FREQUENCY = 10;
     private static final int BEDROCK_ORE_COLOR = 0xD78A16;
@@ -152,23 +153,106 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         };
         boolean placedAny = false;
         if ("overworld".equals(context.config().dimension())) {
+            placedAny |= placeGasBubbles(context);
             placedAny |= placeOilTerrain(context);
             placedAny |= placeSchistStratum(context);
             placedAny |= placeOreCaves(context);
             placedAny |= placeResourceLayers(context);
-            placedAny |= placeDepthDeposits(context, OVERWORLD_DEPTH_DEPOSITS, true);
-            placedAny |= placeGneissOres(context);
-            placedAny |= placeNewBedrockOres(context);
-            placedAny |= placeColtanOres(context);
-            placedAny |= placeBedrockColtanOres(context);
-            placedAny |= placeAustraliumDeposit(context);
+            if (WorldConfig.overworldOre()) {
+                placedAny |= placeDepthDeposits(context, OVERWORLD_DEPTH_DEPOSITS, true);
+                placedAny |= placeGneissOres(context);
+                placedAny |= placeNewBedrockOres(context);
+                placedAny |= placeColtanOres(context);
+                placedAny |= placeBedrockColtanOres(context);
+                placedAny |= placeAustraliumDeposit(context);
+            }
         } else if ("nether".equals(context.config().dimension())) {
-            placedAny |= placeDepthDeposits(context, NETHER_DEPTH_DEPOSITS, false);
+            if (WorldConfig.netherOre()) {
+                placedAny |= placeDepthDeposits(context, NETHER_DEPTH_DEPOSITS, false);
+            }
+            placedAny |= placeNetherCaveWallFeatures(context);
         }
         for (OreEntry entry : entries) {
-            placedAny |= placeEntry(context, entry);
+            if (("overworld".equals(context.config().dimension())
+                    && (WorldConfig.overworldOre() || "ore_alexandrite".equals(entry.blockName())))
+                    || ("nether".equals(context.config().dimension()) && WorldConfig.netherOre())
+                    || ("end".equals(context.config().dimension()) && WorldConfig.endOre())) {
+                placedAny |= placeEntry(context, entry);
+            }
         }
         return placedAny;
+    }
+
+    /**
+     * The final two loops in legacy {@code HbmWorldGen#generateNether} sit
+     * outside {@code WorldConfig.netherOre}.  They are cave-wall features, not
+     * ordinary netherrack veins: retain the source's 30/1 attempts and six
+     * blocks of downward scan after mapping the one selected legacy height.
+     */
+    private boolean placeNetherCaveWallFeatures(FeaturePlaceContext<Configuration> context) {
+        WorldGenLevel level = context.level();
+        RandomSource random = context.random();
+        BlockPos origin = context.origin();
+        RegistryObject<? extends Block> smoldering = ModBlocks.legacyBlock("ore_nether_smoldering");
+        RegistryObject<? extends Block> geysir = ModBlocks.GEYSIR_NETHER;
+        boolean placedAny = false;
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+
+        if (smoldering != null) {
+            placedAny |= placeNetherCaveWallFeature(level, random, origin, 30,
+                    smoldering.get().defaultBlockState(), cursor);
+        }
+        if (geysir != null) {
+            placedAny |= placeNetherCaveWallFeature(level, random, origin, 1,
+                    geysir.get().defaultBlockState(), cursor);
+        }
+        return placedAny;
+    }
+
+    private static boolean placeNetherCaveWallFeature(WorldGenLevel level, RandomSource random, BlockPos origin,
+                                                       int attempts, BlockState result, BlockPos.MutableBlockPos cursor) {
+        boolean placedAny = false;
+        for (int attempt = 0; attempt < attempts; attempt++) {
+            int x = origin.getX() + random.nextInt(16);
+            int z = origin.getZ() + random.nextInt(16);
+            int topY = mapLegacyOreY(level, 16 + random.nextInt(96));
+            for (int y = topY - 5; y <= topY; y++) {
+                cursor.set(x, y, z);
+                if (level.isOutsideBuildHeight(cursor) || level.isOutsideBuildHeight(cursor.above())) {
+                    continue;
+                }
+                if (level.getBlockState(cursor).is(Blocks.NETHERRACK)
+                        && level.getBlockState(cursor.above()).isAir()) {
+                    placedAny |= level.setBlock(cursor, result, Block.UPDATE_CLIENTS);
+                }
+            }
+        }
+        return placedAny;
+    }
+
+    /**
+     * Legacy {@code HbmWorldGen#generateSurface}: these two bubbles run outside
+     * the ordinary-overworld-ore toggle and use a single 32-block minable vein.
+     */
+    private boolean placeGasBubbles(FeaturePlaceContext<Configuration> context) {
+        return placeGasBubble(context, ModBlocks.GAS_FLAMMABLE, WorldgenConfig.gasBubbleSpawnChunks())
+                | placeGasBubble(context, ModBlocks.GAS_EXPLOSIVE, WorldgenConfig.explosiveGasBubbleSpawnChunks());
+    }
+
+    private static boolean placeGasBubble(FeaturePlaceContext<Configuration> context,
+                                          RegistryObject<? extends Block> gas, int spawnChunks) {
+        if (spawnChunks <= 0 || context.random().nextInt(spawnChunks) != 0) {
+            return false;
+        }
+        WorldGenLevel level = context.level();
+        RandomSource random = context.random();
+        BlockPos origin = context.origin();
+        // DungeonToolbox.generateOre: x, then y, then z, with one attempt at 30 + nextInt(10).
+        int x = origin.getX() + random.nextInt(16);
+        int y = mapLegacyOreY(level, 30 + random.nextInt(10));
+        int z = origin.getZ() + random.nextInt(16);
+        return placeLegacyMinable(level, random, new BlockPos(x, y, z),
+                List.of(LegacyOreTarget.rule(VANILLA_STONE, gas.get().defaultBlockState())), 32);
     }
 
     private boolean placeOilTerrain(FeaturePlaceContext<Configuration> context) {
@@ -184,13 +268,17 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         if (oil == null) {
             return false;
         }
+        int configuredFrequency = WorldConfig.oilSpawn;
+        if (configuredFrequency <= 0) {
+            return false;
+        }
         WorldGenLevel level = context.level();
         ChunkBounds bounds = chunkBounds(context.origin());
         boolean placedAny = false;
         for (SourceChunk source : sourceChunks(bounds, 32)) {
             ChunkBounds sourceBounds = source.bounds();
             Holder<Biome> biome = level.getBiome(new BlockPos(sourceBounds.minX(), level.getSeaLevel(), sourceBounds.minZ()));
-            int frequency = OIL_BUBBLE_FREQUENCY;
+            int frequency = configuredFrequency;
             Biome.ClimateSettings climate = biome.value().getModifiedClimateSettings();
             if (climate.temperature() >= 2.0F && climate.downfall() < 0.1F) {
                 frequency /= 3;
@@ -249,6 +337,10 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         if (bedrockOil == null) {
             return false;
         }
+        int frequency = WorldConfig.bedrockOilSpawn;
+        if (frequency <= 0) {
+            return false;
+        }
         WorldGenLevel level = context.level();
         ChunkBounds bounds = chunkBounds(context.origin());
         int minY = level.getMinBuildHeight();
@@ -257,7 +349,7 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         boolean placedAny = false;
         for (SourceChunk source : sourceChunks(bounds, 32)) {
             RandomSource random = sourceRandom(level.getSeed(), source.chunkX(), source.chunkZ(), BEDROCK_OIL_RANDOM_SALT);
-            if (random.nextInt(BEDROCK_OIL_FREQUENCY) != BEDROCK_OIL_FREQUENCY - 2) {
+            if (random.nextInt(frequency) != frequency - 2) {
                 continue;
             }
             ChunkBounds sourceBounds = source.bounds();
@@ -460,20 +552,22 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
 
     private boolean placeEntry(FeaturePlaceContext<Configuration> context, OreEntry entry) {
         RegistryObject<? extends Block> ore = ModBlocks.legacyBlock(entry.blockName());
-        if (ore == null || entry.veinCount() <= 0) {
+        int veinCount = configuredVeinCount(entry);
+        if (ore == null || veinCount <= 0) {
             return false;
         }
         if ("ore_nether_plutonium".equals(entry.blockName()) && !GeneralConfig.enablePlutoniumOre) {
             return false;
         }
-        if (entry.rarity() > 1 && context.random().nextInt(entry.rarity()) != 0) {
+        int rarity = configuredRarity(entry);
+        if (rarity <= 0 || (rarity > 1 && context.random().nextInt(rarity) != 0)) {
             return false;
         }
         WorldGenLevel level = context.level();
         RandomSource random = context.random();
         BlockPos origin = context.origin();
         boolean placedAny = false;
-        for (int attempt = 0; attempt < entry.veinCount(); attempt++) {
+        for (int attempt = 0; attempt < veinCount; attempt++) {
             int x = origin.getX() + random.nextInt(16);
             int z = origin.getZ() + random.nextInt(16);
             int oldY = entry.oldMinY() + (entry.oldVariance() > 0 ? random.nextInt(entry.oldVariance()) : 0);
@@ -615,6 +709,11 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     }
 
     private boolean placeResourceLayer(FeaturePlaceContext<Configuration> context, ResourceLayerEntry entry) {
+        if (("stone_resource_hematite".equals(entry.blockName()) && !WorldConfig.enableHematite)
+                || ("stone_resource_bauxite".equals(entry.blockName()) && !WorldConfig.enableBauxite)
+                || ("stone_resource_malachite".equals(entry.blockName()) && !WorldConfig.enableMalachite)) {
+            return false;
+        }
         RegistryObject<? extends Block> resource = ModBlocks.legacyBlock(entry.blockName());
         if (resource == null) {
             return false;
@@ -693,6 +792,10 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     }
 
     private boolean placeOreCave(FeaturePlaceContext<Configuration> context, OreCaveEntry entry) {
+        if (("stone_resource_sulfur".equals(entry.blockName()) && !WorldConfig.enableSulfurCave)
+                || ("stone_resource_asbestos".equals(entry.blockName()) && !WorldConfig.enableAsbestosCave)) {
+            return false;
+        }
         RegistryObject<? extends Block> resource = ModBlocks.legacyBlock(entry.blockName());
         RegistryObject<? extends Block> stalactite = ModBlocks.legacyBlock(entry.stalactiteBlockName());
         RegistryObject<? extends Block> stalagmite = ModBlocks.legacyBlock(entry.stalagmiteBlockName());
@@ -895,16 +998,17 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
     }
 
     private boolean placeGneissOre(FeaturePlaceContext<Configuration> context, GneissOreEntry entry,
-                                   RuleTest gneissTarget) {
+                                    RuleTest gneissTarget) {
         RegistryObject<? extends Block> ore = ModBlocks.legacyBlock(entry.blockName());
-        if (ore == null || entry.veinCount() <= 0) {
+        int veinCount = configuredGneissVeinCount(entry);
+        if (ore == null || veinCount <= 0) {
             return false;
         }
         WorldGenLevel level = context.level();
         RandomSource random = context.random();
         BlockPos origin = context.origin();
         boolean placedAny = false;
-        for (int attempt = 0; attempt < entry.veinCount(); attempt++) {
+        for (int attempt = 0; attempt < veinCount; attempt++) {
             int x = origin.getX() + random.nextInt(16);
             int z = origin.getZ() + random.nextInt(16);
             int oldY = entry.oldMinY() + (entry.oldVariance() > 0 ? random.nextInt(entry.oldVariance()) : 0);
@@ -1164,6 +1268,61 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
             return new BedrockBoreRequirement(2, HbmFluids.WATER, 1_000);
         }
         return new BedrockBoreRequirement(1, HbmFluids.NONE, 0);
+    }
+
+    /**
+     * Keeps the 1.7.10 {@code HbmWorldGen} frequency fields live instead of
+     * baking their defaults into the feature table. Copper deliberately has no
+     * HBM entry: the port's documented copper-modernization rule uses vanilla
+     * copper, so only the surviving legacy HBM blocks are mapped here.
+     */
+    private static int configuredVeinCount(OreEntry entry) {
+        return switch (entry.blockName()) {
+            case "ore_uranium" -> WorldConfig.uraniumSpawn;
+            case "ore_thorium" -> WorldConfig.thoriumSpawn;
+            case "ore_titanium" -> WorldConfig.titaniumSpawn;
+            case "ore_sulfur" -> WorldConfig.sulfurSpawn;
+            case "ore_aluminium" -> WorldConfig.aluminiumSpawn;
+            case "ore_fluorite" -> WorldConfig.fluoriteSpawn;
+            case "ore_niter" -> WorldConfig.niterSpawn;
+            case "ore_tungsten" -> WorldConfig.tungstenSpawn;
+            case "ore_lead" -> WorldConfig.leadSpawn;
+            case "ore_beryllium" -> WorldConfig.berylliumSpawn;
+            case "ore_rare" -> WorldConfig.rareSpawn;
+            case "ore_lignite" -> WorldConfig.ligniteSpawn;
+            case "ore_asbestos" -> WorldConfig.asbestosSpawn;
+            case "ore_cinnebar" -> WorldConfig.cinnebarSpawn;
+            case "ore_cobalt" -> WorldConfig.cobaltSpawn;
+            case "cluster_iron" -> WorldConfig.ironClusterSpawn;
+            case "cluster_titanium" -> WorldConfig.titaniumClusterSpawn;
+            case "cluster_aluminium" -> WorldConfig.aluminiumClusterSpawn;
+            case "cluster_copper" -> WorldConfig.copperClusterSpawn;
+            case "stone_resource_limestone" -> WorldConfig.limestoneSpawn;
+            case "ore_nether_uranium" -> WorldConfig.netherUraniumuSpawn;
+            case "ore_nether_tungsten" -> WorldConfig.netherTungstenSpawn;
+            case "ore_nether_sulfur" -> WorldConfig.netherSulfurSpawn;
+            case "ore_nether_fire" -> WorldConfig.netherPhosphorusSpawn;
+            case "ore_nether_coal" -> WorldConfig.netherCoalSpawn;
+            case "ore_nether_cobalt" -> WorldConfig.netherCobaltSpawn;
+            case "ore_nether_plutonium" -> WorldConfig.netherPlutoniumSpawn;
+            case "ore_tikite" -> WorldConfig.endTikiteSpawn;
+            default -> entry.veinCount();
+        };
+    }
+
+    private static int configuredRarity(OreEntry entry) {
+        return "ore_alexandrite".equals(entry.blockName()) ? WorldConfig.alexandriteSpawn : entry.rarity();
+    }
+
+    private static int configuredGneissVeinCount(GneissOreEntry entry) {
+        return switch (entry.blockName()) {
+            case "ore_gneiss_uranium" -> WorldConfig.uraniumSpawn * 3;
+            case "ore_gneiss_asbestos" -> WorldConfig.asbestosSpawn * 3;
+            case "ore_gneiss_lithium" -> WorldConfig.lithiumSpawn;
+            case "ore_gneiss_rare" -> WorldConfig.rareSpawn;
+            case "ore_gneiss_gas" -> WorldConfig.gassshaleSpawn * 3;
+            default -> entry.veinCount();
+        };
     }
 
     private static int mapLegacyOreY(WorldGenLevel level, int oldY) {

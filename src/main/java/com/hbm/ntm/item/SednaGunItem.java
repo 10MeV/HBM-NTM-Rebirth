@@ -122,6 +122,39 @@ public class SednaGunItem extends Item implements HbmKeybindReceiver, HbmLegacyI
         return gunConfig;
     }
 
+    /**
+     * The animation de-duplication map belongs to a logged-in server player,
+     * not to that player's UUID across later sessions.
+     */
+    public static void clearServerRuntimeState(UUID playerId) {
+        if (playerId != null) {
+            LEGACY_CLIENT_ANIMATION_SYNC.remove(playerId);
+        }
+    }
+
+    /** Clears all server-side animation de-duplication state at server stop. */
+    public static void clearAllServerRuntimeState() {
+        LEGACY_CLIENT_ANIMATION_SYNC.clear();
+    }
+
+    /**
+     * Stops client-local loop handles before discarding their entity-id keys.
+     * AudioWrapper is a common-side facade, so this remains safe to invoke
+     * from the client disconnect path without loading client classes on a
+     * dedicated server.
+     */
+    public static void clearClientRuntimeState() {
+        for (AudioWrapper sound : LEGACY_CONTINUOUS_FIRE_SOUNDS.values()) {
+            if (sound != null && sound.isPlaying()) {
+                sound.stopSound();
+            }
+        }
+        LEGACY_CONTINUOUS_FIRE_SOUNDS.clear();
+        TauCannonItem.clearClientRuntimeState();
+        net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                () -> () -> com.hbm.ntm.client.DrillGunItemClient.clearRuntimeState());
+    }
+
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         return InteractionResultHolder.pass(player.getItemInHand(hand));

@@ -1,4 +1,4 @@
 {
-  "parent": "hbm_ntm_rebirth:block/rebar"
+  "parent": "builtin/entity"
 }
 

@@ -15,6 +15,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -134,7 +137,7 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (!ignoreSize && stack.getCount() < count) {
             return false;
         }
-        if (!ingredient.test(stack)) {
+        if (!matchesCurrentIngredient(stack)) {
             return false;
         }
         if (legacyId != null && !legacyWildcard && LegacyMetaItemMappings.isDamageValueBacked(legacyId)
@@ -198,15 +201,12 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
         if (fluidContainerType != null) {
             return fluidContainerStacks(fluidContainerType, fluidContainerAmount, count);
         }
+        String tagId = ingredientTagId();
+        if (tagId != null) {
+            return currentTagStacks(tagId);
+        }
         return Arrays.stream(ingredient.getItems())
-                .map(stack -> {
-                    ItemStack copy = stack.copy();
-                    copy.setCount(count);
-                    if (hasPartialNbt()) {
-                        copy.setTag(partialNbt());
-                    }
-                    return copy;
-                })
+                .map(this::displayStack)
                 .filter(stack -> !stack.isEmpty())
                 .toList();
     }
@@ -455,6 +455,43 @@ public record HbmIngredient(Ingredient ingredient, int count, ItemStack exactSta
             }
         }
         return true;
+    }
+
+    /**
+     * Forge refreshes registry tags after datapack recipes have been decoded.
+     * {@link Ingredient#getItems()} may already hold the pre-refresh placeholder
+     * cache at that point, whereas the legacy OreDictionary contract always
+     * consulted the currently registered ore entries.  Keep a single-tag
+     * ingredient live so old ore-dictionary recipes cannot become a stale
+     * barrier-item recipe after a reload.
+     */
+    private boolean matchesCurrentIngredient(ItemStack stack) {
+        String tagId = ingredientTagId();
+        if (tagId == null) {
+            return ingredient.test(stack);
+        }
+        return stack.is(TagKey.create(Registries.ITEM, new ResourceLocation(tagId)));
+    }
+
+    private List<ItemStack> currentTagStacks(String tagId) {
+        TagKey<Item> tag = TagKey.create(Registries.ITEM, new ResourceLocation(tagId));
+        return BuiltInRegistries.ITEM.getTag(tag)
+                .stream()
+                .flatMap(holders -> holders.stream())
+                .map(Holder::value)
+                .map(ItemStack::new)
+                .map(this::displayStack)
+                .filter(stack -> !stack.isEmpty())
+                .toList();
+    }
+
+    private ItemStack displayStack(ItemStack stack) {
+        ItemStack copy = stack.copy();
+        copy.setCount(count);
+        if (hasPartialNbt()) {
+            copy.setTag(partialNbt());
+        }
+        return copy;
     }
 
     private static ItemStack readItemStack(JsonObject object, String name) {

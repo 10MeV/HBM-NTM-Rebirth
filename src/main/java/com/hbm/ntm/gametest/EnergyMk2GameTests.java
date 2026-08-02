@@ -4,13 +4,13 @@ import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.Mats.MaterialStack;
 import com.hbm.inventory.RecipesCommon.AStack;
 import com.hbm.inventory.recipes.loader.SerializableRecipe;
+import com.hbm.items.ItemCustomLore;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.ClientPanelData;
 import com.hbm.ntm.client.ClientSatelliteData;
 import com.hbm.ntm.client.renderer.LegacyBlockEntityRenderDistances;
 import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
-import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.api.entity.RadarCommandReceiver;
 import com.hbm.ntm.api.entity.RadarCommandResult;
 import com.hbm.ntm.api.entity.RadarDisplayProjection;
@@ -32,6 +32,7 @@ import com.hbm.ntm.entity.projectile.BurningFoeqEntity;
 import com.hbm.ntm.entity.projectile.TomProjectileEntity;
 import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.CustomMissileExplosion;
+import com.hbm.ntm.item.LaserWavelength;
 import com.hbm.ntm.api.entity.RadarScanner;
 import com.hbm.ntm.block.CableDiodeBlock;
 import com.hbm.ntm.block.CapacitorBlock;
@@ -89,7 +90,6 @@ import com.hbm.ntm.blockentity.CyclotronBlockEntity;
 import com.hbm.ntm.blockentity.DeuteriumExtractorBlockEntity;
 import com.hbm.ntm.blockentity.DeuteriumTowerBlockEntity;
 import com.hbm.ntm.blockentity.DieselGeneratorBlockEntity;
-import com.hbm.ntm.blockentity.DiFurnaceBlockEntity;
 import com.hbm.ntm.blockentity.DrainBlockEntity;
 import com.hbm.ntm.blockentity.DfcEmitterBlockEntity;
 import com.hbm.ntm.blockentity.DfcInjectorBlockEntity;
@@ -141,7 +141,6 @@ import com.hbm.ntm.blockentity.LargeCoolingTowerBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatterySocketBlockEntity;
 import com.hbm.ntm.blockentity.MicrowaveBlockEntity;
-import com.hbm.ntm.blockentity.MiniRtgBlockEntity;
 import com.hbm.ntm.blockentity.MiningLaserBlockEntity;
 import com.hbm.ntm.blockentity.MissileAssemblyBlockEntity;
 import com.hbm.ntm.blockentity.MixerBlockEntity;
@@ -264,6 +263,7 @@ import com.hbm.ntm.satellite.SoyuzRocketItem;
 import com.hbm.ntm.satellite.ISatelliteChip;
 import com.hbm.ntm.satellite.LegacySatelliteType;
 import com.hbm.ntm.satellite.Satellite;
+import com.hbm.ntm.satellite.SatelliteItem;
 import com.hbm.ntm.itempool.HbmItemPoolIds;
 import com.hbm.ntm.item.RedCableBoxBlockItem;
 import com.hbm.ntm.menu.MachineBatteryMenu;
@@ -281,6 +281,7 @@ import com.hbm.ntm.neutron.RBMKStructureDimensions;
 import com.hbm.ntm.recipe.AnvilConstructionRecipe;
 import com.hbm.ntm.recipe.AnvilConstructionRecipeRuntime;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
+import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
 import com.hbm.ntm.recipe.LegacyMetaItemMappings;
 import com.hbm.ntm.recipe.HbmIngredient;
 import com.hbm.ntm.recipe.ModRecipes;
@@ -352,6 +353,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -361,12 +365,14 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -377,7 +383,9 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
@@ -404,20 +412,20 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.ChunkDataEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
-@GameTestHolder(HbmNtm.MOD_ID)
+// Registration is owned by HbmNtm so the normal complete suite and the
+// opt-in missile-only verification profile use the same explicit entrypoint.
 @PrefixGameTestTemplate(false)
 public final class EnergyMk2GameTests {
     private EnergyMk2GameTests() {
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "renderContracts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "renderContracts")
     public static void modelDistanceCullingIsGloballyLockedTo512Blocks(GameTestHelper helper) {
         assertEquals(512, HbmModelRenderDistances.BLOCKS, "model culling block distance is fixed to 512");
         assertTrue(HbmModelRenderDistances.SQUARED_BLOCKS == 262144.0D,
@@ -454,38 +462,36 @@ public final class EnergyMk2GameTests {
     }
 
     /**
-     * {@code Satellite#register()} assigned gameplay-visible numeric IDs by its
-     * registration order in 1.7.10.  Keep that full item/type/interface table
-     * intact for new 1.20.1 worlds rather than silently reordering it around
-     * modern class names such as the FOEQ relay.
+     * The modern satellite family has one item ID; its NBT variant chooses the
+     * source-backed satellite type used by launch and SavedData.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
-    public static void satelliteRegistryKeepsAllNineLegacyTypeContracts(GameTestHelper helper) {
-        Map<LegacySatelliteType, Item> expectedItems = new LinkedHashMap<>();
-        expectedItems.put(LegacySatelliteType.MAPPER, ModItems.SAT_MAPPER.get());
-        expectedItems.put(LegacySatelliteType.SCANNER, ModItems.SAT_SCANNER.get());
-        expectedItems.put(LegacySatelliteType.RADAR, ModItems.SAT_RADAR.get());
-        expectedItems.put(LegacySatelliteType.LASER, ModItems.SAT_LASER.get());
-        expectedItems.put(LegacySatelliteType.RESONATOR, ModItems.SAT_RESONATOR.get());
-        expectedItems.put(LegacySatelliteType.RELAY, ModItems.SAT_FOEQ.get());
-        expectedItems.put(LegacySatelliteType.MINER, ModItems.SAT_MINER.get());
-        expectedItems.put(LegacySatelliteType.LUNAR_MINER, ModItems.SAT_LUNAR_MINER.get());
-        expectedItems.put(LegacySatelliteType.HORIZONS, ModItems.SAT_GERALD.get());
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
+    public static void satelliteRegistryKeepsSingleItemVariantContracts(GameTestHelper helper) {
+        Map<LegacySatelliteType, SatelliteItem.Variant> expectedVariants = new LinkedHashMap<>();
+        expectedVariants.put(LegacySatelliteType.MAPPER, SatelliteItem.Variant.SPY);
+        expectedVariants.put(LegacySatelliteType.SCANNER, SatelliteItem.Variant.SCANNER);
+        expectedVariants.put(LegacySatelliteType.RADAR, SatelliteItem.Variant.RADAR);
+        expectedVariants.put(LegacySatelliteType.LASER, SatelliteItem.Variant.DEATH_RAY);
+        expectedVariants.put(LegacySatelliteType.RESONATOR, SatelliteItem.Variant.XENIUM_RESONATOR);
+        expectedVariants.put(LegacySatelliteType.RELAY, SatelliteItem.Variant.RELAY);
+        expectedVariants.put(LegacySatelliteType.MINER, SatelliteItem.Variant.MINER_ASTRO);
+        expectedVariants.put(LegacySatelliteType.LUNAR_MINER, SatelliteItem.Variant.MINER_LUNAR);
 
-        assertEquals(9, expectedItems.size(), "legacy satellite registration has exactly nine source-backed entries");
-        for (Map.Entry<LegacySatelliteType, Item> entry : expectedItems.entrySet()) {
+        assertEquals(8, expectedVariants.size(), "single-ID satellite variants cover every retained legacy type");
+        for (Map.Entry<LegacySatelliteType, SatelliteItem.Variant> entry : expectedVariants.entrySet()) {
             LegacySatelliteType type = entry.getKey();
-            Item item = entry.getValue();
+            ItemStack stack = SatelliteItem.stack(ModItems.SATELLITE.get(), entry.getValue());
             Satellite satellite = Satellite.create(type.legacyId());
             assertTrue(satellite != null, "legacy satellite ID creates " + type);
-            assertEquals(type.legacyId(), Satellite.getLegacyIdFromItem(item),
-                    "satellite item retains the source registration ID for " + type);
-            assertEquals(type.legacyId(), com.hbm.saveddata.satellites.Satellite.getIDFromItem(item),
-                    "legacy public satellite item map retains the source registration ID for " + type);
+            assertSame(ModItems.SATELLITE.get(), stack.getItem(), "all satellite variants use the sole item ID");
+            assertEquals(type.legacyId(), Satellite.getLegacyIdFromStack(stack),
+                    "satellite variant retains the source registration ID for " + type);
+            assertEquals(type.legacyId(), com.hbm.saveddata.satellites.Satellite.getIDFromStack(stack),
+                    "legacy public facade resolves the satellite stack variant for " + type);
             assertEquals(type.legacyId(), satellite.getID(), "satellite instance retains its source ID for " + type);
             assertTrue(satellite.type() == type, "satellite ID creates its matching type for " + type);
-            assertTrue(Satellite.getTypeFromItem(item).orElse(null) == type,
-                    "satellite item maps to its matching type for " + type);
+            assertTrue(Satellite.getTypeFromStack(stack).orElse(null) == type,
+                    "satellite stack maps to its matching type for " + type);
 
             switch (type) {
                 case MAPPER -> assertTrue(satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_PANEL
@@ -520,8 +526,7 @@ public final class EnergyMk2GameTests {
                     assertEquals(HbmItemPoolIds.POOL_SAT_LUNAR, satellite.cargoPool().orElse(""),
                             "lunar miner retains its source cargo pool");
                 }
-                case HORIZONS -> assertTrue(satellite.satelliteInterface() == Satellite.SatelliteInterface.SAT_COORD,
-                        "Gerald/Horizons retains its coordinate interface contract");
+                default -> throw new AssertionError("unexpected retained satellite variant type: " + type);
             }
         }
         helper.succeed();
@@ -532,7 +537,7 @@ public final class EnergyMk2GameTests {
      * it performs the ordinary satellite orbit hand-off.  The old public
      * AchievementHandler package must expose that same advancement identity.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void soyuzFoeqPayloadKeepsLegacyAdvancementBridge(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         assertSame(com.hbm.ntm.util.AchievementHandler.FOEQ, com.hbm.util.AchievementHandler.FOEQ,
@@ -552,7 +557,7 @@ public final class EnergyMk2GameTests {
         int frequency = 91_274;
         com.hbm.ntm.satellite.SatelliteSavedData data = com.hbm.ntm.satellite.SatelliteSavedData.get(level);
         data.removeSatellite(frequency);
-        ItemStack foeq = new ItemStack(ModItems.SAT_FOEQ.get());
+        ItemStack foeq = SatelliteItem.stack(ModItems.SATELLITE.get(), SatelliteItem.Variant.RELAY);
         ISatelliteChip.setFrequencyOnStack(foeq, frequency);
         SoyuzEntity soyuz = new SoyuzEntity(level);
         soyuz.setMode(SoyuzEntity.MODE_SATELLITE);
@@ -562,7 +567,7 @@ public final class EnergyMk2GameTests {
         soyuz.tick();
 
         assertTrue(data.containsFrequency(frequency, LegacySatelliteType.RELAY),
-                "Soyuz sat_foeq payload still enters the legacy relay orbit contract after its launch-side award");
+                "Soyuz relay satellite payload enters the legacy relay orbit contract after its launch-side award");
         helper.succeed();
     }
 
@@ -572,7 +577,7 @@ public final class EnergyMk2GameTests {
      * This covers the normal Soyuz construction route rather than a direct
      * launcher-placement shortcut.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void soyuzStructKeepsLegacyTwentyTickConstructionConversion(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos corePos = helper.absolutePos(new BlockPos(4, 4, 4));
@@ -623,7 +628,7 @@ public final class EnergyMk2GameTests {
      * materials: six full launcher stacks plus 30, four full smooth-concrete
      * stacks plus 38, six full scaffold stacks plus 63, and one structure core.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void soyuzLauncherKeepsLegacyStructuralMaterialReturn(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos launcherPos = helper.absolutePos(new BlockPos(8, 4, 4));
@@ -654,7 +659,7 @@ public final class EnergyMk2GameTests {
      * NBT round-trip must remain class-driven rather than requiring a modern
      * LegacySatelliteType enum entry.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteRegistryKeepsLegacyCustomSubclassContract(GameTestHelper helper) {
         List<Class<? extends com.hbm.saveddata.satellites.Satellite>> savedClasses =
                 new ArrayList<>(com.hbm.saveddata.satellites.Satellite.satellites);
@@ -717,7 +722,7 @@ public final class EnergyMk2GameTests {
      * null; it must not turn the first later GUI/cache read into an Optional
      * mapper exception.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satellitePanelCacheKeepsLegacyUnknownIdNullBoundary(GameTestHelper helper) {
         ClientPanelData.clearAll();
         try {
@@ -745,7 +750,7 @@ public final class EnergyMk2GameTests {
      * authority to extend this satellite scanner; volcano_core is an explicit
      * source target and must remain present.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void neutrinoLensKeepsLegacyExplicitScannerTargets(GameTestHelper helper) {
         List<String> expected = List.of(
                 "ore_alexandrite", "ore_oil", "ore_bedrock_oil", "ore_coltan", "stone_gneiss",
@@ -757,13 +762,9 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteChipsKeepLegacyRegisteredStackSize(GameTestHelper helper) {
-        List<Item> chips = List.of(
-                ModItems.SAT_MAPPER.get(), ModItems.SAT_SCANNER.get(), ModItems.SAT_RADAR.get(),
-                ModItems.SAT_LASER.get(), ModItems.SAT_FOEQ.get(), ModItems.SAT_RESONATOR.get(),
-                ModItems.SAT_MINER.get(), ModItems.SAT_LUNAR_MINER.get(), ModItems.SAT_GERALD.get(),
-                ModItems.SAT_CHIP.get(), ModItems.SAT_INTERFACE.get(), ModItems.SAT_COORD.get(),
+        List<Item> chips = List.of(ModItems.SATELLITE.get(), ModItems.SAT_CHIP.get(), ModItems.SAT_INTERFACE.get(), ModItems.SAT_COORD.get(),
                 ModItems.SAT_DESIGNATOR.get(), ModItems.SAT_RELAY.get());
         for (Item chip : chips) {
             assertEquals(1, chip.getMaxStackSize(), "legacy satellite registration keeps stack size one: " + chip);
@@ -777,7 +778,7 @@ public final class EnergyMk2GameTests {
      * its empty tag and writing its exact integer frequency.  Non-chip stacks
      * and null stay no-op through the static legacy facade.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteChipFrequencyKeepsLegacyNbtAndZeroCountBoundaries(GameTestHelper helper) {
         ItemStack taglessChip = new ItemStack(ModItems.SAT_CHIP.get());
         assertFalse(taglessChip.hasTag(), "fresh satellite chip starts without a tag");
@@ -815,11 +816,85 @@ public final class EnergyMk2GameTests {
     }
 
     /**
+     * MachineSatLink is a separate ground station, not the inventory-based
+     * machine_satlinker.  Keep its direct footprint, satellite/ROR path,
+     * sky gate, chip interaction, and NBT contract source-backed.
+     */
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
+    public static void satelliteGroundStationKeepsLegacyLinkContract(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos corePos = helper.absolutePos(new BlockPos(6, 2, 6));
+        // The GameTest rig can retain a structural block above its local empty
+        // template.  MachineSatLink deliberately uses the world height map,
+        // so give the unobstructed half of this source-contract test a real
+        // clear sky column before installing the station.
+        clearBox(level, corePos.above(), new BlockPos(corePos.getX(), level.getMaxBuildHeight() - 1, corePos.getZ()));
+        BlockState state = ModBlocks.MACHINE_SATLINK.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.NORTH);
+        level.setBlock(corePos, state, Block.UPDATE_ALL);
+        var block = (com.hbm.ntm.block.SatelliteLinkBlock) ModBlocks.MACHINE_SATLINK.get();
+        block.completeDirectMultiblockPlacement(level, corePos, state, null, ItemStack.EMPTY);
+        if (!(level.getBlockEntity(corePos) instanceof com.hbm.ntm.blockentity.SatelliteLinkBlockEntity link)) {
+            throw new AssertionError("satellite ground-station fixture did not create its block entity");
+        }
+
+        var layout = block.getMultiblockLayout(state, level, corePos);
+        BlockPos behind = com.hbm.ntm.multiblock.LegacyMultiblockLayout.behind(Direction.NORTH);
+        BlockPos clockwise = com.hbm.ntm.multiblock.LegacyMultiblockLayout.clockwise(Direction.NORTH);
+        for (BlockPos offset : List.of(behind, clockwise, behind.offset(clockwise))) {
+            assertTrue(layout.isLegacyExtraOffset(offset),
+                    "satlink retains its source extra Combo proxy offset " + offset);
+            assertTrue(layout.proxyMode(offset).equals(com.hbm.ntm.multiblock.LegacyProxyMode.fullCombo()),
+                    "satlink extra offset retains full TileEntityProxyCombo capabilities " + offset);
+            assertSame(link, MultiblockHelper.resolveCoreBlockEntity(level, corePos.offset(offset)),
+                    "satlink Combo proxy resolves to the ground-station core " + offset);
+        }
+
+        int frequency = 87_341;
+        com.hbm.ntm.satellite.SatelliteSavedData data = com.hbm.ntm.satellite.SatelliteSavedData.get(level);
+        data.removeSatellite(frequency);
+        assertTrue(data.putSatellite(frequency, com.hbm.ntm.satellite.LegacySatelliteType.PRECISION_LASER),
+                "satlink test installs a source SatelliteBase-compatible satellite");
+        link.setFrequency(frequency);
+        com.hbm.ntm.blockentity.SatelliteLinkBlockEntity.serverTick(level, corePos, state, link);
+        assertTrue(link.isConnected(), "unobstructed satlink connects to its assigned occupied frequency");
+        assertEquals("", link.provideRORValue("VAL:rx"), "new SatelliteBase starts with an empty ROR receive value");
+        link.runRORFunction("FUN:tx", new String[] {"settarget 12 34"});
+        link.runRORFunction("FUN:tx", new String[] {"gettarget"});
+        assertEquals("12;34", link.provideRORValue("VAL:rx"),
+                "satlink tx splits legacy commands and exposes SatelliteBase replies through rx");
+        link.runRORFunction("FUN:setfreq", new String[] {"99999.6"});
+        assertEquals(100_000, link.getFrequency(), "satlink ROR setfreq retains legacy decimal rounding within 0..100000");
+
+        ItemStack chip = new ItemStack(ModItems.SAT_CHIP.get());
+        ISatelliteChip.setFrequencyOnStack(chip, frequency);
+        var player = gameTestPlayer(level);
+        player.setShiftKeyDown(false);
+        player.setItemInHand(InteractionHand.MAIN_HAND, chip);
+        assertSame(InteractionResult.SUCCESS, block.use(state, level, corePos, player, InteractionHand.MAIN_HAND,
+                blockHit(corePos)), "satlink accepts a satellite chip through its normal right-click path");
+        assertEquals(frequency, link.getFrequency(), "satlink copies its held satellite-chip frequency");
+
+        level.setBlock(corePos.above(2), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+        com.hbm.ntm.blockentity.SatelliteLinkBlockEntity.serverTick(level, corePos, state, link);
+        assertFalse(link.isConnected(), "satlink disconnects when the source height-map sky path is blocked");
+
+        CompoundTag saved = link.saveWithoutMetadata();
+        assertTrue(saved.contains("freq", Tag.TAG_INT) && !saved.contains("power", Tag.TAG_INT),
+                "satlink saves its frequency with the source NBT key");
+        var restored = new com.hbm.ntm.blockentity.SatelliteLinkBlockEntity(corePos, state);
+        restored.load(saved);
+        assertEquals(frequency, restored.getFrequency(), "satlink restores its saved frequency after reload");
+        data.removeSatellite(frequency);
+        helper.succeed();
+    }
+
+    /**
      * {@code CommandSatellites} is a player command, not merely a SavedData
      * helper: its legacy-name path must consume the held satellite, list the
      * public map by concrete class name, and return the descended frequency.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void legacySatelliteCommandKeepsOrbitListAndDescendContracts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var player = gameTestPlayer(level);
@@ -832,7 +907,7 @@ public final class EnergyMk2GameTests {
         data.sats.remove(frequency);
         data.setDirty(false);
 
-        ItemStack mapper = new ItemStack(ModItems.SAT_MAPPER.get());
+        ItemStack mapper = SatelliteItem.stack(ModItems.SATELLITE.get(), SatelliteItem.Variant.SPY);
         ISatelliteChip.setFrequencyOnStack(mapper, frequency);
         player.setItemInHand(InteractionHand.MAIN_HAND, mapper);
 
@@ -878,7 +953,7 @@ public final class EnergyMk2GameTests {
     // the final probe even though the receiver implementation is correct.
     // Reuse the existing 24x8x16 empty fixture to keep every probe inside this
     // test's reserved structure volume.
-    @GameTest(templateNamespace = "minecraft", template = "drone_empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "missileSatellites")
     public static void poleSatelliteReceiverKeepsLegacyYawPlacementOrder(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var player = gameTestPlayer(level);
@@ -920,7 +995,7 @@ public final class EnergyMk2GameTests {
      * the data dirty explicitly after changing it; direct map mutation itself
      * does not acquire a modern persistence side effect.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satellitePublicMapKeepsLegacyExplicitDirtyBoundary(GameTestHelper helper) {
         com.hbm.saveddata.SatelliteSavedData data = new com.hbm.saveddata.SatelliteSavedData("satellite_test");
         com.hbm.saveddata.satellites.Satellite mapper =
@@ -950,7 +1025,7 @@ public final class EnergyMk2GameTests {
      * path, does not call {@code SatelliteSavedData.markDirty()} in 1.7.10.  Retain that distinct
      * persistence boundary instead of treating every satellite runtime timestamp as auto-persisted.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteLaserKeepsLegacyUnmarkedCooldownWrite(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         com.hbm.ntm.satellite.SatelliteSavedData data = com.hbm.ntm.satellite.SatelliteSavedData.get(level);
@@ -986,7 +1061,7 @@ public final class EnergyMk2GameTests {
      * override omits its parent tick.  If an external lifecycle nevertheless supplies age 60, its
      * exact source payload is a no-radiation MK5 strength-80 blast plus 100 MASKMAN bolts at y + 2.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void deathBlastKeepsLegacyAgeGatedNuclearBoltPayload(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos origin = helper.absolutePos(new BlockPos(5, 3, 5));
@@ -1035,7 +1110,7 @@ public final class EnergyMk2GameTests {
      * not call Entity#onUpdate, leaving ticksExisted at zero and consequently
      * taking its modulo-100 chime branch on every flight tick.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void horizonsTomProjectileKeepsLegacyNoParentTickCadence(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         TomProjectileEntity tom = new TomProjectileEntity(level);
@@ -1060,7 +1135,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** Burning FOEQ owns EntityThrowable's old manual update body just like TOM. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void burningFoeqKeepsLegacyManualFallCadence(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BurningFoeqEntity foeq = new BurningFoeqEntity(level);
@@ -1090,7 +1165,7 @@ public final class EnergyMk2GameTests {
      * for ordinary entity lifecycle behavior while the explosion owns only
      * chunk loading and crater progression.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void horizonsTomBlastKeepsLegacyDefaultPhysicsAndFireContract(GameTestHelper helper) {
         TomBlastEntity blast = new TomBlastEntity(helper.getLevel(), TomProjectileEntity.BLAST_RANGE);
 
@@ -1108,7 +1183,7 @@ public final class EnergyMk2GameTests {
      * {@code entity_moonstone_blast}; the modern type must retain that source
      * identity rather than derive a new key from its modern class name.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void horizonsTomCloudKeepsLegacyRegistrationIdentity(GameTestHelper helper) {
         assertTrue(new ResourceLocation(HbmNtm.MOD_ID, "entity_moonstone_blast")
                         .equals(ForgeRegistries.ENTITY_TYPES.getKey(ModEntityTypes.CLOUD_TOM.get())),
@@ -1121,7 +1196,7 @@ public final class EnergyMk2GameTests {
      * maxAge is not serialized, so a reloaded cloud returns to watcher default
      * 100 rather than retaining its original 500-tick TOM lifetime.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void horizonsTomCloudKeepsLegacyIndependentAgeAndSaveContract(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         CloudTomEntity cloud = new CloudTomEntity(level, 500);
@@ -1157,7 +1232,7 @@ public final class EnergyMk2GameTests {
      * non-collidable cell with the entry face, rather than treating an empty
      * 300-block path as a no-op.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDesignatorKeepsLegacyLastUncollidableRayTrace(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var player = gameTestPlayer(level);
@@ -1203,103 +1278,22 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    /**
-     * {@code plsm.gerald} is a normal-mode Plasma Forge recipe.  Its old
-     * expensive-mode replacement is intentionally not a modern configuration
-     * branch, while the shared {@code coin_ufo} input is excluded with its
-     * boss/UFO acquisition chain.
-     */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
-    public static void geraldPlasmaForgeRecipeKeepsNormalModeSatelliteContract(GameTestHelper helper) {
-        GenericMachineRecipe gerald = helper.getLevel().getRecipeManager()
-                .getAllRecipesFor(ModRecipes.PLASMA_FORGE.type().get()).stream()
-                .filter(recipe -> "plsm.gerald".equals(recipe.getInternalName()))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("plsm.gerald is missing from the Plasma Forge datapack recipes"));
-
-        assertEquals(12_000, gerald.getDuration(), "Gerald keeps the legacy Plasma Forge duration");
-        assertEquals(50_000_000L, gerald.getPower(), "Gerald keeps the legacy Plasma Forge power draw");
-        assertEquals(25_000_000L, gerald.getExtraData().plasmaForge().orElseThrow().ignitionTemp(),
-                "Gerald keeps the legacy Plasma Forge ignition requirement");
-        assertEquals(10, gerald.getItemInputs().size(),
-                "Gerald retains every normal-mode input except the excluded UFO-chain coin");
-        assertTrue(gerald.getItemInputs().stream().allMatch(input -> input.count() == 64),
-                "Gerald's retained normal-mode inputs keep their legacy stack counts");
-        assertEquals(1, gerald.getItemOutputs().size(), "Gerald has one legacy output");
-        assertSame(ModItems.SAT_GERALD.get(), gerald.getItemOutputs().get(0).getItem(),
-                "Gerald Plasma Forge recipe outputs sat_gerald");
-        assertTrue(gerald.getPools().equals(List.of("discover.gerald")),
-                "Gerald keeps its legacy discover blueprint pool");
-        helper.succeed();
-    }
-
-    /**
-     * The ordinary satellite chain is split between the Assembly Machine and
-     * Arc Welder in 1.7.10.  Keep every source-backed output, duration, power,
-     * and input-slot shape published together; Gerald's separate Plasma Forge
-     * recipe is covered above.
-     */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
-    public static void satelliteManufacturingRecipesKeepLegacyMachineSplit(GameTestHelper helper) {
-        Map<String, Item> assemblyOutputs = new LinkedHashMap<>();
-        assemblyOutputs.put("ass.satellitebase",
-                ForgeRegistries.ITEMS.getValue(new ResourceLocation(HbmNtm.MOD_ID, "sat_base")));
-        assemblyOutputs.put("ass.satellitemapper", ModItems.SAT_HEAD_MAPPER.get());
-        assemblyOutputs.put("ass.satellitescanner", ModItems.SAT_HEAD_SCANNER.get());
-        assemblyOutputs.put("ass.satelliteradar", ModItems.SAT_HEAD_RADAR.get());
-        assemblyOutputs.put("ass.satellitelaser", ModItems.SAT_HEAD_LASER.get());
-        assemblyOutputs.put("ass.satelliteresonator", ModItems.SAT_HEAD_RESONATOR.get());
-        assemblyOutputs.put("ass.satelliterelay", ModItems.SAT_FOEQ.get());
-        assemblyOutputs.put("ass.satelliteasteroidminer", ModItems.SAT_MINER.get());
-        assemblyOutputs.put("ass.satellitelunarminer", ModItems.SAT_LUNAR_MINER.get());
-        Map<String, Integer> assemblyInputCounts = Map.ofEntries(
-                Map.entry("ass.satellitebase", 9),
-                Map.entry("ass.satellitemapper", 4),
-                Map.entry("ass.satellitescanner", 5),
-                Map.entry("ass.satelliteradar", 5),
-                Map.entry("ass.satellitelaser", 7),
-                Map.entry("ass.satelliteresonator", 5),
-                Map.entry("ass.satelliterelay", 9),
-                Map.entry("ass.satelliteasteroidminer", 9),
-                Map.entry("ass.satellitelunarminer", 9));
-
-        Map<String, GenericMachineRecipe> assemblyRecipes = recipeMap(helper, ModRecipes.ASSEMBLY_MACHINE);
-        assertEquals(assemblyOutputs.size(), assemblyRecipes.entrySet().stream()
-                        .filter(entry -> assemblyOutputs.containsKey(entry.getKey())).count(),
-                "every legacy Assembly Machine satellite recipe is loaded");
-        for (Map.Entry<String, Item> expected : assemblyOutputs.entrySet()) {
-            GenericMachineRecipe recipe = assemblyRecipes.get(expected.getKey());
-            assertTrue(recipe != null, expected.getKey() + " is present in the Assembly Machine recipes");
-            assertEquals(600, recipe.getDuration(), expected.getKey() + " keeps its legacy 600-tick duration");
-            assertEquals(100L, recipe.getPower(), expected.getKey() + " keeps its legacy 100 HE/t draw");
-            assertEquals(assemblyInputCounts.get(expected.getKey()).intValue(), recipe.getItemInputs().size(),
-                    expected.getKey() + " keeps its legacy input-slot count");
-            assertEquals(1, recipe.getItemOutputs().size(), expected.getKey() + " has one source output");
-            assertSame(expected.getValue(), recipe.getItemOutputs().get(0).getItem(),
-                    expected.getKey() + " keeps its source output item");
-        }
-
-        Map<String, Item> arcOutputs = new LinkedHashMap<>();
-        arcOutputs.put("arc.satellitemapper", ModItems.SAT_MAPPER.get());
-        arcOutputs.put("arc.satellitescanner", ModItems.SAT_SCANNER.get());
-        arcOutputs.put("arc.satelliteradar", ModItems.SAT_RADAR.get());
-        arcOutputs.put("arc.satellitelaser", ModItems.SAT_LASER.get());
-        arcOutputs.put("arc.satelliteresonator", ModItems.SAT_RESONATOR.get());
-        Map<String, GenericMachineRecipe> arcRecipes = recipeMap(helper, ModRecipes.ARC_WELDER);
-        assertEquals(arcOutputs.size(), arcRecipes.entrySet().stream()
-                        .filter(entry -> arcOutputs.containsKey(entry.getKey())).count(),
-                "every legacy Arc Welder satellite recipe is loaded");
-        for (Map.Entry<String, Item> expected : arcOutputs.entrySet()) {
-            GenericMachineRecipe recipe = arcRecipes.get(expected.getKey());
-            assertTrue(recipe != null, expected.getKey() + " is present in the Arc Welder recipes");
-            assertEquals(600, recipe.getDuration(), expected.getKey() + " keeps its legacy 600-tick duration");
-            assertEquals(expected.getKey().endsWith("laser") || expected.getKey().endsWith("resonator")
-                            ? 50_000L : 10_000L,
-                    recipe.getPower(), expected.getKey() + " keeps its source power draw");
-            assertEquals(2, recipe.getItemInputs().size(), expected.getKey() + " combines base and satellite head");
-            assertEquals(1, recipe.getItemOutputs().size(), expected.getKey() + " has one source output");
-            assertSame(expected.getValue(), recipe.getItemOutputs().get(0).getItem(),
-                    expected.getKey() + " keeps its source output item");
+    /** The retained satellite manufacturing family has ten legacy assembly recipes under one item ID. */
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
+    public static void satelliteManufacturingRecipesKeepSingleItemVariants(GameTestHelper helper) {
+        List<GenericMachineRecipe> recipes = helper.getLevel().getRecipeManager()
+                .getAllRecipesFor(ModRecipes.ASSEMBLY_MACHINE.type().get()).stream()
+                .filter(recipe -> recipe.getId().getPath().startsWith("assembly_machine/x_satellite_"))
+                .toList();
+        // 1.7.10 AssemblyMachineRecipes defines no recipe for EnumSatType.RELAY.
+        assertEquals(SatelliteItem.Variant.values().length - 1, recipes.size(),
+                "every source-crafted satellite variant has one x_satellite assembly recipe");
+        for (GenericMachineRecipe recipe : recipes) {
+            assertEquals(1, recipe.getItemOutputs().size(), recipe.getId() + " has one satellite output");
+            ItemStack output = recipe.getItemOutputs().get(0);
+            assertSame(ModItems.SATELLITE.get(), output.getItem(), recipe.getId() + " uses the single satellite ID");
+            assertTrue(output.hasTag() && output.getTag().contains(SatelliteItem.TAG_VARIANT),
+                    recipe.getId() + " persists its satellite variant in NBT");
         }
         helper.succeed();
     }
@@ -1310,7 +1304,7 @@ public final class EnergyMk2GameTests {
      * 1.7.10, so Assembly Machine and Arc Welder coverage alone cannot prove
      * that a fresh world can obtain its remotes, linkers, dock, or receiver.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteCraftingRecipesKeepLegacyAcquisitionPaths(GameTestHelper helper) {
         assertCraftingRecipeOutput(helper, "satellite/pole_satellite_receiver",
                 ModBlocks.POLE_SATELLITE_RECEIVER.get().asItem());
@@ -1331,7 +1325,7 @@ public final class EnergyMk2GameTests {
      * complete legacy table loaded through the datapack serializer, rather
      * than proving only that the corresponding items are registered.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void arcWelderPrebuiltMissilesKeepCompleteLegacyRecipeTable(GameTestHelper helper) {
         Map<String, MissileArcRecipeExpectation> expected = Map.ofEntries(
                 Map.entry("arc.missile.abm", new MissileArcRecipeExpectation(ModItems.MISSILE_ANTI_BALLISTIC.get(), 100, 5_000L)),
@@ -1382,12 +1376,141 @@ public final class EnergyMk2GameTests {
     }
 
     /**
+     * Runtime counterpart to the source-coverage report's 59 non-MKU recipe
+     * families. Datagen coverage only proves that JSON was emitted; this
+     * matrix proves that a live server reload parsed each executable machine
+     * family into its RecipeManager type. Display-only NEI families have no
+     * RecipeType and remain documented as display-only rather than being
+     * represented by a fake processing recipe. Magic/manual and annihilator
+     * defaults intentionally remain empty under their recorded exclusions.
+     */
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "machineRecipeRuntimeMatrix")
+    public static void machineRecipeRuntimeMatrixLoadsEveryDatapackBackedFamily(GameTestHelper helper) {
+        List<RuntimeRecipeFamily> families = List.of(
+                runtimeFamily("chemical_plant", ModRecipes.CHEMICAL_PLANT, 74),
+                runtimeFamily("assembly_machine", ModRecipes.ASSEMBLY_MACHINE, 332),
+                // Orders 45-46 are source-backed optional Naquadria-tag recipes.
+                // The default project deliberately provides no Naquadria tag, so Forge
+                // condition processing correctly omits them from the live manager.
+                runtimeFamily("purex", ModRecipes.PUREX, 53),
+                runtimeFamily("fusion_reactor", ModRecipes.FUSION_REACTOR, 10),
+                runtimeFamily("plasma_forge", ModRecipes.PLASMA_FORGE, 32),
+                runtimeFamily("press", ModRecipes.PRESS, 48),
+                runtimeFamily("blast_furnace", ModRecipes.BLAST_FURNACE, 14),
+                runtimeFamily("shredder", ModRecipes.SHREDDER, 302),
+                runtimeFamily("soldering_station", ModRecipes.SOLDERING_STATION, 26),
+                runtimeFamily("combination_oven", ModRecipes.COMBINATION_OVEN, 23),
+                runtimeFamily("centrifuge", ModRecipes.CENTRIFUGE, 56),
+                runtimeFamily("crystallizer", ModRecipes.CRYSTALLIZER, 107),
+                runtimeFamily("refinery", ModRecipes.REFINERY, 4),
+                runtimeFamily("vacuum_distill", ModRecipes.VACUUM_DISTILL, 2),
+                runtimeFamily("fraction_tower", ModRecipes.FRACTION_TOWER, 19),
+                runtimeFamily("catalytic_cracker", ModRecipes.CATALYTIC_CRACKER, 12),
+                runtimeFamily("catalytic_reformer", ModRecipes.CATALYTIC_REFORMER, 9),
+                runtimeFamily("hydrotreater", ModRecipes.HYDROTREATER, 6),
+                runtimeFamily("liquefaction", ModRecipes.LIQUEFACTION, 33),
+                runtimeFamily("solidifier", ModRecipes.SOLIDIFIER, 47),
+                runtimeFamily("coker", ModRecipes.COKER, 33),
+                runtimeFamily("pyro_oven", ModRecipes.PYRO_OVEN, 40),
+                runtimeFamily("breeding_reactor", ModRecipes.BREEDING_REACTOR, 31),
+                runtimeFamily("cyclotron", ModRecipes.CYCLOTRON, 42),
+                runtimeFamily("fuel_pool", ModRecipes.FUEL_POOL, 31),
+                runtimeFamily("mixer", ModRecipes.MIXER, 50),
+                runtimeFamily("outgasser", ModRecipes.OUTGASSER, 19),
+                runtimeFamily("exposure_chamber", ModRecipes.EXPOSURE_CHAMBER, 4),
+                runtimeFamily("electrolyzer_fluid", ModRecipes.ELECTROLYZER_FLUID, 8),
+                runtimeFamily("electrolyzer_metal", ModRecipes.ELECTROLYZER_METAL, 18),
+                runtimeFamily("fusion_fluid_breeder", ModRecipes.FUSION_FLUID_BREEDER, 3),
+                runtimeFamily("compressor", ModRecipes.COMPRESSOR, 5),
+                runtimeFamily("arc_welder", ModRecipes.ARC_WELDER, 47),
+                runtimeFamily("rotary_furnace", ModRecipes.ROTARY_FURNACE, 12),
+                runtimeFamily("particle_accelerator", ModRecipes.PARTICLE_ACCELERATOR, 11),
+                runtimeFamily("ammo_press", ModRecipes.AMMO_PRESS, 89),
+                runtimeFamily("annihilator", ModRecipes.ANNIHILATOR, 0),
+                runtimeFamily("anvil_construction", ModRecipes.ANVIL_CONSTRUCTION, 61),
+                runtimeFamily("anvil_smithing", ModRecipes.ANVIL_SMITHING, 58),
+                runtimeFamily("pedestal", ModRecipes.PEDESTAL, 12),
+                runtimeFamily("crucible", ModRecipes.CRUCIBLE, 13),
+                runtimeFamily("crucible_smelting", ModRecipes.CRUCIBLE_SMELTING, 45),
+                runtimeFamily("arc_furnace", ModRecipes.ARC_FURNACE, 12),
+                runtimeFamily("gas_cent", ModRecipes.GAS_CENT, 4),
+                runtimeFamily("lemegeton", ModRecipes.LEMEGETON, 37),
+                runtimeFamily("radiolysis", ModRecipes.RADIOLYSIS, 1),
+                runtimeFamily("radgen", ModRecipes.RADGEN, 28),
+                runtimeFamily("silex", ModRecipes.SILEX, 325),
+                runtimeFamily("precass", ModRecipes.PRECASS, 2));
+
+        List<String> missingRuntimeFamilies = new ArrayList<>();
+        for (RuntimeRecipeFamily family : families) {
+            int loaded = loadedRecipeCount(helper, family.type());
+            if (loaded < family.minimumLoaded()) {
+                missingRuntimeFamilies.add(family.name() + " expected at least " + family.minimumLoaded()
+                        + ", got " + loaded);
+            }
+        }
+        assertTrue(missingRuntimeFamilies.isEmpty(),
+                "machine recipe runtime matrix gaps: " + String.join("; ", missingRuntimeFamilies));
+
+        assertSpecialRecipeSerializer(helper, "rbmk/rbmk_fuel_disassembly", ModRecipes.RBMK_FUEL_DISASSEMBLY.get());
+        assertSpecialRecipeSerializer(helper, "weapon/grenade_crafting", ModRecipes.GRENADE_CRAFTING.get());
+        assertSpecialRecipeSerializer(helper, "weapon/cargo_shell_crafting", ModRecipes.CARGO_SHELL_CRAFTING.get());
+        assertSpecialRecipeSerializer(helper, "parts/scraps_split", ModRecipes.SCRAPS_SPLIT.get());
+        for (String path : List.of("blocks/crate_desh", "blocks/crate_tungsten", "blocks/safe",
+                "blocks/mass_storage_desh", "blocks/mass_storage_tungsten")) {
+            assertSpecialRecipeSerializer(helper, path, ModRecipes.CONTAINER_UPGRADE_CRAFTING.get());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "renderContracts")
+    public static void rebarRenderPlansAndClientConfigKeepLegacyContracts(GameTestHelper helper) {
+        assertFalse(HbmClientConfig.renderRebarSimple(), "rebar defaults to the source twelve-bar world lattice");
+        assertEquals(250, HbmClientConfig.renderRebarLimit(), "rebar fill overlay defaults to the source 250-per-frame limit");
+        assertFalse(com.hbm.config.ClientConfig.renderRebarSimple(),
+                "legacy rebar-simple facade delegates to the Forge client config");
+        assertEquals(250, com.hbm.config.ClientConfig.renderRebarLimit(),
+                "legacy rebar-limit facade delegates to the Forge client config");
+
+        var inventory = com.hbm.ntm.client.obj.LegacyIsbrhBlockPlans.rebarInventoryPlan(0);
+        var complex = com.hbm.ntm.client.obj.LegacyIsbrhBlockPlans.rebarWorldPlan(0, false);
+        var simple = com.hbm.ntm.client.obj.LegacyIsbrhBlockPlans.rebarWorldPlan(0, true);
+        var fill = com.hbm.ntm.client.obj.LegacyIsbrhBlockPlans.rebarConcreteFillPlan(375, 0xFFFFFF);
+        assertEquals(12, inventory.rebarCuboids().size(), "inventory rebar remains the old twelve-bar lattice");
+        assertEquals(12, complex.rebarCuboids().size(), "default world rebar remains the old twelve-bar lattice");
+        assertEquals(3, simple.rebarCuboids().size(), "simple world rebar remains the old three center bars");
+        assertEquals(1, fill.overlayCuboids().size(), "partial concrete fill has one block-volume overlay");
+        assertTrue(Math.abs(fill.max() - 0.375D) < 0.000001D,
+                "concrete fill height remains progress divided by 1000");
+        helper.succeed();
+    }
+
+    private static RuntimeRecipeFamily runtimeFamily(String name, ModRecipes.RecipeHolder<?> type, int minimumLoaded) {
+        return new RuntimeRecipeFamily(name, type, minimumLoaded);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static int loadedRecipeCount(GameTestHelper helper, ModRecipes.RecipeHolder<?> type) {
+        return helper.getLevel().getRecipeManager().getAllRecipesFor((RecipeType) type.type().get()).size();
+    }
+
+    private static void assertSpecialRecipeSerializer(GameTestHelper helper, String path,
+                                                      net.minecraft.world.item.crafting.RecipeSerializer<?> serializer) {
+        var recipe = helper.getLevel().getRecipeManager()
+                .byKey(new ResourceLocation(HbmNtm.MOD_ID, path))
+                .orElseThrow(() -> new AssertionError("missing runtime special recipe " + path));
+        assertSame(serializer, recipe.getSerializer(), path + " keeps its datapack serializer at runtime");
+    }
+
+    private record RuntimeRecipeFamily(String name, ModRecipes.RecipeHolder<?> type, int minimumLoaded) {
+    }
+
+    /**
      * Radar's {@code sat_relay} source branch recognizes only Laser, Horizons,
      * and Resonator.  SavedData creates their legacy-package facade instances,
      * so this must exercise the complete relay lookup rather than only direct
      * modern satellite classes.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void radarRelayTargetsLegacySatelliteFacades(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var player = gameTestPlayer(level);
@@ -1422,7 +1545,7 @@ public final class EnergyMk2GameTests {
      * Its jam/result/redstone data is rebuilt by the next server scan rather than
      * surviving a world reload.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void radarHostReloadClearsLegacyTransientScanState(GameTestHelper helper) {
         BlockState state = ModBlocks.MACHINE_RADAR.get().defaultBlockState();
         RadarBlockEntity stored = new RadarBlockEntity(BlockPos.ZERO, state);
@@ -1457,7 +1580,7 @@ public final class EnergyMk2GameTests {
      * TileEntityMachineSatDock launches only SatelliteMiner instances (including
      * its lunar subclass), not arbitrary satellites that expose a cargo pool.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDockKeepsLegacyMinerConcreteClassBoundary(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         com.hbm.ntm.satellite.SatelliteSavedData data = com.hbm.ntm.satellite.SatelliteSavedData.get(level);
@@ -1490,7 +1613,7 @@ public final class EnergyMk2GameTests {
      * ContainerSatDock's manual chip slot accepts the ItemSatChip inheritance
      * family, not every ISatChip implementation such as ItemModLens.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDockMenuKeepsLegacySatelliteChipClassBoundary(GameTestHelper helper) {
         var dock = new com.hbm.ntm.blockentity.SatelliteDockBlockEntity(helper.absolutePos(BlockPos.ZERO),
                 ModBlocks.SAT_DOCK.get().defaultBlockState());
@@ -1511,7 +1634,7 @@ public final class EnergyMk2GameTests {
      * placement, but the old Container merge pass first tops up an existing
      * compatible output stack without asking that predicate.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDockQuickMoveKeepsLegacyExistingOutputStackBoundary(GameTestHelper helper) {
         var dock = new com.hbm.ntm.blockentity.SatelliteDockBlockEntity(helper.absolutePos(BlockPos.ZERO),
                 ModBlocks.SAT_DOCK.get().defaultBlockState());
@@ -1548,7 +1671,7 @@ public final class EnergyMk2GameTests {
      * TileEntityMachineSatDock keeps its plain inventory separate from
      * ContainerSatDock: only the menu's manual chip slot is ItemSatChip-only.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDockKeepsLegacyGenericInventoryChipSlot(GameTestHelper helper) {
         var dock = new com.hbm.ntm.blockentity.SatelliteDockBlockEntity(helper.absolutePos(BlockPos.ZERO),
                 ModBlocks.SAT_DOCK.get().defaultBlockState());
@@ -1592,7 +1715,7 @@ public final class EnergyMk2GameTests {
      * as frequency zero, so a docked zero-frequency miner remains unloadable
      * after its chip is removed.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDockKeepsLegacyEmptyChipFrequencyZeroUnload(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos dockPos = helper.absolutePos(new BlockPos(12, 96, 12));
@@ -1627,13 +1750,12 @@ public final class EnergyMk2GameTests {
     }
 
     /**
-     * TileEntityMachineSatDock only null-checks the lookup at the unloading
-     * tick, then directly casts to SatelliteMiner. This is intentionally
-     * distinct from its guarded launch branch: a mutated non-miner entry
-     * throws instead of being silently treated as no cargo.
+     * TileEntityMachineSatDock unloads only SatelliteMiner instances. A
+     * non-miner at the rocket's frequency reaches the unload tick without
+     * crashing the dock or producing cargo.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
-    public static void satelliteDockKeepsLegacyUnloadDirectCastBoundary(GameTestHelper helper) {
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
+    public static void satelliteDockSkipsNonMinerAtUnloadTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos dockPos = helper.absolutePos(new BlockPos(14, 96, 14));
         level.setBlock(dockPos, ModBlocks.SAT_DOCK.get().defaultBlockState(), Block.UPDATE_ALL);
@@ -1657,23 +1779,22 @@ public final class EnergyMk2GameTests {
             rocket.tick();
         }
         assertEquals(MinerRocketEntity.MODE_UNLOADING, rocket.mode(),
-                "mutated satellite fixture still reaches the old unloading mode");
-        assertEquals(50, rocket.timer(), "mutated satellite fixture reaches the exact old unload tick");
+                "non-miner fixture still reaches the legacy unloading mode");
+        assertEquals(50, rocket.timer(), "non-miner fixture reaches the exact legacy unload tick");
 
-        try {
-            com.hbm.ntm.blockentity.SatelliteDockBlockEntity.serverTick(level, dockPos,
-                    level.getBlockState(dockPos), dock);
-            throw new AssertionError("sat dock must preserve the legacy direct SatelliteMiner cast");
-        } catch (ClassCastException expected) {
-            helper.succeed();
-        }
+        com.hbm.ntm.blockentity.SatelliteDockBlockEntity.serverTick(level, dockPos,
+                level.getBlockState(dockPos), dock);
+
+        assertTrue(dock.getItems().getStackInSlot(0).isEmpty(),
+                "non-miner satellite at the unload frequency produces no cargo");
+        helper.succeed();
     }
 
     /**
      * TileEntityMachineSatDock#addToInv merges by item and legacy metadata only:
      * incoming NBT is ignored both when stacking and when filling an empty output.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDockKeepsLegacyCargoNbtDiscardBoundary(GameTestHelper helper) {
         var dock = new com.hbm.ntm.blockentity.SatelliteDockBlockEntity(helper.absolutePos(BlockPos.ZERO),
                 ModBlocks.SAT_DOCK.get().defaultBlockState());
@@ -1704,7 +1825,7 @@ public final class EnergyMk2GameTests {
      * target also exposes a modern item-handler capability: exactly one item
      * joins the first matching legacy stack during this tick.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDockEjectKeepsLegacyContainerPriorityAndSingleItemRate(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos dockPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -1740,7 +1861,7 @@ public final class EnergyMk2GameTests {
      * capability-only block entity must therefore not become an extra output
      * destination merely because Forge exposes an item handler for it.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDockRejectsCapabilityOnlyOutputTarget(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos dockPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -1775,7 +1896,7 @@ public final class EnergyMk2GameTests {
      * ordinary legacy Slots inherit that rejection, including player
      * shift-click, even though pre-filled chip stacks are still processed.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteLinkerKeepsLegacyNoInsertionBoundary(GameTestHelper helper) {
         var linker = new com.hbm.ntm.blockentity.SatelliteLinkerBlockEntity(helper.absolutePos(BlockPos.ZERO),
                 ModBlocks.MACHINE_SATLINKER.get().defaultBlockState());
@@ -1812,7 +1933,7 @@ public final class EnergyMk2GameTests {
      * prevents new placement, but an existing compatible randomizer stack is
      * merged after all full player slots have been tried.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteLinkerKeepsLegacySourceQuickMoveRange(GameTestHelper helper) {
         var linker = new com.hbm.ntm.blockentity.SatelliteLinkerBlockEntity(helper.absolutePos(BlockPos.ZERO),
                 ModBlocks.MACHINE_SATLINKER.get().defaultBlockState());
@@ -1849,7 +1970,7 @@ public final class EnergyMk2GameTests {
      * reading that chip.  This preserves the legacy freq-tag materialization
      * boundary for otherwise-default chips.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteLinkerKeepsLegacyFrequencyWriteBoundary(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(2, 2, 2));
@@ -1877,7 +1998,7 @@ public final class EnergyMk2GameTests {
      * each slot gets one offset, then splits into 10..30 item entities with
      * copied item NBT instead of using the vanilla one-stack drop path.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteDockBreakKeepsLegacyRandomInventoryDrops(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos dockPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -1913,7 +2034,7 @@ public final class EnergyMk2GameTests {
      * spill: each slot gets one offset, then splits into 10..30 item entities
      * with copied item NBT instead of using the vanilla one-stack drop path.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteLinkerBreakKeepsLegacyRandomInventoryDrops(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos linkerPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -1949,7 +2070,7 @@ public final class EnergyMk2GameTests {
      * the other satellite machine containers, rather than vanilla's one-stack
      * block drop path.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void soyuzCapsuleBreakKeepsLegacyRandomInventoryDrops(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos capsulePos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -1986,7 +2107,7 @@ public final class EnergyMk2GameTests {
      * TileEntitySoyuzCapsule inherits TileEntityInventoryBase's all-slot
      * false insertion predicate; only the landing entity fills its cargo.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void soyuzCapsuleRejectsLegacyPlayerInventoryInsertion(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos capsulePos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -2010,7 +2131,7 @@ public final class EnergyMk2GameTests {
      * Legacy merge first tops up existing recovered stacks even though the
      * inherited all-slot insertion predicate rejects a new placement.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void soyuzCapsuleQuickMoveKeepsLegacyExistingStackBoundary(GameTestHelper helper) {
         var capsule = new com.hbm.ntm.blockentity.SoyuzCapsuleBlockEntity(helper.absolutePos(BlockPos.ZERO),
                 ModBlocks.SOYUZ_CAPSULE.get().defaultBlockState());
@@ -2055,7 +2176,7 @@ public final class EnergyMk2GameTests {
      * Both legacy satellite machine blocks consumed every client-side activation,
      * including a sneaking one, but passed through only server-side sneaking use.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void satelliteMachinesServerInteractionKeepLegacySneakBranch(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var player = gameTestPlayer(level);
@@ -2093,7 +2214,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileMultipart")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileMultipart")
     public static void legacyMissileStructFacadeKeepsFourIntMultipartContract(GameTestHelper helper) {
         Item warhead = ForgeRegistries.ITEMS.getValue(new ResourceLocation(HbmNtm.MOD_ID, "mp_warhead_10_he"));
         Item fuselage = ForgeRegistries.ITEMS.getValue(new ResourceLocation(HbmNtm.MOD_ID, "mp_fuselage_10_kerosene"));
@@ -2145,7 +2266,7 @@ public final class EnergyMk2GameTests {
      * radar-linked launchers: designators retain integer X/Z only, while a radar
      * map click uses Java truncation when it is converted back to world space.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileCoordinates")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileCoordinates")
     public static void missileDesignatorAndRadarPositionCommandsKeepLegacyCoordinates(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos launchPos = helper.absolutePos(new BlockPos(3, 7, 5));
@@ -2198,7 +2319,7 @@ public final class EnergyMk2GameTests {
      * designator/radar coordinates must reach the spawned missile as the same legacy
      * integer X/Z endpoints, including Java's truncation of a negative launch position.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void missileLaunchChainRetainsSpecifiedCoordinates(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
 
@@ -2275,7 +2396,7 @@ public final class EnergyMk2GameTests {
      * The ordinary pad and custom launchers deliberately own different launch-coordinate
      * contracts.  A complete custom missile must not take the ordinary pad's X/Z path.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileCoordinates")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileCoordinates")
     public static void customMissilesRemainOnTheirDedicatedLauncherCoordinatePath(GameTestHelper helper) {
         ItemStack customMissile = completeSize10SolidCustomMissile();
         assertTrue(CustomMissileItem.isCompleteForLaunch(customMissile),
@@ -2315,7 +2436,7 @@ public final class EnergyMk2GameTests {
      * Both retain supplied coordinate-command X/Z independently, including their
      * entity-command overloads under the protected modern coordinate correction.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void customLauncherLaunchChainRetainsSpecifiedCoordinates(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
 
@@ -2397,7 +2518,7 @@ public final class EnergyMk2GameTests {
      * size, but redstone is a fresh per-tick footprint sample rather than world
      * state.  Keep stale modern-only redstone keys from surviving a reload.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void customLauncherReloadKeepsOnlyLegacyPersistentState(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         LaunchTableBlockEntity table = new LaunchTableBlockEntity(helper.absolutePos(new BlockPos(6, 7, 5)),
@@ -2433,7 +2554,7 @@ public final class EnergyMk2GameTests {
      * slots accept any manual/shift-click stack even though the source
      * ISidedInventory automation methods reject every insertion and extraction.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void customLauncherKeepsLegacyManualSlotsSeparateFromAutomation(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos compactPos = helper.absolutePos(new BlockPos(5, 7, 5));
@@ -2488,7 +2609,7 @@ public final class EnergyMk2GameTests {
      * tick.  Sustained power must therefore launch as soon as a later fuel load
      * makes the already-powered launcher ready; it is not a rising-edge input.
      */
-    @GameTest(templateNamespace = "minecraft", template = "missile_workspace", batch = "missileLaunchRedstone")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "missile_workspace", batch = "missileLaunchRedstone")
     public static void customLauncherRechecksContinuousRedstonePower(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos tablePos = helper.absolutePos(new BlockPos(12, 7, 5));
@@ -2514,7 +2635,7 @@ public final class EnergyMk2GameTests {
      * launchers: ordinary and large pads launch only on a rising edge.  A signal
      * that was already present while the pad became ready must not fire it.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void ordinaryLaunchPadsKeepLegacyRedstoneEdge(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         // Each GameTest receives an isolated ticking test area. Keep the fixture
@@ -2607,7 +2728,7 @@ public final class EnergyMk2GameTests {
      * LaunchTable and CompactLauncher leave a sneaking server-side use
      * unhandled, rather than swallowing the held item's interaction in a GUI.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void customLaunchersPassSneakingUse(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var player = gameTestPlayer(level);
@@ -2634,7 +2755,7 @@ public final class EnergyMk2GameTests {
      * BlockDummyable standard-open contract: sneaking still consumes use, but
      * must not open a menu.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void launchPadsConsumeSneakingUse(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var player = gameTestPlayer(level);
@@ -2672,7 +2793,7 @@ public final class EnergyMk2GameTests {
      * keeps only its cardinal plate dummies zero-height. Keep these placement and
      * local-shape details separate from the proxy/capability tests.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void customLauncherPlacementKeepsLegacyClearanceAndPlateShapes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos tableSupport = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -2791,7 +2912,7 @@ public final class EnergyMk2GameTests {
      * regression guards both that removal ordering and the resulting non-recursive
      * missile destruction path.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void missileDestructionRemovesItBeforeItsSelfDamageExplosion(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MissileEntity missile = new MissileEntity(ModEntityTypes.MISSILE_TEST.get(), level, MissileEntity.Variant.TEST);
@@ -2809,7 +2930,7 @@ public final class EnergyMk2GameTests {
      * EntityMissileBaseNT owns a single 50 HP field; Tier, form factor, radar
      * visibility, and tooltip part health never change a prebuilt missile's body HP.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void prebuiltMissilesKeepTheirSharedLegacyBaseHealth(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         for (MissileEntity.Variant variant : MissileEntity.Variant.values()) {
@@ -2824,7 +2945,7 @@ public final class EnergyMk2GameTests {
      * The old ABM source leaves {@code dist} at 1,000 after accepting a candidate,
      * so the last eligible entry in the radar cache wins rather than the nearest one.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileAbmRadarCache")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileAbmRadarCache")
     public static void antiBallisticMissileKeepsLegacyRadarCacheIterationTarget(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos launchPos = helper.absolutePos(new BlockPos(112, 8, 5));
@@ -2875,7 +2996,7 @@ public final class EnergyMk2GameTests {
      * the ABM.  The old ABM only replaces that target once it is dead; automatic
      * radar-cache acquisition is the separate missile-only path.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileAbmDirectTarget")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileAbmDirectTarget")
     public static void antiBallisticMissileKeepsDirectNonMissileTarget(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         // The empty template's upper barrier is at relative Y=122.  The ABM
@@ -2909,7 +3030,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** The legacy ABM persists only its motion multiplier, not its activation state. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void antiBallisticMissileSaveDataKeepsLegacyVelocityOnly(GameTestHelper helper) {
         AntiBallisticMissileEntity abm = new AntiBallisticMissileEntity(ModEntityTypes.MISSILE_ANTI_BALLISTIC.get(),
                 helper.getLevel());
@@ -2925,7 +3046,7 @@ public final class EnergyMk2GameTests {
      * field.  The old world-only subtype constructors therefore lose the in-flight
      * airburst flag on reload, while retaining their cluster impact subtype.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void clusterMissileReloadKeepsLegacyTransientAirburstFlag(GameTestHelper helper) {
         MissileEntity launched = new MissileEntity(ModEntityTypes.MISSILE_TEST.get(), helper.getLevel(),
                 MissileEntity.Variant.CLUSTER);
@@ -2946,7 +3067,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** EntityMissileBaseNT has a default 50 HP field but does not serialize it. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void missileReloadResetsLegacyUnpersistedHealth(GameTestHelper helper) {
         MissileEntity damaged = new MissileEntity(ModEntityTypes.MISSILE_TEST.get(), helper.getLevel(),
                 MissileEntity.Variant.GENERIC);
@@ -2965,7 +3086,7 @@ public final class EnergyMk2GameTests {
      * EntityMissileCustom inherits EntityMissileBaseNT's fixed 50 HP.  Its part
      * health values are an item-tooltip total, not a launch-time entity override.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void customMissileKeepsLegacyBaseHealthSeparateFromPartTooltip(GameTestHelper helper) {
         CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(
                 completeSize10SolidCustomMissile());
@@ -2993,7 +3114,7 @@ public final class EnergyMk2GameTests {
      * EntityMissileCustom overrides the base destruction hook, but its 1.7.10
      * implementation applies the same already-dead gate before exploding.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void customMissileDestructionRemovesItBeforeItsSelfDamageExplosion(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         CustomMissilePartProfile.Assembly assembly = CustomMissilePartProfile.assemblyFromStack(
@@ -3020,7 +3141,7 @@ public final class EnergyMk2GameTests {
      * That integration is frozen, so none of those warheads may gain a synthetic
      * built-in explosion in the clean port.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void customMissileNoOpWarheadsKeepTheirLegacyImpactBoundary(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos impactPos = helper.absolutePos(new BlockPos(8, 8, 5));
@@ -3054,7 +3175,7 @@ public final class EnergyMk2GameTests {
      * EntityMissileCustom repeats EntityMissileBaseNT's constructor body rather
      * than calling it, but both resolve to the same 2 / distance deceleration.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void customMissileKeepsItsLegacyBaseVerticalDeceleration(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MissileEntity standard = new MissileEntity(ModEntityTypes.MISSILE_GENERIC.get(), level,
@@ -3072,7 +3193,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** Launch constructors enlarge missiles, while legacy world reloads return to EntityThrowable's default box. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void missileFlightEntitiesKeepLegacyUniformCollisionSize(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         List<RegistryObject<EntityType<MissileEntity>>> prebuiltMissileTypes = List.of(
@@ -3144,7 +3265,7 @@ public final class EnergyMk2GameTests {
      * SoyuzCapsule did not override the BlockContainer selection or collision
      * bounds. Its non-full renderer therefore still occupies one local block.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void soyuzCapsuleBlockKeepsLegacyFullBlockShape(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(14, 8, 14));
@@ -3164,7 +3285,7 @@ public final class EnergyMk2GameTests {
      * SoyuzCapsule consumes every client use, but server-side sneaking is its
      * sole legacy pass-through branch.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void soyuzCapsuleServerInteractionKeepsLegacySneakBranch(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(14, 8, 14));
@@ -3190,7 +3311,7 @@ public final class EnergyMk2GameTests {
      * TileEntityLaunchPadLarge only serializes its settled erector state.  The
      * schedule flag is a one-delay server animation latch, not saved state.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void largeLaunchPadKeepsErectionScheduleTransientAcrossReload(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -3224,7 +3345,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** EntityMissileBaseNT rotates its contrail thrust around Z before Y. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void missileContrailKeepsLegacyZThenYThrustRotation(GameTestHelper helper) {
         MissileEntity missile = new MissileEntity(ModEntityTypes.MISSILE_GENERIC.get(), helper.getLevel(),
                 MissileEntity.Variant.GENERIC);
@@ -3242,7 +3363,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** Tier3/4 retain EntityMissileTier3/4's deliberately asymmetric engine offsets. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void missileTier3AndTier4ContrailsKeepLegacyNozzleOffsets(GameTestHelper helper) {
         ContrailRecordingMissile tier3 = new ContrailRecordingMissile(helper.getLevel(), MissileEntity.Variant.BURST);
         tier3.setYRot(0.0F);
@@ -3271,7 +3392,7 @@ public final class EnergyMk2GameTests {
      * constructor's radian arguments.  Preserve that actual source behavior rather than
      * "correcting" the submunition cone to conventional degree conversion.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void missileClusterKeepsLegacyRadiansConstructorContract(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Vec3 origin = Vec3.atCenterOf(helper.absolutePos(new BlockPos(14, 20, 9)));
@@ -3294,7 +3415,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** EntityMissileBaseNT updates target yaw and pitch even when motion is exactly zero. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void missileZeroMotionKeepsLegacyRotationUpdate(GameTestHelper helper) {
         MissileEntity missile = new MissileEntity(ModEntityTypes.MISSILE_GENERIC.get(), helper.getLevel(),
                 MissileEntity.Variant.GENERIC);
@@ -3313,7 +3434,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** EntitySoyuz resets flight yaw and pitch to zero through setLocationAndAngles every tick. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void soyuzFlightTickResetsLegacyRotation(GameTestHelper helper) {
         SoyuzEntity soyuz = new SoyuzEntity(helper.getLevel());
         assertFalse(soyuz.isNoGravity() || soyuz.noPhysics,
@@ -3354,7 +3475,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** SatelliteHorizons is a one-shot coordinate satellite that launches the legacy TOM descent entity. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void horizonsSatelliteKeepsLegacyOneShotTomLaunch(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Satellite created = Satellite.create(LegacySatelliteType.HORIZONS.legacyId());
@@ -3399,7 +3520,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** EntityMinerRocket resets flight yaw and pitch to zero through setPositionAndRotation every tick. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void minerRocketFlightTickResetsLegacyRotation(GameTestHelper helper) {
         MinerRocketEntity rocket = new MinerRocketEntity(helper.getLevel());
         assertFalse(rocket.isNoGravity() || rocket.noPhysics,
@@ -3439,7 +3560,7 @@ public final class EnergyMk2GameTests {
      * spends exactly 101 unloading ticks before lifting, and persists only its
      * legacy mode/satellite/timer state.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void minerRocketKeepsLegacyDockingTimerAndNbtContract(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         // EntityMinerRocket's source coordinate casts are Java truncation, so
@@ -3492,7 +3613,7 @@ public final class EnergyMk2GameTests {
      * entering Entity#onUpdate, and preserves its caller-supplied payload
      * stack reference through legacy NBT serialization.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void bobmazonDeliveryKeepsLegacyManualDescentAndPayloadReference(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos origin = helper.absolutePos(new BlockPos(4, 120, 4));
@@ -3536,7 +3657,7 @@ public final class EnergyMk2GameTests {
      * EntitySoyuzCapsule moves before applying gravity, then lands one block
      * above its integer-truncated impact coordinate with its legacy NBT cargo.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void soyuzCapsuleKeepsLegacyDescentLandingAndNbtContract(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos flightOrigin = helper.absolutePos(new BlockPos(4, 110, 4));
@@ -3665,7 +3786,7 @@ public final class EnergyMk2GameTests {
      * TileEntityInventoryBase permits a squared distance of 128 and writes any
      * non-null custom name, including an empty one.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void soyuzCapsuleKeepsLegacyNameNbtAndInteractionRadius(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(16, 8, 16));
@@ -3689,7 +3810,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** EntityMissileAntiBallistic updates its yaw and pitch even when motion is exactly zero. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void antiBallisticZeroMotionKeepsLegacyRotationUpdate(GameTestHelper helper) {
         AntiBallisticMissileEntity missile = new AntiBallisticMissileEntity(ModEntityTypes.MISSILE_ANTI_BALLISTIC.get(),
                 helper.getLevel());
@@ -3710,7 +3831,7 @@ public final class EnergyMk2GameTests {
      * non-launchable missile item, while firing consumes only a launch code and
      * retains the key.  Its designator target remains the legacy X/Z floor pair.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void rustedLaunchPadKeepsItsDedicatedCodeKeyAndCoordinateContract(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos launchPos = helper.absolutePos(new BlockPos(24, 7, 5));
@@ -3778,7 +3899,7 @@ public final class EnergyMk2GameTests {
      * ItemCustomMissile exposes only the eight legacy assembly lines once its NBT
      * references every required part; untagged items intentionally remain silent.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void customMissileTooltipPreservesLegacyAssemblyContract(GameTestHelper helper) {
         ItemStack complete = completeSize10SolidCustomMissile();
         List<Component> completeTooltip = new ArrayList<>();
@@ -3807,7 +3928,7 @@ public final class EnergyMk2GameTests {
     }
 
     /** The common item exposes only ItemGunStinger's synchronized lock-on counter. */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void stingerLockonExposesSynchronizedCounter(GameTestHelper helper) {
         StingerGunItem stinger = (StingerGunItem) ModItems.GUN_STINGER.get();
         ItemStack stack = new ItemStack(stinger);
@@ -3826,7 +3947,7 @@ public final class EnergyMk2GameTests {
      * addition to its ordinary creative-tab items. They must remain assembled
      * stacks rather than becoming new registry entries or unconfigured missiles.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void missileCreativeTabKeepsLegacyCustomPresets(GameTestHelper helper) {
         assertTrue(ModCreativeTabs.MISSILES.get().getIconItem().is(ModItems.MISSILE_NUCLEAR.get()),
                 "legacy MissileTab uses the nuclear missile as its tab icon");
@@ -3889,7 +4010,7 @@ public final class EnergyMk2GameTests {
      * CraftingManager supplied the placed custom-missile assembly machine; its
      * internal assembly recipe is a separate output and cannot replace it.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void missileAssemblyMachineCraftingRecipeKeepsLegacyAcquisitionPath(GameTestHelper helper) {
         assertCraftingRecipeOutput(helper, "missile/machine_missile_assembly",
                 ModBlocks.MACHINE_MISSILE_ASSEMBLY.get().asItem());
@@ -3906,7 +4027,7 @@ public final class EnergyMk2GameTests {
      * MachineMissileAssembly copied a named placed block item's display text into
      * its tile entity. The modern block must preserve that visible menu title.
      */
-    @GameTest(templateNamespace = "minecraft", template = "missile_workspace", batch = "missileItemsPlacement")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "missile_workspace", batch = "missileItemsPlacement")
     public static void namedMissileAssemblyKeepsLegacyPlacementName(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos support = helper.absolutePos(new BlockPos(26, 7, 6));
@@ -3938,7 +4059,7 @@ public final class EnergyMk2GameTests {
      * The legacy missile-assembly Container used ordinary input Slots while its
      * ISidedInventory rejected every automation insertion.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void missileAssemblyKeepsLegacyManualInputAndAutomationBoundary(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos assemblyPos = helper.absolutePos(new BlockPos(28, 7, 6));
@@ -3985,7 +4106,7 @@ public final class EnergyMk2GameTests {
      * ContainerSoyuzLauncher exposed every one of its 27 machine slots as an
      * ordinary player Slot.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void soyuzLauncherKeepsLegacyManualSlotsAndRejectsAutomation(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos launcherPos = helper.absolutePos(new BlockPos(34, 7, 6));
@@ -4066,7 +4187,7 @@ public final class EnergyMk2GameTests {
      * eagerly clear the old countdown; the next launcher tick owned that
      * readiness decision.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileSatellites")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileSatellites")
     public static void soyuzLauncherButtonsKeepLegacyRawModeAndCountdownBoundary(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos launcherPos = helper.absolutePos(new BlockPos(34, 7, 8));
@@ -4101,7 +4222,7 @@ public final class EnergyMk2GameTests {
         launcher.getItems().setStackInSlot(SoyuzLauncherBlockEntity.SLOT_ROCKET,
                 new ItemStack(ModItems.MISSILE_SOYUZ.get()));
         launcher.getItems().setStackInSlot(SoyuzLauncherBlockEntity.SLOT_SATELLITE,
-                new ItemStack(ModItems.SAT_MAPPER.get()));
+                SatelliteItem.stack(ModItems.SATELLITE.get(), SatelliteItem.Variant.SPY));
         launcher.keroseneTank().setFill(launcher.getFuelRequired());
         assertTrue(launcher.canLaunch(), "Soyuz satellite fixture satisfies the old launch gate");
         assertTrue(launcher.canReceiveLegacyButton(player, -37, SoyuzLauncherBlockEntity.CONTROL_START),
@@ -4116,7 +4237,7 @@ public final class EnergyMk2GameTests {
      * then clears only the launcher inventory references.  Do not copy cargo
      * stacks while crossing the launcher/entity boundary.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
     public static void soyuzLauncherCargoLiftOffKeepsLegacyStackReferences(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos launcherPos = helper.absolutePos(new BlockPos(34, 7, 10));
@@ -4172,7 +4293,7 @@ public final class EnergyMk2GameTests {
      * MachineMissileAssembly returned false for a sneaking server-side use so a
      * held item could handle the interaction instead of opening its menu.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void missileAssemblyPassesSneakingUse(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos assemblyPos = helper.absolutePos(new BlockPos(30, 7, 6));
@@ -4193,7 +4314,7 @@ public final class EnergyMk2GameTests {
      * fields, rather than the modern-port model identifier.  Keep the legacy order,
      * units, and non-chip health suffixes under regression.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void customMissilePartTooltipsPreserveLegacyMechanicalContract(GameTestHelper helper) {
         assertLegacyPartTooltip(helper, "mp_c_5", "Inaccuracy: 0.0%");
         assertLegacyPartTooltip(helper, "mp_warhead_10_he", "Size: 1.0m", "Type: HE", "Strength: 15.0",
@@ -4217,7 +4338,7 @@ public final class EnergyMk2GameTests {
      * 1.7.10 registered the five targeting chips as {@code mp_c_*} and the size-20
      * fins as {@code mp_s_20}; their Java field names are deliberately not registry IDs.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void customMissilePartRegistryIdsKeepLegacyShortNames(GameTestHelper helper) {
         for (String id : List.of("mp_c_1", "mp_c_2", "mp_c_3", "mp_c_4", "mp_c_5", "mp_s_20")) {
             Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(HbmNtm.MOD_ID, id));
@@ -4238,7 +4359,7 @@ public final class EnergyMk2GameTests {
      * under a server-side regression so a future registry edit cannot silently turn
      * it into a partial missile kit.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void missileStarterKitDeliversItsCompleteLegacyLoadout(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         var player = FakePlayerFactory.get(level, new com.mojang.authlib.GameProfile(
@@ -4283,7 +4404,7 @@ public final class EnergyMk2GameTests {
      * Keep item metadata separate from a flying entity's radar deception: the
      * legacy decoy item is T1 even though its launched entity advertises T4.
      */
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "missileItems")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileItems")
     public static void prebuiltMissileItemsKeepTheirLegacyRegistryContracts(GameTestHelper helper) {
         assertFalse(ModItems.MISSILE_ASSEMBLY.get() instanceof MissileItem,
                 "missile assembly remains an ordinary legacy component, not an unlaunchable missile");
@@ -4376,7 +4497,7 @@ public final class EnergyMk2GameTests {
         legacyBatteryNumericItemStackNbtMigrationUsesWorldItemData();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void powerNetDistributesLikeLegacyMk2(GameTestHelper helper) {
         powerNetDistributesLikeLegacyMk2();
         helper.succeed();
@@ -4405,7 +4526,7 @@ public final class EnergyMk2GameTests {
         assertEquals(200L, net.getEnergyTracker(), "energy tracker");
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void powerNetProviderRoundingDrainsExactlyTransferredPower(GameTestHelper helper) {
         powerNetProviderRoundingDrainsExactlyTransferredPower();
         helper.succeed();
@@ -4440,13 +4561,13 @@ public final class EnergyMk2GameTests {
         }
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void powerNetPrunesTimeoutAndUnloadedSubscribers(GameTestHelper helper) {
         powerNetPrunesTimeoutAndUnloadedSubscribers();
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void fluidNetKeepsSingleSidedSubscriptionsUntilLegacyTransferPass(GameTestHelper helper) {
         HbmFluidNet net = new HbmFluidNet(HbmFluids.DIESEL);
         TestFluidProvider provider = new TestFluidProvider(HbmFluids.DIESEL, 100);
@@ -4468,7 +4589,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void powerNetKeepsSingleSidedSubscriptionsUntilLegacyTransferPass(GameTestHelper helper) {
         HbmPowerNet providerOnlyNet = new HbmPowerNet();
         providerOnlyNet.addProvider(new TestProvider(100L, 100L));
@@ -4512,7 +4633,7 @@ public final class EnergyMk2GameTests {
         assertEquals(0, loadedNet.getReceiverCount(), "unloaded receiver pruned");
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void sendPowerDiodeKeepsLegacyUnclampedReceiverShape(GameTestHelper helper) {
         sendPowerDiodeKeepsLegacyUnclampedReceiverShape();
         helper.succeed();
@@ -4531,7 +4652,7 @@ public final class EnergyMk2GameTests {
         assertEquals(100L, net.getEnergyTracker(), "diode tracker counts accepted HE");
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void energyStorageReceiveRateRemainderStaysObservable(GameTestHelper helper) {
         energyStorageReceiveRateRemainderStaysObservable();
         helper.succeed();
@@ -4552,7 +4673,7 @@ public final class EnergyMk2GameTests {
         assertEquals(100L, storage.getPower(), "FE receive writes accepted HE without scaling");
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void forgeEnergyBridgeIsOneToOneAndIntCapped(GameTestHelper helper) {
         forgeEnergyBridgeIsOneToOneAndIntCapped();
         helper.succeed();
@@ -4577,7 +4698,7 @@ public final class EnergyMk2GameTests {
         assertEquals(Long.MAX_VALUE, storage.getPower(), "FE getter must not truncate internal HE");
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void batteryDefaultsAndLegacyTransferEdgesStayRaw(GameTestHelper helper) {
         batteryDefaultsAndLegacyTransferEdgesStayRaw();
         helper.succeed();
@@ -4620,7 +4741,7 @@ public final class EnergyMk2GameTests {
         }
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void legacyBatteryMetaMappingsStaySingleSource(GameTestHelper helper) {
         legacyBatteryMetaMappingsStaySingleSource();
         helper.succeed();
@@ -4663,7 +4784,7 @@ public final class EnergyMk2GameTests {
                 "legacy meta requireItem quantum");
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void legacyVanillaMetaIngredientsKeepIdentityAcrossJsonAndNetwork(GameTestHelper helper) {
         ResourceLocation fish = new ResourceLocation("minecraft", "fish");
         assertTrue(LegacyMetaItemMappings.hasMapping(fish, 0), "legacy cod metadata is mapped");
@@ -4741,6 +4862,44 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
+    public static void circuitStarComponentsKeepLegacyMetadataIdentity(GameTestHelper helper) {
+        ResourceLocation legacyId = LegacyMetaItemMappings.CIRCUIT_STAR_COMPONENT;
+        assertEquals(4, LegacyMetaItemMappings.variantCount(legacyId),
+                "circuit_star_component keeps all four legacy metadata variants");
+        assertRegistryListEquals(ModItems.CIRCUIT_STAR_COMPONENT_ITEMS, "circuit_star_component variants",
+                ModItems.CIRCUIT_STAR_COMPONENT_ITEMS.get(0),
+                ModItems.CIRCUIT_STAR_COMPONENT_ITEMS.get(1),
+                ModItems.CIRCUIT_STAR_COMPONENT_ITEMS.get(2),
+                ModItems.CIRCUIT_STAR_COMPONENT_ITEMS.get(3));
+        for (int meta = 0; meta < 4; meta++) {
+            Item expected = ModItems.CIRCUIT_STAR_COMPONENT_ITEMS.get(meta).get();
+            assertTrue(LegacyMetaItemMappings.hasMapping(legacyId, meta),
+                    "circuit_star_component meta " + meta + " is mapped");
+            assertSame(ModItems.CIRCUIT_STAR_COMPONENT_ITEMS.get(meta),
+                    LegacyMetaItemMappings.requireItem(legacyId, meta),
+                    "circuit_star_component meta " + meta + " resolves to its split registry item");
+            HbmIngredient ingredient = HbmIngredient.legacyMeta(legacyId, meta, 1);
+            assertTrue(ingredient.test(new ItemStack(expected)),
+                    "circuit_star_component meta " + meta + " matches its split item");
+            assertEquals(meta, ingredient.legacyMeta(),
+                    "circuit_star_component meta " + meta + " retains legacy provenance");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
+    public static void circuitStarKeepsLegacyHiddenUncommonOutput(GameTestHelper helper) {
+        Item circuitStar = ModItems.CIRCUIT_STAR.get();
+        assertTrue(circuitStar instanceof ItemCustomLore,
+                "circuit_star keeps the legacy ItemCustomLore carrier");
+        assertTrue(circuitStar.getRarity(new ItemStack(circuitStar)) == Rarity.UNCOMMON,
+                "circuit_star keeps the legacy uncommon rarity");
+        assertTrue(!ModItems.PARTS_TAB_ITEMS.contains(ModItems.CIRCUIT_STAR),
+                "circuit_star remains hidden from the creative parts tab");
+        helper.succeed();
+    }
+
     private static JsonArray serializedLegacyAStack(AStack stack) {
         try {
             StringWriter output = new StringWriter();
@@ -4765,7 +4924,7 @@ public final class EnergyMk2GameTests {
         }
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2Capacitor")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2Capacitor")
     public static void legacyBlockCapacitorsKeepLegacyCapacitiesAndClickedFacing(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -4801,7 +4960,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2Capacitor")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2Capacitor")
     public static void legacyBlockCapacitorReceivesFromFacingInputSide(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -4846,7 +5005,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2Capacitor")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2Capacitor")
     public static void legacyBlockCapacitorOutputsThroughStraightBusChain(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -4903,7 +5062,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2Capacitor")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2Capacitor")
     public static void legacyBlockCapacitorPersistentDropKeepsPowerAndMaxPower(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -4932,7 +5091,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void legacyBatteryDisplayListMatchesGasCentrifugeNeiOrder(GameTestHelper helper) {
         legacyBatteryDisplayListMatchesGasCentrifugeNeiOrder();
         helper.succeed();
@@ -4973,7 +5132,7 @@ public final class EnergyMk2GameTests {
                 label + ": display stack must be accepted by legacy machine battery slots");
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void legacyBatteryItemStackNbtMigrationPreservesCharge(GameTestHelper helper) {
         legacyBatteryItemStackNbtMigrationPreservesCharge();
         helper.succeed();
@@ -5051,37 +5210,37 @@ public final class EnergyMk2GameTests {
         assertEquals(1, stack.getByte("Count"), "legacy " + label + " Count preserved");
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void legacyBatteryNumericItemStackNbtMigrationUsesWorldItemData(GameTestHelper helper) {
         legacyBatteryNumericItemStackNbtMigrationUsesWorldItemData();
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void legacyBatteryRealLocalWorldSamplesUseActualLevelDatItemData(GameTestHelper helper) {
         legacyBatteryRealLocalWorldSamplesUseActualLevelDatItemData();
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2LegacyImport")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2LegacyImport")
     public static void legacyBatteryRealLocalWorldSamplesLoadThroughServerMigrationCache(GameTestHelper helper) {
         legacyBatteryRealLocalWorldSamplesLoadThroughServerMigrationCache();
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2LegacyImport")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2LegacyImport")
     public static void legacyBatteryRealLocalWorldSamplesMigrateActualSavedStacks(GameTestHelper helper) {
         legacyBatteryRealLocalWorldSamplesMigrateActualSavedStacks();
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2LegacyImport")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2LegacyImport")
     public static void legacyBatteryDroppedItemEntityNbtMigrationPreservesCharge(GameTestHelper helper) {
         legacyBatteryDroppedItemEntityNbtMigrationPreservesCharge();
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2LegacyImport")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2LegacyImport")
     public static void legacyBatteryChunkDataEventsUseLoadedWorldItemMap(GameTestHelper helper) {
         LegacyWorldItemIdMap itemIds = LegacyWorldItemIdMap.fromLevelDatRoot(legacyModItemDataLevelDat());
         int previousBuild = setBlockMigrationCachedBuildNumberForTesting(2);
@@ -5123,7 +5282,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void energyNodespaceExplicitDestructionAndReplacementRebuildNetworks(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -5191,7 +5350,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void energyNodespaceForgeChunkUnloadEventKeepsRealNodesAlive(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -5238,7 +5397,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void energyNodespaceLevelUnloadClearsRealNodesAndAllowsRebuild(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -5287,7 +5446,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void energyNodespaceForgeLevelUnloadEventClearsRealNodesAndAllowsRebuild(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -5333,7 +5492,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2NodespaceLifecycleTick")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2NodespaceLifecycleTick")
     public static void energyNodespaceNodeCreationWaitsForServerStartBeforeBuildingNetwork(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -5374,7 +5533,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void uninosCreatesNodesBeforeTheFollowingServerStartBuildsTheirNetworks(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -5419,7 +5578,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void nodeNetKeepsLegacyUnconditionalLeaveLinkContract(GameTestHelper helper) {
         BlockPos pos = helper.absolutePos(new BlockPos(1, 2, 1));
         HbmEnergyNode node = new HbmEnergyNode(pos, Set.of());
@@ -5442,7 +5601,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void nodeNetKeepsLegacyJoinNetworksEntryAndLifecycle(GameTestHelper helper) {
         BlockPos firstPos = helper.absolutePos(new BlockPos(1, 2, 1));
         BlockPos secondPos = firstPos.east();
@@ -5475,7 +5634,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void nodeNetKeepsLegacyBadLinkLoadedTileContract(GameTestHelper helper) {
         com.hbm.ntm.api.tile.LoadedTile unloaded = () -> false;
         com.hbm.ntm.api.tile.LoadedTile loaded = () -> true;
@@ -5489,7 +5648,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void nodeNetKeepsLegacyPublicStateFields(GameTestHelper helper) {
         HbmNodeNet<Object, Object, HbmEnergyNode> network = new HbmNodeNet<>();
         HbmEnergyNode node = new HbmEnergyNode(helper.absolutePos(new BlockPos(1, 2, 1)), Set.of());
@@ -5516,7 +5675,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void nodeNetsKeepLegacyPublicSubscriptionMaps(GameTestHelper helper) {
         HbmPowerNet powerNet = new HbmPowerNet(0L);
         TestProvider powerProvider = new TestProvider(20L, 20L);
@@ -5604,7 +5763,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void pneumaticSlotMonitorRetainsLegacyNullEmptySlotContract(GameTestHelper helper) {
         PneumaticNetwork network = new PneumaticNetwork();
         PneumaticStackCache cache = new PneumaticStackCache(helper.absolutePos(new BlockPos(7, 2, 1)));
@@ -5656,7 +5815,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void fluidPipeBridgeKeepsLegacyUnconditionalSixWayNodeEndpoints(GameTestHelper helper) {
         BlockPos pipePos = helper.absolutePos(new BlockPos(11, 2, 1));
         api.hbm.fluidmk2.IFluidPipeMK2 pipe = new api.hbm.fluidmk2.IFluidPipeMK2() {
@@ -5671,7 +5830,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void specialisedNodeNetsKeepOneInheritedSubscriptionState(GameTestHelper helper) {
         HbmPowerNet powerNet = new HbmPowerNet(0L);
         HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider, HbmEnergyNode> powerBase = powerNet;
@@ -5722,7 +5881,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void pneumaticReceiverLeaseOnlyValidatesItsDestinationInventory(GameTestHelper helper) {
         PneumaticNetwork network = new PneumaticNetwork();
         net.minecraftforge.items.ItemStackHandler sourceHandler = new net.minecraftforge.items.ItemStackHandler(1);
@@ -5780,7 +5939,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void pneumaticReceiverRegistrationKeepsOnlyTheLatestEndpointPerInventory(GameTestHelper helper) {
         PneumaticNetwork network = new PneumaticNetwork();
         net.minecraftforge.items.ItemStackHandler destination = new net.minecraftforge.items.ItemStackHandler(1);
@@ -5830,7 +5989,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void pneumaticRoundRobinSortsByDestinationInventoryPosition(GameTestHelper helper) {
         PneumaticNetwork network = new PneumaticNetwork();
         net.minecraftforge.items.ItemStackHandler source = new net.minecraftforge.items.ItemStackHandler(1);
@@ -5857,7 +6016,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void pneumaticTransferCapsEachAutocrafterDestinationAtOneItem(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos sourcePos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -5894,7 +6053,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosPneumaticMerge")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosPneumaticMerge")
     public static void pneumaticCompressorSenderCadenceKeepsLegacySignedIdentifier(GameTestHelper helper) {
         BlockPos negativeIdentifierPosition = new BlockPos(-1, 0, 0);
         assertEquals(-1, PneumaticUtil.identifier(negativeIdentifierPosition),
@@ -5909,7 +6068,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void pneumaticTubeUsesLegacyRemoteAirSubscriptionWithoutCoreFluidNode(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos tubePos = helper.absolutePos(new BlockPos(3, 2, 3));
@@ -5946,7 +6105,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void paintablePneumaticTubeInheritsLegacyRemoteAirSubscriptionWithoutCoreFluidNode(
             GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -6006,7 +6165,7 @@ public final class EnergyMk2GameTests {
         };
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void specialisedNodespacesKeepLegacyNodeObjectDestroyEntrypoints(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         FoundryNode foundryNode = new FoundryNode(helper.absolutePos(new BlockPos(3, 2, 1)), Set.of());
@@ -6029,7 +6188,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void nodespaceReapKeepsLegacyDetachedNetworkState(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(9, 2, 1));
@@ -6065,7 +6224,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void nodeNetInvalidateImmediatelyLeavesLegacyActiveSet(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(11, 2, 1));
@@ -6099,7 +6258,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void networkProvidersKeepLegacyZeroArgumentCreationContract(GameTestHelper helper) {
         assertSame(com.hbm.ntm.uninos.networkproviders.PowerNetProvider.THE_PROVIDER,
                 api.hbm.energymk2.Nodespace.THE_POWER_PROVIDER,
@@ -6131,7 +6290,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void nodespaceCreatesNetworksThroughItsSelectedLegacyProvider(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         int[] providerSelections = {0};
@@ -6172,7 +6331,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void legacyPowerNodeStandardConnectionsKeepTheirExplicitOrigin(GameTestHelper helper) {
         BlockPos nodePos = helper.absolutePos(new BlockPos(1, 2, 1));
         BlockPos origin = helper.absolutePos(new BlockPos(9, 6, 11));
@@ -6198,7 +6357,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void legacyNodePositionsKeepTheirDeclaredOrder(GameTestHelper helper) {
         BlockPos first = helper.absolutePos(new BlockPos(1, 2, 1));
         BlockPos second = first.east();
@@ -6213,7 +6372,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void legacyFluidNodeKeepsExplicitConnectionPointsAndIdentity(GameTestHelper helper) {
         BlockPos nodePos = helper.absolutePos(new BlockPos(1, 2, 1));
         BlockPos origin = helper.absolutePos(new BlockPos(9, 6, 11));
@@ -6246,7 +6405,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoreLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoreLifecycle")
     public static void legacyRebarAndFoundryNodesKeepTheirTypedFluentConnectionApis(GameTestHelper helper) {
         BlockPos nodePos = helper.absolutePos(new BlockPos(1, 2, 1));
         BlockPos origin = helper.absolutePos(new BlockPos(9, 6, 11));
@@ -6268,7 +6427,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2NodespaceLifecycleTick")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2NodespaceLifecycleTick")
     public static void energyNodespaceServerStartTickRebuildsChangedRealCableNetwork(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -6313,7 +6472,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2NodespaceLifecycleTick")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2NodespaceLifecycleTick")
     public static void energyNodespaceTickKeepsStaleUnloadedChunkNode(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -6348,7 +6507,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void realRedCableBreakRebuildsNodespace(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -6389,7 +6548,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2CableRender")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2CableRender")
     public static void redCableBoxLegacyVariantPlacementAndDrops(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -6435,7 +6594,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2CableRender")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2CableRender")
     public static void redCableBoxLegacyVariantAnvilMatrixMatches1710(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         if (!(ModBlocks.RED_CABLE_BOX.get().asItem() instanceof RedCableBoxBlockItem boxItem)) {
@@ -6511,7 +6670,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryBufferModeCreatesAndRemovesRealNode(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -6559,7 +6718,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void batterySocketFourFacingLegacyPortShapes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -6589,7 +6748,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void batterySocketRemotePortSubscribesRealCableNetwork(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -6661,7 +6820,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2BatterySocketPlayerPlacement")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2BatterySocketPlayerPlacement")
     public static void playerUseOnPlacesBatterySocketRemotePortAndMenus(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -6764,7 +6923,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void batterySocketSelfChargingStateMatchesLegacyNbtTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -6829,7 +6988,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsArc")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsArc")
     public static void arcFurnaceRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -6898,7 +7057,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsSolidifier")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsSolidifier")
     public static void solidifierRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -6922,7 +7081,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsLiquefactor")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsLiquefactor")
     public static void liquefactorRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -6946,7 +7105,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesArcFurnaceRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7004,7 +7163,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesSolidifierRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7062,7 +7221,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesLiquefactorRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7120,7 +7279,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesMixerAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7186,7 +7345,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesIntakeRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7245,7 +7404,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesRadarAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7317,7 +7476,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesTeslaAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7376,7 +7535,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesTeleporterAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7435,7 +7594,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesFloodlightBackReceiverPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7492,7 +7651,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void rbmkReasimControlRodBottomReceiverPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7570,7 +7729,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void rbmkPlainControlRodDoesNotExposeBottomReceiver(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -7611,7 +7770,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesElectricFurnaceAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         assertPlayerUseOnPlacesAdjacentReceiverWithDiagnostics(helper, ModBlocks.MACHINE_ELECTRIC_FURNACE_OFF,
                 ElectricFurnaceBlockEntity.class, "machine_electric_furnace_off", 768,
@@ -7619,14 +7778,17 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosElectricFurnaceEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosElectricFurnaceEnergyCadence")
     public static void electricFurnaceRetriesAdjacentEnergyOnlyOnLegacyFortiethTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         int ticksToFortiethBoundary = Math.floorMod(40 - (int) (level.getGameTime() % 40L), 40);
         if (ticksToFortiethBoundary == 0) {
             ticksToFortiethBoundary = 40;
         }
-        BlockPos furnacePos = helper.absolutePos(new BlockPos(4, 2, 4));
+        // This delayed cadence sequence overlaps the default GameTest grid for
+        // several ticks. Keep its physical Energy Mk2 line out of the shared
+        // low-offset fixture band without changing the source 40-tick timing.
+        BlockPos furnacePos = helper.absolutePos(new BlockPos(4, 2, 3_800_004));
         BlockPos portCablePos = furnacePos.west();
         BlockPos batteryPos = portCablePos.west(4);
         BlockPos firstCablePos = batteryPos.east();
@@ -7648,6 +7810,15 @@ public final class EnergyMk2GameTests {
                     }
                     furnace.getEnergyStorage().setPower(0L);
                     prepareOutputBatteryAndCableLine(level, batteryPos, firstCablePos, portCablePos, 100_000L);
+                    // A GameTest callback is not a block-entity tick ordering
+                    // guarantee. Run the real production ticker at the exact
+                    // legacy boundary so its initial dirty subscription is
+                    // consumed here, rather than on the following non-boundary
+                    // tick after the replacement fixture has been installed.
+                    ElectricFurnaceBlockEntity.serverTick(level, furnacePos,
+                            level.getBlockState(furnacePos), furnace);
+                    assertEquals(1, HbmEnergyNodespace.getNetworkReceiverCount(level, portCablePos),
+                            "electric furnace initially subscribes on its legacy 40-tick receiver boundary");
                 })
                 // On the following non-boundary tick, replace the physical
                 // conductor after its old receiver entry has been invalidated.
@@ -7665,18 +7836,20 @@ public final class EnergyMk2GameTests {
                 .thenExecute(() -> assertEquals(0, HbmEnergyNodespace.getNetworkReceiverCount(level, portCablePos),
                         "electric furnace does not retry its replaced Energy Mk2 receiver off the legacy 40-tick boundary"))
                 // The preceding callbacks are at boundary+1 and boundary+2;
-                // wait exactly to the next old connection tick, then inspect
-                // after that natural block-entity ticker has run.
+                // wait exactly to the next old connection tick.  GameTest
+                // callbacks are not ordered relative to the natural BE pass,
+                // so invoke the same production ticker in that exact boundary
+                // callback before inspecting the restored subscription.
                 .thenIdle(38)
-                .thenExecute(() -> assertEquals(0L, level.getGameTime() % 40L,
-                        "electric furnace reaches its next legacy 40-tick receiver boundary"))
-                .thenIdle(1)
                 .thenExecute(() -> {
+                    assertEquals(0L, level.getGameTime() % 40L,
+                            "electric furnace reaches its next legacy 40-tick receiver boundary");
+                    ElectricFurnaceBlockEntity furnace = (ElectricFurnaceBlockEntity) level.getBlockEntity(furnacePos);
+                    assertTrue(furnace != null, "electric furnace remains present for the restored receiver transfer");
+                    ElectricFurnaceBlockEntity.serverTick(level, furnacePos, level.getBlockState(furnacePos), furnace);
                     assertEquals(1, HbmEnergyNodespace.getNetworkReceiverCount(level, portCablePos),
                             "electric furnace restores its replaced adjacent Energy Mk2 receiver on the next 40-tick boundary");
-                    ElectricFurnaceBlockEntity furnace = (ElectricFurnaceBlockEntity) level.getBlockEntity(furnacePos);
                     MachineBatteryBlockEntity battery = requireMachineBattery(level, batteryPos);
-                    assertTrue(furnace != null, "electric furnace remains present for the restored receiver transfer");
                     furnace.getEnergyStorage().setPower(0L);
                     battery.setPower(100_000L);
                     tickMachineBattery(level, batteryPos, battery);
@@ -7695,7 +7868,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosTwentyTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosTwentyTickEnergyCadence")
     public static void compressorRetriesRemoteEnergyOnlyOnLegacyTwentiethTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         int ticksToBoundary = Math.floorMod(20 - (int) (level.getGameTime() % 20L), 20);
@@ -7759,7 +7932,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosTwentyTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosTwentyTickEnergyCadence")
     public static void electricHeaterAndExposureChamberRetryRemoteEnergyOnlyOnLegacyTwentiethTick(
             GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -7840,7 +8013,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void legacyEveryTickMachinesRetryAdjacentEnergyOnNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos[] machinePositions = {
@@ -7911,7 +8084,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void legacyUtilityMachinesRetryAdjacentEnergyOnNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos[] machinePositions = {
@@ -7989,7 +8162,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void chargerKeepsItsSingleReceiverOnZeroDemandCableReplacement(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos chargerPos = helper.absolutePos(new BlockPos(4, 2, 24));
@@ -8036,7 +8209,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void microwaveRetriesAdjacentEnergyOnNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos microwavePos = helper.absolutePos(new BlockPos(4, 2, 36));
@@ -8083,7 +8256,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void conveyorPressRetriesRemoteEnergyOnNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pressPos = helper.absolutePos(new BlockPos(4, 2, 50));
@@ -8130,7 +8303,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void felRetriesRemoteEnergyOnNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos supportPos = helper.absolutePos(new BlockPos(4, 1, 64));
@@ -8202,7 +8375,223 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "felLegacyBeamContracts")
+    public static void felUsesPreviousScanDistanceBeforeUpdatingBeamObstruction(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos felPos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        level.setBlock(felPos, felState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)) {
+            throw new AssertionError("FEL beam-order fixture did not create a FelBlockEntity");
+        }
+        fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
+        fel.getEnergyStorage().setPower(100_000L);
+        fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
+
+        BlockPos firstObstruction = felPos.east(7).above();
+        BlockPos nextObstruction = felPos.east(3).above();
+        level.setBlock(firstObstruction, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertEquals(7, fel.getDistance(), "first FEL scan records its obstruction for the following legacy tick");
+
+        Entity pig = EntityType.PIG.create(level);
+        if (pig == null) {
+            throw new AssertionError("FEL beam-order fixture could not create its living target");
+        }
+        pig.moveTo(felPos.getX() + 5.5D, felPos.getY() + 0.2D, felPos.getZ() + 0.5D, 0.0F, 0.0F);
+        level.addFreshEntity(pig);
+        level.removeBlock(firstObstruction, false);
+        level.setBlock(nextObstruction, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertTrue(pig.getRemainingFireTicks() > 0,
+                "FEL applies IR hazards with the previous tick's longer distance before the new near obstruction is scanned");
+        assertEquals(3, fel.getDistance(), "FEL stores the new near obstruction only after applying this tick's hazard");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "felLegacyBeamContracts")
+    public static void felClearsPartialPowerAndKeepsPreviousDistance(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos felPos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        level.setBlock(felPos, felState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)) {
+            throw new AssertionError("FEL partial-power fixture did not create a FelBlockEntity");
+        }
+        fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
+        fel.getEnergyStorage().setPower(100_000L);
+        fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
+        level.setBlock(felPos.east(7).above(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertEquals(7, fel.getDistance(), "FEL fixture establishes a persisted prior scan distance");
+
+        fel.getEnergyStorage().setPower(FelBlockEntity.POWER_REQ * 3L - 1L);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertEquals(0L, fel.getEnergyStorage().getPower(),
+                "enabled FEL discards an insufficient partial 3^wavelength charge like TileEntityFEL");
+        assertEquals(7, fel.getDistance(), "unpowered FEL leaves its prior scan distance intact");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "felLegacyBeamContracts")
+    public static void felDoesNotTreatSameModeSilexAsANewValidMatch(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos felPos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        BlockState silexState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        level.setBlock(felPos, felState, Block.UPDATE_ALL);
+        BlockPos beamSilexPos = felPos.east(5).above();
+        BlockPos silexCorePos = beamSilexPos.east().below();
+        level.setBlock(beamSilexPos, silexState, Block.UPDATE_ALL);
+        level.setBlock(silexCorePos, silexState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)
+                || !(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity silex)) {
+            throw new AssertionError("FEL same-mode SILEX fixture did not create both required block entities");
+        }
+        silex.acceptLaser(Direction.EAST, LaserWavelength.IR);
+        fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
+        fel.getEnergyStorage().setPower(100_000L);
+        fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertTrue(fel.isMissingValidSilex(),
+                "an already-identical SILEX wavelength does not clear TileEntityFEL's one-way missing-valid flag");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "felLegacyBeamContracts")
+    public static void felFindsAndWritesTheLegacySilexCoreBelowItsBeamDummy(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos felPos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        BlockState silexState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        level.setBlock(felPos, felState, Block.UPDATE_ALL);
+        BlockPos beamSilexPos = felPos.east(5).above();
+        BlockPos silexCorePos = beamSilexPos.east().below();
+        level.setBlock(beamSilexPos, silexState, Block.UPDATE_ALL);
+        level.setBlock(silexCorePos, silexState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)
+                || !(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity silex)) {
+            throw new AssertionError("FEL/SILEX legacy-coordinate fixture did not create both required cores");
+        }
+        fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
+        fel.getEnergyStorage().setPower(100_000L);
+        fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertTrue(silex.getMode() == LaserWavelength.IR,
+                "FEL writes its wavelength to the 1.7.10 SILEX core position below the illuminated dummy");
+        assertTrue(!fel.isMissingValidSilex(),
+                "a newly written valid SILEX wavelength clears FEL's legacy missing-valid flag");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "felLegacyBeamContracts")
+    public static void felWritesEveryLegacyWavelengthToTheSilexCore(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos felPos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        BlockState silexState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        level.setBlock(felPos, felState, Block.UPDATE_ALL);
+        BlockPos beamSilexPos = felPos.east(5).above();
+        BlockPos silexCorePos = beamSilexPos.east().below();
+        level.setBlock(beamSilexPos, silexState, Block.UPDATE_ALL);
+        level.setBlock(silexCorePos, silexState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)
+                || !(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity silex)) {
+            throw new AssertionError("FEL all-wavelength SILEX fixture did not create both required cores");
+        }
+        ItemStack[] crystals = {
+            new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()),
+            new ItemStack(ModItems.LASER_CRYSTAL_BISMUTH.get()),
+            new ItemStack(ModItems.LASER_CRYSTAL_CMB.get()),
+            new ItemStack(ModItems.LASER_CRYSTAL_DNT.get()),
+            new ItemStack(ModItems.LASER_CRYSTAL_DIGAMMA.get())
+        };
+        LaserWavelength[] wavelengths = {
+            LaserWavelength.IR, LaserWavelength.VISIBLE, LaserWavelength.UV,
+            LaserWavelength.GAMMA, LaserWavelength.DRX
+        };
+        fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
+        for (int index = 0; index < crystals.length; index++) {
+            fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, crystals[index]);
+            fel.getEnergyStorage().setPower(1_000_000L);
+            FelBlockEntity.serverTick(level, felPos, felState, fel);
+            assertTrue(silex.getMode() == wavelengths[index],
+                    "FEL writes " + wavelengths[index] + " to the source-correct SILEX core position");
+            assertTrue(fel.isBeamActive(),
+                    "FEL keeps the renderer/audio beam gate active for " + wavelengths[index]);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "felLegacyBeamContracts")
+    public static void felEnforcesTheLegacySilexAxialLaserDirection(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos felPos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        BlockState beamDummyState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        BlockState reverseCoreState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.WEST);
+        BlockState perpendicularCoreState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.NORTH);
+        level.setBlock(felPos, felState, Block.UPDATE_ALL);
+        BlockPos beamSilexPos = felPos.east(5).above();
+        BlockPos silexCorePos = beamSilexPos.east().below();
+        level.setBlock(beamSilexPos, beamDummyState, Block.UPDATE_ALL);
+        level.setBlock(silexCorePos, reverseCoreState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)
+                || !(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity reverseSilex)) {
+            throw new AssertionError("FEL SILEX-direction fixture did not create both required cores");
+        }
+        fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
+        fel.getEnergyStorage().setPower(100_000L);
+        fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertTrue(reverseSilex.getMode() == LaserWavelength.IR,
+                "a SILEX core facing opposite the FEL remains a valid legacy axial laser target");
+
+        level.setBlock(silexCorePos, perpendicularCoreState, Block.UPDATE_ALL);
+        fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL,
+                new ItemStack(ModItems.LASER_CRYSTAL_BISMUTH.get()));
+        fel.getEnergyStorage().setPower(100_000L);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertTrue(!(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity),
+                "a perpendicular SILEX core is rejected and dismantled by the legacy FEL scan");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "felLegacyBeamContracts")
+    public static void felPassesThroughLegacyNonOpaqueGlassBeforeTheNextOpaqueBlock(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos felPos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        level.setBlock(felPos, felState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)) {
+            throw new AssertionError("FEL opaque-material fixture did not create a FelBlockEntity");
+        }
+        fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
+        fel.getEnergyStorage().setPower(100_000L);
+        fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
+        level.setBlock(felPos.east(3).above(), Blocks.GLASS.defaultBlockState(), Block.UPDATE_ALL);
+        level.setBlock(felPos.east(7).above(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertEquals(7, fel.getDistance(),
+                "FEL uses TileEntityFEL's opaque-material gate and therefore passes through glass");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void assemblyAndChemicalHostsRetryRemoteEnergyEveryLegacyTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(4, 2, 96));
@@ -8254,7 +8643,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void precassAndPurexRetryRemoteEnergyEveryLegacyTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos precassPos = helper.absolutePos(new BlockPos(4, 2, 114));
@@ -8282,7 +8671,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void arcFurnaceRetriesRemoteEnergyEveryLegacyTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos arcPos = helper.absolutePos(new BlockPos(4, 2, 138));
@@ -8302,7 +8691,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosEveryTickEnergyCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosEveryTickEnergyCadence")
     public static void standardTurretRetriesRemoteEnergyEveryLegacyTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos turretPos = helper.absolutePos(new BlockPos(4, 2, 154));
@@ -8332,14 +8721,14 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesElectricPressAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         assertPlayerUseOnPlacesAdjacentReceiverWithDiagnostics(helper, ModBlocks.MACHINE_EPRESS,
                 ElectricPressBlockEntity.class, "machine_epress", 784, ElectricPressBlockEntity::serverTick);
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesConveyorPressHorizontalReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -8396,7 +8785,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2ConveyorPress")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2ConveyorPress")
     public static void conveyorPressProcessesMovingItemWithLegacyPlateStamp(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pressPos = helper.absolutePos(new BlockPos(3, 2, 3));
@@ -8438,21 +8827,21 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesMicrowaveAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         assertPlayerUseOnPlacesAdjacentReceiverWithDiagnostics(helper, ModBlocks.MACHINE_MICROWAVE,
                 MicrowaveBlockEntity.class, "machine_microwave", 816, MicrowaveBlockEntity::serverTick);
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesRadioboxAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         assertPlayerUseOnPlacesAdjacentReceiverWithDiagnostics(helper, ModBlocks.RADIOBOX,
                 RadioboxBlockEntity.class, "radiobox", 832, RadioboxBlockEntity::serverTick);
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesPowerDetectorAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -8527,21 +8916,21 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesShredderAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         assertPlayerUseOnPlacesAdjacentReceiverWithDiagnostics(helper, ModBlocks.MACHINE_SHREDDER,
                 ShredderBlockEntity.class, "machine_shredder", 848, ShredderBlockEntity::serverTick);
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesAutocrafterAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         assertPlayerUseOnPlacesAdjacentReceiverWithDiagnostics(helper, ModBlocks.MACHINE_AUTOCRAFTER,
                 AutocrafterBlockEntity.class, "machine_autocrafter", 864, AutocrafterBlockEntity::serverTick);
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesForceFieldAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ForceFieldBlockEntity forceField = assertPlayerUseOnPlacesAdjacentReceiverWithDiagnostics(helper,
                 ModBlocks.MACHINE_FORCEFIELD,
@@ -8550,26 +8939,26 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesChargerBackEnergySideAndDiagnostics(GameTestHelper helper) {
         assertPlayerUseOnPlacesChargerBackEnergySideWithDiagnostics(helper, 896);
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesDfcEmitterAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         assertPlayerUseOnPlacesAdjacentEnergyAndFluidReceiverWithDiagnostics(helper, ModBlocks.DFC_EMITTER,
                 DfcEmitterBlockEntity.class, "dfc_emitter", 904, DfcEmitterBlockEntity::serverTick);
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesDfcStabilizerAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         assertPlayerUseOnPlacesAdjacentReceiverWithDiagnostics(helper, ModBlocks.DFC_STABILIZER,
                 DfcStabilizerBlockEntity.class, "dfc_stabilizer", 908, DfcStabilizerBlockEntity::serverTick);
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesCyclotronRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -8625,7 +9014,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesExposureChamberRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -8684,7 +9073,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesFelRemoteReceiverPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -8743,7 +9132,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesLargeRadarRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -8832,7 +9221,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesGasCentAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -8893,7 +9282,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesCentrifugeAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -8977,7 +9366,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesCrystallizerRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -8999,15 +9388,26 @@ public final class EnergyMk2GameTests {
         ItemStack crystallizerStack = new ItemStack(ModBlocks.MACHINE_CRYSTALLIZER.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, crystallizerStack);
 
-        var placeResult = crystallizerStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        var useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(supportPos));
+        var placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_CRYSTALLIZER.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        boolean directLayoutCanPlace = multiblock.canPlaceDirectMultiblock(level, expectedCorePos,
+                placementContext.getClickedPos(), placementState);
+        var placeResult = crystallizerStack.useOn(useOnContext);
 
         ProcessingMachineBlockEntity crystallizer = findBlockEntityAroundOrNull(level, supportPos.above(), 8,
                 ProcessingMachineBlockEntity.class, ModBlocks.MACHINE_CRYSTALLIZER.get());
         if (crystallizer == null) {
             throw new AssertionError("player useOn machine_crystallizer placement returned " + placeResult
                     + " without placing a machine_crystallizer core around " + supportPos.above()
-                    + "; hand stack=" + player.getItemInHand(InteractionHand.MAIN_HAND));
+                    + "; hand stack=" + player.getItemInHand(InteractionHand.MAIN_HAND)
+                    + "; expectedCore=" + expectedCorePos + "; directLayoutCanPlace=" + directLayoutCanPlace
+                    + "; preflightProblems=" + directMultiblockPreflightProblems(level, expectedCorePos,
+                    ((LegacyVisibleMultiblockMachineBlock) ModBlocks.MACHINE_CRYSTALLIZER.get()).definition()
+                            .layout(placementState),
+                    placementContext.getClickedPos()));
         }
         assertTrue(placeResult.consumesAction(),
                 "player useOn placement consumes the machine_crystallizer block item action after placing the core");
@@ -9040,7 +9440,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesDeuteriumExtractorAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9097,13 +9497,17 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesDeuteriumTowerRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
-        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 5, chunkStartZ + 496);
+        // Keep this nine-block tower outside both the mini-RTG provider lane
+        // and the low empty-template ceiling: its source layout extends eight
+        // blocks above the core before the player-placement assertions run.
+        int fixtureY = helper.absolutePos(new BlockPos(1, 124, 1)).getY();
+        BlockPos supportPos = new BlockPos(chunkStartX + 24, fixtureY, chunkStartZ + 2_700_496);
         forceLoadedChunks(level, supportPos.offset(-18, -8, -18), supportPos.offset(18, 14, 18));
         clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(14).offset(18, 0, 18));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -9116,8 +9520,20 @@ public final class EnergyMk2GameTests {
         ItemStack towerStack = new ItemStack(ModBlocks.MACHINE_DEUTERIUM_TOWER.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, towerStack);
 
-        var placeResult = towerStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(supportPos));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_DEUTERIUM_TOWER.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_deuterium_tower has a direct placement state for the selected top-face context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_deuterium_tower source XR footprint is clear before player placement; problems="
+                        + MultiblockHelper.findLayoutProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_DEUTERIUM_TOWER.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos)));
+        var placeResult = towerStack.useOn(useOnContext);
 
         DeuteriumTowerBlockEntity tower = findBlockEntityAroundOrNull(level, supportPos.above(), 12,
                 DeuteriumTowerBlockEntity.class, ModBlocks.MACHINE_DEUTERIUM_TOWER.get());
@@ -9129,6 +9545,8 @@ public final class EnergyMk2GameTests {
         assertTrue(placeResult.consumesAction(),
                 "player useOn placement consumes the machine_deuterium_tower block item action after placing the core");
         BlockPos machinePos = tower.getBlockPos();
+        assertTrue(expectedCorePos.equals(machinePos),
+                "player useOn places machine_deuterium_tower at the same core selected by direct preflight");
         assertTrue(level.getBlockState(machinePos).getValue(LegacyVisibleMultiblockMachineBlock.FACING)
                 == Direction.SOUTH,
                 "player-placed machine_deuterium_tower faces south while exposing eight legacy receiver ports");
@@ -9155,10 +9573,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=8", "networked=");
 
+        clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(14).offset(18, 0, 18));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesOreSlopperRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9236,7 +9655,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesElectricHeaterRemoteReceiverPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9301,7 +9720,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesPoweredCondenserRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9320,6 +9739,11 @@ public final class EnergyMk2GameTests {
         ItemStack condenserStack = new ItemStack(ModBlocks.MACHINE_CONDENSER_POWERED.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, condenserStack);
 
+        // This batch can run long enough for independent gas fixtures to enter
+        // the checked XR volume. Re-clear only this fixture immediately before
+        // the unchanged source-backed placement preflight.
+        clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(10).offset(18, 0, 18));
+        level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
         UseOnContext condenserUseContext = new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(supportPos));
         BlockPlaceContext condenserPlacementContext = new BlockPlaceContext(condenserUseContext);
         var condenserMultiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_CONDENSER_POWERED.get();
@@ -9402,10 +9826,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=6", "networked=");
 
+        clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(10).offset(18, 0, 18));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesPyroOvenRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9468,7 +9893,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesPurexRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9553,13 +9978,19 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesPrecassRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
-        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 5, chunkStartZ + 1376);
+        // The source MachineAssemblyMachine fills a 3x3 legacy floor ring.
+        // Keep this complete player-use fixture on the same isolated height
+        // convention as the adjacent PUREX fixture: the batch also owns
+        // low-altitude fixture lanes, so a low support can race their cleanup
+        // even though the machine placement contract itself is valid.
+        int fixtureY = helper.absolutePos(new BlockPos(1, 124, 1)).getY();
+        BlockPos supportPos = new BlockPos(chunkStartX + 24, fixtureY, chunkStartZ + 1376);
         forceLoadedChunks(level, supportPos.offset(-18, -8, -18), supportPos.offset(18, 10, 18));
         clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(10).offset(18, 0, 18));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -9632,10 +10063,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=12", "networked=");
 
+        clearBox(level, supportPos.above().offset(-6, 0, -6), supportPos.above(3).offset(6, 0, 6));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2CableDiode")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2CableDiode")
     public static void cableDiodeTransfersOneWayAcrossRealCableNetworksAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9678,16 +10110,9 @@ public final class EnergyMk2GameTests {
         }
         HbmEnergyNodespace.tick(level);
 
-        var player = gameTestPlayer(level);
-        CableDiodeBlock diodeBlock = (CableDiodeBlock) ModBlocks.CABLE_DIODE.get();
-        assertTrue(diodeBlock.onToolUse(level, player, diodePos, Direction.UP, Vec3.atCenterOf(diodePos),
-                Toolable.ToolType.SCREWDRIVER),
-                "cable_diode accepts screwdriver level increase");
-        assertTrue(diodeBlock.onToolUse(level, player, diodePos, Direction.UP, Vec3.atCenterOf(diodePos),
-                Toolable.ToolType.DEFUSER),
-                "cable_diode accepts defuser priority cycle");
-        assertEquals(2, diode.getThroughputLevel(), "screwdriver raises cable_diode throughput level");
-        assertEquals(100L, diode.getMaxPower(), "level 2 cable_diode max transfer is 10^2 HE/t");
+        diode.applyConfiguration(123L, HbmEnergyReceiver.ConnectionPriority.HIGH.ordinal());
+        assertEquals(123L, diode.getThroughputLimit(), "cable_diode accepts precise GUI throughput configuration");
+        assertEquals(123L, diode.getMaxPower(), "configured cable_diode max transfer is exact HE/t value");
 
         CableDiodeBlockEntity.serverTick(level, diodePos, level.getBlockState(diodePos), diode);
         assertOutputBatteryProviderSubscribes(level, providerPos, inputLastCablePos, providerBattery,
@@ -9734,12 +10159,12 @@ public final class EnergyMk2GameTests {
 
         CompoundTag diodeInfo = new CompoundTag();
         diode.provideExtraInfo(diodeInfo);
-        assertEquals(2, diodeInfo.getInt("level"), "cable_diode EC extra info exposes throughput level");
-        assertEquals("HIGH", diodeInfo.getString("priority"), "defuser cycles cable_diode priority from NORMAL to HIGH");
-        assertEquals(100L, diodeInfo.getLong("maxRate"), "cable_diode EC extra info exposes max transfer");
+        assertEquals(123L, diodeInfo.getLong("limit"), "cable_diode EC extra info exposes exact throughput limit");
+        assertEquals("HIGH", diodeInfo.getString("priority"), "cable_diode GUI config sets priority");
+        assertEquals(123L, diodeInfo.getLong("maxRate"), "cable_diode EC extra info exposes exact max transfer");
         assertEquals("east", diodeInfo.getString("output"), "cable_diode EC extra info exposes output side");
         CompoundTag saved = diode.saveWithFullMetadata();
-        assertEquals(2, saved.getInt("level"), "cable_diode saves legacy level NBT");
+        assertEquals(123L, saved.getLong("limit"), "cable_diode saves legacy precise limit NBT");
         assertEquals(HbmEnergyReceiver.ConnectionPriority.HIGH.ordinal(), saved.getByte("p"),
                 "cable_diode saves legacy priority ordinal NBT");
 
@@ -9747,7 +10172,7 @@ public final class EnergyMk2GameTests {
         CompatEnergyControl.getEnergyData(diode, commandInfo);
         CompatEnergyControl.getExtraData(diode, commandInfo);
         assertCommandVisibleMessage(level, diodePos, "hbm energy info " + commandPos(diodePos), commandInfo.size(),
-                "Energy info at " + diodePos.toShortString(), "level=", "maxRate=", "output=", "priority=");
+                "Energy info at " + diodePos.toShortString(), "limit=", "maxRate=", "output=", "priority=");
         assertCommandVisibleMessage(level, inputLastCablePos, "hbm energy network " + commandPos(inputLastCablePos),
                 afterInputUpdate.links(),
                 "Energy network at " + inputLastCablePos.toShortString(), "providers=", "receivers=",
@@ -9759,7 +10184,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesSolderingStationRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9820,7 +10245,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesExcavatorRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9841,10 +10266,37 @@ public final class EnergyMk2GameTests {
         ItemStack excavatorStack = new ItemStack(ModBlocks.MACHINE_EXCAVATOR.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, excavatorStack);
 
-        var placeResult = excavatorStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        // MachineExcavator checks its primary XR volume plus three source-side
+        // extensions down from the temporary placement level.  Clicking the
+        // top face makes this support stone occupy that checked air volume;
+        // use its north face so the temporary placement cell is outside the
+        // old structure footprint.
+        // Other full-suite fixtures can write into this tall source footprint
+        // after setup. Preserve the old all-volume preflight: clear only this
+        // fixture immediately before the player action, then require it to pass.
+        clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(10).offset(18, 0, 18));
+        level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+        BlockPos placedPos = supportPos.north();
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND,
+                blockHit(supportPos, Direction.NORTH));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_EXCAVATOR.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_excavator has a source-backed direct-placement state for the selected south-facing context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(placementContext.canPlace(),
+                "machine_excavator BlockPlaceContext can place at its selected north-face temporary position");
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_excavator source XR footprint is clear before player placement; problems="
+                        + directMultiblockPreflightProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_EXCAVATOR.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos),
+                                placementContext.getClickedPos()));
+        var placeResult = excavatorStack.useOn(useOnContext);
 
-        ExcavatorBlockEntity excavator = findBlockEntityAroundOrNull(level, supportPos.above(), 16,
+        ExcavatorBlockEntity excavator = findBlockEntityAroundOrNull(level, placedPos, 16,
                 ExcavatorBlockEntity.class, ModBlocks.MACHINE_EXCAVATOR.get());
         if (excavator == null) {
             throw new AssertionError("player useOn machine_excavator placement returned " + placeResult
@@ -9880,10 +10332,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=4", "networked=");
 
+        clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(10).offset(18, 0, 18));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesMiningLaserTopReceiverPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -9946,7 +10399,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedFixedMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedFixedMachinePorts")
     public static void playerUseOnPlacesElectrolyserRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10008,13 +10461,15 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedOilMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedOilMachinePorts")
     public static void playerUseOnPlacesHydrotreaterRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
-        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 5, chunkStartZ + 560);
+        // Keep this large XR placement outside the shared low-offset fixture
+        // bands: every GameTest is active in one server level.
+        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 5, chunkStartZ + 3_800_000 + 560);
         forceLoadedChunks(level, supportPos.offset(-16, -8, -16), supportPos.offset(16, 10, 16));
         clearBox(level, supportPos.above().offset(-16, -8, -16), supportPos.above(10).offset(16, 0, 16));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -10031,8 +10486,29 @@ public final class EnergyMk2GameTests {
         ItemStack hydrotreaterStack = new ItemStack(ModBlocks.MACHINE_HYDROTREATER.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, hydrotreaterStack);
 
-        var placeResult = hydrotreaterStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        // Preserve the source layout's normal clearance rule even if another
+        // batch writes a transient block after the fixture setup.
+        clearBox(level, supportPos.above().offset(-16, -8, -16), supportPos.above(10).offset(16, 0, 16));
+        level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(supportPos));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_HYDROTREATER.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_hydrotreater has a source-backed direct-placement state for the selected south-facing context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(placementContext.canPlace(),
+                "machine_hydrotreater BlockPlaceContext can place at its selected temporary position");
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_hydrotreater source XR footprint is clear before player placement; problems="
+                        + directMultiblockPreflightProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_HYDROTREATER.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos),
+                                placementContext.getClickedPos()));
+
+        var placeResult = hydrotreaterStack.useOn(useOnContext);
 
         HydrotreaterBlockEntity hydrotreater = findBlockEntityAroundOrNull(level, supportPos.above(), 14,
                 HydrotreaterBlockEntity.class, ModBlocks.MACHINE_HYDROTREATER.get());
@@ -10071,7 +10547,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedOilMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedOilMachinePorts")
     public static void playerUseOnPlacesCatalyticReformerRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10090,8 +10566,25 @@ public final class EnergyMk2GameTests {
         ItemStack reformerStack = new ItemStack(ModBlocks.MACHINE_CATALYTIC_REFORMER.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, reformerStack);
 
-        var placeResult = reformerStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        // MachineCatalyticReformer#checkRequirement probes its base XR volume
+        // and two source-offset XR volumes. A top-face click places the stone
+        // support inside that checked air space; the north face preserves the
+        // real player placement route while keeping that source footprint clear.
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND,
+                blockHit(supportPos, Direction.NORTH));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_CATALYTIC_REFORMER.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_catalytic_reformer has a direct placement state for the selected north-face context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_catalytic_reformer source XR footprint is clear for its north-face player placement; problems="
+                        + MultiblockHelper.findLayoutProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_CATALYTIC_REFORMER.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos)));
+        var placeResult = reformerStack.useOn(useOnContext);
 
         CatalyticReformerBlockEntity reformer = findBlockEntityAroundOrNull(level, supportPos.above(), 16,
                 CatalyticReformerBlockEntity.class, ModBlocks.MACHINE_CATALYTIC_REFORMER.get());
@@ -10103,6 +10596,8 @@ public final class EnergyMk2GameTests {
         assertTrue(placeResult.consumesAction(),
                 "player useOn placement consumes the machine_catalytic_reformer block item action after placing the core");
         BlockPos machinePos = reformer.getBlockPos();
+        assertTrue(expectedCorePos.equals(machinePos),
+                "player useOn places machine_catalytic_reformer at the same offset core selected by direct preflight");
         assertTrue(level.getBlockState(machinePos).getValue(HorizontalMachineBlock.FACING) == Direction.SOUTH,
                 "player-placed machine_catalytic_reformer faces south while exposing rotated legacy receiver ports");
 
@@ -10130,7 +10625,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedOilMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedOilMachinePorts")
     public static void playerUseOnPlacesVacuumDistillRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10189,7 +10684,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedOilMachinePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedOilMachinePorts")
     public static void playerUseOnPlacesRefineryRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10254,7 +10749,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedArcWelderPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedArcWelderPorts")
     public static void playerUseOnPlacesArcWelderRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10309,16 +10804,20 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=10", "networked=");
 
+        clearBox(level, supportPos.above().offset(-16, -8, -16), supportPos.above(12).offset(16, 0, 16));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedCompressorPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedCompressorPorts")
     public static void playerUseOnPlacesCompressorRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
-        BlockPos supportPos = new BlockPos(chunkStartX + 22, anchor.getY() + 5, chunkStartZ + 292);
+        // The default low-offset test band is shared by unrelated full-suite
+        // fixtures. Keep this tall XR placement in its own coordinate band so
+        // the source-backed clearance check observes only this fixture.
+        BlockPos supportPos = new BlockPos(chunkStartX + 22, anchor.getY() + 5, chunkStartZ + 3_400_000 + 292);
         forceLoadedChunks(level, supportPos.offset(-14, -8, -14), supportPos.offset(14, 10, 14));
         clearBox(level, supportPos.above().offset(-14, -8, -14), supportPos.above(10).offset(14, 0, 14));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -10338,12 +10837,15 @@ public final class EnergyMk2GameTests {
         assertTrue(placementState != null,
                 "machine_compressor has a source-backed direct-placement state for the selected south-facing context");
         BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(placementContext.canPlace(),
+                "machine_compressor BlockPlaceContext can place at its selected temporary position");
         assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
                         placementState),
                 "machine_compressor source XR footprint is clear before player placement; problems="
-                        + MultiblockHelper.findLayoutProblems(level, expectedCorePos,
+                        + directMultiblockPreflightProblems(level, expectedCorePos,
                                 ((MultiblockCoreBlock) ModBlocks.MACHINE_COMPRESSOR.get())
-                                        .getMultiblockLayout(placementState, level, expectedCorePos)));
+                                        .getMultiblockLayout(placementState, level, expectedCorePos),
+                                placementContext.getClickedPos()));
 
         var placeResult = compressorStack.useOn(useOnContext);
 
@@ -10384,13 +10886,16 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedCompressorPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedCompressorPorts")
     public static void playerUseOnPlacesCompactCompressorRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
-        BlockPos supportPos = new BlockPos(chunkStartX + 22, anchor.getY() + 5, chunkStartZ + 308);
+        // The compact compressor has a 3x3, three-block-high source XR volume.
+        // Keep it out of the shared low-offset fixture band so this test checks
+        // the 1.7.10 placement footprint, not another batch's leftovers.
+        BlockPos supportPos = new BlockPos(chunkStartX + 22, anchor.getY() + 5, chunkStartZ + 3_400_000 + 308);
         forceLoadedChunks(level, supportPos.offset(-12, -5, -12), supportPos.offset(12, 8, 12));
         clearBox(level, supportPos.above().offset(-12, -5, -12), supportPos.above(8).offset(12, 0, 12));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -10403,8 +10908,24 @@ public final class EnergyMk2GameTests {
         ItemStack compressorStack = new ItemStack(ModBlocks.MACHINE_COMPRESSOR_COMPACT.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, compressorStack);
 
-        var placeResult = compressorStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(supportPos));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_COMPRESSOR_COMPACT.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_compressor_compact has a source-backed direct-placement state for the selected south-facing context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(placementContext.canPlace(),
+                "machine_compressor_compact BlockPlaceContext can place at its selected temporary position");
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_compressor_compact source XR footprint is clear before player placement; problems="
+                        + directMultiblockPreflightProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_COMPRESSOR_COMPACT.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos),
+                                placementContext.getClickedPos()));
+
+        var placeResult = compressorStack.useOn(useOnContext);
 
         CompressorBlockEntity compressor = findCompressorAroundOrNull(level, supportPos.above(), 12,
                 ModBlocks.MACHINE_COMPRESSOR_COMPACT.get());
@@ -10441,10 +10962,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=6", "networked=");
 
+        clearBox(level, supportPos.above().offset(-12, -5, -12), supportPos.above(8).offset(12, 0, 12));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsAssembly")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsAssembly")
     public static void assemblyMachineRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10469,7 +10991,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "assemblyMachineRecipeSelector")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "assemblyMachineRecipeSelector")
     public static void assemblyMachineRecipeSelectorValidatesBlueprintControlAndPersistence(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos machinePos = helper.absolutePos(new BlockPos(2, 2, 2));
@@ -10517,7 +11039,196 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsChemicalPlant")
+    /**
+     * A recipe-manager count is not a machine-runtime proof.  Run the source
+     * {@code chem.stone} contract through a placed Chemical Plant: blueprint
+     * gate, three fluid inputs, per-tick energy draw, one item output, and the
+     * completion boundary all belong to old {@code ModuleMachineBase}.
+     */
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "machineRecipeRuntimeMatrix")
+    public static void chemicalPlantCompletesLegacyStoneRecipeThroughBlockEntityTick(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos machinePos = helper.absolutePos(new BlockPos(7, 2, 7));
+        BlockState machineState = ModBlocks.MACHINE_CHEMICAL_PLANT.get().defaultBlockState();
+        level.setBlock(machinePos, machineState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(machinePos) instanceof ChemicalPlantBlockEntity chemicalPlant)) {
+            throw new AssertionError("No chemical_plant block entity at " + machinePos);
+        }
+
+        chemicalPlant.getItems().setStackInSlot(ChemicalPlantBlockEntity.SLOT_BLUEPRINT,
+                com.hbm.ntm.item.ItemBlueprints.make("discover.stone"));
+        assertTrue(chemicalPlant.selectRecipe("chem.stone"),
+                "chemical plant accepts chem.stone only through its matching legacy blueprint pool");
+        chemicalPlant.getInputTank(0).fill(HbmFluids.WATER, 1_000, 0, false);
+        chemicalPlant.getInputTank(1).fill(HbmFluids.LAVA, 25, 0, false);
+        chemicalPlant.getInputTank(2).fill(HbmFluids.AIR, 4_000, 0, false);
+        chemicalPlant.getEnergyStorage().setPower(30_000L);
+
+        assertTrue(chemicalPlant.canProcessSelectedRecipe(),
+                "fully supplied chem.stone passes the legacy pre-completion input/output gate");
+        for (int tick = 0; tick < 60; tick++) {
+            ChemicalPlantBlockEntity.serverTick(level, machinePos, machineState, chemicalPlant);
+        }
+
+        assertSame(Blocks.STONE.asItem(), chemicalPlant.getItems()
+                        .getStackInSlot(ChemicalPlantBlockEntity.SLOT_ITEM_OUTPUT_START).getItem(),
+                "chem.stone completes into its source-backed stone output slot");
+        assertEquals(1, chemicalPlant.getItems()
+                        .getStackInSlot(ChemicalPlantBlockEntity.SLOT_ITEM_OUTPUT_START).getCount(),
+                "chem.stone produces exactly one item after its 60-tick duration");
+        assertEquals(0, chemicalPlant.getInputTank(0).getFill(), "chem.stone consumes its water input atomically");
+        assertEquals(0, chemicalPlant.getInputTank(1).getFill(), "chem.stone consumes its lava input atomically");
+        assertEquals(0, chemicalPlant.getInputTank(2).getFill(), "chem.stone consumes its air input atomically");
+        assertEquals(0L, chemicalPlant.getEnergyStorage().getPower(),
+                "chem.stone draws its exact legacy 500 HE for all 60 processing ticks");
+        assertTrue(chemicalPlant.getProgress() == 0.0D,
+                "chemical plant clears progress when the completed recipe no longer has inputs");
+        assertFalse(chemicalPlant.canProcessSelectedRecipe(),
+                "completed chem.stone cannot duplicate output without re-supplying its legacy inputs");
+        helper.succeed();
+    }
+
+    /**
+     * Complements the fluid-only Chemical Plant cycle with the old assembler's
+     * ordered item-slot path.  Pulling each stack from the loaded recipe keeps
+     * this a runtime/datapack test instead of guessing a tag representative.
+     */
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "machineRecipeRuntimeMatrix")
+    public static void assemblyMachineCompletesLegacyAtomicClockRecipeThroughBlockEntityTick(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos machinePos = helper.absolutePos(new BlockPos(11, 2, 11));
+        BlockState machineState = ModBlocks.MACHINE_ASSEMBLY_MACHINE.get().defaultBlockState();
+        level.setBlock(machinePos, machineState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(machinePos) instanceof AssemblyMachineBlockEntity assembler)) {
+            throw new AssertionError("No assembly_machine block entity at " + machinePos);
+        }
+
+        assertTrue(assembler.selectRecipe("ass.atomicClock"),
+                "assembly machine selects the source-backed non-pooled atomic-clock recipe");
+        GenericMachineRecipe recipe = assembler.getSelectedRecipeDefinition();
+        assertTrue(recipe != null && recipe.getItemInputs().size() == 3,
+                "ass.atomicClock keeps its three ordered legacy item inputs at runtime");
+        for (int index = 0; index < recipe.getItemInputs().size(); index++) {
+            int inputIndex = index;
+            ItemStack input = recipe.getItemInputs().get(inputIndex).displayStacks().stream().findFirst()
+                    .orElseThrow(() -> new AssertionError("ass.atomicClock input " + inputIndex
+                            + " has no resolved runtime display stack"));
+            assembler.getItems().setStackInSlot(AssemblyMachineBlockEntity.SLOT_INPUT_START + inputIndex, input);
+        }
+        ItemStack expectedOutput = recipe.getItemOutputs().get(0).copy();
+        // TileEntityMachineAssemblyMachine retains an already charged power buffer
+        // when it derives maxPower: max(power, recipe.power * 100, 100_000).
+        // Model that old precharged-state boundary before writing the fixture's
+        // 301 processing ticks, rather than letting HbmEnergyStorage clamp it.
+        // The legacy double accumulation of 1D / 300 reaches completion on the
+        // 301st tick, so its source-backed energy boundary is 301,000 HE.
+        assembler.getEnergyStorage().setMaxPower(301_000L);
+        assembler.getEnergyStorage().setPower(301_000L);
+
+        assertTrue(assembler.canProcessSelectedRecipe(),
+                "ordered atomic-clock inputs pass the old ModuleMachineAssembler pre-completion gate");
+        for (int tick = 0; tick < 301; tick++) {
+            AssemblyMachineBlockEntity.serverTick(level, machinePos, machineState, assembler);
+        }
+
+        ItemStack output = assembler.getItems().getStackInSlot(AssemblyMachineBlockEntity.SLOT_OUTPUT);
+        assertSame(expectedOutput.getItem(), output.getItem(),
+                "ass.atomicClock completes into its source-backed output item");
+        assertEquals(expectedOutput.getCount(), output.getCount(),
+                "ass.atomicClock produces its exact source-backed output count");
+        for (int index = 0; index < recipe.getItemInputs().size(); index++) {
+            assertTrue(assembler.getItems().getStackInSlot(AssemblyMachineBlockEntity.SLOT_INPUT_START + index).isEmpty(),
+                    "ass.atomicClock consumes ordered input slot " + index + " exactly once");
+        }
+        assertEquals(0L, assembler.getEnergyStorage().getPower(),
+                "ass.atomicClock draws its exact legacy 1,000 HE for all 301 floating-point processing ticks");
+        assertTrue(assembler.getProgress() == 0.0D,
+                "assembly machine clears progress when the completed recipe no longer has inputs");
+        assertFalse(assembler.canProcessSelectedRecipe(),
+                "completed ass.atomicClock cannot duplicate output without re-supplying ordered inputs");
+        helper.succeed();
+    }
+
+    /**
+     * {@code ModuleMachineBase#canProcess} switches a grouped recipe from its
+     * first input and cancels processing for that same tick.  Exercise that
+     * boundary through the placed assembler rather than its runtime helper.
+     */
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "machineRecipeRuntimeMatrix")
+    public static void assemblyMachineAutoSwitchDefersProcessingUntilTheFollowingTick(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos machinePos = helper.absolutePos(new BlockPos(15, 2, 15));
+        BlockState machineState = ModBlocks.MACHINE_ASSEMBLY_MACHINE.get().defaultBlockState();
+        level.setBlock(machinePos, machineState, Block.UPDATE_ALL);
+        if (!(level.getBlockEntity(machinePos) instanceof AssemblyMachineBlockEntity assembler)) {
+            throw new AssertionError("No assembly_machine block entity at " + machinePos);
+        }
+
+        assembler.getItems().setStackInSlot(AssemblyMachineBlockEntity.SLOT_BLUEPRINT,
+                com.hbm.ntm.item.ItemBlueprints.make("alt.plates"));
+        assertTrue(assembler.selectRecipe("ass.plateiron"),
+                "assembly machine selects the source-backed plate auto-switch group member");
+        GenericMachineRecipe copperRecipe = GenericMachineRecipeRuntime.findByInternalName(level,
+                GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, "ass.platecopper");
+        GenericMachineRecipe goldRecipe = GenericMachineRecipeRuntime.findByInternalName(level,
+                GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, "ass.plategold");
+        GenericMachineRecipe ironRecipe = GenericMachineRecipeRuntime.findByInternalName(level,
+                GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, "ass.plateiron");
+        assertTrue(copperRecipe != null && copperRecipe.getItemInputs().size() == 1,
+                "ass.platecopper exposes its source-backed first input at runtime");
+        assertTrue(goldRecipe != null && goldRecipe.getItemInputs().size() == 1,
+                "ass.plategold exposes its source-backed first input at runtime");
+        assertTrue(ironRecipe != null && ironRecipe.getItemInputs().size() == 1,
+                "ass.plateiron exposes its source-backed first input at runtime");
+        ItemStack copperInput = copperRecipe.getItemInputs().get(0).displayStacks().stream().findFirst()
+                .orElseThrow(() -> new AssertionError("ass.platecopper has no resolved runtime display stack"));
+        assertSame(Items.COPPER_INGOT, copperInput.getItem(),
+                "ass.platecopper resolves its legacy ingotCopper tag to minecraft:copper_ingot; actual="
+                        + ForgeRegistries.ITEMS.getKey(copperInput.getItem())
+                        + "; copperTag=" + itemTagContents("forge:ingots/copper")
+                        + "; goldTag=" + itemTagContents("forge:ingots/gold")
+                        + "; copper=" + copperRecipe.getItemInputs().get(0).toJson()
+                        + "; gold=" + goldRecipe.getItemInputs().get(0).toJson());
+        assertTrue(copperRecipe.getItemInputs().get(0).test(copperInput, true),
+                "the resolved copper display stack matches its own source-backed ingredient");
+        assertFalse(goldRecipe.getItemInputs().get(0).test(copperInput, true),
+                "a copper ingot must not match the distinct legacy ingotGold auto-switch member; copper="
+                        + copperRecipe.getItemInputs().get(0).toJson()
+                        + "; gold=" + goldRecipe.getItemInputs().get(0).toJson());
+        assertFalse(ironRecipe.getItemInputs().get(0).test(copperInput, true),
+                "a copper ingot must not match the distinct legacy ingotIron auto-switch member");
+        assembler.getItems().setStackInSlot(AssemblyMachineBlockEntity.SLOT_INPUT_START, copperInput);
+        assembler.getEnergyStorage().setPower(100L);
+
+        AssemblyMachineBlockEntity.serverTick(level, machinePos, machineState, assembler);
+        assertEquals("ass.platecopper", assembler.getSelectedRecipeName(),
+                "first input switches the legacy auto-switch group to the matching recipe");
+        assertEquals(100L, assembler.getEnergyStorage().getPower(),
+                "legacy auto-switch tick does not consume power before the new recipe is rechecked");
+        assertTrue(assembler.getProgress() == 0.0D && !assembler.isProcessing(),
+                "legacy auto-switch tick neither advances progress nor reports processing");
+        assertSame(copperInput.getItem(), assembler.getItems().getStackInSlot(AssemblyMachineBlockEntity.SLOT_INPUT_START).getItem(),
+                "legacy auto-switch tick keeps the first input for the newly selected recipe");
+
+        AssemblyMachineBlockEntity.serverTick(level, machinePos, machineState, assembler);
+        assertEquals(0L, assembler.getEnergyStorage().getPower(),
+                "the following copper-recipe tick consumes its source-backed 100 HE");
+        assertTrue(assembler.getProgress() > 0.0D && assembler.isProcessing(),
+                "the following tick begins processing only after auto-switch selection settles");
+        helper.succeed();
+    }
+
+    private static List<ResourceLocation> itemTagContents(String tagId) {
+        TagKey<Item> tag = TagKey.create(Registries.ITEM, new ResourceLocation(tagId));
+        return BuiltInRegistries.ITEM.getTag(tag)
+                .stream()
+                .flatMap(holders -> holders.stream())
+                .map(Holder::value)
+                .map(BuiltInRegistries.ITEM::getKey)
+                .toList();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsChemicalPlant")
     public static void chemicalPlantRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10542,7 +11253,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedXrFloorRing")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedXrFloorRing")
     public static void playerUseOnPlacesAssemblyMachineRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10596,10 +11307,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=12", "networked=");
 
+        clearBox(level, supportPos.above().offset(-6, 0, -6), supportPos.above(3).offset(6, 0, 6));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedXrFloorRing")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedXrFloorRing")
     public static void playerUseOnPlacesChemicalPlantRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10653,10 +11365,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=12", "networked=");
 
+        clearBox(level, supportPos.above().offset(-6, 0, -6), supportPos.above(3).offset(6, 0, 6));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedFactoryPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedFactoryPorts")
     public static void playerUseOnPlacesAssemblyFactoryRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10664,7 +11377,7 @@ public final class EnergyMk2GameTests {
         int chunkStartZ = anchor.getZ() & ~15;
         // Assembly Factory's 7x7 footprint must not overlap another test's
         // grid-relative cleanup volume before this real BlockItem#useOn call.
-        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 5, chunkStartZ + 2_500_000 + 920);
+        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 5, chunkStartZ + 3_600_000 + 920);
         forceLoadedChunks(level, supportPos.offset(-18, -8, -18), supportPos.offset(18, 12, 18));
         clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(12).offset(18, 0, 18));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -10677,8 +11390,31 @@ public final class EnergyMk2GameTests {
         ItemStack factoryStack = new ItemStack(ModBlocks.MACHINE_ASSEMBLY_FACTORY.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, factoryStack);
 
-        var placeResult = factoryStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        // A running batch can place gas_radon into this remote footprint after
+        // the setup clear. Preserve the source layout's normal replaceability
+        // rule: clear immediately before the actual player placement, then
+        // restore only the clicked stone support.
+        clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(12).offset(18, 0, 18));
+        level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(supportPos));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_ASSEMBLY_FACTORY.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_assembly_factory has a source-backed direct-placement state for the selected south-facing context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(placementContext.canPlace(),
+                "machine_assembly_factory BlockPlaceContext can place at its selected temporary position");
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_assembly_factory source XR footprint is clear before player placement; problems="
+                        + directMultiblockPreflightProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_ASSEMBLY_FACTORY.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos),
+                                placementContext.getClickedPos()));
+
+        var placeResult = factoryStack.useOn(useOnContext);
 
         AssemblyFactoryBlockEntity factory = findBlockEntityAroundOrNull(level, supportPos.above(), 10,
                 AssemblyFactoryBlockEntity.class, ModBlocks.MACHINE_ASSEMBLY_FACTORY.get());
@@ -10721,15 +11457,16 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedFactoryPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFactoryPorts")
     public static void playerUseOnPlacesChemicalFactoryRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
-        // This large legacy footprint must not share the default remote-port
-        // band: all GameTest templates are active in the same server level.
-        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 5, chunkStartZ + 180_000 + 940);
+        // This large legacy footprint needs an isolated far-coordinate lane:
+        // all GameTest templates are active in the same server level, and the
+        // old remote-port band is also used by asynchronous fixture activity.
+        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 5, chunkStartZ + 3_600_000 + 1_000);
         forceLoadedChunks(level, supportPos.offset(-18, -8, -18), supportPos.offset(18, 12, 18));
         clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(12).offset(18, 0, 18));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -10742,8 +11479,30 @@ public final class EnergyMk2GameTests {
         ItemStack factoryStack = new ItemStack(ModBlocks.MACHINE_CHEMICAL_FACTORY.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, factoryStack);
 
-        var placeResult = factoryStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        // A running batch can place transient gas blocks after setup. Preserve
+        // the legacy replaceability contract by clearing immediately before
+        // this real BlockItem#useOn call, then restoring the stone support.
+        clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(12).offset(18, 0, 18));
+        level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(supportPos));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_CHEMICAL_FACTORY.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_chemical_factory has a source-backed direct-placement state for the selected south-facing context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(placementContext.canPlace(),
+                "machine_chemical_factory BlockPlaceContext can place at its selected temporary position");
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_chemical_factory source XR footprint is clear before player placement; problems="
+                        + directMultiblockPreflightProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_CHEMICAL_FACTORY.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos),
+                                placementContext.getClickedPos()));
+
+        var placeResult = factoryStack.useOn(useOnContext);
 
         ChemicalFactoryBlockEntity factory = findBlockEntityAroundOrNull(level, supportPos.above(), 10,
                 ChemicalFactoryBlockEntity.class, ModBlocks.MACHINE_CHEMICAL_FACTORY.get());
@@ -10786,7 +11545,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsSteamEngine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsSteamEngine")
     public static void steamEngineRemotePortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10860,7 +11619,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsFensu")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsFensu")
     public static void fensuBottomPortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10910,7 +11669,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsFensu")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsFensu")
     public static void playerUseOnPlacesFensuBottomProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -10977,7 +11736,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsBatteryRedd")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsBatteryRedd")
     public static void batteryReddSidePortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11050,7 +11809,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsStirling")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsStirling")
     public static void stirlingSidePortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11075,7 +11834,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsStirling")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsStirling")
     public static void playerUseOnPlacesStirlingRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11135,7 +11894,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsWoodBurner")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsWoodBurner")
     public static void woodBurnerBackPortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11162,7 +11921,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsWoodBurner")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsWoodBurner")
     public static void woodBurnerRetriesRemoteEnergyProviderOnNextLegacyTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11189,7 +11948,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsWoodBurner")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsWoodBurner")
     public static void playerUseOnPlacesWoodBurnerRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11208,13 +11967,14 @@ public final class EnergyMk2GameTests {
         ItemStack woodBurnerStack = new ItemStack(ModBlocks.MACHINE_WOOD_BURNER.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, woodBurnerStack);
 
+        BlockPos placedPos = supportPos.north();
         var placeResult = woodBurnerStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+                blockHit(supportPos, Direction.NORTH)));
 
-        WoodBurnerBlockEntity woodBurner = findWoodBurnerAroundOrNull(level, supportPos.above(), 6);
+        WoodBurnerBlockEntity woodBurner = findWoodBurnerAroundOrNull(level, placedPos.above(), 6);
         if (woodBurner == null) {
             throw new AssertionError("player useOn machine_wood_burner placement returned " + placeResult
-                    + " without placing a machine_wood_burner core around " + supportPos.above()
+                    + " without placing a machine_wood_burner core around " + placedPos.above()
                     + "; hand stack=" + player.getItemInHand(InteractionHand.MAIN_HAND));
         }
         assertTrue(placeResult.consumesAction(),
@@ -11248,7 +12008,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsTurbofan")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsTurbofan")
     public static void playerUseOnPlacesTurbofanRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11312,10 +12072,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=4", "networked=");
 
+        clearBox(level, supportPos.above().offset(-10, -4, -10), supportPos.above(7).offset(10, 0, 10));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsGasTurbine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsGasTurbine")
     public static void playerUseOnPlacesGasTurbineRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11384,10 +12145,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=1", "networked=");
 
+        clearBox(level, supportPos.above().offset(-12, -4, -12), supportPos.above(8).offset(12, 0, 12));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsLargeTurbine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsLargeTurbine")
     public static void playerUseOnPlacesLargeTurbineRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11406,8 +12168,24 @@ public final class EnergyMk2GameTests {
         ItemStack turbineStack = new ItemStack(ModBlocks.MACHINE_LARGE_TURBINE.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, turbineStack);
 
-        var placeResult = turbineStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        // MachineLargeTurbine#getDimensions includes a block below its offset
+        // core. A top-face click therefore occupies a required air cell with
+        // the support stone; use the north face for the valid legacy entry.
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND,
+                blockHit(supportPos, Direction.NORTH));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_LARGE_TURBINE.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_large_turbine has a direct placement state for the selected north-face context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_large_turbine source XR footprint is clear for its north-face player placement; problems="
+                        + MultiblockHelper.findLayoutProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_LARGE_TURBINE.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos)));
+        var placeResult = turbineStack.useOn(useOnContext);
 
         LegacyLargeTurbineBlockEntity turbine = findBlockEntityAroundOrNull(level, supportPos.above(), 10,
                 LegacyLargeTurbineBlockEntity.class, ModBlocks.MACHINE_LARGE_TURBINE.get());
@@ -11419,6 +12197,8 @@ public final class EnergyMk2GameTests {
         assertTrue(placeResult.consumesAction(),
                 "player useOn placement consumes the machine_large_turbine block item action after placing the core");
         BlockPos machinePos = turbine.getBlockPos();
+        assertTrue(expectedCorePos.equals(machinePos),
+                "player useOn places machine_large_turbine at the same offset core selected by direct preflight");
         assertTrue(level.getBlockState(machinePos).getValue(HorizontalMachineBlock.FACING) == Direction.SOUTH,
                 "player-placed machine_large_turbine faces south for the selected legacy north power port");
         Direction facing = level.getBlockState(machinePos).getValue(HorizontalMachineBlock.FACING);
@@ -11451,16 +12231,21 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=1", "networked=");
 
+        clearBox(level, supportPos.above().offset(-12, -4, -12), supportPos.above(7).offset(12, 0, 12));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsSteamEngine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsSteamEngine")
     public static void playerUseOnPlacesSteamEngineRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
-        BlockPos supportPos = new BlockPos(chunkStartX + 26, anchor.getY() + 6, chunkStartZ + 404);
+        // This legacy XR footprint must remain entirely clear. Keep the
+        // player-placement fixture outside the shared low-Z GameTest lanes,
+        // where long-running features can leave non-replaceable blocks in
+        // a proxy position before this batch executes.
+        BlockPos supportPos = new BlockPos(chunkStartX + 26, anchor.getY() + 6, chunkStartZ + 4_400_404);
         forceLoadedChunks(level, supportPos.offset(-12, -4, -12), supportPos.offset(12, 8, 12));
         clearBox(level, supportPos.above().offset(-12, -4, -12), supportPos.above(8).offset(12, 0, 12));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -11473,8 +12258,24 @@ public final class EnergyMk2GameTests {
         ItemStack steamEngineStack = new ItemStack(ModBlocks.MACHINE_STEAM_ENGINE.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, steamEngineStack);
 
-        var placeResult = steamEngineStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        // SteamEngine's source dimensions include one block below its offset
+        // core. A top-face click puts the stone support inside that required
+        // air volume; the north face is the corresponding valid player entry.
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND,
+                blockHit(supportPos, Direction.NORTH));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_STEAM_ENGINE.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_steam_engine has a direct placement state for the selected north-face context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_steam_engine source XR footprint is clear for its north-face player placement; problems="
+                        + MultiblockHelper.findLayoutProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_STEAM_ENGINE.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos)));
+        var placeResult = steamEngineStack.useOn(useOnContext);
 
         SteamEngineBlockEntity steamEngine = findBlockEntityAroundOrNull(level, supportPos.above(), 10,
                 SteamEngineBlockEntity.class, ModBlocks.MACHINE_STEAM_ENGINE.get());
@@ -11486,6 +12287,8 @@ public final class EnergyMk2GameTests {
         assertTrue(placeResult.consumesAction(),
                 "player useOn placement consumes the machine_steam_engine block item action after placing the core");
         BlockPos machinePos = steamEngine.getBlockPos();
+        assertTrue(expectedCorePos.equals(machinePos),
+                "player useOn places machine_steam_engine at the same offset core selected by direct preflight");
         assertTrue(level.getBlockState(machinePos).getValue(HorizontalMachineBlock.FACING) == Direction.SOUTH,
                 "player-placed machine_steam_engine faces south for the selected legacy west center port");
         Direction facing = level.getBlockState(machinePos).getValue(HorizontalMachineBlock.FACING);
@@ -11549,10 +12352,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=3", "networked=");
 
+        clearBox(level, supportPos.above().offset(-12, -4, -12), supportPos.above(8).offset(12, 0, 12));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsSteamTurbine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsSteamTurbine")
     public static void playerUseOnPlacesSteamTurbineAdjacentProviderPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11628,7 +12432,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsBatteryRedd")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsBatteryRedd")
     public static void playerUseOnPlacesBatteryReddRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11740,7 +12544,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsIndustrialTurbine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsIndustrialTurbine")
     public static void playerUseOnPlacesIndustrialTurbineRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11825,7 +12629,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsChungus")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsChungus")
     public static void playerUseOnPlacesChungusRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11893,7 +12697,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsRtg")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsRtg")
     public static void playerUseOnPlacesRtgAdjacentProviderPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -11968,90 +12772,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsMiniRtg")
-    public static void playerUseOnPlacesMiniRtgAdjacentProviderPortsAndDiagnostics(GameTestHelper helper) {
-        assertPlayerUseOnPlacesMiniRtgAdjacentProviderPortsAndDiagnostics(helper,
-                ModBlocks.MACHINE_MINIRTG.get(), "machine_minirtg", 700L, 496);
-    }
-
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsPowerRtg")
-    public static void playerUseOnPlacesPowerRtgAdjacentProviderPortsAndDiagnostics(GameTestHelper helper) {
-        assertPlayerUseOnPlacesMiniRtgAdjacentProviderPortsAndDiagnostics(helper,
-                ModBlocks.MACHINE_POWERRTG.get(), "machine_powerrtg", 2_500L, 504);
-    }
-
-    private static void assertPlayerUseOnPlacesMiniRtgAdjacentProviderPortsAndDiagnostics(GameTestHelper helper,
-            Block block, String machineName, long expectedOutput, int zOffset) {
-        ServerLevel level = helper.getLevel();
-        BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
-        int chunkStartX = anchor.getX() & ~15;
-        int chunkStartZ = anchor.getZ() & ~15;
-        BlockPos supportPos = new BlockPos(chunkStartX + 20, anchor.getY() + 4, chunkStartZ + zOffset);
-        forceLoadedChunks(level, supportPos.offset(-8, -4, -8), supportPos.offset(8, 6, 8));
-        clearBox(level, supportPos.above().offset(-8, -4, -8), supportPos.above(6).offset(8, 0, 8));
-        level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
-
-        var player = gameTestPlayer(level);
-        player.setPos(supportPos.getX() + 0.5D, supportPos.getY() + 1.0D, supportPos.getZ() + 6.5D);
-        player.setYRot(180.0F);
-        player.setXRot(0.0F);
-        player.getInventory().clearContent();
-        ItemStack machineStack = new ItemStack(block);
-        player.setItemInHand(InteractionHand.MAIN_HAND, machineStack);
-
-        var placeResult = machineStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
-        MiniRtgBlockEntity rtg = findBlockEntityAroundOrNull(level, supportPos.above(), 3,
-                MiniRtgBlockEntity.class, block);
-        if (rtg == null) {
-            throw new AssertionError("player useOn " + machineName + " placement returned " + placeResult
-                    + " without placing a " + machineName + " block entity around " + supportPos.above()
-                    + "; hand stack=" + player.getItemInHand(InteractionHand.MAIN_HAND));
-        }
-        assertTrue(placeResult.consumesAction(),
-                "player useOn placement consumes the " + machineName + " block item action after placing the block");
-        BlockPos machinePos = rtg.getBlockPos();
-
-        BlockPos portCablePos = machinePos.west();
-        BlockPos batteryPos = portCablePos.west(4);
-        BlockPos firstCablePos = batteryPos.east();
-        forceLoadedChunks(level, batteryPos, machinePos);
-        MachineBatteryBlockEntity battery = prepareInputBatteryAndCableLine(level, batteryPos, firstCablePos,
-                portCablePos);
-        assertSame(rtg, level.getBlockEntity(machinePos),
-                "player-placed " + machineName + " survives adjacent west provider-side cable placement");
-
-        assertInputBatteryReceiverSubscribes(level, batteryPos, portCablePos, battery,
-                "machine_battery input receiver subscribes before player-placed " + machineName + " transfer");
-        MiniRtgBlockEntity.serverTick(level, machinePos, level.getBlockState(machinePos), rtg);
-        HbmEnergyNodespace.tick(level);
-
-        HbmPowerNet powerNet = HbmEnergyUtil.getPowerNet(level, portCablePos);
-        assertTrue(powerNet != null && powerNet.isValid(),
-                "player-placed " + machineName + " adjacent provider side has a valid power net");
-        HbmPowerNet.DebugSnapshot beforeUpdate = powerNet.createDebugSnapshot();
-        long transferred = powerNet.update();
-        HbmPowerNet.DebugSnapshot afterUpdate = powerNet.createDebugSnapshot();
-        assertTrue(beforeUpdate.lastTransfer() > 0L || transferred > 0L,
-                "player-placed " + machineName + " power net transferred HE; before=" + beforeUpdate
-                        + ", after=" + afterUpdate);
-        assertTrue(battery.getPower() > 0L,
-                "machine_battery input received HE from player-placed " + machineName);
-        assertEquals(expectedOutput, rtg.getOutput(),
-                "player-placed " + machineName + " keeps legacy HE/t output");
-
-        int expectedLinks = powerNet.createDebugSnapshot().links();
-        assertCommandVisibleMessage(level, portCablePos, "hbm energy network " + commandPos(portCablePos),
-                expectedLinks, "Energy network at " + portCablePos.toShortString(), "links=", "providers=");
-        assertCommandVisibleMessage(level, portCablePos, "hbm energy node " + commandPos(portCablePos),
-                expectedLinks, "Energy network at " + portCablePos.toShortString(), "links=");
-        assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 0,
-                "Energy ports at " + machinePos.toShortString(), "total=0", "networked=0");
-
-        helper.succeed();
-    }
-
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsDiesel")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsDiesel")
     public static void playerUseOnPlacesDieselGeneratorAdjacentProviderPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12132,10 +12853,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=6", "networked=");
 
+        clearBox(level, supportPos.above().offset(-8, -4, -8), supportPos.above(6).offset(8, 0, 8));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsCombustion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsCombustion")
     public static void playerUseOnPlacesCombustionEngineRemoteProviderPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12154,10 +12876,15 @@ public final class EnergyMk2GameTests {
         ItemStack engineStack = new ItemStack(ModBlocks.MACHINE_COMBUSTION_ENGINE.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, engineStack);
 
+        // The legacy {1,0,1,0,3,2} XR footprint and its four extra provider
+        // ports occupy the top-click support route.  Click the north face of
+        // the south-side support so the temporary placement cell stays out of
+        // the source-checked structure volume.
+        BlockPos placedPos = supportPos.north();
         var placeResult = engineStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+                blockHit(supportPos, Direction.NORTH)));
 
-        CombustionEngineBlockEntity engine = findBlockEntityAroundOrNull(level, supportPos.above(), 8,
+        CombustionEngineBlockEntity engine = findBlockEntityAroundOrNull(level, placedPos, 8,
                 CombustionEngineBlockEntity.class, ModBlocks.MACHINE_COMBUSTION_ENGINE.get());
         if (engine == null) {
             throw new AssertionError("player useOn machine_combustion_engine placement returned " + placeResult
@@ -12233,15 +12960,17 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsGasFlare")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsGasFlare")
     public static void playerUseOnPlacesGasFlareRemoteProviderPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
         // Keep the flare's real BlockItem#useOn support outside shared template
-        // cleanup volumes; this fixture also exercises fluid-port replacement.
-        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 4, chunkStartZ + 2_800_000 + 824);
+        // cleanup volumes and above the empty-template ceiling; this fixture
+        // also exercises fluid-port replacement.
+        int fixtureY = helper.absolutePos(new BlockPos(1, 124, 1)).getY();
+        BlockPos supportPos = new BlockPos(chunkStartX + 24, fixtureY, chunkStartZ + 2_800_000 + 824);
         forceLoadedChunks(level, supportPos.offset(-10, -4, -10), supportPos.offset(10, 14, 10));
         clearBox(level, supportPos.above().offset(-10, -4, -10), supportPos.above(14).offset(10, 0, 10));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -12320,10 +13049,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=4", "networked=");
 
+        clearBox(level, supportPos.above().offset(-10, -4, -10), supportPos.above(14).offset(10, 0, 10));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsDfcReceiver")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsDfcReceiver")
     public static void playerUseOnPlacesDfcReceiverAdjacentProviderPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12397,13 +13127,15 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsRadiolysis")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsRadiolysis")
     public static void playerUseOnPlacesRadiolysisRemoteProviderPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
-        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 4, chunkStartZ + 552);
+        // This real XR BlockItem placement runs beside the entire suite, so
+        // keep it outside the shared low-offset fixture lanes.
+        BlockPos supportPos = new BlockPos(chunkStartX + 24, anchor.getY() + 4, chunkStartZ + 4_000_000 + 552);
         forceLoadedChunks(level, supportPos.offset(-8, -4, -8), supportPos.offset(8, 7, 8));
         clearBox(level, supportPos.above().offset(-8, -4, -8), supportPos.above(7).offset(8, 0, 8));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -12416,8 +13148,27 @@ public final class EnergyMk2GameTests {
         ItemStack radiolysisStack = new ItemStack(ModBlocks.MACHINE_RADIOLYSIS.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, radiolysisStack);
 
-        var placeResult = radiolysisStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        clearBox(level, supportPos.above().offset(-8, -4, -8), supportPos.above(7).offset(8, 0, 8));
+        level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(supportPos));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.MACHINE_RADIOLYSIS.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "machine_radiolysis has a source-backed direct-placement state for the selected south-facing context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(placementContext.canPlace(),
+                "machine_radiolysis BlockPlaceContext can place at its selected temporary position");
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "machine_radiolysis source XR footprint is clear before player placement; problems="
+                        + directMultiblockPreflightProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.MACHINE_RADIOLYSIS.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos),
+                                placementContext.getClickedPos()));
+
+        var placeResult = radiolysisStack.useOn(useOnContext);
 
         RadiolysisBlockEntity radiolysis = findBlockEntityAroundOrNull(level, supportPos.above(), 8,
                 RadiolysisBlockEntity.class, ModBlocks.MACHINE_RADIOLYSIS.get());
@@ -12484,7 +13235,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsRadGen")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsRadGen")
     public static void playerUseOnPlacesRadGenRemoteProviderPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12574,7 +13325,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesOilWellAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12637,7 +13388,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesPumpjackRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12699,7 +13450,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesFrackingTowerAdjacentReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12773,7 +13524,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesElectricPumpRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12838,7 +13589,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2ReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2ReceiverPorts")
     public static void assembledIcfControllerRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12891,7 +13642,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesFusionTorusRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -12970,7 +13721,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesFusionKlystronRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13035,10 +13786,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=3", "networked=");
 
+        clearBox(level, supportPos.above().offset(-22, -8, -22), supportPos.above(16).offset(22, 0, 22));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedReceiverPorts")
     public static void playerUseOnPlacesFusionPlasmaForgeRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13047,7 +13799,12 @@ public final class EnergyMk2GameTests {
         // Plasma Forge has the largest receiver fixture in this batch. Its
         // lane is intentionally distinct from every grid-derived placement
         // fixture so a concurrent clear cannot turn its support into air.
-        BlockPos supportPos = new BlockPos(chunkStartX + 34, anchor.getY() + 8, chunkStartZ + 2_600_000 + 880);
+        // The source accepts this XR footprint at any valid height. Keep the
+        // GameTest fixture in a dedicated high-altitude lane: at the modern
+        // negative-depth test floor, freshly generated deepslate can race the
+        // remote fixture clear and make a placement test depend on terrain timing.
+        int fixtureY = level.getMaxBuildHeight() - 48;
+        BlockPos supportPos = new BlockPos(chunkStartX + 34, fixtureY, chunkStartZ + 2_600_000 + 880);
         forceLoadedChunks(level, supportPos.offset(-20, -8, -20), supportPos.offset(20, 16, 20));
         clearBox(level, supportPos.above().offset(-20, -8, -20), supportPos.above(16).offset(20, 0, 20));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -13060,8 +13817,28 @@ public final class EnergyMk2GameTests {
         ItemStack machineStack = new ItemStack(ModBlocks.FUSION_PLASMA_FORGE.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, machineStack);
 
-        var placeResult = machineStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
+        // MachineFusionPlasmaForge#checkRequirement checks every one of its
+        // eight XR volumes around the source-offset core. A top-face click
+        // leaves the support below all source-checked volumes while retaining
+        // the real ItemBlock placement path. Keep the derived coordinates in
+        // the assertion path so a future useOn/BlockPlaceContext drift cannot
+        // turn this back into a fixture-dependent failure.
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND,
+                blockHit(supportPos, Direction.UP));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.FUSION_PLASMA_FORGE.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "fusion_plasma_forge has a direct placement state for the selected top-face context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "fusion_plasma_forge source XR footprint is clear for its top-face player placement; problems="
+                        + MultiblockHelper.findLayoutProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.FUSION_PLASMA_FORGE.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos)));
+
+        var placeResult = machineStack.useOn(useOnContext);
         FusionPlasmaForgeBlockEntity forge = findBlockEntityAroundOrNull(level, supportPos.above(), 18,
                 FusionPlasmaForgeBlockEntity.class, ModBlocks.FUSION_PLASMA_FORGE.get());
         if (forge == null) {
@@ -13072,6 +13849,8 @@ public final class EnergyMk2GameTests {
         assertTrue(placeResult.consumesAction(),
                 "player useOn placement consumes the fusion_plasma_forge block item action after placing the core");
         BlockPos machinePos = forge.getBlockPos();
+        assertTrue(expectedCorePos.equals(machinePos),
+                "player useOn places fusion_plasma_forge at the same offset core selected by direct preflight");
         assertTrue(level.getBlockState(machinePos).getValue(LegacyVisibleMultiblockMachineBlock.FACING)
                         == Direction.SOUTH,
                 "player-placed fusion_plasma_forge faces south for the selected legacy remote port");
@@ -13100,15 +13879,15 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsFusionMhdt")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2PlayerPlacedProviderPortsFusionMhdt")
     public static void playerUseOnPlacesFusionMhdtRemoteProviderPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
         int chunkStartX = anchor.getX() & ~15;
         int chunkStartZ = anchor.getZ() & ~15;
-        // MHDT checks five overlapping XR volumes; keep this source-sized footprint
-        // outside the shared player-placement lanes before exercising its UNINOS ports.
-        BlockPos supportPos = new BlockPos(chunkStartX + 34, anchor.getY() + 8, chunkStartZ + 65_536 + 920);
+        // MHDT checks five overlapping XR volumes. Keep this source-sized
+        // footprint in a dedicated band, away from full-suite fixture cleanup.
+        BlockPos supportPos = new BlockPos(chunkStartX + 34, anchor.getY() + 8, chunkStartZ + 4_000_000 + 920);
         forceLoadedChunks(level, supportPos.offset(-22, -8, -22), supportPos.offset(22, 16, 22));
         clearBox(level, supportPos.above().offset(-22, -8, -22), supportPos.above(16).offset(22, 0, 22));
         level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
@@ -13121,14 +13900,45 @@ public final class EnergyMk2GameTests {
         ItemStack machineStack = new ItemStack(ModBlocks.FUSION_MHDT.get());
         player.setItemInHand(InteractionHand.MAIN_HAND, machineStack);
 
-        var placeResult = machineStack.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
-                blockHit(supportPos)));
-        FusionMHDTBlockEntity mhdt = findBlockEntityAroundOrNull(level, supportPos.above(), 20,
+        // The MHDT's source footprint reaches seven blocks below its temporary
+        // placement position.  A top-face click would put its support block
+        // inside that required air volume, so use the north face of the
+        // south-side support exactly as a player must for this multiblock.
+        // This full-suite fixture runs after its initial cleanup for several
+        // server ticks, during which independent gas features can occupy an
+        // otherwise legal layout cell. Clear only this fixture again; the
+        // production placement contract still rejects non-replaceable blocks.
+        clearBox(level, supportPos.above().offset(-22, -8, -22), supportPos.above(16).offset(22, 0, 22));
+        level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+        BlockPos placedPos = supportPos.north();
+        UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND,
+                blockHit(supportPos, Direction.NORTH));
+        BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+        var multiblock = (LegacyMultiblockPlaceable) ModBlocks.FUSION_MHDT.get();
+        BlockState placementState = multiblock.getDirectPlacementState(placementContext);
+        assertTrue(placementState != null,
+                "fusion_mhdt has a source-backed direct-placement state for the selected south-facing context");
+        BlockPos expectedCorePos = multiblock.getDirectPlacementCore(placementContext, placementState);
+        assertTrue(placementContext.canPlace(),
+                "fusion_mhdt BlockPlaceContext can place at its north-face temporary position");
+        assertTrue(multiblock.canPlaceDirectMultiblock(level, expectedCorePos, placementContext.getClickedPos(),
+                        placementState),
+                "fusion_mhdt source XR footprint is clear before player placement; problems="
+                        + directMultiblockPreflightProblems(level, expectedCorePos,
+                                ((MultiblockCoreBlock) ModBlocks.FUSION_MHDT.get())
+                                        .getMultiblockLayout(placementState, level, expectedCorePos),
+                                placementContext.getClickedPos()));
+
+        var placeResult = machineStack.useOn(useOnContext);
+        FusionMHDTBlockEntity mhdt = findBlockEntityAroundOrNull(level, placedPos, 20,
                 FusionMHDTBlockEntity.class, ModBlocks.FUSION_MHDT.get());
         if (mhdt == null) {
             throw new AssertionError("player useOn fusion_mhdt placement returned " + placeResult
-                    + " without placing a fusion_mhdt core around " + supportPos.above()
-                    + "; hand stack=" + player.getItemInHand(InteractionHand.MAIN_HAND));
+                    + " without placing a fusion_mhdt core around " + expectedCorePos
+                    + "; hand stack=" + player.getItemInHand(InteractionHand.MAIN_HAND)
+                    + "; contextCanPlace=" + placementContext.canPlace()
+                    + "; directLayoutCanPlace=" + multiblock.canPlaceDirectMultiblock(level, expectedCorePos,
+                            placementContext.getClickedPos(), placementState));
         }
         assertTrue(placeResult.consumesAction(),
                 "player useOn placement consumes the fusion_mhdt block item action after placing the core");
@@ -13185,10 +13995,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=3", "networked=");
 
+        clearBox(level, supportPos.above().offset(-22, -8, -22), supportPos.above(16).offset(22, 0, 22));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsTurbofan")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsTurbofan")
     public static void turbofanBackPortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13215,7 +14026,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsGasTurbine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsGasTurbine")
     public static void gasTurbineSidePortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13242,7 +14053,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsTurbofan")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsTurbofan")
     public static void turbofanRetriesRemoteEnergyProviderOnNextLegacyTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13269,7 +14080,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsGasTurbine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsGasTurbine")
     public static void gasTurbineRetriesRemoteEnergyProviderOnNextLegacyTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13293,7 +14104,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsLargeTurbine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsLargeTurbine")
     public static void largeTurbineBackPortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13320,7 +14131,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsIndustrialTurbine")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsIndustrialTurbine")
     public static void industrialTurbineBackPortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13347,7 +14158,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsChungus")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsChungus")
     public static void chungusBackPortProvidesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13374,7 +14185,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsTurretStandard")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsTurretStandard")
     public static void standardTurretRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13400,7 +14211,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsTurretArty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsTurretArty")
     public static void artilleryTurretRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13426,7 +14237,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsTurretHimars")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsTurretHimars")
     public static void himarsTurretRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13452,7 +14263,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsPaSource")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsPaSource")
     public static void paSourceRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13478,7 +14289,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsPaRfc")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsPaRfc")
     public static void paRfcRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13504,7 +14315,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsPaQuadrupole")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsPaQuadrupole")
     public static void paQuadrupoleRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13530,7 +14341,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsPaDipole")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsPaDipole")
     public static void paDipoleRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13553,10 +14364,15 @@ public final class EnergyMk2GameTests {
         prepareOutputBatteryAndCableLine(level, batteryPos, firstCablePos, portCablePos, 100_000L);
         assertRemoteReceiverReceivesPower(level, batteryPos, portCablePos, paPos,
                 pa.energyPorts(), pa, "pa_dipole", 8, 100_000L);
+        // The dipole creates four real multiblock DUMMY block entities outside
+        // the 1x1x1 `empty` template.  Let its normal core/dummy teardown run
+        // while the fixture chunks are loaded; otherwise the GameTest runner's
+        // later template reset can persist stale dummy NBT beside air.
+        clearBox(level, batteryPos.offset(-12, -12, -12), paPos.offset(12, 12, 12));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsPaDetector")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsPaDetector")
     public static void paDetectorRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13582,7 +14398,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsLaunchPad")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsLaunchPad")
     public static void launchPadRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13605,7 +14421,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedRemotePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedRemotePorts")
     public static void playerUseOnPlacesLaunchPadRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13659,7 +14475,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsLargeLaunchPad")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsLargeLaunchPad")
     public static void largeLaunchPadRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13682,7 +14498,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedLargeLaunchPad")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedLargeLaunchPad")
     public static void playerUseOnPlacesLargeLaunchPadRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13765,7 +14581,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsCompactLauncher")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsCompactLauncher")
     public static void compactLauncherRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13788,7 +14604,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedRemotePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedRemotePorts")
     public static void playerUseOnPlacesCompactLauncherRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13842,7 +14658,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedRemotePorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedRemotePorts")
     public static void playerUseOnPlacesLaunchTableRemotePortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13898,7 +14714,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsSoyuzLauncher")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsSoyuzLauncher")
     public static void soyuzLauncherRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13921,7 +14737,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2PlayerPlacedSoyuzLauncher")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedSoyuzLauncher")
     public static void playerUseOnPlacesSoyuzLauncherRemotePortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -13974,10 +14790,11 @@ public final class EnergyMk2GameTests {
         assertCommandVisibleMessage(level, launcherPos, "hbm energy ports " + commandPos(launcherPos), 1,
                 "Energy ports at " + launcherPos.toShortString(), "total=104", "networked=");
 
+        clearBox(level, supportPos.above().offset(-16, 0, -16), supportPos.above(10).offset(16, 0, 16));
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsRemainingStandardTurrets")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsRemainingStandardTurrets")
     public static void remainingStandardTurretSubclassesReceivePowerAcrossChunkCable(GameTestHelper helper) {
         assertStandardTurretSubclassReceivesPower(helper, ModBlocks.TURRET_FRIENDLY,
                 "turret_friendly", 124);
@@ -13994,7 +14811,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsTurretSentry")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsTurretSentry")
     public static void sentryTurretBottomPortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -14020,7 +14837,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2UseOnTurretSentry")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2UseOnTurretSentry")
     public static void playerUseOnPlacesSentryTurretBottomPortAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -14072,7 +14889,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsTurretFritz")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsTurretFritz")
     public static void fritzTurretRemotePortReceivesPowerAcrossChunkCable(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -14098,7 +14915,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2UseOnTurretFritz")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2UseOnTurretFritz")
     public static void playerUseOnPlacesFritzTurretRemoteReceiverPortsAndDiagnostics(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -14154,7 +14971,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2RemotePortsTurretFritz")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2RemotePortsTurretFritz")
     public static void fritzTurretFluidPortReceivesDieselAcrossFluidDuct(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -14238,7 +15055,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2CommandDiagnostics")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2CommandDiagnostics")
     public static void energyCommandsObserveRemotePortNetworks(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -14301,7 +15118,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2CommandDiagnostics")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2CommandDiagnostics")
     public static void legacyReapNetworksCommandClearsEveryModernNodespace(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -14441,7 +15258,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosReapRecovery")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosReapRecovery")
     public static void legacyReapMakesLoadedSpecialisedNodeHostsRecoverOnTheirNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos rebarPos = helper.absolutePos(new BlockPos(2, 2, 2));
@@ -14806,7 +15623,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosReapStorage")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosReapStorage")
     public static void legacyReapMakesLoadedBufferStorageHostsRecoverOnTheirNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos tankPos = helper.absolutePos(new BlockPos(2, 2, 2));
@@ -14940,7 +15757,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosReapCables")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosReapCables")
     public static void legacyReapMakesLoadedCableHostsRecoverOnTheirNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos cablePos = helper.absolutePos(new BlockPos(2, 2, 2));
@@ -15111,7 +15928,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosReapWireHosts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosReapWireHosts")
     public static void legacyReapMakesLoadedWireHostsRecoverOnTheirNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos connectorPos = helper.absolutePos(new BlockPos(2, 2, 2));
@@ -15188,7 +16005,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFoundry")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFoundry")
     public static void foundryChannelUsesSharedUninosMaterialState(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmUninosNodespaces.unloadLevel(level);
@@ -15244,7 +16061,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosRebar")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosRebar")
     public static void rebarUsesUninosLowestLayerTransferContract(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -15313,7 +16130,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidTank")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidTank")
     public static void fluidTankModesUseLegacyUninosNodeAndPortContracts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -15476,7 +16293,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidBarrel")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidBarrel")
     public static void fluidBarrelUsesLegacyAdjacentUninosPortContracts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos barrelPos = helper.absolutePos(new BlockPos(12, 2, 5));
@@ -15618,7 +16435,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosNodeUnloadLifecycle")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosNodeUnloadLifecycle")
     public static void networkBlockEntitiesKeepNodesOnChunkUnloadAndDestroyThemOnRemoval(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -15676,7 +16493,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosIcfPress")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosIcfPress")
     public static void icfPressUsesLegacyAdjacentReceiverPortsWithoutFluidNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -15767,7 +16584,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCondenser")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCondenser")
     public static void condenserUsesLegacyAdjacentFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos condenserPos = helper.absolutePos(new BlockPos(12, 2, 5));
@@ -15837,7 +16654,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCoolingTowers")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCoolingTowers")
     public static void coolingTowersUseLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos smallPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -15858,7 +16675,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosOilDrills")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosOilDrills")
     public static void oilDrillsUseLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos wellPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -15889,7 +16706,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFuelGenerators")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFuelGenerators")
     public static void fuelGeneratorsUseLegacyRemoteFluidInputsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos combustionPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -15935,7 +16752,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosLiquefactorFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosLiquefactorFluid")
     public static void liquefactorUsesLegacyRemoteFluidOutputsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos liquefactorPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -15961,7 +16778,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosGasFlareFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosGasFlareFluid")
     public static void gasFlareUsesLegacyRemoteGasInputWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos flarePos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -15978,7 +16795,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosVacuumDistillFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosVacuumDistillFluid")
     public static void vacuumDistillUsesLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOutsideLegacyTwentyTick(helper, () -> {
@@ -16027,48 +16844,8 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosDiFurnaceSmoke")
-    public static void diFurnaceUsesLegacyDirectSmokePortsWithoutCoreNodes(GameTestHelper helper) {
-        ServerLevel level = helper.getLevel();
-        BlockPos typePos = helper.absolutePos(new BlockPos(8, 2, 8));
-        BlockPos sixPortPos = helper.absolutePos(new BlockPos(24, 2, 8));
-        BlockPos extensionPos = helper.absolutePos(new BlockPos(40, 2, 8));
-        clearBox(level, typePos.offset(-3, -2, -3), extensionPos.offset(3, 5, 3));
-        try {
-            level.setBlock(typePos, ModBlocks.MACHINE_DIFURNACE_OFF.get().defaultBlockState(), Block.UPDATE_ALL);
-            level.setBlock(sixPortPos, ModBlocks.MACHINE_DIFURNACE_OFF.get().defaultBlockState(), Block.UPDATE_ALL);
-            level.setBlock(extensionPos, ModBlocks.MACHINE_DIFURNACE_OFF.get().defaultBlockState(), Block.UPDATE_ALL);
-            level.setBlock(extensionPos.above(), ModBlocks.MACHINE_DIFURNACE_EXTENSION.get().defaultBlockState(),
-                    Block.UPDATE_ALL);
-            if (!(level.getBlockEntity(typePos) instanceof DiFurnaceBlockEntity typedFurnace)
-                    || !(level.getBlockEntity(sixPortPos) instanceof DiFurnaceBlockEntity sixPortFurnace)
-                    || !(level.getBlockEntity(extensionPos) instanceof DiFurnaceBlockEntity extensionFurnace)) {
-                throw new AssertionError("DiFurnace smoke fixtures did not create their source-backed block entities");
-            }
 
-            // TileEntityMachinePolluting keeps three independent smoke types.  The
-            // DiFurnace sends each non-empty type directly through the same six
-            // neighbor positions, rather than creating a local Fluid Mk2 node.
-            assertDiFurnaceSmokeTypesStaySeparated(level, typedFurnace);
-            assertDiFurnaceSmokeProviderPorts(level, sixPortFurnace, sixPortFurnace.getSendingTanks().get(0),
-                    HbmFluids.SMOKE, List.of(
-                            HbmFluidUtil.FluidPort.of(1, 0, 0, Direction.EAST),
-                            HbmFluidUtil.FluidPort.of(-1, 0, 0, Direction.WEST),
-                            HbmFluidUtil.FluidPort.of(0, 1, 0, Direction.UP),
-                            HbmFluidUtil.FluidPort.of(0, -1, 0, Direction.DOWN),
-                            HbmFluidUtil.FluidPort.of(0, 0, 1, Direction.SOUTH),
-                            HbmFluidUtil.FluidPort.of(0, 0, -1, Direction.NORTH)),
-                    "DiFurnace six-way smoke");
-            assertDiFurnaceSmokeProviderPorts(level, extensionFurnace, extensionFurnace.getSendingTanks().get(0),
-                    HbmFluids.SMOKE, List.of(HbmFluidUtil.FluidPort.of(0, 2, 0, Direction.UP)),
-                    "DiFurnace extension-top smoke");
-        } finally {
-            clearBox(level, typePos.offset(-3, -2, -3), extensionPos.offset(3, 5, 3));
-        }
-        helper.succeed();
-    }
-
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosRotaryFurnaceFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosRotaryFurnaceFluid")
     public static void rotaryFurnaceKeepsLegacySplitRemoteFluidPorts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos steamPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -16150,7 +16927,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosMachineFluidEndpoints")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosMachineFluidEndpoints")
     public static void machinesUseSourceBackedFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOnLegacyTwentyTick(helper, () -> {
@@ -16224,7 +17001,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosAssemblyFluidHosts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosAssemblyFluidHosts")
     public static void assemblyMachinesUseLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos assemblyInputPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -16287,7 +17064,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosArcWelderFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosArcWelderFluid")
     public static void arcWelderUsesLegacyRemoteFluidReceiverPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOnLegacyTwentyTick(helper, () -> {
@@ -16332,7 +17109,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void refineryAndSolidifierUseAuditedRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos refineryPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -16373,7 +17150,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void fluidConsumersUseAuditedRemotePortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos drainPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -16417,7 +17194,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void solarBoilerAndThresherUseAuditedRemotePortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOnLegacyTwentyTick(helper, () -> {
@@ -16438,7 +17215,7 @@ public final class EnergyMk2GameTests {
             assertLegacyRemoteFluidOutput(level, solarBoiler, solarBoiler.getSteamTank(), HbmFluids.STEAM, 2,
                     "solar boiler output", () -> SolarBoilerBlockEntity.serverTick(level, solarBoiler.getBlockPos(),
                             level.getBlockState(solarBoiler.getBlockPos()), solarBoiler));
-            assertLegacyRemoteFluidInput(level, thresher, thresher.getTank(), HbmFluids.WOODOIL, 2,
+            assertLegacyRemoteFluidInput(level, thresher, thresher.getTank(), HbmFluids.WOODOIL, 3,
                     "thresher", () -> ThresherBlockEntity.serverTick(level, thresher.getBlockPos(),
                             level.getBlockState(thresher.getBlockPos()), thresher));
             // The initial legacy input-transfer proof fills Solar Boiler's tiny
@@ -16457,7 +17234,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void fluidPumpAndRefuelerUseAuditedRemotePortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOutsideLegacyTwentyTick(helper, () -> {
@@ -16555,7 +17332,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void steamTurbinesUseAuditedFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOutsideLegacyTwentyTick(helper, () -> {
@@ -16596,7 +17373,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void steamEngineUsesLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos enginePos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -16627,7 +17404,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void electricWaterPumpUsesAuditedRemoteOutputPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pumpPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -16649,7 +17426,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void steamWaterPumpUsesAuditedRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pumpPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -16683,7 +17460,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void gasTurbineUsesAuditedRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos fuelTurbinePos = helper.absolutePos(new BlockPos(8, 6, 8));
@@ -16733,7 +17510,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void turbofanUsesAuditedRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos turbofanPos = helper.absolutePos(new BlockPos(12, 2, 12));
@@ -16763,7 +17540,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void strandCasterUsesAuditedRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos casterPos = helper.absolutePos(new BlockPos(12, 4, 12));
@@ -16780,7 +17557,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void blastAndCombinationFurnacesUseAuditedFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos blastPos = helper.absolutePos(new BlockPos(12, 3, 12));
@@ -16806,7 +17583,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void chemicalPlantUsesAuditedRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos machinePos = helper.absolutePos(new BlockPos(58, 3, 12));
@@ -16830,7 +17607,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void chemicalFactoryUsesAuditedRecipeAndCoolingFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos machinePos = helper.absolutePos(new BlockPos(78, 3, 12));
@@ -16860,7 +17637,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidEndpointExpansion")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidEndpointExpansion")
     public static void chimneyUsesAuditedRemoteSmokePortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOnLegacyTwentyTick(helper, () -> {
@@ -16916,7 +17693,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosStorageDrum")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosStorageDrum")
     public static void storageDrumUsesLegacyAdjacentOutputPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -17008,40 +17785,47 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosDroneCrate")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosDroneCrate")
     public static void droneCrateUsesLegacyAdjacentFluidModesWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        BlockPos cratePos = helper.absolutePos(new BlockPos(8, 2, 12));
+        int ticksToBoundary = Math.floorMod(20 - (int) (level.getGameTime() % 20L), 20);
+        if (ticksToBoundary == 0) {
+            ticksToBoundary = 20;
+        }
+        // Keep this callback-local endpoint fixture outside the shared low
+        // GameTest grid. The production crate remains six-side adjacent.
+        BlockPos cratePos = helper.absolutePos(new BlockPos(8, 2, 4_200_012));
         BlockPos inputPipePos = cratePos.north();
         BlockPos outputPipePos = cratePos.east();
-        try {
-            level.setBlock(cratePos, ModBlocks.DRONE_CRATE.get().defaultBlockState(), Block.UPDATE_ALL);
-            level.setBlock(inputPipePos, ModBlocks.FLUID_DUCT_NEO.get().defaultBlockState(), Block.UPDATE_ALL);
-            level.setBlock(outputPipePos, ModBlocks.FLUID_DUCT_NEO.get().defaultBlockState(), Block.UPDATE_ALL);
-            if (!(level.getBlockEntity(cratePos) instanceof DroneCrateBlockEntity crate)
-                    || !(level.getBlockEntity(inputPipePos) instanceof FluidPipeBlockEntity inputPipe)
-                    || !(level.getBlockEntity(outputPipePos) instanceof FluidPipeBlockEntity outputPipe)) {
-                throw new AssertionError("Drone crate fixture did not create its required block entities");
-            }
-            inputPipe.setFluidType(HbmFluids.DIESEL);
-            outputPipe.setFluidType(HbmFluids.DIESEL);
-            refreshFluidNodeAt(level, inputPipePos);
-            refreshFluidNodeAt(level, outputPipePos);
-            crate.tank().setTankType(HbmFluids.DIESEL);
-            crate.handleLegacyButton(null, 0, DroneCrateBlockEntity.CONTROL_TOGGLE_TYPE);
-            crate.handleLegacyButton(null, 0, DroneCrateBlockEntity.CONTROL_TOGGLE_MODE);
+        helper.startSequence()
+                .thenIdle(ticksToBoundary)
+                .thenExecute(() -> {
+                    assertEquals(0L, level.getGameTime() % 20L,
+                            "drone crate fixture reaches the source 20-tick Fluid Mk2 boundary");
+                    forceLoadedChunks(level, cratePos.offset(-3, -2, -3), cratePos.offset(3, 3, 3));
+                    clearBox(level, cratePos.offset(-3, -2, -3), cratePos.offset(3, 3, 3));
+                    try {
+                        level.setBlock(cratePos, ModBlocks.DRONE_CRATE.get().defaultBlockState(), Block.UPDATE_ALL);
+                        level.setBlock(inputPipePos, ModBlocks.FLUID_DUCT_NEO.get().defaultBlockState(), Block.UPDATE_ALL);
+                        level.setBlock(outputPipePos, ModBlocks.FLUID_DUCT_NEO.get().defaultBlockState(), Block.UPDATE_ALL);
+                        if (!(level.getBlockEntity(cratePos) instanceof DroneCrateBlockEntity crate)
+                                || !(level.getBlockEntity(inputPipePos) instanceof FluidPipeBlockEntity inputPipe)
+                                || !(level.getBlockEntity(outputPipePos) instanceof FluidPipeBlockEntity outputPipe)) {
+                            throw new AssertionError("Drone crate fixture did not create its required block entities");
+                        }
+                        inputPipe.setFluidType(HbmFluids.DIESEL);
+                        outputPipe.setFluidType(HbmFluids.DIESEL);
+                        refreshFluidNodeAt(level, inputPipePos);
+                        refreshFluidNodeAt(level, outputPipePos);
+                        HbmFluidNodespace.tick(level);
+                        crate.tank().setTankType(HbmFluids.DIESEL);
+                        crate.handleLegacyButton(null, 0, DroneCrateBlockEntity.CONTROL_TOGGLE_TYPE);
+                        crate.handleLegacyButton(null, 0, DroneCrateBlockEntity.CONTROL_TOGGLE_MODE);
 
-            // The nodespace START pass creates the pipe net before the
-            // crate's own legacy 20-tick block-entity pass reaches it.
-            HbmFluidNodespace.tick(level);
-            TestFluidReceiver dieselSink = new TestFluidReceiver(HbmFluids.DIESEL, 500);
-            helper.startSequence()
-                    // GameTest executes this callback before that server tick's block-entity
-                    // ticker.  After switching the legacy mode, wait through the following
-                    // twentieth-world-time tick so TileEntityDroneCrate's source-backed
-                    // 20-tick endpoint pass has actually run.
-                    .thenIdle(21)
-                    .thenExecute(() -> {
+                        // Invoke the actual legacy-cadenced block-entity ticker at
+                        // this boundary, rather than allowing unrelated later test
+                        // batches to reset the shared nodespace during a long wait.
+                        DroneCrateBlockEntity.tick(level, crate);
                         assertTrue(HbmFluidNodespace.getNode(level, cratePos, HbmFluids.DIESEL) == null,
                                 "drone crate fluid input mode uses remote ports without a core fluid node");
                         assertEquals(1, HbmFluidNodespace.getNetworkReceiverCount(level, inputPipePos, HbmFluids.DIESEL),
@@ -17057,36 +17841,44 @@ public final class EnergyMk2GameTests {
                         assertTrue(crate.tank().getFill() > 0,
                                 "sending-mode drone crate receives fluid for drone loading");
 
+                        TestFluidReceiver dieselSink = new TestFluidReceiver(HbmFluids.DIESEL, 500);
                         assertTrue(HbmFluidUtil.subscribeReceiverToNetwork(level, outputPipePos, Direction.WEST,
                                 HbmFluids.DIESEL, dieselSink),
                                 "test diesel sink subscribes to the drone crate output pipe");
                         crate.handleLegacyButton(null, 0, DroneCrateBlockEntity.CONTROL_TOGGLE_MODE);
-                    })
-                    // The toggle above is processed by the GameTest sequence after the
-                    // block-entity pass for this server tick.  Cross the next cadence
-                    // boundary rather than asserting one tick before it.
-                    .thenIdle(21)
-                    .thenExecute(() -> {
+                        DroneCrateBlockEntity.tick(level, crate);
                         assertTrue(HbmFluidNodespace.getNode(level, cratePos, HbmFluids.DIESEL) == null,
                                 "drone crate fluid output mode still has no core fluid node");
                         assertEquals(1, HbmFluidNodespace.getNetworkProviderCount(level, outputPipePos, HbmFluids.DIESEL),
                                 "requesting-mode drone crate subscribes as a diesel provider at its adjacent output port");
+                        HbmFluidNet outputNet = HbmFluidNodespace.getNode(level, outputPipePos, HbmFluids.DIESEL).getFluidNet();
+                        assertTrue(outputNet.update() > 0L,
+                                "drone crate fluid output network transfers diesel through its legacy adjacent port");
                         assertTrue(dieselSink.getStoredFluid() > 0,
                                 "drone crate fluid output mode delivers diesel through its legacy adjacent port");
+                    } finally {
                         level.removeBlock(cratePos, false);
                         level.removeBlock(inputPipePos, false);
                         level.removeBlock(outputPipePos, false);
-                    })
-                    .thenSucceed();
-        } catch (RuntimeException | Error exception) {
-            level.removeBlock(cratePos, false);
-            level.removeBlock(inputPipePos, false);
-            level.removeBlock(outputPipePos, false);
-            throw exception;
-        }
+                    }
+                })
+                .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosAlbionParticleAccelerator")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosOilDrills")
+    public static void oilDrillDepthsFollowModernDimensionBottom(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        int minY = level.getMinBuildHeight();
+        assertEquals(minY, OilDrillBlockEntity.drillFloorY(level, OilDrillBlockEntity.Kind.FRACKING_TOWER),
+                "fracking tower maps its legacy y=0 drill floor to the current dimension bottom");
+        assertEquals(minY + 5, OilDrillBlockEntity.drillFloorY(level, OilDrillBlockEntity.Kind.WELL),
+                "oil well maps its legacy y=5 drill floor to five blocks above the current dimension bottom");
+        assertEquals(minY + 5, OilDrillBlockEntity.drillFloorY(level, OilDrillBlockEntity.Kind.PUMPJACK),
+                "pumpjack maps its legacy y=5 drill floor to five blocks above the current dimension bottom");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosAlbionParticleAccelerator")
     public static void albionParticleAcceleratorRefreshesLegacyFluidPortsEveryTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         int delayToNonTwentiethTick = Math.floorMod(20 - (int) (level.getGameTime() % 20L) + 1, 20);
@@ -17187,7 +17979,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosOilCrackerFraction")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosOilCrackerFraction")
     public static void catalyticCrackerAndFractionTowerUseLegacyRemoteFluidPorts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos crackerPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -17311,7 +18103,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosHeatFluidHosts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosHeatFluidHosts")
     public static void heatBoilersAndHephaestusUseLegacyRemoteFluidPorts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos boilerPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -17467,7 +18259,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosOilRemoteFluidCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosOilRemoteFluidCadence")
     public static void oilRemoteFluidInputsKeepLegacyTwentyTickCadence(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos cokerPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -17566,7 +18358,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosOilRemoteFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosOilRemoteFluid")
     public static void oilProcessorsUseSourceBackedRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOnLegacyTwentyTick(helper, () -> {
@@ -17637,7 +18429,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFixedMachineFluidCadence")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFixedMachineFluidCadence")
     public static void fixedMachineFluidInputsKeepLegacyTwentyTickCadence(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos woodBurnerPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -17688,7 +18480,10 @@ public final class EnergyMk2GameTests {
                     assertEquals(8, solderingPorts.size(), "soldering station retains its eight legacy remote fluid ports");
                     assertEquals(4, excavatorPorts.size(), "excavator retains its four legacy remote fluid ports");
                     assertEquals(5, autosawPorts.size(), "autosaw retains its five legacy remote fluid ports");
-                    assertEquals(2, thresherPorts.size(), "thresher retains its two legacy remote fluid ports");
+                    assertEquals(3, thresherPorts.size(), "thresher retains its two lateral and one bottom legacy remote fluid ports");
+                    assertTrue(thresherPorts.stream().anyMatch(port -> port.offset().equals(new BlockPos(0, -1, 0))
+                            && port.direction() == Direction.DOWN),
+                            "thresher exposes its legacy bottom fluid port facing downward");
                     prepareOilRemoteFluidCadencePipe(level, woodBurnerPos, woodBurnerPorts.get(0), HbmFluids.WOODOIL);
                     prepareOilRemoteFluidCadencePipe(level, solderingPos, solderingPorts.get(0), HbmFluids.UF6);
                     prepareOilRemoteFluidCadencePipe(level, excavatorPos, excavatorPorts.get(0), HbmFluids.WATER);
@@ -17775,7 +18570,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosElectrolyserFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosElectrolyserFluid")
     public static void electrolyserKeepsLegacyTwentyTickDirectFluidCadence(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos electrolyserPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -17824,7 +18619,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCombinationOvenFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCombinationOvenFluid")
     public static void combinationOvenKeepsLegacyTwentyTickDirectFluidCadence(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos ovenPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -17879,7 +18674,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosDfc")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosDfc")
     public static void dfcFluidEndpointsUseLegacyAdjacentPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos injectorPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -18005,7 +18800,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosOreSlopper")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosOreSlopper")
     public static void oreSlopperFluidEndpointsUseLegacyRemotePortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -18023,7 +18818,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCompressor")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCompressor")
     public static void compressorFluidEndpointsUseLegacyRemotePortsWithoutCoreNodes(GameTestHelper helper) {
         runOnLegacyTwentyTick(helper, () -> {
             ServerLevel level = helper.getLevel();
@@ -18047,7 +18842,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCompressor")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCompressor")
     public static void compressorKeepsLegacyInputAndOutputFluidCadence(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         int delayToNonTwentiethTick = Math.floorMod(20 - (int) (level.getGameTime() % 20L) + 1, 20);
@@ -18090,7 +18885,7 @@ public final class EnergyMk2GameTests {
                 .thenSucceed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosMiningLaser")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosMiningLaser")
     public static void miningLaserFluidOutputsUseLegacyRemotePortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -18115,7 +18910,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosIntakeFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosIntakeFluid")
     public static void intakeRetriesLegacyAirProviderPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOutsideLegacyTwentyTick(helper, () -> {
@@ -18143,26 +18938,37 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosLaunchers")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosLaunchers")
     public static void launcherFluidEndpointsUseLegacyRemotePortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         // Launcher fluid ports are subscribed through the global nodespace;
         // isolate the fixture so another batch cannot clear its remote ducts.
         BlockPos fixtureBase = helper.absolutePos(new BlockPos(0, 2, 1_120_000));
+        // Keep each multi-block and its remote-port graph in a distinct chunk
+        // region. These five legacy hosts all use the global Fluid Mk2
+        // nodespace, so compact neighboring test structures can otherwise
+        // contaminate a later host's port graph.
         BlockPos compactPos = fixtureBase.offset(4, 0, 4);
-        BlockPos launchTablePos = fixtureBase.offset(20, 0, 4);
-        BlockPos launchPadPos = fixtureBase.offset(4, 0, 20);
-        BlockPos largeLaunchPadPos = fixtureBase.offset(20, 0, 20);
-        BlockPos soyuzPos = fixtureBase.offset(4, 0, 38);
-        clearBox(level, compactPos.offset(-8, -4, -8), soyuzPos.offset(8, 12, 8));
-        try {
-            forceLoadedChunks(level, compactPos, soyuzPos.offset(8, 0, -8));
+        BlockPos launchTablePos = fixtureBase.offset(68, 0, 4);
+        BlockPos launchPadPos = fixtureBase.offset(4, 0, 68);
+        BlockPos largeLaunchPadPos = fixtureBase.offset(68, 0, 68);
+        BlockPos soyuzPos = fixtureBase.offset(4, 0, 132);
+        runAfterNextLegacyTwentyTick(helper, () -> {
+            clearBox(level, compactPos.offset(-8, -4, -8), soyuzPos.offset(8, 12, 8));
+            // The original compact-to-Soyuz diagonal did not include either
+            // x=20 launcher chunk. Force the full fixture envelope so all
+            // remote port lookups use loaded chunks, just as the legacy
+            // server's loaded TileEntity pass required.
+            forceLoadedChunks(level, compactPos.offset(-8, -4, -8),
+                    largeLaunchPadPos.offset(8, 12, 72));
 
             level.setBlock(compactPos, ModBlocks.COMPACT_LAUNCHER.get().defaultBlockState(), Block.UPDATE_ALL);
             level.setBlock(launchTablePos, ModBlocks.LAUNCH_TABLE.get().defaultBlockState(), Block.UPDATE_ALL);
             level.setBlock(launchPadPos, ModBlocks.LAUNCH_PAD.get().defaultBlockState(), Block.UPDATE_ALL);
             level.setBlock(largeLaunchPadPos, ModBlocks.LAUNCH_PAD_LARGE.get().defaultBlockState(), Block.UPDATE_ALL);
             level.setBlock(soyuzPos, ModBlocks.SOYUZ_LAUNCHER.get().defaultBlockState(), Block.UPDATE_ALL);
+        }, () -> {
+            try {
             if (!(level.getBlockEntity(compactPos) instanceof CompactLauncherBlockEntity compact)
                     || !(level.getBlockEntity(launchTablePos) instanceof LaunchTableBlockEntity launchTable)
                     || !(level.getBlockEntity(launchPadPos) instanceof LaunchPadBlockEntity launchPad)
@@ -18197,13 +19003,13 @@ public final class EnergyMk2GameTests {
                     "Soyuz rejects top HBM-fluid connection attempts");
             assertFalse(soyuz.canConnectFluid(HbmFluids.OXYGEN, Direction.DOWN),
                     "Soyuz rejects bottom HBM-fluid connection attempts");
-        } finally {
-            clearBox(level, compactPos.offset(-8, -4, -8), soyuzPos.offset(8, 12, 8));
-        }
-        helper.succeed();
+            } finally {
+                clearBox(level, compactPos.offset(-8, -4, -8), soyuzPos.offset(8, 12, 8));
+            }
+        });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosGasCentSoldering")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosGasCentSoldering")
     public static void gasCentAndSolderingUseLegacyRemoteReceiverPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOnLegacyTwentyTick(helper, () -> {
@@ -18227,7 +19033,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosPrecassCrystallizerFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosPrecassCrystallizerFluid")
     public static void precassAndCrystallizerUseLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOutsideLegacyTwentyTick(helper, () -> {
@@ -18262,7 +19068,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosRadiolysisFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosRadiolysisFluid")
     public static void radiolysisUsesLegacyDirectFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos inputPos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -18296,7 +19102,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosDeuteriumTowerFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosDeuteriumTowerFluid")
     public static void deuteriumTowerUsesLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos towerPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -18314,7 +19120,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosDeuteriumTowerFluid")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosDeuteriumTowerFluid")
     public static void deuteriumExtractorUsesLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos extractorPos = helper.absolutePos(new BlockPos(8, 2, 8));
@@ -18338,7 +19144,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosWatzZirnox")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosWatzZirnox")
     public static void watzAndZirnoxUseLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOutsideLegacyTwentyTick(helper, () -> {
@@ -18369,7 +19175,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosCyclotronIcfSilex")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosCyclotronIcfSilex")
     public static void cyclotronIcfAndSilexUseLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos cyclotronPos = helper.absolutePos(new BlockPos(8, 4, 8));
@@ -18398,7 +19204,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosPwrAssembly")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosPwrAssembly")
     public static void pwrAssemblyUsesLegacyRemoteFluidPortsWithoutCoreNodes(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOutsideLegacyTwentyTick(helper, () -> {
@@ -18514,7 +19320,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFusionBoilerBreeder")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFusionBoilerBreeder")
     public static void fusionBoilerAndBreederKeepDedicatedPlasmaNodesAndRemoteFluidPorts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -18704,7 +19510,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFusionDedicatedPorts")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFusionDedicatedPorts")
     public static void fusionDedicatedNodesKeepLegacyRemoteFluidPortBoundaries(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         runOnLegacyTwentyTick(helper, () -> {
@@ -18828,7 +19634,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosReapFusionNodes")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosReapFusionNodes")
     public static void legacyReapMakesLoadedFusionDedicatedNodesRecoverOnTheirNextTick(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos boilerPos = helper.absolutePos(new BlockPos(2, 2, 1500));
@@ -18987,7 +19793,7 @@ public final class EnergyMk2GameTests {
         return ticker;
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosRbmkBoiler")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosRbmkBoiler")
     public static void rbmkBoilerUsesCompleteColumnFluidPortContracts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -19048,7 +19854,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosRbmkLoader")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosRbmkLoader")
     public static void rbmkBoilerLoaderOutputPortsMirrorBothLegacyOffsets(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -19125,7 +19931,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosRbmkHeaterOutgasser")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosRbmkHeaterOutgasser")
     public static void rbmkHeaterAndOutgasserKeepLegacyFluidPortRoles(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -19225,7 +20031,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosRbmkCooler")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosRbmkCooler")
     public static void rbmkCoolerUsesLegacyBottomInputAndColumnOutputPorts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -19353,7 +20159,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosExhaust")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosExhaust")
     public static void fluidDuctExhaustKeepsLegacySmokeNodesTypeSeparated(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -19407,7 +20213,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFissure")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFissure")
     public static void geothermalFissureUsesLegacyUpwardDirectFluidPortWithoutCoreNode(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos fissurePos = helper.absolutePos(new BlockPos(4, 2, 4));
@@ -19473,7 +20279,7 @@ public final class EnergyMk2GameTests {
         }
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosPaintableExhaust")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosPaintableExhaust")
     public static void paintableFluidDuctExhaustKeepsLegacySmokeAndPaintContracts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -19542,7 +20348,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosPneumaticStorage")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosPneumaticStorage")
     public static void pneumaticStorageEndpointsKeepLegacyCacheAndUnloadContracts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos accessPos = helper.absolutePos(new BlockPos(2, 2, 12));
@@ -19622,7 +20428,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosPneumaticReap")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosPneumaticReap")
     public static void legacyNetworkReapKeepsPneumaticCacheUntilItsHostRebuilds(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos accessPos = helper.absolutePos(new BlockPos(8, 2, 12));
@@ -19682,7 +20488,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosPneumaticMerge")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosPneumaticMerge")
     public static void pneumaticNetworkMergeDissolvesOnlyTheAbsorbedLegacyCache(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos firstAccessPos = helper.absolutePos(new BlockPos(2, 2, 2));
@@ -19754,7 +20560,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosFluidValves")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosFluidValves")
     public static void fluidValvesKeepLegacyOpenNodeAndCounterContracts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -19850,7 +20656,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "uninosPipeAnchors")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "uninosPipeAnchors")
     public static void fluidPipeAnchorsKeepLegacyRemoteLinkContracts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmFluidNodespace.unloadLevel(level);
@@ -19904,7 +20710,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2CommandDiagnostics")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2CommandDiagnostics")
     public static void powerNetToolUseOnKeepsLegacyCableDiagnosticBoundary(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -19962,7 +20768,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2CommandDiagnostics")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2CommandDiagnostics")
     public static void energyDebugParticleCommandTogglesServerSwitch(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -19994,7 +20800,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2ClientVisualAnchors")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2ClientVisualAnchors")
     public static void energyClientVisualClasspathResourcesStayPublished(GameTestHelper helper) {
         assertClasspathResources("Energy Mk2 client visual anchors",
                 "assets/hbm_ntm_rebirth/particles/network_power.json",
@@ -20035,7 +20841,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2CommandDiagnostics")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2CommandDiagnostics")
     public static void legacyWiringItemConnectsSmallPylonsAndClearsFailures(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -20118,7 +20924,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryRedstoneHighLowLifecycle(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos cablePos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -20187,7 +20993,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryComparatorKeepsLegacyPlusOneFormula(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -20205,7 +21011,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void batterySocketProxyCoreComparatorAndCapabilities(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -20260,7 +21066,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void batterySocketSidedAutomationKeepsLegacySingleSlotRules(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -20337,7 +21143,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2BatterySocketHoppers")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2BatterySocketHoppers")
     public static void batterySocketRealHoppersFollowCoreProxyFootprint(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -20415,7 +21221,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "energyMk2BatterySocketPneumatic")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "energyMk2BatterySocketPneumatic")
     public static void batterySocketRealPneumaticTubesFollowCoreProxyFootprint(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -20502,7 +21308,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "energyMk2BatterySocketPneumaticServerTick")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2BatterySocketPneumaticServerTick")
     public static void batterySocketPneumaticServerTickMovesAcrossMultitubeProxyFootprint(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -20583,7 +21389,7 @@ public final class EnergyMk2GameTests {
         }
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void batterySocketProxyMenuCoordinatesResolveCore(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -20620,7 +21426,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void batterySocketCoreAndProxyUseOpenCoreMenu(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         HbmEnergyNodespace.unloadLevel(level);
@@ -20658,7 +21464,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatterySocketMenuQuickMoveKeepsLegacyTransferShape(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos socketPos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -20707,7 +21513,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatterySocketControlButtonsKeepLegacyCycles(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos socketPos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -20761,7 +21567,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatterySocketMenuDataSlotsSyncLegacyEnergyState(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos socketPos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -20801,7 +21607,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryMenuQuickMoveKeepsLegacyTransferShape(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos batteryPos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -20865,7 +21671,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryMenuDataSlotsSyncLegacyEnergyState(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos batteryPos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -20904,7 +21710,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryControlButtonsKeepLegacyCycles(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos batteryPos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -20959,7 +21765,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryPersistentDropKeepsLegacyNbtShape(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos firstPos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -21023,7 +21829,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatterySidedAutomationKeepsLegacySlotRules(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -21076,7 +21882,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryRealHoppersFollowLegacySidedAutomation(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos batteryPos = helper.absolutePos(new BlockPos(2, 2, 2));
@@ -21140,7 +21946,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryRealPneumaticTubesFollowLegacySidedAutomation(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos batteryPos = helper.absolutePos(new BlockPos(3, 3, 3));
@@ -21225,7 +22031,7 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void machineBatteryPneumaticServerTickMovesAcrossMultitubeNetwork(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos batteryPos = helper.absolutePos(new BlockPos(9, 3, 3));
@@ -21297,7 +22103,7 @@ public final class EnergyMk2GameTests {
         });
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void nukeElectricStarterKitKeepsLegacyBatteryAndCanisterOutputs(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Player player = gameTestPlayer(level);
@@ -21343,6 +22149,124 @@ public final class EnergyMk2GameTests {
 
         player.getInventory().clearContent();
         clearDroppedItemsAround(level, player);
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
+    public static void multiDetonatorKeepsLegacyCoordinateArraysAndClearContract(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Player player = gameTestPlayer(level);
+        BlockPos first = helper.absolutePos(new BlockPos(2, 2, 2));
+        BlockPos second = helper.absolutePos(new BlockPos(4, 2, 2));
+        BlockPos unarmedNuke = helper.absolutePos(new BlockPos(6, 2, 2));
+        level.setBlock(first, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+        level.setBlock(second, Blocks.DIRT.defaultBlockState(), Block.UPDATE_ALL);
+        level.setBlock(unarmedNuke, ModBlocks.NUKE_GADGET.get().defaultBlockState(), Block.UPDATE_ALL);
+
+        ItemStack multi = new ItemStack(ModItems.DETONATOR_MULTI.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, multi);
+        player.setShiftKeyDown(true);
+        InteractionResult firstBind = multi.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(first)));
+        InteractionResult secondBind = multi.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(second)));
+        InteractionResult nukeBind = multi.useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, blockHit(unarmedNuke)));
+        assertTrue(firstBind.consumesAction() && secondBind.consumesAction() && nukeBind.consumesAction(),
+                "multi detonator sneak-use consumes each legacy coordinate binding");
+        CompoundTag bound = multi.getTag();
+        assertTrue(bound != null, "multi detonator creates its legacy coordinate compound");
+        assertEquals(3, bound.getIntArray("xValues").length, "multi detonator appends xValues");
+        assertEquals(first.getX(), bound.getIntArray("xValues")[0], "multi detonator preserves first xValues entry");
+        assertEquals(second.getY(), bound.getIntArray("yValues")[1], "multi detonator preserves second yValues entry");
+        assertEquals(unarmedNuke.getZ(), bound.getIntArray("zValues")[2], "multi detonator preserves third zValues entry");
+
+        player.setShiftKeyDown(false);
+        InteractionResultHolder<ItemStack> detonate = multi.getItem().use(level, player, InteractionHand.MAIN_HAND);
+        assertTrue(detonate.getResult().consumesAction(), "multi detonator normal use consumes the batch trigger action");
+        assertTrue(level.getBlockState(unarmedNuke).is(ModBlocks.NUKE_GADGET.get()),
+                "multi detonator leaves an unarmed remote bomb in place after its failed legacy trigger");
+        assertEquals(3, multi.getTag().getIntArray("xValues").length,
+                "multi detonator does not clear legacy coordinate arrays after a trigger attempt");
+
+        player.setShiftKeyDown(true);
+        InteractionResultHolder<ItemStack> clear = multi.getItem().use(level, player, InteractionHand.MAIN_HAND);
+        assertTrue(clear.getResult().consumesAction(), "multi detonator sneak-air use consumes legacy clear action");
+        assertEquals(0, multi.getTag().getIntArray("xValues").length, "multi detonator clears xValues only by sneak-air use");
+        assertEquals(0, multi.getTag().getIntArray("yValues").length, "multi detonator clears yValues only by sneak-air use");
+        assertEquals(0, multi.getTag().getIntArray("zValues").length, "multi detonator clears zValues only by sneak-air use");
+        List<Component> tooltip = new ArrayList<>();
+        multi.getItem().appendHoverText(multi, level, tooltip, TooltipFlag.Default.NORMAL);
+        assertEquals("No position set!", tooltip.get(3).getString(),
+                "multi detonator empty tooltip retains the legacy no-position line");
+        player.setShiftKeyDown(false);
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
+    public static void laserDetonatorKeepsLegacyToolTipCrosshairAndRayAction(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Player player = gameTestPlayer(level);
+        ItemStack laser = new ItemStack(ModItems.DETONATOR_LASER.get());
+        player.setItemInHand(InteractionHand.MAIN_HAND, laser);
+        assertSame(com.hbm.ntm.api.item.Crosshair.L_ARROWS,
+                ((com.hbm.ntm.api.item.IHoldableWeapon) laser.getItem()).getCrosshair(),
+                "laser detonator retains the legacy L_ARROWS held-weapon crosshair");
+        List<Component> tooltip = new ArrayList<>();
+        laser.getItem().appendHoverText(laser, level, tooltip, TooltipFlag.Default.NORMAL);
+        assertEquals("Aim & click to detonate!", tooltip.get(0).getString(),
+                "laser detonator retains the legacy hardcoded aim tooltip");
+        InteractionResultHolder<ItemStack> result = laser.getItem().use(level, player, InteractionHand.MAIN_HAND);
+        assertTrue(result.getResult().consumesAction(), "laser detonator consumes its legacy ray-trigger action");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
+    public static void deadManDetonatorsKeepLegacyDeathInventoryAndRecipeContracts(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Player player = gameTestPlayer(level);
+        BlockPos unarmedNuke = helper.absolutePos(new BlockPos(6, 2, 2));
+        level.setBlock(unarmedNuke, ModBlocks.NUKE_GADGET.get().defaultBlockState(), Block.UPDATE_ALL);
+
+        ItemStack bound = new ItemStack(ModItems.DETONATOR_DEADMAN.get());
+        CompoundTag tag = bound.getOrCreateTag();
+        tag.putInt("x", unarmedNuke.getX());
+        tag.putInt("y", unarmedNuke.getY());
+        tag.putInt("z", unarmedNuke.getZ());
+        ItemStack unbound = new ItemStack(ModItems.DETONATOR_DEADMAN.get());
+        player.getInventory().clearContent();
+        player.getInventory().setItem(0, bound);
+        player.getInventory().setItem(1, unbound);
+
+        com.hbm.ntm.item.DroppedDetonatorItem.triggerOnPlayerDeath(player);
+        assertTrue(player.getInventory().getItem(0).isEmpty(),
+                "player death clears every tagged legacy dead-man detonator even when its remote bomb rejects detonation");
+        assertSame(ModItems.DETONATOR_DEADMAN.get(), player.getInventory().getItem(1).getItem(),
+                "player death leaves an unbound legacy dead-man detonator in its inventory");
+        assertTrue(level.getBlockState(unarmedNuke).is(ModBlocks.NUKE_GADGET.get()),
+                "dead-man death trigger leaves an unarmed remote bomb in place after its failed legacy trigger");
+
+        List<Component> boundTooltip = new ArrayList<>();
+        bound.getItem().appendHoverText(bound, level, boundTooltip, TooltipFlag.Default.NORMAL);
+        assertEquals("Shift right-click to set position,", boundTooltip.get(0).getString(),
+                "dead-man detonator keeps the legacy hardcoded bind tooltip");
+        assertEquals("Set pos to " + unarmedNuke.getX() + ", " + unarmedNuke.getY() + ", " + unarmedNuke.getZ(),
+                boundTooltip.get(2).getString(), "dead-man detonator keeps the legacy coordinate tooltip");
+        assertCraftingRecipeOutput(helper, "weapon/detonator_deadman", ModItems.DETONATOR_DEADMAN.get());
+        assertCraftingRecipeOutput(helper, "weapon/detonator_de", ModItems.DETONATOR_DE.get());
+        assertCraftingRecipeOutput(helper, "weapon/detonator_laser", ModItems.DETONATOR_LASER.get());
+
+        player.getInventory().clearContent();
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
+    public static void betaKeepsLegacyImmediateDropVanishContract(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(2, 2, 2));
+        ItemStack beta = new ItemStack(ModItems.BETA.get());
+        ItemEntity dropped = new ItemEntity(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, beta);
+        assertEquals(1, beta.getMaxStackSize(), "beta preserves the legacy one-item stack limit");
+        assertTrue(beta.getItem().onEntityItemUpdate(beta, dropped),
+                "beta drop update consumes the legacy item-entity tick");
+        assertTrue(dropped.isRemoved(), "beta immediately discards its dropped item entity on either side");
         helper.succeed();
     }
 
@@ -23031,82 +23955,7 @@ public final class EnergyMk2GameTests {
         }
     }
 
-    private static void assertDiFurnaceSmokeTypesStaySeparated(ServerLevel level, DiFurnaceBlockEntity furnace) {
-        List<HbmFluidTank> tanks = furnace.getSendingTanks();
-        FluidType[] types = {HbmFluids.SMOKE, HbmFluids.SMOKE_LEADED, HbmFluids.SMOKE_POISON};
-        HbmFluidUtil.FluidPort[] ports = {
-                HbmFluidUtil.FluidPort.of(1, 0, 0, Direction.EAST),
-                HbmFluidUtil.FluidPort.of(-1, 0, 0, Direction.WEST),
-                HbmFluidUtil.FluidPort.of(0, 0, -1, Direction.NORTH)
-        };
-        BlockPos[] pipePositions = new BlockPos[types.length];
-        for (int index = 0; index < types.length; index++) {
-            tanks.get(index).setFill(500);
-            pipePositions[index] = ports[index].connectorPos(furnace.getBlockPos());
-            level.setBlock(pipePositions[index], ModBlocks.FLUID_DUCT_NEO.get().defaultBlockState(), Block.UPDATE_ALL);
-            if (!(level.getBlockEntity(pipePositions[index]) instanceof FluidPipeBlockEntity pipe)) {
-                throw new AssertionError("DiFurnace type-isolation fixture did not create its remote duct");
-            }
-            pipe.setFluidType(types[index]);
-            refreshFluidNodeAt(level, pipePositions[index]);
-        }
-        HbmFluidNodespace.tick(level);
-        DiFurnaceBlockEntity.serverTick(level, furnace.getBlockPos(), level.getBlockState(furnace.getBlockPos()), furnace);
 
-        HbmFluidNet[] networks = new HbmFluidNet[types.length];
-        for (int index = 0; index < types.length; index++) {
-            assertTrue(HbmFluidNodespace.getNode(level, furnace.getBlockPos(), types[index]) == null,
-                    "DiFurnace keeps " + types[index].getName() + " direct without a core fluid node");
-            assertEquals(1, HbmFluidNodespace.getNetworkProviderCount(level, pipePositions[index], types[index]),
-                    "DiFurnace provides " + types[index].getName() + " at its typed direct smoke port");
-            networks[index] = HbmFluidNodespace.getNode(level, pipePositions[index], types[index]).getFluidNet();
-        }
-        assertTrue(networks[0] != networks[1] && networks[0] != networks[2] && networks[1] != networks[2],
-                "DiFurnace's ordinary, leaded, and poison smoke never share a FluidNet");
-
-        for (int index = 0; index < types.length; index++) {
-            TestFluidReceiver sink = new TestFluidReceiver(types[index], 500);
-            assertTrue(HbmFluidUtil.subscribeReceiverToNetwork(level, pipePositions[index], ports[index].connectorSide(),
-                    types[index], sink), "test sink subscribes to DiFurnace " + types[index].getName() + " port");
-            assertTrue(networks[index].update() > 0L,
-                    "DiFurnace " + types[index].getName() + " network transfers through its direct smoke port");
-            assertTrue(sink.getStoredFluid() > 0,
-                    "DiFurnace delivers " + types[index].getName() + " without crossing smoke types");
-        }
-    }
-
-    private static void assertDiFurnaceSmokeProviderPorts(ServerLevel level, DiFurnaceBlockEntity furnace,
-            HbmFluidTank tank, FluidType type, List<HbmFluidUtil.FluidPort> ports, String label) {
-        tank.setFill(500);
-        List<BlockPos> pipePositions = new ArrayList<>();
-        for (HbmFluidUtil.FluidPort port : ports) {
-            BlockPos pipePos = port.connectorPos(furnace.getBlockPos());
-            pipePositions.add(pipePos);
-            level.setBlock(pipePos, ModBlocks.FLUID_DUCT_NEO.get().defaultBlockState(), Block.UPDATE_ALL);
-            if (!(level.getBlockEntity(pipePos) instanceof FluidPipeBlockEntity pipe)) {
-                throw new AssertionError(label + " fixture did not create its remote duct");
-            }
-            pipe.setFluidType(type);
-            refreshFluidNodeAt(level, pipePos);
-        }
-        HbmFluidNodespace.tick(level);
-        DiFurnaceBlockEntity.serverTick(level, furnace.getBlockPos(), level.getBlockState(furnace.getBlockPos()), furnace);
-
-        assertTrue(HbmFluidNodespace.getNode(level, furnace.getBlockPos(), type) == null,
-                label + " remains a direct sender without a core fluid node");
-        for (BlockPos pipePos : pipePositions) {
-            assertEquals(1, HbmFluidNodespace.getNetworkProviderCount(level, pipePos, type),
-                    label + " provides through every declared direct smoke port");
-        }
-        HbmFluidUtil.FluidPort testedPort = ports.get(0);
-        BlockPos testedPipePos = pipePositions.get(0);
-        TestFluidReceiver sink = new TestFluidReceiver(type, 500);
-        assertTrue(HbmFluidUtil.subscribeReceiverToNetwork(level, testedPipePos, testedPort.connectorSide(), type, sink),
-                "test sink subscribes to " + label + " direct smoke port");
-        HbmFluidNet network = HbmFluidNodespace.getNode(level, testedPipePos, type).getFluidNet();
-        assertTrue(network.update() > 0L, label + " transfers through the real remote smoke duct");
-        assertTrue(sink.getStoredFluid() > 0, label + " delivers smoke through the real remote duct");
-    }
 
     @SuppressWarnings("unchecked")
     private static List<HbmFluidUtil.FluidPort> rotaryFurnaceFluidPorts(RotaryFurnaceBlockEntity furnace,
@@ -26342,6 +27191,24 @@ public final class EnergyMk2GameTests {
                     assertEquals(0L, level.getGameTime() % 20L,
                             "fixed-machine fixture reaches the legacy 20-tick connection boundary");
                     fixture.run();
+                })
+                .thenSucceed();
+    }
+
+    /** Places a fixture before, then verifies it after, the next natural legacy 20-tick connection pass. */
+    private static void runAfterNextLegacyTwentyTick(GameTestHelper helper, Runnable setup, Runnable verification) {
+        ServerLevel level = helper.getLevel();
+        int ticksUntilBoundary = Math.floorMod(20 - (int) (level.getGameTime() % 20L), 20);
+        if (ticksUntilBoundary == 0) {
+            ticksUntilBoundary = 20;
+        }
+        helper.startSequence()
+                .thenExecute(setup)
+                .thenIdle(ticksUntilBoundary)
+                .thenExecute(() -> {
+                    assertEquals(0L, level.getGameTime() % 20L,
+                            "placed fixed-machine fixture reaches its next legacy 20-tick connection boundary");
+                    verification.run();
                 })
                 .thenSucceed();
     }

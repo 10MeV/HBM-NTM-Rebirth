@@ -73,9 +73,17 @@ public class SilexScreen extends AbstractContainerScreen<SilexMenu> {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTank(),
                     menu.getTank().tooltip(hasShiftDown()), mouseX, mouseY);
         } else if (isHovering(27, 72, 16, 52, mouseX, mouseY)) {
+            SilexBlockEntity silex = menu.getBlockEntity();
+            List<Component> tooltip = List.of(Component.literal(menu.getCurrentFill() + "/"
+                    + SilexBlockEntity.MAX_FILL + "mB"));
+            if (menu.getCurrentFill() > 0) {
+                Component source = !silex.getCurrentStack().isEmpty()
+                        ? silex.getCurrentStack().getHoverName()
+                        : silex.getCurrentFluid().getDisplayName();
+                tooltip = List.of(tooltip.get(0), source);
+            }
             graphics.renderComponentTooltip(font,
-                    List.of(Component.literal(menu.getCurrentFill() + "/" + SilexBlockEntity.MAX_FILL + "mB")),
-                    mouseX, mouseY);
+                    tooltip, mouseX, mouseY);
         } else if (isHovering(10, 92, 12, 12, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font,
                     List.of(Component.translatableWithFallback("gui.hbm_ntm_rebirth.silex.void", "Void contents")),

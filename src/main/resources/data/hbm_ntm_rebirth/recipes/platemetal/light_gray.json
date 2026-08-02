@@ -1,0 +1,1 @@
+{"type":"hbm_ntm_rebirth:shaped_nbt","category":"building","pattern":["PPP","PDP","PPP"],"key":{"P":{"type":"forge:nbt","item":"hbm_ntm_rebirth:platemetal","nbt":"{hbmLegacyVariant:0}"},"D":{"item":"minecraft:light_gray_dye"}},"result":{"item":"hbm_ntm_rebirth:platemetal","count":8,"nbt":"{hbmLegacyVariant:5}"}}

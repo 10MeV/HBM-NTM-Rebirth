@@ -1,0 +1,6 @@
+{
+  "feature": "hbm_ntm_rebirth:legacy_flower_nightshade",
+  "placement": [
+    { "type": "minecraft:biome" }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "building",
+  "key": {
+    "B": { "type": "forge:nbt", "item": "hbm_ntm_rebirth:vinyl_tile", "nbt": "{hbmLegacyVariant:0}" }
+  },
+  "pattern": ["BB", "BB"],
+  "result": { "item": "hbm_ntm_rebirth:vinyl_tile", "count": 4, "nbt": "{hbmLegacyVariant:1}" },
+  "show_notification": true
+}

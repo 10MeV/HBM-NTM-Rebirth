@@ -2,6 +2,8 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
 import com.hbm.ntm.energy.HbmEnergyPortInspectable;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
@@ -23,6 +25,7 @@ import com.hbm.ntm.menu.PrecassMenu;
 import com.hbm.ntm.menu.PurexMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmGuiControlSecurity;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
@@ -70,7 +73,8 @@ import java.util.List;
 import java.util.Map;
 
 public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
-        HbmEnergyPortInspectable, HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider {
+        HbmEnergyPortInspectable, HbmStandardFluidTransceiver, HbmLegacyLoadedTile, LegacyLookOverlayProvider,
+        RORValueProvider {
     private static final String TAG_KIND = "kind";
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_ENERGY = "Energy";
@@ -129,6 +133,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     private final boolean[] strikerDir = new boolean[4];
     private int strikerIndex;
     private int strikerDelay;
+    private final RORDispatcher ror;
 
     public LegacyGenericSelectorMachineBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, inferKind(state));
@@ -137,6 +142,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     public LegacyGenericSelectorMachineBlockEntity(BlockPos pos, BlockState state, Kind kind) {
         super(ModBlockEntities.LEGACY_GENERIC_SELECTOR_MACHINE.get(), pos, state);
         this.kind = kind;
+        this.ror = createRorDispatcher();
         this.items = createItemHandler(kind);
         this.energy = new HbmEnergyStorage(kind.defaultMaxPower, kind.defaultMaxPower, 0L);
         this.inputTanks = createTanks(kind.inputTankCount, kind.tankCapacity);
@@ -150,6 +156,17 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
                 outputTankList, 0, this::onFluidContentsChanged));
         this.allFluidHandler = LazyOptional.of(() -> ForgeRecipeFluidHandlerAdapter.create(inputTankList,
                 outputTankList, 0, this::onFluidContentsChanged));
+    }
+
+    private RORDispatcher createRorDispatcher() {
+        if (kind != Kind.PUREX) {
+            return RORDispatcher.builder().build();
+        }
+        return RORDispatcher.builder()
+                .value("progress", () -> Integer.toString((int) Math.round(progress * 100.0D)))
+                .value("recipe", this::getSelectedRecipeName)
+                .value("active", () -> didProcess ? "1" : "0")
+                .build();
     }
 
     private static Kind inferKind(BlockState state) {
@@ -554,6 +571,12 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
         return progress;
     }
 
+    @Override
+    public String[] getFunctionInfo() { return ror.getFunctionInfo(); }
+
+    @Override
+    public String provideRORValue(String name) { return ror.provideValue(name); }
+
     public boolean shouldRenderFrame() {
         return frame || (level != null && !level.getBlockState(worldPosition.above(kind.frameYOffset)).isAir());
     }
@@ -658,7 +681,8 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return GenericMachineRecipeSelector.isSelectionTag(tag)
+        return HbmGuiControlSecurity.hasLegacyMachineUsePermission(player, this)
+                && GenericMachineRecipeSelector.isSelectionTag(tag)
                 && GenericMachineRecipeSelector.canSelect(level, kind.recipeMachine,
                 GenericMachineRecipeSelector.readSelection(tag), items.getStackInSlot(SLOT_BLUEPRINT));
     }
@@ -741,11 +765,11 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-    }
+}
 
     @Override
     public CompoundTag getClientSyncTag() {
-        CompoundTag tag = saveWithoutMetadata();
+        CompoundTag tag = new CompoundTag();
         writeClientSyncFields(tag);
         return tag;
     }

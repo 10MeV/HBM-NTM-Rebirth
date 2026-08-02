@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": { "layer0": "hbm_ntm_rebirth:item/pile_rod.ra226be" },
+  "overrides": [
+    { "predicate": { "damage": 0.16666667 }, "model": "hbm_ntm_rebirth:item/pile_rod_po210be" },
+    { "predicate": { "damage": 0.33333334 }, "model": "hbm_ntm_rebirth:item/pile_rod_zr" },
+    { "predicate": { "damage": 0.5 }, "model": "hbm_ntm_rebirth:item/pile_rod_nu" },
+    { "predicate": { "damage": 0.6666667 }, "model": "hbm_ntm_rebirth:item/pile_rod_pu239" },
+    { "predicate": { "damage": 0.83333334 }, "model": "hbm_ntm_rebirth:item/pile_rod_rgp" },
+    { "predicate": { "damage": 1.0 }, "model": "hbm_ntm_rebirth:item/pile_rod_waste" }
+  ]
+}

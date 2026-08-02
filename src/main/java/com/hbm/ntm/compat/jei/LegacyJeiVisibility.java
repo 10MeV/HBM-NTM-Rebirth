@@ -16,9 +16,17 @@ import net.minecraft.world.item.ItemStack;
 final class LegacyJeiVisibility {
     private static final Set<String> ALWAYS_HIDDEN_ITEM_PATHS = Set.of(
             "ingot_metal",
+            "ingot_metal_scrap",
+            "ingot_metal_ingot",
+            "ingot_metal_counter",
+            "ingot_metal_key",
+            "ingot_metal_beacon",
+            "ingot_metal_casing",
+            "ingot_metal_clockwork",
+            "ingot_metal_bar",
+            "ingot_metal_detector",
             "memory",
             "machine_electric_furnace_on",
-            "machine_difurnace_on",
             "machine_rtg_furnace_on",
             "reinforced_lamp_on",
             "statue_elb_f",

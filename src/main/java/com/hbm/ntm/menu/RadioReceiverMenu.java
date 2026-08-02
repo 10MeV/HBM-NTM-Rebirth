@@ -2,6 +2,7 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.RadioReceiverBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -31,7 +32,7 @@ public class RadioReceiverMenu extends AbstractContainerMenu {
         return !blockEntity.isRemoved() && player.distanceToSqr(
                 blockEntity.getBlockPos().getX() + 0.5D,
                 blockEntity.getBlockPos().getY() + 0.5D,
-                blockEntity.getBlockPos().getZ() + 0.5D) <= 64.0D;
+                blockEntity.getBlockPos().getZ() + 0.5D) <= HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity);
     }
 
     @Override

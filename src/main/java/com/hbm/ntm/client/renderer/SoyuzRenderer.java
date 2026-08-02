@@ -30,6 +30,8 @@ public class SoyuzRenderer extends EntityRenderer<SoyuzEntity> {
 
     @Override
     public ResourceLocation getTextureLocation(SoyuzEntity entity) {
-        return ObjSoyuzModels.textureSetForSkin(entity.skin()).engineBlock();
+        // Legacy RenderSoyuz returns the base payload texture here.  The
+        // renderer itself still selects every skin-specific part texture.
+        return ObjSoyuzModels.SOYUZ_TEXTURES.payload();
     }
 }

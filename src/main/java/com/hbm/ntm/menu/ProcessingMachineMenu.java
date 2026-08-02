@@ -53,10 +53,10 @@ public class ProcessingMachineMenu extends AbstractContainerMenu {
     private void addCentrifugeSlots(Inventory playerInventory) {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 36, 50));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 9, 50));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 2, 63, 50));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 3, 83, 50));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 4, 103, 50));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 5, 123, 50));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 2, 63, 50));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 3, 83, 50));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 4, 103, 50));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 5, 123, 50));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 6, 149, 22));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 7, 149, 40));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
@@ -65,7 +65,7 @@ public class ProcessingMachineMenu extends AbstractContainerMenu {
     private void addCrystallizerSlots(Inventory playerInventory) {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 62, 45));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 152, 72));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 2, 113, 45));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 2, 113, 45));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 3, 17, 18));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 4, 17, 54));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 5, 80, 18));
@@ -116,7 +116,7 @@ public class ProcessingMachineMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity));
     }
 
     @Override
@@ -138,7 +138,16 @@ public class ProcessingMachineMenu extends AbstractContainerMenu {
             return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        if (index < MACHINE_SLOT_COUNT && isAchievementOutput(index)) {
+            com.hbm.ntm.util.AchievementHandler.fire(player, original);
+        }
         return original;
+    }
+
+    private boolean isAchievementOutput(int index) {
+        return blockEntity.kind() == ProcessingMachineBlockEntity.Kind.CENTRIFUGE
+                ? index >= 2 && index <= 5
+                : index == 2;
     }
 
     private boolean movePlayerStackToMachine(ItemStack stack) {

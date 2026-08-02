@@ -1,6 +1,8 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -56,7 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
-        implements MenuProvider, HbmStandardFluidTransceiver, FusionPowerReceiver, HbmLegacyControlReceiver {
+        implements MenuProvider, HbmStandardFluidTransceiver, FusionPowerReceiver, HbmLegacyControlReceiver, RORValueProvider {
     public static final int SLOT_BATTERY = 0;
     public static final int SLOT_BLUEPRINT = 1;
     public static final int SLOT_BOOSTER = 2;
@@ -145,6 +147,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int ringDelay;
     private final ForgeArm armStriker = new ForgeArm(ForgeArmType.STRIKER);
     private final ForgeArm armJet = new ForgeArm(ForgeArmType.JET);
+    private final RORDispatcher ror;
 
     public FusionPlasmaForgeBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY));
@@ -154,6 +157,7 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         super(ModBlockEntities.FUSION_PLASMA_FORGE.get(), pos, state, new HbmEnergyStorage(DEFAULT_MAX_POWER),
                 List.of(inputTank));
         this.inputTank = inputTank;
+        this.ror = createRorDispatcher();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FusionPlasmaForgeBlockEntity forge) {
@@ -264,6 +268,22 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
         return true;
+    }
+
+    @Override
+    public String[] getFunctionInfo() { return ror.getFunctionInfo(); }
+
+    @Override
+    public String provideRORValue(String name) { return ror.provideValue(name); }
+
+    private RORDispatcher createRorDispatcher() {
+        return RORDispatcher.builder()
+                .value("progress", () -> Integer.toString((int) Math.round(progress * 100.0D)))
+                .value("recipe", this::getSelectedRecipeName)
+                .value("active", () -> didProcess ? "1" : "0")
+                .value("booster", () -> Integer.toString(booster))
+                .value("plasma", () -> Long.toString(plasmaEnergy))
+                .build();
     }
 
     public static CompoundTag recipeSelectionTag(String selection) {

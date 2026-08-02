@@ -40,6 +40,9 @@ public final class LegacyObjArmorRenderer {
 
     public static void acceptObjArmorExtensions(Consumer<IClientItemExtensions> consumer) {
         consumer.accept(new IClientItemExtensions() {
+            private final BlockEntityWithoutLevelRenderer itemRenderer =
+                    LegacyItemRendererBridge.withDisplayContext(ItemRendererHolder.INSTANCE);
+
             @Override
             public @NotNull Model getGenericArmorModel(LivingEntity livingEntity, ItemStack itemStack,
                                                        EquipmentSlot equipmentSlot, HumanoidModel<?> original) {
@@ -48,7 +51,7 @@ public final class LegacyObjArmorRenderer {
 
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                return ItemRendererHolder.INSTANCE;
+                return itemRenderer;
             }
         });
     }

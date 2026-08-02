@@ -295,10 +295,8 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = saveWithoutMetadata();
-        writeCraneTag(tag, true);
-        return tag;
-    }
+        return getClientSyncTag();
+}
 
     @Nullable
     @Override

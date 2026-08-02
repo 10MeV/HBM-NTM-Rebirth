@@ -2,10 +2,6 @@ package com.hbm.ntm.network;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.network.packet.AuxParticlePacket;
-import com.hbm.ntm.network.packet.ClientBinaryDataPacket;
-import com.hbm.ntm.network.packet.ClientBinaryDataChunkPacket;
-import com.hbm.ntm.network.packet.ClientBinaryDataReadyPacket;
-import com.hbm.ntm.network.packet.ClientBiomeSyncPacket;
 import com.hbm.ntm.network.packet.ClientEntityEventPacket;
 import com.hbm.ntm.network.packet.ClientInformPacket;
 import com.hbm.ntm.network.packet.ClientMissileMultipartPacket;
@@ -34,8 +30,6 @@ import com.hbm.ntm.network.packet.ParticleBurstPacket;
 import com.hbm.ntm.network.packet.PermaSyncPacket;
 import com.hbm.ntm.network.packet.PlayerPropertiesPacket;
 import com.hbm.ntm.network.packet.PlayerRadiationSyncPacket;
-import com.hbm.ntm.network.packet.ServerTileBinaryControlPacket;
-import com.hbm.ntm.network.packet.ServerTileBinaryControlChunkPacket;
 import com.hbm.ntm.network.packet.PWRPrinterSnapshotPacket;
 import com.hbm.ntm.network.packet.ServerEntityActionPacket;
 import com.hbm.ntm.network.packet.ServerTileActionPacket;
@@ -70,17 +64,13 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
@@ -92,11 +82,10 @@ import java.util.function.Supplier;
 import java.util.zip.CRC32;
 
 public final class ModMessages {
-    private static final String PROTOCOL_VERSION = "1";
+    // Removing registered packets changes discriminator order.  Refuse mixed client/server jars.
+    private static final String PROTOCOL_VERSION = "2";
     private static final String LEGACY_CHANNEL_NAME = "hbm";
     private static final ResourceLocation CHANNEL_NAME = new ResourceLocation(HbmNtm.MOD_ID, "main");
-    public static final ResourceLocation LEGACY_SERIALIZABLE_RECIPE_CHANNEL =
-            new ResourceLocation(HbmNtm.MOD_ID, "legacy_serializable_recipes");
     private static final int EXPECTED_LEGACY_PACKET_COUNT = 27;
     private static final int EXPECTED_FIRST_LEGACY_PACKET_ID = 0;
     private static final String EXPECTED_FIRST_LEGACY_PACKET_NAME = "TESirenPacket";
@@ -158,6 +147,14 @@ public final class ModMessages {
             new LegacyPacketRegistration(24, "SerializableRecipePacket", "S2C"),
             new LegacyPacketRegistration(25, "HeldItemNBTPacket", "S2C"),
             new LegacyPacketRegistration(26, "MuzzleFlashPacket", "S2C"));
+    /**
+     * Historical 1.7.10 packets intentionally omitted from the modern runtime
+     * protocol. Recipes are datapack-backed and biome updates use native chunk
+     * synchronization, so retaining either client cache would have no consumer.
+     */
+    private static final Set<String> INTENTIONALLY_UNMAPPED_LEGACY_PACKETS = Set.of(
+            "BiomeSyncPacket",
+            "SerializableRecipePacket");
     private static final List<LegacyPacketMapping> LEGACY_PACKET_MAPPINGS = List.of(
             new LegacyPacketMapping("ExtPropPacket", "PlayerRadiationSyncPacket", "S2C",
                     "radiation/status fields split out of legacy extended properties"),
@@ -191,18 +188,10 @@ public final class ModMessages {
                     "missile multipart snapshot by block position"),
             new LegacyPacketMapping("SatPanelPacket", "ClientPanelDataPacket", "S2C",
                     "satellite panel type and NBT payload hbm_ntm_rebirth:satellite_panel"),
-            new LegacyPacketMapping("BiomeSyncPacket", "ClientBiomeSyncPacket", "S2C",
-                    "single-cell or whole-chunk biome short array"),
             new LegacyPacketMapping("BufPacket", "ClientTileBinaryDataPacket", "S2C",
                     "small tile binary payload by channel"),
             new LegacyPacketMapping("BufPacket", "ClientTileBinaryDataChunkPacket", "S2C",
                     "large tile binary payload split by transfer id"),
-            new LegacyPacketMapping("SerializableRecipePacket", "ClientBinaryDataPacket", "S2C",
-                    "generic non-recipe-manager client binary data fallback"),
-            new LegacyPacketMapping("SerializableRecipePacket", "ClientBinaryDataChunkPacket", "S2C",
-                    "large generic client binary data fallback"),
-            new LegacyPacketMapping("SerializableRecipePacket", "ClientBinaryDataReadyPacket", "S2C",
-                    "legacy reinit=true completion signal after all recipe files are received"),
             new LegacyPacketMapping("ExplosionKnockbackPacket", "ExplosionKnockbackPacket", "S2C",
                     "client motion impulse for explosion effects"),
             new LegacyPacketMapping("ExplosionVanillaNewTechnologyCompressedAffectedBlockPositionDataForClientEffectsAndParticleHandlingPacket",
@@ -381,9 +370,9 @@ public final class ModMessages {
         if (!channel.modernPacketIdsContiguous()) {
             problems.add("modern packet id table is not contiguous");
         }
-        if (mappedLegacyPacketCount() != LEGACY_REGISTERED_PACKETS.size()) {
-            problems.add("not all legacy packets have modern carrier mappings: "
-                    + mappedLegacyPacketCount() + "/" + LEGACY_REGISTERED_PACKETS.size());
+        if (mappedLegacyPacketCount() != activeLegacyPacketRegistrationCount()) {
+            problems.add("not all active legacy packets have modern carrier mappings: "
+                    + mappedLegacyPacketCount() + "/" + activeLegacyPacketRegistrationCount());
         }
         if (audit.hasProblems()) {
             problems.add("protocol audit has problems: " + protocolAuditSummary());
@@ -739,7 +728,14 @@ public final class ModMessages {
                 .map(LegacyPacketMapping::legacyName)
                 .collect(java.util.stream.Collectors.toSet());
         return LEGACY_REGISTERED_PACKETS.stream()
+                .filter(registration -> !INTENTIONALLY_UNMAPPED_LEGACY_PACKETS.contains(registration.legacyName))
                 .filter(registration -> mappedNames.contains(registration.legacyName))
+                .count();
+    }
+
+    private static long activeLegacyPacketRegistrationCount() {
+        return LEGACY_REGISTERED_PACKETS.stream()
+                .filter(registration -> !INTENTIONALLY_UNMAPPED_LEGACY_PACKETS.contains(registration.legacyName))
                 .count();
     }
 
@@ -748,6 +744,7 @@ public final class ModMessages {
                 .map(LegacyPacketMapping::legacyName)
                 .collect(java.util.stream.Collectors.toSet());
         return LEGACY_REGISTERED_PACKETS.stream()
+                .filter(registration -> !INTENTIONALLY_UNMAPPED_LEGACY_PACKETS.contains(registration.legacyName))
                 .filter(registration -> !mappedNames.contains(registration.legacyName))
                 .toList();
     }
@@ -772,6 +769,7 @@ public final class ModMessages {
                 .filter(registration -> modernPacketMappings(registration.typeName()).isEmpty())
                 .toList();
         List<LegacyPacketRegistration> unmappedLegacyPackets = LEGACY_REGISTERED_PACKETS.stream()
+                .filter(registration -> !INTENTIONALLY_UNMAPPED_LEGACY_PACKETS.contains(registration.legacyName))
                 .filter(registration -> !mappedLegacyPackets.contains(registration.legacyName()))
                 .toList();
         List<LegacyPacketMapping> mappingsWithDirectionMismatch = LEGACY_PACKET_MAPPINGS.stream()
@@ -940,10 +938,6 @@ public final class ModMessages {
                 CoordinateActionPacket::decode,
                 CoordinateActionPacket::encode,
                 CoordinateActionPacket::handle);
-        registerServerToClient(ClientBinaryDataPacket.class,
-                ClientBinaryDataPacket::decode,
-                ClientBinaryDataPacket::encode,
-                ClientBinaryDataPacket::handle);
         registerServerToClient(ClientTileEventPacket.class,
                 ClientTileEventPacket::decode,
                 ClientTileEventPacket::encode,
@@ -960,22 +954,10 @@ public final class ModMessages {
                 MenuActionPacket::decode,
                 MenuActionPacket::encode,
                 MenuActionPacket::handle);
-        registerServerToClient(ClientBiomeSyncPacket.class,
-                ClientBiomeSyncPacket::decode,
-                ClientBiomeSyncPacket::encode,
-                ClientBiomeSyncPacket::handle);
         registerServerToClient(CompressedExplosionEffectPacket.class,
                 CompressedExplosionEffectPacket::decode,
                 CompressedExplosionEffectPacket::encode,
                 CompressedExplosionEffectPacket::handle);
-        registerServerToClient(ClientBinaryDataChunkPacket.class,
-                ClientBinaryDataChunkPacket::decode,
-                ClientBinaryDataChunkPacket::encode,
-                ClientBinaryDataChunkPacket::handle);
-        registerServerToClient(ClientBinaryDataReadyPacket.class,
-                ClientBinaryDataReadyPacket::decode,
-                ClientBinaryDataReadyPacket::encode,
-                ClientBinaryDataReadyPacket::handle);
         registerServerToClient(ClientTileBinaryDataPacket.class,
                 ClientTileBinaryDataPacket::decode,
                 ClientTileBinaryDataPacket::encode,
@@ -984,14 +966,6 @@ public final class ModMessages {
                 ClientTileBinaryDataChunkPacket::decode,
                 ClientTileBinaryDataChunkPacket::encode,
                 ClientTileBinaryDataChunkPacket::handle);
-        registerClientToServer(ServerTileBinaryControlPacket.class,
-                ServerTileBinaryControlPacket::decode,
-                ServerTileBinaryControlPacket::encode,
-                ServerTileBinaryControlPacket::handle);
-        registerClientToServer(ServerTileBinaryControlChunkPacket.class,
-                ServerTileBinaryControlChunkPacket::decode,
-                ServerTileBinaryControlChunkPacket::encode,
-                ServerTileBinaryControlChunkPacket::handle);
         registerServerToClient(ClientEntityEventPacket.class,
                 ClientEntityEventPacket::decode,
                 ClientEntityEventPacket::encode,
@@ -2036,77 +2010,6 @@ public final class ModMessages {
         sendTypedTileAction(blockEntity.getBlockPos(), actionType, value);
     }
 
-    public static void sendTileBinaryControl(BlockPos pos, ResourceLocation channel,
-                                             java.util.function.Consumer<FriendlyByteBuf> writer) {
-        FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
-        try {
-            writer.accept(buffer);
-            byte[] payload = new byte[buffer.readableBytes()];
-            buffer.getBytes(buffer.readerIndex(), payload);
-            sendTileBinaryControl(pos, channel, payload);
-        } finally {
-            buffer.release();
-        }
-    }
-
-    public static void sendTileBinaryControl(BlockEntity blockEntity, ResourceLocation channel,
-                                             java.util.function.Consumer<FriendlyByteBuf> writer) {
-        sendTileBinaryControl(blockEntity.getBlockPos(), channel, writer);
-    }
-
-    public static void sendTileBinaryControl(BlockPos pos, ResourceLocation channel, byte[] payload) {
-        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
-        if (safePayload.length <= ServerTileBinaryControlPacket.MAX_PAYLOAD_BYTES) {
-            sendToServer(serverTileBinaryControlPacket(pos, channel, safePayload));
-            return;
-        }
-        UUID transferId = UUID.randomUUID();
-        int chunkSize = ServerTileBinaryControlChunkPacket.MAX_CHUNK_BYTES;
-        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
-        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
-            int start = chunkIndex * chunkSize;
-            int end = Math.min(start + chunkSize, safePayload.length);
-            sendToServer(new ServerTileBinaryControlChunkPacket(
-                    transferId,
-                    pos,
-                    channel,
-                    chunkIndex,
-                    chunkCount,
-                    Arrays.copyOfRange(safePayload, start, end)));
-        }
-    }
-
-    public static void sendTileBinaryControl(BlockEntity blockEntity, ResourceLocation channel, byte[] payload) {
-        sendTileBinaryControl(blockEntity.getBlockPos(), channel, payload);
-    }
-
-    public static ServerTileBinaryControlPacket serverTileBinaryControlPacket(BlockPos pos, ResourceLocation channel,
-                                                                              byte[] payload) {
-        return new ServerTileBinaryControlPacket(pos, channel, payload);
-    }
-
-    public static ServerTileBinaryControlPacket serverTileBinaryControlPacket(int x, int y, int z,
-                                                                              ResourceLocation channel,
-                                                                              byte[] payload) {
-        return serverTileBinaryControlPacket(new BlockPos(x, y, z), channel, payload);
-    }
-
-    public static ServerTileBinaryControlPacket serverTileBinaryControlPacket(BlockEntity blockEntity,
-                                                                              ResourceLocation channel,
-                                                                              byte[] payload) {
-        return serverTileBinaryControlPacket(blockEntity.getBlockPos(), channel, payload);
-    }
-
-    public static ServerTileBinaryControlPacket tileBinaryControlPacket(BlockPos pos, ResourceLocation channel,
-                                                                        byte[] payload) {
-        return serverTileBinaryControlPacket(pos, channel, payload);
-    }
-
-    public static ServerTileBinaryControlPacket tileBinaryControlPacket(BlockEntity blockEntity,
-                                                                        ResourceLocation channel, byte[] payload) {
-        return serverTileBinaryControlPacket(blockEntity, channel, payload);
-    }
-
     public static void syncPermaData(ServerPlayer player, net.minecraft.nbt.CompoundTag data) {
         sendToPlayer(permaSyncPacket(data), player);
     }
@@ -2173,192 +2076,6 @@ public final class ModMessages {
         sendCoordinateAction(InteractionHand.MAIN_HAND, pos, action, value, frequency, data);
     }
 
-    public static void syncClientBinaryData(ServerPlayer player, ResourceLocation channel, String name, byte[] payload) {
-        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
-        if (safePayload.length <= ClientBinaryDataPacket.MAX_PAYLOAD_BYTES) {
-            sendToPlayer(clientBinaryDataPacket(channel, name, safePayload, false), player);
-            return;
-        }
-        UUID transferId = UUID.randomUUID();
-        int chunkSize = ClientBinaryDataChunkPacket.MAX_CHUNK_BYTES;
-        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
-        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
-            int start = chunkIndex * chunkSize;
-            int end = Math.min(start + chunkSize, safePayload.length);
-            sendToPlayer(new ClientBinaryDataChunkPacket(
-                    transferId,
-                    channel,
-                    name,
-                    chunkIndex,
-                    chunkCount,
-                    Arrays.copyOfRange(safePayload, start, end)), player);
-        }
-    }
-
-    public static void syncClientBinaryDataThreaded(ServerPlayer player, ResourceLocation channel, String name,
-                                                    byte[] payload) {
-        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
-        if (safePayload.length <= ClientBinaryDataPacket.MAX_PAYLOAD_BYTES) {
-            ThreadedPacketDispatcher.sendToPlayer(clientBinaryDataPacket(channel, name, safePayload, false), player);
-            return;
-        }
-        UUID transferId = UUID.randomUUID();
-        int chunkSize = ClientBinaryDataChunkPacket.MAX_CHUNK_BYTES;
-        int chunkCount = (safePayload.length + chunkSize - 1) / chunkSize;
-        for (int chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
-            int start = chunkIndex * chunkSize;
-            int end = Math.min(start + chunkSize, safePayload.length);
-            ThreadedPacketDispatcher.sendToPlayer(new ClientBinaryDataChunkPacket(
-                    transferId,
-                    channel,
-                    name,
-                    chunkIndex,
-                    chunkCount,
-                    Arrays.copyOfRange(safePayload, start, end)), player);
-        }
-    }
-
-    public static void syncClientBinaryDataBatch(ServerPlayer player, ResourceLocation channel, Map<String, byte[]> payloads,
-                                                 boolean clearFirst, boolean markReady) {
-        if (clearFirst) {
-            clearClientBinaryData(player, channel);
-        }
-        Map<String, byte[]> safePayloads = payloads == null ? Map.of() : payloads;
-        safePayloads.forEach((name, payload) -> syncClientBinaryData(player, channel, name, payload));
-        if (markReady) {
-            markClientBinaryDataReady(player, channel);
-        }
-    }
-
-    public static void syncClientBinaryDataBatchThreaded(ServerPlayer player, ResourceLocation channel,
-                                                         Map<String, byte[]> payloads, boolean clearFirst,
-                                                         boolean markReady) {
-        if (clearFirst) {
-            clearClientBinaryDataThreaded(player, channel);
-        }
-        Map<String, byte[]> safePayloads = payloads == null ? Map.of() : payloads;
-        safePayloads.forEach((name, payload) -> syncClientBinaryDataThreaded(player, channel, name, payload));
-        if (markReady) {
-            markClientBinaryDataReadyThreaded(player, channel);
-        }
-    }
-
-    public static void clearClientBinaryData(ServerPlayer player, ResourceLocation channel) {
-        sendToPlayer(clientBinaryDataPacket(channel, "", new byte[0], true), player);
-    }
-
-    public static void clearClientBinaryDataThreaded(ServerPlayer player, ResourceLocation channel) {
-        ThreadedPacketDispatcher.sendToPlayer(clientBinaryDataPacket(channel, "", new byte[0], true), player);
-    }
-
-    public static void markClientBinaryDataReady(ServerPlayer player, ResourceLocation channel) {
-        sendToPlayer(clientBinaryDataReadyPacket(channel), player);
-    }
-
-    public static void markClientBinaryDataReadyThreaded(ServerPlayer player, ResourceLocation channel) {
-        ThreadedPacketDispatcher.sendToPlayer(clientBinaryDataReadyPacket(channel), player);
-    }
-
-    public static ClientBinaryDataPacket clientBinaryDataPacket(ResourceLocation channel, String name, byte[] payload,
-                                                               boolean clearChannel) {
-        return new ClientBinaryDataPacket(channel, name, payload, clearChannel);
-    }
-
-    public static ClientBinaryDataReadyPacket clientBinaryDataReadyPacket(ResourceLocation channel) {
-        return new ClientBinaryDataReadyPacket(channel);
-    }
-
-    public static ClientBinaryDataPacket serializableRecipePacket(String filename, byte[] fileBytes) {
-        return clientBinaryDataPacket(LEGACY_SERIALIZABLE_RECIPE_CHANNEL, filename, fileBytes, false);
-    }
-
-    public static Optional<ClientBinaryDataPacket> serializableRecipePacket(File recipeFile) {
-        return readSerializableRecipeFile(recipeFile)
-                .map(recipe -> serializableRecipePacket(recipe.filename(), recipe.fileBytes()));
-    }
-
-    public static ClientBinaryDataPacket clearSerializableRecipesPacket() {
-        return clientBinaryDataPacket(LEGACY_SERIALIZABLE_RECIPE_CHANNEL, "", new byte[0], true);
-    }
-
-    public static ClientBinaryDataReadyPacket serializableRecipeReinitPacket() {
-        return clientBinaryDataReadyPacket(LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
-    }
-
-    public static void sendSerializableRecipe(ServerPlayer player, String filename, byte[] fileBytes) {
-        syncClientBinaryData(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL, filename, fileBytes);
-    }
-
-    public static void sendSerializableRecipeThreaded(ServerPlayer player, String filename, byte[] fileBytes) {
-        syncClientBinaryDataThreaded(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL, filename, fileBytes);
-    }
-
-    public static void sendSerializableRecipe(ServerPlayer player, File recipeFile) {
-        readSerializableRecipeFile(recipeFile)
-                .ifPresent(recipe -> sendSerializableRecipe(player, recipe.filename(), recipe.fileBytes()));
-    }
-
-    public static void sendSerializableRecipeThreaded(ServerPlayer player, File recipeFile) {
-        readSerializableRecipeFile(recipeFile)
-                .ifPresent(recipe -> sendSerializableRecipeThreaded(player, recipe.filename(), recipe.fileBytes()));
-    }
-
-    public static void sendSerializableRecipes(ServerPlayer player, Map<String, byte[]> recipeFiles) {
-        syncClientBinaryDataBatch(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL, recipeFiles, true, true);
-    }
-
-    public static void sendSerializableRecipesThreaded(ServerPlayer player, Map<String, byte[]> recipeFiles) {
-        syncClientBinaryDataBatchThreaded(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL, recipeFiles, true, true);
-    }
-
-    public static void sendSerializableRecipeFiles(ServerPlayer player, Iterable<File> recipeFiles) {
-        sendSerializableRecipes(player, readSerializableRecipeFiles(recipeFiles));
-    }
-
-    public static void sendSerializableRecipeFilesThreaded(ServerPlayer player, Iterable<File> recipeFiles) {
-        sendSerializableRecipesThreaded(player, readSerializableRecipeFiles(recipeFiles));
-    }
-
-    public static void clearSerializableRecipes(ServerPlayer player) {
-        clearClientBinaryData(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
-    }
-
-    public static void clearSerializableRecipesThreaded(ServerPlayer player) {
-        clearClientBinaryDataThreaded(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
-    }
-
-    public static void sendSerializableRecipeReinit(ServerPlayer player) {
-        markClientBinaryDataReady(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
-    }
-
-    public static void sendSerializableRecipeReinitThreaded(ServerPlayer player) {
-        markClientBinaryDataReadyThreaded(player, LEGACY_SERIALIZABLE_RECIPE_CHANNEL);
-    }
-
-    private static Optional<LegacySerializableRecipeFile> readSerializableRecipeFile(File recipeFile) {
-        if (recipeFile == null || !recipeFile.isFile()) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(new LegacySerializableRecipeFile(recipeFile.getName(), Files.readAllBytes(recipeFile.toPath())));
-        } catch (IOException exception) {
-            HbmNtm.LOGGER.warn("Unable to read legacy serializable recipe file '{}'.", recipeFile, exception);
-            return Optional.empty();
-        }
-    }
-
-    private static Map<String, byte[]> readSerializableRecipeFiles(Iterable<File> recipeFiles) {
-        if (recipeFiles == null) {
-            return Map.of();
-        }
-        Map<String, byte[]> recipes = new LinkedHashMap<>();
-        for (File recipeFile : recipeFiles) {
-            readSerializableRecipeFile(recipeFile)
-                    .ifPresent(recipe -> recipes.put(recipe.filename(), recipe.fileBytes()));
-        }
-        return recipes;
-    }
-
     public static void sendClientTileEvent(BlockEntity blockEntity, ResourceLocation eventType, net.minecraft.nbt.CompoundTag data) {
         sendToTrackingChunk(clientTileEventPacket(blockEntity.getBlockPos(), eventType, data), blockEntity);
     }
@@ -2417,7 +2134,7 @@ public final class ModMessages {
                                                             ResourceLocation channel, HbmTileBinarySyncState syncState) {
         byte[] payload = writeTileBinaryPayload(provider);
         Level level = blockEntity.getLevel();
-        if (!shouldSendTileBinaryPayload(syncState, payload, level)) {
+        if (!shouldSendTileBinaryPayload(syncState, payload, level, blockEntity.getBlockPos())) {
             return false;
         }
         sendClientTileBinaryData(level, blockEntity.getBlockPos(), channel, payload);
@@ -2455,7 +2172,7 @@ public final class ModMessages {
                                                           HbmTileBinarySyncState syncState) {
         byte[] payload = writeTileBinaryPayload(provider);
         Level level = blockEntity.getLevel();
-        if (!shouldSendTileBinaryPayload(syncState, payload, level)) {
+        if (!shouldSendTileBinaryPayload(syncState, payload, level, blockEntity.getBlockPos())) {
             return false;
         }
         sendClientTileBinaryData(player, blockEntity.getBlockPos(), channel, payload);
@@ -2487,7 +2204,7 @@ public final class ModMessages {
                                                         HbmTileBinarySyncState syncState) {
         byte[] payload = writeTileBinaryPayload(provider);
         Level level = blockEntity.getLevel();
-        if (!shouldSendTileBinaryPayload(syncState, payload, level)) {
+        if (!shouldSendTileBinaryPayload(syncState, payload, level, blockEntity.getBlockPos())) {
             return false;
         }
         if (level instanceof ServerLevel serverLevel) {
@@ -2521,16 +2238,17 @@ public final class ModMessages {
     public static boolean syncTileBinaryAroundThreadedIfChanged(HbmTileBinarySyncProvider provider, BlockEntity blockEntity,
                                                                 ResourceLocation channel, double range,
                                                                 HbmTileBinarySyncState syncState) {
-        byte[] payload = writeTileBinaryPayload(provider);
         Level level = blockEntity.getLevel();
-        if (!shouldSendTileBinaryPayload(syncState, payload, level)) {
+        if (!(level instanceof ServerLevel serverLevel)
+                || !hasPlayerInRange(serverLevel, blockEntity.getBlockPos(), range)) {
             return false;
         }
-        if (level instanceof ServerLevel serverLevel) {
-            sendClientTileBinaryDataAround(serverLevel, blockEntity.getBlockPos(), channel, payload, range, true);
-            return true;
+        byte[] payload = writeTileBinaryPayload(provider);
+        if (!shouldSendTileBinaryPayload(syncState, payload, level, blockEntity.getBlockPos())) {
+            return false;
         }
-        return false;
+        sendClientTileBinaryDataAround(serverLevel, blockEntity.getBlockPos(), channel, payload, range, true);
+        return true;
     }
 
     public static boolean networkPackNT(HbmTileBinarySyncProvider provider, BlockEntity blockEntity, int range,
@@ -2876,7 +2594,10 @@ public final class ModMessages {
     }
 
     public static void sendClientTileBinaryData(ServerPlayer player, BlockPos pos, ResourceLocation channel, byte[] payload) {
-        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        byte[] safePayload = payload == null ? new byte[0] : payload;
+        if (!canSendTileBinaryPayload(safePayload, pos, channel)) {
+            return;
+        }
         if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
             sendToPlayer(clientTileBinaryDataPacket(pos, channel, safePayload), player);
             return;
@@ -2899,7 +2620,10 @@ public final class ModMessages {
 
     public static void sendClientTileBinaryDataThreaded(ServerPlayer player, BlockPos pos,
                                                         ResourceLocation channel, byte[] payload) {
-        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        byte[] safePayload = payload == null ? new byte[0] : payload;
+        if (!canSendTileBinaryPayload(safePayload, pos, channel)) {
+            return;
+        }
         if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
             ThreadedPacketDispatcher.sendToPlayer(clientTileBinaryDataPacket(pos, channel, safePayload), player);
             return;
@@ -2924,7 +2648,10 @@ public final class ModMessages {
         if (!(level instanceof ServerLevel)) {
             return;
         }
-        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        byte[] safePayload = payload == null ? new byte[0] : payload;
+        if (!canSendTileBinaryPayload(safePayload, pos, channel)) {
+            return;
+        }
         if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
             sendToTrackingChunk(clientTileBinaryDataPacket(pos, channel, safePayload), level, pos);
             return;
@@ -2950,7 +2677,10 @@ public final class ModMessages {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        byte[] safePayload = payload == null ? new byte[0] : payload;
+        if (!canSendTileBinaryPayload(safePayload, pos, channel)) {
+            return;
+        }
         if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
             ThreadedPacketDispatcher.sendToTrackingChunk(clientTileBinaryDataPacket(pos, channel, safePayload),
                     serverLevel, pos);
@@ -3226,60 +2956,6 @@ public final class ModMessages {
         sendAnvilCraftAction(recipeIndex, 0);
     }
 
-    public static void syncClientBiome(ServerPlayer player, int blockX, int blockZ, short biome) {
-        sendToPlayer(biomeSyncPacket(blockX, blockZ, biome), player);
-    }
-
-    public static ClientBiomeSyncPacket biomeSyncPacket(int blockX, int blockZ, byte biome) {
-        return biomeSyncPacket(blockX, blockZ, (short) biome);
-    }
-
-    public static ClientBiomeSyncPacket biomeSyncPacket(int blockX, int blockZ, short biome) {
-        return ClientBiomeSyncPacket.single(blockX, blockZ, biome);
-    }
-
-    public static ClientBiomeSyncPacket biomeSyncChunkPacket(int chunkX, int chunkZ, byte[] biomeArray) {
-        if (biomeArray == null) {
-            return ClientBiomeSyncPacket.chunk(chunkX, chunkZ, null);
-        }
-        short[] biomes = new short[biomeArray.length];
-        for (int i = 0; i < biomeArray.length; i++) {
-            biomes[i] = (short) biomeArray[i];
-        }
-        return biomeSyncChunkPacket(chunkX, chunkZ, biomes);
-    }
-
-    public static ClientBiomeSyncPacket biomeSyncChunkPacket(int chunkX, int chunkZ, short[] biomeArray) {
-        return ClientBiomeSyncPacket.chunk(chunkX, chunkZ, biomeArray);
-    }
-
-    public static void syncClientBiome(ServerLevel level, int blockX, int blockZ, short biome, double range) {
-        sendToAllAround(biomeSyncPacket(blockX, blockZ, biome),
-                level, blockX, legacyBiomeSyncY(level), blockZ, range);
-    }
-
-    public static void syncClientBiomeChunk(ServerPlayer player, int chunkX, int chunkZ, short[] biomeArray) {
-        sendToPlayer(biomeSyncChunkPacket(chunkX, chunkZ, biomeArray), player);
-    }
-
-    public static void syncClientBiomeChunk(ServerPlayer player, int chunkX, int chunkZ, byte[] biomeArray) {
-        sendToPlayer(biomeSyncChunkPacket(chunkX, chunkZ, biomeArray), player);
-    }
-
-    public static void syncClientBiomeChunk(ServerLevel level, int chunkX, int chunkZ, short[] biomeArray, double range) {
-        int centerX = (chunkX << 4) + 8;
-        int centerZ = (chunkZ << 4) + 8;
-        sendToAllAround(biomeSyncChunkPacket(chunkX, chunkZ, biomeArray),
-                level, centerX, legacyBiomeSyncY(level), centerZ, range);
-    }
-
-    public static void syncClientBiomeChunk(ServerLevel level, int chunkX, int chunkZ, byte[] biomeArray, double range) {
-        int centerX = (chunkX << 4) + 8;
-        int centerZ = (chunkZ << 4) + 8;
-        sendToAllAround(biomeSyncChunkPacket(chunkX, chunkZ, biomeArray),
-                level, centerX, legacyBiomeSyncY(level), centerZ, range);
-    }
-
     public static void sendParticleBurst(ServerLevel level, BlockPos pos, BlockState state, double range) {
         if (pos == null || state == null) {
             return;
@@ -3353,7 +3029,10 @@ public final class ModMessages {
 
     private static void sendClientTileBinaryDataAround(ServerLevel level, BlockPos pos, ResourceLocation channel,
                                                        byte[] payload, double range, boolean threaded) {
-        byte[] safePayload = payload == null ? new byte[0] : Arrays.copyOf(payload, payload.length);
+        byte[] safePayload = payload == null ? new byte[0] : payload;
+        if (!canSendTileBinaryPayload(safePayload, pos, channel)) {
+            return;
+        }
         if (safePayload.length <= ClientTileBinaryDataPacket.MAX_PAYLOAD_BYTES) {
             sendTileBinaryMessageAround(new ClientTileBinaryDataPacket(pos, channel, safePayload), level, pos, range, threaded);
             return;
@@ -3372,6 +3051,20 @@ public final class ModMessages {
                     chunkCount,
                     Arrays.copyOfRange(safePayload, start, end)), level, pos, range, threaded);
         }
+    }
+
+    /**
+     * Do this before allocating a transfer id or even its first chunk.  The
+     * receiver cannot reassemble more than this value, so sending it would only
+     * consume bandwidth, packet allocations and client-side rejection logs.
+     */
+    private static boolean canSendTileBinaryPayload(byte[] payload, BlockPos pos, ResourceLocation channel) {
+        if (payload.length <= ClientTileBinaryDataChunkPacket.MAX_REASSEMBLED_PAYLOAD_BYTES) {
+            return true;
+        }
+        HbmNtm.LOGGER.warn("Rejected tile-binary S2C payload before chunking: bytes={} limit={} pos={} channel={}",
+                payload.length, ClientTileBinaryDataChunkPacket.MAX_REASSEMBLED_PAYLOAD_BYTES, pos, channel);
+        return false;
     }
 
     private static void sendTileBinaryMessageAround(Object message, ServerLevel level, BlockPos pos,
@@ -3398,17 +3091,30 @@ public final class ModMessages {
         }
     }
 
-    private static boolean shouldSendTileBinaryPayload(HbmTileBinarySyncState syncState, byte[] payload, Level level) {
+    private static boolean shouldSendTileBinaryPayload(HbmTileBinarySyncState syncState, byte[] payload, Level level,
+                                                       BlockPos pos) {
         if (level == null || level.isClientSide) {
             return false;
         }
-        boolean sent = syncState == null || syncState.shouldSend(payload, level.getGameTime());
+        long resendPhase = pos == null ? 0L : pos.asLong();
+        boolean sent = syncState == null || syncState.shouldSend(payload, level.getGameTime(),
+                HbmTileBinarySyncState.LEGACY_FORCED_RESEND_INTERVAL_TICKS, resendPhase);
         HbmMachinePerformanceCounters.networkPack(payload == null ? 0 : payload.length, sent);
         return sent;
     }
 
-    private static double legacyBiomeSyncY(ServerLevel level) {
-        return (level.getMinBuildHeight() + level.getMaxBuildHeight()) * 0.5D;
+    private static boolean hasPlayerInRange(ServerLevel level, BlockPos pos, double range) {
+        double centerX = pos.getX() + 0.5D;
+        double centerY = pos.getY() + 0.5D;
+        double centerZ = pos.getZ() + 0.5D;
+        double safeRange = Math.max(0.0D, range);
+        double rangeSquared = safeRange * safeRange;
+        for (ServerPlayer player : level.players()) {
+            if (!player.isRemoved() && player.distanceToSqr(centerX, centerY, centerZ) <= rangeSquared) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static <MSG> void registerServerToClient(
@@ -3616,13 +3322,6 @@ public final class ModMessages {
     }
 
     public record LegacyPacketRegistration(int legacyId, String legacyName, String direction) {
-    }
-
-    private record LegacySerializableRecipeFile(String filename, byte[] fileBytes) {
-        private LegacySerializableRecipeFile {
-            filename = filename == null ? "" : filename;
-            fileBytes = fileBytes == null ? new byte[0] : Arrays.copyOf(fileBytes, fileBytes.length);
-        }
     }
 
     public record NetworkChannelSnapshot(

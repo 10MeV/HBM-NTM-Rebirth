@@ -135,13 +135,13 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
     private final IFluidHandler steamFluidHandler;
     private final IFluidHandler inputFluidHandler;
     private final IFluidHandler smokeFluidHandler;
-    private final ICapabilityProvider steamDelegate;
-    private final ICapabilityProvider inputFluidDelegate;
-    private final ICapabilityProvider smokeDelegate;
-    private final ICapabilityProvider input0Delegate = new ItemDelegate(() -> input0Handler);
-    private final ICapabilityProvider input1Delegate = new ItemDelegate(() -> input1Handler);
-    private final ICapabilityProvider input2Delegate = new ItemDelegate(() -> input2Handler);
-    private final ICapabilityProvider fuelDelegate = new ItemDelegate(() -> fuelHandler);
+    private final FluidDelegate steamDelegate;
+    private final FluidDelegate inputFluidDelegate;
+    private final FluidDelegate smokeDelegate;
+    private final ItemDelegate input0Delegate = new ItemDelegate(input0Handler);
+    private final ItemDelegate input1Delegate = new ItemDelegate(input1Handler);
+    private final ItemDelegate input2Delegate = new ItemDelegate(input2Handler);
+    private final ItemDelegate fuelDelegate = new ItemDelegate(fuelHandler);
 
     private boolean isProgressing;
     private float progress;
@@ -181,9 +181,9 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
                 this::onFluidContentsChanged);
         smokeFluidHandler = new ForgeFluidHandlerAdapter(List.of(), List.of(smokeTank), 0, false, true,
                 this::onFluidContentsChanged);
-        steamDelegate = new FluidDelegate(() -> steamFluidHandler);
-        inputFluidDelegate = new FluidDelegate(() -> inputFluidHandler);
-        smokeDelegate = new FluidDelegate(() -> smokeFluidHandler);
+        steamDelegate = new FluidDelegate(steamFluidHandler);
+        inputFluidDelegate = new FluidDelegate(inputFluidHandler);
+        smokeDelegate = new FluidDelegate(smokeFluidHandler);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RotaryFurnaceBlockEntity furnace) {
@@ -393,6 +393,18 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
     @Override
     public long getProviderSpeed(FluidType type, int pressure) {
         return Math.max(1L, type == HbmFluids.SPENTSTEAM ? spentSteamTank.getFill() : smokeTank.getFill());
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        input0Delegate.invalidate();
+        input1Delegate.invalidate();
+        input2Delegate.invalidate();
+        fuelDelegate.invalidate();
+        steamDelegate.invalidate();
+        inputFluidDelegate.invalidate();
+        smokeDelegate.invalidate();
     }
 
     @Override
@@ -786,22 +798,42 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
         }
     }
 
-    private record ItemDelegate(java.util.function.Supplier<IItemHandler> handler) implements ICapabilityProvider {
+    private static final class ItemDelegate implements ICapabilityProvider {
+        private final LazyOptional<IItemHandler> handler;
+
+        private ItemDelegate(IItemHandler handler) {
+            this.handler = LazyOptional.of(() -> handler);
+        }
+
+        private void invalidate() {
+            handler.invalidate();
+        }
+
         @Override
         public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
             return capability == ForgeCapabilities.ITEM_HANDLER
-                    ? LazyOptional.of(handler::get).cast()
+                    ? handler.cast()
                     : LazyOptional.empty();
         }
     }
 
-    private record FluidDelegate(java.util.function.Supplier<IFluidHandler> handler) implements ICapabilityProvider {
+    private static final class FluidDelegate implements ICapabilityProvider {
+        private final LazyOptional<IFluidHandler> handler;
+
+        private FluidDelegate(IFluidHandler handler) {
+            this.handler = LazyOptional.of(() -> handler);
+        }
+
+        private void invalidate() {
+            handler.invalidate();
+        }
+
         @Override
         public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
             return capability == ForgeCapabilities.FLUID_HANDLER
-                    ? LazyOptional.of(handler::get).cast()
+                    ? handler.cast()
                     : LazyOptional.empty();
         }
     }

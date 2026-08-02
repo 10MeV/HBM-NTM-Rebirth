@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/brick_light",
+    "side": "hbm_ntm_rebirth:block/brick_light",
+    "top": "hbm_ntm_rebirth:block/brick_light"
+  }
+}
+

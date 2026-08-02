@@ -1,4 +1,5 @@
 {
+  "parent": "hbm_ntm_rebirth:burner_press",
   "display": {
     "icon": {
       "item": "hbm_ntm_rebirth:machine_assembly_machine"

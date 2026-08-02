@@ -16,6 +16,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmWorldUtil;
+import com.hbm.saveddata.satellites.SatelliteRayScan;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -116,6 +117,10 @@ public class DfcCoreBlockEntity extends HbmFluidNetworkBlockEntity implements Me
         }
         if (heat > 0) {
             applyLegacyAmsRadiation(level, pos);
+            if (level.getGameTime() % 100L == 0L) {
+                SatelliteRayScan.reportEvent(level, pos.getX(), pos.getY(), pos.getZ(),
+                        SatelliteRayScan.RayEvent.INFO_PARTICLE, 200);
+            }
         }
         networkPackNT(250);
         heat = 0;

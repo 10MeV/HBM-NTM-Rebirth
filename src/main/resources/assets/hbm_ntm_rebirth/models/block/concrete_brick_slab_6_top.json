@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/brick_concrete_mossy",
+    "side": "hbm_ntm_rebirth:block/brick_concrete_mossy",
+    "top": "hbm_ntm_rebirth:block/brick_concrete_mossy"
+  }
+}

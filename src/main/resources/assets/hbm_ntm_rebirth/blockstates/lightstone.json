@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "hbm_ntm_rebirth:block/lightstone_0"
+    },
+    "variant=1": {
+      "model": "hbm_ntm_rebirth:block/lightstone_1"
+    },
+    "variant=2": {
+      "model": "hbm_ntm_rebirth:block/lightstone_2"
+    },
+    "variant=3": {
+      "model": "hbm_ntm_rebirth:block/lightstone_3"
+    },
+    "variant=4": {
+      "model": "hbm_ntm_rebirth:block/lightstone_4"
+    }
+  }
+}

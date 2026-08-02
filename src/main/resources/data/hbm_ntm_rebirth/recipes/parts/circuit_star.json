@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:circuit_star_component_chipset" },
+    { "item": "hbm_ntm_rebirth:circuit_star_component_cpu" },
+    { "item": "hbm_ntm_rebirth:circuit_star_component_ram" },
+    { "item": "hbm_ntm_rebirth:circuit_star_component_card" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_board_transistor" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_board_converter" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_board_blank" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:circuit_star" }
+}

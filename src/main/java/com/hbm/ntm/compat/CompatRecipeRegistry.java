@@ -1108,55 +1108,6 @@ public final class CompatRecipeRegistry {
                 duration);
     }
 
-    public static JsonObject createDiFurnace(List<HbmIngredient> inputs, HbmItemOutput output) {
-        List<HbmIngredient> safeInputs = nonNullList(inputs);
-        requireDiFurnaceShape(safeInputs, output);
-        JsonObject json = new JsonObject();
-        json.addProperty("type", ModRecipes.DIFURNACE.serializer().getId().toString());
-        json.add("inputs", itemInputs(safeInputs));
-        json.add("output", output.toJson());
-        return json;
-    }
-
-    public static JsonObject createDiFurnace(HbmIngredient[] inputs, ItemStack output) {
-        return createDiFurnace(list(inputs), HbmItemOutput.of(output));
-    }
-
-    public static JsonObject createDiFurnace(HbmIngredient firstInput, HbmIngredient secondInput,
-            ItemStack output) {
-        return createDiFurnace(List.of(firstInput, secondInput), HbmItemOutput.of(output));
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
-            List<HbmIngredient> inputs, HbmItemOutput output) {
-        return emit(sink, id, createDiFurnace(inputs, output));
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
-            HbmIngredient[] inputs, ItemStack output) {
-        return registerDiFurnace(sink, id, list(inputs), HbmItemOutput.of(output));
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
-            HbmIngredient firstInput, HbmIngredient secondInput, ItemStack output) {
-        return registerDiFurnace(sink, id, List.of(firstInput, secondInput), HbmItemOutput.of(output));
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
-            List<HbmIngredient> inputs, HbmItemOutput output) {
-        return registerDiFurnace(sink, compatRecipeId("difurnace", name), inputs, output);
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
-            HbmIngredient[] inputs, ItemStack output) {
-        return registerDiFurnace(sink, compatRecipeId("difurnace", name), inputs, output);
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
-            HbmIngredient firstInput, HbmIngredient secondInput, ItemStack output) {
-        return registerDiFurnace(sink, compatRecipeId("difurnace", name), firstInput, secondInput, output);
-    }
-
     public static JsonObject createCombination(HbmIngredient input, HbmItemOutput outputItem,
             HbmFluidStack outputFluid) {
         Objects.requireNonNull(input, "input");
@@ -2868,8 +2819,6 @@ public final class CompatRecipeRegistry {
                 supported("registerCrystallizer", "crystallizer", "ModRecipes.CRYSTALLIZER"),
                 supported("registerItemProcessing", "item_processing_recipe_methods", "ItemProcessingRecipe JSON sink"),
                 supported("registerGeneric", "recipe_sink_register_methods", "generic datapack JSON sink"),
-                supported("registerBlastFurnace", "difurnace",
-                        "old no-sink 1.7.10 facade targets ModRecipes.DIFURNACE; explicit modern sink overloads named registerBlastFurnace remain ModRecipes.BLAST_FURNACE for BlastFurnaceRecipesNT"),
                 supported("registerSoldering", "soldering_station", "ModRecipes.SOLDERING_STATION"),
                 supported("registerCombination", "combination_oven", "ModRecipes.COMBINATION_OVEN"),
                 supported("registerCrucible", "crucible", "ModRecipes.CRUCIBLE datapack JSON sink"),
@@ -3196,15 +3145,6 @@ public final class CompatRecipeRegistry {
         }
         if (outputs.isEmpty() || outputs.size() > 2) {
             throw new IllegalArgumentException("HBM compat blast furnace recipe needs one or two item outputs");
-        }
-    }
-
-    private static void requireDiFurnaceShape(List<HbmIngredient> inputs, HbmItemOutput output) {
-        if (inputs.size() != 2) {
-            throw new IllegalArgumentException("HBM compat DiFurnace recipe needs exactly two item inputs");
-        }
-        if (output == null) {
-            throw new IllegalArgumentException("HBM compat DiFurnace recipe needs one item output");
         }
     }
 

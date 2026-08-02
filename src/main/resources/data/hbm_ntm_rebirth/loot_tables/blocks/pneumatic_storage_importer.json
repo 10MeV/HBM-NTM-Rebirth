@@ -1,0 +1,4 @@
+{
+  "type": "minecraft:block",
+  "pools": [{ "rolls": 1, "entries": [{ "type": "minecraft:item", "name": "hbm_ntm_rebirth:pneumatic_storage_importer" }], "conditions": [{ "condition": "minecraft:survives_explosion" }] }]
+}

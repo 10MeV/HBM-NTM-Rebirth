@@ -1,0 +1,11 @@
+{
+  "parent": "hbm_ntm_rebirth:block/stones_slab_0_bottom",
+  "overrides": [
+    {
+      "model": "hbm_ntm_rebirth:block/stones_slab_1_bottom",
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 1.0
+      }
+    }
+  ]
+}

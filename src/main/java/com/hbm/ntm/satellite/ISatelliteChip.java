@@ -60,19 +60,23 @@ public interface ISatelliteChip {
 
     /**
      * 1.20.1's public ItemStack#getItem returns AIR when count is zero, unlike
-     * the 1.7.10 carrier used by ISatChip.  The underlying Forge holder still
-     * retains the original item, so read it only for this legacy facade.
+     * the 1.7.10 carrier used by ISatChip. Temporarily restoring a positive
+     * count exposes the retained holder through the public API.
      */
     private static Item legacyCarrierItem(ItemStack stack) {
-        // ItemStack.EMPTY itself has no Forge holder. It was null in 1.7.10
-        // too, so retain the static facade's ordinary non-chip/no-op result.
-        if (stack.isEmpty()) {
-            // A deserialized or handler-provided empty stack can have neither
-            // an item nor a Forge holder.  1.7.10 represented this as a null
-            // stack, which ISatChip#getFreqS maps to frequency zero.
-            return stack.delegate != null ? stack.delegate.value() : null;
+        // ItemStack.EMPTY has no backing holder. It maps to the old null-stack
+        // no-op path and must never be temporarily mutated.
+        if (stack == ItemStack.EMPTY) {
+            return null;
         }
-        return stack.getItem();
+        if (!stack.isEmpty()) {
+            return stack.getItem();
+        }
+        int legacyCount = stack.getCount();
+        stack.setCount(1);
+        Item item = stack.getItem();
+        stack.setCount(legacyCount);
+        return item;
     }
 
     default int getFreq(ItemStack stack) {

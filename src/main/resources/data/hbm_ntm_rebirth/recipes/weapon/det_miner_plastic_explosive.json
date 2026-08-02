@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"misc","key":{"F":{"item":"minecraft:flint"},"I":{"item":"hbm_ntm_rebirth:plate_steel"},"T":{"tag":"forge:ingots/any_plastic_explosive"}},"pattern":["FFF","ITI","ITI"],"result":{"item":"hbm_ntm_rebirth:det_miner","count":12},"show_notification":true}

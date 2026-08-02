@@ -322,13 +322,8 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = saveWithoutMetadata();
-        HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, "items", items);
-        if (customName != null && !customName.isEmpty()) {
-            tag.putString("name", customName);
-        }
-        return tag;
-    }
+        return new CompoundTag();
+}
 
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {

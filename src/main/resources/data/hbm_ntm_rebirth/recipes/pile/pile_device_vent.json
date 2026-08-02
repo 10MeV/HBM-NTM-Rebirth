@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "misc",
+  "pattern": [" M ", "ACA", " S "],
+  "key": {
+    "M": { "item": "hbm_ntm_rebirth:motor" },
+    "A": { "item": "hbm_ntm_rebirth:plate_aluminium" },
+    "C": { "item": "hbm_ntm_rebirth:shell_copper" },
+    "S": { "item": "hbm_ntm_rebirth:plate_cast_steel" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:pile_device", "nbt": "{hbmPileDeviceKind:\"vent\"}" }
+}

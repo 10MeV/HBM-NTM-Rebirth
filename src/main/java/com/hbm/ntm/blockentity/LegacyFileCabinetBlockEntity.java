@@ -269,10 +269,8 @@ public class LegacyFileCabinetBlockEntity extends BlockEntity implements MenuPro
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        saveAdditional(tag);
-        return tag;
-    }
+        return new CompoundTag();
+}
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {

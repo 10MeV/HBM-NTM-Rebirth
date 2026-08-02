@@ -89,6 +89,48 @@ public final class ObjRenderUtils {
         }
     }
 
+    /**
+     * Renders selected cull-face groups from a baked block model.  This is for
+     * entity-rendered multiblock sections, where vanilla's chunk renderer is
+     * not present to discard the faces shared by two adjacent sections.
+     */
+    public static void renderBlockModelFaces(
+            BakedModel model,
+            BlockState state,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            int packedOverlay,
+            boolean renderDown,
+            boolean renderUp) {
+        BlockColors blockColors = Minecraft.getInstance().getBlockColors();
+        int color = blockColors.getColor(state, (BlockAndTintGetter) null, (BlockPos) null, 0);
+        float red = (float) (color >> 16 & 255) / 255.0F;
+        float green = (float) (color >> 8 & 255) / 255.0F;
+        float blue = (float) (color & 255) / 255.0F;
+        PoseStack.Pose pose = poseStack.last();
+        RandomSource random = bakedModelRandom();
+
+        for (RenderType renderType : model.getRenderTypes(state, random, ModelData.EMPTY)) {
+            VertexConsumer consumer = buffer.getBuffer(RenderTypeHelper.getEntityRenderType(renderType, false));
+            for (Direction direction : DIRECTIONS) {
+                if ((direction == Direction.DOWN && !renderDown) || (direction == Direction.UP && !renderUp)) {
+                    continue;
+                }
+                random.setSeed(BAKED_MODEL_RANDOM_SEED);
+                renderQuadListFaces(pose, consumer,
+                        model.getQuads(state, direction, random, ModelData.EMPTY, renderType),
+                        packedLight, packedOverlay, 1.0F, red, green, blue, false, renderDown, renderUp);
+            }
+            random.setSeed(BAKED_MODEL_RANDOM_SEED);
+            // Block-model JSON normally leaves cullface unset, so its horizontal
+            // faces live in this unculled list.  Filter by the baked quad's own
+            // direction rather than assuming they were supplied by the loop above.
+            renderQuadListFaces(pose, consumer, model.getQuads(state, null, random, ModelData.EMPTY, renderType),
+                    packedLight, packedOverlay, 1.0F, red, green, blue, false, renderDown, renderUp);
+        }
+    }
+
     public static void renderModel(
             BakedModel model,
             PoseStack poseStack,
@@ -148,6 +190,32 @@ public final class ObjRenderUtils {
             boolean legacyShadow) {
         for (BakedQuad quad : quads) {
             float shadow = legacyShadow ? legacyShadowFactor(pose, quad.getDirection()) : 1.0F;
+            float red = Mth.clamp(baseRed * lightMultiplier * shadow, 0.0F, 1.0F);
+            float green = Mth.clamp(baseGreen * lightMultiplier * shadow, 0.0F, 1.0F);
+            float blue = Mth.clamp(baseBlue * lightMultiplier * shadow, 0.0F, 1.0F);
+            consumer.putBulkData(pose, quad, red, green, blue, packedLight, packedOverlay);
+        }
+    }
+
+    private static void renderQuadListFaces(
+            PoseStack.Pose pose,
+            VertexConsumer consumer,
+            List<BakedQuad> quads,
+            int packedLight,
+            int packedOverlay,
+            float lightMultiplier,
+            float baseRed,
+            float baseGreen,
+            float baseBlue,
+            boolean legacyShadow,
+            boolean renderDown,
+            boolean renderUp) {
+        for (BakedQuad quad : quads) {
+            Direction direction = quad.getDirection();
+            if ((direction == Direction.DOWN && !renderDown) || (direction == Direction.UP && !renderUp)) {
+                continue;
+            }
+            float shadow = legacyShadow ? legacyShadowFactor(pose, direction) : 1.0F;
             float red = Mth.clamp(baseRed * lightMultiplier * shadow, 0.0F, 1.0F);
             float green = Mth.clamp(baseGreen * lightMultiplier * shadow, 0.0F, 1.0F);
             float blue = Mth.clamp(baseBlue * lightMultiplier * shadow, 0.0F, 1.0F);

@@ -813,50 +813,6 @@ public final class CompatRecipeRegistry {
                 output, duration);
     }
 
-    public static JsonObject createDiFurnace(List<HbmIngredient> inputs, HbmItemOutput output) {
-        return com.hbm.ntm.compat.CompatRecipeRegistry.createDiFurnace(inputs, output);
-    }
-
-    public static JsonObject createDiFurnace(HbmIngredient[] inputs, ItemStack output) {
-        return com.hbm.ntm.compat.CompatRecipeRegistry.createDiFurnace(inputs, output);
-    }
-
-    public static JsonObject createDiFurnace(HbmIngredient firstInput, HbmIngredient secondInput,
-            ItemStack output) {
-        return com.hbm.ntm.compat.CompatRecipeRegistry.createDiFurnace(firstInput, secondInput, output);
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
-            List<HbmIngredient> inputs, HbmItemOutput output) {
-        return com.hbm.ntm.compat.CompatRecipeRegistry.registerDiFurnace(sink, id, inputs, output);
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
-            HbmIngredient[] inputs, ItemStack output) {
-        return com.hbm.ntm.compat.CompatRecipeRegistry.registerDiFurnace(sink, id, inputs, output);
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, ResourceLocation id,
-            HbmIngredient firstInput, HbmIngredient secondInput, ItemStack output) {
-        return com.hbm.ntm.compat.CompatRecipeRegistry.registerDiFurnace(sink, id, firstInput, secondInput, output);
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
-            List<HbmIngredient> inputs, HbmItemOutput output) {
-        return com.hbm.ntm.compat.CompatRecipeRegistry.registerDiFurnace(sink, name, inputs, output);
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
-            HbmIngredient[] inputs, ItemStack output) {
-        return com.hbm.ntm.compat.CompatRecipeRegistry.registerDiFurnace(sink, name, inputs, output);
-    }
-
-    public static ResourceLocation registerDiFurnace(com.hbm.ntm.api.recipe.RecipeSink sink, String name,
-            HbmIngredient firstInput, HbmIngredient secondInput, ItemStack output) {
-        return com.hbm.ntm.compat.CompatRecipeRegistry.registerDiFurnace(sink, name, firstInput, secondInput,
-                output);
-    }
-
     public static JsonObject createSoldering(ItemStack output, int duration, long power, HbmFluidStack fluid,
             List<HbmIngredient> toppings, List<HbmIngredient> pcb, List<HbmIngredient> solder, int sourceOrder) {
         return com.hbm.ntm.compat.CompatRecipeRegistry.createSoldering(output, duration, power, fluid, toppings,
@@ -1806,18 +1762,6 @@ public final class CompatRecipeRegistry {
         enqueueLegacyDirect("press", (sink, id, sourceOrder) ->
                 com.hbm.ntm.compat.CompatRecipeRegistry.registerPress(sink, id, stamp,
                         modernIngredient(input).ingredient(), output, sourceOrder));
-    }
-
-    public static void registerBlastFurnace(Object[] inputs, ItemStack output) {
-        if (inputs == null || inputs.length != 2) {
-            return;
-        }
-        enqueueLegacyDirect("difurnace", (sink, id, sourceOrder) ->
-                com.hbm.ntm.compat.CompatRecipeRegistry.registerDiFurnace(sink, id,
-                        new HbmIngredient[] {
-                                modernIngredient(inputs[0]),
-                                modernIngredient(inputs[1])
-                        }, output));
     }
 
     public static void registerShredder(AStack input, ItemStack output) {

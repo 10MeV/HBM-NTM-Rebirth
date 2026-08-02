@@ -27,7 +27,7 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class LegacyBigSwordItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
-            "textures/models/ModelBigSwordTexture.png");
+            "textures/models/model_big_sword_texture.png");
     private static final ModelPart MODEL = createModel();
 
     public static final LegacyBigSwordItemRenderer INSTANCE = new LegacyBigSwordItemRenderer(

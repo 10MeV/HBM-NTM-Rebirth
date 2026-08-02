@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:pile_device",
+              "conditions": [{ "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:pile_device", "properties": { "kind": "loader" } }],
+              "functions": [{ "function": "minecraft:set_nbt", "tag": "{hbmPileDeviceKind:\"loader\"}" }]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:pile_device",
+              "conditions": [{ "condition": "minecraft:block_state_property", "block": "hbm_ntm_rebirth:pile_device", "properties": { "kind": "vent" } }],
+              "functions": [{ "function": "minecraft:set_nbt", "tag": "{hbmPileDeviceKind:\"vent\"}" }]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "hbm_ntm_rebirth:pile_device",
+              "functions": [{ "function": "minecraft:set_nbt", "tag": "{hbmPileDeviceKind:\"control\"}" }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

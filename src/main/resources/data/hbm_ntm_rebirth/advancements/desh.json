@@ -1,4 +1,5 @@
 {
+  "parent": "hbm_ntm_rebirth:chemplant",
   "display": {
     "icon": {
       "item": "hbm_ntm_rebirth:ingot_desh"

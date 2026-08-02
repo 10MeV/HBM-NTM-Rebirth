@@ -142,6 +142,22 @@ public final class WeaponExplosionUtil {
         return explosion;
     }
 
+    /**
+     * Exact {@code EntityOrbitalLaser#explode()} VNT setup.  This is deliberately
+     * separate from {@link #smooth}: the Precision Laser uses a different
+     * effect count/scale/speed than the Death Ray's generic weapon effect.
+     */
+    public static ExplosionVnt orbitalLaser(Level level, double x, double y, double z, @Nullable Entity source) {
+        return new ExplosionVnt(level, x, y, z, 5.0F, source, false, Explosion.BlockInteraction.DESTROY_WITH_DECAY)
+                .setBlockAllocator(new BlockAllocatorStandard())
+                .setBlockProcessor(new BlockProcessorStandard())
+                .setEntityProcessor(new EntityProcessorCrossSmooth(1.0D, 1_000.0F)
+                        .setupPiercing(50.0F, 0.5F)
+                        .setDamageClass(DamageClass.LASER))
+                .setPlayerProcessor(new PlayerProcessorStandard())
+                .setEffects(new ExplosionEffectWeapon(15, 3.5F, 1.25F));
+    }
+
     public static ExplosionVnt standardEnergy(Level level, double x, double y, double z, float size, @Nullable Entity source,
             float fixedDamage, DamageClass damageClass, float red, float green, float blue, float scale) {
         return new ExplosionVnt(level, x, y, z, size, source, false, Explosion.BlockInteraction.KEEP)

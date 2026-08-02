@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","pattern":["LLL","LGL","LLL"],"key":{"L":{"item":"minecraft:ladder"},"G":{"tag":"forge:ingots/gold"}},"result":{"item":"hbm_ntm_rebirth:ladder_gold","count":8}}

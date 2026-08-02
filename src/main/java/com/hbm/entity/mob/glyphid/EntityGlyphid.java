@@ -41,6 +41,7 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -178,10 +179,22 @@ public class EntityGlyphid extends Monster implements IResistanceProvider {
                 getNavigation().stop();
                 destroyLegacyLanternsWhileBlinded();
             }
+            refreshLegacyPlayerTarget();
             tickTaskState();
             if (tickCount % 100 == 0) {
                 swingGlyphid();
             }
+        }
+    }
+
+    /** Source {@code updateEntityActionState}: staggered 5-second closest-player refresh for two thirds of Glyphids. */
+    private void refreshLegacyPlayerTarget() {
+        if (hasEffect(MobEffects.BLINDNESS) || getId() % 3 <= 0 || (getId() + tickCount) % 100 != 0) {
+            return;
+        }
+        Player target = level().getNearestPlayer(TargetingConditions.forCombat().range(getTargetRange()), this);
+        if (target != null) {
+            setTarget(target);
         }
     }
 

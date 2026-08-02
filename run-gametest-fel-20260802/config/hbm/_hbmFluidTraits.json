@@ -1,0 +1,2168 @@
+{
+  "NONE": {},
+  "WATER": {
+    "liquid": {},
+    "unsiphonable": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "STEAM",
+          "amountReq": 1,
+          "amountProd": 100,
+          "heatReq": 200
+        },
+        {
+          "typeProduced": "HOTSTEAM",
+          "amountReq": 1,
+          "amountProd": 10,
+          "heatReq": 220
+        },
+        {
+          "typeProduced": "SUPERHOTSTEAM",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 238
+        },
+        {
+          "typeProduced": "ULTRAHOTSTEAM",
+          "amountReq": 10,
+          "amountProd": 1,
+          "heatReq": 2500
+        }
+      ],
+      "BOILER": 1.0,
+      "HEATEXCHANGER": 0.25
+    }
+  },
+  "STEAM": {
+    "gaseous": {},
+    "unsiphonable": {},
+    "coolable": {
+      "coolsTo": "SPENTSTEAM",
+      "amountReq": 100,
+      "amountProd": 1,
+      "heatEnergy": 200,
+      "TURBINE": 1.0,
+      "HEATEXCHANGER": 0.5
+    }
+  },
+  "HOTSTEAM": {
+    "gaseous": {},
+    "unsiphonable": {},
+    "coolable": {
+      "coolsTo": "STEAM",
+      "amountReq": 1,
+      "amountProd": 10,
+      "heatEnergy": 2,
+      "TURBINE": 1.0,
+      "HEATEXCHANGER": 0.5
+    }
+  },
+  "SUPERHOTSTEAM": {
+    "gaseous": {},
+    "unsiphonable": {},
+    "coolable": {
+      "coolsTo": "HOTSTEAM",
+      "amountReq": 1,
+      "amountProd": 10,
+      "heatEnergy": 18,
+      "TURBINE": 1.0,
+      "HEATEXCHANGER": 0.5
+    }
+  },
+  "ULTRAHOTSTEAM": {
+    "gaseous": {},
+    "unsiphonable": {},
+    "coolable": {
+      "coolsTo": "SUPERHOTSTEAM",
+      "amountReq": 1,
+      "amountProd": 10,
+      "heatEnergy": 120,
+      "TURBINE": 1.0,
+      "HEATEXCHANGER": 0.5
+    }
+  },
+  "COOLANT": {
+    "liquid": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "COOLANT_HOT",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 300
+        }
+      ],
+      "HEATEXCHANGER": 1.0,
+      "PWR": 1.0,
+      "ICF": 1.0
+    }
+  },
+  "LAVA": {
+    "liquid": {},
+    "viscous": {}
+  },
+  "DEUTERIUM": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 255,
+      "gasTankLabelColor": 16777215
+    }
+  },
+  "TRITIUM": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 153,
+      "gasTankLabelColor": 15335338
+    }
+  },
+  "OIL": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 4342338
+    },
+    "flammable": {
+      "energy": 6250
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    },
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "HOTOIL",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 10
+        }
+      ],
+      "BOILER": 1.0,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "HOTOIL": {
+    "liquid": {},
+    "viscous": {},
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    },
+    "coolable": {
+      "coolsTo": "OIL",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 10,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "HEAVYOIL": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 5324601
+    },
+    "flammable": {
+      "energy": 13700
+    },
+    "combustible": {
+      "energy": 17100,
+      "grade": "LOW"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "BITUMEN": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 5920887
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "SMEAR": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 6442811
+    },
+    "flammable": {
+      "energy": 20600
+    },
+    "combustible": {
+      "energy": 25700,
+      "grade": "LOW"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "HEATINGOIL": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 6898229
+    },
+    "flammable": {
+      "energy": 97800
+    },
+    "combustible": {
+      "energy": 122000,
+      "grade": "LOW"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "RECLAIMED": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 16144163
+    },
+    "flammable": {
+      "energy": 28300
+    },
+    "combustible": {
+      "energy": 35400,
+      "grade": "LOW"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "PETROIL": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 2320886
+    },
+    "flammable": {
+      "energy": 32600
+    },
+    "combustible": {
+      "energy": 48900,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "LUBRICANT": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 15846405
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "NAPHTHA": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 6253892
+    },
+    "flammable": {
+      "energy": 27500
+    },
+    "combustible": {
+      "energy": 41200,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "DIESEL": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 16722988
+    },
+    "flammable": {
+      "energy": 137000
+    },
+    "combustible": {
+      "energy": 343000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "LIGHTOIL": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 11823954
+    },
+    "flammable": {
+      "energy": 733000
+    },
+    "combustible": {
+      "energy": 1100000,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "KEROSENE": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 16725885
+    },
+    "flammable": {
+      "energy": 1280000
+    },
+    "combustible": {
+      "energy": 1920000,
+      "grade": "AERO"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "GAS": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 16729413,
+      "gasTankLabelColor": 16771455
+    },
+    "flammable": {
+      "energy": 12500
+    },
+    "combustible": {
+      "energy": 18700,
+      "grade": "GAS"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 2.0E-4
+      }
+    }
+  },
+  "PETROLEUM": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 6192383,
+      "gasTankLabelColor": 16771455
+    },
+    "flammable": {
+      "energy": 550000
+    },
+    "combustible": {
+      "energy": 825000,
+      "grade": "GAS"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 2.0E-4
+      }
+    }
+  },
+  "LPG": {
+    "liquid": {},
+    "flammable": {
+      "energy": 605000
+    },
+    "combustible": {
+      "energy": 1510000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {},
+      "burn": {
+        "SOOT": 4.0E-4
+      }
+    }
+  },
+  "BIOGAS": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 13172511,
+      "gasTankLabelColor": 3158064
+    },
+    "flammable": {
+      "energy": 62500
+    },
+    "combustible": {
+      "energy": 78100,
+      "grade": "GAS"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 2.0E-4
+      }
+    }
+  },
+  "BIOFUEL": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 10401315
+    },
+    "flammable": {
+      "energy": 500000
+    },
+    "combustible": {
+      "energy": 1250000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "NITAN": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 7021452
+    },
+    "flammable": {
+      "energy": 32000000
+    },
+    "combustible": {
+      "energy": 80000000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "UF6": {
+    "gaseous": {},
+    "ventradiation": {
+      "radiation": 0.2
+    },
+    "corrosive": {
+      "rating": 15
+    }
+  },
+  "PUF6": {
+    "gaseous": {},
+    "ventradiation": {
+      "radiation": 0.1
+    },
+    "corrosive": {
+      "rating": 15
+    }
+  },
+  "SAS3": {
+    "liquid": {},
+    "ventradiation": {
+      "radiation": 1.0
+    },
+    "corrosive": {
+      "rating": 30
+    }
+  },
+  "SCHRABIDIC": {
+    "liquid": {},
+    "ventradiation": {
+      "radiation": 1.0
+    },
+    "corrosive": {
+      "rating": 75
+    },
+    "poison": {
+      "level": 2,
+      "withering": true
+    }
+  },
+  "AMAT": {
+    "amat": {},
+    "gaseous": {}
+  },
+  "ASCHRAB": {
+    "amat": {},
+    "gaseous": {}
+  },
+  "PEROXIDE": {
+    "liquid": {},
+    "corrosive": {
+      "rating": 40
+    }
+  },
+  "WATZ": {
+    "liquid": {},
+    "viscous": {},
+    "ventradiation": {
+      "radiation": 0.1
+    },
+    "corrosive": {
+      "rating": 60
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-4
+      },
+      "burn": {}
+    }
+  },
+  "CRYOGEL": {
+    "liquid": {},
+    "viscous": {}
+  },
+  "HYDROGEN": {
+    "liquid": {},
+    "gaseous_art": {},
+    "container": {
+      "gasTankBottleColor": 4359924,
+      "gasTankLabelColor": 16777215
+    }
+  },
+  "OXYGEN": {
+    "liquid": {},
+    "gaseous_art": {},
+    "container": {
+      "gasTankBottleColor": 10010105,
+      "gasTankLabelColor": 16777215
+    }
+  },
+  "XENON": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 9183743,
+      "gasTankLabelColor": 3158064
+    }
+  },
+  "BALEFIRE": {
+    "liquid": {},
+    "viscous": {},
+    "corrosive": {
+      "rating": 50
+    },
+    "flammable": {
+      "energy": 128000000
+    },
+    "combustible": {
+      "energy": 320000000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "MERCURY": {
+    "liquid": {},
+    "poison": {
+      "level": 2,
+      "withering": false
+    }
+  },
+  "PAIN": {
+    "liquid": {},
+    "viscous": {},
+    "corrosive": {
+      "rating": 30
+    },
+    "poison": {
+      "level": 2,
+      "withering": true
+    }
+  },
+  "WASTEFLUID": {
+    "nocontainer": {},
+    "liquid": {},
+    "viscous": {},
+    "ventradiation": {
+      "radiation": 0.5
+    }
+  },
+  "WASTEGAS": {
+    "nocontainer": {},
+    "gaseous": {},
+    "ventradiation": {
+      "radiation": 0.5
+    }
+  },
+  "GASOLINE": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 3110727
+    },
+    "flammable": {
+      "energy": 151000
+    },
+    "combustible": {
+      "energy": 378000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "COALGAS": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 3020127
+    },
+    "flammable": {
+      "energy": 529000
+    },
+    "combustible": {
+      "energy": 794000,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "SPENTSTEAM": {
+    "nocontainer": {},
+    "gaseous": {}
+  },
+  "FRACKSOL": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 5212287
+    },
+    "corrosive": {
+      "rating": 15
+    },
+    "poison": {
+      "level": 0,
+      "withering": false
+    }
+  },
+  "PLASMA_DT": {
+    "nocontainer": {},
+    "noid": {},
+    "plasma": {}
+  },
+  "PLASMA_HD": {
+    "nocontainer": {},
+    "noid": {},
+    "plasma": {}
+  },
+  "PLASMA_HT": {
+    "nocontainer": {},
+    "noid": {},
+    "plasma": {}
+  },
+  "PLASMA_XM": {
+    "nocontainer": {},
+    "noid": {},
+    "plasma": {}
+  },
+  "PLASMA_BF": {
+    "nocontainer": {},
+    "noid": {},
+    "plasma": {}
+  },
+  "CARBONDIOXIDE": {
+    "gaseous": {},
+    "polluting": {
+      "release": {
+        "POISON": 2.0000001E-5
+      },
+      "burn": {}
+    }
+  },
+  "PLASMA_DH3": {
+    "nocontainer": {},
+    "noid": {},
+    "plasma": {}
+  },
+  "HELIUM3": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 16605983,
+      "gasTankLabelColor": 16777215
+    }
+  },
+  "DEATH": {
+    "leadcontainer": {},
+    "liquid": {},
+    "viscous": {},
+    "corrosive": {
+      "rating": 80
+    },
+    "poison": {
+      "level": 4,
+      "withering": true
+    }
+  },
+  "ETHANOL": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 15400947
+    },
+    "flammable": {
+      "energy": 275000
+    },
+    "combustible": {
+      "energy": 687000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "HEAVYWATER": {
+    "liquid": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "HEAVYWATER_HOT",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 300
+        }
+      ],
+      "PWR": 1.0
+    },
+    "pwrmoderator": {
+      "multiplier": 1.25
+    }
+  },
+  "CRACKOIL": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 4342338
+    },
+    "flammable": {
+      "energy": 7810
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    },
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "HOTCRACKOIL",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 10
+        }
+      ],
+      "BOILER": 1.0,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "COALOIL": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 4342338
+    },
+    "flammable": {
+      "energy": 275000
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "HOTCRACKOIL": {
+    "liquid": {},
+    "viscous": {},
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    },
+    "coolable": {
+      "coolsTo": "CRACKOIL",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 10,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "NAPHTHA_CRACK": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 6253892
+    },
+    "flammable": {
+      "energy": 21400
+    },
+    "combustible": {
+      "energy": 32200,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "LIGHTOIL_CRACK": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 11823954
+    },
+    "flammable": {
+      "energy": 458000
+    },
+    "combustible": {
+      "energy": 687000,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "DIESEL_CRACK": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 16722988
+    },
+    "flammable": {
+      "energy": 128000
+    },
+    "combustible": {
+      "energy": 322000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "AROMATICS": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "gasTankBottleColor": 6856858,
+      "gasTankLabelColor": 15585063
+    },
+    "flammable": {
+      "energy": 229000
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 2.0E-4
+      }
+    }
+  },
+  "UNSATURATEDS": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 6459310,
+      "gasTankLabelColor": 15585063
+    },
+    "flammable": {
+      "energy": 1830000
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 2.0E-4
+      }
+    }
+  },
+  "SALIENT": {
+    "delicious": {},
+    "liquid": {},
+    "viscous": {}
+  },
+  "XPJUICE": {
+    "liquid": {},
+    "viscous": {}
+  },
+  "ENDERJUICE": {
+    "liquid": {}
+  },
+  "PETROIL_LEADED": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 2306550
+    },
+    "flammable": {
+      "energy": 48900
+    },
+    "combustible": {
+      "energy": 73300,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5,
+        "HEAVYMETAL": 5.0000002E-5
+      },
+      "burn": {
+        "SOOT": 0.001,
+        "HEAVYMETAL": 5.0E-4
+      }
+    }
+  },
+  "GASOLINE_LEADED": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 3110746
+    },
+    "flammable": {
+      "energy": 226000
+    },
+    "combustible": {
+      "energy": 567000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5,
+        "HEAVYMETAL": 5.0000002E-5
+      },
+      "burn": {
+        "SOOT": 0.001,
+        "HEAVYMETAL": 5.0E-4
+      }
+    }
+  },
+  "COALGAS_LEADED": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 1971551
+    },
+    "flammable": {
+      "energy": 794000
+    },
+    "combustible": {
+      "energy": 1190000,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5,
+        "HEAVYMETAL": 5.0000002E-5
+      },
+      "burn": {
+        "SOOT": 0.001,
+        "HEAVYMETAL": 5.0E-4
+      }
+    }
+  },
+  "SULFURIC_ACID": {
+    "liquid": {},
+    "corrosive": {
+      "rating": 50
+    }
+  },
+  "COOLANT_HOT": {
+    "liquid": {},
+    "coolable": {
+      "coolsTo": "COOLANT",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 300,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "MUG": {
+    "delicious": {},
+    "liquid": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "MUG_HOT",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 400
+        }
+      ],
+      "HEATEXCHANGER": 1.0,
+      "PWR": 1.0,
+      "ICF": 1.25
+    },
+    "pwrmoderator": {
+      "multiplier": 1.15
+    }
+  },
+  "MUG_HOT": {
+    "delicious": {},
+    "liquid": {},
+    "coolable": {
+      "coolsTo": "MUG",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 400,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "WOODOIL": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 12549711
+    },
+    "flammable": {
+      "energy": 110000
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "COALCREOSOTE": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 2644543
+    },
+    "flammable": {
+      "energy": 250000
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "SEEDSLURRY": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 8176478
+    }
+  },
+  "NITRIC_ACID": {
+    "liquid": {},
+    "corrosive": {
+      "rating": 60
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-4
+      },
+      "burn": {}
+    }
+  },
+  "SOLVENT": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 15000559
+    },
+    "corrosive": {
+      "rating": 30
+    },
+    "flammable": {
+      "energy": 100000
+    }
+  },
+  "BLOOD": {
+    "liquid": {},
+    "viscous": {},
+    "delicious": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "BLOOD_HOT",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 500
+        }
+      ],
+      "HEATEXCHANGER": 1.0,
+      "ICF": 1.25
+    }
+  },
+  "BLOOD_HOT": {
+    "liquid": {},
+    "viscous": {},
+    "coolable": {
+      "coolsTo": "BLOOD",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 500,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "SYNGAS": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 16777215,
+      "gasTankLabelColor": 1250067
+    },
+    "flammable": {
+      "energy": 412000
+    },
+    "combustible": {
+      "energy": 515000,
+      "grade": "GAS"
+    }
+  },
+  "OXYHYDROGEN": {
+    "gaseous": {},
+    "flammable": {
+      "energy": 5000
+    },
+    "combustible": {
+      "energy": 15000,
+      "grade": "GAS"
+    }
+  },
+  "RADIOSOLVENT": {
+    "liquid": {},
+    "corrosive": {
+      "rating": 50
+    },
+    "flammable": {
+      "energy": 150000
+    }
+  },
+  "CHLORINE": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 12236146,
+      "gasTankLabelColor": 8944436
+    },
+    "corrosive": {
+      "rating": 25
+    },
+    "toxin": {
+      "entries": [
+        {
+          "type": "directdamage",
+          "amount": 2.0,
+          "source": "hbm_ntm_rebirth:cloud",
+          "delay": 20,
+          "hazmat": false,
+          "masktype": "GAS_LUNG"
+        }
+      ]
+    }
+  },
+  "HEAVYOIL_VACUUM": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 5324601
+    },
+    "flammable": {
+      "energy": 46800
+    },
+    "combustible": {
+      "energy": 58500,
+      "grade": "LOW"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "REFORMATE": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 13730006
+    },
+    "flammable": {
+      "energy": 1200000
+    },
+    "combustible": {
+      "energy": 3000000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "LIGHTOIL_VACUUM": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 11823954
+    },
+    "flammable": {
+      "energy": 1500000
+    },
+    "combustible": {
+      "energy": 2250000,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "SOURGAS": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 13221389,
+      "gasTankLabelColor": 3158064
+    },
+    "corrosive": {
+      "rating": 10
+    },
+    "poison": {
+      "level": 1,
+      "withering": false
+    },
+    "flammable": {
+      "energy": 62500
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-4
+      },
+      "burn": {
+        "SOOT": 2.0E-4
+      }
+    }
+  },
+  "XYLENE": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 10715350
+    },
+    "flammable": {
+      "energy": 1050000
+    },
+    "combustible": {
+      "energy": 2620000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "HEATINGOIL_VACUUM": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 6898229
+    },
+    "flammable": {
+      "energy": 328000
+    },
+    "combustible": {
+      "energy": 410000,
+      "grade": "LOW"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "DIESEL_REFORM": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 16762112
+    },
+    "flammable": {
+      "energy": 342000
+    },
+    "combustible": {
+      "energy": 856000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "DIESEL_CRACK_REFORM": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 16762112
+    },
+    "flammable": {
+      "energy": 320000
+    },
+    "combustible": {
+      "energy": 800000,
+      "grade": "HIGH"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "KEROSENE_REFORM": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 16725885
+    },
+    "flammable": {
+      "energy": 3200000
+    },
+    "combustible": {
+      "energy": 4800000,
+      "grade": "AERO"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "REFORMGAS": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 9671423,
+      "gasTankLabelColor": 16759186
+    },
+    "flammable": {
+      "energy": 2620000
+    },
+    "combustible": {
+      "energy": 3930000,
+      "grade": "GAS"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 2.0E-4
+      }
+    }
+  },
+  "COLLOID": {
+    "liquid": {},
+    "viscous": {}
+  },
+  "PHOSGENE": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 13616292,
+      "gasTankLabelColor": 3544084
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-4
+      },
+      "burn": {}
+    },
+    "toxin": {
+      "entries": [
+        {
+          "type": "directdamage",
+          "amount": 4.0,
+          "source": "hbm_ntm_rebirth:cloud",
+          "delay": 20,
+          "hazmat": false,
+          "masktype": "GAS_LUNG"
+        }
+      ]
+    }
+  },
+  "MUSTARDGAS": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 12236146,
+      "gasTankLabelColor": 3544084
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-4
+      },
+      "burn": {}
+    },
+    "toxin": {
+      "entries": [
+        {
+          "type": "directdamage",
+          "amount": 4.0,
+          "source": "hbm_ntm_rebirth:cloud",
+          "delay": 10,
+          "hazmat": false,
+          "masktype": "GAS_BLISTERING"
+        },
+        {
+          "type": "effects",
+          "effects": [
+            [
+              "minecraft:wither",
+              100,
+              1,
+              false
+            ],
+            [
+              "minecraft:nausea",
+              100,
+              0,
+              false
+            ]
+          ],
+          "hazmat": true,
+          "masktype": "GAS_BLISTERING"
+        }
+      ]
+    }
+  },
+  "IONGEL": {
+    "liquid": {},
+    "viscous": {}
+  },
+  "OIL_COKER": {
+    "liquid": {},
+    "viscous": {},
+    "flammable": {
+      "energy": 7810
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "NAPHTHA_COKER": {
+    "liquid": {},
+    "viscous": {},
+    "flammable": {
+      "energy": 31200
+    },
+    "combustible": {
+      "energy": 46800,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    }
+  },
+  "GAS_COKER": {
+    "gaseous": {},
+    "flammable": {
+      "energy": 15600
+    },
+    "combustible": {
+      "energy": 23400,
+      "grade": "GAS"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 2.0E-4
+      }
+    }
+  },
+  "EGG": {
+    "liquid": {}
+  },
+  "CHOLESTEROL": {
+    "liquid": {}
+  },
+  "ESTRADIOL": {
+    "liquid": {},
+    "toxin": {
+      "entries": [
+        {
+          "type": "effects",
+          "effects": [
+            [
+              "hbm_ntm_rebirth:death",
+              72000,
+              0,
+              false
+            ]
+          ],
+          "hazmat": false,
+          "masktype": "PARTICLE_FINE"
+        }
+      ]
+    }
+  },
+  "FISHOIL": {
+    "liquid": {},
+    "flammable": {
+      "energy": 75000
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "SUNFLOWEROIL": {
+    "liquid": {},
+    "flammable": {
+      "energy": 50000
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "NITROGLYCERIN": {
+    "liquid": {}
+  },
+  "REDMUD": {
+    "liquid": {},
+    "viscous": {},
+    "leadcontainer": {},
+    "corrosive": {
+      "rating": 60
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-4
+      },
+      "burn": {}
+    },
+    "toxin": {
+      "entries": [
+        {
+          "type": "effects",
+          "effects": [
+            [
+              "minecraft:wither",
+              600,
+              2,
+              false
+            ]
+          ],
+          "hazmat": false,
+          "masktype": "GAS_BLISTERING"
+        }
+      ]
+    }
+  },
+  "CHLOROCALCITE_SOLUTION": {
+    "liquid": {},
+    "nocontainer": {},
+    "corrosive": {
+      "rating": 60
+    }
+  },
+  "CHLOROCALCITE_MIX": {
+    "liquid": {},
+    "nocontainer": {},
+    "corrosive": {
+      "rating": 60
+    }
+  },
+  "CHLOROCALCITE_CLEANED": {
+    "liquid": {},
+    "nocontainer": {},
+    "corrosive": {
+      "rating": 60
+    }
+  },
+  "POTASSIUM_CHLORIDE": {
+    "liquid": {},
+    "nocontainer": {},
+    "corrosive": {
+      "rating": 60
+    }
+  },
+  "CALCIUM_CHLORIDE": {
+    "liquid": {},
+    "nocontainer": {},
+    "corrosive": {
+      "rating": 60
+    }
+  },
+  "CALCIUM_SOLUTION": {
+    "liquid": {},
+    "nocontainer": {},
+    "corrosive": {
+      "rating": 60
+    }
+  },
+  "SMOKE": {
+    "gaseous": {},
+    "noid": {},
+    "nocontainer": {}
+  },
+  "SMOKE_LEADED": {
+    "gaseous": {},
+    "noid": {},
+    "nocontainer": {}
+  },
+  "SMOKE_POISON": {
+    "gaseous": {},
+    "noid": {},
+    "nocontainer": {}
+  },
+  "HELIUM4": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 16605983,
+      "gasTankLabelColor": 16776960
+    }
+  },
+  "HEAVYWATER_HOT": {
+    "liquid": {},
+    "viscous": {},
+    "coolable": {
+      "coolsTo": "HEAVYWATER",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 300,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "SODIUM": {
+    "liquid": {},
+    "viscous": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "SODIUM_HOT",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 400
+        }
+      ],
+      "PWR": 2.5,
+      "ICF": 3.0
+    }
+  },
+  "SODIUM_HOT": {
+    "liquid": {},
+    "viscous": {},
+    "coolable": {
+      "coolsTo": "SODIUM",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 400,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "THORIUM_SALT": {
+    "liquid": {},
+    "viscous": {},
+    "corrosive": {
+      "rating": 65
+    },
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "THORIUM_SALT_HOT",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 400
+        }
+      ],
+      "PWR": 1.0
+    },
+    "pwrmoderator": {
+      "multiplier": 2.5
+    }
+  },
+  "THORIUM_SALT_HOT": {
+    "liquid": {},
+    "viscous": {},
+    "corrosive": {
+      "rating": 65
+    },
+    "coolable": {
+      "coolsTo": "THORIUM_SALT_DEPLETED",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 400,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "THORIUM_SALT_DEPLETED": {
+    "liquid": {},
+    "viscous": {},
+    "corrosive": {
+      "rating": 65
+    }
+  },
+  "FULLERENE": {
+    "liquid": {},
+    "corrosive": {
+      "rating": 65
+    },
+    "polluting": {
+      "release": {
+        "POISON": 2.0000001E-5
+      },
+      "burn": {}
+    }
+  },
+  "PHEROMONE": {
+    "liquid": {},
+    "pheromone": {
+      "type": 1
+    }
+  },
+  "PHEROMONE_M": {
+    "liquid": {},
+    "pheromone": {
+      "type": 2
+    }
+  },
+  "OIL_DS": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 4342338
+    },
+    "flammable": {
+      "energy": 12500
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    },
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "HOTOIL_DS",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 10
+        }
+      ],
+      "BOILER": 1.0,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "HOTOIL_DS": {
+    "liquid": {},
+    "viscous": {},
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    },
+    "coolable": {
+      "coolsTo": "OIL_DS",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 10,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "CRACKOIL_DS": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 4342338
+    },
+    "flammable": {
+      "energy": 15600
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    },
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "HOTCRACKOIL_DS",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 10
+        }
+      ],
+      "BOILER": 1.0,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "HOTCRACKOIL_DS": {
+    "liquid": {},
+    "viscous": {},
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.004
+      }
+    },
+    "coolable": {
+      "coolsTo": "CRACKOIL_DS",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 10,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "NAPHTHA_DS": {
+    "liquid": {},
+    "viscous": {},
+    "container": {
+      "canisterColor": 6253892
+    },
+    "flammable": {
+      "energy": 55000
+    },
+    "combustible": {
+      "energy": 82500,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "LIGHTOIL_DS": {
+    "liquid": {},
+    "container": {
+      "canisterColor": 11823954
+    },
+    "flammable": {
+      "energy": 1460000
+    },
+    "combustible": {
+      "energy": 2200000,
+      "grade": "MEDIUM"
+    },
+    "polluting": {
+      "release": {
+        "POISON": 5.0E-5
+      },
+      "burn": {
+        "SOOT": 0.001
+      }
+    }
+  },
+  "STELLAR_FLUX": {
+    "amat": {},
+    "gaseous": {}
+  },
+  "VITRIOL": {
+    "liquid": {},
+    "viscous": {}
+  },
+  "SLOP": {
+    "liquid": {},
+    "viscous": {}
+  },
+  "LEAD": {
+    "liquid": {},
+    "viscous": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "LEAD_HOT",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 800
+        }
+      ],
+      "PWR": 0.75,
+      "ICF": 4.0
+    },
+    "pwrmoderator": {
+      "multiplier": 0.75
+    }
+  },
+  "LEAD_HOT": {
+    "liquid": {},
+    "viscous": {},
+    "coolable": {
+      "coolsTo": "LEAD",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 680,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "PERFLUOROMETHYL": {
+    "liquid": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "PERFLUOROMETHYL_HOT",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 300
+        }
+      ],
+      "HEATEXCHANGER": 1.0,
+      "PWR": 1.0,
+      "ICF": 1.0
+    }
+  },
+  "PERFLUOROMETHYL_COLD": {
+    "liquid": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "PERFLUOROMETHYL",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 300
+        }
+      ],
+      "PA": 1.0
+    }
+  },
+  "PERFLUOROMETHYL_HOT": {
+    "liquid": {},
+    "coolable": {
+      "coolsTo": "PERFLUOROMETHYL",
+      "amountReq": 1,
+      "amountProd": 1,
+      "heatEnergy": 300,
+      "HEATEXCHANGER": 1.0
+    }
+  },
+  "LYE": {
+    "liquid": {},
+    "corrosive": {
+      "rating": 40
+    }
+  },
+  "SODIUM_ALUMINATE": {
+    "liquid": {},
+    "corrosive": {
+      "rating": 30
+    }
+  },
+  "BAUXITE_SOLUTION": {
+    "liquid": {},
+    "viscous": {},
+    "corrosive": {
+      "rating": 40
+    }
+  },
+  "ALUMINA": {
+    "liquid": {}
+  },
+  "AIR": {
+    "gaseous": {},
+    "heatable": {
+      "steps": [
+        {
+          "typeProduced": "AIRBLAST",
+          "amountReq": 1,
+          "amountProd": 1,
+          "heatReq": 5
+        }
+      ],
+      "BOILER": 1.0
+    }
+  },
+  "CONCRETE": {
+    "liquid": {}
+  },
+  "DHC": {
+    "gaseous": {}
+  },
+  "AIRBLAST": {
+    "gaseous": {}
+  },
+  "FLUE": {
+    "gaseous": {},
+    "container": {
+      "gasTankBottleColor": 16729413,
+      "gasTankLabelColor": 16771455
+    },
+    "flammable": {
+      "energy": 10000
+    },
+    "polluting": {
+      "release": {
+        "SOOT": 0.005
+      },
+      "burn": {
+        "SOOT": 2.0E-4
+      }
+    }
+  },
+  "CORIUM_FLUID": {
+    "nocontainer": {},
+    "liquid": {},
+    "viscous": {},
+    "ventradiation": {
+      "radiation": 1.0
+    }
+  },
+  "CUSTOM_DEMO": {}
+}

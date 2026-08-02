@@ -6,6 +6,8 @@ public final class LegacyBulletConfigs {
     public static final float DEFAULT_SPREAD = 0.005F;
 
     public static final BulletConfig TURBINE = turbine();
+    /** 1.7.10 TileEntityPileCore#pile_debris; emitted only by MK2 Pile meltdowns. */
+    public static final BulletConfig PILE_DEBRIS = pileDebris();
     public static final BulletConfig MASKMAN_BOLT = maskmanBolt();
 
     public static BulletConfig standardBullet(String legacyName) {
@@ -74,6 +76,22 @@ public final class LegacyBulletConfigs {
                 .ricochet(false, 0.0D, 0, 0, 0.0D)
                 .destroysBlocks(true)
                 .appearance(BulletStyle.BLADE, 0, BulletPlink.NONE, "")
+                .build();
+    }
+
+    private static BulletConfig pileDebris() {
+        return BulletConfig.builder("pile_debris")
+                .ammo(BulletAmmo.NOTHING)
+                .damage(100.0F, 100.0F)
+                .ballistics(1.0F, 0.0F, 0, 0, 0)
+                .physics(0.1D, 200)
+                .ricochet(false, 0.0D, 0, 0, 0.0D)
+                // TileEntityPileCore's impact lambda calls newExplosion(..., 5F, true, false).
+                .explosive(5.0F)
+                .incendiaryTicks(1)
+                .blockDamage(false)
+                .behavior(BulletBehaviorTag.FLAME_VISUAL)
+                .appearance(BulletStyle.NORMAL, 0, BulletPlink.NONE, "")
                 .build();
     }
 

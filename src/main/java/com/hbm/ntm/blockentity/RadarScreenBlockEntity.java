@@ -129,10 +129,8 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = saveWithoutMetadata();
-        tag.merge(snapshot.toTag(true));
-        return tag;
-    }
+        return getClientSyncTag();
+}
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

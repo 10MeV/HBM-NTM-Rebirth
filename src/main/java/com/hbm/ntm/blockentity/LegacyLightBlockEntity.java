@@ -333,10 +333,8 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        saveAdditional(tag);
-        return tag;
-    }
+        return new CompoundTag();
+}
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

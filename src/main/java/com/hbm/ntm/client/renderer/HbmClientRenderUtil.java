@@ -28,6 +28,12 @@ public final class HbmClientRenderUtil {
                 OverlayTexture.NO_OVERLAY, null, 1.0F);
     }
 
+    public static void renderBlockModelFaces(BlockRenderDispatcher dispatcher, BlockState state, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, boolean renderDown, boolean renderUp) {
+        ObjRenderUtils.renderBlockModelFaces(dispatcher.getBlockModel(state), state, poseStack, buffer, packedLight,
+                OverlayTexture.NO_OVERLAY, renderDown, renderUp);
+    }
+
     @SuppressWarnings("deprecation")
     public static void bindParticleAtlas() {
         RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_PARTICLES);

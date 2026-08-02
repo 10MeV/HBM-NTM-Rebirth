@@ -125,8 +125,8 @@ public class BedrockOreDepositBlockEntity extends BlockEntity implements com.hbm
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

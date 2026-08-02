@@ -454,13 +454,13 @@ public class SawmillBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        return new CompoundTag();
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Nullable
     @Override

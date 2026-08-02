@@ -29,6 +29,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -109,8 +110,20 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
         int oldDistance = fel.distance;
         HbmEnergyUtil.chargeStorageFromItem(fel.items.getStackInSlot(SLOT_BATTERY), fel.energy, fel.energy.getReceiverSpeed());
         fel.mode = fel.on ? wavelengthFor(fel.items.getStackInSlot(SLOT_CRYSTAL)) : LaserWavelength.NULL;
-        fel.missingValidSilex = true;
-        fel.scanBeam(level, state);
+        int request = fel.powerRequest();
+        if (fel.on && fel.mode != LaserWavelength.NULL && fel.energy.getPower() < request) {
+            // TileEntityFEL deliberately discards a partial charge when an enabled
+            // laser cannot pay its complete legacy per-tick request.
+            fel.energy.setPower(0L);
+        }
+        if (fel.on && fel.mode != LaserWavelength.NULL && fel.energy.getPower() >= request) {
+            Direction facing = state.getValue(HorizontalMachineBlock.FACING);
+            // The old tile applies hazards using the last scan result, before the
+            // current tick consumes energy and scans the next obstruction.
+            fel.hurtEntities(level, facing, fel.distance - 1);
+            fel.energy.setPower(fel.energy.getPower() - request);
+            fel.scanBeam(level, facing);
+        }
         // TileEntityFEL broadcasts its renderer/audio state through networkPackNT(250) every tick.
         // The packet layer suppresses unchanged snapshots except for the legacy keepalive cadence.
         fel.networkPackNT(250);
@@ -131,34 +144,49 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
                 "hbm:block.fel", fel.audioDuration > 10, 25.0D, 10.0F, volume, pitch);
     }
 
-    private void scanBeam(Level level, BlockState state) {
-        if (!canEmit()) {
-            distance = 0;
-            return;
-        }
-        Direction facing = state.getValue(HorizontalMachineBlock.FACING);
-        int request = powerRequest();
-        energy.setPower(energy.getPower() - request);
+    private void scanBeam(Level level, Direction facing) {
         int range = 24;
-        boolean foundSilex = false;
-        distance = range;
+        boolean silexSpacing = false;
         for (int i = 3; i < range; i++) {
             BlockPos beamPos = worldPosition.relative(facing, i).above();
             BlockState beamState = level.getBlockState(beamPos);
-            if (!beamState.getFluidState().isEmpty() && !beamState.blocksMotion()) {
-                distance = i;
-                LegacySoundPlayer.playSoundEffect(level, beamPos, "random.fizz", 1.0F, 1.0F);
-                level.removeBlock(beamPos, false);
-                break;
-            }
-            if (beamState.isAir() || !beamState.blocksMotion()) {
+            // TileEntityFEL uses Material#isOpaque, not collision.  In
+            // particular, glass must not stop the beam merely because it has a
+            // collision shape.  isSolidRender is the modern state-level
+            // equivalent for this legacy opaque-material gate.
+            // SILEX used Material.iron in 1.7.10 and therefore passed the
+            // legacy opaque-material gate.  Its 1.20.1 visual block is
+            // intentionally no-occlusion so the imported model can render,
+            // which must not make the beam skip it before the SILEX branch.
+            boolean isSilex = beamState.is(ModBlocks.MACHINE_SILEX.get());
+            if (!isSilex && !beamState.isSolidRender(level, beamPos) && !beamState.is(Blocks.TNT)) {
+                distance = range;
+                silexSpacing = false;
                 continue;
             }
-            BlockEntity behind = level.getBlockEntity(beamPos.relative(facing));
-            if (behind instanceof SilexBlockEntity silex && i >= 5 && !foundSilex
-                    && silex.acceptLaser(facing, mode)) {
-                missingValidSilex = false;
-                foundSilex = true;
+            if (isSilex) {
+                // The illuminated SILEX dummy is one block above the core;
+                // TileEntityFEL looks up the core one block farther along the
+                // beam at the FEL core's Y level.  Looking up only at beam Y
+                // makes every valid modern SILEX invisible to the laser.
+                BlockEntity behind = level.getBlockEntity(beamPos.relative(facing).below());
+                if (behind instanceof SilexBlockEntity silex) {
+                    Direction silexFacing = silex.getBlockState().getValue(HorizontalMachineBlock.FACING);
+                    boolean validRotation = silexFacing == facing || silexFacing == facing.getOpposite();
+                    if (validRotation && i >= 5 && !silexSpacing) {
+                        if (silex.getMode() != mode) {
+                            silex.acceptLaser(facing, mode);
+                            missingValidSilex = false;
+                            silexSpacing = true;
+                        }
+                    } else {
+                        // The legacy machine self-destructs a malformed inline
+                        // SILEX assembly and emits precisely one replacement item.
+                        level.destroyBlock(silex.getBlockPos(), false);
+                        level.addFreshEntity(new ItemEntity(level, beamPos.getX() + 0.5D, beamPos.getY() + 0.5D,
+                                beamPos.getZ() + 0.5D, new ItemStack(ModBlocks.MACHINE_SILEX.get())));
+                    }
+                }
                 continue;
             }
             distance = i;
@@ -174,15 +202,17 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
             }
             break;
         }
-        hurtEntities(level, facing, Math.max(0, distance - 1));
     }
 
     private void hurtEntities(Level level, Direction facing, int beamDistance) {
-        if (beamDistance <= 0 || mode == LaserWavelength.NULL) {
+        if (mode == LaserWavelength.NULL) {
             return;
         }
-        AABB box = new AABB(worldPosition).expandTowards(
-                facing.getStepX() * beamDistance, 1.0D, facing.getStepZ() * beamDistance).inflate(0.2D);
+        double endX = worldPosition.getX() + facing.getStepX() * beamDistance;
+        double endZ = worldPosition.getZ() + facing.getStepZ() * beamDistance;
+        AABB box = new AABB(Math.min(worldPosition.getX(), endX) + 0.2D, worldPosition.getY() + 0.2D,
+                Math.min(worldPosition.getZ(), endZ) + 0.2D, Math.max(worldPosition.getX(), endX) + 0.8D,
+                worldPosition.getY() + 1.8D, Math.max(worldPosition.getZ(), endZ) + 0.8D);
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box)) {
             switch (mode) {
                 // TileEntityFEL intentionally falls through from VISIBLE into IR in 1.7.10.
@@ -198,10 +228,6 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
                 }
             }
         }
-    }
-
-    private boolean canEmit() {
-        return on && mode != LaserWavelength.NULL && energy.getPower() >= powerRequest();
     }
 
     public int powerRequest() {
@@ -327,8 +353,8 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {

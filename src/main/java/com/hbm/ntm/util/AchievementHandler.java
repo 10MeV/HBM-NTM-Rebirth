@@ -27,6 +27,8 @@ public final class AchievementHandler {
     public static final ResourceLocation NO9 = new ResourceLocation(HbmNtm.MOD_ID, "no9");
     public static final ResourceLocation SOME_WOUNDS = new ResourceLocation(HbmNtm.MOD_ID, "some_wounds");
     public static final ResourceLocation GO_FISH = new ResourceLocation(HbmNtm.MOD_ID, "go_fish");
+    public static final ResourceLocation STRATUM = new ResourceLocation(HbmNtm.MOD_ID, "stratum");
+    public static final ResourceLocation SLIMEBALL = new ResourceLocation(HbmNtm.MOD_ID, "slimeball");
     public static final ResourceLocation DIGAMMA_SEE =
             new ResourceLocation(HbmNtm.MOD_ID, "digamma_see");
     public static final ResourceLocation DIGAMMA_FEEL =
@@ -46,16 +48,67 @@ public final class AchievementHandler {
     public static final ResourceLocation HORIZONS_END = new ResourceLocation(HbmNtm.MOD_ID, "horizons_end");
     public static final ResourceLocation HORIZONS_BONUS = new ResourceLocation(HbmNtm.MOD_ID, "horizons_bonus");
     public static final ResourceLocation SOYUZ = new ResourceLocation(HbmNtm.MOD_ID, "soyuz");
+    public static final ResourceLocation BURNER_PRESS = new ResourceLocation(HbmNtm.MOD_ID, "burner_press");
+    public static final ResourceLocation SELENIUM = new ResourceLocation(HbmNtm.MOD_ID, "selenium");
+    public static final ResourceLocation CONCRETE = new ResourceLocation(HbmNtm.MOD_ID, "concrete");
+    public static final ResourceLocation POLYMER = new ResourceLocation(HbmNtm.MOD_ID, "polymer");
+    public static final ResourceLocation TANTALUM = new ResourceLocation(HbmNtm.MOD_ID, "tantalum");
+    public static final ResourceLocation GAS_CENT = new ResourceLocation(HbmNtm.MOD_ID, "gas_cent");
+    public static final ResourceLocation CENTRIFUGE = new ResourceLocation(HbmNtm.MOD_ID, "centrifuge");
+    public static final ResourceLocation SPACE = new ResourceLocation(HbmNtm.MOD_ID, "space");
+    public static final ResourceLocation SCHRAB = new ResourceLocation(HbmNtm.MOD_ID, "schrab");
+    public static final ResourceLocation ACIDIZER = new ResourceLocation(HbmNtm.MOD_ID, "acidizer");
+    public static final ResourceLocation CHICAGO_PILE = new ResourceLocation(HbmNtm.MOD_ID, "chicago_pile");
+    public static final ResourceLocation SILEX = new ResourceLocation(HbmNtm.MOD_ID, "silex");
+    public static final ResourceLocation WATZ = new ResourceLocation(HbmNtm.MOD_ID, "watz");
+    public static final ResourceLocation RBMK = new ResourceLocation(HbmNtm.MOD_ID, "rbmk");
+    public static final ResourceLocation BISMUTH = new ResourceLocation(HbmNtm.MOD_ID, "bismuth");
+    public static final ResourceLocation BREEDING = new ResourceLocation(HbmNtm.MOD_ID, "breeding");
+    public static final ResourceLocation FUSION = new ResourceLocation(HbmNtm.MOD_ID, "fusion");
+    public static final ResourceLocation RED_BALLOONS = new ResourceLocation(HbmNtm.MOD_ID, "red_balloons");
+    public static final ResourceLocation FIEND = new ResourceLocation(HbmNtm.MOD_ID, "fiend");
+    public static final ResourceLocation FIEND2 = new ResourceLocation(HbmNtm.MOD_ID, "fiend2");
+    public static final ResourceLocation OMEGA12 = new ResourceLocation(HbmNtm.MOD_ID, "omega12");
+    public static final ResourceLocation INFERNO = new ResourceLocation(HbmNtm.MOD_ID, "inferno");
 
     private AchievementHandler() {
     }
 
     public static void register() {
+        registerCraftingAchievement(ModItems.legacyItem("piston_selenium").get(), SELENIUM);
+        registerCraftingAchievement(ModItems.legacyItem("battery_potatos").get(), new ResourceLocation(HbmNtm.MOD_ID, "potato"));
+        registerCraftingAchievement(ModBlocks.MACHINE_PRESS.get(), BURNER_PRESS);
+        registerCraftingAchievement(ModItems.legacyItem("rbmk_fuel_empty").get(), RBMK);
         registerCraftingAchievement(ModBlocks.MACHINE_BLAST_FURNACE.get(), BLAST_FURNACE);
         registerCraftingAchievement(ModBlocks.MACHINE_ASSEMBLY_MACHINE.get(), ASSEMBLY);
         registerCraftingAchievement(ModBlocks.MACHINE_CHEMICAL_PLANT.get(), CHEMPLANT);
+        registerCraftingAchievement(ModBlocks.CONCRETE_SMOOTH.get(), CONCRETE);
+        registerCraftingAchievement(ModBlocks.CONCRETE_ASBESTOS.get(), CONCRETE);
+        registerCraftingAchievement(ModItems.legacyItem("ingot_polymer").get(), POLYMER);
         registerCraftingAchievement(ModItems.legacyItem("ingot_desh").get(), DESH);
+        registerCraftingAchievement(ModItems.legacyItem("gem_tantalium").get(), TANTALUM);
+        registerCraftingAchievement(ModBlocks.MACHINE_GASCENT.get(), GAS_CENT);
+        registerCraftingAchievement(ModBlocks.MACHINE_CENTRIFUGE.get(), CENTRIFUGE);
+        registerCraftingAchievement(ModItems.legacyItem("ingot_schrabidium").get(), SCHRAB);
+        registerCraftingAchievement(ModItems.legacyItem("nugget_schrabidium").get(), SCHRAB);
+        registerCraftingAchievement(ModBlocks.MACHINE_CRYSTALLIZER.get(), ACIDIZER);
+        registerCraftingAchievement(ModBlocks.MACHINE_SILEX.get(), SILEX);
         registerCraftingAchievement(ModItems.legacyItem("nugget_technetium").get(), TECHNETIUM);
+        registerCraftingAchievement(ModBlocks.STRUCT_WATZ_CORE.get(), WATZ);
+        registerCraftingAchievement(ModItems.legacyItem("nugget_bismuth").get(), BISMUTH);
+        registerCraftingAchievement(ModItems.legacyItem("nugget_am241").get(), BREEDING);
+        registerCraftingAchievement(ModItems.legacyItem("nugget_am242").get(), BREEDING);
+        registerCraftingAchievement(ModItems.legacyItem("missile_nuclear").get(), RED_BALLOONS);
+        registerCraftingAchievement(ModItems.legacyItem("missile_nuclear_cluster").get(), RED_BALLOONS);
+        registerCraftingAchievement(ModItems.legacyItem("missile_doomsday").get(), RED_BALLOONS);
+        registerCraftingAchievement(ModItems.legacyItem("mp_warhead_10_nuclear").get(), RED_BALLOONS);
+        registerCraftingAchievement(ModItems.legacyItem("mp_warhead_10_nuclear_large").get(), RED_BALLOONS);
+        registerCraftingAchievement(ModItems.legacyItem("mp_warhead_15_nuclear").get(), RED_BALLOONS);
+        registerCraftingAchievement(ModItems.legacyItem("mp_warhead_15_nuclear_shark").get(), RED_BALLOONS);
+        registerCraftingAchievement(ModItems.legacyItem("mp_warhead_15_boxcar").get(), RED_BALLOONS);
+        registerCraftingAchievement(ModBlocks.FUSION_TORUS.get(), FUSION);
+        registerCraftingAchievement(ModItems.legacyItem("billet_pu_mix").get(), CHICAGO_PILE);
+        registerCraftingAchievement(ModItems.legacyItem("particle_digamma").get(), new ResourceLocation(HbmNtm.MOD_ID, "omega12"));
     }
 
     public static void registerCraftingAchievement(ItemLike output, ResourceLocation advancementId) {

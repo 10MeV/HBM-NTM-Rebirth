@@ -1,0 +1,18 @@
+# Forge's OBJ loader requires every mtllib declared by the exported model to exist.
+# The visible plug materials are rendered separately by LegacyVisibleMachineRenderer;
+# the baked block model only exposes Body, so the declared material slots all resolve
+# to the source-backed base block texture.
+newmtl Texture
+map_Kd #default
+
+newmtl Ashes
+map_Kd #default
+
+newmtl Gavel
+map_Kd #default
+
+newmtl Book
+map_Kd #default
+
+newmtl Coin
+map_Kd #default

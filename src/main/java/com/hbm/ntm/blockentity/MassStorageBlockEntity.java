@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.block.MassStorageBlock;
 import com.hbm.ntm.item.KeyPinItem;
 import com.hbm.ntm.item.PadlockItem;
@@ -14,6 +15,8 @@ import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -40,7 +43,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class MassStorageBlockEntity extends BlockEntity
-        implements MenuProvider, HbmLegacyControlReceiver, LegacyLookOverlayProvider {
+        implements MenuProvider, HbmLegacyControlReceiver, LegacyLookOverlayProvider, CopiableSettings {
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_FILTER = 1;
     public static final int SLOT_OUTPUT = 2;
@@ -52,6 +55,8 @@ public class MassStorageBlockEntity extends BlockEntity
     public static final String LEGACY_LOCKED_TAG = "isLocked";
     public static final String LEGACY_LOCK_MOD_TAG = "lockMod";
     public static final String LEGACY_CHEESABLE_TAG = "cheesable";
+    private static final String TAG_SETTINGS_ITEMS = "items";
+    private static final String TAG_SETTINGS_SLOT = "slot";
 
     private final ItemStackHandler items = new ItemStackHandler(3) {
         @Override
@@ -362,6 +367,53 @@ public class MassStorageBlockEntity extends BlockEntity
         items.setStackInSlot(SLOT_FILTER, stack.isEmpty() ? ItemStack.EMPTY : stack.copyWithCount(1));
     }
 
+    /**
+     * Source-backed {@code IControlReceiverFilter} bridge.  Mass storage has
+     * precisely one filter slot, legacy inventory slot 1; its copy NBT stores
+     * that slot as relative index 0 and its matcher hook is intentionally a
+     * no-op.
+     */
+    @Override
+    public CompoundTag getSettings(Level level, BlockPos pos) {
+        CompoundTag tag = new CompoundTag();
+        ItemStack filter = items.getStackInSlot(SLOT_FILTER);
+        if (!filter.isEmpty()) {
+            ListTag copied = new ListTag();
+            CompoundTag slotTag = new CompoundTag();
+            slotTag.putByte(TAG_SETTINGS_SLOT, (byte) 0);
+            filter.save(slotTag);
+            copied.add(slotTag);
+            tag.put(TAG_SETTINGS_ITEMS, copied);
+        }
+        return tag;
+    }
+
+    @Override
+    public void pasteSettings(CompoundTag tag, int index, Level level, Player player, BlockPos pos) {
+        if (tag == null) {
+            return;
+        }
+        ListTag copied = tag.getList(TAG_SETTINGS_ITEMS, Tag.TAG_COMPOUND);
+        for (int entry = 0; entry < copied.size(); entry++) {
+            CompoundTag slotTag = copied.getCompound(entry);
+            if (slotTag.getByte(TAG_SETTINGS_SLOT) != 0) {
+                continue;
+            }
+            ItemStack filter = ItemStack.of(slotTag);
+            if (!filter.isEmpty()) {
+                // Legacy ICopyable bypasses the normal control-packet
+                // stockpile guard and writes the filter inventory slot itself.
+                items.setStackInSlot(SLOT_FILTER, filter);
+            }
+            return;
+        }
+    }
+
+    @Override
+    public List<Component> infoForDisplay(Level level, BlockPos pos) {
+        return List.of(Component.translatable("copytool.filter"));
+    }
+
     public boolean tryApplyPadlock(Player player, ItemStack stack) {
         if (!(stack.getItem() instanceof PadlockItem padlock) || locked || KeyPinItem.getPins(stack) == 0) {
             return false;
@@ -578,10 +630,8 @@ public class MassStorageBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        saveAdditional(tag);
-        return tag;
-    }
+        return getClientSyncTag();
+}
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
@@ -591,7 +641,6 @@ public class MassStorageBlockEntity extends BlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = new CompoundTag();
-        saveAdditional(tag);
         return tag;
     }
 

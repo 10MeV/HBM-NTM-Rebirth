@@ -76,8 +76,8 @@ public abstract class RadioTorchDeviceBlockEntity extends RadioTorchBlockEntity 
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {

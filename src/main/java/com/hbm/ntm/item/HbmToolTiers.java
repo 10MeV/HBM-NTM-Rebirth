@@ -4,6 +4,7 @@ import com.hbm.ntm.registry.ModItems;
 import java.util.function.Supplier;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.registries.RegistryObject;
 
@@ -25,7 +26,7 @@ public enum HbmToolTiers implements Tier {
     METEORITE(4, 0, 50.0F, 0.0F, 200, () -> legacyIngredient("plate_paa")),
     MESE(4, 0, 100.0F, 0.0F, 200, () -> legacyIngredient("plate_paa")),
     MESE_GAVEL(4, 0, 50.0F, 0.0F, 200, () -> legacyIngredient("plate_paa")),
-    DWARVEN(2, 0, 4.0F, 0.0F, 10, () -> Ingredient.of(ModItems.COPPER_INGOT.get()));
+    DWARVEN(2, 0, 4.0F, 0.0F, 10, () -> Ingredient.of(Items.COPPER_INGOT));
 
     private final int level;
     private final int uses;

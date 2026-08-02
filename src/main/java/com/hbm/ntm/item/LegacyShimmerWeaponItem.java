@@ -2,6 +2,8 @@ package com.hbm.ntm.item;
 
 import com.hbm.ntm.entity.projectile.RubbleEntity;
 import com.hbm.ntm.registry.ModSounds;
+import com.hbm.ntm.radiation.ArmorUtil;
+import com.hbm.ntm.util.AchievementHandler;
 import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
@@ -11,6 +13,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
@@ -40,6 +43,15 @@ public class LegacyShimmerWeaponItem extends HbmAbilitySwordItem {
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         Level level = target.level();
         if (!level.isClientSide) {
+            // Legacy WeaponSpecial granted the victim's Fiend achievement when
+            // a shimmer weapon hit a player wearing its matching set.
+            if (target instanceof ServerPlayer player) {
+                if (ArmorUtil.checkForFiend(player)) {
+                    AchievementHandler.award(player, AchievementHandler.FIEND);
+                } else if (ArmorUtil.checkForFiend2(player)) {
+                    AchievementHandler.award(player, AchievementHandler.FIEND2);
+                }
+            }
             if (kind == Kind.SLEDGE) {
                 Vec3 push = attacker.getLookAngle().scale(5.0D);
                 target.setDeltaMovement(target.getDeltaMovement().add(push));

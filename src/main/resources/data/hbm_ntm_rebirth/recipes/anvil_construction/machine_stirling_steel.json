@@ -1,0 +1,33 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "tag": "forge:plates/steel" },
+      "count": 8,
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/beryllium" },
+      "count": 3,
+      "legacy_ore": "ingotBeryllium"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/copper" },
+      "count": 2,
+      "legacy_ore": "ingotCopper"
+    },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:coil_gold" },
+      "count": 4
+    },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:gear_large_steel" },
+      "count": 1
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:machine_stirling_steel"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

@@ -205,8 +205,16 @@ public class DroneLogisticsBlockEntity extends BlockEntity implements MenuProvid
             filters[i] = tag.contains("filter" + i) ? DroneFilter.load(tag.getCompound("filter" + i)) : null;
         }
     }
-    @Override public CompoundTag getUpdateTag() { CompoundTag tag=super.getUpdateTag(); saveAdditional(tag); return tag; }
-    @Override public void handleUpdateTag(CompoundTag tag) { load(tag); }
+    @Override public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        for (int i = 0; i < 9; i++) if (filters[i] != null) tag.put("filter" + i, filters[i].save());
+        return tag;
+    }
+    @Override public void handleUpdateTag(CompoundTag tag) {
+        for (int i = 0; i < 9; i++) {
+            filters[i] = tag.contains("filter" + i) ? DroneFilter.load(tag.getCompound("filter" + i)) : null;
+        }
+    }
     @Override public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }

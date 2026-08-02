@@ -135,9 +135,9 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
             ForgeRecipeFluidHandlerAdapter.create(inputTankList, NO_TANKS, 0, this::onFluidContentsChanged));
     private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
-    private final ICapabilityProvider redProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_0);
-    private final ICapabilityProvider yellowProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_1);
-    private final ICapabilityProvider greenProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_2);
+    private final ProxyCapabilityDelegate redProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_0);
+    private final ProxyCapabilityDelegate yellowProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_1);
+    private final ProxyCapabilityDelegate greenProxyDelegate = new ProxyCapabilityDelegate(SLOT_INPUT_2);
 
     private int progress;
     private int processTime = 1;
@@ -496,12 +496,12 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        return new CompoundTag();
     }
 
     @Override
@@ -589,6 +589,9 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
         itemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
+        redProxyDelegate.invalidate();
+        yellowProxyDelegate.invalidate();
+        greenProxyDelegate.invalidate();
     }
 
     @Override
@@ -734,6 +737,10 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
 
         private ProxyCapabilityDelegate(int inputSlot) {
             this.proxyItemHandler = LazyOptional.of(() -> new ArcWelderAccessibleItemHandler(inputSlot, SLOT_OUTPUT));
+        }
+
+        private void invalidate() {
+            proxyItemHandler.invalidate();
         }
 
         @Override

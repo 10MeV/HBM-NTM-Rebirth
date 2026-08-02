@@ -1,0 +1,17 @@
+{
+  "loader": "forge:obj",
+  "model": "hbm_ntm_rebirth:models/block/machines/satlink.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "minecraft:cutout",
+  "visibility": {
+    "Base": false,
+    "Rotor": false,
+    "Dish": false
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/machine_satlinker_side",
+    "default": "hbm_ntm_rebirth:block/machine_satlinker_side",
+    "texture0": "hbm_ntm_rebirth:block/machine_satlinker_side"
+  }
+}

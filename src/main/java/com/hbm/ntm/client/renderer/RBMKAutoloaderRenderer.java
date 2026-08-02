@@ -10,6 +10,10 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
 public class RBMKAutoloaderRenderer implements BlockEntityRenderer<RBMKAutoloaderBlockEntity> {
+    // TileEntityRBMKAutoloader#getMaxRenderDistanceSquared() returned 65536,
+    // which maps to a 256-block modern renderer distance.
+    private static final int LEGACY_VIEW_DISTANCE = 256;
+
     public RBMKAutoloaderRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -50,6 +54,6 @@ public class RBMKAutoloaderRenderer implements BlockEntityRenderer<RBMKAutoloade
 
     @Override
     public int getViewDistance() {
-        return LegacyBlockEntityRenderDistances.machine();
+        return LEGACY_VIEW_DISTANCE;
     }
 }

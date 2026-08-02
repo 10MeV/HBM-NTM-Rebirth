@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_river",
+  "features": "hbm_ntm_rebirth:legacy_reeds_river",
+  "step": "vegetal_decoration"
+}

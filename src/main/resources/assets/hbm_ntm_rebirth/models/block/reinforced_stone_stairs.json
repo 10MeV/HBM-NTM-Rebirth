@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/reinforced_stone",
+    "side": "hbm_ntm_rebirth:block/reinforced_stone",
+    "top": "hbm_ntm_rebirth:block/reinforced_stone"
+  }
+}
+

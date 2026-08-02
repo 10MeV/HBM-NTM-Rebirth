@@ -1,0 +1,8 @@
+{
+  "feature": "hbm_ntm_rebirth:legacy_surface_fixtures",
+  "placement": [
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

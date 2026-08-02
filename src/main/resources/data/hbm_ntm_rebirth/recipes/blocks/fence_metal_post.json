@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:shapeless_nbt",
+  "category": "building",
+  "ingredients": [{ "type": "forge:nbt", "item": "hbm_ntm_rebirth:fence_metal", "nbt": "{hbmLegacyVariant:0}" }],
+  "result": { "item": "hbm_ntm_rebirth:fence_metal", "nbt": "{hbmLegacyVariant:1}" },
+  "show_notification": true
+}

@@ -104,8 +104,8 @@ public class RedCablePaintableBlockEntity extends HbmEnergyNodeBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

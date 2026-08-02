@@ -57,7 +57,7 @@ public class ChemicalFactoryMenu extends AbstractContainerMenu {
                         ChemicalFactoryBlockEntity.inputStart(module) + i, 10 + i * 16, y));
             }
             for (int i = 0; i < 3; i++) {
-                addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
+                addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
                         ChemicalFactoryBlockEntity.outputStart(module) + i, 139 + i * 16, y));
             }
         }
@@ -123,7 +123,7 @@ public class ChemicalFactoryMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity));
     }
 
     @Override
@@ -145,6 +145,9 @@ public class ChemicalFactoryMenu extends AbstractContainerMenu {
             return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        if (index < MACHINE_SLOT_COUNT) {
+            com.hbm.ntm.util.AchievementHandler.fire(player, original);
+        }
         return original;
     }
 

@@ -2,11 +2,18 @@
 /.gradle-codex-build*/
 /.gradle-codex-project-cache*/
 /.gradle-codex-verify*/
+/build-codex-verify/
 /.gradle-codex-verify-project/
 /build/
+/build-client/
+/.gradle-client/
+/.hbm-client-output.lock
+/build-client-audit/
 /build-codex*/
 /bin/
 /run/
+/$runDir/
+/run-client-audit/
 /run-data/
 /src/generated/
 *.ipr
@@ -33,4 +40,8 @@ out/
 /run-client.bat
 /run-client.ps1
 /run-client.pt
+/run-embeddium-oculus/
+/run-embeddium-oculus-dev/
+/run-embeddium-oculus.bat
+/run-embeddium-oculus.ps1
 *.pt

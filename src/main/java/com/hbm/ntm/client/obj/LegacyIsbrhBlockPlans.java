@@ -659,15 +659,7 @@ public final class LegacyIsbrhBlockPlans {
                 true, overrideTexture, true, false);
     }
 
-    public static MultiPartObjRenderPlan diFurnaceExtensionInventoryPlan() {
-        return new MultiPartObjRenderPlan(0, OBJ_INVENTORY_TRANSLATION,
-                0.0F, 0.0F, 1.0F, false, true, diFurnaceExtensionParts(0.0F, 0.0F, false));
-    }
 
-    public static MultiPartObjRenderPlan diFurnaceExtensionWorldPlan(double x, double y, double z) {
-        return new MultiPartObjRenderPlan(0, new TranslationPlan(x + 0.5D, y, z + 0.5D),
-                0.0F, 0.0F, 1.0F, true, true, diFurnaceExtensionParts(0.0F, 0.0F, true));
-    }
 
     public static SideRotationRenderPlan sideRotationInventoryPlan(int metadata) {
         return new SideRotationRenderPlan(metadata, true, true,
@@ -1786,16 +1778,6 @@ public final class LegacyIsbrhBlockPlans {
         };
     }
 
-    private static List<NamedIconPartPlan> diFurnaceExtensionParts(float yawRadians,
-            float pitchRadians, boolean shadeNormals) {
-        return List.of(
-                new NamedIconPartPlan("difurnace_extension", "Top", "top", 1, 0,
-                        yawRadians, pitchRadians, shadeNormals),
-                new NamedIconPartPlan("difurnace_extension", "Bottom", "bottom", 0, 0,
-                        yawRadians, pitchRadians, shadeNormals),
-                new NamedIconPartPlan("difurnace_extension", "Side", "side", 3, 0,
-                        yawRadians, pitchRadians, shadeNormals));
-    }
 
     private static List<CuboidUvPlan> rebarSimpleCuboids(int metadata, double min, double max) {
         return List.of(

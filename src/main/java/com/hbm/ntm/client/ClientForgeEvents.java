@@ -22,6 +22,7 @@ import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.client.render.HbmThermalVisionRenderer;
 import com.hbm.ntm.client.render.HbmVatsRenderer;
 import com.hbm.ntm.client.render.HbmRenderEffects;
+import com.hbm.ntm.client.renderer.RebarFillRenderBudget;
 import com.hbm.ntm.client.render.SoyuzHologramRenderer;
 import com.hbm.ntm.client.render.HbmRenderFrameLight;
 import com.hbm.ntm.client.render.HbmRenderFrameFlags;
@@ -33,6 +34,7 @@ import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
 import com.hbm.ntm.client.render.shader.HbmIrisRenderBatch;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
 import com.hbm.ntm.client.render.LegacyMultiblockHighlightRenderer;
+import com.hbm.ntm.client.render.LegacyMultiblockPlacementPreview;
 import com.hbm.ntm.client.render.DrillGunHighlightRenderer;
 import com.hbm.ntm.client.renderer.LegacyAccessoryRenderHelper;
 import com.hbm.ntm.client.renderer.LegacyArmorCapeRenderer;
@@ -61,6 +63,7 @@ import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
 import com.hbm.ntm.api.item.HazardClass;
+import com.hbm.ntm.api.item.HoldableWeapon;
 import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.item.PowerArmorWeaponItem;
 import com.hbm.ntm.item.FsbArmorItem;
@@ -108,6 +111,7 @@ import net.minecraftforge.client.event.RenderHighlightEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.client.event.sound.PlaySoundEvent;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -358,6 +362,12 @@ public final class ClientForgeEvents {
             return;
         }
         ItemStack stack = player.getMainHandItem();
+        if (stack.getItem() instanceof HoldableWeapon holdable && !(stack.getItem() instanceof SednaGunItem)) {
+            event.setCanceled(true);
+            LegacyScreenQuadRenderer.renderCrosshair(OVERLAY_MISC_TEXTURE, event.getGuiGraphics(),
+                    event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight(), holdable.getCrosshair());
+            return;
+        }
         if (!(stack.getItem() instanceof SednaGunItem gun)) {
             return;
         }
@@ -407,6 +417,7 @@ public final class ClientForgeEvents {
             LegacyLightSampleCache.beginFrame();
             LegacyRenderLighting.beginFrame();
             LegacyMachineEffectPresenter.beginFrame();
+            RebarFillRenderBudget.beginFrame();
         }
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
@@ -463,6 +474,9 @@ public final class ClientForgeEvents {
 
     @SubscribeEvent
     public static void onRenderBlockHighlight(RenderHighlightEvent.Block event) {
+        if (LegacyMultiblockPlacementPreview.render(event)) {
+            return;
+        }
         if (DrillGunHighlightRenderer.render(event)) {
             return;
         }
@@ -550,11 +564,22 @@ public final class ClientForgeEvents {
     @SubscribeEvent
     public static void onClientLevelUnload(LevelEvent.Unload event) {
         if (event.getLevel().isClientSide()) {
+            clearNetworkState();
+            // Entity ids are scoped to this client level. Stop and discard every
+            // Sedna loop before another level can reuse one of those ids.
+            SednaGunItem.clearClientRuntimeState();
             ConveyorRoutePreview.clear();
             ClientBlockLightOverrides.clear();
             HbmClientGeometryInvalidation.clearPending();
             HbmClientGeometryInvalidation.noteWorldGeometryChanged();
         }
+    }
+
+    @SubscribeEvent
+    public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
+        // A disconnect can happen before the no-level client tick fallback.
+        clearNetworkState();
+        SednaGunItem.clearClientRuntimeState();
     }
 
     private static void tickClientArmorMods(Minecraft minecraft) {
@@ -698,7 +723,6 @@ public final class ClientForgeEvents {
         if (minecraft.level == null || minecraft.level.getGameTime() % 100L != 0L) {
             return;
         }
-        ClientBinaryData.pruneExpired(minecraft.level.getGameTime());
         ClientTileBinaryData.pruneExpired(minecraft.level.getGameTime());
     }
 
@@ -779,9 +803,7 @@ public final class ClientForgeEvents {
     }
 
     private static void clearNetworkState() {
-        ClientBinaryData.clearAll();
         ClientTileBinaryData.clearAll();
-        ClientBiomeSyncData.clearAll();
         ClientPermaSyncData.clearAll();
         ClientPollutionData.clearAll();
         ClientTomImpactData.clearAll();
@@ -791,6 +813,7 @@ public final class ClientForgeEvents {
         ClientInformMessages.clearAll();
         ClientMuzzleFlashEffects.clearAll();
         ClientSednaGunEffects.clearAll();
+        SednaGunItem.clearClientRuntimeState();
         HbmRenderEffects.clearAll();
         HbmOverheadMarkers.clearAll();
         HbmBlackHoleEffects.clearAll();

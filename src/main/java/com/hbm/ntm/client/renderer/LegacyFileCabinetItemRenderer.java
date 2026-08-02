@@ -38,7 +38,7 @@ public class LegacyFileCabinetItemRenderer extends BlockEntityWithoutLevelRender
 
     private static void applyDisplay(ItemDisplayContext displayContext, PoseStack poseStack) {
         if (displayContext == ItemDisplayContext.GUI) {
-            poseStack.translate(0.5D, 0.625D, 0.0D);
+            poseStack.translate(0.5D, 0.375D, 0.0D);
             LegacyPoseRotations.rotateXDegrees(poseStack, 30.0F);
             LegacyPoseRotations.rotateYDegrees(poseStack, 45.0F);
             poseStack.scale(0.0625F, 0.0625F, 0.0625F);

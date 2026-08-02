@@ -111,14 +111,12 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
                 }
             }
             if (rocket.mode() == MinerRocketEntity.MODE_UNLOADING && rocket.timer() == 50) {
-                // The source only tests for non-null here, then directly casts
-                // to SatelliteMiner. Do not reuse the launch-path cargo query:
-                // that query deliberately filters non-miners, while this legacy
-                // corrupted/mutated-state boundary throws ClassCastException.
+                // TileEntityMachineSatDock only unloads a mining satellite.
+                // Non-miner entries at the matching frequency leave the rocket
+                // untouched and produce no cargo; they must not be cast.
                 Satellite satellite = data.getSatFromFreq(frequency);
-                if (satellite != null) {
-                    String pool = ((com.hbm.saveddata.satellites.SatelliteMiner) satellite).getCargo();
-                    dock.unloadCargo(serverLevel, pool);
+                if (satellite instanceof com.hbm.saveddata.satellites.SatelliteMiner miner) {
+                    dock.unloadCargo(serverLevel, miner.getCargo());
                 }
             }
         }

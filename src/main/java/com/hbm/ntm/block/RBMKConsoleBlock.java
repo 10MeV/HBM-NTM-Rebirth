@@ -2,16 +2,12 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.blockentity.RBMKConsoleBlockEntity;
-import com.hbm.ntm.item.GuideBookItem;
 import com.hbm.ntm.neutron.RBMKPanelBlockPlanner;
-import com.hbm.ntm.neutron.RBMKPanelBlockPlanner.ConsoleGuideBookPlan;
-import com.hbm.ntm.neutron.RBMKBlockPlanner;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.menu.RBMKConsoleMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
-import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -143,22 +139,6 @@ public class RBMKConsoleBlock extends LegacyXrMultiblockBlock implements EntityB
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level, pos);
             if (blockEntity instanceof RBMKConsoleBlockEntity console) {
-                ConsoleGuideBookPlan guidePlan = RBMKPanelBlockPlanner.planConsoleGuideBookClick(
-                        console.getBlockPos(),
-                        pos,
-                        coreMetaForGuideBook(console.getBlockState()),
-                        hit.getDirection().ordinal(),
-                        hit.getLocation().x - pos.getX(),
-                        hit.getLocation().z - pos.getZ(),
-                        playerHasGuideBook(player, GuideBookItem.BookType.RBMK));
-                if (guidePlan.grantGuideBook()) {
-                    ItemStack stack = GuideBookItem.stack(ModItems.BOOK_GUIDE.get(), GuideBookItem.BookType.RBMK);
-                    if (!player.getInventory().add(stack)) {
-                        player.drop(stack, false);
-                    }
-                    player.inventoryMenu.broadcastChanges();
-                    return InteractionResult.SUCCESS;
-                }
                 NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
                         (containerId, inventory, opener) -> new RBMKConsoleMenu(containerId, inventory, console),
                         Component.translatable("container.rbmkConsole")), console.getBlockPos());
@@ -195,15 +175,6 @@ public class RBMKConsoleBlock extends LegacyXrMultiblockBlock implements EntityB
             onIncompleteLegacyLayout(level, corePos, state);
         }
         return complete;
-    }
-
-    private static int coreMetaForGuideBook(BlockState state) {
-        Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.SOUTH;
-        return RBMKBlockPlanner.CORE_METADATA_OFFSET + facing.ordinal();
-    }
-
-    private static boolean playerHasGuideBook(Player player, GuideBookItem.BookType type) {
-        return player.getInventory().items.stream().anyMatch(stack -> GuideBookItem.isType(stack, type));
     }
 
     @Override

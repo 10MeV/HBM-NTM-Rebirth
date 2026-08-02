@@ -297,8 +297,8 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

@@ -32,6 +32,64 @@ public class PneumaticStackCache {
         return Map.copyOf(cacheSlots);
     }
 
+    /** Source-shaped aggregate removal through the live storage monitors. */
+    public long consumeItemsAndReturnQuantity(ItemStack stack, long amount) {
+        if (stack == null || stack.isEmpty() || amount <= 0L) {
+            return 0L;
+        }
+        CacheSlot cache = cacheSlots.get(StackIdentity.of(stack));
+        if (cache == null) {
+            return 0L;
+        }
+        long originalAmount = amount;
+        for (PneumaticSlotMonitor monitor : cache.monitors) {
+            ItemStack original = monitor.parent.getSlotAt(monitor.index);
+            if (!sameIdentity(original, stack)) {
+                continue;
+            }
+            amount = monitor.parent.useUpItem(monitor.index, amount);
+            if (amount <= 0L) {
+                break;
+            }
+        }
+        return originalAmount - amount;
+    }
+
+    /** Source-shaped aggregate insertion through the live storage monitors. */
+    public long addItemsAndReturnQuantity(ItemStack stack, long amount) {
+        if (stack == null || stack.isEmpty() || amount <= 0L) {
+            return amount;
+        }
+        CacheSlot cache = cacheSlots.get(StackIdentity.of(stack));
+        if (cache != null) {
+            for (PneumaticSlotMonitor monitor : cache.monitors) {
+                ItemStack original = monitor.parent.getSlotAt(monitor.index);
+                if (!sameIdentity(original, stack)) {
+                    continue;
+                }
+                amount = monitor.parent.addItem(monitor.index, amount);
+                if (amount <= 0L) {
+                    return 0L;
+                }
+            }
+        }
+        if (amount > 0L) {
+            CacheSlot emptyCache = cacheSlots.get(StackIdentity.of(ItemStack.EMPTY));
+            if (emptyCache != null) {
+                for (PneumaticSlotMonitor monitor : emptyCache.monitors) {
+                    if (!monitor.parent.allowTypeSetting() || !isEmpty(monitor.parent.getSlotAt(monitor.index))) {
+                        continue;
+                    }
+                    amount = monitor.parent.setupType(monitor.index, stack, amount);
+                    if (amount <= 0L) {
+                        break;
+                    }
+                }
+            }
+        }
+        return amount;
+    }
+
     public void addToCache(PneumaticSlotMonitor monitor) {
         StackIdentity identity = StackIdentity.of(monitor);
         CacheSlot cache = cacheSlots.computeIfAbsent(identity, ignored -> new CacheSlot(monitor));
@@ -118,5 +176,13 @@ public class PneumaticStackCache {
             }
             return new StackIdentity(stack.getItem(), stack.getDamageValue(), stack.hasTag() ? stack.getTag().copy() : null);
         }
+    }
+
+    private static boolean isEmpty(@Nullable ItemStack stack) {
+        return stack == null || stack.isEmpty();
+    }
+
+    private static boolean sameIdentity(@Nullable ItemStack first, ItemStack second) {
+        return !isEmpty(first) && ItemStack.isSameItemSameTags(first, second);
     }
 }

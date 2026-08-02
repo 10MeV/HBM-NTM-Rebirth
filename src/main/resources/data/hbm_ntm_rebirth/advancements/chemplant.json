@@ -1,4 +1,5 @@
 {
+  "parent": "hbm_ntm_rebirth:assembly",
   "display": {
     "icon": {
       "item": "hbm_ntm_rebirth:machine_chemical_plant"

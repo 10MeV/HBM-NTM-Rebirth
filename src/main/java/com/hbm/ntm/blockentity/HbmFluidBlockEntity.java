@@ -1238,12 +1238,16 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
+        writeFluidTanksToNbtReport(tag);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readLegacyLoadedTileClientTag(tag);
+        readFluidTanksFromNbtReport(tag);
     }
 
     @Override

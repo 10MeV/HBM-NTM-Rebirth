@@ -432,7 +432,8 @@ public class ThresherBlockEntity extends HbmFluidNetworkBlockEntity
         Direction rot = facing(getBlockState()).getClockWise();
         return List.of(
                 FluidPort.of(rot.getStepX(), 0, rot.getStepZ(), rot),
-                FluidPort.of(-rot.getStepX(), 0, -rot.getStepZ(), rot.getOpposite()));
+                FluidPort.of(-rot.getStepX(), 0, -rot.getStepZ(), rot.getOpposite()),
+                FluidPort.of(0, -1, 0, Direction.DOWN));
     }
 
     @Override

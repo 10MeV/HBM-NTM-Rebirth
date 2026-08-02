@@ -3,6 +3,7 @@ package com.hbm.ntm.api.redstoneoverradio;
 import com.hbm.ntm.util.HbmCalculator;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 public class RTTYMses1Parser implements RTTYScriptParser {
     @Override
@@ -74,6 +75,79 @@ public class RTTYMses1Parser implements RTTYScriptParser {
         if (lower.equals("shutdown")) {
             return StatementReturn.SHUTDOWN;
         }
+        if (lower.startsWith("splitter ")) {
+            if (line.length() <= 9) {
+                return StatementReturn.PARAMETER_ERROR;
+            }
+            context.setSplitString(substitute(context, line.substring(9), false));
+            return StatementReturn.OK;
+        }
+        if (lower.startsWith("split ")) {
+            if (line.length() <= 6) {
+                return StatementReturn.PARAMETER_ERROR;
+            }
+            try {
+                int index = Integer.parseInt(substitute(context, line.substring(6), true));
+                if (index < 1) {
+                    return StatementReturn.PARAMETER_ERROR;
+                }
+                String[] fragments = context.buffer().split(Pattern.quote(context.splitString()));
+                if (index > fragments.length) {
+                    return StatementReturn.PARAMETER_ERROR;
+                }
+                context.setBuffer(fragments[index - 1]);
+                return StatementReturn.OK;
+            } catch (Throwable ex) {
+                return StatementReturn.PARAMETER_ERROR;
+            }
+        }
+        if (lower.equals("splitcount")) {
+            if (context.buffer().isEmpty()) {
+                return StatementReturn.PARAMETER_ERROR;
+            }
+            context.setBuffer(Integer.toString(context.buffer().split(Pattern.quote(context.splitString())).length));
+            return StatementReturn.OK;
+        }
+        if (lower.equals("push")) {
+            if (context.buffer().isEmpty()) {
+                return StatementReturn.PARAMETER_ERROR;
+            }
+            return context.push(context.buffer()) ? StatementReturn.OK : StatementReturn.STACK_EXCEEDED;
+        }
+        if (lower.startsWith("push ")) {
+            if (line.length() <= 5) {
+                return StatementReturn.PARAMETER_ERROR;
+            }
+            return context.push(substitute(context, line.substring(5), false))
+                    ? StatementReturn.OK
+                    : StatementReturn.STACK_EXCEEDED;
+        }
+        if (lower.equals("pop")) {
+            String value = context.pop();
+            if (value == null) {
+                return StatementReturn.UNDEFINED;
+            }
+            context.setBuffer(value);
+            return StatementReturn.OK;
+        }
+        if (lower.equals("peek")) {
+            String value = context.peek();
+            if (value == null) {
+                return StatementReturn.UNDEFINED;
+            }
+            context.setBuffer(value);
+            return StatementReturn.OK;
+        }
+        if (lower.equals("length")) {
+            context.setBuffer(Integer.toString(context.buffer().length()));
+            return StatementReturn.OK;
+        }
+        if (lower.startsWith("first ")) {
+            return substring(context, line, 6, true);
+        }
+        if (lower.startsWith("last ")) {
+            return substring(context, line, 5, false);
+        }
         if (lower.startsWith("load ")) {
             if (line.length() <= 5) {
                 return StatementReturn.PARAMETER_ERROR;
@@ -106,6 +180,12 @@ public class RTTYMses1Parser implements RTTYScriptParser {
                 return StatementReturn.PARAMETER_ERROR;
             }
             return evaluateToBuffer(context, substitute(context, line.substring(6), true), true);
+        }
+        if (lower.equals("eval")) {
+            if (context.buffer().isEmpty()) {
+                return StatementReturn.PARAMETER_ERROR;
+            }
+            return evaluateToBuffer(context, substitute(context, context.buffer(), true), false);
         }
         if (lower.equals("evalr")) {
             if (context.buffer().isEmpty()) {
@@ -165,6 +245,23 @@ public class RTTYMses1Parser implements RTTYScriptParser {
             }
             return StatementReturn.OK;
         }
+        if (lower.startsWith("poll ")) {
+            if (line.length() <= 5 || context.level() == null) {
+                return StatementReturn.PARAMETER_ERROR;
+            }
+            RTTYSystem.RTTYChannel channel = RTTYSystem.listen(context.level(), substitute(context, line.substring(5), false));
+            if (channel != null && channel.timeStamp() >= context.level().getGameTime() - 1L) {
+                context.setBuffer(channel.signalString());
+            }
+            return StatementReturn.OK;
+        }
+        if (lower.equals("worldtime")) {
+            if (context.level() == null) {
+                return StatementReturn.PARAMETER_ERROR;
+            }
+            context.setBuffer(Long.toString(context.level().getGameTime()));
+            return StatementReturn.OK;
+        }
         return StatementReturn.UNRECOGNIZED_COMMAND;
     }
 
@@ -181,16 +278,20 @@ public class RTTYMses1Parser implements RTTYScriptParser {
                     readingVariable = true;
                 } else {
                     if ("buffer".contentEquals(variableName)) {
-                        joined.append(context.buffer());
+                        String variable = context.buffer();
+                        if (forceNumber && variable.isEmpty()) {
+                            variable = "0";
+                        }
+                        joined.append(variable);
                     } else {
                         String variable = context.variables().getString(variableName.toString());
                         if (forceNumber && variable.isEmpty()) {
                             variable = "0";
                         }
                         joined.append(variable);
-                        variableName.delete(0, variableName.length());
-                        readingVariable = false;
                     }
+                    variableName.delete(0, variableName.length());
+                    readingVariable = false;
                 }
             } else if (readingVariable) {
                 variableName.append(character);
@@ -242,7 +343,7 @@ public class RTTYMses1Parser implements RTTYScriptParser {
         }
         try {
             double buffer = Double.parseDouble(context.buffer());
-            double value = Double.parseDouble(line.substring(offset));
+            double value = Double.parseDouble(substitute(context, line.substring(offset), false));
             boolean result = switch (comparison) {
                 case GREATER_THAN_BUFFER -> value > buffer;
                 case LOWER_THAN_BUFFER -> value < buffer;
@@ -250,6 +351,25 @@ public class RTTYMses1Parser implements RTTYScriptParser {
                 case LOWER_EQUAL_BUFFER -> value <= buffer;
             };
             context.setBuffer(result ? "true" : "false");
+            return StatementReturn.OK;
+        } catch (Exception ex) {
+            return StatementReturn.PARAMETER_ERROR;
+        }
+    }
+
+    private StatementReturn substring(ParseContext context, String line, int offset, boolean first) {
+        if (line.length() <= offset) {
+            return StatementReturn.PARAMETER_ERROR;
+        }
+        try {
+            int length = Integer.parseInt(substitute(context, line.substring(offset), true));
+            int max = context.buffer().length();
+            if (length > max) {
+                length = max;
+            }
+            context.setBuffer(first
+                    ? context.buffer().substring(0, length)
+                    : context.buffer().substring(max - length, max));
             return StatementReturn.OK;
         } catch (Exception ex) {
             return StatementReturn.PARAMETER_ERROR;

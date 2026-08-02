@@ -11,6 +11,8 @@ import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.config.WeaponConfig;
 import com.hbm.ntm.api.entity.RadarScanner;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
+import com.hbm.saveddata.satellites.SatelliteDetector;
+import com.hbm.saveddata.satellites.SatelliteRayScan;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.damage.DamageClass;
 import com.hbm.ntm.damage.DamageResistanceHandler;
@@ -27,6 +29,7 @@ import com.hbm.ntm.entity.effect.BlackHoleEntity;
 import com.hbm.ntm.entity.effect.QuasarEntity;
 import com.hbm.ntm.entity.effect.RagingVortexEntity;
 import com.hbm.ntm.entity.effect.VortexEntity;
+import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.entity.projectile.BurningFoeqEntity;
 import com.hbm.ntm.entity.train.LegacyRailCarEntity;
 import com.hbm.ntm.explosion.ExplosionChaos;
@@ -35,6 +38,7 @@ import com.hbm.ntm.explosion.NuclearExplosionUtil;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.fluid.HbmFluidNodespace;
 import com.hbm.ntm.item.EuphemiumArmorItem;
+import com.hbm.ntm.item.DroppedDetonatorItem;
 import com.hbm.ntm.item.DnsArmorItem;
 import com.hbm.ntm.item.FsbArmorItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
@@ -45,7 +49,7 @@ import com.hbm.ntm.item.TrenchmasterArmorItem;
 import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.LoadedTileAccessCache;
-import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
+import com.hbm.ntm.network.ServerResyncRequestRateLimiter;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.player.HbmExtendedProperties;
@@ -75,6 +79,7 @@ import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.uninos.HbmUninosNodespaces;
 import com.hbm.ntm.util.AchievementHandler;
 import com.hbm.ntm.util.HbmCraftingAdvancementUtil;
+import com.hbm.ntm.util.HbmShadyUtil;
 import com.hbm.ntm.world.BlockMigrationHelper;
 import com.hbm.ntm.world.TomImpactWorldEffects;
 import com.hbm.ntm.world.saveddata.TomImpactSavedData;
@@ -109,6 +114,7 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.block.Block;
@@ -123,6 +129,7 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
@@ -132,11 +139,13 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkDataEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
@@ -239,6 +248,13 @@ public final class CommonForgeEvents {
         }
         for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, entity.getBoundingBox().inflate(50.0D))) {
             AchievementHandler.award(player, AchievementHandler.HIDDEN);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onLivingDeathLast(LivingDeathEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            DroppedDetonatorItem.triggerOnPlayerDeath(player);
         }
     }
 
@@ -383,6 +399,11 @@ public final class CommonForgeEvents {
             RTTYSystem.updateBroadcastQueue(event.getServer());
             RadarScanner.updateSystem(event.getServer().getAllLevels());
             for (ServerLevel level : event.getServer().getAllLevels()) {
+                if (level.getGameTime() % 20L == 10L) {
+                    SatelliteDetector.updateSystem(level);
+                    SatelliteRayScan.updateSystem(level);
+                    NukeExplosionMk3Entity.pruneExpiredAntiTeleportEntries(level);
+                }
                 TomImpactWorldEffects.tickLegacyWorldStart(level);
                 HbmEnergyNodespace.tick(level);
                 HbmFluidNodespace.tick(level);
@@ -402,7 +423,6 @@ public final class CommonForgeEvents {
             TomImpactWorldEffects.applyQueuedPostPopulation(level);
         }
         NeutronHandler.tick(event.getServer());
-        ServerTileBinaryControlTransfers.pruneExpired(event.getServer().overworld().getGameTime());
         ThreadedPacketDispatcher.flush();
     }
 
@@ -462,6 +482,80 @@ public final class CommonForgeEvents {
         }
     }
 
+    /**
+     * Mirrors legacy ModEventHandler#itemSmelted: smelting participates in the
+     * same output-to-advancement bridge as crafting, then performs two
+     * independent 1/64 bonus rolls.
+     */
+    @SubscribeEvent
+    public static void onItemSmelted(PlayerEvent.ItemSmeltedEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        ItemStack smelted = event.getSmelting();
+        HbmCraftingAdvancementUtil.fireCraftingAdvancement(player, smelted);
+        if (smelted.is(Items.IRON_INGOT) && player.getRandom().nextInt(64) == 0) {
+            giveSmeltingBonus(player, new ItemStack(ModItems.LODESTONE.get()));
+        }
+        if (smelted.is(ModItems.URANIUM_INGOT.get()) && player.getRandom().nextInt(64) == 0) {
+            giveSmeltingBonus(player, new ItemStack(ModItems.QUARTZ_PLUTONIUM.get()));
+        }
+    }
+
+    private static void giveSmeltingBonus(ServerPlayer player, ItemStack bonus) {
+        if (!player.getInventory().add(bonus)) {
+            player.drop(bonus, false);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemPickup(PlayerEvent.ItemPickupEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && event.getStack().is(Items.SLIME_BALL)) {
+            AchievementHandler.award(player, AchievementHandler.SLIMEBALL);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onAnvilUpdate(AnvilUpdateEvent event) {
+        ItemStack left = event.getLeft();
+        if (left.isEmpty() || !event.getRight().isEmpty()) {
+            return;
+        }
+
+        String requestedName = event.getName();
+        boolean clearsName = requestedName != null && requestedName.isBlank() && left.hasCustomHoverName();
+        boolean changesName = requestedName != null && !requestedName.isBlank()
+                && !requestedName.equals(left.getHoverName().getString());
+        if (!clearsName && !changesName) {
+            return;
+        }
+
+        // AnvilUpdateEvent is pre-vanilla in 1.20.1, unlike the old
+        // post-result AnvilRepairEvent. Build only the rename result and leave
+        // every repair/merge path to vanilla, while retaining the input's
+        // repair history exactly as the legacy handler did.
+        ItemStack renamed = left.copy();
+        if (clearsName) {
+            renamed.resetHoverName();
+        } else {
+            renamed.setHoverName(Component.literal(requestedName));
+        }
+        int oldRepairCost = left.getBaseRepairCost();
+        if (oldRepairCost > 0) {
+            renamed.setRepairCost(oldRepairCost);
+        } else if (renamed.hasTag()) {
+            // Keep the legacy zero-cost representation too: a pure rename did
+            // not leave a synthetic RepairCost:0 tag behind.
+            renamed.getTag().remove("RepairCost");
+            if (renamed.getTag().isEmpty()) {
+                renamed.setTag(null);
+            }
+        }
+        event.setOutput(renamed);
+        event.setCost(Math.max(1, event.getCost()));
+    }
+
     @SubscribeEvent
     public static void onItemToss(ItemTossEvent event) {
         ItemEntity itemEntity = event.getEntity();
@@ -485,8 +579,19 @@ public final class CommonForgeEvents {
             handleLeadPollutionOnBlockBreak(event, level);
             return;
         }
+        handleFirstGneissBreak(event);
         handleCoalGasOnBlockBreak(event, level);
         handleLeadPollutionOnBlockBreak(event, level);
+    }
+
+    private static void handleFirstGneissBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player)
+                || !event.getState().is(legacyBlockOrNull("stone_gneiss"))
+                || AchievementHandler.has(player, AchievementHandler.STRATUM)) {
+            return;
+        }
+        AchievementHandler.award(player, AchievementHandler.STRATUM);
+        event.setExpToDrop(500);
     }
 
     private static void handleConveyorWandLineBreak(BlockEvent.BreakEvent event, ServerLevel level) {
@@ -882,6 +987,9 @@ public final class CommonForgeEvents {
         if (event.getOriginal() instanceof ServerPlayer oldPlayer) {
             HbmServerKeybinds.clear(oldPlayer);
             HbmPlayerProperties.clearRuntime(oldPlayer);
+            // The replacement player keeps the UUID. Its first packet must not be
+            // compared with the discarded entity's animation snapshot.
+            SednaGunItem.clearServerRuntimeState(oldPlayer.getUUID());
         }
         if (event.getEntity() instanceof ServerPlayer player) {
             syncRadiation(player);
@@ -889,8 +997,28 @@ public final class CommonForgeEvents {
     }
 
     @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)
+                || (!player.getUUID().toString().equals(HbmShadyUtil.DR_NOSTALGIA)
+                && !player.getName().getString().equals("Dr_Nostalgia"))) {
+            return;
+        }
+        giveRespawnGiftIfMissing(player, ModItems.HAT.get());
+        giveRespawnGiftIfMissing(player, ModItems.BETA.get());
+    }
+
+    private static void giveRespawnGiftIfMissing(ServerPlayer player, Item item) {
+        ItemStack gift = new ItemStack(item);
+        if (!player.getInventory().contains(gift)) {
+            player.getInventory().add(gift);
+        }
+    }
+
+    @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            // A UUID identifies a profile, not a continuous Sedna runtime session.
+            SednaGunItem.clearServerRuntimeState(player.getUUID());
             sendMotd(player);
             syncRadiation(player);
         }
@@ -934,8 +1062,21 @@ public final class CommonForgeEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             HbmServerKeybinds.clear(player);
             HbmPlayerProperties.clearRuntime(player);
-            ServerTileBinaryControlTransfers.clearPlayer(player.getUUID());
+            ServerResyncRequestRateLimiter.clearPlayer(player.getUUID());
+            SednaGunItem.clearServerRuntimeState(player.getUUID());
         }
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        RTTYSystem.clearAll();
+        SatelliteDetector.clearAll();
+        SatelliteRayScan.clearAll();
+        NukeExplosionMk3Entity.clearAllAntiTeleportEntries();
+        SednaGunItem.clearAllServerRuntimeState();
+        ServerResyncRequestRateLimiter.clearAll();
+        DroneLogisticsNetwork.clearAll();
+        RadarScanner.clearRuntimeCache();
     }
 
     @SubscribeEvent
@@ -993,6 +1134,14 @@ public final class CommonForgeEvents {
             NeutronNodeWorld.unloadLevel(level);
             PollutionManager.unloadLevel(level);
             LoadedTileAccessCache.clearLevel(level);
+            RTTYSystem.clear(level);
+            SatelliteDetector.unloadLevel(level);
+            SatelliteRayScan.unloadLevel(level);
+            NukeExplosionMk3Entity.clearAntiTeleportEntries(level);
+            if (level instanceof ServerLevel serverLevel) {
+                DroneLogisticsNetwork.unloadLevel(serverLevel);
+                RadarScanner.unloadLevel(serverLevel);
+            }
             TRACKED_ITEM_ENTITIES.remove(level.dimension());
         }
     }

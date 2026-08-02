@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_bridge_bios" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_bridge_bus" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_bridge_chipset" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_bridge_cmos" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_bridge_io" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_bridge_north" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_bridge_south" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:circuit_star_component_chipset" }
+}

@@ -22,12 +22,17 @@ public final class ClientHbmLivingProperties {
 
     public static void update(HbmLivingProperties.SyncData data) {
         HbmLivingProperties.SyncData safeData = data == null ? HbmLivingProperties.emptySyncedData() : data;
+        List<ContaminationEffectData> effects = safeData.contaminationUpdated()
+                ? safeData.contaminationEffects().stream()
+                        .map(effect -> new ContaminationEffectData(effect.maxRad, effect.maxTime, effect.time, effect.ignoresArmor()))
+                        .toList()
+                : ClientRadiationData.getContaminationEffects().stream()
+                        .map(effect -> new ContaminationEffectData(effect.maxRad(), effect.maxTime(), effect.time(), effect.ignoreArmor()))
+                        .toList();
         update(new ClientLivingSyncData(safeData.radiation(), safeData.digamma(), safeData.radBuf(), safeData.chunkRadiation(), safeData.resistance(),
                 safeData.asbestos(), safeData.blackLung(), safeData.bombTimer(), safeData.contagion(), safeData.oil(),
                 safeData.fire(), safeData.phosphorus(), safeData.balefire(), safeData.blackFire(),
-                safeData.contaminationEffects().stream()
-                        .map(effect -> new ContaminationEffectData(effect.maxRad, effect.maxTime, effect.time, effect.ignoresArmor()))
-                        .toList()));
+                effects));
     }
 
     public static float getRadiation() {

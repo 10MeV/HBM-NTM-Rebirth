@@ -87,8 +87,8 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int SLOT_GAS_CONTAINER = 3;
     public static final int SLOT_GAS_CONTAINER_OUTPUT = 4;
     public static final int SLOT_UPGRADE_START = 5;
-    public static final int SLOT_UPGRADE_END = 7;
-    public static final int ITEM_COUNT = 8;
+    public static final int SLOT_UPGRADE_END = 6;
+    public static final int ITEM_COUNT = 7;
 
     public static final int INDICATOR_OK = 0;
     public static final int INDICATOR_COMPLETE = 1;
@@ -117,7 +117,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
                 case SLOT_BATTERY, SLOT_OIL_CONTAINER, SLOT_GAS_CONTAINER,
-                     SLOT_UPGRADE_START, SLOT_UPGRADE_START + 1, SLOT_UPGRADE_END -> true;
+                     SLOT_UPGRADE_START, SLOT_UPGRADE_END -> true;
                 default -> false;
             };
         }
@@ -628,7 +628,7 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean advanceDrill(Level level, BlockPos pos) {
-        int depth = Math.max(level.getMinBuildHeight(), kind == Kind.FRACKING_TOWER ? 0 : 5);
+        int depth = drillFloorY(level, kind);
         for (int y = pos.getY() - 1; y >= depth; y--) {
             BlockPos sample = new BlockPos(pos.getX(), y, pos.getZ());
             if (!level.getBlockState(sample).is(ModBlocks.OIL_PIPE.get())) {
@@ -645,6 +645,18 @@ public class OilDrillBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         indicator = INDICATOR_COMPLETE;
         return true;
+    }
+
+    /**
+     * Maps the legacy drill-floor contract into the active dimension.  In 1.7.10
+     * {@code getDrillDepth()} returned 0 for the fracking tower and 5 for the
+     * other oil drills, where zero was the world bottom rather than an absolute
+     * gameplay altitude.
+     */
+    public static int drillFloorY(Level level, Kind kind) {
+        int legacyBlocksAboveBottom = kind == Kind.FRACKING_TOWER ? 0 : 5;
+        return Math.min(level.getMaxBuildHeight() - 1,
+                level.getMinBuildHeight() + legacyBlocksAboveBottom);
     }
 
     private void tryDrill(Level level, BlockPos sample) {

@@ -2,6 +2,9 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
+import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
+import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
+import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.block.LegacyFrameRenderState;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.energy.ForgeEnergyAdapter;
@@ -22,6 +25,7 @@ import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.menu.ChemicalPlantMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
+import com.hbm.ntm.network.HbmGuiControlSecurity;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.recipe.GenericMachineRecipe;
 import com.hbm.ntm.recipe.GenericMachineRecipeRuntime;
@@ -70,7 +74,7 @@ import java.util.List;
 
 public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvider, HbmEnergyReceiver,
         HbmEnergyPortInspectable,
-        HbmLegacyLoadedTile, HbmStandardFluidTransceiver, LegacyLookOverlayProvider {
+        HbmLegacyLoadedTile, HbmStandardFluidTransceiver, LegacyLookOverlayProvider, RORValueProvider, RORInteractive {
     private static final String TAG_INVENTORY = HbmInventoryMenuHelper.LEGACY_ITEMS_TAG;
     private static final String TAG_MODERN_INVENTORY = "Inventory";
     private static final String TAG_CUSTOM_NAME = "name";
@@ -81,6 +85,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     private static final String TAG_OUTPUT_TANK = "o";
     private static final String TAG_PROGRESS = "progress0";
     private static final String TAG_RECIPE = "recipe0";
+    private static final String TAG_RESTRICTED_MODE = "restrictedMode";
     private static final String TAG_DID_PROCESS = "DidProcess";
     private static final long DEFAULT_MAX_POWER = 100_000L;
     private static final int TANK_CAPACITY = 24_000;
@@ -185,6 +190,8 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     private int anim;
     private double progress;
     private String selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
+    private boolean rorRestrictedMode;
+    private final RORDispatcher ror = createRorDispatcher();
     private Object audioLoop;
     @Nullable
     private String customName;
@@ -307,6 +314,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     public boolean selectRecipe(String selectedRecipe) {
         if (level == null || GenericMachineRecipeSelector.isNullSelection(selectedRecipe)) {
             setSelectedRecipe(GenericMachineRecipeRuntime.NULL_RECIPE);
+            rorRestrictedMode = false;
             return true;
         }
         if (!GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.CHEMICAL_PLANT,
@@ -314,6 +322,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
             return false;
         }
         setSelectedRecipe(selectedRecipe);
+        rorRestrictedMode = false;
         GenericMachineRecipe recipe = getSelectedRecipeDefinition();
         setupTanks(recipe);
         updateDynamicCapacity(recipe);
@@ -388,6 +397,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         }
         tag.putDouble(TAG_PROGRESS, progress);
         tag.putString(TAG_RECIPE, selectedRecipe);
+        tag.putBoolean(TAG_RESTRICTED_MODE, rorRestrictedMode);
     }
 
     @Override
@@ -414,6 +424,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         if (selectedRecipe.isBlank()) {
             selectedRecipe = GenericMachineRecipeRuntime.NULL_RECIPE;
         }
+        rorRestrictedMode = tag.getBoolean(TAG_RESTRICTED_MODE);
         invalidateUpgradeFactors();
         appliedMaxPower = Long.MIN_VALUE;
         updateDynamicCapacity(getSelectedRecipeDefinition());
@@ -422,11 +433,11 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-    }
+}
 
     @Override
     public CompoundTag getClientSyncTag() {
-        CompoundTag tag = saveWithoutMetadata();
+        CompoundTag tag = new CompoundTag();
         writeClientSyncFields(tag);
         return tag;
     }
@@ -451,6 +462,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         data.writeLong(energy.getMaxPower());
         data.writeBoolean(didProcess);
         data.writeDouble(progress);
+        data.writeBoolean(rorRestrictedMode);
         BufferUtil.writeString(data, selectedRecipe);
     }
 
@@ -467,15 +479,18 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         energy.setMaxPower(Math.max(DEFAULT_MAX_POWER, data.readLong()));
         didProcess = data.readBoolean();
         progress = data.readDouble();
+        rorRestrictedMode = data.readBoolean();
         selectedRecipe = GenericMachineRecipeSelector.normalize(BufferUtil.readString(data));
     }
 
     private void writeClientSyncFields(CompoundTag tag) {
         tag.putBoolean(TAG_DID_PROCESS, didProcess);
+        tag.putBoolean(TAG_RESTRICTED_MODE, rorRestrictedMode);
     }
 
     private void readClientSyncFields(CompoundTag tag) {
         didProcess = tag.getBoolean(TAG_DID_PROCESS);
+        rorRestrictedMode = tag.getBoolean(TAG_RESTRICTED_MODE);
     }
 
     @Nullable
@@ -499,7 +514,8 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
-        return GenericMachineRecipeSelector.isSelectionTag(tag)
+        return HbmGuiControlSecurity.hasLegacyMachineUsePermission(player, this)
+                && GenericMachineRecipeSelector.isSelectionTag(tag)
                 && GenericMachineRecipeSelector.canSelect(level, GenericMachineRecipe.Machine.CHEMICAL_PLANT,
                 GenericMachineRecipeSelector.readSelection(tag), items.getStackInSlot(SLOT_BLUEPRINT));
     }
@@ -510,6 +526,15 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
             selectRecipe(GenericMachineRecipeSelector.readSelection(tag));
         }
     }
+
+    @Override
+    public String[] getFunctionInfo() { return ror.getFunctionInfo(); }
+
+    @Override
+    public String provideRORValue(String name) { return ror.provideValue(name); }
+
+    @Override
+    public String runRORFunction(String name, String[] params) { return ror.runFunction(name, params); }
 
     @Override
     public long getPower() {
@@ -579,7 +604,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
 
         ProcessingResult result = GenericMachineRecipeRuntime.update(level, GenericMachineRecipe.Machine.CHEMICAL_PLANT,
                 selectedRecipe, progress, items.getStackInSlot(SLOT_BLUEPRINT), energy, items, INPUT_SLOTS, OUTPUT_SLOTS,
-                inputTankList, outputTankList, upgradeFactors(), true, TANK_CAPACITY);
+                inputTankList, outputTankList, processingFactors(), true, TANK_CAPACITY);
         selectedRecipe = result.selectedRecipe();
         progress = result.progress();
         didProcess = result.didProcess();
@@ -609,6 +634,35 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
         pow += overdriveLevel * 10.0D / 3.0D;
         cachedUpgradeFactors = new ProcessingFactors(speed, pow);
         return cachedUpgradeFactors;
+    }
+
+    private ProcessingFactors processingFactors() {
+        ProcessingFactors factors = upgradeFactors();
+        return rorRestrictedMode
+                ? new ProcessingFactors(factors.speedMultiplier() * 0.25D, factors.powerMultiplier()) : factors;
+    }
+
+    private RORDispatcher createRorDispatcher() {
+        return RORDispatcher.builder()
+                .value("progress", () -> Integer.toString((int) Math.round(progress * 100.0D)))
+                .value("recipe", this::getSelectedRecipeName)
+                .value("active", () -> didProcess ? "1" : "0")
+                .function("setrecipe", this::runRorSetRecipe, "name")
+                .build();
+    }
+
+    private String runRorSetRecipe(String[] params) {
+        if (params.length == 1) {
+            setSelectedRecipe(params[0]);
+            rorRestrictedMode = true;
+            GenericMachineRecipe recipe = getSelectedRecipeDefinition();
+            setupTanks(recipe);
+            updateDynamicCapacity(recipe);
+            if (level != null && !level.isClientSide) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            }
+        }
+        return null;
     }
 
     private void invalidateUpgradeFactors() {

@@ -1,0 +1,1 @@
+{"variants":{"facing=north":{"model":"hbm_ntm_rebirth:block/ladder_sturdy"},"facing=east":{"model":"hbm_ntm_rebirth:block/ladder_sturdy","y":90,"uvlock":true},"facing=south":{"model":"hbm_ntm_rebirth:block/ladder_sturdy","y":180,"uvlock":true},"facing=west":{"model":"hbm_ntm_rebirth:block/ladder_sturdy","y":270,"uvlock":true}}}

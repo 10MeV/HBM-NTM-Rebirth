@@ -191,20 +191,22 @@ public class TauCannonItem extends SednaGunItem {
     }
 
     private void tickTauChargeSound(ItemStack stack, Level level, Entity entity, boolean selected) {
-        AudioWrapper running = TAU_CHARGE_SOUNDS.get(entity.getId());
+        int entityId = entity.getId();
+        AudioWrapper running = TAU_CHARGE_SOUNDS.get(entityId);
         int animation = legacyAnimation(stack, CONFIG_INDEX);
         int timer = legacyAnimationTimer(stack, CONFIG_INDEX);
         boolean charging = selected && animation == LEGACY_ANIM_SPINUP && timer < 300;
         if (!charging) {
-            if (running != null && running.isPlaying()) {
-                running.stopSound();
-            }
-            TAU_CHARGE_SOUNDS.remove(entity.getId());
+            stopAndRemoveChargeSound(entityId);
             return;
         }
         if (running == null || !running.isPlaying()) {
+            if (running != null) {
+                TAU_CHARGE_SOUNDS.remove(entityId, running);
+                running.stopSound();
+            }
             running = AudioWrapper.getLoopedEntitySound(level, "GUN_TAU_LOOP", entity, 1.0F, 15.0F, 0.75F, 10);
-            TAU_CHARGE_SOUNDS.put(entity.getId(), running);
+            TAU_CHARGE_SOUNDS.put(entityId, running);
             running.startSound();
             running.attachTo(entity);
             running.updatePitch(0.75F);
@@ -213,6 +215,27 @@ public class TauCannonItem extends SednaGunItem {
             running.keepAlive();
             running.attachTo(entity);
             running.updatePitch(0.75F + timer * 0.01F);
+        }
+    }
+
+    /**
+     * Closes client-only charge loops before an entity id can be reused by a
+     * new client level. AudioWrapper owns the attached client entity, so
+     * clearing the map without stopping is not sufficient.
+     */
+    public static void clearClientRuntimeState() {
+        for (AudioWrapper sound : TAU_CHARGE_SOUNDS.values()) {
+            if (sound != null) {
+                sound.stopSound();
+            }
+        }
+        TAU_CHARGE_SOUNDS.clear();
+    }
+
+    private static void stopAndRemoveChargeSound(int entityId) {
+        AudioWrapper sound = TAU_CHARGE_SOUNDS.remove(entityId);
+        if (sound != null) {
+            sound.stopSound();
         }
     }
 

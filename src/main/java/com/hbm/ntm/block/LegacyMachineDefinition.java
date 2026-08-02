@@ -13,6 +13,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -325,9 +326,12 @@ public record LegacyMachineDefinition(
         }
 
         public LegacyMachineDefinition build() {
-            Function<Direction, LegacyMultiblockLayout> resolvedLayout = layoutFactory != null
+            Function<Direction, LegacyMultiblockLayout> uncachedLayout = layoutFactory != null
                     ? layoutFactory
                     : facing -> LegacyMultiblockLayout.ofLegacyXrChecked(legacyXrDimensions, facing);
+            Map<Direction, LegacyMultiblockLayout> layoutsByFacing = new ConcurrentHashMap<>();
+            Function<Direction, LegacyMultiblockLayout> resolvedLayout =
+                    facing -> layoutsByFacing.computeIfAbsent(facing, uncachedLayout);
             boolean resolvedItemRenderAll = itemRenderAll == null ? renderAll : itemRenderAll;
             List<String> resolvedItemRenderParts = itemRenderParts == null ? renderParts : itemRenderParts;
             Map<String, LegacyMachinePartRenderProperties> resolvedItemPartRenderProperties =

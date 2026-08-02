@@ -11,15 +11,28 @@ import com.hbm.ntm.block.CraneLogisticsBlock;
 import com.hbm.ntm.block.conveyor.ChuteConveyorBlock;
 import com.hbm.ntm.block.conveyor.ConveyorBlock;
 import com.hbm.ntm.block.conveyor.LiftConveyorBlock;
+import com.hbm.ntm.blockentity.AutocrafterBlockEntity;
 import com.hbm.ntm.blockentity.CraneLogisticsBlockEntity;
+import com.hbm.ntm.blockentity.MassStorageBlockEntity;
+import com.hbm.ntm.blockentity.RadioTorchCounterBlockEntity;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.entity.item.MovingPackageEntity;
+import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.item.BedrockOreItem;
 import com.hbm.ntm.item.ConveyorWandItem;
+import com.hbm.ntm.item.FluidIconItem;
+import com.hbm.ntm.item.FoundryMoldItem;
+import com.hbm.ntm.item.HbmFluidContainerItem;
+import com.hbm.ntm.item.LegacyStateBlockItem;
+import com.hbm.ntm.item.SirenCassetteItem;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.sound.LegacySirenTrack;
+import com.hbm.ntm.util.LegacyPatternMatcher;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -36,7 +49,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.event.RegisterGameTestsEvent;
-import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 /**
@@ -44,7 +56,6 @@ import net.minecraftforge.gametest.PrefixGameTestTemplate;
  * entities, and conveyor wand.  These tests deliberately cover the shared
  * library rather than only a downstream machine consumer.
  */
-@GameTestHolder(HbmNtm.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ConveyorGameTests {
     private ConveyorGameTests() {
@@ -54,7 +65,7 @@ public final class ConveyorGameTests {
         event.register(ConveyorGameTests.class);
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "conveyorLibrary")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
     public static void legacyMetadataAndLaneContracts(GameTestHelper helper) {
         BlockPos pos = new BlockPos(0, 0, 0);
         for (int metadata = 2; metadata <= 13; metadata++) {
@@ -87,7 +98,74 @@ public final class ConveyorGameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "conveyorLibrary")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
+    public static void patternMatcherPreservesLegacyMetadataAndDurabilityContracts(GameTestHelper helper) {
+        LegacyStateBlockItem absorber = (LegacyStateBlockItem) ModBlocks.RAD_ABSORBER.get().asItem();
+        ItemStack tierOne = LegacyStateBlockItem.createStack(absorber, 1);
+        ItemStack tierTwo = LegacyStateBlockItem.createStack(absorber, 2);
+        LegacyPatternMatcher matcher = new LegacyPatternMatcher(7);
+
+        matcher.initPatternStandard(tierOne, 0);
+        assertEquals(LegacyPatternMatcher.MODE_EXACT, matcher.getMode(0),
+                "legacy state-backed metadata defaults to exact mode");
+        assertTrue(matcher.isValidForFilter(tierOne, 0, tierOne.copy()),
+                "exact metadata filter accepts its own variant");
+        assertTrue(!matcher.isValidForFilter(tierOne, 0, tierTwo),
+                "exact metadata filter rejects another state-backed variant");
+
+        ItemStack wornSword = new ItemStack(Items.DIAMOND_SWORD);
+        wornSword.setDamageValue(12);
+        matcher.initPatternStandard(wornSword, 1);
+        assertEquals(LegacyPatternMatcher.MODE_WILDCARD, matcher.getMode(1),
+                "durability is not legacy metadata");
+        assertTrue(matcher.isValidForFilter(wornSword, 1, new ItemStack(Items.DIAMOND_SWORD)),
+                "wildcard mode accepts the same durable item at another wear value");
+
+        ItemStack waterIcon = FluidIconItem.make(HbmFluids.WATER, 100);
+        ItemStack gasolineIcon = FluidIconItem.make(HbmFluids.GASOLINE, 100);
+        matcher.initPatternStandard(waterIcon, 2);
+        assertEquals(LegacyPatternMatcher.MODE_EXACT, matcher.getMode(2),
+                "legacy fluid-icon metadata defaults to exact mode");
+        assertTrue(!matcher.isValidForFilter(waterIcon, 2, gasolineIcon),
+                "exact fluid-icon filter ignores amount NBT but preserves the old fluid-id metadata");
+
+        HbmFluidContainerItem canister = (HbmFluidContainerItem) ModItems.CANISTER_FULL.get();
+        ItemStack waterCanister = canister.createFilledStack(HbmFluids.WATER);
+        ItemStack gasolineCanister = canister.createFilledStack(HbmFluids.GASOLINE);
+        matcher.initPatternStandard(waterCanister, 3);
+        assertEquals(LegacyPatternMatcher.MODE_EXACT, matcher.getMode(3),
+                "legacy fluid-container metadata defaults to exact mode");
+        assertTrue(!matcher.isValidForFilter(waterCanister, 3, gasolineCanister),
+                "exact fluid-container filter preserves the old fluid-id metadata");
+
+        ItemStack nuggetMold = FoundryMoldItem.stackForId(0);
+        ItemStack billetMold = FoundryMoldItem.stackForId(1);
+        matcher.initPatternStandard(nuggetMold, 4);
+        assertTrue(!matcher.isValidForFilter(nuggetMold, 4, billetMold),
+                "exact mold filter preserves its old mold metadata");
+
+        ItemStack hatchCassette = SirenCassetteItem.stackForTrack(ModItems.SIREN_TRACK.get(), LegacySirenTrack.HATCH);
+        ItemStack autopilotCassette = SirenCassetteItem.stackForTrack(ModItems.SIREN_TRACK.get(), LegacySirenTrack.ATUOPILOT);
+        matcher.initPatternStandard(hatchCassette, 5);
+        assertTrue(!matcher.isValidForFilter(hatchCassette, 5, autopilotCassette),
+                "exact cassette filter preserves the old track metadata");
+
+        ItemStack lightBedrock = BedrockOreItem.make(BedrockOreItem.BedrockOreGrade.BASE,
+                BedrockOreItem.BedrockOreType.LIGHT_METAL);
+        ItemStack heavyBedrock = BedrockOreItem.make(BedrockOreItem.BedrockOreGrade.BASE,
+                BedrockOreItem.BedrockOreType.HEAVY_METAL);
+        matcher.initPatternStandard(lightBedrock, 6);
+        assertEquals(LegacyPatternMatcher.MODE_BEDROCK, matcher.getMode(6),
+                "bedrock ore retains its source-backed grade mode");
+        assertTrue(matcher.isValidForFilter(lightBedrock, 6, heavyBedrock),
+                "bedrock mode accepts another ore type with the same grade");
+        matcher.setMode(6, LegacyPatternMatcher.MODE_EXACT);
+        assertTrue(!matcher.isValidForFilter(lightBedrock, 6, heavyBedrock),
+                "bedrock exact mode preserves the full old metadata value, including ore type");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
     public static void liftAndChuteSegmentContracts(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos liftPos = helper.absolutePos(new BlockPos(1, 2, 1));
@@ -125,7 +203,7 @@ public final class ConveyorGameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "conveyorLibrary")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
     public static void wandRoutePlannerReturnsLegacyOutcomes(GameTestHelper helper) {
         ConveyorRoutePlanner.RouteContext successContext = routeContext(4, pos -> true);
         ConveyorRoutePlanner.RouteResult success = ConveyorRoutePlanner.plan(successContext);
@@ -144,7 +222,7 @@ public final class ConveyorGameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "conveyorLibrary")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
     public static void itemEntityConvertsAndMovesOnConveyor(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(3, 2, 3));
@@ -171,7 +249,7 @@ public final class ConveyorGameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "energy_workspace", batch = "conveyorLibrary")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "energy_workspace", batch = "conveyorLibrary")
     public static void wandTwoPointUsePlacesAndConsumesConveyors(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos start = helper.absolutePos(new BlockPos(1, 2, 8));
@@ -197,7 +275,7 @@ public final class ConveyorGameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "conveyorLibrary")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
     public static void movingItemEntersCraneInserterFromLegacyInputSide(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos cranePos = helper.absolutePos(new BlockPos(8, 2, 3));
@@ -222,7 +300,7 @@ public final class ConveyorGameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "conveyorLibrary")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
     public static void movingPackagesHonorLegacyCraneEntrySides(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos boxerPos = helper.absolutePos(new BlockPos(1, 2, 12));
@@ -274,7 +352,163 @@ public final class ConveyorGameTests {
         helper.succeed();
     }
 
-    @GameTest(templateNamespace = "minecraft", template = "empty", batch = "conveyorLibrary")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
+    public static void movingItemsCramAndOffBeltDropsFollowLegacyLifecycle(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(3, 2, 3));
+        ConveyorBlock belt = (ConveyorBlock) ModBlocks.CONVEYOR.get();
+        level.setBlock(pos, belt.stateFromLegacyMetadata(Direction.NORTH.get3DDataValue()), Block.UPDATE_ALL);
+
+        MovingItemEntity anchor = null;
+        for (int index = 0; index < 25; index++) {
+            MovingItemEntity moving = new MovingItemEntity(level, new ItemStack(Items.IRON_INGOT));
+            moving.setPos(pos.getX() + 0.5D, pos.getY() + 0.25D, pos.getZ() + 0.5D);
+            level.addFreshEntity(moving);
+            if (anchor == null) {
+                anchor = moving;
+            }
+        }
+        int checkTick = 400 - Math.floorMod(anchor.getId(), 400);
+        if (checkTick <= 5) {
+            checkTick += 400;
+        }
+        anchor.tickCount = checkTick - 1;
+        anchor.tick();
+        assertSame(Blocks.AIR, level.getBlockState(pos).getBlock(), "cram check destroys the occupied conveyor");
+        assertEquals(0, level.getEntitiesOfClass(MovingItemEntity.class, new AABB(pos).inflate(1.0D)).size(),
+                "cram check discards every overlapping moving conveyor object");
+
+        MovingItemEntity leaving = new MovingItemEntity(level, new ItemStack(Items.GOLD_INGOT));
+        leaving.setPos(pos.getX() + 0.5D, pos.getY() + 0.25D, pos.getZ() + 0.5D);
+        leaving.setDeltaMovement(0.1D, 0.0D, 0.0D);
+        leaving.tickCount = 6;
+        level.addFreshEntity(leaving);
+        leaving.tick();
+        List<ItemEntity> droppedItems = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(1.0D));
+        assertEquals(1, droppedItems.size(), "leaving moving item becomes one vanilla item entity");
+        assertEquals(60 * 20, droppedItems.get(0).lifespan, "off-belt drop keeps the legacy one-minute lifespan");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
+    public static void settingsToolCopiesLegacyCraneFiltersOrientationsAndRouterPatterns(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var player = FakePlayerFactory.getMinecraft(level);
+
+        BlockPos extractorSourcePos = helper.absolutePos(new BlockPos(1, 2, 1));
+        BlockPos extractorTargetPos = helper.absolutePos(new BlockPos(3, 2, 1));
+        CraneLogisticsBlock extractorBlock = (CraneLogisticsBlock) ModBlocks.CRANE_EXTRACTOR.get();
+        level.setBlock(extractorSourcePos,
+                extractorBlock.defaultBlockState().setValue(CraneLogisticsBlock.FACING, Direction.NORTH), Block.UPDATE_ALL);
+        level.setBlock(extractorTargetPos,
+                extractorBlock.defaultBlockState().setValue(CraneLogisticsBlock.FACING, Direction.SOUTH), Block.UPDATE_ALL);
+        CraneLogisticsBlockEntity extractorSource = (CraneLogisticsBlockEntity) level.getBlockEntity(extractorSourcePos);
+        CraneLogisticsBlockEntity extractorTarget = (CraneLogisticsBlockEntity) level.getBlockEntity(extractorTargetPos);
+        extractorSource.setInput(Direction.EAST);
+        extractorSource.setOutputOverride(Direction.UP);
+        extractorSource.setPatternStack(3, new ItemStack(Items.EMERALD));
+        CompoundTag extractorSettings = extractorSource.getSettings(level, extractorSourcePos);
+        extractorTarget.pasteSettings(extractorSettings, 0, level, player, extractorTargetPos);
+        assertSame(Items.EMERALD, extractorTarget.getItems().getStackInSlot(3).getItem(),
+                "normal crane index zero copies its sparse filter slot");
+        extractorTarget.pasteSettings(extractorSettings, 1, level, player, extractorTargetPos);
+        assertEquals(extractorSource.getInputSide(), extractorTarget.getInputSide(),
+                "normal crane index one copies input orientation");
+        assertEquals(extractorSource.getOutputSide(), extractorTarget.getOutputSide(),
+                "normal crane index one copies output orientation");
+
+        BlockPos routerSourcePos = helper.absolutePos(new BlockPos(6, 2, 1));
+        BlockPos routerTargetPos = helper.absolutePos(new BlockPos(8, 2, 1));
+        CraneLogisticsBlock routerBlock = (CraneLogisticsBlock) ModBlocks.CRANE_ROUTER.get();
+        level.setBlock(routerSourcePos, routerBlock.defaultBlockState(), Block.UPDATE_ALL);
+        level.setBlock(routerTargetPos, routerBlock.defaultBlockState(), Block.UPDATE_ALL);
+        CraneLogisticsBlockEntity routerSource = (CraneLogisticsBlockEntity) level.getBlockEntity(routerSourcePos);
+        CraneLogisticsBlockEntity routerTarget = (CraneLogisticsBlockEntity) level.getBlockEntity(routerTargetPos);
+        routerSource.setPatternStack(5, new ItemStack(Items.IRON_INGOT));
+        routerSource.setPatternStack(6, new ItemStack(Items.DIAMOND));
+        CompoundTag modeToggle = new CompoundTag();
+        modeToggle.putInt("toggle", Direction.NORTH.get3DDataValue());
+        routerSource.receiveControl(player, modeToggle);
+        routerTarget.setPatternStack(5, new ItemStack(Items.GOLD_INGOT));
+        routerTarget.setPatternStack(6, new ItemStack(Items.REDSTONE));
+        routerTarget.pasteSettings(routerSource.getSettings(level, routerSourcePos), 1, level, player, routerTargetPos);
+        assertSame(Items.GOLD_INGOT, routerTarget.getItems().getStackInSlot(5).getItem(),
+                "legacy router pattern copy leaves the first selected slot untouched");
+        assertSame(Items.DIAMOND, routerTarget.getItems().getStackInSlot(6).getItem(),
+                "legacy router pattern copy updates the remaining selected slots");
+        assertEquals(routerSource.getRouterMode(Direction.NORTH.get3DDataValue()),
+                routerTarget.getRouterMode(Direction.NORTH.get3DDataValue()),
+                "router copy synchronizes the complete legacy route-mode array");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
+    public static void settingsToolCopiesLegacyAutocrafterTemplateFilters(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var player = FakePlayerFactory.getMinecraft(level);
+        BlockPos sourcePos = helper.absolutePos(new BlockPos(11, 2, 1));
+        BlockPos targetPos = helper.absolutePos(new BlockPos(13, 2, 1));
+        level.setBlock(sourcePos, ModBlocks.MACHINE_AUTOCRAFTER.get().defaultBlockState(), Block.UPDATE_ALL);
+        level.setBlock(targetPos, ModBlocks.MACHINE_AUTOCRAFTER.get().defaultBlockState(), Block.UPDATE_ALL);
+        AutocrafterBlockEntity source = (AutocrafterBlockEntity) level.getBlockEntity(sourcePos);
+        AutocrafterBlockEntity target = (AutocrafterBlockEntity) level.getBlockEntity(targetPos);
+        source.getItems().setStackInSlot(2, new ItemStack(Items.IRON_INGOT));
+        source.updatePatternSlot(2, source.getItems().getStackInSlot(2));
+        target.getItems().setStackInSlot(4, new ItemStack(Items.GOLD_INGOT));
+        target.updatePatternSlot(4, target.getItems().getStackInSlot(4));
+
+        target.pasteSettings(source.getSettings(level, sourcePos), 0, level, player, targetPos);
+        assertSame(Items.IRON_INGOT, target.getItems().getStackInSlot(2).getItem(),
+                "autocrafter settings copy restores the relative template filter slot");
+        assertSame(Items.GOLD_INGOT, target.getItems().getStackInSlot(4).getItem(),
+                "autocrafter settings copy preserves sparse target template slots");
+        assertEquals(0, target.getModeIndex(2),
+                "legacy filter paste invokes nextMode from the empty target matcher state");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
+    public static void settingsToolCopiesLegacyMassStorageFilterWithoutControlPacketGuard(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var player = FakePlayerFactory.getMinecraft(level);
+        BlockPos sourcePos = helper.absolutePos(new BlockPos(15, 2, 1));
+        BlockPos targetPos = helper.absolutePos(new BlockPos(17, 2, 1));
+        level.setBlock(sourcePos, ModBlocks.MASS_STORAGE.get().defaultBlockState(), Block.UPDATE_ALL);
+        level.setBlock(targetPos, ModBlocks.MASS_STORAGE.get().defaultBlockState(), Block.UPDATE_ALL);
+        MassStorageBlockEntity source = (MassStorageBlockEntity) level.getBlockEntity(sourcePos);
+        MassStorageBlockEntity target = (MassStorageBlockEntity) level.getBlockEntity(targetPos);
+        source.setFilter(new ItemStack(Items.IRON_INGOT));
+        target.setFilter(new ItemStack(Items.GOLD_INGOT));
+        assertEquals(0, target.increaseTotalStockpile(7, true), "mass storage fixture fills the existing filter type");
+
+        target.pasteSettings(source.getSettings(level, sourcePos), 0, level, player, targetPos);
+        assertSame(Items.IRON_INGOT, target.type().getItem(),
+                "legacy settings paste writes the mass-storage filter despite non-empty stockpile");
+        assertEquals(7, target.stockpile(), "settings paste does not alter the stored count");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
+    public static void settingsToolCopiesLegacyRadioTorchCounterFilters(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        var player = FakePlayerFactory.getMinecraft(level);
+        BlockPos sourcePos = helper.absolutePos(new BlockPos(19, 2, 1));
+        BlockPos targetPos = helper.absolutePos(new BlockPos(21, 2, 1));
+        level.setBlock(sourcePos, ModBlocks.RADIO_TORCH_COUNTER.get().defaultBlockState(), Block.UPDATE_ALL);
+        level.setBlock(targetPos, ModBlocks.RADIO_TORCH_COUNTER.get().defaultBlockState(), Block.UPDATE_ALL);
+        RadioTorchCounterBlockEntity source = (RadioTorchCounterBlockEntity) level.getBlockEntity(sourcePos);
+        RadioTorchCounterBlockEntity target = (RadioTorchCounterBlockEntity) level.getBlockEntity(targetPos);
+        source.getFilterItems().setStackInSlot(2, new ItemStack(Items.IRON_INGOT));
+
+        target.pasteSettings(source.getSettings(level, sourcePos), 0, level, player, targetPos);
+        assertSame(Items.IRON_INGOT, target.getFilterItems().getStackInSlot(2).getItem(),
+                "radio counter settings copy restores the relative third filter slot");
+        assertEquals("Item and meta match", target.filterModeLabel(2),
+                "radio counter paste advances a blank target matcher to the legacy exact mode");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "conveyorLibrary")
     public static void wandSneakVerticalPlacementPreservesLegacyConversions(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos liftBase = helper.absolutePos(new BlockPos(12, 2, 12));

@@ -1,12 +1,19 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.saveddata.satellites.SatelliteDetector;
+import com.hbm.saveddata.satellites.SatelliteDetector.BurstIntensity;
+import com.hbm.saveddata.satellites.SatelliteRayScan;
+import com.hbm.saveddata.satellites.SatelliteRayScan.RayEvent;
 import com.hbm.ntm.block.ParticleAcceleratorBlock;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.recipe.ParticleAcceleratorRecipeRegistry;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.util.AchievementHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -91,6 +98,17 @@ public class PADetectorBlockEntity extends PABlockEntity implements PAParticleUs
         }
         addOutput(SLOT_OUTPUT_1, recipe.output1Stack());
         addOutput(SLOT_OUTPUT_2, recipe.output2Stack());
+        if (recipe.output1Stack().is(ModItems.PARTICLE_DIGAMMA.get())
+                || recipe.output2Stack().is(ModItems.PARTICLE_DIGAMMA.get())) {
+            for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
+                    new net.minecraft.world.phys.AABB(worldPosition).inflate(100.0D, 50.0D, 100.0D))) {
+                AchievementHandler.award(player, AchievementHandler.OMEGA12);
+            }
+        }
+        SatelliteDetector.reportEvent(level, SatelliteDetector.DURATION_MEDIUM, BurstIntensity.MEDIUM,
+                worldPosition.getX(), worldPosition.getZ());
+        SatelliteRayScan.reportEvent(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                RayEvent.INFO_PARTICLE, 600);
         setChanged();
     }
 

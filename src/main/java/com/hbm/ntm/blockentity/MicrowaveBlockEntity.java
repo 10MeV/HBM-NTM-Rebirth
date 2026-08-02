@@ -247,7 +247,7 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
 
     @Override
     public CompoundTag getClientSyncTag() {
-        CompoundTag tag = saveWithoutMetadata();
+        CompoundTag tag = new CompoundTag();
         tag.putInt("cookTime", time);
         return tag;
     }
@@ -260,7 +260,7 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-    }
+}
 
     @Nullable
     @Override

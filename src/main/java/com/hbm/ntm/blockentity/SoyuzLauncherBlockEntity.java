@@ -20,6 +20,8 @@ import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.satellite.LegacySatelliteType;
+import com.hbm.ntm.satellite.SatelliteItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
 import com.hbm.ntm.sound.LegacyMachineAudioBridge;
 import com.hbm.ntm.sound.LegacySoundPlayer;
@@ -314,7 +316,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private static boolean requiresOrbitalModule(ItemStack stack) {
-        return stack.is(ModItems.SAT_GERALD.get()) || stack.is(ModItems.SAT_LUNAR_MINER.get());
+        return stack.getItem() instanceof SatelliteItem
+                && (SatelliteItem.variantOf(stack) == SatelliteItem.Variant.MINER_LUNAR
+                || SatelliteItem.variantOf(stack).satelliteType() == LegacySatelliteType.HORIZONS);
     }
 
     private boolean isDesignatorReady(ItemStack stack) {
@@ -558,11 +562,8 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = saveWithoutMetadata();
-        tag.putBoolean(TAG_STARTING, starting);
-        tag.putInt(TAG_COUNTDOWN, countdown);
-        return tag;
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

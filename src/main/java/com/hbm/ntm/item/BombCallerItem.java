@@ -3,6 +3,7 @@ package com.hbm.ntm.item;
 import com.hbm.ntm.entity.logic.AirstrikeBomberEntity;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.RayTraceUtil;
+import com.hbm.ntm.world.WorldUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -37,7 +38,8 @@ public class BombCallerItem extends Item {
                 return InteractionResultHolder.fail(stack);
             }
             BlockPos pos = hit.getBlockPos();
-            level.addFreshEntity(AirstrikeBomberEntity.create(level, pos.getX(), pos.getY(), pos.getZ(), type));
+            WorldUtil.loadAndSpawnEntityInWorld(
+                    AirstrikeBomberEntity.create(level, pos.getX(), pos.getY(), pos.getZ(), type));
             player.displayClientMessage(Component.literal("Called in airstrike!"), false);
             LegacySoundPlayer.playLegacyTechBleep(player, 1.0F, 1.0F);
             if (!player.getAbilities().instabuild) {

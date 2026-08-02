@@ -28,8 +28,9 @@
     },
     {
       "ingredient": {
-        "item": "hbm_ntm_rebirth:upgrade_speed_1"
-      }
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
     }
   ],
   "solder": [

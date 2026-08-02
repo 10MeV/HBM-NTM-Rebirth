@@ -537,7 +537,7 @@ public final class LegacyRbmkPanelRenderer {
     }
 
     private static String gaugeLimitLabel(long value) {
-        return value <= 10_000L ? Long.toString(value) : HbmMathUtil.getShortNumber(value);
+        return value >= -10_000L && value <= 10_000L ? Long.toString(value) : HbmMathUtil.getShortNumber(value);
     }
 
     private static void renderPreparedTexturedSelection(LegacyWavefrontModel model, ResourceLocation texture,

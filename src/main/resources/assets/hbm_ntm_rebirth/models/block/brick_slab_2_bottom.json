@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/brick_obsidian",
+    "side": "hbm_ntm_rebirth:block/brick_obsidian",
+    "top": "hbm_ntm_rebirth:block/brick_obsidian"
+  }
+}

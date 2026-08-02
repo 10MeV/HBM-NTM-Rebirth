@@ -1,0 +1,29 @@
+{
+  "parent": "hbm_ntm_rebirth:block/lightstone_0",
+  "overrides": [
+    {
+      "model": "hbm_ntm_rebirth:block/lightstone_1",
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 1.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:block/lightstone_2",
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 2.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:block/lightstone_3",
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 3.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:block/lightstone_4",
+      "predicate": {
+        "hbm_ntm_rebirth:legacy_variant": 4.0
+      }
+    }
+  ]
+}

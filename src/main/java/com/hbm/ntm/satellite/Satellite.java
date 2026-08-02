@@ -127,11 +127,11 @@ public abstract class Satellite {
     }
 
     public static boolean orbit(ServerLevel level, ItemStack stack, int frequency, double x, double y, double z) {
-        return stack != null && !stack.isEmpty() && orbit(level, stack.getItem(), frequency, x, y, z);
+        return stack != null && !stack.isEmpty() && orbit(level, getLegacyIdFromStack(stack), frequency, x, y, z);
     }
 
     public static boolean orbit(Level level, ItemStack stack, int frequency, double x, double y, double z) {
-        return stack != null && !stack.isEmpty() && orbit(level, stack.getItem(), frequency, x, y, z);
+        return stack != null && !stack.isEmpty() && orbit(level, getLegacyIdFromStack(stack), frequency, x, y, z);
     }
 
     public static void registerSatelliteItem(Item item, LegacySatelliteType type) {
@@ -178,7 +178,11 @@ public abstract class Satellite {
     }
 
     public static Optional<LegacySatelliteType> getTypeFromStack(ItemStack stack) {
-        return stack == null || stack.isEmpty() ? Optional.empty() : getTypeFromItem(stack.getItem());
+        if (stack == null || stack.isEmpty()) {
+            return Optional.empty();
+        }
+        LegacySatelliteType xSatelliteType = com.hbm.saveddata.satellites.XSatelliteRegistry.typeFromItemStack(stack);
+        return xSatelliteType != null ? Optional.of(xSatelliteType) : getTypeFromItem(stack.getItem());
     }
 
     public static Optional<LegacySatelliteType> getTypeFromClass(Class<? extends Satellite> satelliteClass) {
@@ -221,7 +225,7 @@ public abstract class Satellite {
     }
 
     public static Optional<Class<? extends Satellite>> getClassFromStack(ItemStack stack) {
-        return stack == null || stack.isEmpty() ? Optional.empty() : getClassFromItem(stack.getItem());
+        return stack == null || stack.isEmpty() ? Optional.empty() : getTypeFromStack(stack).flatMap(Satellite::getClassFromType);
     }
 
     public static Optional<Class<? extends Satellite>> getClassFromSatellite(Satellite satellite) {
@@ -249,7 +253,9 @@ public abstract class Satellite {
     }
 
     public static int getLegacyIdFromStack(ItemStack stack) {
-        return stack == null || stack.isEmpty() ? -1 : getLegacyIdFromItem(stack.getItem());
+        return stack == null || stack.isEmpty() ? -1 : getTypeFromStack(stack)
+                .map(LegacySatelliteType::legacyId)
+                .orElseGet(() -> getLegacyIdFromItem(stack.getItem()));
     }
 
     public static int getLegacyIdFromClass(Class<? extends Satellite> satelliteClass) {
@@ -285,6 +291,10 @@ public abstract class Satellite {
         return getLegacyIdFromItem(item);
     }
 
+    public static int getIDFromStack(ItemStack stack) {
+        return getLegacyIdFromStack(stack);
+    }
+
     public static int getIDFromClass(Class<? extends Satellite> satelliteClass) {
         return getLegacyIdFromClass(satelliteClass);
     }
@@ -312,7 +322,8 @@ public abstract class Satellite {
     }
 
     public static Optional<String> getCargoPoolFromStack(ItemStack stack) {
-        return stack == null || stack.isEmpty() ? Optional.empty() : getCargoPoolFromItem(stack.getItem());
+        return stack == null || stack.isEmpty() ? Optional.empty()
+                : getTypeFromStack(stack).flatMap(Satellite::cargoPoolForType);
     }
 
     public static Optional<String> getCargoPoolFromClass(Class<? extends Satellite> satelliteClass) {

@@ -49,11 +49,6 @@ public class MaterialShapes {
     private MaterialShapes(int quantity, String... prefixes) {
         this.quantity = quantity;
         this.prefixes = prefixes;
-        if (prefixes != null) {
-            for (String prefix : prefixes) {
-                Mats.prefixByName.put(prefix, this);
-            }
-        }
         allShapes.add(this);
     }
 

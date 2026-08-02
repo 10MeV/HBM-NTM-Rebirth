@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"transportation","key":{"C":{"item":"hbm_ntm_rebirth:coil_copper"},"I":{"item":"hbm_ntm_rebirth:plate_iron"},"R":{"tag":"forge:ingots/mingrade"},"S":{"tag":"forge:ingots/steel"}},"pattern":["S S","CIC","SRS"],"result":{"item":"hbm_ntm_rebirth:rail_booster","count":6},"show_notification":true}

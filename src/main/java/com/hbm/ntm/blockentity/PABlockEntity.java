@@ -47,7 +47,9 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class PABlockEntity extends BlockEntity implements MenuProvider, HbmLegacyLoadedTile,
         HbmEnergyReceiver, HbmStandardFluidTransceiver, LegacyProxyDelegateProvider {
@@ -71,6 +73,7 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     private final LazyOptional<IItemHandler> coreItemHandler;
     private final LazyOptional<IEnergyStorage> energyHandler;
     private final LazyOptional<IFluidHandler> fluidHandler;
+    private final Map<BlockPos, PaProxyProvider> proxyDelegates = new HashMap<>();
     private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
     protected float temperature = KELVIN + 20.0F;
 
@@ -222,12 +225,12 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
                     ? new int[]{PASourceBlockEntity.SLOT_INPUT_2, PASourceBlockEntity.SLOT_CONTAINER_1,
                             PASourceBlockEntity.SLOT_CONTAINER_2}
                     : new int[]{PASourceBlockEntity.SLOT_CONTAINER_1, PASourceBlockEntity.SLOT_CONTAINER_2};
-            return new PaProxyProvider(new PaItemHandler(slots));
+            return proxyDelegates.computeIfAbsent(proxyPos, ignored -> new PaProxyProvider(new PaItemHandler(slots)));
         }
         if (variant == ParticleAcceleratorBlock.Variant.DETECTOR) {
-            return new PaProxyProvider(new PaItemHandler(new int[]{PADetectorBlockEntity.SLOT_CONTAINER_1,
-                    PADetectorBlockEntity.SLOT_CONTAINER_2, PADetectorBlockEntity.SLOT_OUTPUT_1,
-                    PADetectorBlockEntity.SLOT_OUTPUT_2}));
+            return proxyDelegates.computeIfAbsent(proxyPos, ignored -> new PaProxyProvider(new PaItemHandler(
+                    new int[]{PADetectorBlockEntity.SLOT_CONTAINER_1, PADetectorBlockEntity.SLOT_CONTAINER_2,
+                            PADetectorBlockEntity.SLOT_OUTPUT_1, PADetectorBlockEntity.SLOT_OUTPUT_2})));
         }
         return null;
     }
@@ -339,7 +342,6 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = new CompoundTag();
-        saveAdditional(tag);
         return tag;
     }
 
@@ -357,7 +359,7 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-    }
+}
 
     @Override
     public Component getDisplayName() {
@@ -384,9 +386,16 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     public void setRemoved() {
         fluidPortSubscriptions.detachAllDetailed(level, worldPosition, fluidPorts(), this, this);
         super.setRemoved();
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
         coreItemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
+        proxyDelegates.values().forEach(PaProxyProvider::invalidate);
+        proxyDelegates.clear();
     }
 
     @Override
@@ -439,6 +448,10 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
 
         private PaProxyProvider(IItemHandler itemHandler) {
             this.proxyItemHandler = LazyOptional.of(() -> itemHandler);
+        }
+
+        private void invalidate() {
+            proxyItemHandler.invalidate();
         }
 
         @Override

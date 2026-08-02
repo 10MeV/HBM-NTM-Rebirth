@@ -1,10 +1,12 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.menu.AnvilMenu;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
@@ -14,7 +16,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -23,6 +24,7 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
@@ -32,7 +34,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import com.hbm.ntm.item.NTMAnvilBlockItem;
 
 @SuppressWarnings("deprecation")
 public class NTMAnvilBlock extends FallingBlock {
@@ -64,14 +66,14 @@ public class NTMAnvilBlock extends FallingBlock {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return defaultBlockState().setValue(FACING, legacyPlacementFacing(context.getHorizontalDirection()));
     }
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer,
             ItemStack stack) {
         if (placer != null) {
-            level.setBlock(pos, state.setValue(FACING, placer.getDirection().getOpposite()), 2);
+            level.setBlock(pos, state.setValue(FACING, legacyPlacementFacing(placer.getDirection())), 2);
         }
     }
 
@@ -85,12 +87,29 @@ public class NTMAnvilBlock extends FallingBlock {
             return InteractionResult.SUCCESS;
         }
         if (player instanceof ServerPlayer serverPlayer) {
+            level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.8F, 1.0F);
             MenuProvider provider = new SimpleMenuProvider(
                     (containerId, inventory, openedPlayer) -> new AnvilMenu(containerId, inventory, tier),
                     Component.translatable("container.anvil", tier));
             NetworkHooks.openScreen(serverPlayer, provider, buffer -> buffer.writeVarInt(tier));
         }
         return InteractionResult.CONSUME;
+    }
+
+    /**
+     * Exact 1.7.10 {@code onBlockPlacedBy} metadata projection expressed through the modern FACING state.
+     * The legacy mapping was player south/west/north/east to metadata 3/4/2/5, whose model rotations are
+     * 270/180/90/0 degrees respectively. Keeping this mapping also keeps the OBJ long axis on the same
+     * axis as the modern collision shape.
+     */
+    private static Direction legacyPlacementFacing(Direction playerFacing) {
+        return switch (playerFacing) {
+            case SOUTH -> Direction.WEST;
+            case WEST -> Direction.SOUTH;
+            case NORTH -> Direction.EAST;
+            case EAST -> Direction.NORTH;
+            default -> Direction.NORTH;
+        };
     }
 
     @Override
@@ -106,6 +125,12 @@ public class NTMAnvilBlock extends FallingBlock {
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
+    }
+
+    /** Keeps the complete legacy anvil sound set (place, break and step) on every tier. */
+    @Override
+    public SoundType getSoundType(BlockState state) {
+        return SoundType.ANVIL;
     }
 
     @Override
@@ -129,12 +154,6 @@ public class NTMAnvilBlock extends FallingBlock {
     }
 
     public static BlockItem item(NTMAnvilBlock block, Item.Properties properties) {
-        return new BlockItem(block, properties) {
-            @Override
-            public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip,
-                    TooltipFlag flag) {
-                tooltip.add(Component.literal("Tier " + block.tier() + " Anvil").withStyle(ChatFormatting.GOLD));
-            }
-        };
+        return new NTMAnvilBlockItem(block, properties);
     }
 }

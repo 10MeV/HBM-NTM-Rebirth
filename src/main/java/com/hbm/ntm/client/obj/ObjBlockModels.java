@@ -32,8 +32,6 @@ public final class ObjBlockModels {
     public static final LegacyWavefrontModel CRYSTAL_TRIXITE = model("crystals_trixite", "crystal_virus").noSmooth().asVBO();
     public static final LegacyWavefrontModel CABLE_NEO = model("cable_neo", "cable_neo").noSmooth().asVBO();
     public static final LegacyWavefrontModel PIPE_NEO = model("pipe_neo", "pipe_neo").asVBO();
-    public static final LegacyWavefrontModel DIFURNACE_EXTENSION =
-            model("difurnace_extension", "difurnace_extension").noSmooth().asVBO();
     public static final LegacyWavefrontModel SPLITTER = model("splitter", "crane_splitter_inner").noSmooth().asVBO();
     public static final LegacyWavefrontModel CRANE_BUFFER = model("crane_buffer", "crane_box").noSmooth().asVBO();
     public static final LegacyWavefrontModel RAIL_NARROW_STRAIGHT =

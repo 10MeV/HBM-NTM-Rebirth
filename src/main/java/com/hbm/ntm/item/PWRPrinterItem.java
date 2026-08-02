@@ -47,6 +47,10 @@ public class PWRPrinterItem extends Item {
             return InteractionResult.CONSUME;
         }
         Snapshot snapshot = collectSnapshot(level, clicked, controller);
+        if (snapshot == null) {
+            player.displayClientMessage(Component.literal("PWR structure is too large to print safely"), true);
+            return InteractionResult.CONSUME;
+        }
         ModMessages.sendToPlayer(new PWRPrinterSnapshotPacket(snapshot.min(), snapshot.max(),
                 snapshot.direction(), snapshot.states()), player);
         return InteractionResult.CONSUME;
@@ -57,11 +61,16 @@ public class PWRPrinterItem extends Item {
         tooltip.add(Component.literal("Use on a constructed PWR controller to generate construction diagrams"));
     }
 
+    @Nullable
     private static Snapshot collectSnapshot(Level level, BlockPos controllerPos, PWRControllerBlockEntity controller) {
         Direction direction = controller.getBlockState().hasProperty(HorizontalMachineBlock.FACING)
                 ? controller.getBlockState().getValue(HorizontalMachineBlock.FACING).getOpposite()
                 : Direction.NORTH;
-        Set<BlockPos> fill = floodFill(level, controllerPos.relative(direction));
+        FloodFillResult floodResult = floodFill(level, controllerPos.relative(direction));
+        if (floodResult.exceededLimit()) {
+            return null;
+        }
+        Set<BlockPos> fill = floodResult.positions();
         fill.add(controllerPos.immutable());
         BlockPos min = controllerPos;
         BlockPos max = controllerPos;
@@ -70,6 +79,9 @@ public class PWRPrinterItem extends Item {
                     Math.min(min.getZ(), pos.getZ()));
             max = new BlockPos(Math.max(max.getX(), pos.getX()), Math.max(max.getY(), pos.getY()),
                     Math.max(max.getZ(), pos.getZ()));
+        }
+        if (!PWRPrinterSnapshotPacket.isValidBounds(min, max)) {
+            return null;
         }
 
         Map<BlockPos, BlockState> statesByPos = new HashMap<>();
@@ -88,8 +100,8 @@ public class PWRPrinterItem extends Item {
             }
         }
 
-        List<BlockState> states = new ArrayList<>((max.getX() - min.getX() + 1)
-                * (max.getY() - min.getY() + 1) * (max.getZ() - min.getZ() + 1));
+        int volume = PWRPrinterSnapshotPacket.snapshotVolume(min, max);
+        List<BlockState> states = new ArrayList<>(volume);
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
         for (int x = min.getX(); x <= max.getX(); x++) {
             for (int y = min.getY(); y <= max.getY(); y++) {
@@ -101,16 +113,22 @@ public class PWRPrinterItem extends Item {
         return new Snapshot(min, max, direction, states);
     }
 
-    private static Set<BlockPos> floodFill(Level level, BlockPos start) {
+    private static FloodFillResult floodFill(Level level, BlockPos start) {
         Set<BlockPos> fill = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         queue.add(start.immutable());
-        while (!queue.isEmpty() && fill.size() < MAX_SCAN) {
+        while (!queue.isEmpty()) {
             BlockPos pos = queue.removeFirst();
             if (fill.contains(pos) || !level.getBlockState(pos).is(ModBlocks.PWR_BLOCK.get())) {
                 continue;
             }
             fill.add(pos.immutable());
+            // Do not silently crop a connected reactor at the scan boundary:
+            // the first node beyond the permitted legacy-sized scan invalidates
+            // the whole snapshot before its bounds or states are allocated.
+            if (fill.size() > MAX_SCAN) {
+                return new FloodFillResult(Set.of(), true);
+            }
             for (Direction direction : Direction.values()) {
                 BlockPos next = pos.relative(direction);
                 if (!fill.contains(next)) {
@@ -118,9 +136,12 @@ public class PWRPrinterItem extends Item {
                 }
             }
         }
-        return fill;
+        return new FloodFillResult(fill, false);
     }
 
     private record Snapshot(BlockPos min, BlockPos max, Direction direction, List<BlockState> states) {
+    }
+
+    private record FloodFillResult(Set<BlockPos> positions, boolean exceededLimit) {
     }
 }

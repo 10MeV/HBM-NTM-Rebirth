@@ -1,0 +1,1433 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.6/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :copyGameTestStructures
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createSrgToMcp UP-TO-DATE
+> Task :downloadMCMeta UP-TO-DATE
+> Task :downloadAssets UP-TO-DATE
+> Task :extractNatives UP-TO-DATE
+> Task :makeSrcDirs
+> Task :prepareRuns
+> Task :prepareRunGameTestServer
+> Task :prepareRunGameTestServerCompile UP-TO-DATE
+
+> Task :runGameTestServer
+2026-07-30 04:42:19,434 main WARN Advanced terminal features are not available in this environment
+[04:42:19] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgegametestserveruserdev, --gameDir, ., --fml.forgeVersion, 47.2.32, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412]
+[04:42:19] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 21.0.12 by Eclipse Adoptium; OS Windows 11 arch amd64 version 10.0
+[04:42:19] [main/DEBUG] [cp.mo.mo.LaunchServiceHandler/MODLAUNCHER]: Found launch services [fmlclientdev,forgeclient,minecraft,forgegametestserverdev,fmlserveruserdev,fmlclient,fmldatauserdev,forgeserverdev,forgeserveruserdev,forgeclientdev,forgeclientuserdev,forgeserver,forgedatadev,fmlserver,fmlclientuserdev,fmlserverdev,forgedatauserdev,testharness,forgegametestserveruserdev]
+[04:42:19] [main/DEBUG] [cp.mo.mo.NameMappingServiceHandler/MODLAUNCHER]: Found naming services : [srgtomcp]
+[04:42:19] [main/DEBUG] [cp.mo.mo.LaunchPluginHandler/MODLAUNCHER]: Found launch plugins: [mixin,eventbus,slf4jfixer,object_holder_definalize,runtime_enum_extender,capability_token_subclass,accesstransformer,runtimedistcleaner]
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Discovering transformation services
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLPaths/CORE]: Path GAMEDIR is E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLPaths/CORE]: Path MODSDIR is E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\mods
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLPaths/CORE]: Path CONFIGDIR is E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\config
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLPaths/CORE]: Path FMLCONFIG is E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\config\fml.toml
+[04:42:19] [main/WARN] [ne.mi.fm.lo.FMLConfig/CORE]: Configuration file E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\config\fml.toml is not correct. Correcting
+[04:42:19] [main/INFO] [ne.mi.fm.lo.FMLConfig/CORE]: Incorrect key [earlyWindowSkipGLVersions] was corrected from null to []
+[04:42:19] [main/INFO] [ne.mi.fm.lo.FMLConfig/CORE]: Incorrect key [earlyWindowSquir] was corrected from null to false
+[04:42:19] [main/INFO] [ne.mi.fm.lo.FMLConfig/CORE]: Incorrect key [earlyWindowShowCPU] was corrected from null to false
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Found additional transformation services from discovery services: 
+[04:42:19] [main/INFO] [ne.mi.fm.lo.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgegametestserveruserdev
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Found transformer services : [mixin,fml]
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services loading
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loading service mixin
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loaded service mixin
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loading service fml
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.LauncherVersion/CORE]: Found FMLLauncher version 1.0
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: FML 1.0 loading
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: FML found ModLauncher version : 10.0.9+10.0.9+main.dcd20f30
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: FML found AccessTransformer version : 8.0.4+66+master.c09db6d7
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: FML found EventBus version : 6.0.5+6.0.5+master.eb8e549b
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: Found Runtime Dist Cleaner
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: FML found CoreMod version : 5.1.6
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: Found ForgeSPI package implementation version 7.0.1+7.0.1+master.d2b38bf6
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: Found ForgeSPI package specification 5
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loaded service fml
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Configuring option handling for services
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services initializing
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformation service mixin
+[04:42:19] [main/DEBUG] [mixin/]: MixinService [ModLauncher] was successfully booted in cpw.mods.cl.ModuleClassLoader@5e316c74
+[04:42:19] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/Mr.Wu/.gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.5/9d1c0c3a304ae6697ecd477218fa61b850bf57fc/mixin-0.8.5.jar%23128!/ Service=ModLauncher Env=SERVER
+[04:42:19] [main/DEBUG] [mixin/]: Initialising Mixin Platform Manager
+[04:42:19] [main/DEBUG] [mixin/]: Adding mixin platform agents for container ModLauncher Root Container(ModLauncher:4f56a0a2)
+[04:42:19] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for ModLauncher Root Container(ModLauncher:4f56a0a2)
+[04:42:19] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container ModLauncher Root Container(ModLauncher:4f56a0a2)
+[04:42:19] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for ModLauncher Root Container(ModLauncher:4f56a0a2)
+[04:42:19] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container ModLauncher Root Container(ModLauncher:4f56a0a2)
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformation service mixin
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformation service fml
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLServiceProvider/CORE]: Setting up basic FML game directories
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLPaths/CORE]: Path GAMEDIR is E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLPaths/CORE]: Path MODSDIR is E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\mods
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLPaths/CORE]: Path CONFIGDIR is E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\config
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLPaths/CORE]: Path FMLCONFIG is E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\config\fml.toml
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLServiceProvider/CORE]: Loading configuration
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLServiceProvider/CORE]: Preparing ModFile
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLServiceProvider/CORE]: Preparing launch handler
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: Using forgegametestserveruserdev as launch service
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLLoader/CORE]: Received command line version data  : VersionInfo[forgeVersion=47.2.32, mcVersion=1.20.1, mcpVersion=20230612.114412, forgeGroup=net.minecraftforge]
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformation service fml
+[04:42:19] [main/DEBUG] [cp.mo.mo.NameMappingServiceHandler/MODLAUNCHER]: Current naming domain is 'mcp'
+[04:42:19] [main/DEBUG] [cp.mo.mo.NameMappingServiceHandler/MODLAUNCHER]: Identified name mapping providers {srg=srgtomcp:1234}
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services begin scanning
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Beginning scan trigger - transformation service mixin
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: End scan trigger - transformation service mixin
+[04:42:19] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Beginning scan trigger - transformation service fml
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.FMLServiceProvider/CORE]: Initiating mod scan
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModListHandler/CORE]: Found mod coordinates from lists: []
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModDiscoverer/CORE]: Found Mod Locators : (mods folder:null),(maven libs:null),(exploded directory:null),(minecraft:null),(userdev classpath:null)
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModDiscoverer/CORE]: Found Dependency Locators : (JarInJar:null)
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.ta.CommonLaunchHandler/CORE]: Got mod coordinates hbm_ntm_rebirth%%E:\hbmqy\hbm_high\HBM-NTM-Rebirth\build\resources\main;hbm_ntm_rebirth%%E:\hbmqy\hbm_high\HBM-NTM-Rebirth\build\classes\java\main from env
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.ta.CommonLaunchHandler/CORE]: Found supplied mod coordinates [{hbm_ntm_rebirth=[E:\hbmqy\hbm_high\HBM-NTM-Rebirth\build\resources\main, E:\hbmqy\hbm_high\HBM-NTM-Rebirth\build\classes\java\main]}]
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar with {minecraft} mods - versions {1.20.1}
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Mr.Wu\.gradle\caches\modules-2\files-2.1\net.minecraftforge\javafmllanguage\1.20.1-47.2.32\9d7e04e58b558bf95759e2d94b77944a0845d1cb\javafmllanguage-1.20.1-47.2.32.jar
+[04:42:19] [main/WARN] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Mod file C:\Users\Mr.Wu\.gradle\caches\modules-2\files-2.1\net.minecraftforge\javafmllanguage\1.20.1-47.2.32\9d7e04e58b558bf95759e2d94b77944a0845d1cb\javafmllanguage-1.20.1-47.2.32.jar is missing mods.toml file
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Mr.Wu\.gradle\caches\modules-2\files-2.1\net.minecraftforge\lowcodelanguage\1.20.1-47.2.32\38d24291ba53d0eebaa2830618f331bc728d4b90\lowcodelanguage-1.20.1-47.2.32.jar
+[04:42:19] [main/WARN] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Mod file C:\Users\Mr.Wu\.gradle\caches\modules-2\files-2.1\net.minecraftforge\lowcodelanguage\1.20.1-47.2.32\38d24291ba53d0eebaa2830618f331bc728d4b90\lowcodelanguage-1.20.1-47.2.32.jar is missing mods.toml file
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Mr.Wu\.gradle\caches\modules-2\files-2.1\net.minecraftforge\mclanguage\1.20.1-47.2.32\63a076b8fcbb860cfddb7cec5c1374338a5043da\mclanguage-1.20.1-47.2.32.jar
+[04:42:19] [main/WARN] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Mod file C:\Users\Mr.Wu\.gradle\caches\modules-2\files-2.1\net.minecraftforge\mclanguage\1.20.1-47.2.32\63a076b8fcbb860cfddb7cec5c1374338a5043da\mclanguage-1.20.1-47.2.32.jar is missing mods.toml file
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Mr.Wu\.gradle\caches\modules-2\files-2.1\net.minecraftforge\fmlcore\1.20.1-47.2.32\cb79ea145f390bce56ce90e2cc62eb6928911801\fmlcore-1.20.1-47.2.32.jar
+[04:42:19] [main/WARN] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Mod file C:\Users\Mr.Wu\.gradle\caches\modules-2\files-2.1\net.minecraftforge\fmlcore\1.20.1-47.2.32\cb79ea145f390bce56ce90e2cc62eb6928911801\fmlcore-1.20.1-47.2.32.jar is missing mods.toml file
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate E:\hbmqy\hbm_high\HBM-NTM-Rebirth\build\resources\main
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file main with {hbm_ntm_rebirth} mods - versions {0.4.1beta}
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate /
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file  with {forge} mods - versions {47.2.32}
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Mr.Wu\.gradle\caches\forge_gradle\deobf_dependencies\mezz\jei\jei-1.20.1-forge\15.20.0.130_mapped_parchment_2023.09.03-1.20.1\jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar with {jei} mods - versions {15.20.0.130}
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Mr.Wu\.gradle\caches\forge_gradle\deobf_dependencies\mezz\jei\jei-1.20.1-forge\15.20.0.130_mapped_parchment_2023.09.03-1.20.1\jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar with {jei} mods - versions {15.20.0.130}
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.UniqueModListBuilder/]: Found 2 mods for first modid jei, selecting most recent based on version data
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.UniqueModListBuilder/]: Selected file jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar for modid jei with version 15.20.0.130
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.AbstractJarFileDependencyLocator/]: Failed to load resource META-INF\jarjar\metadata.json from forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar, it does not contain dependency information.
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.AbstractJarFileDependencyLocator/]: Failed to load resource META-INF\jarjar\metadata.json from , it does not contain dependency information.
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.AbstractJarFileDependencyLocator/]: Failed to load resource META-INF\jarjar\metadata.json from main, it does not contain dependency information.
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.AbstractJarFileDependencyLocator/]: Failed to load resource META-INF\jarjar\metadata.json from jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar, it does not contain dependency information.
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.AbstractJarFileDependencyLocator/]: Failed to load resource META-INF\jarjar\metadata.json from mclanguage-1.20.1-47.2.32.jar, it does not contain dependency information.
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.AbstractJarFileDependencyLocator/]: Failed to load resource META-INF\jarjar\metadata.json from javafmllanguage-1.20.1-47.2.32.jar, it does not contain dependency information.
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.AbstractJarFileDependencyLocator/]: Failed to load resource META-INF\jarjar\metadata.json from fmlcore-1.20.1-47.2.32.jar, it does not contain dependency information.
+[04:42:19] [main/DEBUG] [ne.mi.fm.lo.mo.AbstractJarFileDependencyLocator/]: Failed to load resource META-INF\jarjar\metadata.json from lowcodelanguage-1.20.1-47.2.32.jar, it does not contain dependency information.
+[04:42:20] [main/INFO] [ne.mi.fm.lo.mo.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar with {minecraft} mods - versions {1.20.1}
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFile/LOADING]: Loading mod file E:\hbmqy\hbm_high\HBM-NTM-Rebirth\build\fg_cache\net\minecraftforge\forge\1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1\forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar with languages [LanguageSpec[languageName=minecraft, acceptedVersions=1]]
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate /
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file  with {forge} mods - versions {47.2.32}
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFile/LOADING]: Loading mod file / with languages [LanguageSpec[languageName=javafml, acceptedVersions=[24,]]]
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Found coremod field_to_method with Javascript path coremods/field_to_method.js
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Found coremod field_to_instanceof with Javascript path coremods/field_to_instanceof.js
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Found coremod add_bouncer_method with Javascript path coremods/add_bouncer_method.js
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Found coremod method_redirector with Javascript path coremods/method_redirector.js
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFile/LOADING]: Found coremod coremods/field_to_method.js
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFile/LOADING]: Found coremod coremods/field_to_instanceof.js
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFile/LOADING]: Found coremod coremods/add_bouncer_method.js
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFile/LOADING]: Found coremod coremods/method_redirector.js
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate E:\hbmqy\hbm_high\HBM-NTM-Rebirth\build\resources\main
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file main with {hbm_ntm_rebirth} mods - versions {0.4.1beta}
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFile/LOADING]: Loading mod file E:\hbmqy\hbm_high\HBM-NTM-Rebirth\build\resources\main with languages [LanguageSpec[languageName=javafml, acceptedVersions=[47,)]]
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Mr.Wu\.gradle\caches\forge_gradle\deobf_dependencies\mezz\jei\jei-1.20.1-forge\15.20.0.130_mapped_parchment_2023.09.03-1.20.1\jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar with {jei} mods - versions {15.20.0.130}
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.mo.ModFile/LOADING]: Loading mod file C:\Users\Mr.Wu\.gradle\caches\forge_gradle\deobf_dependencies\mezz\jei\jei-1.20.1-forge\15.20.0.130_mapped_parchment_2023.09.03-1.20.1\jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar with languages [LanguageSpec[languageName=javafml, acceptedVersions=[47,)]]
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: End scan trigger - transformation service fml
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.LanguageLoadingProvider/CORE]: Found 3 language providers
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.LanguageLoadingProvider/CORE]: Found language provider minecraft, version 1.0
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.LanguageLoadingProvider/CORE]: Found language provider lowcodefml, version 47
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.LanguageLoadingProvider/CORE]: Found language provider javafml, version 47
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.ModSorter/]: Configured system mods: [minecraft, forge]
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.ModSorter/]: Found system mod: minecraft
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.ModSorter/]: Found system mod: forge
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.ModSorter/LOADING]: Found 7 mod requirements (4 mandatory, 3 optional)
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.ModSorter/LOADING]: Found 0 mod requirements missing (0 mandatory, 0 optional)
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.MCPNamingService/CORE]: Loaded 34318 method mappings from methods.csv
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.MCPNamingService/CORE]: Loaded 31014 field mappings from fields.csv
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services loading transformers
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformers for transformation service mixin
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformers for transformation service mixin
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformers for transformation service fml
+[04:42:20] [main/DEBUG] [ne.mi.fm.lo.FMLServiceProvider/CORE]: Loading coremod transformers
+[04:42:20] [main/DEBUG] [ne.mi.co.CoreModEngine/COREMOD]: Loading CoreMod from coremods/field_to_method.js
+[04:42:20] [main/DEBUG] [ne.mi.co.CoreModEngine/COREMOD]: CoreMod loaded successfully
+[04:42:20] [main/DEBUG] [ne.mi.co.CoreModEngine/COREMOD]: Loading CoreMod from coremods/field_to_instanceof.js
+[04:42:20] [main/DEBUG] [ne.mi.co.CoreModEngine/COREMOD]: CoreMod loaded successfully
+[04:42:20] [main/DEBUG] [ne.mi.co.CoreModEngine/COREMOD]: Loading CoreMod from coremods/add_bouncer_method.js
+[04:42:20] [main/DEBUG] [ne.mi.co.CoreModEngine/COREMOD]: CoreMod loaded successfully
+[04:42:20] [main/DEBUG] [ne.mi.co.CoreModEngine/COREMOD]: Loading CoreMod from coremods/method_redirector.js
+[04:42:20] [main/DEBUG] [ne.mi.co.CoreModEngine/COREMOD]: CoreMod loaded successfully
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@5a8816cc to Target : CLASS {Lnet/minecraft/world/level/biome/Biome;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@70d63e05 to Target : CLASS {Lnet/minecraft/world/level/levelgen/structure/Structure;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@e11ecfa to Target : CLASS {Lnet/minecraft/world/effect/MobEffectInstance;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@485e13d7 to Target : CLASS {Lnet/minecraft/world/level/block/LiquidBlock;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43984213 to Target : CLASS {Lnet/minecraft/world/item/BucketItem;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@2ff7a73 to Target : CLASS {Lnet/minecraft/world/level/block/StairBlock;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@38830ea to Target : CLASS {Lnet/minecraft/world/level/block/FlowerPotBlock;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@3b705be7 to Target : CLASS {Lnet/minecraft/world/item/ItemStack;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@3a790e40 to Target : CLASS {Lnet/minecraft/network/play/client/CClientSettingsPacket;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/level/NaturalSpawner;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/level/levelgen/PatrolSpawner;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/level/levelgen/structure/structures/OceanMonumentPieces$OceanMonumentPiece;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/level/levelgen/structure/structures/OceanRuinPieces$OceanRuinPiece;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/server/commands/RaidCommand;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/server/commands/SummonCommand;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/monster/Zombie;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/monster/ZombieVillager;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/ai/village/VillageSiege;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/monster/Strider;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/animal/frog/Tadpole;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/npc/CatSpawner;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/level/levelgen/structure/structures/SwampHutPiece;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/level/levelgen/structure/structures/WoodlandMansionPieces$WoodlandMansionPiece;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/animal/horse/SkeletonTrapGoal;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/raid/Raid;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/npc/Villager;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/monster/Evoker$EvokerSummonSpellGoal;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/EntityType;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/entity/monster/Spider;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.minecraftforge.coremod.transformer.CoreModClassTransformer@43acd79e to Target : CLASS {Lnet/minecraft/world/level/levelgen/PhantomSpawner;} {} {V}
+[04:42:20] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformers for transformation service fml
+[04:42:21] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:ModLauncher Root Container(ModLauncher:4f56a0a2)]
+[04:42:21] [main/DEBUG] [mixin/]: Processing launch tasks for PlatformAgent[MixinPlatformAgentDefault:ModLauncher Root Container(ModLauncher:4f56a0a2)]
+[04:42:21] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(minecraft)
+[04:42:21] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(minecraft)
+[04:42:21] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(minecraft)
+[04:42:21] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(minecraft)
+[04:42:21] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(minecraft)
+[04:42:21] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(minecraft)]
+[04:42:21] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(forge)
+[04:42:21] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(forge)
+[04:42:21] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(forge)
+[04:42:21] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(forge)
+[04:42:21] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(forge)
+[04:42:21] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(forge)]
+[04:42:21] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(jei)
+[04:42:21] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(jei)
+[04:42:21] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(jei)
+[04:42:21] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(jei)
+[04:42:21] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(jei)
+[04:42:21] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(jei)]
+[04:42:21] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(hbm_ntm_rebirth)
+[04:42:21] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(hbm_ntm_rebirth)
+[04:42:21] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(hbm_ntm_rebirth)
+[04:42:21] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(hbm_ntm_rebirth)
+[04:42:21] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(hbm_ntm_rebirth)
+[04:42:21] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(hbm_ntm_rebirth)]
+[04:42:21] [main/DEBUG] [mixin/]: inject() running with 5 agents
+[04:42:21] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:ModLauncher Root Container(ModLauncher:4f56a0a2)]
+[04:42:21] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(minecraft)]
+[04:42:21] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(forge)]
+[04:42:21] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(jei)]
+[04:42:21] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(hbm_ntm_rebirth)]
+[04:42:21] [main/INFO] [cp.mo.mo.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgegametestserveruserdev' with arguments [--gameDir, .]
+[04:42:21] [main/DEBUG] [mixin/]: Error cleaning class output directory: .mixin.out
+[04:42:21] [main/DEBUG] [mixin/]: Preparing mixins for MixinEnvironment[DEFAULT]
+[04:42:21] [main/DEBUG] [io.ne.ut.in.lo.InternalLoggerFactory/]: Using SLF4J as the default logging framework
+[04:42:21] [main/DEBUG] [io.ne.ut.ResourceLeakDetector/]: -Dio.netty.leakDetection.level: simple
+[04:42:21] [main/DEBUG] [io.ne.ut.ResourceLeakDetector/]: -Dio.netty.leakDetection.targetRecords: 4
+[04:42:22] [main/DEBUG] [os.ut.FileUtil/]: No oshi.properties file found from ClassLoader cpw.mods.modlauncher.TransformingClassLoader@ba17be6
+[04:42:22] [main/DEBUG] [os.ut.FileUtil/]: No oshi.architecture.properties file found from ClassLoader cpw.mods.modlauncher.TransformingClassLoader@ba17be6
+[04:42:22] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/EntityType
+[04:42:22] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/block/LiquidBlock
+[04:42:22] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/block/StairBlock
+[04:42:22] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/block/FlowerPotBlock
+[04:42:23] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/item/ItemStack
+[04:42:23] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/animal/frog/Tadpole
+[04:42:23] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/item/BucketItem
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/monster/Spider
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/monster/Zombie
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/monster/ZombieVillager
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/monster/Evoker$EvokerSummonSpellGoal
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/animal/horse/SkeletonTrapGoal
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/monster/Strider
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/npc/Villager
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/effect/MobEffectInstance
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/levelgen/structure/Structure
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/levelgen/structure/structures/OceanRuinPieces$OceanRuinPiece
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/levelgen/structure/structures/SwampHutPiece
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/levelgen/structure/structures/OceanMonumentPieces$OceanMonumentPiece
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/levelgen/structure/structures/WoodlandMansionPieces$WoodlandMansionPiece
+[04:42:24] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/biome/Biome
+[04:42:24] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Creating vanilla freeze snapshot
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:block Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:fluid Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:item Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:mob_effect Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:sound_event Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:potion Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:enchantment Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:entity_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:block_entity_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:particle_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:menu Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:painting_variant Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:recipe_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:recipe_serializer Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:attribute Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:stat_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:command_argument_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:villager_profession Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:point_of_interest_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:memory_module_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:sensor_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:schedule Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:activity Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/carver Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/feature Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:chunk_status Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/block_state_provider_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/foliage_placer_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/tree_decorator_type Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/biome Sync: VANILLA -> ACTIVE
+[04:42:24] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Vanilla freeze snapshot created
+[04:42:24] [main/DEBUG] [ne.mi.co.ForgeI18n/CORE]: Loading I18N data entries: 6430
+[04:42:24] [main/DEBUG] [ne.mi.fm.ModWorkManager/LOADING]: Using 24 threads for parallel mod-loading
+[04:42:25] [main/DEBUG] [ne.mi.fm.ja.FMLJavaModLanguageProvider/LOADING]: Loading FMLModContainer from classloader cpw.mods.modlauncher.TransformingClassLoader@ba17be6 - got cpw.mods.cl.ModuleClassLoader@1d207fad
+[04:42:25] [main/DEBUG] [ne.mi.fm.ja.FMLModContainer/LOADING]: Creating FMLModContainer instance for net.minecraftforge.common.ForgeMod
+[04:42:25] [main/DEBUG] [ne.mi.fm.ja.FMLJavaModLanguageProvider/LOADING]: Loading FMLModContainer from classloader cpw.mods.modlauncher.TransformingClassLoader@ba17be6 - got cpw.mods.cl.ModuleClassLoader@1d207fad
+[04:42:25] [main/DEBUG] [ne.mi.fm.ja.FMLModContainer/LOADING]: Creating FMLModContainer instance for mezz.jei.forge.JustEnoughItems
+[04:42:25] [main/DEBUG] [ne.mi.fm.ja.FMLJavaModLanguageProvider/LOADING]: Loading FMLModContainer from classloader cpw.mods.modlauncher.TransformingClassLoader@ba17be6 - got cpw.mods.cl.ModuleClassLoader@1d207fad
+[04:42:25] [main/DEBUG] [ne.mi.fm.ja.FMLModContainer/LOADING]: Creating FMLModContainer instance for com.hbm.ntm.HbmNtm
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.ve.fo.ForgeVersion/CORE]: Forge Version package package net.minecraftforge.versions.forge, Forge, version 47.2 from cpw.mods.modlauncher.TransformingClassLoader@ba17be6
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.ve.fo.ForgeVersion/CORE]: Found Forge version 47.2.32
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.ve.fo.ForgeVersion/CORE]: Found Forge spec 47.2
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.ve.fo.ForgeVersion/CORE]: Found Forge group net.minecraftforge
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.ve.mc.MCPVersion/CORE]: MCP Version package package net.minecraftforge.versions.mcp, Minecraft, version 1.20.1 from cpw.mods.modlauncher.TransformingClassLoader@ba17be6
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.ve.mc.MCPVersion/CORE]: Found MC version information 1.20.1
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.ve.mc.MCPVersion/CORE]: Found MCP version information 20230612.114412
+[04:42:25] [modloading-worker-0/INFO] [ne.mi.co.ForgeMod/FORGEMOD]: Forge mod loading, version 47.2.32, for MC 1.20.1 with MCP 20230612.114412
+[04:42:25] [modloading-worker-0/INFO] [ne.mi.co.MinecraftForge/FORGE]: MinecraftForge v47.2.32 Initialized
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.co.ConfigTracker/CONFIG]: Config file jei-server.toml for jei tracking
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.ja.AutomaticEventSubscriber/LOADING]: Attempting to inject @EventBusSubscriber classes into the eventbus for jei
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: -Dio.netty.noUnsafe: false
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: Java version: 21
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: sun.misc.Unsafe.theUnsafe: available
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: sun.misc.Unsafe.copyMemory: available
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: sun.misc.Unsafe.storeFence: available
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: java.nio.Buffer.address: available
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: direct buffer constructor: unavailable
+java.lang.NoSuchMethodException: java.nio.DirectByteBuffer.<init>(long,int)
+	at java.lang.Class.getConstructor0(Class.java:3763) ~[?:?] {}
+	at java.lang.Class.getDeclaredConstructor(Class.java:2932) ~[?:?] {}
+	at io.netty.util.internal.PlatformDependent0$5.run(PlatformDependent0.java:287) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at java.security.AccessController.doPrivileged(AccessController.java:319) ~[?:?] {}
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:282) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:333) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:88) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.ConstantPool.<init>(ConstantPool.java:34) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.AttributeKey$1.<init>(AttributeKey.java:27) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.AttributeKey.<clinit>(AttributeKey.java:27) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at net.minecraftforge.network.NetworkConstants.<clinit>(NetworkConstants.java:34) ~[forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar%23190%23197!/:?] {re:classloading}
+	at net.minecraftforge.common.ForgeMod.<init>(ForgeMod.java:429) ~[forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar%23190%23197!/:?] {re:classloading}
+	at jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62) ~[?:?] {}
+	at java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502) ~[?:?] {}
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:486) ~[?:?] {}
+	at net.minecraftforge.fml.javafmlmod.FMLModContainer.constructMod(FMLModContainer.java:70) ~[javafmllanguage-1.20.1-47.2.32.jar%23192!/:?] {}
+	at net.minecraftforge.fml.ModContainer.lambda$buildTransitionHandler$4(ModContainer.java:124) ~[fmlcore-1.20.1-47.2.32.jar%23195!/:?] {}
+	at java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[?:?] {}
+	at java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796) ~[?:?] {}
+	at java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387) ~[?:?] {}
+	at java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312) ~[?:?] {}
+	at java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843) ~[?:?] {}
+	at java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808) ~[?:?] {}
+	at java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) ~[?:?] {}
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: java.nio.Bits.unaligned: available, true
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable
+java.lang.IllegalAccessException: class io.netty.util.internal.PlatformDependent0$7 (in module io.netty.common) cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to module io.netty.common
+	at jdk.internal.reflect.Reflection.newIllegalAccessException(Reflection.java:394) ~[?:?] {}
+	at java.lang.reflect.AccessibleObject.checkAccess(AccessibleObject.java:714) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:571) ~[?:?] {}
+	at io.netty.util.internal.PlatformDependent0$7.run(PlatformDependent0.java:410) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at java.security.AccessController.doPrivileged(AccessController.java:319) ~[?:?] {}
+	at io.netty.util.internal.PlatformDependent0.<clinit>(PlatformDependent0.java:401) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.internal.PlatformDependent.isAndroid(PlatformDependent.java:333) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.internal.PlatformDependent.<clinit>(PlatformDependent.java:88) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.ConstantPool.<init>(ConstantPool.java:34) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.AttributeKey$1.<init>(AttributeKey.java:27) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at io.netty.util.AttributeKey.<clinit>(AttributeKey.java:27) ~[netty-common-4.1.82.Final.jar%23151!/:4.1.82.Final] {}
+	at net.minecraftforge.network.NetworkConstants.<clinit>(NetworkConstants.java:34) ~[forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar%23190%23197!/:?] {re:classloading}
+	at net.minecraftforge.common.ForgeMod.<init>(ForgeMod.java:429) ~[forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar%23190%23197!/:?] {re:classloading}
+	at jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62) ~[?:?] {}
+	at java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502) ~[?:?] {}
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:486) ~[?:?] {}
+	at net.minecraftforge.fml.javafmlmod.FMLModContainer.constructMod(FMLModContainer.java:70) ~[javafmllanguage-1.20.1-47.2.32.jar%23192!/:?] {}
+	at net.minecraftforge.fml.ModContainer.lambda$buildTransitionHandler$4(ModContainer.java:124) ~[fmlcore-1.20.1-47.2.32.jar%23195!/:?] {}
+	at java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[?:?] {}
+	at java.util.concurrent.CompletableFuture$AsyncRun.exec(CompletableFuture.java:1796) ~[?:?] {}
+	at java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387) ~[?:?] {}
+	at java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312) ~[?:?] {}
+	at java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843) ~[?:?] {}
+	at java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808) ~[?:?] {}
+	at java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) ~[?:?] {}
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent0/]: java.nio.DirectByteBuffer.<init>(long, int): unavailable
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent/]: sun.misc.Unsafe: available
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent/]: maxDirectMemory: 17112760320 bytes (maybe)
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.tmpdir: C:\Users\Mr.Wu\AppData\Local\Temp (java.io.tmpdir)
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.bitMode: 64 (sun.arch.data.model)
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent/]: Platform: Windows
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.maxDirectMemory: -1 bytes
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.uninitializedArrayAllocationThreshold: -1
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.CleanerJava9/]: java.nio.ByteBuffer.cleaner(): available
+[04:42:25] [modloading-worker-0/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.noPreferDirect: false
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.co.ForgeMod/FORGEMOD]: Loading Network data for FML net version: FML3
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.co.ConfigTracker/CONFIG]: Config file forge-client.toml for forge tracking
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.co.ConfigTracker/CONFIG]: Config file forge-server.toml for forge tracking
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.ModLoadingContext/]: Attempted to register an empty config for type COMMON on mod forge
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.ja.AutomaticEventSubscriber/LOADING]: Attempting to inject @EventBusSubscriber classes into the eventbus for forge
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.minecraftforge.common.ForgeSpawnEggItem$CommonHandler to MOD
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.co.ConfigTracker/CONFIG]: Config file hbm_ntm_rebirth-common.toml for hbm_ntm_rebirth tracking
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.co.ConfigTracker/CONFIG]: Config file hbm_ntm_rebirth-client.toml for hbm_ntm_rebirth tracking
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.ja.AutomaticEventSubscriber/LOADING]: Attempting to inject @EventBusSubscriber classes into the eventbus for hbm_ntm_rebirth
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.hbm.config.LegacyConfigFacadeEvents to MOD
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.hbm.ntm.armor.ArmorModEvents to FORGE
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.hbm.ntm.event.CommonForgeEvents to FORGE
+[04:42:25] [modloading-worker-0/DEBUG] [ne.mi.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.hbm.ntm.item.CrucibleWeaponAttributeEvents to FORGE
+[04:42:25] [main/DEBUG] [ne.mi.re.ObjectHolderRegistry/REGISTRIES]: Processing ObjectHolder annotations
+[04:42:25] [main/DEBUG] [ne.mi.re.ObjectHolderRegistry/REGISTRIES]: Found 9389 ObjectHolder annotations
+[04:42:25] [main/DEBUG] [ne.mi.co.ca.CapabilityManager/CAPABILITIES]: Attempting to automatically register: Lnet/minecraftforge/energy/IEnergyStorage;
+[04:42:25] [main/DEBUG] [ne.mi.co.ca.CapabilityManager/CAPABILITIES]: Attempting to automatically register: Lnet/minecraftforge/fluids/capability/IFluidHandler;
+[04:42:25] [main/DEBUG] [ne.mi.co.ca.CapabilityManager/CAPABILITIES]: Attempting to automatically register: Lnet/minecraftforge/fluids/capability/IFluidHandlerItem;
+[04:42:25] [main/DEBUG] [ne.mi.co.ca.CapabilityManager/CAPABILITIES]: Attempting to automatically register: Lnet/minecraftforge/items/IItemHandler;
+[04:42:25] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Unfreezing vanilla registries
+[04:42:25] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:sound_event
+[04:42:25] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:sound_event
+[04:42:25] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:fluid
+[04:42:25] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:fluid
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:block
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:block
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:attribute
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:attribute
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:mob_effect
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:mob_effect
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:particle_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:particle_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:item
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:item
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:entity_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:entity_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:sensor_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:sensor_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:memory_module_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:memory_module_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:potion
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:potion
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:game_event
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:game_event
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:enchantment
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:enchantment
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:block_entity_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:block_entity_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:painting_variant
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:painting_variant
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:stat_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:stat_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:custom_stat
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:custom_stat
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:chunk_status
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:chunk_status
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:rule_test
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:rule_test
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:rule_block_entity_modifier
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:rule_block_entity_modifier
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:pos_rule_test
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:pos_rule_test
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:menu
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:menu
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:recipe_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:recipe_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:recipe_serializer
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:recipe_serializer
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:position_source_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:position_source_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:command_argument_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:command_argument_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:villager_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:villager_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:villager_profession
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:villager_profession
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:point_of_interest_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:point_of_interest_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:schedule
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:schedule
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:activity
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:activity
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:loot_pool_entry_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:loot_pool_entry_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:loot_function_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:loot_function_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:loot_condition_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:loot_condition_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:loot_number_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:loot_number_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:loot_nbt_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:loot_nbt_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:loot_score_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:loot_score_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:float_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:float_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:int_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:int_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:height_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:height_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:block_predicate_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:block_predicate_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/carver
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/carver
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/feature
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/feature
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/structure_processor
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/structure_processor
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/structure_placement
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/structure_placement
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/structure_piece
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/structure_piece
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/structure_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/structure_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/placement_modifier_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/placement_modifier_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/block_state_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/block_state_provider_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/foliage_placer_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/foliage_placer_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/trunk_placer_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/trunk_placer_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/root_placer_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/root_placer_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/tree_decorator_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/tree_decorator_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/feature_size_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/feature_size_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/biome_source
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/biome_source
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/chunk_generator
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/chunk_generator
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/material_condition
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/material_condition
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/material_rule
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/material_rule
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/density_function_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/density_function_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/structure_pool_element
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/structure_pool_element
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:cat_variant
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:cat_variant
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:frog_variant
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:frog_variant
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:banner_pattern
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:banner_pattern
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:instrument
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:instrument
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:decorated_pot_patterns
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:decorated_pot_patterns
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:creative_mode_tab
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:creative_mode_tab
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: forge:biome_modifier_serializers
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: forge:biome_modifier_serializers
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: forge:display_contexts
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: forge:display_contexts
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: forge:entity_data_serializers
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: forge:entity_data_serializers
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: forge:fluid_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: forge:fluid_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: forge:global_loot_modifier_serializers
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: forge:global_loot_modifier_serializers
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: forge:holder_set_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: forge:holder_set_type
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: forge:structure_modifier_serializers
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: forge:structure_modifier_serializers
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Applying holder lookups: minecraft:worldgen/biome
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Holder lookups applied: minecraft:worldgen/biome
+[04:42:27] [main/DEBUG] [ne.mi.fm.co.ConfigTracker/CONFIG]: Loading configs type COMMON
+[04:42:27] [main/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Built TOML config for E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\config\hbm_ntm_rebirth-common.toml
+[04:42:27] [main/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Loaded TOML config file E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\config\hbm_ntm_rebirth-common.toml
+[04:42:27] [main/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Watching TOML config file E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\config\hbm_ntm_rebirth-common.toml for changes
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Configuration file E:\hbmqy\hbm_high\HBM-NTM-Rebirth\run-gametest-missile-filtered-20260730\config\hbm_ntm_rebirth-common.toml is not correct. Correcting
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key migration was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key migration.logStartup was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key migration.logStartup does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key migration.enableLegacyIdNotes was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key migration.enableLegacyIdNotes does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key general was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key general.enableExtendedLogging was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key general.enableExtendedLogging does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key general.enableCrystalVirusSpreading was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key general.enableCrystalVirusSpreading does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key general.enableMotd was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key general.enableMotd does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key general.enableMachineGravity was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key general.enableMachineGravity does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key general.enableCataclysm was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key general.enableCataclysm does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.icfLaser was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.icfLaser.capacitorPower was corrected from null to its default, 2500000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.icfLaser.capacitorPower does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.icfLaser.turboPower was corrected from null to its default, 5000000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.icfLaser.turboPower does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.mhd-turbine was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.mhd-turbine.minimumPlasma was corrected from null to its default, 5000000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.mhd-turbine.minimumPlasma does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.ashpit was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.ashpit.thresholdWood was corrected from null to its default, 2000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.ashpit.thresholdWood does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.ashpit.thresholdCoal was corrected from null to its default, 2000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.ashpit.thresholdCoal does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.ashpit.thresholdMisc was corrected from null to its default, 2000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.ashpit.thresholdMisc does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.ashpit.thresholdFly was corrected from null to its default, 2000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.ashpit.thresholdFly does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.ashpit.thresholdSoot was corrected from null to its default, 8000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.ashpit.thresholdSoot does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamengine was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamengine.steamCap was corrected from null to its default, 2000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamengine.steamCap does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamengine.ldsCap was corrected from null to its default, 20. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamengine.ldsCap does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamengine.efficiency was corrected from null to its default, 0.85. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamengine.efficiency does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserTowerSmall was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserTowerSmall.inputTankSize was corrected from null to its default, 1000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenserTowerSmall.inputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserTowerSmall.outputTankSize was corrected from null to its default, 1000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenserTowerSmall.outputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserTowerLarge was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserTowerLarge.inputTankSize was corrected from null to its default, 10000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenserTowerLarge.inputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserTowerLarge.outputTankSize was corrected from null to its default, 10000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenserTowerLarge.outputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenser was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenser.inputTankSize was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenser.inputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenser.outputTankSize was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenser.outputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserPowered was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserPowered.maxPower was corrected from null to its default, 10000000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenserPowered.maxPower does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserPowered.inputTankSize was corrected from null to its default, 1000000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenserPowered.inputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserPowered.outputTankSize was corrected from null to its default, 1000000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenserPowered.outputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.condenserPowered.powerConsumption was corrected from null to its default, 10. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.condenserPowered.powerConsumption does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbine was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbine.maxPower was corrected from null to its default, 1000000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamturbine.maxPower does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbine.inputTankSize was corrected from null to its default, 64000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamturbine.inputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbine.outputTankSize was corrected from null to its default, 128000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamturbine.outputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbine.maxSteamPerTick was corrected from null to its default, 6000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamturbine.maxSteamPerTick does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbine.efficiency was corrected from null to its default, 0.85. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamturbine.efficiency does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.largeTurbineLegacy was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.largeTurbineLegacy.maxPower was corrected from null to its default, 100000000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.largeTurbineLegacy.maxPower does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.largeTurbineLegacy.inputTankSize was corrected from null to its default, 512000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.largeTurbineLegacy.inputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.largeTurbineLegacy.outputTankSize was corrected from null to its default, 10240000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.largeTurbineLegacy.outputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.largeTurbineLegacy.efficiency was corrected from null to its default, 1.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.largeTurbineLegacy.efficiency does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbineIndustrialMk2 was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbineIndustrialMk2.inputTankSize was corrected from null to its default, 750000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamturbineIndustrialMk2.inputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbineIndustrialMk2.outputTankSize was corrected from null to its default, 3000000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamturbineIndustrialMk2.outputTankSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.steamturbineIndustrialMk2.efficiency was corrected from null to its default, 1.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.steamturbineIndustrialMk2.efficiency does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.derrick was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.derrick.powerCap was corrected from null to its default, 100000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.derrick.powerCap does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.derrick.consumption was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.derrick.consumption does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.derrick.delay was corrected from null to its default, 50. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.derrick.delay does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.derrick.oilPerDeposit was corrected from null to its default, 500. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.derrick.oilPerDeposit does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.derrick.gasPerDepositMin was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.derrick.gasPerDepositMin does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.derrick.gasPerDepositMax was corrected from null to its default, 500. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.derrick.gasPerDepositMax does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.derrick.drainChance was corrected from null to its default, 0.05. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.derrick.drainChance does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.pumpjack was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.pumpjack.powerCap was corrected from null to its default, 250000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.pumpjack.powerCap does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.pumpjack.consumption was corrected from null to its default, 200. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.pumpjack.consumption does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.pumpjack.delay was corrected from null to its default, 25. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.pumpjack.delay does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.pumpjack.oilPerDeposit was corrected from null to its default, 750. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.pumpjack.oilPerDeposit does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.pumpjack.gasPerDepositMin was corrected from null to its default, 50. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.pumpjack.gasPerDepositMin does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.pumpjack.gasPerDepositMax was corrected from null to its default, 250. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.pumpjack.gasPerDepositMax does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.pumpjack.drainChance was corrected from null to its default, 0.025. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.pumpjack.drainChance does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.powerCap was corrected from null to its default, 5000000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.powerCap does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.consumption was corrected from null to its default, 5000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.consumption does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.solutionRequired was corrected from null to its default, 10. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.solutionRequired does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.delay was corrected from null to its default, 20. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.delay does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.oilPerDeposit was corrected from null to its default, 1000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.oilPerDeposit does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.gasPerDepositMin was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.gasPerDepositMin does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.gasPerDepositMax was corrected from null to its default, 500. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.gasPerDepositMax does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.drainChance was corrected from null to its default, 0.02. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.drainChance does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.oilPerBedrockDeposit was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.oilPerBedrockDeposit does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.gasPerBedrockDepositMin was corrected from null to its default, 10. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.gasPerBedrockDepositMin does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.gasPerBedrockDepositMax was corrected from null to its default, 50. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.gasPerBedrockDepositMax does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.frackingtower.destructionRange was corrected from null to its default, 75. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.frackingtower.destructionRange does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.boiler was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.boiler.maxHeat was corrected from null to its default, 3200000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.boiler.maxHeat does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.boiler.industrialMaxHeat was corrected from null to its default, 12800000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.boiler.industrialMaxHeat does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.boiler.diffusion was corrected from null to its default, 0.1. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.boiler.diffusion does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.boiler.canExplode was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.boiler.canExplode does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.radar was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.radar.powerCap was corrected from null to its default, 100000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.radar.powerCap does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.radar.consumption was corrected from null to its default, 500. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.radar.consumption does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.radar.radarRange was corrected from null to its default, 1000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.radar.radarRange does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.radar.radarLargeRange was corrected from null to its default, 3000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.radar.radarLargeRange does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.radar.radarBuffer was corrected from null to its default, 30. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.radar.radarBuffer does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.radar.radarAltitude was corrected from null to its default, 55. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.radar.radarAltitude does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.radar.mapChunkLoadCap was corrected from null to its default, 10. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.radar.mapChunkLoadCap does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.radar.mapGenerateChunks was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.radar.mapGenerateChunks does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.rtg was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.rtg.doRtgsDecay was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.rtg.doRtgsDecay does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key machines.rtg.scaleRtgPower was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key machines.rtg.scaleRtgPower does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key network was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key network.packetThreading was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key network.packetThreading.enablePacketThreading was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key network.packetThreading.enablePacketThreading does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key network.packetThreading.packetThreadingErrorBypass was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key network.packetThreading.packetThreadingErrorBypass does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key network.packetThreading.packetThreadingWaitTimeoutMs was corrected from null to its default, 50. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key network.packetThreading.packetThreadingWaitTimeoutMs does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key network.packetThreading.packetThreadingMaxPending was corrected from null to its default, 4096. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key network.packetThreading.packetThreadingMaxPending does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key network.packetThreading.packetThreadingFallbackClearThreshold was corrected from null to its default, 5. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key network.packetThreading.packetThreadingFallbackClearThreshold does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.fogRad was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.fogRad does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.fogChance was corrected from null to its default, 20. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.fogChance does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.hellRad was corrected from null to its default, 0.1. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.hellRad does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.worldRadEffects was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.worldRadEffects does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.worldRad was corrected from null to its default, 10. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.worldRad does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.worldRadThreshold was corrected from null to its default, 20. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.worldRadThreshold does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.cleanupDeadDirt was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.cleanupDeadDirt does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.enableMyceliumSpread was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.enableMyceliumSpread does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.enableCraterBiomeRadiation was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.enableCraterBiomeRadiation does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.craterBiomeRad was corrected from null to its default, 5.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.craterBiomeRad does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.craterBiomeInnerRad was corrected from null to its default, 25.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.craterBiomeInnerRad does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.craterBiomeOuterRad was corrected from null to its default, 0.5. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.craterBiomeOuterRad does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.craterBiomeWaterMult was corrected from null to its default, 5.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.craterBiomeWaterMult does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.enableContamination was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.enableContamination does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.enableChunkRads was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.enableChunkRads does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key radiation.enablePRISM was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key radiation.enablePRISM does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.enablePollution was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.enablePollution does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.enableLeadFromBlocks was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.enableLeadFromBlocks does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.enableLeadPoisoning was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.enableLeadPoisoning does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.enablePoison was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.enablePoison does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.enableSootFog was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.enableSootFog does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.pollutionMult was corrected from null to its default, 1.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.pollutionMult does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.buffMobThreshold was corrected from null to its default, 15.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.buffMobThreshold does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.sootFogThreshold was corrected from null to its default, 35.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.sootFogThreshold does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.sootFogDivisor was corrected from null to its default, 120.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.sootFogDivisor does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.smokeStackSootMult was corrected from null to its default, 0.8. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.smokeStackSootMult does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.enableMobGear was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.enableMobGear does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.enableMobWeapons was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.enableMobWeapons does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.mobWeaponSootReduction was corrected from null to its default, 0.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.mobWeaponSootReduction does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.enableGlyphidHives was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.enableGlyphidHives does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidHiveSpawnChunks was corrected from null to its default, 256. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidHiveSpawnChunks does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidWaypointDebug was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidWaypointDebug does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidTargetingThreshold was corrected from null to its default, 1.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidTargetingThreshold does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.rampantMode was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.rampantMode does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.rampantNaturalScoutSpawn was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.rampantNaturalScoutSpawn does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.rampantScoutSpawnThreshold was corrected from null to its default, 13.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.rampantScoutSpawnThreshold does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.rampantScoutSpawnChance was corrected from null to its default, 1400. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.rampantScoutSpawnChance does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.rampantExtendedTargeting was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.rampantExtendedTargeting does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.rampantDig was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.rampantDig does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.rampantGlyphidGuidance was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.rampantGlyphidGuidance does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.rampantSmokeStackOverride was corrected from null to its default, 0.4. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.rampantSmokeStackOverride does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidSpawnMax was corrected from null to its default, 50.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidSpawnMax does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidScoutThreshold was corrected from null to its default, 1.0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidScoutThreshold does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidScoutSwarmSpawnChance was corrected from null to its default, 3. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidScoutSwarmSpawnChance does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidBaseSwarmSize was corrected from null to its default, 5. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidBaseSwarmSize does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidSwarmScalingMult was corrected from null to its default, 1.2. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidSwarmScalingMult does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidSootStep was corrected from null to its default, 50. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidSootStep does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidSwarmCooldownSeconds was corrected from null to its default, 120. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidSwarmCooldownSeconds does not match the spec. This may create a backup.
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: List on key glyphidChance is deemed to need correction. It is null, not a list, or an empty list. Modders, consider defineListAllowEmpty?
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidChance was corrected from null to its default, [50, -45, 0]. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidChance does not match the spec. This may create a backup.
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: List on key glyphidBrawlerChance is deemed to need correction. It is null, not a list, or an empty list. Modders, consider defineListAllowEmpty?
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidBrawlerChance was corrected from null to its default, [10, 30, 1]. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidBrawlerChance does not match the spec. This may create a backup.
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: List on key glyphidBombardierChance is deemed to need correction. It is null, not a list, or an empty list. Modders, consider defineListAllowEmpty?
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidBombardierChance was corrected from null to its default, [20, -15, 1]. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidBombardierChance does not match the spec. This may create a backup.
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: List on key glyphidBlasterChance is deemed to need correction. It is null, not a list, or an empty list. Modders, consider defineListAllowEmpty?
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidBlasterChance was corrected from null to its default, [-5, 40, 5]. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidBlasterChance does not match the spec. This may create a backup.
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: List on key glyphidDiggerChance is deemed to need correction. It is null, not a list, or an empty list. Modders, consider defineListAllowEmpty?
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidDiggerChance was corrected from null to its default, [-15, 25, 5]. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidDiggerChance does not match the spec. This may create a backup.
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: List on key glyphidBehemothChance is deemed to need correction. It is null, not a list, or an empty list. Modders, consider defineListAllowEmpty?
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidBehemothChance was corrected from null to its default, [-30, 45, 10]. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidBehemothChance does not match the spec. This may create a backup.
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: List on key glyphidBrendaChance is deemed to need correction. It is null, not a list, or an empty list. Modders, consider defineListAllowEmpty?
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidBrendaChance was corrected from null to its default, [-50, 60, 20]. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidBrendaChance does not match the spec. This may create a backup.
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: List on key glyphidNuclearChance is deemed to need correction. It is null, not a list, or an empty list. Modders, consider defineListAllowEmpty?
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key pollution.glyphidNuclearChance was corrected from null to its default, [-50, 60, 50]. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key pollution.glyphidNuclearChance does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key hazards was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key hazards.disableAsbestos was corrected from null to its default, false. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key hazards.disableBlinding was corrected from null to its default, false. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key hazards.disableCoal was corrected from null to its default, false. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key hazards.disableExplosive was corrected from null to its default, false. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key hazards.disableHot was corrected from null to its default, false. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key hazards.disableHydroactive was corrected from null to its default, false. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key hazards.disableFibrosis was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key hazards.disableFibrosis does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.enableMku was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.enableMku does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.itemHazardDropTickrate was corrected from null to its default, 2. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.itemHazardDropTickrate does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.taintTrails was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.taintTrails does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.autocalMaxClockSpeed was corrected from null to its default, 20. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.autocalMaxClockSpeed does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.gadgetRadius was corrected from null to its default, 150. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.gadgetRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.boyRadius was corrected from null to its default, 120. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.boyRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.manRadius was corrected from null to its default, 175. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.manRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.mikeRadius was corrected from null to its default, 250. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.mikeRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.tsarRadius was corrected from null to its default, 500. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.tsarRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.prototypeRadius was corrected from null to its default, 150. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.prototypeRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.fleijaRadius was corrected from null to its default, 50. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.fleijaRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.missileRadius was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.missileRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.mirvRadius was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.mirvRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.fatmanRadius was corrected from null to its default, 35. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.fatmanRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.nukaRadius was corrected from null to its default, 25. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.nukaRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.aSchrabRadius was corrected from null to its default, 20. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.aSchrabRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.soliniumRadius was corrected from null to its default, 150. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.soliniumRadius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key nukes.n2Radius was corrected from null to its default, 200. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key nukes.n2Radius does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key explosions was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key explosions.limitExplosionLifespan was corrected from null to its default, 0. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key explosions.limitExplosionLifespan does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key explosions.blastSpeed was corrected from null to its default, 1024. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key explosions.blastSpeed does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key explosions.mk5BlastTime was corrected from null to its default, 50. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key explosions.mk5BlastTime does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key explosions.falloutRange was corrected from null to its default, 100. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key explosions.falloutRange does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key explosions.falloutDelay was corrected from null to its default, 4. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key explosions.falloutDelay does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key explosions.enableChunkLoading was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key explosions.enableChunkLoading does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key explosions.explosionAlgorithm was corrected from null to its default, 2. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key explosions.explosionAlgorithm does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key guns was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key guns.enableGuns was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key guns.enableGuns does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key drops was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key drops.dropAntimatterCells was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key drops.dropAntimatterCells does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key drops.dropBlackHoleSingularities was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key drops.dropBlackHoleSingularities does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key drops.dropXenCrystals was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key drops.dropXenCrystals does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key drops.dropDeadManExplosives was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key drops.dropDeadManExplosives does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key turrets was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key turrets.ciwsHitrate was corrected from null to its default, 50. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key turrets.ciwsHitrate does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key fbi was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key fbi.attackDelay was corrected from null to its default, 40. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key fbi.attackDelay does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key fbi.attackReach was corrected from null to its default, 2. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key fbi.attackReach does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.recursionDepth was corrected from null to its default, 1000. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.recursionDepth does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.recursionStone was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.recursionStone does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.recursionNetherrack was corrected from null to its default, false. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.recursionNetherrack does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.hammerAbility was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.hammerAbility does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.abilityVein was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.abilityVein does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.abilityLuck was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.abilityLuck does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.abilitySilk was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.abilitySilk does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.abilityFurnace was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.abilityFurnace does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.abilityShredder was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.abilityShredder does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.abilityCentrifuge was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.abilityCentrifuge does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.abilityCrystallizer was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.abilityCrystallizer does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.abilityMercury was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.abilityMercury does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key tools.abilityExplosion was corrected from null to its default, true. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key tools.abilityExplosion does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key potions was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key potions.potionSickness was corrected from null to its default, OFF. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key potions.potionSickness does not match the spec. This may create a backup.
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key worldgen was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:42:27] [main/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key worldgen.meteoriteSpawnChunks was corrected from null to its default, 200. 
+[04:42:27] [main/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key worldgen.meteoriteSpawnChunks does not match the spec. This may create a backup.
+[04:42:27] [Thread-1/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Config file hbm_ntm_rebirth-common.toml changed, sending notifies
+[04:42:27] [modloading-worker-0/INFO] [co.hb.nt.HbmNtm/]: HBM NTM migration scaffold loaded. Source semantics: 1.7.10 first, 1.20.1 reference second.
+[04:42:27] [main/DEBUG] [ne.mi.fm.DeferredWorkQueue/LOADING]: Dispatching synchronous work for work queue COMMON_SETUP: 1 jobs
+[04:42:27] [Thread-1/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Config file hbm_ntm_rebirth-common.toml changed, sending notifies
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded hazmat resistance defaults loaded; entries=124, compatDefaults=0, warnings=0.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded damage resistance defaults loaded; template written if missing.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded built-in fallout table, entries=156, warnings=0.
+[04:42:27] [Forge Version Check/INFO] [ne.mi.fm.VersionChecker/]: [forge] Starting version check at https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded custom fluid types loadedConfig=true createdDefault=true customFluids=1 skipped=0.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded compat fluids listenerLifecycle=disabled listenerAttempts=0 lastInvoked=0 foreignFluids=0 existingResolved=0 rejectedRegistrations=0.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded compat recipes listeners=0 lastInvoked=0 lastFailed=0 lastEmittedRecipes=0.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded fluid containers listeners=0 lastInvoked=0 externalContainers=0 lastRegistered=0 lastSkipped=0.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded fluid container config loadedConfig=true createdDefault=true containers=0 skipped=0.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded Forge fluid aliases loadedConfig=true createdDefault=true aliases=6 fluidMappings=0 skipped=0.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded Forge fluid mappings export=147 import=147 tagAliases=25.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded fluid traits loadedConfig=false fluids=158 traits=0 skipped=0.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: Loaded 182 legacy synced bullet configs.
+[04:42:27] [main/INFO] [co.hb.nt.HbmNtm/]: HBM network protocol audit passed: problems=false missingModern=0 unknownLegacy=0 directionMismatch=0 unmappedLegacy=0 duplicateLegacyIds=0 duplicateLegacyNames=0 duplicateModernRegistrations=0 modernWithoutLegacyMappings=10 contract=ok=true fingerprint=e1ddfa01 modernPackets=42 legacyPackets=27 legacyMapped=27/27 mappingRows=36 modernContiguous=true legacyContiguous=true auditProblems=false problems=0
+[04:42:27] [main/DEBUG] [ne.mi.fm.DeferredWorkQueue/LOADING]: Synchronous work queue completed in 206.0 ms
+[04:42:27] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: Freezing registries
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:block Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:fluid Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:item Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:mob_effect Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:sound_event Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:potion Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:enchantment Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:entity_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:block_entity_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:particle_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:menu Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:painting_variant Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:recipe_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:recipe_serializer Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:attribute Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:stat_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:command_argument_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:villager_profession Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:point_of_interest_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:memory_module_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:sensor_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:schedule Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:activity Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/carver Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/feature Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:chunk_status Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/block_state_provider_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/foliage_placer_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/tree_decorator_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry minecraft:worldgen/biome Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry forge:entity_data_serializers Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry forge:global_loot_modifier_serializers Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry forge:biome_modifier_serializers Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry forge:fluid_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry forge:structure_modifier_serializers Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry forge:holder_set_type Sync: FROZEN -> ACTIVE
+[04:42:27] [main/DEBUG] [ne.mi.re.ForgeRegistry/REGISTRIES]: Registry forge:display_contexts Sync: FROZEN -> ACTIVE
+[04:42:28] [Forge Version Check/DEBUG] [ne.mi.fm.VersionChecker/]: [forge] Received version check data:
+{
+  "homepage": "https://files.minecraftforge.net/net/minecraftforge/forge/",
+  "promos": {
+    "1.1-latest": "1.3.4.29",
+    "1.2.3-latest": "1.4.1.64",
+    "1.2.4-latest": "2.0.0.68",
+    "1.2.5-latest": "3.4.9.171",
+    "1.3.2-latest": "4.3.5.318",
+    "1.4.0-latest": "5.0.0.326",
+    "1.4.1-latest": "6.0.0.329",
+    "1.4.2-latest": "6.0.1.355",
+    "1.4.3-latest": "6.2.1.358",
+    "1.4.4-latest": "6.3.0.378",
+    "1.4.5-latest": "6.4.2.448",
+    "1.4.6-latest": "6.5.0.489",
+    "1.4.7-latest": "6.6.2.534",
+    "1.5-latest": "7.7.0.598",
+    "1.5.1-latest": "7.7.2.682",
+    "1.5.2-latest": "7.8.1.738",
+    "1.5.2-recommended": "7.8.1.738",
+    "1.6.1-latest": "8.9.0.775",
+    "1.6.2-latest": "9.10.1.871",
+    "1.6.2-recommended": "9.10.1.871",
+    "1.6.3-latest": "9.11.0.878",
+    "1.6.4-latest": "9.11.1.1345",
+    "1.6.4-recommended": "9.11.1.1345",
+    "1.7.2-latest": "10.12.2.1161",
+    "1.7.2-recommended": "10.12.2.1161",
+    "1.7.10-latest": "10.13.4.1614",
+    "1.7.10-recommended": "10.13.4.1614",
+    "1.8-latest": "11.14.4.1577",
+    "1.8-recommended": "11.14.4.1563",
+    "1.8.8-latest": "11.15.0.1655",
+    "1.8.9-latest": "11.15.1.2318",
+    "1.8.9-recommended": "11.15.1.2318",
+    "1.9-latest": "12.16.1.1938",
+    "1.9-recommended": "12.16.1.1887",
+    "1.9.4-latest": "12.17.0.2317",
+    "1.9.4-recommended": "12.17.0.2317",
+    "1.10-latest": "12.18.0.2000",
+    "1.10.2-latest": "12.18.3.2511",
+    "1.10.2-recommended": "12.18.3.2511",
+    "1.11-latest": "13.19.1.2199",
+    "1.11-recommended": "13.19.1.2189",
+    "1.11.2-latest": "13.20.1.2588",
+    "1.11.2-recommended": "13.20.1.2588",
+    "1.12-latest": "14.21.1.2443",
+    "1.12-recommended": "14.21.1.2387",
+    "1.12.1-latest": "14.22.1.2485",
+    "1.12.1-recommended": "14.22.1.2478",
+    "1.12.2-latest": "14.23.5.2864",
+    "1.12.2-recommended": "14.23.5.2859",
+    "1.13.2-latest": "25.0.223",
+    "1.14.2-latest": "26.0.63",
+    "1.14.3-latest": "27.0.60",
+    "1.14.4-latest": "28.2.30",
+    "1.14.4-recommended": "28.2.26",
+    "1.15-latest": "29.0.4",
+    "1.15.1-latest": "30.0.51",
+    "1.15.2-latest": "31.2.62",
+    "1.15.2-recommended": "31.2.57",
+    "1.16.1-latest": "32.0.108",
+    "1.16.2-latest": "33.0.61",
+    "1.16.3-latest": "34.1.42",
+    "1.16.3-recommended": "34.1.0",
+    "1.16.4-latest": "35.1.37",
+    "1.16.4-recommended": "35.1.4",
+    "1.16.5-latest": "36.2.42",
+    "1.16.5-recommended": "36.2.34",
+    "1.17.1-latest": "37.1.1",
+    "1.17.1-recommended": "37.1.1",
+    "1.18-latest": "38.0.17",
+    "1.18.1-latest": "39.1.2",
+    "1.18.1-recommended": "39.1.0",
+    "1.18.2-recommended": "40.3.0",
+    "1.18.2-latest": "40.3.12",
+    "1.19-latest": "41.1.0",
+    "1.19-recommended": "41.1.0",
+    "1.19.1-latest": "42.0.9",
+    "1.19.2-recommended": "43.5.0",
+    "1.19.2-latest": "43.5.2",
+    "1.19.3-latest": "44.1.23",
+    "1.19.3-recommended": "44.1.0",
+    "1.19.4-recommended": "45.4.0",
+    "1.19.4-latest": "45.4.3",
+    "1.20-latest": "46.0.14",
+    "1.20.1-recommended": "47.4.10",
+    "1.20.1-latest": "47.4.22",
+    "1.20.2-latest": "48.1.0",
+    "1.20.2-recommended": "48.1.0",
+    "1.20.3-latest": "49.0.2",
+    "1.20.4-latest": "49.2.8",
+    "1.20.4-recommended": "49.2.0",
+    "1.20.6-latest": "50.2.10",
+    "1.20.6-recommended": "50.2.0",
+    "1.21-latest": "51.0.33",
+    "1.21.1-latest": "52.1.16",
+    "1.21.1-recommended": "52.1.0",
+    "1.21.3-latest": "53.1.11",
+    "1.21.3-recommended": "53.1.0",
+    "1.21.4-latest": "54.1.17",
+    "1.21.4-recommended": "54.1.14",
+    "1.21.5-latest": "55.1.11",
+    "1.21.5-recommended": "55.1.0",
+    "1.21.6-latest": "56.0.9",
+    "1.21.7-latest": "57.0.3",
+    "1.21.8-latest": "58.1.20",
+    "1.21.8-recommended": "58.1.0",
+    "1.21.9-latest": "59.0.5",
+    "1.21.10-latest": "60.1.13",
+    "1.21.10-recommended": "60.1.0",
+    "1.21.11-latest": "61.1.14",
+    "1.21.11-recommended": "61.1.0",
+    "26.1-latest": "62.0.9",
+    "26.1.1-latest": "63.0.2",
+    "26.1.2-latest": "64.1.0",
+    "26.1.2-recommended": "64.1.0",
+    "26.2-latest": "65.1.0",
+    "26.2-recommended": "65.1.0"
+  }
+}
+[04:42:28] [Forge Version Check/INFO] [ne.mi.fm.VersionChecker/]: [forge] Found status: OUTDATED Current: 47.2.32 Target: 47.4.10
+[04:42:48] [main/DEBUG] [ne.mi.re.GameData/REGISTRIES]: All registries frozen
+[04:42:48] [main/ERROR] [minecraft/Settings]: Failed to load properties from file: server.properties
+java.nio.file.NoSuchFileException: server.properties
+	at sun.nio.fs.WindowsException.translateToIOException(WindowsException.java:85) ~[?:?] {}
+	at sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:103) ~[?:?] {}
+	at sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:108) ~[?:?] {}
+	at sun.nio.fs.WindowsFileSystemProvider.newByteChannel(WindowsFileSystemProvider.java:234) ~[?:?] {}
+	at java.nio.file.Files.newByteChannel(Files.java:380) ~[?:?] {}
+	at java.nio.file.Files.newByteChannel(Files.java:432) ~[?:?] {}
+	at java.nio.file.spi.FileSystemProvider.newInputStream(FileSystemProvider.java:420) ~[?:?] {}
+	at java.nio.file.Files.newInputStream(Files.java:160) ~[?:?] {}
+	at net.minecraft.server.dedicated.Settings.loadFromFile(Settings.java:36) ~[forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar:?] {re:classloading}
+	at net.minecraft.server.dedicated.DedicatedServerProperties.fromFile(DedicatedServerProperties.java:137) ~[forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar:?] {re:classloading}
+	at net.minecraft.server.dedicated.DedicatedServerSettings.<init>(DedicatedServerSettings.java:12) ~[forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar:?] {re:classloading}
+	at net.minecraft.server.Main.main(Main.java:126) ~[forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar:?] {re:classloading}
+	at net.minecraftforge.gametest.GameTestMain.main(GameTestMain.java:16) ~[forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar:?] {re:classloading}
+	at jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:580) ~[?:?] {}
+	at net.minecraftforge.fml.loading.targets.ForgeGametestUserdevLaunchHandler.devService(ForgeGametestUserdevLaunchHandler.java:16) ~[fmlloader-1.20.1-47.2.32.jar:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonDevLaunchHandler.lambda$makeService$7(CommonDevLaunchHandler.java:135) ~[fmlloader-1.20.1-47.2.32.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:108) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?] {}
+[04:42:48] [main/INFO] [mojang/YggdrasilAuthenticationService]: Environment: authHost='https://authserver.mojang.com', accountsHost='https://api.mojang.com', sessionHost='https://sessionserver.mojang.com', servicesHost='https://api.minecraftservices.com', name='PROD'
+[04:42:48] [main/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/E:/hbmqy/hbm_high/HBM-NTM-Rebirth/build/fg_cache/net/minecraftforge/forge/1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar%23191!/assets/.mcassetsroot' uses unexpected schema
+[04:42:48] [main/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/E:/hbmqy/hbm_high/HBM-NTM-Rebirth/build/fg_cache/net/minecraftforge/forge/1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1/forge-1.20.1-47.2.32_mapped_parchment_2023.09.03-1.20.1.jar%23191!/data/.mcassetsroot' uses unexpected schema
+[04:42:48] [main/DEBUG] [ne.mi.se.ServerLifecycleHooks/CORE]: Generating PackInfo named mod:forge for mod file /
+[04:42:48] [main/DEBUG] [ne.mi.se.ServerLifecycleHooks/CORE]: Generating PackInfo named mod:jei for mod file C:\Users\Mr.Wu\.gradle\caches\forge_gradle\deobf_dependencies\mezz\jei\jei-1.20.1-forge\15.20.0.130_mapped_parchment_2023.09.03-1.20.1\jei-1.20.1-forge-15.20.0.130_mapped_parchment_2023.09.03-1.20.1.jar
+[04:42:48] [main/DEBUG] [ne.mi.se.ServerLifecycleHooks/CORE]: Generating PackInfo named mod:hbm_ntm_rebirth for mod file E:\hbmqy\hbm_high\HBM-NTM-Rebirth\build\resources\main
+[04:42:48] [main/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/server/commands/SummonCommand
+[04:42:49] [Worker-Main-7/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/raid/Raid
+[04:42:49] [main/INFO] [minecraft/RecipeManager]: Loaded 56 recipes
+[04:42:49] [main/INFO] [minecraft/AdvancementList]: Loaded 1297 advancements
+[04:43:08] [main/DEBUG] [ne.mi.co.ForgeHooks/WP]: Gathering id map for writing to world save world
+[04:43:08] [main/DEBUG] [ne.mi.co.ForgeHooks/WP]: ID Map collection complete world
+[04:43:08] [main/INFO] [ne.mi.ga.ForgeGameTestHooks/]: Enabled Gametest Namespaces: [hbm_ntm_rebirth, minecraft]
+[04:43:08] [main/INFO] [co.hb.nt.HbmNtm/]: Registered only missile GameTest batches for this opt-in verification run.
+[04:43:08] [Server thread/DEBUG] [ne.mi.fm.co.ConfigTracker/CONFIG]: Loading configs type SERVER
+[04:43:08] [Server thread/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Built TOML config for .\world\serverconfig\jei-server.toml
+[04:43:08] [Server thread/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Loaded TOML config file .\world\serverconfig\jei-server.toml
+[04:43:08] [Server thread/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Watching TOML config file .\world\serverconfig\jei-server.toml for changes
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Configuration file .\world\serverconfig\jei-server.toml is not correct. Correcting
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key cheat mode was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key cheat mode.enableCheatModeForOp was corrected from null to its default, true. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key cheat mode.enableCheatModeForOp does not match the spec. This may create a backup.
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key cheat mode.enableCheatModeForCreative was corrected from null to its default, true. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key cheat mode.enableCheatModeForCreative does not match the spec. This may create a backup.
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key cheat mode.enableCheatModeForGive was corrected from null to its default, false. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key cheat mode.enableCheatModeForGive does not match the spec. This may create a backup.
+[04:43:08] [Server thread/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Built TOML config for .\world\serverconfig\forge-server.toml
+[04:43:08] [Server thread/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Loaded TOML config file .\world\serverconfig\forge-server.toml
+[04:43:08] [Server thread/DEBUG] [ne.mi.fm.co.ConfigFileTypeHandler/CONFIG]: Watching TOML config file .\world\serverconfig\forge-server.toml for changes
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Configuration file .\world\serverconfig\forge-server.toml is not correct. Correcting
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server was corrected from null to its default, SimpleCommentedConfig:{}. 
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.removeErroringBlockEntities was corrected from null to its default, false. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.removeErroringBlockEntities does not match the spec. This may create a backup.
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.removeErroringEntities was corrected from null to its default, false. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.removeErroringEntities does not match the spec. This may create a backup.
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.fullBoundingBoxLadders was corrected from null to its default, false. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.fullBoundingBoxLadders does not match the spec. This may create a backup.
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.zombieBaseSummonChance was corrected from null to its default, 0.1. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.zombieBaseSummonChance does not match the spec. This may create a backup.
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.zombieBabyChance was corrected from null to its default, 0.05. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.zombieBabyChance does not match the spec. This may create a backup.
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.permissionHandler was corrected from null to its default, forge:default_handler. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.permissionHandler does not match the spec. This may create a backup.
+[04:43:08] [Server thread/WARN] [ne.mi.co.ForgeConfigSpec/CORE]: Incorrect key server.advertiseDedicatedServerToLan was corrected from null to its default, true. 
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server.advertiseDedicatedServerToLan does not match the spec. This may create a backup.
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfigSpec/CORE]: The comment on key server does not match the spec. This may create a backup.
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.ForgeConfig/FORGEMOD]: Loaded forge config file forge-server.toml
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/levelgen/PhantomSpawner
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/levelgen/PatrolSpawner
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/npc/CatSpawner
+[04:43:08] [Server thread/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/entity/ai/village/VillageSiege
+[04:43:09] [Worker-Main-19/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate
+[04:43:10] [Worker-Main-8/DEBUG] [ne.mi.co.tr.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/level/NaturalSpawner
+[04:43:10] [Server thread/INFO] [minecraft/MinecraftServer]: Preparing start region for dimension minecraft:overworld
+[04:43:10] [Worker-Main-17/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 0%
+[04:43:10] [Worker-Main-15/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 0%
+[04:43:11] [Worker-Main-1/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 1%
+[04:43:11] [Worker-Main-1/DEBUG] [io.ne.ut.in.InternalThreadLocalMap/]: -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[04:43:11] [Worker-Main-1/DEBUG] [io.ne.ut.in.InternalThreadLocalMap/]: -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+[04:43:11] [Worker-Main-1/DEBUG] [io.ne.ut.in.ThreadLocalRandom/]: -Dio.netty.initialSeedUniquifier: 0x1ec3086dd6972d66
+[04:43:11] [Worker-Main-11/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 3%
+[04:43:12] [Worker-Main-21/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 6%
+[04:43:12] [Worker-Main-8/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 9%
+[04:43:13] [Worker-Main-9/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 15%
+[04:43:13] [Worker-Main-7/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 20%
+[04:43:14] [Worker-Main-22/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 25%
+[04:43:15] [Worker-Main-7/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 30%
+[04:43:15] [Worker-Main-17/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 31%
+[04:43:15] [Worker-Main-23/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 36%
+[04:43:16] [Worker-Main-17/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 42%
+[04:43:16] [Worker-Main-18/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 46%
+[04:43:17] [Worker-Main-4/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 54%
+[04:43:17] [Worker-Main-11/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 57%
+[04:43:18] [Worker-Main-9/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 65%
+[04:43:18] [Worker-Main-5/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 70%
+[04:43:19] [Worker-Main-10/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 75%
+[04:43:19] [Worker-Main-3/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 81%
+[04:43:20] [Worker-Main-22/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 87%
+[04:43:20] [Worker-Main-15/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 93%
+[04:43:21] [Server thread/INFO] [minecraft/LoggerChunkProgressListener]: Time elapsed: 10986 ms
+[04:43:21] [Server thread/INFO] [minecraft/GameTestServer]: Started game test server
+[04:43:21] [Server thread/DEBUG] [ne.mi.co.ForgeI18n/CORE]: Loading I18N data entries: 5172
+[04:43:21] [Server thread/INFO] [ne.mi.se.pe.PermissionAPI/]: Successfully initialized permission handler forge:default_handler
+[04:43:21] [Server thread/DEBUG] [io.ne.bu.AbstractByteBuf/]: -Dio.netty.buffer.checkAccessible: true
+[04:43:21] [Server thread/DEBUG] [io.ne.bu.AbstractByteBuf/]: -Dio.netty.buffer.checkBounds: true
+[04:43:21] [Server thread/DEBUG] [io.ne.ut.ResourceLeakDetectorFactory/]: Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@1f3c0c42
+[04:43:21] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosPneumaticMerge:1' (2 tests)...
+[04:43:21] [Server thread/INFO] [minecraft/GameTestServer]: 423 tests are now running!
+[04:43:21] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'abilityHarvest:1' (1 tests)...
+[04:43:22] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsBatteryRedd:1' (1 tests)...
+[04:43:24] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2Capacitor:1' (4 tests)...
+[04:43:24] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 3125ms or 62 ticks behind
+[04:43:24] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2ConveyorPress:1' (1 tests)...
+[04:43:24] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'droneDirectRequest:1' (1 tests)...
+[04:43:25] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++_                                                                                                                                                                                                                                                                                                                                                                                                                             ]
+[04:43:25] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++_                                                                                                                                                                                                                                                                                                                                                                                                                             ]
+[04:43:26] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++_                                                                                                                                                                                                                                                                                                                                                                                                                             ]
+[04:43:26] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++_                                                                                                                                                                                                                                                                                                                                                                                                                             ]
+[04:43:26] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'missileItems:1' (12 tests)...
+[04:43:27] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosPneumaticStorage:1' (1 tests)...
+[04:43:27] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2CableDiode:1' (1 tests)...
+[04:43:28] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'missileSatellites:1' (43 tests)...
+[04:43:28] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++                                                                                                                                                                                                                                                                                                                                                                                                               ]
+java.lang.IndexOutOfBoundsException: Index 99999 out of bounds for length 9
+	at java.base/jdk.internal.util.Preconditions.outOfBounds(Preconditions.java:100)
+	at java.base/jdk.internal.util.Preconditions.outOfBoundsCheckIndex(Preconditions.java:106)
+	at java.base/jdk.internal.util.Preconditions.checkIndex(Preconditions.java:302)
+	at java.base/java.util.Objects.checkIndex(Objects.java:385)
+	at java.base/java.util.ArrayList.get(ArrayList.java:427)
+	at TRANSFORMER/hbm_ntm_rebirth@0.4.1beta/com.hbm.saveddata.satellites.Satellite.create(Satellite.java:64)
+	at TRANSFORMER/hbm_ntm_rebirth@0.4.1beta/com.hbm.ntm.satellite.Satellite.create(Satellite.java:65)
+	at TRANSFORMER/hbm_ntm_rebirth@0.4.1beta/com.hbm.ntm.client.ClientSatelliteData.readLegacyPanelSnapshot(ClientSatelliteData.java:41)
+	at TRANSFORMER/hbm_ntm_rebirth@0.4.1beta/com.hbm.ntm.client.ClientSatelliteData.lambda$current$0(ClientSatelliteData.java:17)
+	at java.base/java.util.Optional.flatMap(Optional.java:289)
+	at TRANSFORMER/hbm_ntm_rebirth@0.4.1beta/com.hbm.ntm.client.ClientSatelliteData.current(ClientSatelliteData.java:17)
+	at TRANSFORMER/hbm_ntm_rebirth@0.4.1beta/com.hbm.ntm.gametest.EnergyMk2GameTests.satellitePanelCacheKeepsLegacyUnknownIdNullBoundary(EnergyMk2GameTests.java:735)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.gametest.framework.GameTestRegistry.lambda$turnMethodIntoConsumer$3(GameTestRegistry.java:146)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.gametest.framework.TestFunction.run(TestFunction.java:45)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.gametest.framework.GameTestInfo.startTest(GameTestInfo.java:126)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.gametest.framework.GameTestInfo.tickInternal(GameTestInfo.java:90)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.gametest.framework.GameTestInfo.tick(GameTestInfo.java:73)
+	at java.base/java.util.concurrent.CopyOnWriteArrayList.forEach(CopyOnWriteArrayList.java:891)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.gametest.framework.GameTestTicker.tick(GameTestTicker.java:20)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.server.MinecraftServer.tickChildren(MinecraftServer.java:911)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:814)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.gametest.framework.GameTestServer.tickServer(GameTestServer.java:119)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:661)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.server.MinecraftServer.lambda$spin$2(MinecraftServer.java:251)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+[04:43:28] [Server thread/INFO] [minecraft/MinecraftServer]: Horizons has been activated.
+[04:43:30] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosCyclotronIcfSilex:1' (1 tests)...
+[04:43:30] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsLiquefactor:1' (1 tests)...
+[04:43:30] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosLaunchers:1' (1 tests)...
+[04:43:31] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedArcWelderPorts:1' (1 tests)...
+[04:43:33] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2BatterySocketHoppers:1' (1 tests)...
+[04:43:33] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2BatterySocketPneumaticServerTick:1' (1 tests)...
+[04:43:33] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosOreSlopper:1' (1 tests)...
+[04:43:33] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsLargeTurbine:1' (1 tests)...
+[04:43:33] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'missileAbmRadarCache:1' (1 tests)...
+[04:43:33] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosLiquefactorFluid:1' (1 tests)...
+[04:43:33] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsGasFlare:1' (1 tests)...
+[04:43:34] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'renderContracts:1' (1 tests)...
+[04:43:34] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosTwentyTickEnergyCadence:1' (2 tests)...
+[04:43:34] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++__                                                                                                                                                                                                                                                                                                                                                      ]
+[04:43:35] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosElectrolyserFluid:1' (1 tests)...
+[04:43:35] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                                                                                                      ]
+[04:43:35] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosGasCentSoldering:1' (1 tests)...
+[04:43:35] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                                                                                                     ]
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosReapWireHosts:1' (1 tests)...
+[04:43:36] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                                                                                                    ]
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsSteamEngine:1' (1 tests)...
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsPaRfc:1' (1 tests)...
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosFuelGenerators:1' (1 tests)...
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'assemblyMachineRecipeSelector:1' (1 tests)...
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosRotaryFurnaceFluid:1' (1 tests)...
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosMachineFluidEndpoints:1' (1 tests)...
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsPaDipole:1' (1 tests)...
+[04:43:36] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                                                                                             ]
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosStorageDrum:1' (1 tests)...
+[04:43:36] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'missileAbmDirectTarget:1' (1 tests)...
+[04:43:37] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsGasTurbine:1' (1 tests)...
+[04:43:39] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosOilRemoteFluidCadence:1' (1 tests)...
+[04:43:39] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++_                                                                                                                                                                                                                                                                                                                                        ]
+[04:43:39] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosOilCrackerFraction:1' (1 tests)...
+[04:43:39] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                                                                                        ]
+[04:43:39] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedXrFloorRing:1' (2 tests)...
+[04:43:40] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedLargeLaunchPad:1' (1 tests)...
+[04:43:41] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsTurretStandard:1' (1 tests)...
+[04:43:41] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosPneumaticReap:1' (1 tests)...
+[04:43:41] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsFusionMhdt:1' (1 tests)...
+[04:43:44] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsIndustrialTurbine:1' (1 tests)...
+[04:43:48] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'conveyorLibrary:1' (9 tests)...
+[04:43:48] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosVacuumDistillFluid:1' (1 tests)...
+[04:43:48] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosIntakeFluid:1' (1 tests)...
+[04:43:48] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++_                                                                                                                                                                                                                                                                                                                     ]
+[04:43:48] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'missileMultipart:1' (1 tests)...
+[04:43:49] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosIcfPress:1' (1 tests)...
+[04:43:49] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsStirling:1' (1 tests)...
+[04:43:49] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosAssemblyFluidHosts:1' (1 tests)...
+[04:43:49] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsAssembly:1' (1 tests)...
+[04:43:49] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsSteamTurbine:1' (1 tests)...
+[04:43:50] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosNodeUnloadLifecycle:1' (1 tests)...
+[04:43:50] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsPaDetector:1' (1 tests)...
+[04:43:50] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosReapFusionNodes:1' (1 tests)...
+[04:43:51] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosFusionDedicatedPorts:1' (1 tests)...
+[04:43:53] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2LegacyImport:1' (4 tests)...
+[04:43:53] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                                                           ]
+[04:43:54] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosHeatFluidHosts:1' (1 tests)...
+[04:43:54] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++_                                                                                                                                                                                                                                                                                                      ]
+[04:43:55] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsRadGen:1' (1 tests)...
+[04:43:56] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosEveryTickEnergyCadence:1' (10 tests)...
+[04:43:57] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 17659ms or 353 ticks behind
+[04:43:57] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosCoolingTowers:1' (1 tests)...
+[04:43:57] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsTurbofan:1' (2 tests)...
+[04:43:57] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsMiniRtg:1' (1 tests)...
+[04:43:58] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosPrecassCrystallizerFluid:1' (1 tests)...
+[04:43:58] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosWatzZirnox:1' (1 tests)...
+[04:43:58] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsLargeLaunchPad:1' (1 tests)...
+[04:43:58] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosFixedMachineFluidCadence:1' (1 tests)...
+[04:43:58] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++_                                                                                                                                                                                                                                                                                   ]
+[04:43:59] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosFoundry:1' (1 tests)...
+[04:43:59] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                                   ]
+[04:43:59] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosElectricFurnaceEnergyCadence:1' (1 tests)...
+[04:43:59] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++_                                                                                                                                                                                                                                                                                 ]
+[04:44:00] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++_                                                                                                                                                                                                                                                                                 ]
+[04:44:01] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++_                                                                                                                                                                                                                                                                                 ]
+[04:44:01] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2ReceiverPorts:1' (1 tests)...
+[04:44:02] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsChungus:1' (1 tests)...
+[04:44:04] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'missileItemsPlacement:1' (1 tests)...
+[04:44:04] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosRbmkBoiler:1' (1 tests)...
+[04:44:04] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsRtg:1' (1 tests)...
+[04:44:06] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsCombustion:1' (1 tests)...
+[04:44:07] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosFusionBoilerBreeder:1' (1 tests)...
+[04:44:08] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosArcWelderFluid:1' (1 tests)...
+[04:44:09] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosCombinationOvenFluid:1' (1 tests)...
+[04:44:09] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                         ]
+[04:44:09] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosFluidTank:1' (1 tests)...
+[04:44:09] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                        ]
+[04:44:10] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'uninosCompressor:1' (2 tests)...
+[04:44:10] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++_                                                                                                                                                                                                                                                                     ]
+[04:44:11] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsTurretHimars:1' (1 tests)...
+[04:44:11] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                                                                                                                                                                                                                                                                     ]
+[04:44:11] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsWoodBurner:1' (2 tests)...
+[04:44:11] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2RemotePortsSoyuzLauncher:1' (1 tests)...
+[04:44:12] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'energyMk2PlayerPlacedProviderPortsLargeTurbine:1' (1 tests)...
+[04:44:13] [Server thread/INFO] [minecraft/GameTestBatchRunner]: Running test batch 'missileLaunchChain:1' (36 tests)...
+
+> Task :runGameTestServer FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':runGameTestServer'.
+> Process 'command 'D:\jdk\21\bin\java.exe'' finished with non-zero exit value -1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.6/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2m 3s
+11 actionable tasks: 4 executed, 7 up-to-date

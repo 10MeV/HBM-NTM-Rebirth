@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "X": {
+      "type": "forge:nbt",
+      "item": "hbm_ntm_rebirth:lightstone",
+      "nbt": "{hbmLegacyVariant:1}"
+    }
+  },
+  "pattern": [
+    "X  ",
+    "XX ",
+    "XXX"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:lightstone_tile_stairs"
+  },
+  "show_notification": true
+}

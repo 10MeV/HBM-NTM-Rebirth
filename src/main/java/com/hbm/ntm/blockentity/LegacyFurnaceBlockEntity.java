@@ -475,12 +475,12 @@ public class LegacyFurnaceBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        return new CompoundTag();
     }
 
     @Override

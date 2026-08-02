@@ -319,7 +319,7 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        return new CompoundTag();
     }
 
     @Override
@@ -329,8 +329,8 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Nullable
     @Override

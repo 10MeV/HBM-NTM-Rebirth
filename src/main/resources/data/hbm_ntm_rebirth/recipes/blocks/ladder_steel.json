@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","pattern":["LLL","LSL","LLL"],"key":{"L":{"item":"minecraft:ladder"},"S":{"tag":"forge:ingots/steel"}},"result":{"item":"hbm_ntm_rebirth:ladder_steel","count":8}}

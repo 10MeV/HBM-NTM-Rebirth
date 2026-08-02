@@ -129,7 +129,7 @@ public class ExcavatorMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 128.0D);
     }
 
     @Override

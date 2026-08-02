@@ -107,7 +107,10 @@ public class ExplosionTom {
         int craterFloor = (int) (craterRing + Math.pow(Math.E, -Math.pow(radialDistance - 500.0D, 2.0D) / 2000.0D) * 37.0D);
 
         int minBuildHeight = level.getMinBuildHeight();
-        int sampleTop = Math.min(256, level.getMaxBuildHeight() - 1);
+        // The legacy 256..0 probe meant "from the top of the world down", not
+        // an absolute modern Y=256 cap.  Starting at this dimension's ceiling
+        // preserves that terrain-search contract in tall and negative-Y worlds.
+        int sampleTop = level.getMaxBuildHeight() - 1;
         int y = sampleTop;
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int sampleY = sampleTop; sampleY >= minBuildHeight; sampleY--) {

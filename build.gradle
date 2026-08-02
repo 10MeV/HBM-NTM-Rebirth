@@ -11,6 +11,46 @@ base {
     archivesName = mod_id
 }
 
+// Concurrent developer runs otherwise share build/classes and can make javac
+// observe class files being removed by another Gradle invocation.  Launchers
+// may opt into an isolated, ignored output directory with -PhbmBuildDir=... .
+if (project.hasProperty('hbmBuildDir')) {
+    layout.buildDirectory.set(project.file(project.property('hbmBuildDir')))
+}
+
+// `runClient` loads mod classes directly from the selected build directory for
+// the entire lifetime of the Minecraft process.  A second Gradle invocation
+// using build-client (most notably clean/compileJava) can otherwise empty that
+// directory after the game has started, causing a delayed
+// NoClassDefFoundError when Minecraft first reaches an unloaded class.
+def usesIsolatedClientBuild = layout.buildDirectory.get().asFile.canonicalFile ==
+        layout.projectDirectory.dir('build-client').asFile.canonicalFile
+def isolatedClientBuildLockChannel = null
+def isolatedClientBuildLock = null
+if (usesIsolatedClientBuild) {
+    def lockFile = layout.projectDirectory.file('.hbm-client-output.lock').asFile
+    lockFile.parentFile.mkdirs()
+    try {
+        isolatedClientBuildLockChannel = java.nio.channels.FileChannel.open(lockFile.toPath(),
+                java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE)
+        isolatedClientBuildLock = isolatedClientBuildLockChannel.tryLock()
+    } catch (java.nio.channels.OverlappingFileLockException | java.io.IOException ignored) {
+        // Another process or Gradle instance owns the same client output.
+    }
+    if (isolatedClientBuildLock == null) {
+        isolatedClientBuildLockChannel?.close()
+        throw new GradleException('build-client is in use by an active HBM client or isolated client build. '
+                + 'Close it before running another Gradle command with -PhbmBuildDir=build-client.')
+    }
+    gradle.buildFinished {
+        try {
+            isolatedClientBuildLock?.release()
+        } finally {
+            isolatedClientBuildLockChannel?.close()
+        }
+    }
+}
+
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
@@ -51,6 +91,10 @@ minecraft {
         }
 
         server {
+            // Keep dedicated-server verification isolated from an interactive client.
+            if (project.hasProperty('serverRunDir')) {
+                workingDirectory project.file(project.property('serverRunDir'))
+            }
             property 'forge.enabledGameTestNamespaces', gameTestNamespaces
             args '--nogui'
         }
@@ -63,6 +107,19 @@ minecraft {
                 workingDirectory project.file(project.property('gameTestRunDir'))
             }
             property 'forge.enabledGameTestNamespaces', gameTestNamespaces
+            // Forge 1.20.1 has no command-line batch selector.  Keep this
+            // opt-in switch limited to the dedicated GameTest run so the
+            // missile regression suite can be executed without unrelated
+            // batches aborting the server before it reaches those tests.
+            if (project.hasProperty('missileGameTestOnly')) {
+                property 'hbm_ntm.gametest.missileOnly', 'true'
+            }
+            if (project.hasProperty('materialGameTestOnly')) {
+                property 'hbm_ntm.gametest.materialOnly', 'true'
+            }
+            if (project.hasProperty('surfacePlantsGameTestOnly')) {
+                property 'hbm_ntm.gametest.surfacePlantsOnly', 'true'
+            }
         }
 
         data {
@@ -86,10 +143,12 @@ repositories {
 }
 
 // LWJGL 3.3.4+ embeds GLFW 3.4+, which fixes disabled-cursor input in Windows RDP
-// sessions. Keep every LWJGL module aligned to avoid mixing Java/native ABIs.
+// sessions. Minecraft 1.20.1 is compiled against the old stb_image_resize API,
+// which was removed in LWJGL 3.3.6, so STB must remain on Minecraft's 3.3.1
+// Java/native pair. The remaining modules may use the newer GLFW-compatible set.
 configurations.configureEach {
     resolutionStrategy.eachDependency { details ->
-        if (details.requested.group == 'org.lwjgl') {
+        if (details.requested.group == 'org.lwjgl' && details.requested.name != 'lwjgl-stb') {
             details.useVersion lwjgl_version
             details.because 'Use GLFW 3.4 RDP input handling while preserving Minecraft MouseHandler behavior'
         }
@@ -106,6 +165,14 @@ configurations {
         canBeResolved = true
         transitive = false
     }
+    // Production-style client profile for the optional Embeddium + Oculus
+    // render-compatibility matrix. These release artifacts must stay out of
+    // the Parchment-named Forge userdev classpath.
+    renderCompatibilityMods {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
 }
 
 dependencies {
@@ -118,8 +185,12 @@ dependencies {
     // Optional production/modpack optimization stack. HBM has no hard API
     // linkage, so these must not pollute the Parchment-named userdev runtime.
     performanceMods "maven.modrinth:embeddium:${embeddium_version}"
+    performanceMods "maven.modrinth:oculus:${oculus_version}"
     performanceMods "maven.modrinth:modernfix:${modernfix_version}"
     performanceMods "maven.modrinth:ferrite-core:${ferritecore_version}"
+
+    renderCompatibilityMods "maven.modrinth:embeddium:${embeddium_version}"
+    renderCompatibilityMods "maven.modrinth:oculus:${oculus_version}"
 }
 
 tasks.register('resolvePerformanceMods') {
@@ -128,6 +199,22 @@ tasks.register('resolvePerformanceMods') {
     doLast {
         configurations.performanceMods.files.each { file -> logger.lifecycle("Resolved optional performance mod: ${file.name}") }
     }
+}
+
+tasks.register('prepareEmbeddiumOculusProfile', Sync) {
+    group = 'verification'
+    description = 'Builds HBM and prepares an isolated optional Forge client mod profile with Embeddium and Oculus.'
+    dependsOn tasks.named('reobfJar')
+    from(configurations.renderCompatibilityMods)
+    from(tasks.named('jar'))
+    into(layout.projectDirectory.dir('run-embeddium-oculus/mods'))
+}
+
+tasks.register('prepareEmbeddiumOculusDevRun', Sync) {
+    group = 'verification'
+    description = 'Prepares Embeddium and Oculus only for the isolated ForgeGradle development client run.'
+    from(configurations.renderCompatibilityMods)
+    into(layout.projectDirectory.dir('run-embeddium-oculus-dev/mods'))
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -149,6 +236,63 @@ tasks.named('processResources', ProcessResources).configure {
 
     filesMatching(['META-INF/mods.toml']) {
         expand replaceProperties
+    }
+}
+
+// Gradle normally notices a missing output directory, but an interrupted or
+// externally-cleared directory can still leave an incremental run with a
+// mixed classpath.  Verify every conventional top-level Java output before a
+// Forge run starts so a missing lazy-loaded machine/network class cannot turn
+// into an in-game server crash.
+def verifyRuntimeClasspath = tasks.register('verifyRuntimeClasspath') {
+    group = 'verification'
+    description = 'Verifies that every compiled main Java source is present on the runtime classpath.'
+    dependsOn tasks.named('classes')
+
+    doLast {
+        def classDirectories = sourceSets.main.output.classesDirs.files.findAll { it.isDirectory() }
+        def missing = []
+        sourceSets.main.java.srcDirs.findAll { it.isDirectory() }.each { sourceRoot ->
+            fileTree(sourceRoot) { include '**/*.java' }.files.each { sourceFile ->
+                if (sourceFile.name == 'package-info.java' || sourceFile.name == 'module-info.java') {
+                    return
+                }
+                def simpleName = sourceFile.name[0..-6]
+                def declaration = java.util.regex.Pattern.compile(
+                        '(?m)(?:\\b(?:class|interface|enum|record)\\s+|@interface\\s+)'
+                                + java.util.regex.Pattern.quote(simpleName) + '\\b')
+                if (!declaration.matcher(sourceFile.getText('UTF-8')).find()) {
+                    return
+                }
+                def packageMatcher = java.util.regex.Pattern.compile(
+                        '(?m)^\\s*package\\s+([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*)\\s*;')
+                        .matcher(sourceFile.getText('UTF-8'))
+                def relativeClass = packageMatcher.find()
+                        ? packageMatcher.group(1).replace('.', '/') + '/' + simpleName + '.class'
+                        : simpleName + '.class'
+                if (!classDirectories.any { new File(it, relativeClass).isFile() }) {
+                    missing << relativeClass
+                }
+            }
+        }
+        if (classDirectories.isEmpty() || missing) {
+            def summary = missing.take(12).join(', ')
+            def suffix = missing.size() > 12 ? " (and ${missing.size() - 12} more)" : ''
+            throw new GradleException('Runtime classpath is incomplete. Missing compiled classes: '
+                    + (summary ?: '<no class output directory>') + suffix
+                    + '. Rebuild the selected build directory before starting Minecraft.')
+        }
+        def modsToml = sourceSets.main.output.resourcesDir.toPath().resolve('META-INF/mods.toml').toFile()
+        if (!modsToml.isFile()) {
+            throw new GradleException('Runtime resources are incomplete: META-INF/mods.toml is missing. '
+                    + 'Rebuild the selected build directory before starting Minecraft.')
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name.startsWith('run') && task.name != 'runEnergyMk2SelfTest') {
+        task.dependsOn(verifyRuntimeClasspath)
     }
 }
 

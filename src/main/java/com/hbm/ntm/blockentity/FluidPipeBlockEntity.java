@@ -182,8 +182,8 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

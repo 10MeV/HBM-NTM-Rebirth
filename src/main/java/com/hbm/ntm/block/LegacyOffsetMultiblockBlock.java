@@ -21,15 +21,23 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
 public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock implements MultiblockCoreBlock, LegacyMultiblockPlaceable, LegacyMultiblock {
+    private final Map<BlockState, LegacyMultiblockLayout> layoutCache = new ConcurrentHashMap<>();
+
     protected LegacyOffsetMultiblockBlock(Properties properties) {
         super(properties, false);
     }
 
     protected abstract LegacyMultiblockLayout getLayout(BlockState state);
+
+    private LegacyMultiblockLayout cachedLayout(BlockState state) {
+        return layoutCache.computeIfAbsent(state, this::getLayout);
+    }
 
     protected Direction getFacingForPlacement(BlockPlaceContext context) {
         return context.getHorizontalDirection().getOpposite();
@@ -41,7 +49,7 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
 
     @Override
     public LegacyMultiblockLayout getMultiblockLayout(BlockState state, BlockGetter level, BlockPos corePos) {
-        return getLayout(state);
+        return cachedLayout(state);
     }
 
     @Override
@@ -83,7 +91,7 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
 
     @Override
     public boolean canPlaceDirectMultiblock(Level level, BlockPos corePos, BlockPos temporaryPos, BlockState state) {
-        return MultiblockHelper.checkLayout(level, corePos, getLayout(state), temporaryPos);
+        return MultiblockHelper.checkLayout(level, corePos, cachedLayout(state), temporaryPos);
     }
 
     @Override
@@ -111,7 +119,7 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
-            MultiblockHelper.removeLayout(level, pos, getLayout(state));
+            MultiblockHelper.removeLayout(level, pos, cachedLayout(state));
             onCoreRemoved(level, pos, state);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
@@ -137,6 +145,6 @@ public abstract class LegacyOffsetMultiblockBlock extends HorizontalMachineBlock
     }
 
     private void fillLayout(Level level, BlockPos corePos, BlockState state) {
-        MultiblockHelper.fillLayout(level, corePos, getLayout(state));
+        MultiblockHelper.fillLayout(level, corePos, cachedLayout(state));
     }
 }

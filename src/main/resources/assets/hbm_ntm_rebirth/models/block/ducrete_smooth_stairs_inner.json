@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/ducrete",
+    "side": "hbm_ntm_rebirth:block/ducrete",
+    "top": "hbm_ntm_rebirth:block/ducrete"
+  }
+}
+

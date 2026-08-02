@@ -573,8 +573,8 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "hbm_ntm_rebirth:block/reeds_top"
+  }
+}

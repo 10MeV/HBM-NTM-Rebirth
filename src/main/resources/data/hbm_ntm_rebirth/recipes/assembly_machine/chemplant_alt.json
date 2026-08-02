@@ -1,0 +1,43 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:plates/dura_steel"
+      },
+      "legacy_ore": "plateDuraSteel"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:pipes/copper"
+      },
+      "legacy_ore": "ntmpipeCopper"
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:motor"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_basic"
+      }
+    }
+  ],
+  "internal_name": "ass.chemplantAlt",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "item": "hbm_ntm_rebirth:machine_chemical_plant"
+    }
+  ],
+  "pools": [],
+  "power": 100,
+  "source_order": 79
+}

@@ -129,6 +129,9 @@ public class RTTYAutocalState {
                     if (result == RTTYScriptParser.StatementReturn.UNDEFINED) {
                         stop("Undefined behavior");
                     }
+                    if (result == RTTYScriptParser.StatementReturn.STACK_EXCEEDED) {
+                        stop("Stack exceeded capacity");
+                    }
                 }
                 if (result == RTTYScriptParser.StatementReturn.SKIP) {
                     i--;
@@ -193,15 +196,12 @@ public class RTTYAutocalState {
         tag.putBoolean(TAG_ON, on);
         tag.putBoolean(TAG_IGNORE_ERROR, ignoreError);
         tag.putBoolean(TAG_AUTO_REBOOT, autoReboot);
-        tag.putInt(TAG_CURRENT, context.current());
-        tag.putInt(TAG_CLOCK_SPEED, context.clockSpeed());
-        tag.putString(TAG_BUFFER, context.buffer());
         ListTag lineList = new ListTag();
         for (String line : script) {
             lineList.add(StringTag.valueOf(line));
         }
         tag.put(TAG_SCRIPT, lineList);
-        tag.put(TAG_VARIABLES, context.variables());
+        context.saveRuntime(tag);
     }
 
     public void saveClient(CompoundTag tag) {
@@ -217,12 +217,6 @@ public class RTTYAutocalState {
         on = tag.getBoolean(TAG_ON);
         ignoreError = tag.getBoolean(TAG_IGNORE_ERROR);
         autoReboot = tag.getBoolean(TAG_AUTO_REBOOT);
-        context.setCurrent(tag.getInt(TAG_CURRENT));
-        context.setClockSpeed(tag.getInt(TAG_CLOCK_SPEED));
-        if (context.clockSpeed() < 1) {
-            context.setClockSpeed(1);
-        }
-        context.setBuffer(tag.getString(TAG_BUFFER));
         context.jumps().clear();
         ListTag lineList = tag.getList(TAG_SCRIPT, Tag.TAG_STRING);
         script = new String[lineList.size()];
@@ -230,7 +224,7 @@ public class RTTYAutocalState {
             script[i] = lineList.getString(i);
             parser.generateJumpPoints(context, script[i], i);
         }
-        context.setVariables(tag.getCompound(TAG_VARIABLES));
+        context.loadRuntime(tag);
     }
 
     public void loadClient(CompoundTag tag) {

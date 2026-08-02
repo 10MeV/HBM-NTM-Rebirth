@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "role=dummy": { "model": "hbm_ntm_rebirth:block/pile_block_connected" },
+    "role=edge": { "model": "hbm_ntm_rebirth:block/pile_block_connected" },
+    "role=channel": { "model": "hbm_ntm_rebirth:block/pile_block_connected" },
+    "role=fuel_in": { "model": "hbm_ntm_rebirth:block/pile_block_connected" },
+    "role=air_in": { "model": "hbm_ntm_rebirth:block/pile_block_connected" },
+    "role=fuel_out": { "model": "hbm_ntm_rebirth:block/pile_block_connected" },
+    "role=air_out": { "model": "hbm_ntm_rebirth:block/pile_block_connected" },
+    "role=control": { "model": "hbm_ntm_rebirth:block/pile_block_connected" },
+    "role=core": { "model": "hbm_ntm_rebirth:block/pile_block_connected" }
+  }
+}

@@ -94,6 +94,120 @@ public final class LegacyGuiElements {
         RenderSystem.disableBlend();
     }
 
+    /**
+     * Draws the continuous linear pointer used by the legacy reactor tank gauges.
+     * The geometry and its deliberately asymmetric outer stroke mirror
+     * {@code GUIElements#drawSmoothLinearGauge} from 1.7.10.
+     */
+    public static void drawSmoothLinearGauge(GuiGraphics graphics, int x, int y, double progress,
+            double tipLength, double backLength, double backSide, double scale, float rotation, int color) {
+        drawSmoothLinearGauge(graphics, x, y, progress, tipLength, backLength, backSide, scale, rotation, color,
+                0x000000);
+    }
+
+    public static void drawSmoothLinearGauge(GuiGraphics graphics, int x, int y, double progress,
+            double tipLength, double backLength, double backSide, double scale, float rotation, int color,
+            int colorOuter) {
+        double clampedScale = Math.max(scale, 1.0D);
+        double travel = Mth.clamp(progress, 0.0D, 1.0D) * clampedScale;
+        double angle = -rotation * Mth.DEG_TO_RAD;
+        double sin = Math.sin(angle);
+        double cos = Math.cos(angle);
+
+        double tipX = tipLength * sin;
+        double tipY = -tipLength * cos;
+        double rightX = -backSide * cos;
+        double rightY = backSide * sin;
+        double backRightX = -backSide * cos - backLength * sin;
+        double backRightY = backSide * sin + backLength * cos;
+        double backLeftX = backSide * cos - backLength * sin;
+        double backLeftY = -backSide * sin + backLength * cos;
+        double leftX = backSide * cos;
+        double leftY = -backSide * sin;
+        double deltaX = travel * cos;
+        double deltaY = travel * sin;
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        Matrix4f pose = graphics.pose().last().pose();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder builder = tesselator.getBuilder();
+        builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+        vertex(builder, pose, x + deltaX + tipX * 1.5D, y + deltaY + tipY * 1.5D, colorOuter);
+        vertex(builder, pose, x + deltaX + rightX * 1.5D, y + deltaY + rightY * 1.5D, colorOuter);
+        vertex(builder, pose, x + deltaX + backRightX * 1.5D, y + deltaY + backRightY, colorOuter);
+        vertex(builder, pose, x + deltaX + backLeftX * 1.5D, y + deltaY + backLeftY, colorOuter);
+        vertex(builder, pose, x + deltaX + leftX * 1.5D, y + deltaY + leftY * 1.5D, colorOuter);
+        tesselator.end();
+
+        builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+        vertex(builder, pose, x + deltaX + tipX, y + deltaY + tipY, color);
+        vertex(builder, pose, x + deltaX + rightX, y + deltaY + rightY, color);
+        vertex(builder, pose, x + deltaX + backRightX, y + deltaY + backRightY, color);
+        vertex(builder, pose, x + deltaX + backLeftX, y + deltaY + backLeftY, color);
+        vertex(builder, pose, x + deltaX + leftX, y + deltaY + leftY, color);
+        tesselator.end();
+        RenderSystem.disableBlend();
+    }
+
+    /**
+     * Draws the 270-degree textured sweep used by the legacy gas-turbine RPM dial.
+     * It intentionally clips one source texture through continuously calculated
+     * triangles instead of selecting a discrete frame from a sprite strip.
+     */
+    public static void drawSmoothTextureCircle(GuiGraphics graphics, ResourceLocation texture, int x, int y,
+            int textureX, int textureY, int width, int height, double progress, int textureWidth,
+            int textureHeight) {
+        double clamped = Mth.clamp(progress, 0.0D, 1.0D);
+        double angle = -clamped * 270.0D;
+        double theta = (angle - 135.0D) * Mth.DEG_TO_RAD;
+        int addons = angle >= -180.0D && angle < -90.0D ? 1 : angle >= -270.0D && angle < -180.0D ? 2 : 0;
+        double targetX;
+        double targetY;
+        if (angle >= -90.0D) {
+            targetX = -1.0D;
+            targetY = -Math.tan(theta);
+        } else if (angle > -180.0D && angle < -90.0D && angle != -135.0D) {
+            targetX = Math.tan(Math.PI / 2.0D - theta);
+            targetY = 1.0D;
+        } else if (angle <= -180.0D) {
+            targetX = 1.0D;
+            targetY = Math.tan(theta);
+        } else {
+            targetX = 0.0D;
+            targetY = 1.0D;
+        }
+
+        double midX = width / 2.0D;
+        double midY = height / 2.0D;
+        targetX *= midX;
+        targetY *= midY;
+        Matrix4f pose = graphics.pose().last().pose();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, texture);
+        drawTexturedTriangle(pose, x, y + height, textureX, textureY + height,
+                x + midX, y + midY, textureX + midX, textureY + midY,
+                addons == 0 ? x + targetX + midX : x, addons == 0 ? y - targetY + midY : y,
+                addons == 0 ? textureX + targetX + midX : textureX,
+                addons == 0 ? textureY - targetY + midY : textureY, textureWidth, textureHeight);
+        if (addons >= 1) {
+            drawTexturedTriangle(pose, x, y, textureX, textureY,
+                    x + midX, y + midY, textureX + midX, textureY + midY,
+                    x + targetX + midX, y - targetY + midY,
+                    textureX + targetX + midX, textureY - targetY + midY, textureWidth, textureHeight);
+        }
+        if (addons == 2) {
+            drawTexturedTriangle(pose, x + width, y, textureX + width, textureY,
+                    x + midX, y + midY, textureX + midX, textureY + midY,
+                    x + targetX + midX, y - targetY + midY,
+                    textureX + targetX + midX, textureY - targetY + midY, textureWidth, textureHeight);
+        }
+        RenderSystem.disableBlend();
+    }
+
     public static void renderRoundSmallGauge(GuiGraphics graphics, int x, int y, double progress) {
         renderLegacyGauge(graphics, ROUND_SMALL_GAUGE, x, y, 18, 18, 13, progress);
     }
@@ -660,6 +774,22 @@ public final class LegacyGuiElements {
         builder.vertex(pose, (float) x, (float) y, 0.0F)
                 .color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 0xFF)
                 .endVertex();
+    }
+
+    private static void drawTexturedTriangle(Matrix4f pose, double x0, double y0, double u0, double v0,
+            double x1, double y1, double u1, double v1, double x2, double y2, double u2, double v2,
+            int textureWidth, int textureHeight) {
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder builder = tesselator.getBuilder();
+        builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_TEX);
+        texturedVertex(builder, pose, x0, y0, u0 / textureWidth, v0 / textureHeight);
+        texturedVertex(builder, pose, x1, y1, u1 / textureWidth, v1 / textureHeight);
+        texturedVertex(builder, pose, x2, y2, u2 / textureWidth, v2 / textureHeight);
+        tesselator.end();
+    }
+
+    private static void texturedVertex(BufferBuilder builder, Matrix4f pose, double x, double y, double u, double v) {
+        builder.vertex(pose, (float) x, (float) y, 0.0F).uv((float) u, (float) v).endVertex();
     }
 
     private static int color(int red, int green, int blue) {

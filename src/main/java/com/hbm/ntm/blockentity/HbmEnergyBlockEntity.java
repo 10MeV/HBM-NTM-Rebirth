@@ -399,7 +399,7 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        return getClientSyncTag();
     }
 
     @Nullable
@@ -410,7 +410,10 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override
@@ -423,14 +426,14 @@ public abstract class HbmEnergyBlockEntity extends BlockEntity implements HbmEne
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
-        data.writeNbt(saveWithoutMetadata());
+        data.writeNbt(getClientSyncTag());
     }
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         CompoundTag tag = data.readNbt();
         if (tag != null) {
-            load(tag);
+            handleClientSyncTag(tag);
         }
     }
 

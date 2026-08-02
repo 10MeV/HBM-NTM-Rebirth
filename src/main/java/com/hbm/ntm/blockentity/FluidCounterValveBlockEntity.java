@@ -97,8 +97,8 @@ public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

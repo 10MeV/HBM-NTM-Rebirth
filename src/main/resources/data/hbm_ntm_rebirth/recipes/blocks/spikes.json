@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","key":{"B":{"item":"hbm_ntm_rebirth:bolt_steel"},"T":{"tag":"forge:ingots/steel"}},"pattern":["BBB","BBB","TTT"],"result":{"item":"hbm_ntm_rebirth:spikes","count":4},"show_notification":true}

@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"redstone","key":{"C":{"item":"hbm_ntm_rebirth:coil_copper"},"P":{"item":"hbm_ntm_rebirth:plate_polymer"},"S":{"item":"minecraft:cobblestone"},"W":{"tag":"forge:pipes/steel"}},"pattern":["CWC","PWP"," S "],"result":{"item":"hbm_ntm_rebirth:red_pylon_steel","count":4},"show_notification":true}

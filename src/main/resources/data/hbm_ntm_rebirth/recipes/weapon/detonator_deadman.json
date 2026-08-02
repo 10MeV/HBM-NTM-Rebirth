@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:detonator" },
+    { "item": "hbm_ntm_rebirth:defuser" },
+    { "item": "hbm_ntm_rebirth:ducttape" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:detonator_deadman" }
+}

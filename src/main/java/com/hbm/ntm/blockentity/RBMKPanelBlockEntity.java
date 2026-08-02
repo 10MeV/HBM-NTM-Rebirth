@@ -1,6 +1,8 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
+import com.hbm.ntm.api.redstoneoverradio.RORInfo;
+import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.block.RBMKPanelBlock;
 import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.menu.RBMKPanelMenu;
@@ -32,7 +34,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class RBMKPanelBlockEntity extends BlockEntity
-        implements MenuProvider, HbmLegacyLoadedTile {
+        implements MenuProvider, HbmLegacyLoadedTile, RORInteractive {
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private RBMKPanelPlanner.GaugeUnit[] gauges = defaultGauges();
     private RBMKPanelPlanner.GraphUnit[] graphs = defaultGraphs();
@@ -88,6 +90,37 @@ public class RBMKPanelBlockEntity extends BlockEntity
 
     public RBMKPanelPlanner.TerminalState terminal() {
         return terminal;
+    }
+
+    @Override
+    public String[] getFunctionInfo() {
+        if (panelType() != RBMKPanelPlanner.PanelType.TERMINAL) {
+            return new String[0];
+        }
+        return new String[] {
+                RORInfo.PREFIX_FUNCTION + "clear",
+                RORInfo.PREFIX_FUNCTION + "write" + RORInteractive.NAME_SEPARATOR + "text",
+                RORInfo.PREFIX_FUNCTION + "set<line#>" + RORInteractive.NAME_SEPARATOR + "text",
+                RORInfo.PREFIX_FUNCTION + "submit" + RORInteractive.NAME_SEPARATOR + "command"
+        };
+    }
+
+    @Override
+    public String runRORFunction(String name, String[] params) {
+        if (panelType() != RBMKPanelPlanner.PanelType.TERMINAL) {
+            return null;
+        }
+        RBMKPanelPlanner.TerminalRorFunctionPlan plan = RBMKPanelPlanner.planTerminalRorFunction(terminal, name, params);
+        if (!plan.changed()) {
+            return null;
+        }
+        terminal = plan.state();
+        broadcast(level, plan.broadcast());
+        if (plan.action() == RBMKPanelPlanner.TerminalAction.SELF_DESTRUCT) {
+            selfDestructTerminal();
+        }
+        setChangedAndSync(false);
+        return null;
     }
 
     public RBMKConsolePlanner.ColumnSnapshot[] displayColumns() {

@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:machine_bat9000" }, "count": 1 }
+  ],
+  "outputs": [
+    { "item": "hbm_ntm_rebirth:plate_welded_tcalloy", "count": 4 },
+    { "item": "hbm_ntm_rebirth:plate_steel", "count": 16 }
+  ],
+  "tier_lower": 3,
+  "overlay": "recycling"
+}

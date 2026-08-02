@@ -51,7 +51,7 @@ public class PurexMenu extends AbstractContainerMenu {
         for (int row = 0; row < 2; row++) {
             for (int column = 0; column < 3; column++) {
                 int slot = 7 + column + row * 3;
-                addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), slot,
+                addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), slot,
                         80 + column * 18, 36 + row * 18));
             }
         }
@@ -97,7 +97,7 @@ public class PurexMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity));
     }
 
     @Override
@@ -119,6 +119,9 @@ public class PurexMenu extends AbstractContainerMenu {
             return ItemStack.EMPTY;
         }
         HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+        if (index < MACHINE_SLOT_COUNT) {
+            com.hbm.ntm.util.AchievementHandler.fire(player, original);
+        }
         return original;
     }
 

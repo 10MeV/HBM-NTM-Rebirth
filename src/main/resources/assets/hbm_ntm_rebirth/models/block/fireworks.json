@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "hbm_ntm_rebirth:block/fireworks_side",
+    "top": "hbm_ntm_rebirth:block/fireworks_top",
+    "bottom": "hbm_ntm_rebirth:block/fireworks_bottom",
+    "particle": "hbm_ntm_rebirth:block/fireworks_side"
+  }
+}

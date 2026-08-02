@@ -23,13 +23,15 @@ import com.hbm.ntm.block.LegacyBarbedWireBlock;
 import com.hbm.ntm.block.LegacyChargeBlock;
 import com.hbm.ntm.block.LegacyChainBlock;
 import com.hbm.ntm.block.LegacyDeadPlantBlock;
-import com.hbm.ntm.block.LegacyFanBlock;
 import com.hbm.ntm.block.LegacyFileCabinetBlock;
 import com.hbm.ntm.block.LegacyFrameRenderState;
 import com.hbm.ntm.block.LegacyGlyphidSpawnerBlock;
 import com.hbm.ntm.block.LegacyRadAbsorberBlock;
 import com.hbm.ntm.block.LegacyBasaltOreBlock;
+import com.hbm.ntm.block.LegacyBiomeStoneBlock;
 import com.hbm.ntm.block.LegacyCokeBlock;
+import com.hbm.ntm.block.LegacyLightstoneBlock;
+import com.hbm.ntm.block.LegacyMultiSlabBlock;
 import com.hbm.ntm.block.LegacySellafieldBlock;
 import com.hbm.ntm.block.LegacySellafieldOreBlock;
 import com.hbm.ntm.block.LegacySellafieldSlakedBlock;
@@ -38,7 +40,6 @@ import com.hbm.ntm.block.LegacyNtmGlassPaneBlock;
 import com.hbm.ntm.block.LegacyNtmFlowerBlock;
 import com.hbm.ntm.block.LegacyTallPlantBlock;
 import com.hbm.ntm.block.MassStorageBlock;
-import com.hbm.ntm.block.PileGraphiteDrilledBaseBlock;
 import com.hbm.ntm.block.PowerDetectorBlock;
 import com.hbm.ntm.block.PoweredRedCableBlock;
 import com.hbm.ntm.block.RBMKColumnBlock;
@@ -60,6 +61,9 @@ import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
@@ -74,11 +78,43 @@ public class HbmBlockStateProvider extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
+        legacyStairsWithItem(ModBlocks.CONCRETE_SMOOTH_STAIRS, "concrete");
+        legacyStairsWithItem(ModBlocks.CONCRETE_STAIRS, "concrete_tile");
+        legacyStairsWithItem(ModBlocks.CONCRETE_ASBESTOS_STAIRS, "concrete_asbestos");
+        legacyStairsWithItem(ModBlocks.DUCRETE_SMOOTH_STAIRS, "ducrete");
+        legacyStairsWithItem(ModBlocks.DUCRETE_STAIRS, "ducrete_tile");
+        legacyStairsWithItem(ModBlocks.BRICK_CONCRETE_STAIRS, "brick_concrete");
+        legacyStairsWithItem(ModBlocks.BRICK_CONCRETE_MOSSY_STAIRS, "brick_concrete_mossy");
+        legacyStairsWithItem(ModBlocks.BRICK_CONCRETE_CRACKED_STAIRS, "brick_concrete_cracked");
+        legacyStairsWithItem(ModBlocks.BRICK_CONCRETE_BROKEN_STAIRS, "brick_concrete_broken");
+        legacyStairsWithItem(ModBlocks.BRICK_DUCRETE_STAIRS, "brick_ducrete");
+        legacyStairsWithItem(ModBlocks.REINFORCED_STONE_STAIRS, "reinforced_stone");
+        legacyStairsWithItem(ModBlocks.REINFORCED_BRICK_STAIRS, "reinforced_brick");
+        legacyStairsWithItem(ModBlocks.BRICK_OBSIDIAN_STAIRS, "brick_obsidian");
+        legacyStairsWithItem(ModBlocks.BRICK_LIGHT_STAIRS, "brick_light");
+        legacyStairsWithItem(ModBlocks.BRICK_COMPOUND_STAIRS, "brick_compound");
+        legacyStairsWithItem(ModBlocks.BRICK_ASBESTOS_STAIRS, "brick_asbestos");
+        legacyStairsWithItem(ModBlocks.BRICK_FIRE_STAIRS, "brick_fire");
+        legacyStairsWithItem(ModBlocks.ASPHALT_STAIRS, "asphalt");
+        legacyStairsWithItem(ModBlocks.LIGHTSTONE_TILE_STAIRS, "lightstone.tile");
+        legacyStairsWithItem(ModBlocks.LIGHTSTONE_BRICKS_STAIRS, "lightstone.bricks");
+        legacyLightstoneWithItem();
+        legacyMultiSlabWithItem(ModBlocks.CONCRETE_SLAB,
+                "concrete", "concrete_tile", "concrete_asbestos", "ducrete", "ducrete_tile", "asphalt");
+        legacyMultiSlabWithItem(ModBlocks.CONCRETE_BRICK_SLAB,
+                "brick_concrete", "brick_concrete_mossy", "brick_concrete_cracked", "brick_concrete_broken", "brick_ducrete");
+        legacyMultiSlabWithItem(ModBlocks.BRICK_SLAB,
+                "reinforced_stone", "reinforced_brick", "brick_obsidian", "brick_light", "brick_compound", "brick_asbestos", "brick_fire");
+        legacyMultiSlabWithItem(ModBlocks.STONES_SLAB, "lightstone.tile", "lightstone.bricks");
+        legacyDoubleSlabBlock(ModBlocks.CONCRETE_DOUBLE_SLAB, "concrete_slab");
+        legacyDoubleSlabBlock(ModBlocks.CONCRETE_BRICK_DOUBLE_SLAB, "concrete_brick_slab");
+        legacyDoubleSlabBlock(ModBlocks.BRICK_DOUBLE_SLAB, "brick_slab");
+        legacyDoubleSlabBlock(ModBlocks.STONES_DOUBLE_SLAB, "stones_slab");
         existingModelWithItemNoRotation(ModBlocks.MACHINE_PRESS, "machine_press");
         cubeWithItem(ModBlocks.PRESS_PREHEATER, "press_preheater");
         electricPressWithItemRenderer(ModBlocks.MACHINE_EPRESS, "machine_epress");
         conveyorPressWithItem();
-        difurnaceWithItem(ModBlocks.MACHINE_DIFURNACE_OFF);
+        pistonInserterWithItemRenderer();
         sidedCubeWithItem(ModBlocks.MACHINE_ELECTRIC_FURNACE_OFF,
                 "machine_electric_furnace_bottom",
                 "machine_electric_furnace_top",
@@ -136,7 +172,6 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "armor_table_side",
                 "armor_table_side",
                 "armor_table_side");
-        fanFrameWithItemRenderer();
         filingCabinetWithItemRenderer();
         pedestalWithItem();
         existingModelWithCustomItemNoRotation(ModBlocks.BOXCAR, "boxcar");
@@ -239,6 +274,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         massStorageWithItem();
         existingModelWithCustomItem(ModBlocks.MACHINE_RADAR, "machines/radar");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADAR_LARGE, "machines/radar_large");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_SATLINK, "machines/satlink");
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_RADAR_SCREEN, "radar_screen",
                 HbmBlockStateProvider::solidifierRotation);
         vendingMachineWithItemRenderer();
@@ -287,6 +323,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "machine_controller_side",
                 "machine_controller_side");
         satDockWithItemRenderer();
+        satelliteLinkWithItemRenderer();
         soyuzCapsuleWithItem();
         soyuzLauncherWithItemRenderer();
         simpleCubeWithItem(ModBlocks.STRUCT_LAUNCHER, "struct_launcher");
@@ -332,7 +369,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 "rbmk_control_reasim", "rbmk_control_reasim_bottom");
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_REASIM_AUTO,
                 "rbmk_control_reasim_auto", "rbmk_control_reasim_auto_bottom");
-        pileGraphiteBlocksWithItems();
+        graphiteBlockWithItem();
         frameStateVisibleMachineWithItemRenderer(ModBlocks.MACHINE_ASSEMBLY_MACHINE,
                 HbmBlockStateProvider::assemblyMachineRotation);
         forceFieldWithItem();
@@ -445,20 +482,6 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_RADIOLYSIS, "machine_radiolysis",
                 HbmBlockStateProvider::radiolysisRotation);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RTG_GREY, "machines/rtg");
-        sidedCubeWithItem(ModBlocks.MACHINE_MINIRTG,
-                "rtg_cell",
-                "rtg_cell",
-                "rtg_cell",
-                "rtg_cell",
-                "rtg_cell",
-                "rtg_cell");
-        sidedCubeWithItem(ModBlocks.MACHINE_POWERRTG,
-                "rtg_polonium",
-                "rtg_polonium",
-                "rtg_polonium",
-                "rtg_polonium",
-                "rtg_polonium",
-                "rtg_polonium");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADGEN, "machines/radgen");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ROTARY_FURNACE, "machines/rotary_furnace");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_STEAM_ENGINE, "machines/steam_engine");
@@ -559,8 +582,15 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleCubeWithItem("block_meteor", "meteor");
         simpleCubeWithItem("block_meteor_cobble", "meteor_cobble");
         simpleCubeWithItem("block_meteor_broken", "meteor_crushed");
+        uberConcreteWithItem();
         simpleCubeWithItem(ModBlocks.BLOCK_METEOR_MOLTEN, "block_meteor_molten");
         simpleCubeWithItem("block_meteor_treasure", "meteor_treasure");
+        simpleCubeWithItem(ModBlocks.METEOR_POLISHED, "meteor_polished");
+        simpleCubeWithItem(ModBlocks.METEOR_BRICK, "meteor_brick");
+        simpleCubeWithItem(ModBlocks.METEOR_BRICK_MOSSY, "meteor_brick_mossy");
+        simpleCubeWithItem(ModBlocks.METEOR_BRICK_CRACKED, "meteor_brick_cracked");
+        meteorPillarWithItem(ModBlocks.METEOR_PILLAR, "meteor_pillar", "meteor_pillar_top");
+        meteorPillarWithItem(ModBlocks.METEOR_BATTERY, "meteor_spawner_side", "meteor_power");
         simpleCubeWithItem(ModBlocks.ORE_METEOR_IRON, "ore_meteor_iron");
         simpleCubeWithItem(ModBlocks.ORE_METEOR_COPPER, "ore_meteor_copper");
         simpleCubeWithItem(ModBlocks.ORE_METEOR_ALUMINIUM, "ore_meteor_aluminium");
@@ -573,7 +603,13 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         steelGrateWithItem(ModBlocks.STEEL_GRATE, "steel_grate");
         steelGrateWithItem(ModBlocks.STEEL_GRATE_WIDE, "steel_grate_wide");
         chainWithItem();
-        barbedWireWithItem();
+        barbedWireWithItem(ModBlocks.BARBED_WIRE, "barbed_wire", "barbed_wire_model");
+        barbedWireWithItem(ModBlocks.BARBED_WIRE_FIRE, "barbed_wire_fire", "barbed_wire_fire_model");
+        barbedWireWithItem(ModBlocks.BARBED_WIRE_POISON, "barbed_wire_poison", "barbed_wire_poison_model");
+        barbedWireWithItem(ModBlocks.BARBED_WIRE_ACID, "barbed_wire_acid", "barbed_wire_acid_model");
+        barbedWireWithItem(ModBlocks.BARBED_WIRE_WITHER, "barbed_wire_wither", "barbed_wire_wither_model");
+        barbedWireWithItem(ModBlocks.BARBED_WIRE_ULTRADEATH, "barbed_wire_ultradeath", "barbed_wire_ultradeath_model");
+        spikesWithItem();
         existingModelWithItemNoRotation(ModBlocks.POLE_TOP, "pole_top");
         existingModelWithItem(ModBlocks.POLE_SATELLITE_RECEIVER, "pole_satellite_receiver");
         glowingMushWithItem();
@@ -595,8 +631,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_URANIUM_SCORCHED, LegacySellafieldOreBlock.Kind.URANIUM_SCORCHED);
         sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_SCHRABIDIUM, LegacySellafieldOreBlock.Kind.SCHRABIDIUM);
         sellafieldOreWithItem(ModBlocks.ORE_SELLAFIELD_RADGEM, LegacySellafieldOreBlock.Kind.RADGEM);
-        simpleCubeWithItem(ModBlocks.WASTE_TRINITITE, "waste_trinitite");
-        simpleCubeWithItem(ModBlocks.WASTE_TRINITITE_RED, "waste_trinitite_red");
+        trinititeOreWithItem(ModBlocks.WASTE_TRINITITE);
+        trinititeOreWithItem(ModBlocks.WASTE_TRINITITE_RED);
         translucentCubeWithItem(ModBlocks.GLASS_TRINITITE, "glass_trinitite");
         simpleCubeWithItem(ModBlocks.ASH_DIGAMMA, "ash_digamma");
         crossBlockOnly(ModBlocks.FIRE_DIGAMMA, "fire_digamma");
@@ -611,6 +647,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         pribrisDebrisWithItem(ModBlocks.PRIBRIS_DIGAMMA, "rbmk/rbmk_debris_digamma");
         cokeBlockWithItem();
         concreteColoredWithItem();
+        biomeStoneWithItem();
+        phosphorVineWithItem();
         concreteColoredExtWithItem();
         woodStructureWithItem();
         basaltOreWithItem();
@@ -1010,17 +1048,6 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         customBlockItem(block);
     }
 
-    private void fanFrameWithItemRenderer() {
-        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/machines/fan"));
-        getVariantBuilder(ModBlocks.FAN.get())
-                .forAllStates(state -> ConfiguredModel.builder()
-                        .modelFile(model)
-                        .rotationX(rotationX(state.getValue(LegacyFanBlock.FACING)))
-                        .rotationY(rotationY(state.getValue(LegacyFanBlock.FACING)))
-                        .build());
-        customBlockItem(ModBlocks.FAN);
-    }
-
     private void filingCabinetWithItemRenderer() {
         ModelFile green = new ModelFile.UncheckedModelFile(
                 new ResourceLocation(HbmNtm.MOD_ID, "block/filing_cabinet"));
@@ -1291,6 +1318,16 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         customBlockItem(ModBlocks.SAT_DOCK);
     }
 
+    private void satelliteLinkWithItemRenderer() {
+        ModelFile model = new ModelFile.UncheckedModelFile(modLoc("block/machine_satlink"));
+        getVariantBuilder(ModBlocks.MACHINE_SATLINK.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationY(eastZeroRotation(state.getValue(HorizontalMachineBlock.FACING)))
+                        .build());
+        customBlockItem(ModBlocks.MACHINE_SATLINK);
+    }
+
     private void researchReactorWithItemRenderer() {
         ModelFile model = new ModelFile.UncheckedModelFile(modLoc("block/reactors/reactor_small_base"));
         getVariantBuilder(ModBlocks.REACTOR_RESEARCH.get())
@@ -1403,48 +1440,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         return builder.build();
     }
 
-    private void pileGraphiteBlocksWithItems() {
+    private void graphiteBlockWithItem() {
         simpleCubeWithItem(ModBlocks.BLOCK_GRAPHITE, "block_graphite");
-        pileGraphiteColumnWithItem(ModBlocks.BLOCK_GRAPHITE_DRILLED,
-                "block_graphite_drilled",
-                "block_graphite_drilled_aluminum",
-                "",
-                "");
-        pileGraphiteColumnWithItem(ModBlocks.BLOCK_GRAPHITE_FUEL,
-                "block_graphite_fuel",
-                "block_graphite_fuel_aluminum",
-                "",
-                "");
-        pileGraphiteColumnWithItem(ModBlocks.BLOCK_GRAPHITE_PLUTONIUM,
-                "block_graphite_plutonium",
-                "block_graphite_plutonium_aluminum",
-                "",
-                "");
-        pileGraphiteColumnWithItem(ModBlocks.BLOCK_GRAPHITE_ROD,
-                "block_graphite_rod_in",
-                "block_graphite_rod_in_aluminum",
-                "block_graphite_rod_out",
-                "block_graphite_rod_out_aluminum");
-        pileGraphiteColumnWithItem(ModBlocks.BLOCK_GRAPHITE_SOURCE,
-                "block_graphite_source",
-                "block_graphite_source_aluminum",
-                "",
-                "");
-        pileGraphiteColumnWithItem(ModBlocks.BLOCK_GRAPHITE_LITHIUM,
-                "block_graphite_lithium",
-                "block_graphite_lithium_aluminum",
-                "",
-                "");
-        pileGraphiteColumnWithItem(ModBlocks.BLOCK_GRAPHITE_TRITIUM,
-                "block_graphite_tritium",
-                "block_graphite_tritium_aluminum",
-                "",
-                "");
-        pileGraphiteColumnWithItem(ModBlocks.BLOCK_GRAPHITE_DETECTOR,
-                "block_graphite_detector",
-                "block_graphite_detector_aluminum",
-                "block_graphite_detector_out",
-                "block_graphite_detector_out_aluminum");
     }
 
     private void rbmkColumnWithItem(RegistryObject<Block> block, String textureBase) {
@@ -1577,49 +1574,6 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .texture("bottom", modLoc("block/rbmk/" + bottomTexture));
     }
 
-    private void pileGraphiteColumnWithItem(
-            RegistryObject<Block> block,
-            String endTexture,
-            String aluminumEndTexture,
-            String activeEndTexture,
-            String activeAluminumEndTexture) {
-        ModelFile normal = pileGraphiteColumnModel(block.getId().getPath(), endTexture);
-        ModelFile aluminum = pileGraphiteColumnModel(block.getId().getPath() + "_aluminum",
-                fallbackTexture(aluminumEndTexture, endTexture));
-        ModelFile active = pileGraphiteColumnModel(block.getId().getPath() + "_active",
-                fallbackTexture(activeEndTexture, endTexture));
-        ModelFile activeAluminum = pileGraphiteColumnModel(block.getId().getPath() + "_active_aluminum",
-                fallbackTexture(activeAluminumEndTexture, fallbackTexture(aluminumEndTexture, endTexture)));
-
-        getVariantBuilder(block.get())
-                .forAllStates(state -> {
-                    boolean aluminumState = state.getValue(PileGraphiteDrilledBaseBlock.ALUMINUM);
-                    boolean activeState = state.getValue(PileGraphiteDrilledBaseBlock.ACTIVE);
-                    ModelFile model = activeState
-                            ? (aluminumState ? activeAluminum : active)
-                            : (aluminumState ? aluminum : normal);
-                    ConfiguredModel.Builder<?> builder = ConfiguredModel.builder().modelFile(model);
-                    switch (state.getValue(PileGraphiteDrilledBaseBlock.AXIS)) {
-                        case Z -> builder.rotationX(90);
-                        case X -> builder.rotationX(90).rotationY(90);
-                        case Y -> {
-                        }
-                    }
-                    return builder.build();
-                });
-        simpleBlockItem(block.get(), normal);
-    }
-
-    private ModelFile pileGraphiteColumnModel(String modelName, String endTexture) {
-        return models().withExistingParent(modelName, mcLoc("block/cube_column"))
-                .texture("particle", modLoc("block/block_graphite"))
-                .texture("side", modLoc("block/block_graphite"))
-                .texture("end", modLoc("block/" + endTexture));
-    }
-
-    private static String fallbackTexture(String preferred, String fallback) {
-        return preferred == null || preferred.isEmpty() ? fallback : preferred;
-    }
 
     private void vendingMachineWithItemRenderer() {
         ModelFile soda = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/vending_machine"));
@@ -1705,23 +1659,46 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(ModBlocks.STEEL_SCAFFOLD.get(), model);
     }
 
-    private void barbedWireWithItem() {
-        ModelFile model = models().getBuilder("barbed_wire")
+    private void barbedWireWithItem(RegistryObject<Block> block, String modelName, String textureName) {
+        ModelFile model = models().getBuilder(modelName)
                 .customLoader(net.minecraftforge.client.model.generators.loaders.ObjModelBuilder::begin)
                 .modelLocation(new ResourceLocation(HbmNtm.MOD_ID, "models/blocks/barbed_wire.obj"))
                 .flipV(true)
                 .automaticCulling(false)
                 .end()
                 .renderType("minecraft:cutout")
-                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/barbed_wire_model"))
-                .texture("default", new ResourceLocation(HbmNtm.MOD_ID, "block/barbed_wire_model"))
-                .texture("texture0", new ResourceLocation(HbmNtm.MOD_ID, "block/barbed_wire_model"));
-        getVariantBuilder(ModBlocks.BARBED_WIRE.get())
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .texture("default", new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName))
+                .texture("texture0", new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
+        getVariantBuilder(block.get())
                 .forAllStates(state -> ConfiguredModel.builder()
                         .modelFile(model)
                         .rotationY(rotationY(state.getValue(LegacyBarbedWireBlock.FACING)))
                         .build());
-        simpleBlockItem(ModBlocks.BARBED_WIRE.get(), model);
+        simpleBlockItem(block.get(), model);
+    }
+
+    private void pistonInserterWithItemRenderer() {
+        ModelFile model = new ModelFile.UncheckedModelFile(modLoc("block/piston_inserter"));
+        getVariantBuilder(ModBlocks.PISTON_INSERTER.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        itemModels().getBuilder(ModBlocks.PISTON_INSERTER.getId().getPath())
+                .parent(new ModelFile.UncheckedModelFile("minecraft:builtin/entity"));
+    }
+
+    private void spikesWithItem() {
+        ModelFile model = models().getBuilder("spikes")
+                .customLoader(net.minecraftforge.client.model.generators.loaders.ObjModelBuilder::begin)
+                .modelLocation(new ResourceLocation(HbmNtm.MOD_ID, "models/blocks/spikes.obj"))
+                .flipV(true)
+                .automaticCulling(false)
+                .end()
+                .renderType("minecraft:cutout")
+                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/spikes"))
+                .texture("default", new ResourceLocation(HbmNtm.MOD_ID, "block/spikes"))
+                .texture("texture0", new ResourceLocation(HbmNtm.MOD_ID, "block/spikes"));
+        simpleBlock(ModBlocks.SPIKES.get(), model);
+        simpleBlockItem(ModBlocks.SPIKES.get(), model);
     }
 
     private void steelGrateWithItem(RegistryObject<Block> block, String modelName) {
@@ -1770,21 +1747,6 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         return builder.build();
     }
 
-    private void difurnaceWithItem(RegistryObject<Block> block) {
-        String blockName = block.getId().getPath();
-        ModelFile model = models().cube(
-                blockName,
-                new ResourceLocation(HbmNtm.MOD_ID, "block/brick_fire"),
-                new ResourceLocation(HbmNtm.MOD_ID, "block/difurnace_top_off_alt"),
-                new ResourceLocation(HbmNtm.MOD_ID, "block/difurnace_side_alt"),
-                new ResourceLocation(HbmNtm.MOD_ID, "block/difurnace_front_off_alt"),
-                new ResourceLocation(HbmNtm.MOD_ID, "block/difurnace_side_alt"),
-                new ResourceLocation(HbmNtm.MOD_ID, "block/difurnace_side_alt"))
-                .texture("particle", new ResourceLocation(HbmNtm.MOD_ID, "block/difurnace_side_alt"));
-        horizontalBlock(block.get(), model);
-        simpleBlockItem(block.get(), model);
-    }
-
     private void cubeWithItem(RegistryObject<Block> block, String textureName) {
         String blockName = block.getId().getPath();
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
@@ -1797,6 +1759,22 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         ModelFile model = models().cubeAll(blockName, new ResourceLocation(HbmNtm.MOD_ID, "block/" + textureName));
         simpleBlock(block.get(), model);
         simpleBlockItem(block.get(), model);
+    }
+
+    private void trinititeOreWithItem(RegistryObject<Block> block) {
+        String blockName = block.getId().getPath();
+        ModelFile[] variants = new ModelFile[4];
+        for (int index = 0; index < variants.length; index++) {
+            variants[index] = models().cubeAll(blockName + "_" + index,
+                    modLoc("block/" + blockName + "_" + index));
+        }
+        getVariantBuilder(block.get()).forAllStates(state -> new ConfiguredModel[] {
+                new ConfiguredModel(variants[0]),
+                new ConfiguredModel(variants[1]),
+                new ConfiguredModel(variants[2]),
+                new ConfiguredModel(variants[3])
+        });
+        simpleBlockItem(block.get(), variants[0]);
     }
 
     private void ventWithItem(RegistryObject<Block> block, String sideTexture) {
@@ -2264,6 +2242,113 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(block.get(), model);
     }
 
+    private void legacyLightstoneWithItem() {
+        String[] textures = {"lightstone.unrefined", "lightstone.tile", "lightstone.bricks",
+                "lightstone.bricks_chiseled", "lightstone.chiseled"};
+        for (int variant = 0; variant < textures.length; variant++) {
+            String texture = textures[variant];
+            ModelFile model = variant < 3
+                    ? models().cubeAll("lightstone_" + variant, modLoc("block/" + texture))
+                    : models().cube("lightstone_" + variant, modLoc("block/" + texture),
+                            modLoc("block/" + texture + ".top"), modLoc("block/" + texture),
+                            modLoc("block/" + texture), modLoc("block/" + texture), modLoc("block/" + texture))
+                    .texture("particle", modLoc("block/" + texture));
+            getVariantBuilder(ModBlocks.LIGHTSTONE.get()).partialState()
+                    .with(LegacyLightstoneBlock.VARIANT, variant).modelForState().modelFile(model).addModel();
+        }
+        var item = itemModels().withExistingParent("lightstone", modLoc("block/lightstone_0"));
+        for (int variant = 1; variant < textures.length; variant++) {
+            item.override().predicate(modLoc("legacy_variant"), variant)
+                    .model(itemModels().getExistingFile(modLoc("block/lightstone_" + variant))).end();
+        }
+    }
+
+    private void biomeStoneWithItem() {
+        ModelFile desertLayer = models().cubeBottomTop("stone_biome_desert_layer",
+                modLoc("block/stone_biome_layer.desert"), modLoc("block/stone_biome_top.desert"),
+                modLoc("block/stone_biome_top.desert"));
+        ModelFile desertBase = models().cubeBottomTop("stone_biome_desert_base",
+                modLoc("block/stone_biome.desert"), modLoc("block/stone_biome_top.desert"),
+                modLoc("block/stone_biome_top.desert"));
+        ModelFile woodlandLayer = models().cubeBottomTop("stone_biome_woodland_layer",
+                modLoc("block/stone_biome_layer.woodland"), modLoc("block/stone_biome_top.woodland"),
+                modLoc("block/stone_biome_top.woodland"));
+        ModelFile woodlandBase = models().cubeBottomTop("stone_biome_woodland_base",
+                modLoc("block/stone_biome.woodland"), modLoc("block/stone_biome_top.woodland"),
+                modLoc("block/stone_biome_top.woodland"));
+
+        getVariantBuilder(ModBlocks.STONE_BIOME.get())
+                .partialState().with(LegacyBiomeStoneBlock.VARIANT, 0).with(LegacyBiomeStoneBlock.SAME_ABOVE, false)
+                .modelForState().modelFile(desertLayer).addModel()
+                .partialState().with(LegacyBiomeStoneBlock.VARIANT, 0).with(LegacyBiomeStoneBlock.SAME_ABOVE, true)
+                .modelForState().modelFile(desertBase).addModel()
+                .partialState().with(LegacyBiomeStoneBlock.VARIANT, 1).with(LegacyBiomeStoneBlock.SAME_ABOVE, false)
+                .modelForState().modelFile(woodlandLayer).addModel()
+                .partialState().with(LegacyBiomeStoneBlock.VARIANT, 1).with(LegacyBiomeStoneBlock.SAME_ABOVE, true)
+                .modelForState().modelFile(woodlandBase).addModel();
+
+        itemModels().withExistingParent("stone_biome", modLoc("block/stone_biome_desert_layer"))
+                .override().predicate(modLoc("legacy_variant"), 1.0F)
+                .model(itemModels().getExistingFile(modLoc("block/stone_biome_woodland_layer"))).end();
+    }
+
+    private void phosphorVineWithItem() {
+        ModelFile world = models().cross("vine_phosphor", modLoc("block/vine_phosphor"));
+        simpleBlock(ModBlocks.VINE_PHOSPHOR.get(), world);
+        itemModels().getBuilder("vine_phosphor")
+                .parent(itemModels().getExistingFile(mcLoc("item/generated")))
+                .texture("layer0", modLoc("block/vine_phosphor_item"));
+    }
+
+    private void legacyMultiSlabWithItem(RegistryObject<Block> block, String... textures) {
+        legacyMultiSlabBlock(block, textures);
+        var item = itemModels().withExistingParent(block.getId().getPath(),
+                modLoc("block/" + block.getId().getPath() + "_0_bottom"));
+        for (int variant = 1; variant < textures.length; variant++) {
+            item.override().predicate(modLoc("legacy_variant"), variant)
+                    .model(itemModels().getExistingFile(modLoc("block/" + block.getId().getPath() + "_" + variant + "_bottom")))
+                    .end();
+        }
+    }
+
+    private void legacyMultiSlabBlock(RegistryObject<Block> block, String... textures) {
+        for (int variant = 0; variant < 8; variant++) {
+            String suffix = block.getId().getPath() + "_" + variant;
+            ResourceLocation texture = modLoc("block/" + textures[variant % textures.length]);
+            ModelFile bottom = models().withExistingParent(suffix + "_bottom", mcLoc("block/slab"))
+                    .texture("bottom", texture).texture("top", texture).texture("side", texture);
+            ModelFile top = models().withExistingParent(suffix + "_top", mcLoc("block/slab_top"))
+                    .texture("bottom", texture).texture("top", texture).texture("side", texture);
+            ModelFile full = models().cubeAll(suffix + "_double", texture);
+            getVariantBuilder(block.get()).partialState().with(LegacyMultiSlabBlock.VARIANT, variant)
+                    .with(SlabBlock.TYPE, SlabType.BOTTOM).modelForState().modelFile(bottom).addModel();
+            getVariantBuilder(block.get()).partialState().with(LegacyMultiSlabBlock.VARIANT, variant)
+                    .with(SlabBlock.TYPE, SlabType.TOP).modelForState().modelFile(top).addModel();
+            getVariantBuilder(block.get()).partialState().with(LegacyMultiSlabBlock.VARIANT, variant)
+                    .with(SlabBlock.TYPE, SlabType.DOUBLE).modelForState().modelFile(full).addModel();
+        }
+    }
+
+    private void legacyDoubleSlabBlock(RegistryObject<Block> block, String singleSlabName) {
+        for (int variant = 0; variant < 8; variant++) {
+            String source = singleSlabName + "_" + variant;
+            getVariantBuilder(block.get()).partialState().with(LegacyMultiSlabBlock.VARIANT, variant)
+                    .with(SlabBlock.TYPE, SlabType.BOTTOM).modelForState()
+                    .modelFile(models().getExistingFile(modLoc("block/" + source + "_bottom"))).addModel();
+            getVariantBuilder(block.get()).partialState().with(LegacyMultiSlabBlock.VARIANT, variant)
+                    .with(SlabBlock.TYPE, SlabType.TOP).modelForState()
+                    .modelFile(models().getExistingFile(modLoc("block/" + source + "_top"))).addModel();
+            getVariantBuilder(block.get()).partialState().with(LegacyMultiSlabBlock.VARIANT, variant)
+                    .with(SlabBlock.TYPE, SlabType.DOUBLE).modelForState()
+                    .modelFile(models().getExistingFile(modLoc("block/" + source + "_double"))).addModel();
+        }
+    }
+
+    private void legacyStairsWithItem(RegistryObject<Block> block, String texture) {
+        stairsBlock((StairBlock) block.get(), new ResourceLocation(HbmNtm.MOD_ID, "block/" + texture));
+        simpleBlockItem(block.get(), models().getExistingFile(modLoc("block/" + block.getId().getPath())));
+    }
+
     private void horizontalBlockNoRotationWithItem(
             RegistryObject<Block> block,
             String down,
@@ -2599,6 +2684,12 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                         .modelFile(model)
                         .build());
         customBlockItem(ModBlocks.RED_PYLON);
+        getVariantBuilder(ModBlocks.RED_PYLON_STEEL.get())
+                .partialState()
+                .setModels(ConfiguredModel.builder()
+                        .modelFile(model)
+                        .build());
+        customBlockItem(ModBlocks.RED_PYLON_STEEL);
     }
 
     private void fluidDuctExhaustWithItem() {
@@ -2939,6 +3030,28 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                     .setModels(configuredModels(models));
         }
         simpleBlockItem(block.get(), models[0]);
+    }
+
+    private void meteorPillarWithItem(RegistryObject<Block> block, String sideTexture, String topTexture) {
+        ResourceLocation side = new ResourceLocation(HbmNtm.MOD_ID, "block/" + sideTexture);
+        ResourceLocation top = new ResourceLocation(HbmNtm.MOD_ID, "block/" + topTexture);
+        axisBlock((net.minecraft.world.level.block.RotatedPillarBlock) block.get(), side, top);
+        simpleBlockItem(block.get(), new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID,
+                "block/" + block.getId().getPath())));
+    }
+
+    private void uberConcreteWithItem() {
+        ModelFile intact = models().cubeAll("concrete_super", new ResourceLocation(HbmNtm.MOD_ID, "block/concrete_super"));
+        ModelFile m0 = models().cubeAll("concrete_super_m0", new ResourceLocation(HbmNtm.MOD_ID, "block/concrete_super_m0"));
+        ModelFile m1 = models().cubeAll("concrete_super_m1", new ResourceLocation(HbmNtm.MOD_ID, "block/concrete_super_m1"));
+        ModelFile m2 = models().cubeAll("concrete_super_m2", new ResourceLocation(HbmNtm.MOD_ID, "block/concrete_super_m2"));
+        ModelFile m3 = models().cubeAll("concrete_super_m3", new ResourceLocation(HbmNtm.MOD_ID, "block/concrete_super_m3"));
+        getVariantBuilder(ModBlocks.CONCRETE_SUPER.get()).forAllStates(state -> {
+            int damage = state.getValue(com.hbm.ntm.block.LegacyUberConcreteBlock.DAMAGE);
+            ModelFile model = damage == 15 ? m3 : damage >= 14 ? m2 : damage >= 12 ? m1 : damage >= 10 ? m0 : intact;
+            return ConfiguredModel.builder().modelFile(model).build();
+        });
+        simpleBlockItem(ModBlocks.CONCRETE_SUPER.get(), intact);
     }
 
     private void sellafieldOreWithItem(RegistryObject<Block> block, LegacySellafieldOreBlock.Kind kind) {

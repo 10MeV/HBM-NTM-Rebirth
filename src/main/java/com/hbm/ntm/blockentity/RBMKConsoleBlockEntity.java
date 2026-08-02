@@ -153,10 +153,8 @@ public class RBMKConsoleBlockEntity extends BlockEntity implements HbmLegacyLoad
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = saveWithoutMetadata();
-        writeConsoleData(tag);
-        return tag;
-    }
+        return getClientSyncTag();
+}
 
     @Nullable
     @Override

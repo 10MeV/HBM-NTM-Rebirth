@@ -1,7 +1,7 @@
 package com.hbm.ntm.block;
 
-import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.blockentity.CableDiodeBlockEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -28,12 +28,13 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 @SuppressWarnings("deprecation")
-public class CableDiodeBlock extends HbmEnergyNodeBlock implements Toolable {
+public class CableDiodeBlock extends HbmEnergyNodeBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
     public CableDiodeBlock(Properties properties) {
@@ -85,33 +86,13 @@ public class CableDiodeBlock extends HbmEnergyNodeBlock implements Toolable {
     }
 
     @Override
-    public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
-        if (!(level.getBlockEntity(pos) instanceof CableDiodeBlockEntity diode)) {
-            return false;
-        }
-        if (!level.isClientSide) {
-            switch (tool) {
-                case SCREWDRIVER -> diode.increaseLevel();
-                case HAND_DRILL -> diode.decreaseLevel();
-                case DEFUSER -> diode.cyclePriority();
-                default -> {
-                    return false;
-                }
-            }
-        }
-        return tool == ToolType.SCREWDRIVER || tool == ToolType.HAND_DRILL || tool == ToolType.DEFUSER;
-    }
-
-    @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (player.getItemInHand(hand).isEmpty()) {
-            ToolType tool = player.isShiftKeyDown() ? ToolType.HAND_DRILL : ToolType.SCREWDRIVER;
-            if (onToolUse(level, player, pos, hit.getDirection(), hit.getLocation(), tool)) {
-                return InteractionResult.sidedSuccess(level.isClientSide);
-            }
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
+                && level.getBlockEntity(pos) instanceof CableDiodeBlockEntity diode) {
+            NetworkHooks.openScreen(serverPlayer, diode, pos);
         }
-        return super.use(state, level, pos, player, hand, hit);
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override
@@ -128,9 +109,6 @@ public class CableDiodeBlock extends HbmEnergyNodeBlock implements Toolable {
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
             TooltipFlag flag) {
         tooltip.add(Component.translatable("block.hbm_ntm_rebirth.cable_diode.desc1"));
-        tooltip.add(Component.translatable("block.hbm_ntm_rebirth.cable_diode.desc2"));
-        tooltip.add(Component.translatable("block.hbm_ntm_rebirth.cable_diode.desc3"));
-        tooltip.add(Component.translatable("block.hbm_ntm_rebirth.cable_diode.desc4"));
     }
 
     @Override

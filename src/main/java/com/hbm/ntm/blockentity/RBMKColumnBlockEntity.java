@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.saveddata.satellites.SatelliteRayScan;
+import com.hbm.saveddata.satellites.SatelliteRayScan.RayEvent;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.block.RBMKColumnBlock;
@@ -1838,6 +1840,10 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         }
 
         RBMKFuelRodState state = item.getState(fuelRod);
+        if (rodFluxState.fluxQuantity() > 0.0D && level != null && level.getGameTime() % 200L == 0L) {
+            SatelliteRayScan.reportEvent(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                    RayEvent.INFO_NUCLEAR, 300);
+        }
         RBMKThermalState thermalState = new RBMKThermalState();
         thermalState.setHeat(heat);
         thermalState.setReasimWater(reasimWater);
@@ -2394,8 +2400,8 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

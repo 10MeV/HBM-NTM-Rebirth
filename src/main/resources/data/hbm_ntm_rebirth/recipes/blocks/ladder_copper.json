@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","pattern":["LLL","LCL","LLL"],"key":{"L":{"item":"minecraft:ladder"},"C":{"item":"minecraft:copper_ingot"}},"result":{"item":"hbm_ntm_rebirth:ladder_copper","count":8}}

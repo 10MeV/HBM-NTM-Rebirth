@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
+import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.api.redstoneoverradio.RTTYCounterState;
 import com.hbm.ntm.api.redstoneoverradio.RTTYPatternMatcher;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -9,6 +10,8 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -24,16 +27,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity {
+public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity implements CopiableSettings {
     public static final int FILTER_SLOT_COUNT = RTTYCounterState.SLOT_COUNT;
     private static final String TAG_FILTER_ITEMS = "FilterItems";
+    private static final String TAG_SETTINGS_ITEMS = "items";
+    private static final String TAG_SETTINGS_SLOT = "slot";
 
     private final RTTYCounterState radio = new RTTYCounterState();
     private final RTTYPatternMatcher matcher = new RTTYPatternMatcher(FILTER_SLOT_COUNT);
+    private boolean suppressFilterModeInit;
     private final ItemStackHandler filterItems = new ItemStackHandler(FILTER_SLOT_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
-            matcher.initPatternStandard(getStackInSlot(slot), slot);
+            if (!suppressFilterModeInit) {
+                matcher.initPatternStandard(getStackInSlot(slot), slot);
+            }
             setChangedAndSync(false);
         }
 
@@ -78,6 +86,64 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity {
         }
         matcher.nextMode(filterItems.getStackInSlot(slot), slot);
         setChangedAndSync(false);
+    }
+
+    /**
+     * Legacy {@code IControlReceiverFilter} settings-tool contract for the
+     * three counter filters.  It stores only non-empty filters as relative
+     * slots and deliberately advances the target's matcher mode after each
+     * raw slot write instead of serializing the source matcher state.
+     */
+    @Override
+    public CompoundTag getSettings(Level level, BlockPos pos) {
+        CompoundTag tag = new CompoundTag();
+        ListTag copied = new ListTag();
+        for (int slot = 0; slot < FILTER_SLOT_COUNT; slot++) {
+            ItemStack filter = filterItems.getStackInSlot(slot);
+            if (filter.isEmpty()) {
+                continue;
+            }
+            CompoundTag slotTag = new CompoundTag();
+            slotTag.putByte(TAG_SETTINGS_SLOT, (byte) slot);
+            filter.save(slotTag);
+            copied.add(slotTag);
+        }
+        tag.put(TAG_SETTINGS_ITEMS, copied);
+        return tag;
+    }
+
+    @Override
+    public void pasteSettings(CompoundTag tag, int index, Level level, net.minecraft.world.entity.player.Player player,
+            BlockPos pos) {
+        if (tag == null) {
+            return;
+        }
+        ListTag copied = tag.getList(TAG_SETTINGS_ITEMS, Tag.TAG_COMPOUND);
+        boolean changed = false;
+        for (int entry = 0; entry < copied.size(); entry++) {
+            CompoundTag slotTag = copied.getCompound(entry);
+            int slot = slotTag.getByte(TAG_SETTINGS_SLOT);
+            ItemStack filter = ItemStack.of(slotTag);
+            if (slot < 0 || slot >= FILTER_SLOT_COUNT || filter.isEmpty()) {
+                continue;
+            }
+            suppressFilterModeInit = true;
+            try {
+                filterItems.setStackInSlot(slot, filter);
+            } finally {
+                suppressFilterModeInit = false;
+            }
+            matcher.nextMode(filter, slot);
+            changed = true;
+        }
+        if (changed) {
+            setChangedAndSync(false);
+        }
+    }
+
+    @Override
+    public List<Component> infoForDisplay(Level level, BlockPos pos) {
+        return List.of(Component.translatable("copytool.filter"));
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchCounterBlockEntity torch) {
@@ -153,8 +219,8 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {

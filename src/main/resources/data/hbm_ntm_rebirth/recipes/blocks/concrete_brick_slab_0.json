@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "building",
+  "key": {
+    "X": {
+      "item": "hbm_ntm_rebirth:brick_concrete"
+    }
+  },
+  "pattern": [
+    "XXX"
+  ],
+  "result": {
+    "count": 6,
+    "item": "hbm_ntm_rebirth:concrete_brick_slab",
+    "nbt": "{hbmLegacyVariant:0}"
+  },
+  "show_notification": true
+}

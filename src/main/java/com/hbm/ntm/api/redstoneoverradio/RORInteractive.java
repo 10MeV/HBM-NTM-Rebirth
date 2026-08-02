@@ -43,7 +43,11 @@ public interface RORInteractive extends RORInfo {
         try {
             result = Integer.parseInt(value);
         } catch (Exception ex) {
-            throw new RORFunctionException(EX_FORMAT);
+            try {
+                result = (int) Math.round(Double.parseDouble(value));
+            } catch (Exception decimalEx) {
+                throw new RORFunctionException(EX_FORMAT);
+            }
         }
         if (result < min || result > max) {
             throw new RORFunctionException(EX_FORMAT);

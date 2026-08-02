@@ -88,7 +88,7 @@ public class NuclearDeviceMenu extends AbstractContainerMenu {
         return player.distanceToSqr(
                 blockPos.getX() + 0.5D,
                 blockPos.getY() + 0.5D,
-                blockPos.getZ() + 0.5D) <= 64.0D;
+                blockPos.getZ() + 0.5D) <= HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity);
     }
 
     @Override

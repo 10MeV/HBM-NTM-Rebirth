@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "misc",
+  "pattern": [" B ", "SBS", "SBS"],
+  "key": {
+    "B": { "item": "hbm_ntm_rebirth:ingot_boron" },
+    "S": { "item": "hbm_ntm_rebirth:plate_steel" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:pile_device", "nbt": "{hbmPileDeviceKind:\"control\"}" }
+}

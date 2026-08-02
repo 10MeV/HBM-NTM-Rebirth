@@ -1,5 +1,7 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.saveddata.satellites.SatelliteRayScan;
+import com.hbm.saveddata.satellites.SatelliteRayScan.RayEvent;
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
 import com.hbm.ntm.api.tile.IInfoProviderEC;
 import com.hbm.ntm.compat.CompatEnergyControl;
@@ -398,6 +400,10 @@ public class ICFReactorBlockEntity extends HbmFluidNetworkBlockEntity
         if (active.is(ModItems.ICF_PELLET.get()) && ICFPelletItem.getFusingDifficulty(active) <= laser) {
             heatup = ICFPelletItem.react(active, laser);
             heat += heatup;
+            if (level.getGameTime() % 20L == 15L) {
+                SatelliteRayScan.reportEvent(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
+                        RayEvent.INFO_PARTICLE, 200);
+            }
             if (ICFPelletItem.getDepletion(active) >= ICFPelletItem.getMaxDepletion(active)) {
                 items.setStackInSlot(SLOT_ACTIVE, new ItemStack(ModItems.ICF_PELLET_DEPLETED.get()));
                 changed = true;

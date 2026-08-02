@@ -12,8 +12,6 @@ public final class RBMKPanelBlockPlanner {
     public static final int GUI_ID = 0;
     public static final double PANEL_THICKNESS_INSET = 0.25D;
     public static final double INVENTORY_PANEL_MIN_X = 0.25D;
-    public static final double CONSOLE_GUIDE_BOOK_SIZE = 0.1875D;
-    public static final String CONSOLE_GUIDE_BOOK_ID = "book_guide:RBMK";
 
     private RBMKPanelBlockPlanner() {
     }
@@ -105,30 +103,6 @@ public final class RBMKPanelBlockPlanner {
                 1);
     }
 
-    public static ConsoleGuideBookPlan planConsoleGuideBookClick(
-            BlockPos core,
-            BlockPos clicked,
-            int coreMeta,
-            int sideOrdinal,
-            double hitX,
-            double hitZ,
-            boolean playerHasGuideBook) {
-        if (sideOrdinal != Direction.UP.ordinal() || playerHasGuideBook) {
-            return new ConsoleGuideBookPlan(false, CONSOLE_GUIDE_BOOK_ID, BlockPos.ZERO);
-        }
-
-        BlockPos safeCore = core == null ? BlockPos.ZERO : core;
-        BlockPos safeClicked = clicked == null ? safeCore : clicked;
-        ConsoleGuideOffset offset = consoleGuideOffset(coreMeta - RBMKBlockPlanner.CORE_METADATA_OFFSET);
-        double hitWorldX = safeClicked.getX() + hitX;
-        double hitWorldZ = safeClicked.getZ() + hitZ;
-        double targetX = safeCore.getX() + 0.5D + offset.x();
-        double targetZ = safeCore.getZ() + 0.5D + offset.z();
-        boolean grant = Math.abs(hitWorldX - targetX) < CONSOLE_GUIDE_BOOK_SIZE
-                && Math.abs(hitWorldZ - targetZ) < CONSOLE_GUIDE_BOOK_SIZE;
-        return new ConsoleGuideBookPlan(grant, CONSOLE_GUIDE_BOOK_ID, safeCore);
-    }
-
     public static PanelActivationPlan planConsoleScrewdriver(boolean screwdriver, boolean remoteLevel) {
         if (!screwdriver) {
             return PanelActivationPlan.reject();
@@ -182,17 +156,6 @@ public final class RBMKPanelBlockPlanner {
         return index;
     }
 
-    private static ConsoleGuideOffset consoleGuideOffset(int legacyDirectionOrdinal) {
-        double x = 1.375D;
-        double z = 0.75D;
-        return switch (legacyDirectionOrdinal) {
-            case 2 -> new ConsoleGuideOffset(z, -x);
-            case 3 -> new ConsoleGuideOffset(-z, x);
-            case 4 -> new ConsoleGuideOffset(-x, -z);
-            default -> new ConsoleGuideOffset(x, z);
-        };
-    }
-
     public enum PanelBlockType {
         DISPLAY,
         GAUGE,
@@ -234,9 +197,4 @@ public final class RBMKPanelBlockPlanner {
             int placementOffset) {
     }
 
-    public record ConsoleGuideOffset(double x, double z) {
-    }
-
-    public record ConsoleGuideBookPlan(boolean grantGuideBook, String guideBookId, BlockPos core) {
-    }
 }

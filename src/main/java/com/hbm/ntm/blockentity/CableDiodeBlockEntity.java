@@ -10,12 +10,20 @@ import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmLoadedEnergy;
 import com.hbm.ntm.energy.HbmPowerNet;
+import com.hbm.ntm.menu.CableDiodeMenu;
+import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -25,14 +33,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CableDiodeBlockEntity extends BlockEntity
-        implements HbmEnergyReceiver, HbmEnergyConnector, HbmLoadedEnergy, InfoProviderEC, LegacyLookOverlayProvider {
+        implements HbmEnergyReceiver, HbmEnergyConnector, HbmLoadedEnergy, InfoProviderEC, LegacyLookOverlayProvider,
+        MenuProvider, HbmTileSyncable {
+    public static final String CONTROL_LIMIT = "limit";
+    public static final String CONTROL_PRIORITY = "priority";
+    public static final long MAX_THROUGHPUT = 10_000_000_000L;
     private static final String TAG_LEVEL = "level";
     private static final String TAG_PRIORITY = "p";
-    private static final int MIN_LEVEL = 1;
-    private static final int MAX_LEVEL = 11;
     private static final int MAX_PULSES = 10;
 
-    private int throughputLevel = MIN_LEVEL;
+    private long throughputLimit = 1_000L;
     private HbmEnergyReceiver.ConnectionPriority priority = HbmEnergyReceiver.ConnectionPriority.NORMAL;
     private long power;
     private boolean recursionBrake;
@@ -61,34 +71,40 @@ public class CableDiodeBlockEntity extends BlockEntity
         diode.setPower(0L);
     }
 
-    public int getThroughputLevel() {
-        return throughputLevel;
+    public long getThroughputLimit() {
+        return throughputLimit;
     }
 
-    public void increaseLevel() {
-        setLevel(throughputLevel + 1);
-    }
-
-    public void decreaseLevel() {
-        setLevel(throughputLevel - 1);
-    }
-
-    public void setLevel(int level) {
-        int clamped = Mth.clamp(level, MIN_LEVEL, MAX_LEVEL);
-        if (this.throughputLevel != clamped) {
-            this.throughputLevel = clamped;
+    public void setThroughputLimit(long limit) {
+        long clamped = clampThroughput(limit);
+        if (throughputLimit != clamped) {
+            throughputLimit = clamped;
             syncChanged();
         }
     }
 
-    public void cyclePriority() {
-        HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
-        int next = priority.ordinal() + 1;
-        if (next > HbmEnergyReceiver.ConnectionPriority.HIGHEST.ordinal()) {
-            next = HbmEnergyReceiver.ConnectionPriority.LOWEST.ordinal();
+    public HbmEnergyReceiver.ConnectionPriority getConfiguredPriority() {
+        return priority;
+    }
+
+    public void setConfiguredPriority(HbmEnergyReceiver.ConnectionPriority priority) {
+        if (priority != null && this.priority != priority) {
+            this.priority = priority;
+            syncChanged();
         }
-        priority = values[next];
-        syncChanged();
+    }
+
+    public void applyConfiguration(long limit, int priorityOrdinal) {
+        long clampedLimit = clampThroughput(limit);
+        HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
+        HbmEnergyReceiver.ConnectionPriority clampedPriority = priorityOrdinal >= 0 && priorityOrdinal < values.length
+                ? values[priorityOrdinal]
+                : HbmEnergyReceiver.ConnectionPriority.NORMAL;
+        if (throughputLimit != clampedLimit || priority != clampedPriority) {
+            throughputLimit = clampedLimit;
+            priority = clampedPriority;
+            syncChanged();
+        }
     }
 
     public Direction getOutputDirection() {
@@ -160,11 +176,7 @@ public class CableDiodeBlockEntity extends BlockEntity
 
     @Override
     public long getMaxPower() {
-        long max = 1L;
-        for (int i = 0; i < throughputLevel; i++) {
-            max *= 10L;
-        }
-        return max;
+        return throughputLimit;
     }
 
     @Override
@@ -196,7 +208,7 @@ public class CableDiodeBlockEntity extends BlockEntity
 
     @Override
     public void provideExtraInfo(CompoundTag data) {
-        data.putInt("level", throughputLevel);
+        data.putLong(CONTROL_LIMIT, throughputLimit);
         data.putString("priority", priority.name());
         data.putLong("maxRate", getMaxPower());
         data.putLong("transferredThisTick", getPower());
@@ -206,14 +218,20 @@ public class CableDiodeBlockEntity extends BlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt(TAG_LEVEL, throughputLevel);
+        tag.putLong(CONTROL_LIMIT, throughputLimit);
         tag.putByte(TAG_PRIORITY, (byte) priority.ordinal());
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        throughputLevel = tag.contains(TAG_LEVEL) ? Mth.clamp(tag.getInt(TAG_LEVEL), MIN_LEVEL, MAX_LEVEL) : MIN_LEVEL;
+        if (tag.contains(CONTROL_LIMIT)) {
+            throughputLimit = clampThroughput(tag.getLong(CONTROL_LIMIT));
+        } else if (tag.contains(TAG_LEVEL)) {
+            throughputLimit = legacyLevelLimit(tag.getInt(TAG_LEVEL));
+        } else {
+            throughputLimit = 1_000L;
+        }
         if (tag.contains(TAG_PRIORITY)) {
             HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
             int ordinal = tag.getByte(TAG_PRIORITY);
@@ -226,13 +244,60 @@ public class CableDiodeBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
+    }
+
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        return new CableDiodeMenu(containerId, inventory, this);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        return new CompoundTag();
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        load(tag);
+    }
+
+    @Override
+    public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
+        return tag != null && tag.contains(CONTROL_LIMIT) && tag.contains(CONTROL_PRIORITY)
+                && player.containerMenu instanceof CableDiodeMenu menu
+                && menu.getBlockEntity() == this
+                && player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
+                worldPosition.getZ() + 0.5D) <= 64.0D;
+    }
+
+    @Override
+    public void handleClientControl(ServerPlayer player, CompoundTag tag) {
+        applyConfiguration(tag.getLong(CONTROL_LIMIT), tag.getInt(CONTROL_PRIORITY));
+    }
+
+    private static long legacyLevelLimit(int level) {
+        int boundedLevel = Mth.clamp(level, 0, 10);
+        long result = 1L;
+        for (int index = 0; index < boundedLevel; index++) {
+            result *= 10L;
+        }
+        return result;
+    }
+
+    private static long clampThroughput(long limit) {
+        return Math.max(0L, Math.min(limit, MAX_THROUGHPUT));
     }
 
     private void syncChanged() {

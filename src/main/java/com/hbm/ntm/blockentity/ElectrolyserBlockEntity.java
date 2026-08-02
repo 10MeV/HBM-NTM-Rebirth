@@ -722,14 +722,28 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void handleLegacyButton(ServerPlayer player, int value, int id) {
+        int selectedGui;
         if (id == CONTROL_FLUID_MODE) {
-            lastSelectedGui = MODE_FLUID;
+            selectedGui = MODE_FLUID;
         } else if (id == CONTROL_METAL_MODE) {
-            lastSelectedGui = MODE_METAL;
+            selectedGui = MODE_METAL;
+        } else {
+            return;
         }
+        lastSelectedGui = selectedGui;
+        // Fluid and metal recipes use separate GUI pages.  Do not carry the fluid-page
+        // input or its two product buffers across a mode switch; the metal page's nitric
+        // acid reagent is deliberately retained.
+        clearFluidModeBuffers();
         player.closeContainer();
         net.minecraftforge.network.NetworkHooks.openScreen(player, this, worldPosition);
         setChanged();
+    }
+
+    private void clearFluidModeBuffers() {
+        inputTank.resetTank();
+        outputTank1.resetTank();
+        outputTank2.resetTank();
     }
 
     @Override

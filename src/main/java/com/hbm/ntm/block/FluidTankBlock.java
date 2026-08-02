@@ -2,12 +2,15 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
+import com.hbm.ntm.entity.projectile.AirstrikeBombletEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.util.AchievementHandler;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -36,6 +39,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -186,9 +190,25 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
             return;
         }
         if (!tank.isExploded()) {
+            awardInfernoForZetaStrike(level, tank, explosion);
             tank.explodeTank();
         } else {
             level.setBlock(tank.getBlockPos(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        }
+    }
+
+    /**
+     * MachineFluidTank#onBlockExploded: Inferno is only earned when the old
+     * Zeta bomblet destroys a tank containing a flammable fluid.
+     */
+    private static void awardInfernoForZetaStrike(Level level, FluidTankBlockEntity tank, Explosion explosion) {
+        if (!(explosion.getExploder() instanceof AirstrikeBombletEntity)
+                || !tank.getTank().getTankType().hasTrait(FlammableFluidTrait.class)) {
+            return;
+        }
+        AABB range = new AABB(tank.getBlockPos()).inflate(100.0D);
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, range)) {
+            AchievementHandler.award(player, AchievementHandler.INFERNO);
         }
     }
 

@@ -1,5 +1,9 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.saveddata.satellites.SatelliteDetector;
+import com.hbm.saveddata.satellites.SatelliteDetector.BurstIntensity;
+import com.hbm.saveddata.satellites.SatelliteRayScan;
+import com.hbm.saveddata.satellites.SatelliteRayScan.RayEvent;
 import com.hbm.ntm.api.entity.RadarControl;
 import com.hbm.ntm.api.entity.RadarControlState;
 import com.hbm.ntm.api.entity.RadarClientControlProfile;
@@ -147,6 +151,11 @@ public class RadarBlockEntity extends HbmEnergyBlockEntity
         boolean mapChanged = radar.updateMapScan(serverLevel);
         radar.lastRedPower = radar.getRedPower();
         radar.updateLinkedScreen();
+        if (level.getGameTime() % 20L == 0L) {
+            SatelliteDetector.reportEvent(level, SatelliteDetector.DURATION_MEDIUM, BurstIntensity.MEDIUM,
+                    pos.getX(), pos.getZ());
+            SatelliteRayScan.reportEvent(level, pos.getX(), pos.getY(), pos.getZ(), RayEvent.INFO_RADAR, 200);
+        }
 
         RadarHostSyncProfile.TickSyncPlan syncPlan = RadarHostSyncProfile.plan(level.getGameTime(),
                 previousSyncState, radar.syncState(), mapChanged, radar.mapClearDirty);

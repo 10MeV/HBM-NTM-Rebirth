@@ -34,7 +34,6 @@ public final class GeneralConfig {
     public static boolean enableKeybindOverlap = true;
     public static boolean enableFluidContainerCompat = true;
     public static boolean enableMOTD = true;
-    public static boolean enableGuideBook = true;
     public static boolean enableSoundExtension = true;
     public static boolean enableMekanismChanges = true;
     public static boolean enableServerRecipeSync = false;
@@ -86,6 +85,9 @@ public final class GeneralConfig {
             packetThreadingErrorBypass = com.hbm.ntm.config.NetworkConfig.packetThreadingErrorBypass();
             enableExtendedLogging = com.hbm.ntm.config.HbmCommonConfig.extendedLoggingEnabled();
             enableMycelium = com.hbm.ntm.config.RadiationConfig.myceliumSpreadEnabled();
+            enableRad = com.hbm.ntm.config.WorldgenConfig.radiationHotspotsEnabled();
+            enableDungeons = com.hbm.ntm.config.WorldgenConfig.legacySurfaceFixtureMapFeaturesMode();
+            enableMines = com.hbm.ntm.config.WorldgenConfig.landmineSpawningEnabled();
             enableGuns = com.hbm.ntm.config.WeaponConfig.gunsEnabled();
             enableVirus = com.hbm.ntm.config.HbmCommonConfig.crystalVirusSpreadingEnabled();
             enableCataclysm = com.hbm.ntm.config.HbmCommonConfig.cataclysmEnabled();
@@ -149,6 +151,7 @@ public final class GeneralConfig {
     }
 
     public static boolean enableRad() {
+        syncFromModern();
         return enableRad;
     }
 
@@ -178,10 +181,6 @@ public final class GeneralConfig {
 
     public static boolean enableFluidContainerCompat() {
         return enableFluidContainerCompat;
-    }
-
-    public static boolean enableGuideBook() {
-        return enableGuideBook;
     }
 
     public static boolean enableSoundExtension() {

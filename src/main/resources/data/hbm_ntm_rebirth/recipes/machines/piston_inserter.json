@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"redstone","key":{"I":{"tag":"forge:plates/iron"},"P":{"item":"hbm_ntm_rebirth:part_generic_piston_pneumatic"},"T":{"tag":"forge:bolts/steel"}},"pattern":["ITI","TPT","ITI"],"result":{"item":"hbm_ntm_rebirth:piston_inserter"},"show_notification":true}

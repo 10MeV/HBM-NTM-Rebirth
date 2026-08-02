@@ -35,7 +35,11 @@ public class BasicMachineMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_FUEL, 26, 53));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_STAMP, 80, 17));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_INPUT, 80, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), BasicMachineBlockEntity.SLOT_OUTPUT, 140, 35));
+        // The legacy burner press is one of the achievement-producing machines.  Its
+        // output cannot rely on Forge's crafting-grid event, so retain the player-aware
+        // output slot used by the other production machines.
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
+                BasicMachineBlockEntity.SLOT_OUTPUT, 140, 35));
         for (int column = 0; column < 9; column++) {
             addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                     BasicMachineBlockEntity.SLOT_STORAGE_START + column, 8 + column * 18, 84));
@@ -66,7 +70,7 @@ public class BasicMachineMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity));
     }
 
     @Override
@@ -99,6 +103,9 @@ public class BasicMachineMenu extends AbstractContainerMenu {
             }
 
             HbmInventoryMenuHelper.finishQuickMove(slot, stack);
+            if (index == BasicMachineBlockEntity.SLOT_OUTPUT) {
+                com.hbm.ntm.util.AchievementHandler.fire(player, result);
+            }
         }
         return result;
     }

@@ -1,5 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.config.ClientConfig;
 import com.hbm.ntm.block.LegacyConnectorBlock;
 import com.hbm.ntm.block.LegacyLargePylonBlock;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
@@ -223,7 +224,7 @@ public class LegacyPylonRenderer<T extends HbmLegacyWireNodeBlockEntity> impleme
                 LegacyTexturedLineRenderer.pylonLine(wireBatch,
                         startX, startY, startZ,
                         endX, endY, endZ,
-                        true, wireColor);
+                        ClientConfig.renderCableHang(), wireColor);
             }
         }
     }

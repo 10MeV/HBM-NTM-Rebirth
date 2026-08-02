@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"transportation","key":{"S":{"item":"hbm_ntm_rebirth:steel_beam"}},"pattern":["S S","S S","S S"],"result":{"item":"hbm_ntm_rebirth:rail_narrow","count":64},"show_notification":true}

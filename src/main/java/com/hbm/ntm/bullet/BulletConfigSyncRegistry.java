@@ -10,6 +10,7 @@ import java.util.Optional;
 public final class BulletConfigSyncRegistry {
     public static final int TEST_CONFIG = 0;
     public static final int TURBINE = 1;
+    public static final int PILE_DEBRIS = 2;
     public static final int MASKMAN_BOLT = 4;
     public static final int G12_BP = 41;
     public static final int G12_BP_MAGNUM = 42;
@@ -31,6 +32,7 @@ public final class BulletConfigSyncRegistry {
             return;
         }
         register(TURBINE, LegacyBulletConfigs.TURBINE);
+        register(PILE_DEBRIS, LegacyBulletConfigs.PILE_DEBRIS);
         register(MASKMAN_BOLT, LegacyBulletConfigs.MASKMAN_BOLT);
         register(G12_BP, LegacySednaRuntimeBulletConfigs.G12_BP);
         register(G12_BP_MAGNUM, LegacySednaRuntimeBulletConfigs.G12_BP_MAGNUM);

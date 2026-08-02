@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "T",
+    "D",
+    "T"
+  ],
+  "key": {
+    "T": { "item": "minecraft:tnt" },
+    "D": { "item": "hbm_ntm_rebirth:detonator_deadman" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:detonator_de" }
+}

@@ -3,6 +3,7 @@ package com.hbm.ntm.entity.item;
 import com.hbm.ntm.api.conveyor.ConveyorMath;
 import com.hbm.ntm.api.conveyor.IConveyorBelt;
 import com.hbm.ntm.api.conveyor.IEnterableBlock;
+import com.hbm.ntm.explosion.vnt.WeaponExplosionUtil;
 import com.hbm.ntm.util.HbmModelRenderDistances;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,6 +18,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 
 public abstract class MovingConveyorObjectEntity extends Entity {
+    private static final int CRAM_CHECK_INTERVAL = 20 * 20;
+    private static final int CRAM_OBJECT_LIMIT = 25;
+    private static final double CRAM_SEARCH_RADIUS = 0.125D;
+
     // EntityMovingConveyorObject used its own short client interpolation window.
     private int turnProgress;
     private double syncPosX;
@@ -53,6 +58,11 @@ public abstract class MovingConveyorObjectEntity extends Entity {
         }
 
         if (tickCount <= 5) {
+            return;
+        }
+
+        checkForCramming();
+        if (isRemoved()) {
             return;
         }
 
@@ -147,6 +157,29 @@ public abstract class MovingConveyorObjectEntity extends Entity {
             if (belowEnterable != null) {
                 enterBlockFalling(belowEnterable, newPos);
             }
+        }
+    }
+
+    /** Source-backed EntityMovingConveyorObject anti-cram check. */
+    private void checkForCramming() {
+        if ((tickCount + getId()) % CRAM_CHECK_INTERVAL != 0) {
+            return;
+        }
+
+        var objects = level().getEntitiesOfClass(MovingConveyorObjectEntity.class,
+                getBoundingBox().inflate(CRAM_SEARCH_RADIUS));
+        if (objects.size() < CRAM_OBJECT_LIMIT) {
+            return;
+        }
+
+        for (MovingConveyorObjectEntity object : objects) {
+            object.discard();
+        }
+        WeaponExplosionUtil.explodeTiny(level(), getX(), getY() + 0.125D, getZ(), 1.0F, this);
+
+        BlockPos pos = blockPosition();
+        if (ConveyorMath.conveyorAt(level(), pos) != null) {
+            level().destroyBlock(pos, false);
         }
     }
 

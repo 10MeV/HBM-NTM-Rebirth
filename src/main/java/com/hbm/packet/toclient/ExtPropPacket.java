@@ -124,6 +124,7 @@ public class ExtPropPacket extends PrecompiledPacket {
                 0,
                 0,
                 0,
+                true,
                 living.contaminationEffects());
         return new HbmExtendedProperties.SyncData(modernLiving, safeLegacy.player());
     }

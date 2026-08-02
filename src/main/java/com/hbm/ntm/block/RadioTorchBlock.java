@@ -84,6 +84,18 @@ public abstract class RadioTorchBlock extends BaseEntityBlock {
         return canAttachTo(level, pos.relative(facing.getOpposite()), facing);
     }
 
+    @Override
+    @SuppressWarnings("deprecation")
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock,
+            BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+        // RadioTorchBase#onNeighborBlockChange dropped the torch immediately when its
+        // supporting face stopped being valid. BaseEntityBlock does not supply that rule.
+        if (!level.isClientSide && !state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
+        }
+    }
+
     protected boolean canAttachTo(LevelReader level, BlockPos supportPos, Direction attachedSide) {
         BlockState support = level.getBlockState(supportPos);
         return support.isFaceSturdy(level, supportPos, attachedSide)

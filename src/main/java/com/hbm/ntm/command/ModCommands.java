@@ -65,7 +65,6 @@ import com.hbm.ntm.network.LegacyPacketThreading;
 import com.hbm.ntm.network.LegacyRawBufferNetwork;
 import com.hbm.ntm.network.LegacyTargetPoint;
 import com.hbm.ntm.network.LoadedTileAccessCache;
-import com.hbm.ntm.network.ServerTileBinaryControlTransfers;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.packet.EntitySyncPacket;
 import com.hbm.ntm.network.packet.TileSyncPacket;
@@ -1727,7 +1726,7 @@ public final class ModCommands {
             return 0;
         }
 
-        Satellite.orbit(player.serverLevel(), stack.getItem(), ISatelliteChip.getFrequencyFromStack(stack),
+        Satellite.orbit(player.serverLevel(), stack, ISatelliteChip.getFrequencyFromStack(stack),
                 player.getX(), player.getY(), player.getZ());
         stack.shrink(1);
         source.sendSuccess(() -> Component.translatable("commands.satellite.satellite_orbited")
@@ -6207,7 +6206,7 @@ public final class ModCommands {
 
     private static int getPacketThreadingStats(CommandSourceStack source) {
         ThreadedPacketDispatcher.Snapshot snapshot = ThreadedPacketDispatcher.snapshot();
-        source.sendSuccess(() -> Component.literal("Packet threading: pending=" + snapshot.pending()
+        source.sendSuccess(() -> Component.literal("Packet deferred dispatch: pending=" + snapshot.pending()
                 + " enabled=" + snapshot.enabled()
                 + " configuredEnabled=" + snapshot.configuredEnabled()
                 + " fallback=" + snapshot.fallbackToMainThread()
@@ -6223,7 +6222,7 @@ public final class ModCommands {
                 + " totalDiscarded=" + snapshot.totalDiscarded()
                 + " prepareFailed=" + snapshot.totalPrepareFailed()
                 + " manualClears=" + snapshot.manualClears()), false);
-        source.sendSuccess(() -> Component.literal("Packet threading discard reasons: invalidTarget="
+        source.sendSuccess(() -> Component.literal("Packet deferred-dispatch discard reasons: invalidTarget="
                 + snapshot.discardedInvalidTarget()
                 + " invalidMessage=" + snapshot.discardedInvalidMessage()
                 + " prepareNull=" + snapshot.discardedPrepareNull()
@@ -6235,21 +6234,15 @@ public final class ModCommands {
         source.sendSuccess(() -> Component.literal("Last flush: queued=" + snapshot.lastFlushQueued()
                 + " completed=" + snapshot.lastFlushCompleted()
                 + " discarded=" + snapshot.lastFlushDiscarded()
-                + " wait=" + snapshot.lastFlushWaitMillis()
-                + "ms observedWait=" + snapshot.lastObservedWaitMillis()
+                + " duration=" + snapshot.lastFlushWaitMillis()
+                + "ms observedDuration=" + snapshot.lastObservedWaitMillis()
                 + "ms clears=" + snapshot.consecutiveClears()), false);
-        source.sendSuccess(() -> Component.literal("Thread pool: total=" + snapshot.threadPoolSize()
-                + " core=" + snapshot.corePoolSize()
-                + " max=" + snapshot.maximumPoolSize()
-                + " active=" + snapshot.activeThreadCount()
-                + " queued=" + snapshot.executorQueueSize()
+        source.sendSuccess(() -> Component.literal("Packet worker: disabled (Forge sends stay on server thread)"
                 + " completed=" + snapshot.completedTaskCount()), false);
         source.sendSuccess(() -> Component.literal("Legacy PacketThreading facade: "
                 + LegacyPacketThreading.compatibilitySummary()), false);
         source.sendSuccess(() -> Component.literal("Legacy ntmpackets info: "
                 + LegacyPacketThreading.legacyCommandInfoSummary()), false);
-        source.sendSuccess(() -> Component.literal("Tile binary control uploads: pending="
-                + ServerTileBinaryControlTransfers.pendingTransfers()), false);
         sendClientPacketThreadingStats(source);
         if (!snapshot.lastFailureMessage().isBlank()) {
             source.sendSuccess(() -> Component.literal("Last packet threading issue: " + snapshot.lastFailureMessage()), false);
@@ -6265,28 +6258,18 @@ public final class ModCommands {
                 + " entity=" + EntitySyncPacket.pendingClientResyncRequests()
                 + " cooldownTicks=" + TileSyncPacket.clientResyncRequestCooldownTicks()), false);
 
-        ClientStatValue binaryChannels = clientStat("ClientBinaryData", "channelCount");
-        ClientStatValue binaryEntries = clientStat("ClientBinaryData", "entryCount");
-        ClientStatValue readyChannels = clientStat("ClientBinaryData", "readyChannelCount");
-        ClientStatValue binaryTransfers = clientStat("ClientBinaryData", "pendingTransfers");
         ClientStatValue tileBinaryTransfers = clientStat("ClientTileBinaryData", "pendingTransfers");
         ClientStatValue tileBinaryChunks = clientStat("ClientTileBinaryData", "pendingChunkCount");
-        source.sendSuccess(() -> Component.literal("Client network caches: binaryChannels="
-                + binaryChannels.text()
-                + " binaryEntries=" + binaryEntries.text()
-                + " readyChannels=" + readyChannels.text()
-                + " binaryTransfers=" + binaryTransfers.text()
-                + " tileBinaryTransfers=" + tileBinaryTransfers.text()
+        source.sendSuccess(() -> Component.literal("Client network caches: tileBinaryTransfers="
+                + tileBinaryTransfers.text()
                 + " tileBinaryChunks=" + tileBinaryChunks.text()), false);
 
-        ClientStatValue biomeChunks = clientStat("ClientBiomeSyncData", "chunkCount");
         ClientStatValue panelTypes = clientStat("ClientPanelData", "panelCount");
         ClientStatValue playerData = clientStat("ClientHbmPlayerProperties", "syncedEntryCount");
         ClientStatValue permaKeys = clientStat("ClientPermaSyncData", "keyCount");
         ClientStatValue radiationEffects = clientStat("ClientHbmLivingProperties", "getContaminationCount");
-        source.sendSuccess(() -> Component.literal("Client sync caches: biomeChunks="
-                + biomeChunks.text()
-                + " panelTypes=" + panelTypes.text()
+        source.sendSuccess(() -> Component.literal("Client sync caches: panelTypes="
+                + panelTypes.text()
                 + " playerData=" + playerData.text()
                 + " permaKeys=" + permaKeys.text()
                 + " radiationEffects=" + radiationEffects.text()), false);
@@ -6357,7 +6340,8 @@ public final class ModCommands {
     private static int listPacketThreadingThreads(CommandSourceStack source) {
         List<ThreadedPacketDispatcher.ThreadSnapshot> threads = ThreadedPacketDispatcher.threadSnapshots();
         if (threads.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("No HBM packet threads have been created yet."), false);
+            source.sendSuccess(() -> Component.literal(
+                    "No HBM packet worker exists; the modern deferred bridge flushes on the server thread."), false);
             return 0;
         }
         source.sendSuccess(() -> Component.literal("HBM packet threads:"), false);
@@ -6373,13 +6357,13 @@ public final class ModCommands {
 
     private static int togglePacketThreading(CommandSourceStack source) {
         boolean enabled = ThreadedPacketDispatcher.toggleEnabled();
-        source.sendSuccess(() -> Component.literal("Packet threading enabled: " + enabled), true);
+        source.sendSuccess(() -> Component.literal("Packet deferred dispatch enabled: " + enabled), true);
         return enabled ? 1 : 0;
     }
 
     private static int setPacketThreading(CommandSourceStack source, boolean enabled) {
         ThreadedPacketDispatcher.setEnabled(enabled);
-        source.sendSuccess(() -> Component.literal("Packet threading enabled: " + enabled), true);
+        source.sendSuccess(() -> Component.literal("Packet deferred dispatch enabled: " + enabled), true);
         return enabled ? 1 : 0;
     }
 

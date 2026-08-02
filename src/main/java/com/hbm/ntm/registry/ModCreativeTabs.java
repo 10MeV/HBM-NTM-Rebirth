@@ -13,11 +13,11 @@ import com.hbm.ntm.item.HbmInfiniteFluidItem;
 import com.hbm.ntm.item.ICFPelletItem;
 import com.hbm.ntm.item.FoundryMoldItem;
 import com.hbm.ntm.item.FoundryScrapsItem;
-import com.hbm.ntm.item.GuideBookItem;
 import com.hbm.ntm.item.LegacyTemFlakesItem;
 import com.hbm.ntm.item.LegacyStateBlockItem;
 import com.hbm.ntm.item.CrashedBombBlockItem;
 import com.hbm.ntm.item.LegacyStateMultiblockBlockItem;
+import com.hbm.ntm.item.Mk2PileDeviceBlockItem;
 import com.hbm.ntm.item.MarshmallowItem;
 import com.hbm.ntm.item.NuclearWasteItem;
 import com.hbm.ntm.item.RBMKPelletItem;
@@ -25,6 +25,7 @@ import com.hbm.ntm.item.SirenCassetteItem;
 import com.hbm.ntm.item.TrinketBlockItem;
 import com.hbm.ntm.item.UniversalGrenadeItem;
 import com.hbm.ntm.satellite.SoyuzRocketItem;
+import com.hbm.ntm.satellite.SatelliteItem;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.registries.Registries;
@@ -65,8 +66,10 @@ public final class ModCreativeTabs {
                     .icon(() -> ModBlocks.MACHINE_PRESS.get().asItem().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         CreativeModeTab.Output dedupedOutput = deduplicating(output);
-                        ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
-                        ModBlocks.MACHINE_TAB_EXTRA_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+                          ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+                          ModBlocks.MACHINE_TAB_EXTRA_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+                          ModBlocks.LEGACY_STAIRS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+                          ModBlocks.LEGACY_SLABS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
                         if (ModItems.CONVEYOR_WAND.get() instanceof ConveyorWandItem conveyorWand) {
                             ConveyorWandItem.addCreativeStacks(dedupedOutput, conveyorWand);
                         }
@@ -91,8 +94,6 @@ public final class ModCreativeTabs {
                                 LegacyTemFlakesItem.addCreativeStacks(dedupedOutput, item.get());
                             } else if (item.get() instanceof MarshmallowItem) {
                                 MarshmallowItem.addCreativeStacks(dedupedOutput, item.get());
-                            } else if (item.get() instanceof GuideBookItem) {
-                                GuideBookItem.addCreativeStacks(dedupedOutput, item.get());
                             } else {
                                 dedupedOutput.accept(item.get());
                             }
@@ -184,6 +185,8 @@ public final class ModCreativeTabs {
             stateItem.addCreativeStacks(output);
         } else if (item instanceof LegacyStateBlockItem stateItem) {
             stateItem.addCreativeStacks(output);
+        } else if (item instanceof Mk2PileDeviceBlockItem pileDevice) {
+            pileDevice.addCreativeStacks(output);
         } else if (item instanceof FluidDuctVariantBlockItem duct) {
             duct.addCreativeStacks(output);
         } else {
@@ -214,6 +217,8 @@ public final class ModCreativeTabs {
             ICFPelletItem.addCreativeStacks(output);
         } else if (item.get() instanceof SirenCassetteItem cassette) {
             SirenCassetteItem.addCreativeStacks(output, cassette);
+        } else if (item.get() instanceof SatelliteItem satellite) {
+            satellite.addCreativeStacks(output);
             } else if (item.get() instanceof SoyuzRocketItem soyuz) {
                 SoyuzRocketItem.addCreativeStacks(output, soyuz);
         } else if (item.get() instanceof UniversalGrenadeItem) {

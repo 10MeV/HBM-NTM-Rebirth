@@ -135,6 +135,15 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
         }
     }
 
+    /**
+     * 1.7.10 clamped the cloudlet's {@code getHeightValue() - 3} target to y=1,
+     * which meant one block above that world's bottom.  It must remain bottom-relative
+     * in a modern negative-Y dimension instead of becoming absolute Y=1.
+     */
+    private static int cloudletGroundY(Level level, int x, int z) {
+        return Math.max(WorldUtil.legacyGetHeightValue(level, x, z) - 3, WorldUtil.bottomBlockY(level) + 1);
+    }
+
     public NukeTorexEntity setScale(float scale) {
         if (!level().isClientSide()) {
             entityData.set(SCALE, scale);
@@ -211,7 +220,7 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
         convectionHeight = coreHeight + rollerSize;
         int maxHeat = (int) (50.0D * cloudScale);
         heat = maxHeat - Math.pow((maxHeat * age) / (double) Math.max(1, getMaxAge()), 1.0D);
-        lastSpawnY = Math.max(WorldUtil.legacyGetHeightValue(level(), Mth.floor(getX()), Mth.floor(getZ())) - 3, 1);
+        lastSpawnY = cloudletGroundY(level(), Mth.floor(getX()), Mth.floor(getZ()));
         lastRenderSortTick = Integer.MIN_VALUE;
     }
 
@@ -270,7 +279,7 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
             didSpawnWarpShockwave = true;
         }
 
-        int spawnTarget = Math.max(WorldUtil.legacyGetHeightValue(level(), Mth.floor(x), Mth.floor(z)) - 3, 1);
+        int spawnTarget = cloudletGroundY(level(), Mth.floor(x), Mth.floor(z));
         double moveSpeed = 0.5D;
         if (Math.abs(spawnTarget - lastSpawnY) < moveSpeed) {
             lastSpawnY = spawnTarget;

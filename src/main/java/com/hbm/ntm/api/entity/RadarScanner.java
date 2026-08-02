@@ -78,9 +78,8 @@ public final class RadarScanner {
     }
 
     public static void updateSystem(Iterable<ServerLevel> levels) {
-        matchingEntities.clear();
+        clearRuntimeCache();
         if (levels == null) {
-            matchingEntitiesInitialized = false;
             return;
         }
 
@@ -92,6 +91,19 @@ public final class RadarScanner {
             }
         }
         matchingEntitiesInitialized = true;
+    }
+
+    /** Removes candidates owned by a level that is no longer live. */
+    public static void unloadLevel(ServerLevel level) {
+        if (level != null) {
+            matchingEntities.removeIf(entity -> entity.level() == level);
+        }
+    }
+
+    /** Clears entity references without discarding the registered radar API types or converters. */
+    public static void clearRuntimeCache() {
+        matchingEntities.clear();
+        matchingEntitiesInitialized = false;
     }
 
     public static List<Entity> matchingEntitiesSnapshot() {

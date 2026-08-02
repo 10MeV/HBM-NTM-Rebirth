@@ -3,6 +3,7 @@ package com.hbm.ntm.network.packet;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.network.HbmEntitySyncable;
 import com.hbm.ntm.network.ModMessages;
+import com.hbm.ntm.network.ServerResyncRequestRateLimiter;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -39,6 +40,9 @@ public record EntitySyncRequestPacket(int entityId) {
             return;
         }
         if (entity instanceof HbmEntitySyncable syncable && syncable.canSendClientSyncTo(player)) {
+            if (!ServerResyncRequestRateLimiter.tryAcquireEntity(player, packet.entityId, player.serverLevel().getGameTime())) {
+                return;
+            }
             ModMessages.syncEntityToPlayer(syncable, entity, player);
         }
     }

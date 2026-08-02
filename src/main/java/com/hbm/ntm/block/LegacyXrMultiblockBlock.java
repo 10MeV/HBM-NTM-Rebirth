@@ -23,12 +23,15 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
 public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock implements MultiblockCoreBlock, LegacyMultiblockPlaceable, LegacyMultiblock {
     private static final ThreadLocal<Boolean> RELOCATING = ThreadLocal.withInitial(() -> false);
+    private final Map<BlockState, LegacyMultiblockLayout> layoutCache = new ConcurrentHashMap<>();
 
     protected LegacyXrMultiblockBlock(Properties properties) {
         super(properties, false);
@@ -68,13 +71,17 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
                 proxyOffsets(state));
     }
 
+    private LegacyMultiblockLayout cachedLayout(BlockState state) {
+        return layoutCache.computeIfAbsent(state, this::getLayout);
+    }
+
     protected Direction getFacingForPlacement(BlockPlaceContext context) {
         return modifyPlacementFacing(context.getHorizontalDirection().getOpposite());
     }
 
     @Override
     public LegacyMultiblockLayout getMultiblockLayout(BlockState state, BlockGetter level, BlockPos corePos) {
-        return getLayout(state);
+        return cachedLayout(state);
     }
 
     @Override
@@ -117,7 +124,7 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
 
     @Override
     public boolean canPlaceDirectMultiblock(Level level, BlockPos corePos, BlockPos temporaryPos, BlockState state) {
-        return MultiblockHelper.checkLayout(level, corePos, getLayout(state), temporaryPos);
+        return MultiblockHelper.checkLayout(level, corePos, cachedLayout(state), temporaryPos);
     }
 
     @Override
@@ -158,7 +165,7 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!RELOCATING.get() && !state.is(newState.getBlock()) && !level.isClientSide) {
-            MultiblockHelper.removeLayout(level, pos, getLayout(state));
+            MultiblockHelper.removeLayout(level, pos, cachedLayout(state));
             onCoreRemoved(level, pos, state);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
@@ -199,7 +206,7 @@ public abstract class LegacyXrMultiblockBlock extends HorizontalMachineBlock imp
      * to retain that behaviour.
      */
     protected boolean fillLayout(Level level, BlockPos corePos, BlockState state) {
-        LegacyMultiblockLayout layout = getLayout(state);
+        LegacyMultiblockLayout layout = cachedLayout(state);
         boolean filled = usesUncheckedLegacyDummyFill(state)
                 ? MultiblockHelper.fillOffsetsWithLegacySourceOverwrite(level, corePos, layout.offsets(),
                         offset -> getLegacyDummyState(state, offset), layout::proxyMode, layout::isLegacyExtraOffset)

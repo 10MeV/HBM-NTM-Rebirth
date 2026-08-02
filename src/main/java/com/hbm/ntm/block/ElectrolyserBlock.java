@@ -33,7 +33,13 @@ public class ElectrolyserBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        // The legacy electrolyser is rendered by RenderElectrolyser with its
+        // own centre translation and facing transform. Its OBJ extends well
+        // beyond the core block, so a normal baked block-model rotation does
+        // not share the multiblock layout's coordinate frame. Keep the world
+        // model on the equivalent BER path rather than letting the optional
+        // static-model setting move it independently of its dummies.
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override

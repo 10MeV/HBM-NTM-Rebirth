@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine", "duration": 1200, "power": 25000,
+  "input_fluids": [], "output_fluids": [], "pools": [], "source_order": 333,
+  "internal_name": "ass.scansat",
+  "input_items": [
+    {"count":16,"ingredient":{"tag":"forge:shells/aluminium"},"legacy_ore":"shellAluminum"},
+    {"count":32,"ingredient":{"item":"hbm_ntm_rebirth:photo_panel"}},
+    {"count":32,"ingredient":{"tag":"forge:dense_wires/gold"},"legacy_ore":"wireDenseGold"},
+    {"count":16,"ingredient":{"item":"hbm_ntm_rebirth:circuit_bismoid"},"legacy_id":"hbm:circuit","legacy_meta":11},
+    {"count":16,"ingredient":{"item":"hbm_ntm_rebirth:part_generic_lde"},"legacy_id":"hbm:part_generic","legacy_meta":3},
+    {"count":3,"ingredient":{"item":"hbm_ntm_rebirth:circuit_controller"},"legacy_id":"hbm:circuit","legacy_meta":13}
+  ],
+  "output_items": [{"item":"hbm_ntm_rebirth:satellite","nbt":"{hbmLegacyVariant:1}"}]
+}

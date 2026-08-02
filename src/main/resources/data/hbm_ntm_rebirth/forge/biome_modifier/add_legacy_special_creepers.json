@@ -1,0 +1,24 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "#hbm_ntm_rebirth:legacy_overworld_except_mushroom_fields",
+  "spawners": [
+    {
+      "type": "hbm_ntm_rebirth:entity_mob_phosgene_creeper",
+      "weight": 5,
+      "minCount": 1,
+      "maxCount": 1
+    },
+    {
+      "type": "hbm_ntm_rebirth:entity_mob_volatile_creeper",
+      "weight": 10,
+      "minCount": 1,
+      "maxCount": 1
+    },
+    {
+      "type": "hbm_ntm_rebirth:entity_mob_gold_creeper",
+      "weight": 1,
+      "minCount": 1,
+      "maxCount": 1
+    }
+  ]
+}

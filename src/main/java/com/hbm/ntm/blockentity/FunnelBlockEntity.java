@@ -184,8 +184,8 @@ public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmL
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

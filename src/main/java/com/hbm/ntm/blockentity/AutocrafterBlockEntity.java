@@ -1,5 +1,6 @@
 package com.hbm.ntm.blockentity;
 
+import com.hbm.ntm.api.common.CopiableSettings;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -13,6 +14,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -38,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
-        implements MenuProvider {
+        implements MenuProvider, CopiableSettings {
     public static final int SLOT_TEMPLATE_START = 0;
     public static final int SLOT_TEMPLATE_END = 8;
     public static final int SLOT_TEMPLATE_OUTPUT = 9;
@@ -55,6 +57,7 @@ public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
     private static final String TAG_POWER = "power";
     private static final String TAG_RECIPE = "rec";
     private static final String TAG_NAME = "name";
+    private static final String TAG_SETTINGS_SLOT = "slot";
 
     private final LegacyPatternMatcher matcher = new LegacyPatternMatcher(9);
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
@@ -141,6 +144,61 @@ public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
         matcher.initPatternSmart(stack, slot);
         updateTemplateGrid();
         setChangedAndUpdate();
+    }
+
+    /**
+     * Legacy {@code IControlReceiverFilter} settings-tool contract: copy only
+     * non-empty template filters 0..8 using their relative slot values, then
+     * rebuild matcher modes and the crafting preview after a paste.
+     */
+    @Override
+    public CompoundTag getSettings(Level level, BlockPos pos) {
+        CompoundTag tag = new CompoundTag();
+        ListTag copied = new ListTag();
+        for (int slot = SLOT_TEMPLATE_START; slot <= SLOT_TEMPLATE_END; slot++) {
+            ItemStack stack = items.getStackInSlot(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            CompoundTag slotTag = new CompoundTag();
+            slotTag.putByte(TAG_SETTINGS_SLOT, (byte) (slot - SLOT_TEMPLATE_START));
+            stack.save(slotTag);
+            copied.add(slotTag);
+        }
+        tag.put(TAG_ITEMS, copied);
+        return tag;
+    }
+
+    @Override
+    public void pasteSettings(CompoundTag tag, int index, Level level, Player player, BlockPos pos) {
+        if (tag == null) {
+            return;
+        }
+        ListTag copied = tag.getList(TAG_ITEMS, Tag.TAG_COMPOUND);
+        boolean changed = false;
+        for (int entry = 0; entry < copied.size(); entry++) {
+            CompoundTag slotTag = copied.getCompound(entry);
+            int relativeSlot = slotTag.getByte(TAG_SETTINGS_SLOT);
+            ItemStack copiedStack = ItemStack.of(slotTag);
+            if (relativeSlot < 0 || relativeSlot > SLOT_TEMPLATE_END - SLOT_TEMPLATE_START || copiedStack.isEmpty()) {
+                continue;
+            }
+            int slot = SLOT_TEMPLATE_START + relativeSlot;
+            items.setStackInSlot(slot, copiedStack);
+            // IControlReceiverFilter invokes nextMode after its raw slot write;
+            // it does not serialize a source matcher mode with the copied NBT.
+            matcher.nextMode(copiedStack, slot);
+            changed = true;
+        }
+        if (changed) {
+            updateTemplateGrid();
+            setChangedAndUpdate();
+        }
+    }
+
+    @Override
+    public List<Component> infoForDisplay(Level level, BlockPos pos) {
+        return List.of(Component.translatable("copytool.filter"));
     }
 
     public void nextTemplate() {
@@ -395,7 +453,7 @@ public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return saveWithoutMetadata();
+        return new CompoundTag();
     }
 
     @Override
@@ -405,8 +463,8 @@ public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Nullable
     @Override

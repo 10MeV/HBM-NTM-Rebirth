@@ -20,6 +20,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public class MovingItemEntity extends MovingConveyorObjectEntity implements IConveyorItem {
+    private static final int OFF_BELT_ITEM_LIFETIME = 60 * 20;
+
     private static final EntityDataAccessor<ItemStack> DATA_ITEM =
             SynchedEntityData.defineId(MovingItemEntity.class, EntityDataSerializers.ITEM_STACK);
 
@@ -124,6 +126,8 @@ public class MovingItemEntity extends MovingConveyorObjectEntity implements ICon
         }
 
         ItemEntity item = new ItemEntity(level(), spawnPos.x, spawnPos.y, spawnPos.z, stack.copy());
+        // EntityMovingItem gave off-belt drops a one-minute lifetime rather than vanilla's five minutes.
+        item.lifespan = OFF_BELT_ITEM_LIFETIME;
         item.setDeltaMovement(motion);
         item.hasImpulse = true;
         level().addFreshEntity(item);

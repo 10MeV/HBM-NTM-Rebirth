@@ -38,6 +38,7 @@ public class C130Entity extends Entity {
             SynchedEntityData.defineId(C130Entity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Byte> PAYLOAD =
             SynchedEntityData.defineId(C130Entity.class, EntityDataSerializers.BYTE);
+    private int flightTicks;
     private long forcedChunk = Long.MIN_VALUE;
 
     public C130Entity(EntityType<? extends C130Entity> type, Level level) {
@@ -69,6 +70,8 @@ public class C130Entity extends Entity {
             return;
         }
 
+        flightTicks++;
+
         Vec3 motion = getDeltaMovement();
         setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
         updateRotationFromMotion();
@@ -77,11 +80,11 @@ public class C130Entity extends Entity {
             tickCrash();
             return;
         }
-        if (tickCount > LIFETIME) {
+        if (flightTicks > LIFETIME) {
             discard();
             return;
         }
-        if (tickCount == LIFETIME / 2) {
+        if (flightTicks == LIFETIME / 2) {
             dropPayload();
         }
     }
@@ -202,10 +205,12 @@ public class C130Entity extends Entity {
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
         entityData.set(HEALTH, tag.getFloat("health"));
         entityData.set(PAYLOAD, tag.getByte("payload"));
+        flightTicks = tag.getInt("flightTicks");
     }
     @Override protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putFloat("health", health());
         tag.putByte("payload", (byte) payload().ordinal());
+        tag.putInt("flightTicks", flightTicks);
     }
     @Override public Packet<ClientGamePacketListener> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);

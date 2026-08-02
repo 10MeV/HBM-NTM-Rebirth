@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","key":{"B":{"item":"hbm_ntm_rebirth:barbed_wire"},"I":{"type":"hbm_ntm_rebirth:fluid_container","fluid":"hbm_ntm_rebirth:peroxide","amount":1000}},"pattern":["BBB","BIB","BBB"],"result":{"item":"hbm_ntm_rebirth:barbed_wire_acid","count":8},"show_notification":true}

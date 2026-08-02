@@ -23,6 +23,8 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation BATTERY_SC = hbm("battery_sc");
     public static final ResourceLocation CIRCUIT = hbm("circuit");
     public static final ResourceLocation CIRCUIT_STAR_PIECE = hbm("circuit_star_piece");
+    public static final ResourceLocation CIRCUIT_STAR_COMPONENT = hbm("circuit_star_component");
+    public static final ResourceLocation INGOT_METAL = hbm("ingot_metal");
     public static final ResourceLocation CHEMICAL_DYE = hbm("chemical_dye");
     public static final ResourceLocation BLUEPRINT_FOLDER = hbm("blueprint_folder");
     public static final ResourceLocation PLATE_CAST = hbm("plate_cast");
@@ -133,6 +135,8 @@ public final class LegacyMetaItemMappings {
                 ModItems.BATTERY_SC_AM241);
         registerList(CIRCUIT, ModItems.CIRCUIT_ITEMS);
         registerList(CIRCUIT_STAR_PIECE, ModItems.CIRCUIT_STAR_PIECE_ITEMS);
+        registerList(CIRCUIT_STAR_COMPONENT, ModItems.CIRCUIT_STAR_COMPONENT_ITEMS);
+        registerList(INGOT_METAL, ModItems.INGOT_METAL_ITEMS);
         registerList(CHEMICAL_DYE, ModItems.CHEMICAL_DYE_ITEMS);
         register(BLUEPRINT_FOLDER,
                 ModItems.BLUEPRINT_FOLDER,

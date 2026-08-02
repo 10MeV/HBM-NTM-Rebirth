@@ -19,7 +19,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.event.RegisterGameTestsEvent;
-import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 /**
@@ -27,7 +26,6 @@ import net.minecraftforge.gametest.PrefixGameTestTemplate;
  * tests exercise actual block-entity ticks and entities; they are deliberately not a
  * replacement for the client OBJ/particle/GUI acceptance pass.
  */
-@GameTestHolder(HbmNtm.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class DroneLogisticsGameTests {
     // Keep long-lived host fixtures above the empty-template top barrier and
@@ -41,7 +39,7 @@ public final class DroneLogisticsGameTests {
     }
 
     /** TileEntityDroneCrate loads every cargo slot, flies to its linked point, then unloads. */
-    @GameTest(templateNamespace = "minecraft", template = "drone_logistics", batch = "dronePatrol")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_logistics", batch = "dronePatrol")
     public static void patrolDroneTransfersCargoBetweenLinkedCrates(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos sourcePos = helper.absolutePos(new BlockPos(2, 2, 2));
@@ -78,7 +76,7 @@ public final class DroneLogisticsGameTests {
     }
 
     /** EntityRequestDrone executes provider pickup, requester unload and dock return in order. */
-    @GameTest(templateNamespace = "minecraft", template = "drone_logistics", batch = "droneDirectRequest", timeoutTicks = 120)
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_logistics", batch = "droneDirectRequest", timeoutTicks = 120)
     public static void requestDronePicksUnloadsAndReturnsToDock(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos providerPos = helper.absolutePos(new BlockPos(2, 2, 8));
@@ -138,7 +136,7 @@ public final class DroneLogisticsGameTests {
      */
     // GameTest packs templates into 15x15 cells; the request-network fixture itself
     // uses an isolated forced lane so its legacy discovery budget is deterministic.
-    @GameTest(templateNamespace = "minecraft", template = "drone_logistics", batch = "droneDockDispatch", timeoutTicks = 120)
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_logistics", batch = "droneDockDispatch", timeoutTicks = 120)
     public static void dockDispatchesAcrossRequestWaypointAndRecoversDrone(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         // RequestNetwork discovers only five new local nodes per announcement.  Its
@@ -183,7 +181,11 @@ public final class DroneLogisticsGameTests {
                 // sequence before the BlockEntity phase of the matching tick, so retain
                 // one more source-shaped 20-tick announcement for the dock to observe
                 // that converged three-leg snapshot and embark the drone.
-                .thenIdle(79)
+                // GameTest sequences execute before that tick's block-entity phase.
+                // Wait through the following 20-tick dock cadence as well, so this
+                // assertion observes the source-backed dispatch rather than the
+                // already-converged route one tick before the dock consumes a drone.
+                .thenIdle(99)
                 .thenExecute(() -> {
                     require(helper, hasFixtureHosts(level, dockPos, providerPos, requesterPos, waypointPos),
                             "request-network fixture host was cleared before its third announcement; "

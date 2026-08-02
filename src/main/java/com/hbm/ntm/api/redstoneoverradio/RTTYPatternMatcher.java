@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 import com.hbm.ntm.util.BufferUtil;
+import com.hbm.ntm.util.LegacyPatternMatcher;
 
 public class RTTYPatternMatcher {
     public static final String MODE_EXACT = "exact";
@@ -35,7 +36,7 @@ public class RTTYPatternMatcher {
         }
         if (stack.isEmpty()) {
             modes[index] = null;
-        } else if (stack.isDamageableItem()) {
+        } else if (LegacyPatternMatcher.hasLegacySubtypes(stack)) {
             modes[index] = MODE_EXACT;
         } else {
             modes[index] = MODE_WILDCARD;
@@ -76,7 +77,7 @@ public class RTTYPatternMatcher {
             modes[index] = mode = MODE_EXACT;
         }
         if (MODE_EXACT.equals(mode)) {
-            return input.getItem() == filter.getItem() && input.getDamageValue() == filter.getDamageValue();
+            return LegacyPatternMatcher.matchesLegacyExact(input, filter);
         }
         if (MODE_WILDCARD.equals(mode)) {
             return input.getItem() == filter.getItem();
@@ -121,7 +122,7 @@ public class RTTYPatternMatcher {
 
     public static String getLabel(String mode) {
         if (MODE_EXACT.equals(mode)) {
-            return "Item and damage match";
+            return "Item and meta match";
         }
         if (MODE_WILDCARD.equals(mode)) {
             return "Item matches";

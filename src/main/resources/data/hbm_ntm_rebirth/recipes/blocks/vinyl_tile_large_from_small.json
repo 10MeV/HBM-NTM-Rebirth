@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:shapeless_nbt",
+  "category": "building",
+  "ingredients": [{ "type": "forge:nbt", "item": "hbm_ntm_rebirth:vinyl_tile", "nbt": "{hbmLegacyVariant:1}" }],
+  "result": { "item": "hbm_ntm_rebirth:vinyl_tile", "nbt": "{hbmLegacyVariant:0}" },
+  "show_notification": true
+}

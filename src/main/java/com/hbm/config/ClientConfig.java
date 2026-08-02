@@ -159,23 +159,23 @@ public final class ClientConfig extends RunningConfig {
     }
 
     public static boolean renderCableHang() {
-        return true;
+        return com.hbm.ntm.config.HbmClientConfig.renderCableHang();
     }
 
     public static boolean renderReeds() {
-        return true;
+        return com.hbm.ntm.config.HbmClientConfig.renderReeds();
     }
 
     public static boolean renderRebarSimple() {
-        return false;
+        return com.hbm.ntm.config.HbmClientConfig.renderRebarSimple();
     }
 
     public static int renderHeliostatBeamLimit() {
-        return 250;
+        return com.hbm.ntm.config.HbmClientConfig.renderHeliostatBeamLimit();
     }
 
     public static int renderRebarLimit() {
-        return 250;
+        return com.hbm.ntm.config.HbmClientConfig.renderRebarLimit();
     }
 
     public static boolean badgesHud() {

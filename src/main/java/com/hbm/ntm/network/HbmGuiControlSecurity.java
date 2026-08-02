@@ -80,6 +80,20 @@ public final class HbmGuiControlSecurity {
         return validateTileControlWithoutDefaultDistance(player, pos, BlockEntity.class, null, packetName);
     }
 
+    /**
+     * Preserves {@code TileEntityMachineBase#isUseableByPlayer}: a legacy machine control receiver must still be the
+     * block entity at its own position and may only be controlled within 128 squared blocks of its center.
+     */
+    public static boolean hasLegacyMachineUsePermission(ServerPlayer player, BlockEntity blockEntity) {
+        if (player == null || blockEntity == null || blockEntity.isRemoved()
+                || blockEntity.getLevel() != player.serverLevel()) {
+            return false;
+        }
+        BlockPos pos = blockEntity.getBlockPos();
+        return blockEntity.getLevel().getBlockEntity(pos) == blockEntity
+                && player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) <= 128.0D;
+    }
+
     public static void markChangedAndUpdate(BlockEntity blockEntity) {
         if (blockEntity == null || blockEntity.getLevel() == null) {
             return;

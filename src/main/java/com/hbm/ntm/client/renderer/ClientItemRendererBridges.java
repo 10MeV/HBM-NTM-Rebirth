@@ -11,6 +11,10 @@ public final class ClientItemRendererBridges {
         LegacyItemRendererBridge.accept(consumer, () -> BalefireBombItemRenderer.INSTANCE);
     }
 
+    public static void acceptAnvil(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> NTMAnvilItemRenderer.INSTANCE);
+    }
+
     public static void acceptBigSword(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> LegacyBigSwordItemRenderer.INSTANCE);
     }
@@ -31,8 +35,16 @@ public final class ClientItemRendererBridges {
         LegacyItemRendererBridge.accept(consumer, () -> DecoCrtItemRenderer.INSTANCE);
     }
 
+    public static void acceptDecoComputer(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> DecoComputerItemRenderer.INSTANCE);
+    }
+
     public static void acceptPoleSatelliteReceiver(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> PoleSatelliteReceiverItemRenderer.INSTANCE);
+    }
+
+    public static void acceptPistonInserter(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> PistonInserterItemRenderer.INSTANCE);
     }
 
     public static void acceptCableDiode(Consumer<IClientItemExtensions> consumer) {
@@ -55,10 +67,6 @@ public final class ClientItemRendererBridges {
         LegacyItemRendererBridge.accept(consumer, () -> LegacyDemonLampItemRenderer.INSTANCE);
     }
 
-    public static void acceptLegacyFan(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> LegacyFanItemRenderer.INSTANCE);
-    }
-
     public static void acceptLegacyFileCabinet(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> LegacyFileCabinetItemRenderer.INSTANCE);
     }
@@ -75,6 +83,10 @@ public final class ClientItemRendererBridges {
         LegacyItemRendererBridge.accept(consumer, () -> LegacyShimmerWeaponItemRenderer.INSTANCE);
     }
 
+    public static void acceptSignWeapon(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> LegacySignWeaponItemRenderer.INSTANCE);
+    }
+
     public static void acceptNuclearDevice(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> NuclearDeviceItemRenderer.INSTANCE);
     }
@@ -85,6 +97,14 @@ public final class ClientItemRendererBridges {
 
     public static void acceptRedCableBox(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> RedCableBoxItemRenderer.INSTANCE);
+    }
+
+    public static void acceptRebar(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> RebarItemRenderer.INSTANCE);
+    }
+
+    public static void acceptRedstoneSword(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> LegacyRedstoneSwordItemRenderer.INSTANCE);
     }
 
     public static void acceptTrinket(Consumer<IClientItemExtensions> consumer) {

@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "tag": "forge:ingots/australium"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:powder_yellowcake"
+    },
+    "G": {
+      "item": "hbm_ntm_rebirth:block_thorium"
+    },
+    "I": {
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    },
+    "P": {
+      "item": "hbm_ntm_rebirth:photo_panel"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:steel_shovel"
+    }
+  },
+  "pattern": [
+    "CGC",
+    "PSP",
+    "IAI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:memespoon"
+  },
+  "show_notification": true
+}

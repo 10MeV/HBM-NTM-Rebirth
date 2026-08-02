@@ -251,7 +251,6 @@ public final class LegacyBurnTimeModule {
                 case "lignite", "powder_lignite" -> 1200;
                 case "coke" -> SINGLE * 16;
                 case "block_coke" -> SINGLE * 160;
-                case "book_guide" -> SINGLE;
                 case "coal_infernal" -> 4800;
                 case "crystal_coal" -> 6400;
                 case "powder_sawdust" -> SINGLE / 2;

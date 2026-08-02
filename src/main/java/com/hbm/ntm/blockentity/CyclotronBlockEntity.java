@@ -125,6 +125,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
     private final LazyOptional<IEnergyStorage> energyHandler =
             LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final IFluidHandler proxyFluidHandler;
+    private final LazyOptional<IFluidHandler> proxyFluidCapability;
     private final ICapabilityProvider[] proxyDelegates = new ICapabilityProvider[3];
 
     private int progress;
@@ -141,6 +142,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
         getAllTanks().get(2).setTankType(HbmFluids.AMAT);
         proxyFluidHandler = new ForgeFluidHandlerAdapter(List.of(water()), List.of(spentSteam(), amat()), 0, true, true,
                 this::onFluidContentsChanged);
+        proxyFluidCapability = LazyOptional.of(() -> proxyFluidHandler);
         laneItemHandlers = new LazyOptional[3];
         for (int lane = 0; lane < 3; lane++) {
             int captured = lane;
@@ -608,6 +610,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
         super.invalidateCaps();
         itemHandler.invalidate();
         energyHandler.invalidate();
+        proxyFluidCapability.invalidate();
         for (LazyOptional<IItemHandler> laneHandler : laneItemHandlers) {
             laneHandler.invalidate();
         }
@@ -649,7 +652,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
                 return energyHandler.cast();
             }
             if (capability == ForgeCapabilities.FLUID_HANDLER) {
-                return LazyOptional.of(() -> proxyFluidHandler).cast();
+                return proxyFluidCapability.cast();
             }
             return LazyOptional.empty();
         }

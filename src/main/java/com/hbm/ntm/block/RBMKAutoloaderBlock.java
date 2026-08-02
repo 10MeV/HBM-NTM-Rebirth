@@ -220,26 +220,15 @@ public class RBMKAutoloaderBlock extends BaseEntityBlock implements MultiblockCo
     }
 
     @Override
-    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide && !player.getAbilities().instabuild
-                && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof RBMKAutoloaderBlockEntity autoloader) {
-            HbmItemStackUtil.dropStacks(level, autoloader.getBlockPos(), autoloader.removeItemsForDrop());
-        }
-        super.playerWillDestroy(level, pos, state, player);
-    }
-
-    @Override
-    public void beforeMultiblockDummyDestroysCore(Level level, BlockPos corePos, BlockState coreState,
-            BlockPos dummyPos, boolean drop) {
-        if (drop && !level.isClientSide
-                && level.getBlockEntity(corePos) instanceof RBMKAutoloaderBlockEntity autoloader) {
-            HbmItemStackUtil.dropStacks(level, corePos, autoloader.removeItemsForDrop());
-        }
-    }
-
-    @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
+            // 1.7.10 BlockDummyable#breakBlock drained every ISidedInventory while
+            // destroying the real core.  Do it here, rather than in a player/dummy
+            // pre-removal callback: those callbacks do not cover every removal path
+            // and can clear all 18 slots before the core is actually removed.
+            if (level.getBlockEntity(pos) instanceof RBMKAutoloaderBlockEntity autoloader) {
+                HbmItemStackUtil.dropStacks(level, pos, autoloader.removeItemsForDrop());
+            }
             MultiblockHelper.removeLayout(level, pos, LAYOUT);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

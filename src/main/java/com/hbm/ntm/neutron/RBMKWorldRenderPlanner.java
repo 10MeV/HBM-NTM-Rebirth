@@ -220,7 +220,10 @@ public final class RBMKWorldRenderPlanner {
         if (safe.isEmpty()) {
             return new ResolvedDisplayText("", "", "");
         }
-        String[] parts = safe.split("=", 2);
+        // RenderRBMKConsole uses Java split("=") and resolves only a two-part
+        // key=value display. Preserve that exact behavior for empty and repeated
+        // separators rather than treating the remainder as a fallback argument.
+        String[] parts = safe.split("=");
         if (parts.length == 2) {
             return new ResolvedDisplayText(safe, parts[0], parts[1]);
         }

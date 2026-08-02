@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/brick_concrete_cracked",
+    "side": "hbm_ntm_rebirth:block/brick_concrete_cracked",
+    "top": "hbm_ntm_rebirth:block/brick_concrete_cracked"
+  }
+}
+

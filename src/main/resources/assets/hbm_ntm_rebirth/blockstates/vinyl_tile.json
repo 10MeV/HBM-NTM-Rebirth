@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "variant=0": { "model": "hbm_ntm_rebirth:block/vinyl_tile_large" },
+    "variant=1": { "model": "hbm_ntm_rebirth:block/vinyl_tile_small" }
+  }
+}

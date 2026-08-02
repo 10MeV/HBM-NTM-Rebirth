@@ -1,0 +1,1 @@
+{"loader":"forge:obj","model":"hbm_ntm_rebirth:models/blocks/spikes.obj","flip_v":true,"automatic_culling":false,"render_type":"minecraft:cutout","textures":{"default":"hbm_ntm_rebirth:block/spikes","particle":"hbm_ntm_rebirth:block/spikes","texture0":"hbm_ntm_rebirth:block/spikes"}}

@@ -16,9 +16,7 @@ import com.hbm.ntm.registry.ModItems;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -79,11 +77,6 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos,
             boolean movedByPiston) {
         super.neighborChanged(state, level, pos, block, fromPos, movedByPiston);
-        validateCoreLink(level, pos, state);
-    }
-
-    @Override
-    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         validateCoreLink(level, pos, state);
     }
 

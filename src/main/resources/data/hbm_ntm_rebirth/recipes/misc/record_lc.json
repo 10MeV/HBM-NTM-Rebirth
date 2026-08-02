@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" S ", "SDS", " S "],
+  "key": {
+    "S": { "tag": "forge:ingots/any_plastic" },
+    "D": { "tag": "forge:dusts/lapis" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:record_lc" }
+}

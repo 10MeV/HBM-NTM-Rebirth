@@ -109,6 +109,10 @@ public final class WorldConfig {
             craterBiomeInnerRad = com.hbm.ntm.config.RadiationConfig.craterBiomeInnerRadiation();
             craterBiomeOuterRad = com.hbm.ntm.config.RadiationConfig.craterBiomeOuterRadiation();
             craterBiomeWaterMult = com.hbm.ntm.config.RadiationConfig.craterBiomeWaterMultiplier();
+            radfreq = com.hbm.ntm.config.WorldgenConfig.radiationHotspotSpawnChunks();
+            minefreq = com.hbm.ntm.config.WorldgenConfig.landmineSpawnChunks();
+            broadcaster = com.hbm.ntm.config.WorldgenConfig.broadcasterSpawnChunks();
+            geyserChlorine = com.hbm.ntm.config.WorldgenConfig.chlorineGeyserSpawnChunks();
         } catch (IllegalStateException | NullPointerException ignored) {
             // Keep legacy defaults until Forge finishes loading the modern config.
         }

@@ -59,7 +59,8 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     public static final int SLOT_COUNT = 5;
 
     public static final int FUEL_RATE = 800;
-    public static final int MAX_FUEL = 25_600;
+    // 1.7.10: FUEL_COAL (1,600) * 24; must also accept a 32,000-tick coal coke block.
+    public static final int MAX_FUEL = 38_400;
     public static final int FLUE_GAS = 100;
     public static final int AIRBLAST_CAPACITY = 4_000;
     public static final int FLUE_CAPACITY = 1_000;

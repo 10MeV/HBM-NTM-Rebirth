@@ -133,10 +133,8 @@ public abstract class FoundryBaseBlockEntity extends BlockEntity implements ICru
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
-        saveAdditional(tag);
-        return tag;
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

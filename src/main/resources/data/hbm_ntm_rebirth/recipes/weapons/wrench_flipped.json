@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    "S",
+    "D",
+    "W"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:iron_sword"
+    },
+    "D": {
+      "item": "hbm_ntm_rebirth:ducttape"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:wrench"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:wrench_flipped"
+  }
+}

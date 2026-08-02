@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine", "duration": 1200, "power": 25000,
+  "input_fluids": [], "output_fluids": [], "pools": [], "source_order": 336,
+  "internal_name": "ass.lunarminer",
+  "input_items": [
+    {"count":16,"ingredient":{"tag":"forge:cast_plates/saturnite"},"legacy_ore":"plateCastSaturnite"},
+    {"count":8,"ingredient":{"item":"hbm_ntm_rebirth:photo_panel"}},
+    {"count":1,"ingredient":{"item":"hbm_ntm_rebirth:thruster_medium"}},
+    {"count":4,"ingredient":{"item":"hbm_ntm_rebirth:motor_bismuth"}},
+    {"count":16,"ingredient":{"item":"hbm_ntm_rebirth:part_generic_lde"},"legacy_id":"hbm:part_generic","legacy_meta":3},
+    {"count":2,"ingredient":{"item":"hbm_ntm_rebirth:circuit_controller_advanced"},"legacy_id":"hbm:circuit","legacy_meta":14}
+  ],
+  "output_items": [{"item":"hbm_ntm_rebirth:satellite","nbt":"{hbmLegacyVariant:4}"}]
+}

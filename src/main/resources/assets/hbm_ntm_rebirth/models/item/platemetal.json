@@ -1,0 +1,19 @@
+{
+  "parent": "hbm_ntm_rebirth:block/platemetal_base",
+  "overrides": [
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 1.0 }, "model": "hbm_ntm_rebirth:block/platemetal_black" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 2.0 }, "model": "hbm_ntm_rebirth:block/platemetal_white" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 3.0 }, "model": "hbm_ntm_rebirth:block/platemetal_red" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 4.0 }, "model": "hbm_ntm_rebirth:block/platemetal_green" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 5.0 }, "model": "hbm_ntm_rebirth:block/platemetal_light_gray" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 6.0 }, "model": "hbm_ntm_rebirth:block/platemetal_blue" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 7.0 }, "model": "hbm_ntm_rebirth:block/platemetal_purple" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 8.0 }, "model": "hbm_ntm_rebirth:block/platemetal_cyan" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 9.0 }, "model": "hbm_ntm_rebirth:block/platemetal_pink" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 10.0 }, "model": "hbm_ntm_rebirth:block/platemetal_lime" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 11.0 }, "model": "hbm_ntm_rebirth:block/platemetal_yellow" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 12.0 }, "model": "hbm_ntm_rebirth:block/platemetal_light_blue" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 13.0 }, "model": "hbm_ntm_rebirth:block/platemetal_magenta" },
+    { "predicate": { "hbm_ntm_rebirth:legacy_variant": 14.0 }, "model": "hbm_ntm_rebirth:block/platemetal_orange" }
+  ]
+}

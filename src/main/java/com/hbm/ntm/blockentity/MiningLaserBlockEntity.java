@@ -506,12 +506,23 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
         return stack.is(Blocks.DIRT.asItem())
                 || stack.is(Blocks.STONE.asItem())
                 || stack.is(Blocks.COBBLESTONE.asItem())
+                // Deepslate and its normal mining result are the modern deep-world
+                // equivalents of the old stone/cobblestone cleanup pair.
+                || stack.is(Blocks.DEEPSLATE.asItem())
+                || stack.is(Blocks.COBBLED_DEEPSLATE.asItem())
                 || stack.is(Blocks.SAND.asItem())
                 || stack.is(Blocks.SANDSTONE.asItem())
                 || stack.is(Blocks.GRAVEL.asItem())
+                || isLegacyBlockDrop(stack, "basalt")
+                || isLegacyBlockDrop(stack, "stone_gneiss")
                 || stack.is(net.minecraft.world.item.Items.FLINT)
                 || stack.is(net.minecraft.world.item.Items.SNOWBALL)
                 || stack.is(net.minecraft.world.item.Items.WHEAT_SEEDS);
+    }
+
+    private static boolean isLegacyBlockDrop(ItemStack stack, String legacyBlockId) {
+        RegistryObject<? extends Block> block = ModBlocks.legacyBlock(legacyBlockId);
+        return block != null && block.isPresent() && stack.is(block.get().asItem());
     }
 
     private static boolean isOilOreDrop(ItemStack stack) {

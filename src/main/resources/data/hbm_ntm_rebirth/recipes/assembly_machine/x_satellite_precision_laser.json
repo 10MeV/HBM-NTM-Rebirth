@@ -1,0 +1,14 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine", "duration": 1200, "power": 25000,
+  "input_fluids": [], "output_fluids": [], "pools": [], "source_order": 337,
+  "internal_name": "ass.orbitallaser",
+  "input_items": [
+    {"count":16,"ingredient":{"tag":"forge:shells/weapon_steel"},"legacy_ore":"shellWeaponSteel"},
+    {"count":32,"ingredient":{"item":"hbm_ntm_rebirth:photo_panel"}},
+    {"count":1,"ingredient":{"item":"hbm_ntm_rebirth:capacitor_tantalum"},"legacy_id":"hbm:battery_pack","legacy_meta":9},
+    {"count":16,"ingredient":{"item":"hbm_ntm_rebirth:crystal_redstone"}},
+    {"count":16,"ingredient":{"item":"hbm_ntm_rebirth:part_generic_lde"},"legacy_id":"hbm:part_generic","legacy_meta":3},
+    {"count":3,"ingredient":{"item":"hbm_ntm_rebirth:circuit_controller_advanced"},"legacy_id":"hbm:circuit","legacy_meta":14}
+  ],
+  "output_items": [{"item":"hbm_ntm_rebirth:satellite","nbt":"{hbmLegacyVariant:5}"}]
+}

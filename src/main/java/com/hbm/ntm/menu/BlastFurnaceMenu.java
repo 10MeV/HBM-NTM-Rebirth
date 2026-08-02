@@ -98,14 +98,21 @@ public class BlastFurnaceMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity));
     }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
+        ItemStack original = index >= 0 && index < slots.size() && slots.get(index).hasItem()
+                ? slots.get(index).getItem().copy() : ItemStack.EMPTY;
+        ItemStack moved;
         if (index < MACHINE_SLOT_COUNT) {
-            return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
+            moved = HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                     MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END);
+            if (!moved.isEmpty() && index >= BlastFurnaceBlockEntity.SLOT_OUTPUT_1) {
+                com.hbm.ntm.util.AchievementHandler.fire(player, original);
+            }
+            return moved;
         }
         ItemStack stack = slots.get(index).getItem();
         if (ForgeHooks.getBurnTime(stack, RecipeType.SMELTING) > 0) {

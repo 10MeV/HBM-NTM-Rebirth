@@ -26,7 +26,6 @@ public class SilexMenu extends AbstractContainerMenu {
     private final HbmFluidGuiHelper.TankData tank;
     private int currentFill;
     private int progress;
-    private int mode;
 
     public SilexMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
         this(containerId, inventory, getBlockEntity(inventory, data.readBlockPos()));
@@ -50,7 +49,6 @@ public class SilexMenu extends AbstractContainerMenu {
         tank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getTank());
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getCurrentFill, value -> currentFill = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getProgress, value -> progress = value);
-        HbmMenuDataSlots.addInt(this::addDataSlot, () -> blockEntity.getMode().ordinal(), value -> mode = value);
     }
 
     public HbmFluidGuiHelper.TankData getTank() {
@@ -70,7 +68,11 @@ public class SilexMenu extends AbstractContainerMenu {
     }
 
     public int getModeOrdinal() {
-        return mode;
+        // The 1.7.10 tile sends the laser wavelength through its dedicated
+        // runtime packet immediately before clearing its server handshake.
+        // Reading the client block entity preserves that one-tick visual
+        // snapshot; a menu DataSlot would only observe the cleared server value.
+        return blockEntity.getMode().ordinal();
     }
 
     public SilexBlockEntity getBlockEntity() {
@@ -79,7 +81,7 @@ public class SilexMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 64.0D);
+        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, HbmInventoryMenuHelper.legacyMenuUseDistanceSqr(blockEntity));
     }
 
     @Override

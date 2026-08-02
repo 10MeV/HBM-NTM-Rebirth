@@ -209,7 +209,7 @@ public final class RBMKBlockPlanner {
                     new TileEntityPlan("TileEntityRBMKConsole", TileEntityCreation.CORE_ONLY, ProxyPlan.none()),
                     InteractionContract.console(),
                     IconContract.simple(false, false),
-                    List.of("extra footprint {0,0,0,1,2,2}", "guide book click zone handled by RBMKPanelBlockPlanner"));
+                    List.of("extra footprint {0,0,0,1,2,2}"));
             case "rbmk_crane_console" -> new BlockContract(
                     id,
                     LegacyBlockClass.CRANE_CONSOLE,

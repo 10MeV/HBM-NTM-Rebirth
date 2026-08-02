@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "tag": "forge:bolts/steel" },
+    { "item": "hbm_ntm_rebirth:wrench" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cbt_device"
+  }
+}

@@ -16,9 +16,6 @@ import net.minecraft.world.entity.player.Inventory;
 public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/generators/gui_turbinegas.png");
-    private static final ResourceLocation RPM_GAUGE =
-            new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/gauges/button_big.png");
-
     private boolean draggingSlider;
     private int dragStartY;
     private int dragStartSlider;
@@ -249,9 +246,8 @@ public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
     }
 
     private void renderRpmGauge(GuiGraphics graphics, int rpm) {
-        int boundedRpm = Mth.clamp(rpm, 0, 100);
-        graphics.blit(RPM_GAUGE, leftPos + 64, topPos + 16, boundedRpm * 48, 0,
-                48, 48, 4848, 48);
+        LegacyGuiElements.drawSmoothTextureCircle(graphics, TEXTURE, leftPos + 64, topPos + 16,
+                176, 64, 48, 48, rpm / 100.0D, 256, 256);
     }
 
     private static List<net.minecraft.util.FormattedCharSequence> split(List<Component> tooltip) {

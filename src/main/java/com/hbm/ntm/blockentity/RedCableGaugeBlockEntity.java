@@ -98,8 +98,8 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return new CompoundTag();
+}
 
     @Nullable
     @Override

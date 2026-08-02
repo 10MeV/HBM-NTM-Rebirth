@@ -49,7 +49,8 @@ public class MissilePartItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
-            LegacyPoseRotations.rotateZDegrees(poseStack, 135.0F);
+            // User-requested GUI orientation: legacy 135° plus 90° clockwise.
+            LegacyPoseRotations.rotateZDegrees(poseStack, 225.0F);
             LegacyPoseRotations.rotateXDegrees(poseStack, 145.0F);
             if (spec.part().kind() == ObjMissilePartModels.PartKind.WARHEAD) {
                 poseStack.translate(0.0D, 0.08D, 0.0D);

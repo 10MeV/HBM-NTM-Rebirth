@@ -83,6 +83,7 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new ExternalItemHandler(items));
+    private final LazyOptional<IFluidHandler> proxyFluidHandler;
     private final ICapabilityProvider fluidDelegate;
     private final List<HbmFluidTank> receivingTanks;
     private final List<HbmFluidTank> sendingTanks;
@@ -109,7 +110,8 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         // aligned with that shared-port contract as well.
         IFluidHandler fluidHandler = new ForgeFluidHandlerAdapter(List.of(waterTank), List.of(steamTank), 0, true, true,
                 this::onFluidContentsChanged);
-        fluidDelegate = new FluidDelegate(() -> fluidHandler);
+        proxyFluidHandler = LazyOptional.of(() -> fluidHandler);
+        fluidDelegate = new FluidDelegate(proxyFluidHandler);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, StrandCasterBlockEntity caster) {
@@ -328,6 +330,13 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
     }
 
     @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        itemHandler.invalidate();
+        proxyFluidHandler.invalidate();
+    }
+
+    @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
@@ -522,12 +531,12 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         return FluidPort.of(offset.getX(), offset.getY(), offset.getZ(), side);
     }
 
-    private record FluidDelegate(java.util.function.Supplier<IFluidHandler> handler) implements ICapabilityProvider {
+    private record FluidDelegate(LazyOptional<IFluidHandler> handler) implements ICapabilityProvider {
         @Override
         public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
             return capability == ForgeCapabilities.FLUID_HANDLER
-                    ? LazyOptional.of(handler::get).cast()
+                    ? handler.cast()
                     : LazyOptional.empty();
         }
     }

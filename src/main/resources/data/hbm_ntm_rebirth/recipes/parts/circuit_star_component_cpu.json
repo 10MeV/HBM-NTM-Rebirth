@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_cpu_cache" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_cpu_clock" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_cpu_ext" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_cpu_logic" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_cpu_register" },
+    { "item": "hbm_ntm_rebirth:circuit_star_piece_cpu_socket" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:circuit_star_component_cpu" }
+}

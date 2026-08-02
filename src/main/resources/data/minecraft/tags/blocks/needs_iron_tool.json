@@ -4,10 +4,8 @@
                    "hbm_ntm_rebirth:machine_press",
                    "hbm_ntm_rebirth:press_preheater",
                    "hbm_ntm_rebirth:machine_epress",
+                   "hbm_ntm_rebirth:piston_inserter",
                    "hbm_ntm_rebirth:machine_conveyor_press",
-                   "hbm_ntm_rebirth:machine_difurnace_off",
-                   "hbm_ntm_rebirth:machine_difurnace_extension",
-                   "hbm_ntm_rebirth:machine_difurnace_rtg_off",
                    "hbm_ntm_rebirth:machine_electric_furnace_off",
                    "hbm_ntm_rebirth:machine_boiler_off",
                    "hbm_ntm_rebirth:machine_shredder",
@@ -296,8 +294,6 @@
                    "hbm_ntm_rebirth:machine_radgen",
                    "hbm_ntm_rebirth:geiger",
                    "hbm_ntm_rebirth:machine_radiolysis",
-                   "hbm_ntm_rebirth:machine_minirtg",
-                   "hbm_ntm_rebirth:machine_powerrtg",
                    "hbm_ntm_rebirth:machine_refinery",
                    "hbm_ntm_rebirth:machine_rotary_furnace",
                    "hbm_ntm_rebirth:machine_sawmill",
@@ -349,6 +345,8 @@
                    "hbm_ntm_rebirth:pneumatic_storage_access",
                    "hbm_ntm_rebirth:pneumatic_storage_clutter",
                    "hbm_ntm_rebirth:pneumatic_storage_mono",
+                   "hbm_ntm_rebirth:pneumatic_storage_importer",
+                   "hbm_ntm_rebirth:pneumatic_storage_exporter",
                    "hbm_ntm_rebirth:crane_extractor",
                    "hbm_ntm_rebirth:crane_inserter",
                    "hbm_ntm_rebirth:crane_grabber",
@@ -451,12 +449,20 @@
                    "hbm_ntm_rebirth:ore_meteor_rareearth",
                    "hbm_ntm_rebirth:ore_meteor_cobalt",
                    "hbm_ntm_rebirth:block_meteor_treasure",
+                   "hbm_ntm_rebirth:meteor_polished",
+                   "hbm_ntm_rebirth:meteor_brick",
+                   "hbm_ntm_rebirth:meteor_brick_mossy",
+                   "hbm_ntm_rebirth:meteor_brick_cracked",
+                   "hbm_ntm_rebirth:meteor_pillar",
+                   "hbm_ntm_rebirth:meteor_battery",
+                   "hbm_ntm_rebirth:concrete_super",
                    "hbm_ntm_rebirth:reinforced_glass",
                    "hbm_ntm_rebirth:reinforced_glass_pane",
                    "hbm_ntm_rebirth:reinforced_laminate",
                    "hbm_ntm_rebirth:reinforced_laminate_pane",
                    "hbm_ntm_rebirth:block_coke",
                    "hbm_ntm_rebirth:deco_toaster",
+                   "hbm_ntm_rebirth:deco_computer",
                    "hbm_ntm_rebirth:rail_narrow_straight",
                    "hbm_ntm_rebirth:rail_large_straight",
                    "hbm_ntm_rebirth:rail_large_straight_short",
@@ -470,5 +476,9 @@
                    ,"hbm_ntm_rebirth:rail_large_switch_flipped"
                    ,"hbm_ntm_rebirth:concrete_colored"
                    ,"hbm_ntm_rebirth:concrete_colored_ext"
+                   ,"hbm_ntm_rebirth:fence_metal"
+                   ,"hbm_ntm_rebirth:vinyl_tile"
+                   ,"hbm_ntm_rebirth:stone_biome"
+                   ,"hbm_ntm_rebirth:platemetal"
                ]
 }

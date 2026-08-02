@@ -92,6 +92,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> BLOCK_VAULT_THUD = register("block.vault_thud");
     public static final RegistryObject<SoundEvent> BLOCK_VAULT_THUD_NEW = register("block.vault_thud_new");
     public static final RegistryObject<SoundEvent> BLOCK_WARN_OVERSPEED = register("block.warn_overspeed");
+    public static final RegistryObject<SoundEvent> BLOCK_PLATEMETAL_PLACE = register("block.platemetal_place");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_1 = register("tool.geiger1");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_2 = register("tool.geiger2");
     public static final RegistryObject<SoundEvent> TOOL_GEIGER_3 = register("tool.geiger3");
@@ -130,6 +131,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> STEP_IRON = register("step.iron");
     public static final RegistryObject<SoundEvent> STEP_METAL_BLOCK = register("step.metal_block");
     public static final RegistryObject<SoundEvent> STEP_POWERED = register("step.powered");
+    public static final RegistryObject<SoundEvent> STEP_PLATEMETAL = register("step.platemetal");
     public static final RegistryObject<SoundEvent> PLAYER_COUGH = register("player.cough");
     public static final RegistryObject<SoundEvent> PLAYER_VOMIT = register("player.vomit");
     public static final RegistryObject<SoundEvent> PLAYER_GULP = register("player.gulp");

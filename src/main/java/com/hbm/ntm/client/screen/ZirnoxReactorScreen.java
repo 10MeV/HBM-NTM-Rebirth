@@ -30,11 +30,19 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        drawVerticalGauge(graphics, 160, 108, 18, 12, menu.getSteamTank().scaledFill(6), 238, 0);
-        drawVerticalGauge(graphics, 142, 108, 18, 12, menu.getCarbonDioxideTank().scaledFill(6), 238, 0);
-        drawVerticalGauge(graphics, 178, 108, 18, 12, menu.getWaterTank().scaledFill(6), 238, 0);
-        drawVerticalGauge(graphics, 160, 33, 18, 17, menu.getHeatScaled(12), 220, 0, 18);
-        drawVerticalGauge(graphics, 178, 33, 18, 17, menu.getPressureScaled(12), 220, 0, 18);
+        LegacyGuiElements.drawSmoothLinearGauge(graphics, leftPos + 162, topPos + 114,
+                menu.getSteamTank().fill() / (double) menu.getSteamTank().capacity(), 2.0D, 5.0D, 0.75D,
+                14.0D, 0.0F, 0x7F0000);
+        LegacyGuiElements.drawSmoothLinearGauge(graphics, leftPos + 144, topPos + 114,
+                menu.getCarbonDioxideTank().fill() / (double) menu.getCarbonDioxideTank().capacity(),
+                2.0D, 5.0D, 0.75D, 14.0D, 0.0F, 0x7F0000);
+        LegacyGuiElements.drawSmoothLinearGauge(graphics, leftPos + 180, topPos + 114,
+                menu.getWaterTank().fill() / (double) menu.getWaterTank().capacity(), 2.0D, 5.0D, 0.75D,
+                14.0D, 0.0F, 0x7F0000);
+        LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 169, topPos + 42,
+                menu.getHeat() / 100_000.0D, 5.0D, 2.0D, 1.0D, 0x7F0000);
+        LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 187, topPos + 42,
+                menu.getPressure() / 100_000.0D, 5.0D, 2.0D, 1.0D, 0x7F0000);
         if (menu.isOn()) {
             for (int x = 0; x < 4; x++) {
                 for (int y = 0; y < 4; y++) {
@@ -125,16 +133,6 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    private void drawVerticalGauge(GuiGraphics graphics, int x, int y, int width, int height, int scaled,
-            int textureX, int textureY) {
-        drawVerticalGauge(graphics, x, y, width, height, scaled, textureX, textureY, height);
-    }
-
-    private void drawVerticalGauge(GuiGraphics graphics, int x, int y, int width, int height, int scaled,
-            int textureX, int textureY, int textureStep) {
-        graphics.blit(TEXTURE, leftPos + x, topPos + y, textureX, textureY + textureStep * scaled, width, height);
     }
 
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY, HbmFluidGuiHelper.TankData tank,

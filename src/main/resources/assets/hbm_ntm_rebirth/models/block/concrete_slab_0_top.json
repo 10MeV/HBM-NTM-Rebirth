@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/concrete",
+    "side": "hbm_ntm_rebirth:block/concrete",
+    "top": "hbm_ntm_rebirth:block/concrete"
+  }
+}

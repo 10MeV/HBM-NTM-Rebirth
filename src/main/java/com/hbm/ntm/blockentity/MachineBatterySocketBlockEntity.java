@@ -21,6 +21,7 @@ import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmSelfChargingBatteryItem;
 import com.hbm.ntm.menu.MachineBatterySocketMenu;
+import com.hbm.ntm.network.HbmGuiControlSecurity;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.world.DirPos;
@@ -488,6 +489,14 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
     }
 
     @Override
+    public boolean canReceiveClientControl(ServerPlayer player, CompoundTag tag) {
+        int control = tag.getInt(TAG_CONTROL);
+        return HbmGuiControlSecurity.hasLegacyMachineUsePermission(player, this)
+                && tag.contains(TAG_CONTROL)
+                && control >= CONTROL_RED_LOW && control <= CONTROL_PRIORITY;
+    }
+
+    @Override
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
         switch (tag.getInt(TAG_CONTROL)) {
             case CONTROL_RED_LOW -> cycleRedLowMode();
@@ -609,8 +618,8 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Nullable
     @Override

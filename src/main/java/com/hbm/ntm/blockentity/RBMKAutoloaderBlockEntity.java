@@ -34,6 +34,7 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -438,8 +439,8 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
 
     @Override
     public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
-    }
+        return getClientSyncTag();
+}
 
     @Nullable
     @Override
@@ -498,7 +499,7 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
         return Math.max(RBMKAutoloaderPlanner.MIN_CYCLE, Math.min(RBMKAutoloaderPlanner.MAX_CYCLE, value));
     }
 
-    private class LayoutGuardedMenuItems implements IItemHandler {
+    private class LayoutGuardedMenuItems implements IItemHandlerModifiable {
         @Override
         public int getSlots() {
             return hasCompleteLayout() ? items.getSlots() : 0;
@@ -510,6 +511,15 @@ public class RBMKAutoloaderBlockEntity extends BlockEntity implements MenuProvid
                 return ItemStack.EMPTY;
             }
             return items.getStackInSlot(slot);
+        }
+
+        @Override
+        public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+            // SlotItemHandler#set uses IItemHandlerModifiable when the client receives
+            // the server's initial/container slot contents. This is a client-sync write,
+            // not an automation insertion, so it must reach the backing handler even
+            // while the client has not yet observed every multiblock dummy.
+            items.setStackInSlot(slot, stack);
         }
 
         @Override

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "hbm_ntm_rebirth:block/lightstone.tile",
+    "side": "hbm_ntm_rebirth:block/lightstone.tile",
+    "top": "hbm_ntm_rebirth:block/lightstone.tile"
+  }
+}
+
