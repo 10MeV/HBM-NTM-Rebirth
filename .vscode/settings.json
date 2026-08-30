@@ -1,5 +1,0 @@
-{
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "java.gradle.buildServer.enabled": "off",
-    "java.compile.nullAnalysis.mode": "automatic"
-}

@@ -1,6 +1,0 @@
-gradle.projectsEvaluated {
-    def verifyRunDir = System.getProperty('hbm.drone.client.runDir')
-    if (verifyRunDir != null && !verifyRunDir.isBlank()) {
-        rootProject.minecraft.runs.client.workingDirectory(rootProject.file(verifyRunDir))
-    }
-}
