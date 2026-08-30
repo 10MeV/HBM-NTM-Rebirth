@@ -55,7 +55,7 @@ public class ForceFieldRenderer implements BlockEntityRenderer<ForceFieldBlockEn
         poseStack.translate(0.0D, 0.5D, 0.0D);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(forceField)) {
             ObjUtilityModels.FORCEFIELD_TOP.renderAll(ObjUtilityModels.FORCEFIELD_TOP_TEXTURE,
-                    poseStack, buffer, modelLight, packedOverlay);
+                    poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }

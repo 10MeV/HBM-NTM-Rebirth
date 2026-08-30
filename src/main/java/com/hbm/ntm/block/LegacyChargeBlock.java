@@ -116,7 +116,10 @@ public class LegacyChargeBlock extends BaseEntityBlock implements ChainExplodabl
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        // The legacy rotated-block renderer owns the OBJ transform.  Forge's baked OBJ
+        // transform path applies the side/down rotations with a different origin, which
+        // separates the charge body from its correctly positioned BER timer.
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Nullable

@@ -39,7 +39,7 @@ public class AnnihilatorMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 AnnihilatorBlockEntity.SLOT_FLUID_IDENTIFIER, 35, 45));
         HbmInventoryMenuHelper.addOutputSlots(this::addSlot, blockEntity.getItems(),
-                AnnihilatorBlockEntity.SLOT_PAYOUT_START, 80, 36, 3, 2);
+                AnnihilatorBlockEntity.SLOT_PAYOUT_START, 80, 36, 2, 3);
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 AnnihilatorBlockEntity.SLOT_MONITOR, 152, 18));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),

@@ -18,6 +18,8 @@ layout(location = 13) in vec3 LocalLightWeight;
 uniform sampler2D Sampler1;
 uniform mat4 ProjMat;
 uniform float FadeAlpha;
+uniform vec3 Light0_Direction;
+uniform vec3 Light1_Direction;
 
 out vec2 texCoord;
 out vec2 lightmapUV;
@@ -65,24 +67,29 @@ vec2 slicedLightUv(vec3 w) {
     return mix(sliceLightUv(slice0, xzWeight), sliceLightUv(slice1, xzWeight), sliceWeight);
 }
 
-float stableFaceShade(vec3 normal) {
-    float len = length(normal);
-    vec3 n = len > 1.0e-5 ? normal / len : vec3(0.0, 1.0, 0.0);
-    vec3 weight = abs(n);
-    float sum = max(weight.x + weight.y + weight.z, 1.0e-5);
-    float yShade = n.y >= 0.0 ? 1.00 : 0.50;
-    float axisShade = (weight.x * 0.72 + weight.y * yShade + weight.z * 0.86) / sum;
-    vec3 keyLight = normalize(vec3(0.20, 1.00, -0.70));
-    vec3 fillLight = normalize(vec3(-0.20, 1.00, 0.70));
-    float fixedDiffuse = max(dot(n, keyLight), 0.0) * 0.65 + max(dot(n, fillLight), 0.0) * 0.35;
-    float litShade = axisShade * (0.82 + fixedDiffuse * 0.22);
-    float contrastShade = 0.55 + (litShade - 0.55) * 1.25;
-    float shadowWeight = clamp((0.64 - contrastShade) / 0.34, 0.0, 1.0);
-    return clamp(contrastShade - shadowWeight * 0.06, 0.34, 1.00);
+float legacyStandardLight(vec3 transformedNormal) {
+    float normalLength = length(transformedNormal);
+    vec3 normal = normalLength > 1.0e-5 && !isinf(normalLength)
+            ? transformedNormal / normalLength : vec3(0.0);
+    vec3 light0 = normalize(Light0_Direction);
+    vec3 light1 = normalize(Light1_Direction);
+    return min(1.0, 0.40
+            + 0.60 * max(dot(normal, light0), 0.0)
+            + 0.60 * max(dot(normal, light1), 0.0));
+}
+
+vec3 transformNormal(mat4 modelView, vec3 sourceNormal) {
+    mat3 linear = mat3(modelView);
+    float determinantValue = determinant(linear);
+    if (!(abs(determinantValue) > 1.0e-8) || isinf(determinantValue)) {
+        return vec3(0.0);
+    }
+    return transpose(inverse(linear)) * sourceNormal;
 }
 
 void main() {
     mat4 instanceModelView = mat4(InstModel0, InstModel1, InstModel2, InstModel3);
+    vec3 eyeNormal = transformNormal(instanceModelView, Normal);
     vec3 lightWeight = clamp(LocalLightWeight, vec3(0.0), vec3(1.0));
     vec2 rawLightUv = slicedLightUv(lightWeight);
 
@@ -91,9 +98,9 @@ void main() {
 
     texCoord = UV0;
     lightmapUV = (rawLightUv + vec2(8.0)) / 256.0;
-    vertexColor = vec4(InstColor.rgb * stableFaceShade(Normal), InstColor.a);
+    vertexColor = vec4(InstColor.rgb * legacyStandardLight(eyeNormal), InstColor.a);
     overlayColor = texelFetch(Sampler1, ivec2(InstOverlay.xy), 0);
     vertexDistance = length(viewPos.xyz);
-    fragNormal = mat3(instanceModelView) * Normal;
+    fragNormal = eyeNormal;
     vFadeAlpha = FadeAlpha * clamp(InstOverlay.z, 0.0, 1.0);
 }

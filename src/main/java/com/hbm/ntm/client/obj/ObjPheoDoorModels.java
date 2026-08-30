@@ -14,6 +14,7 @@ public final class ObjPheoDoorModels {
     public static final LegacyWavefrontModel VEHICLE_DOOR = model("vehicle_door").asVBO();
     public static final LegacyWavefrontModel WATER_DOOR = model("water_door").asVBO();
     public static final LegacyWavefrontModel VAULT_DOOR = model("vault_door", vaultTexture("vault_door_3")).asVBO();
+    public static final LegacyWavefrontModel CARGO_DOOR = model("cargo_door").asVBO();
 
     public static final ResourceLocation FIRE_DOOR_TEXTURE = texture("fire_door");
     public static final ResourceLocation FIRE_DOOR_BLACK_TEXTURE = texture("fire_door_black");
@@ -36,6 +37,7 @@ public final class ObjPheoDoorModels {
     public static final ResourceLocation VEHICLE_DOOR_TEXTURE = texture("vehicle_door");
     public static final ResourceLocation WATER_DOOR_TEXTURE = texture("water_door");
     public static final ResourceLocation WATER_DOOR_CLEAN_TEXTURE = texture("water_door_clean");
+    public static final ResourceLocation CARGO_DOOR_TEXTURE = texture("cargo_door");
     public static final ResourceLocation VAULT_DOOR_3_TEXTURE = vaultTexture("vault_door_3");
     public static final ResourceLocation VAULT_DOOR_4_TEXTURE = vaultTexture("vault_door_4");
     public static final ResourceLocation VAULT_DOOR_S_TEXTURE = vaultTexture("vault_door_s");

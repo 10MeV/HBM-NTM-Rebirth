@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.CombinationOvenBlockEntity;
 import com.hbm.ntm.menu.CombinationOvenMenu;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -18,7 +19,7 @@ public class CombinationOvenScreen extends AbstractContainerScreen<CombinationOv
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 186;
-        titleLabelX = 70;
+        titleLabelX = imageWidth / 2;
         titleLabelY = 6;
         inventoryLabelX = 8;
         inventoryLabelY = imageHeight - 96 + 2;
@@ -41,7 +42,7 @@ public class CombinationOvenScreen extends AbstractContainerScreen<CombinationOv
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, titleLabelX - font.width(title) / 2, titleLabelY, 0xFFFFFF, false);
+        graphics.drawString(font, title, titleLabelX - font.width(title) / 2, titleLabelY, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -49,18 +50,24 @@ public class CombinationOvenScreen extends AbstractContainerScreen<CombinationOv
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(118, 18, 16, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(118, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
                     menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(45, 37, 38, 5, mouseX, mouseY)) {
+        } else if (isLegacyHovering(44, 36, 39, 7, mouseX, mouseY)) {
             graphics.renderTooltip(font, List.of(
-                    Component.literal(menu.getProgress() + " / " + CombinationOvenBlockEntity.PROCESS_TIME)
+                    Component.literal(String.format(Locale.US, "%,d / %,dTU",
+                                    menu.getProgress(), CombinationOvenBlockEntity.PROCESS_TIME))
                             .getVisualOrderText()), mouseX, mouseY);
-        } else if (isHovering(45, 46, 37, 5, mouseX, mouseY)) {
+        } else if (isLegacyHovering(44, 45, 39, 7, mouseX, mouseY)) {
             graphics.renderTooltip(font, List.of(
-                    Component.literal(menu.getHeat() + " / " + CombinationOvenBlockEntity.MAX_HEAT + " TU")
+                    Component.literal(String.format(Locale.US, "%,d / %,dTU",
+                                    menu.getHeat(), CombinationOvenBlockEntity.MAX_HEAT))
                             .getVisualOrderText()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

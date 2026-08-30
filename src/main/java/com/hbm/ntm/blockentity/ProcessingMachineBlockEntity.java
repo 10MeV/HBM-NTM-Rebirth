@@ -36,6 +36,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -586,12 +587,49 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        // The legacy centrifuge and crystallizer have distinct runtime
+        // packets.  Mirror exactly those fields for the initial chunk/update
+        // packet instead of loading an empty persistence tag on the client.
+        CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
+        tag.putLong(TAG_LEGACY_POWER, energy.getPower());
+        tag.putInt(TAG_PROGRESS, progress);
+        tag.putBoolean(TAG_IS_ON, isOn);
+        if (kind == Kind.CRYSTALLIZER) {
+            tag.putInt(TAG_DURATION, duration);
+            crystallizerTank.writeToNbt(tag, TAG_TANK);
+        }
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        if (!tag.contains(TAG_LEGACY_POWER)) {
+            return;
+        }
+        readLegacyLoadedTileClientTag(tag);
+        energy.setPower(tag.getLong(TAG_LEGACY_POWER));
+        progress = tag.getInt(TAG_PROGRESS);
+        isOn = tag.getBoolean(TAG_IS_ON);
+        if (kind == Kind.CRYSTALLIZER) {
+            duration = Math.max(1, tag.getInt(TAG_DURATION));
+            if (tag.contains(TAG_TANK, Tag.TAG_COMPOUND)) {
+                crystallizerTank.readFromNbt(tag, TAG_TANK);
+            }
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override
@@ -669,7 +707,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     public void setRemoved() {
         if (kind == Kind.CRYSTALLIZER) {
             HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, crystallizerEnergyPorts(), this);
-            fluidPortSubscriptions.detachAllDetailed(level, worldPosition, crystallizerFluidPorts(), this, null);
+            fluidPortSubscriptions.detachAllTrackedDetailed(level, worldPosition, this, null);
         }
         super.setRemoved();
     }
@@ -678,7 +716,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     public void onChunkUnloaded() {
         if (kind == Kind.CRYSTALLIZER) {
             HbmEnergyUtil.unsubscribeReceiverFromPorts(level, worldPosition, crystallizerEnergyPorts(), this);
-            fluidPortSubscriptions.detachAllDetailed(level, worldPosition, crystallizerFluidPorts(), this, null);
+            fluidPortSubscriptions.detachAllTrackedDetailed(level, worldPosition, this, null);
         }
         super.onChunkUnloaded();
     }

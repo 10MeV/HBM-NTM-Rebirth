@@ -78,7 +78,7 @@ public class ArcFurnaceRenderer implements BlockEntityRenderer<ArcFurnaceBlockEn
                         blockEntity.electrodeStateInSlot(ArcFurnaceBlockEntity.SLOT_ELECTRODE_0),
                         blockEntity.electrodeStateInSlot(ArcFurnaceBlockEntity.SLOT_ELECTRODE_1),
                         blockEntity.electrodeStateInSlot(ArcFurnaceBlockEntity.SLOT_ELECTRODE_2),
-                        poseStack, buffer, modelLight, packedOverlay, renderMode);
+                        poseStack, buffer, packedLight, packedOverlay, renderMode);
             }
             poseStack.popPose();
         }

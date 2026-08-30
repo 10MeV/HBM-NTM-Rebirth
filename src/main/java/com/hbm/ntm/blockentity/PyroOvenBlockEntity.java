@@ -380,6 +380,11 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         CompoundTag tag = super.getClientSyncTag();
         tag.putBoolean(TAG_PROGRESSING, progressing);
         tag.putBoolean(TAG_VENTING, venting);
+        // TileEntityMachinePyroOven#serialize appends the live float progress
+        // after its two visual gates.  It is needed immediately when a client
+        // starts tracking this block, while the parent already supplies the
+        // energy and both tanks.
+        tag.putFloat(TAG_PROGRESS, progress);
         return tag;
     }
 
@@ -388,6 +393,9 @@ public class PyroOvenBlockEntity extends HbmEnergyAndFluidBlockEntity
         super.handleClientSyncTag(tag);
         progressing = tag.getBoolean(TAG_PROGRESSING);
         venting = tag.getBoolean(TAG_VENTING);
+        if (tag.contains(TAG_PROGRESS, Tag.TAG_FLOAT)) {
+            progress = Math.max(0.0F, tag.getFloat(TAG_PROGRESS));
+        }
     }
 
     @Override

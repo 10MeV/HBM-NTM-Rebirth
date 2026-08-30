@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChemicalFactoryBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -85,9 +84,9 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(chemicalFactory)) {
                 double fanAngle = anim * LegacyTileRenderPlans.CHEMICAL_FACTORY_FAN_ROTATION_SCALE % 360.0D;
                 renderRotatingYPart(model, "Fan1", LegacyTileRenderPlans.CHEMICAL_FACTORY_FAN_PIVOT_X,
-                        0.0D, 0.0D, fanAngle, texture, poseStack, buffer, modelLight, packedOverlay);
+                        0.0D, 0.0D, fanAngle, texture, poseStack, buffer, packedLight, packedOverlay);
                 renderRotatingYPart(model, "Fan2", -LegacyTileRenderPlans.CHEMICAL_FACTORY_FAN_PIVOT_X,
-                        0.0D, 0.0D, fanAngle, texture, poseStack, buffer, modelLight, packedOverlay);
+                        0.0D, 0.0D, fanAngle, texture, poseStack, buffer, packedLight, packedOverlay);
             }
 
             poseStack.popPose();
@@ -118,9 +117,6 @@ public class ChemicalFactoryRenderer implements BlockEntityRenderer<ChemicalFact
     private static void renderStaticBaseFrame(LegacyWavefrontModel model, boolean frameVisible,
             ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay) {
-        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-            return;
-        }
         model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
                 frameVisible ? BASE_FRAME : BASE);
     }

@@ -382,7 +382,7 @@ public class DfcCoreBlockEntity extends HbmFluidNetworkBlockEntity implements Me
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }

@@ -55,7 +55,7 @@ public class DfcEmitterScreen extends AbstractContainerScreen<DfcEmitterMenu> {
         graphics.blit(TEXTURE, leftPos + 53, topPos + 45, 210, 0, menu.getWatts() * 34 / 100, 4);
         int power = (int) (menu.getPower() * 52L / DfcEmitterBlockEntity.MAX_POWER);
         graphics.blit(TEXTURE, leftPos + 26, topPos + 69 - power, 176, 52 - power, 16, power);
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 8, topPos + 17, 16, 52, menu.getCryogel());
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 8, topPos + 69, 16, 52, menu.getCryogel());
     }
 
     @Override
@@ -89,7 +89,7 @@ public class DfcEmitterScreen extends AbstractContainerScreen<DfcEmitterMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        LegacyGuiElements.drawCenteredLabel(graphics, font, title, 0, 6, imageWidth, 0x404040);
+        LegacyGuiElements.drawCenteredLabel(graphics, font, title, imageWidth / 2, 6, imageWidth, 0x404040);
         graphics.drawString(font, "Output: " + BobMathUtil.getShortNumber(menu.getPrev()) + "Spk", 50, 30, 0xFF7F7F, false);
         graphics.drawString(font, playerInventoryTitle, 8, imageHeight - 94, 0x404040, false);
     }
@@ -99,7 +99,8 @@ public class DfcEmitterScreen extends AbstractContainerScreen<DfcEmitterMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(8, 17, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getCryogel().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getCryogel(),
+                    menu.getCryogel().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         } else if (isHovering(26, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 26, topPos + 17, 16, 52, menu.getPower(), DfcEmitterBlockEntity.MAX_POWER);

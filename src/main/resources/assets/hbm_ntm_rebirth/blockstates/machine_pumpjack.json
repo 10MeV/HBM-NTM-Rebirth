@@ -1,19 +1,19 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_pumpjack",
-      "y": 180
+      "model": "hbm_ntm_rebirth:block/machine_pumpjack"
     },
     "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_pumpjack",
-      "y": 270
+      "y": 90
     },
     "facing=south": {
       "model": "hbm_ntm_rebirth:block/machine_pumpjack",
-      "y": 90
+      "y": 270
     },
     "facing=west": {
-      "model": "hbm_ntm_rebirth:block/machine_pumpjack"
+      "model": "hbm_ntm_rebirth:block/machine_pumpjack",
+      "y": 180
     }
   }
 }

@@ -30,6 +30,6 @@ public class PWRFuelItem extends Item {
         tooltip.add(Component.literal("Reaction function: ").withStyle(ChatFormatting.GOLD)
                 .append(Component.literal(type.curve().fuelLabel()).withStyle(ChatFormatting.RESET)));
         tooltip.add(Component.literal("Fuel type: ").withStyle(ChatFormatting.GOLD)
-                .append(Component.literal(type.curve().dangerLabel()).withStyle(ChatFormatting.YELLOW)));
+                .append(Component.literal(type.curve().dangerLabel()).withStyle(type.curve().dangerStyle())));
     }
 }

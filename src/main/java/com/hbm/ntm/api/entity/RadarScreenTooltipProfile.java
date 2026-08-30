@@ -1,5 +1,6 @@
 package com.hbm.ntm.api.entity;
 
+import com.hbm.ntm.util.BobMathUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -21,10 +22,9 @@ public final class RadarScreenTooltipProfile {
     private RadarScreenTooltipProfile() {
     }
 
-    public static List<Component> energy(long power, long maxPower, int redstonePower) {
-        return List.of(
-                Component.literal(power + " / " + maxPower + " HE"),
-                Component.literal("Redstone: " + redstonePower).withStyle(ChatFormatting.RED));
+    public static List<Component> energy(long power, long maxPower) {
+        return List.of(Component.literal(BobMathUtil.getShortNumber(power) + "/"
+                + BobMathUtil.getShortNumber(maxPower) + "HE"));
     }
 
     public static List<Component> localizedLines(String key) {
@@ -70,9 +70,9 @@ public final class RadarScreenTooltipProfile {
     }
 
     public static List<Component> chrome(RadarScreenHoverProfile.Hover hover, boolean includeControlState,
-            boolean active, long power, long maxPower, int redstonePower) {
+            boolean active, long power, long maxPower) {
         return switch (hover.type()) {
-            case ENERGY -> energy(power, maxPower, redstonePower);
+            case ENERGY -> energy(power, maxPower);
             case CONTROL -> includeControlState
                     ? control(hover.button().tooltipKey(), active)
                     : localizedLines(hover.button().tooltipKey());
@@ -86,8 +86,7 @@ public final class RadarScreenTooltipProfile {
             RadarMenuState state) {
         RadarMenuState safeState = state != null ? state : RadarMenuState.DEFAULT;
         boolean active = hover.button() != null && safeState.controlActive(hover.button().control());
-        return chrome(hover, includeControlState, active, safeState.power(), safeState.maxPower(),
-                safeState.redstonePower());
+        return chrome(hover, includeControlState, active, safeState.power(), safeState.maxPower());
     }
 
     public static List<FormattedCharSequence> split(List<Component> tooltip) {

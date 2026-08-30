@@ -62,7 +62,6 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
                     RadarGuiRenderProfile.slotEnergyBar(leftPos, topPos, powerWidth);
             graphics.blit(LINK_TEXTURE, bar.x(), bar.y(), bar.u(), bar.v(), bar.width(), bar.height());
         }
-        renderToggleStrip(graphics);
     }
 
     @Override
@@ -170,28 +169,6 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
                         blip.x(), blip.y(), blip.level()));
     }
 
-    private void renderToggleStrip(GuiGraphics graphics) {
-        RadarGuiRenderProfile.forEachSlotToggle(leftPos, topPos, menu.getState(), toggle -> {
-            RadarGuiRenderProfile.SlotToggleFrame frame = toggle.frame();
-            int x = leftPos + frame.x();
-            int y = topPos + frame.y();
-            int border = frame.borderColor();
-            graphics.fill(leftPos + frame.outerLeft(), topPos + frame.outerTop(),
-                    leftPos + frame.outerRight(), topPos + frame.outerBottom(),
-                    RadarGuiRenderProfile.SLOT_TOGGLE_BACKGROUND);
-            graphics.fill(leftPos + frame.outerLeft(), topPos + frame.outerTop(),
-                    leftPos + frame.outerRight(), y, border);
-            graphics.fill(leftPos + frame.outerLeft(), topPos + frame.iconBottom(),
-                    leftPos + frame.outerRight(), topPos + frame.outerBottom(), border);
-            graphics.fill(leftPos + frame.outerLeft(), y, x, topPos + frame.iconBottom(), border);
-            graphics.fill(leftPos + frame.iconRight(), y, leftPos + frame.outerRight(),
-                    topPos + frame.iconBottom(), border);
-            if (toggle.active()) {
-                blit(graphics, RADAR_TEXTURE, toggle.icon());
-            }
-        });
-    }
-
     private void renderHoveredTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
         RadarScreenHoverProfile.Hover hover =
                 RadarScreenHoverProfile.slots(leftPos, topPos, mouseX, mouseY);
@@ -236,10 +213,12 @@ public class RadarScreen extends AbstractContainerScreen<RadarMenu> {
     private boolean handleScreenAction(RadarScreenActionProfile.Action action, boolean fallback) {
         return switch (action.type()) {
             case CONTROL -> {
+                LegacyGuiElements.playClickSound();
                 sendButton(action.control());
                 yield true;
             }
             case VIEW -> {
+                LegacyGuiElements.playClickSound();
                 setView(action.view());
                 yield true;
             }

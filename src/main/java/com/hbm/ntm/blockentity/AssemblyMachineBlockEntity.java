@@ -42,6 +42,8 @@ import com.hbm.ntm.util.BufferUtil;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -457,7 +459,11 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
         readClientSyncFields(tag);
     }
 
@@ -489,19 +495,55 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private void writeClientSyncFields(CompoundTag tag) {
+        // Match TileEntityMachineAssemblyMachine#serialize. This deliberately
+        // excludes inventory and other persistence-only data from client state.
+        writeLegacyLoadedTileClientTag(tag);
+        tag.put(TAG_ENERGY, energy.serializeNBT());
+        inputTank.writeToNbt(tag, TAG_INPUT_TANK);
+        outputTank.writeToNbt(tag, TAG_OUTPUT_TANK);
         tag.putBoolean(TAG_DID_PROCESS, didProcess);
         tag.putBoolean(TAG_RESTRICTED_MODE, rorRestrictedMode);
+        tag.putDouble(TAG_PROGRESS, progress);
+        tag.putString(TAG_RECIPE, selectedRecipe);
     }
 
     private void readClientSyncFields(CompoundTag tag) {
-        didProcess = tag.getBoolean(TAG_DID_PROCESS);
-        rorRestrictedMode = tag.getBoolean(TAG_RESTRICTED_MODE);
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_ENERGY, Tag.TAG_COMPOUND)) {
+            energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
+        }
+        if (tag.contains(TAG_INPUT_TANK)) {
+            inputTank.readFromNbt(tag, TAG_INPUT_TANK);
+        }
+        if (tag.contains(TAG_OUTPUT_TANK)) {
+            outputTank.readFromNbt(tag, TAG_OUTPUT_TANK);
+        }
+        if (tag.contains(TAG_DID_PROCESS, Tag.TAG_BYTE)) {
+            didProcess = tag.getBoolean(TAG_DID_PROCESS);
+        }
+        if (tag.contains(TAG_RESTRICTED_MODE, Tag.TAG_BYTE)) {
+            rorRestrictedMode = tag.getBoolean(TAG_RESTRICTED_MODE);
+        }
+        if (tag.contains(TAG_PROGRESS, Tag.TAG_DOUBLE)) {
+            progress = tag.getDouble(TAG_PROGRESS);
+        }
+        if (tag.contains(TAG_RECIPE, Tag.TAG_STRING)) {
+            selectedRecipe = GenericMachineRecipeSelector.normalize(tag.getString(TAG_RECIPE));
+        }
     }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncFields(tag);
+        }
     }
 
     @Override
@@ -643,6 +685,11 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
                 ? new ProcessingFactors(factors.speedMultiplier() * 0.25D, factors.powerMultiplier()) : factors;
     }
 
+    /** Legacy GUI selects the alternate progress texture while the ROR-restricted recipe mode is active. */
+    public boolean isRorRestrictedMode() {
+        return rorRestrictedMode;
+    }
+
     private RORDispatcher createRorDispatcher() {
         return RORDispatcher.builder()
                 .value("progress", () -> Integer.toString((int) Math.round(progress * 100.0D)))
@@ -725,7 +772,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
 
     private void detachFluidPortSubscriptions() {
         if (level != null && !level.isClientSide) {
-            fluidPortSubscriptions.detachAll(level, worldPosition, FLUID_PORTS, this, this);
+            fluidPortSubscriptions.detachAllTracked(level, worldPosition, this, this);
         }
     }
 

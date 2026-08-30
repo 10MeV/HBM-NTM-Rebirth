@@ -2,10 +2,13 @@ package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.TurbineGasBlockEntity;
+import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.menu.TurbineGasMenu;
 import com.hbm.ntm.network.ModMessages;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -90,39 +93,43 @@ public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(26, 108, 142, 16, mouseX, mouseY)) {
+        if (isLegacyHovering(26, 108, 142, 16, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 26, topPos + 108, 142, 16, menu.getPower(), menu.getMaxPower());
-        } else if (draggingSlider || isHovering(36, 36, 16, 66, mouseX, mouseY)) {
+        } else if (isLegacyHovering(36, 36, 16, 66, mouseX, mouseY)) {
             renderSliderTooltip(graphics, mouseX, mouseY);
-        } else if (isHovering(133, 23, 8, 72, mouseX, mouseY)) {
+        } else if (isLegacyHovering(133, 23, 8, 72, mouseX, mouseY)) {
             graphics.renderTooltip(font, List.of(Component.literal("Temperature: "
-                    + Math.max(20, menu.getTemperature()) + " C").getVisualOrderText()), mouseX, mouseY);
-        } else if (isHovering(8, 16, 16, 48, mouseX, mouseY)) {
+                    + Math.max(20, menu.getTemperature()) + "\u00B0C").getVisualOrderText()), mouseX, mouseY);
+        } else if (isLegacyHovering(8, 16, 16, 48, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getFuelTank(),
                     menu.getFuelTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(8, 70, 16, 32, mouseX, mouseY)) {
+        } else if (isLegacyHovering(8, 70, 16, 32, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getLubricantTank(),
                     menu.getLubricantTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(147, 61, 16, 36, mouseX, mouseY)) {
+        } else if (isLegacyHovering(147, 61, 16, 36, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getWaterTank(),
                     menu.getWaterTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(147, 21, 16, 36, mouseX, mouseY)) {
+        } else if (isLegacyHovering(147, 21, 16, 36, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getSteamTank(),
                     menu.getSteamTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(-16, 34, 16, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(List.of(
-                    Component.translatableWithFallback("desc.gui.turbinegas.automode",
-                            "Automatic throttle follows stored power and fuel."))), mouseX, mouseY);
-        } else if (isHovering(-16, 50, 16, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(List.of(
-                    Component.translatableWithFallback("desc.gui.turbinegas.fuels",
-                            "Accepts combustible gas-grade fuel identifiers."))), mouseX, mouseY);
+        } else if (isLegacyHovering(-16, 34, 16, 16, mouseX, mouseY)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 34, 16, 16, leftPos - 8, topPos + 60,
+                    splitLegacyInfo(Component.translatableWithFallback("desc.gui.turbinegas.automode",
+                            "Automatic turbine throttling mode$By clicking the \"AUTO\" button, the turbine$"
+                                    + "will automatically adjust the throttle position$"
+                                    + "based on the power required from the network$"
+                                    + "and the fuel level in the internal tank")));
+        } else if (isLegacyHovering(-16, 50, 16, 16, mouseX, mouseY)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 50, 16, 16, leftPos - 8, topPos + 60, fuelInfo());
         } else if ((menu.hasLowFuelOrLube() || menu.hasNoFuelOrLube())
-                && isHovering(-16, 66, 16, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(List.of(
-                    Component.translatableWithFallback("desc.gui.turbinegas.warning",
-                            "Low fuel or lubricant."))), mouseX, mouseY);
+                && isLegacyHovering(-16, 66, 16, 16, mouseX, mouseY)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 66, 16, 16, leftPos - 8, topPos + 60,
+                    splitLegacyInfo(Component.translatableWithFallback("desc.gui.turbinegas.warning",
+                            "Fuel or lubricant level low!")));
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
@@ -140,13 +147,13 @@ public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
             }
             return true;
         }
-        if (menu.getState() == 1 && isHovering(74, 86, 29, 13, mouseX, mouseY)) {
+        if (menu.getState() == 1 && isLegacyAutoModeButton(mouseX, mouseY)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), menu.isAutoMode() ? 0 : 1,
                     TurbineGasBlockEntity.CONTROL_AUTO);
             LegacyGuiElements.playClickSound();
             return true;
         }
-        if (menu.getState() == 1 && isHovering(36, 97 - menu.getSliderPos(), 16, 6, mouseX, mouseY)) {
+        if (menu.getState() == 1 && isLegacySliderHandle(mouseX, mouseY, menu.getSliderPos())) {
             draggingSlider = true;
             dragStartY = (int) mouseY;
             dragStartSlider = menu.getSliderPos();
@@ -161,7 +168,9 @@ public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (draggingSlider) {
+        if (draggingSlider && !menu.isAutoMode() && menu.getState() == 1
+                && isLegacySliderMotionArea(mouseX, mouseY)
+                && isLegacySliderHandle(dragStartY, dragStartSlider)) {
             updateSlider(mouseY);
             return true;
         }
@@ -172,14 +181,13 @@ public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (draggingSlider) {
             draggingSlider = false;
-            updateSlider(mouseY);
             return true;
         }
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
     private void updateSlider(double mouseY) {
-        int next = Mth.clamp(dragStartSlider + dragStartY - (int) mouseY, 0, 60);
+        int next = Mth.clamp(topPos + 100 - (int) mouseY, 0, 60);
         if (next != localSlider) {
             localSlider = next;
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), next,
@@ -189,8 +197,8 @@ public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
 
     private void renderSliderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
         if (menu.getState() == 1) {
-            graphics.renderTooltip(font, split(List.of(Component.literal(String.format(Locale.US,
-                    "Fuel consumption: %.1f mB/s", menu.fuelConsumptionPerSecond())))),
+            graphics.renderTooltip(font, split(List.of(Component.literal(
+                    "Fuel consumption: " + menu.fuelConsumptionPerSecond() + " mb/s"))),
                     mouseX, mouseY);
         } else {
             graphics.renderTooltip(font, split(List.of(Component.literal("Generator offline"))), mouseX, mouseY);
@@ -237,8 +245,7 @@ public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
     }
 
     private void renderThermometer(GuiGraphics graphics, int temperature) {
-        int clamped = Mth.clamp(temperature, 0, 800);
-        int height = 64 * clamped / 800;
+        int height = 64 * temperature / 800;
         if (height > 0) {
             graphics.blit(TEXTURE, leftPos + 136, topPos + 28 + 64 - height, 176, 64 - height,
                     2, height);
@@ -252,5 +259,47 @@ public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
 
     private static List<net.minecraft.util.FormattedCharSequence> split(List<Component> tooltip) {
         return tooltip.stream().map(Component::getVisualOrderText).toList();
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
+    }
+
+    private boolean isLegacyAutoModeButton(double mouseX, double mouseY) {
+        return leftPos + 74 < mouseX && mouseX <= leftPos + 103
+                && topPos + 86 <= mouseY && mouseY < topPos + 99;
+    }
+
+    private boolean isLegacySliderHandle(double mouseX, double mouseY, int sliderPosition) {
+        return topPos + 97 - sliderPosition <= mouseY && mouseY < topPos + 103 - sliderPosition
+                && leftPos + 36 < mouseX && mouseX <= leftPos + 52;
+    }
+
+    private boolean isLegacySliderHandle(int absoluteMouseY, int sliderPosition) {
+        return topPos + 97 - sliderPosition <= absoluteMouseY
+                && absoluteMouseY < topPos + 103 - sliderPosition;
+    }
+
+    private boolean isLegacySliderMotionArea(double mouseX, double mouseY) {
+        return leftPos + 36 < mouseX && mouseX <= leftPos + 52
+                && topPos + 37 < mouseY && mouseY <= topPos + 103;
+    }
+
+    private static List<Component> splitLegacyInfo(Component text) {
+        return Arrays.stream(text.getString().split("\\$"))
+                .map(Component::literal)
+                .map(Component.class::cast)
+                .toList();
+    }
+
+    private static List<Component> fuelInfo() {
+        List<Component> fuels = new ArrayList<>(splitLegacyInfo(
+                Component.translatableWithFallback("desc.gui.turbinegas.fuels", "Accepted fuels:")));
+        for (FluidType type : HbmFluids.niceOrder()) {
+            if (TurbineGasBlockEntity.isGasFuel(type)) {
+                fuels.add(Component.literal("  ").append(type.getDisplayName()));
+            }
+        }
+        return List.copyOf(fuels);
     }
 }

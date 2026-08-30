@@ -2,6 +2,7 @@ package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.LemegetonMenu;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -29,8 +30,14 @@ public class LemegetonScreen extends AbstractContainerScreen<LemegetonMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
-        graphics.drawString(font, playerInventoryTitle, 8, inventoryLabelY, 0x404040, false);
+        graphics.drawString(font,
+                Component.literal("Material Upgrade Conversion")
+                        .withStyle(style -> style.withFont(Minecraft.ALT_FONT)),
+                28, 6, 0x404040, false);
+        graphics.drawString(font,
+                Component.literal("Standard Inventory")
+                        .withStyle(style -> style.withFont(Minecraft.ALT_FONT)),
+                8, inventoryLabelY, 0x404040, false);
     }
 
     @Override

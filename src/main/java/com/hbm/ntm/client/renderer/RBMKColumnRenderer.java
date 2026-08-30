@@ -81,7 +81,7 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
                 && !MultiblockHelper.isOperationalCoreLayoutComplete(column.getLevel(), column.getBlockPos())) {
             return;
         }
-        renderDynamicSegment(column, 0, partialTick, poseStack, buffer, modelLight, packedOverlay);
+        renderDynamicSegment(column, 0, partialTick, poseStack, buffer, packedLight, packedOverlay);
     }
 
     @Override
@@ -285,7 +285,11 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
             PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         TextureAtlasSprite top = lid == RBMKColumnBlock.LidType.GLASS ? sprites.glassTop() : sprites.coverTop();
         TextureAtlasSprite side = lid == RBMKColumnBlock.LidType.GLASS ? sprites.glassSide() : sprites.coverSide();
-        LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side,
+        // RenderRBMKRod renders this slab at y + 1.  RenderBlocks suppresses
+        // its bottom face against the opaque top section and emits only the
+        // top plus four sides.  Submitting a full cuboid creates a coplanar
+        // bottom/top pair; culling cannot safely repair that face ownership.
+        LegacyAtlasCuboidRenderer.croppedTopAndSides(top, side, side, side, side,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, 255,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0D, 1.0D, 0.0D, 1.0D, 1.25D, 1.0D);
     }
@@ -296,7 +300,7 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
         String material = prefix + (lid == RBMKColumnBlock.LidType.GLASS ? "_glass" : "_cover");
         TextureAtlasSprite top = blockSprite(material + "_top");
         TextureAtlasSprite side = blockSprite(material + "_side");
-        LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side,
+        LegacyAtlasCuboidRenderer.croppedTopAndSides(top, side, side, side, side,
                 poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, 255,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0D, 1.0D, 0.0D, 1.0D, 1.25D, 1.0D);
     }
@@ -339,7 +343,9 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
     private static void renderPipePad(TextureAtlasSprite top, TextureAtlasSprite side,
             LegacyTexturedQuadRenderer.SpriteQuadBatch batch, int packedLight,
             double minX, double minZ, double maxX, double maxZ) {
-        LegacyAtlasCuboidRenderer.croppedCuboid(top, top, side, side, side, side,
+        // RenderRBMKControl uses renderStandardBlock at the air block above
+        // the column.  Its opaque neighbour below removes the bottom face.
+        LegacyAtlasCuboidRenderer.croppedTopAndSides(top, side, side, side, side,
                 batch, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFF, 255,
                 minX, PIPE_PAD_MIN_Y, minZ, maxX, PIPE_PAD_MAX_Y, maxZ);
     }

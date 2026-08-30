@@ -29,13 +29,13 @@ public class DfcCoreScreen extends AbstractContainerScreen<DfcCoreMenu> {
         graphics.blit(TEXTURE, leftPos + 8, topPos + 69 - field, 176, 52 - field, 16, field);
         int heat = menu.getHeat() * 52 / 100;
         graphics.blit(TEXTURE, leftPos + 152, topPos + 69 - heat, 192, 52 - heat, 16, heat);
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 26, topPos + 17, 16, 52, menu.getFuel1());
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 134, topPos + 17, 16, 52, menu.getFuel2());
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 26, topPos + 69, 16, 52, menu.getFuel1());
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 134, topPos + 69, 16, 52, menu.getFuel2());
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        LegacyGuiElements.drawCenteredLabel(graphics, font, title, 0, 6, imageWidth, 0x404040);
+        LegacyGuiElements.drawCenteredLabel(graphics, font, title, imageWidth / 2, 6, imageWidth, 0x404040);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -44,9 +44,11 @@ public class DfcCoreScreen extends AbstractContainerScreen<DfcCoreMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(26, 17, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getFuel1().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getFuel1(),
+                    menu.getFuel1().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         } else if (isHovering(134, 17, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getFuel2().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getFuel2(),
+                    menu.getFuel2().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         } else if (isHovering(8, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal("Restriction Field: " + menu.getField() + "%")), mouseX, mouseY);
         } else if (isHovering(152, 17, 16, 52, mouseX, mouseY)) {

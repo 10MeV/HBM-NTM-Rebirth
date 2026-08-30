@@ -4,7 +4,6 @@ import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.NTMMaterial;
 import com.hbm.ntm.blockentity.StrandCasterBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
-import com.hbm.ntm.item.FoundryMoldItem;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
@@ -62,19 +61,21 @@ public class StrandCasterMenu extends AbstractContainerMenu {
     }
 
     public int getMoltenPixels() {
-        return Math.max(0, Math.min(79, moltenAmount * 79 / Math.max(1, blockEntity.getCapacity())));
+        return Math.max(0, Math.min(moltenAmount * 79 / Math.max(1, blockEntity.getCapacity()), 92));
     }
 
     public int getMoltenColor() {
         return moltenColor;
     }
 
-    public String getMoltenText(boolean showMb) {
+    public Component getMoltenText(boolean showMb) {
         NTMMaterial material = moltenMaterialId < 0 ? null : Mats.matById.get(moltenMaterialId);
         if (moltenAmount <= 0 || material == null) {
-            return "Empty";
+            return Component.literal("Empty").withStyle(net.minecraft.ChatFormatting.RED);
         }
-        return material.names[0] + ": " + Mats.formatAmount(moltenAmount, showMb);
+        return Component.translatable(material.getUnlocalizedName())
+                .append(": " + Mats.formatAmount(moltenAmount, showMb))
+                .withStyle(net.minecraft.ChatFormatting.YELLOW);
     }
 
     @Override
@@ -84,18 +85,8 @@ public class StrandCasterMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        if (index < MACHINE_SLOT_COUNT) {
-            return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END);
-        }
-        ItemStack stack = slots.get(index).getItem();
-        if (FoundryMoldItem.isMold(stack)) {
-            return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                    MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END,
-                    StrandCasterBlockEntity.SLOT_MOLD, StrandCasterBlockEntity.SLOT_MOLD + 1);
-        }
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
-                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END);
+                MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END, 1, 2);
     }
 
     private void addDataSlots() {

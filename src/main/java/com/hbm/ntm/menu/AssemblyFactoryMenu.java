@@ -47,7 +47,7 @@ public class AssemblyFactoryMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 AssemblyFactoryBlockEntity.SLOT_BATTERY, 234, 112));
         HbmInventoryMenuHelper.addUpgradeSlots(this::addSlot, blockEntity.getItems(),
-                AssemblyFactoryBlockEntity.SLOT_UPGRADE_START, 214, 149, 1, 3);
+                AssemblyFactoryBlockEntity.SLOT_UPGRADE_START, 214, 149, 3, 1);
         for (int module = 0; module < 4; module++) {
             int ox = (module % 2) * 109;
             int oy = (module / 2) * 56;
@@ -84,7 +84,7 @@ public class AssemblyFactoryMenu extends AbstractContainerMenu {
     }
 
     public int getProgressWidth(int module, int maxWidth) {
-        return progress[module] * maxWidth / 10_000;
+        return (int) Math.ceil(progress[module] * maxWidth / 10_000.0D);
     }
 
     public boolean canCool() {

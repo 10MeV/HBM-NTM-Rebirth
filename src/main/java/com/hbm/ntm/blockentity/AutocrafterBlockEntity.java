@@ -453,23 +453,50 @@ public class AutocrafterBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        // TileEntityMachineAutocrafter#serialize synchronised its loaded-base
+        // state, power, pattern matcher and recipe selection.  Inventory stays
+        // on the menu slot channel, so never use the persistence loader here.
+        CompoundTag tag = super.getClientSyncTag();
+        matcher.writeToNbt(tag);
+        tag.putInt(TAG_RECIPE, recipeIndex);
+        tag.putInt("recipeCount", recipeCount);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readClientRuntimeTag(tag);
     }
 
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-}
+    }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientRuntimeTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientRuntimeTag(tag);
+    }
+
+    private void readClientRuntimeTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        matcher.readFromNbt(tag);
+        recipeCount = Math.max(0, tag.getInt("recipeCount"));
+        recipeIndex = Math.max(0, tag.getInt(TAG_RECIPE));
     }
 
     @Override

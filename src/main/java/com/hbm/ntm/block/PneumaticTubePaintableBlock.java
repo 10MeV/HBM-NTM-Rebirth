@@ -61,8 +61,10 @@ public class PneumaticTubePaintableBlock extends PneumaticTubeBlock {
         }
 
         ToolType tool = ToolType.getType(held);
-        if (tool != null && onToolUse(level, player, pos, hit.getDirection(), hit.getLocation(), tool)) {
-            return InteractionResult.sidedSuccess(level.isClientSide);
+        if (tool == ToolType.HAND_DRILL || tool == ToolType.DEFUSER) {
+            // Legacy returns false from block activation for these tools, allowing ItemTooling to
+            // dispatch onScrew. In particular, an unpainted tube must not fall through to its GUI.
+            return InteractionResult.PASS;
         }
         return super.use(state, level, pos, player, hand, hit);
     }
@@ -74,7 +76,9 @@ public class PneumaticTubePaintableBlock extends PneumaticTubeBlock {
             if (!level.isClientSide) {
                 paintable.setPaintedState(null, 0);
             }
-            return true;
+            // PneumoTubePaintableBlock removes paint but then falls through to onScrew's false return,
+            // so ItemTooling neither consumes the interaction nor damages the hand drill.
+            return false;
         }
         if (tool == ToolType.DEFUSER) {
             if (!level.isClientSide && level.getBlockState(pos).is(this)) {

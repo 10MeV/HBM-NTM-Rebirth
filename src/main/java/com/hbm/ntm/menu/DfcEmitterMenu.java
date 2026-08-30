@@ -29,7 +29,7 @@ public class DfcEmitterMenu extends AbstractContainerMenu {
     public DfcEmitterMenu(int id, Inventory inventory, DfcEmitterBlockEntity blockEntity) {
         super(ModMenuTypes.DFC_EMITTER.get(), id);
         this.blockEntity = blockEntity;
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 166);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 142);
         cryogel = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getCryogelTank());
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getWatts, value -> watts = value);

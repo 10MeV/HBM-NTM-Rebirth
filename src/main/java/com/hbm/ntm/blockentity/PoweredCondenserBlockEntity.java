@@ -28,6 +28,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
@@ -276,8 +277,6 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putInt("age", age);
         tag.putInt("waterTimer", waterTimer);
         tag.putInt("throughput", throughput);
-        tag.putFloat("spin", spin);
-        tag.putFloat("lastSpin", lastSpin);
         return tag;
     }
 
@@ -326,12 +325,6 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (tag.contains("throughput")) {
             throughput = Math.max(0, tag.getInt("throughput"));
         }
-        if (tag.contains("spin")) {
-            spin = tag.getFloat("spin");
-        }
-        if (tag.contains("lastSpin")) {
-            lastSpin = tag.getFloat("lastSpin");
-        }
     }
 
     private Direction facing() {
@@ -358,5 +351,10 @@ public class PoweredCondenserBlockEntity extends HbmEnergyAndFluidBlockEntity
                 HbmFluidPortLayouts.LegacyPort.of(2, 1, 1, facing),
                 HbmFluidPortLayouts.LegacyPort.of(-2, -1, 1, facing.getOpposite()),
                 HbmFluidPortLayouts.LegacyPort.of(-2, 1, 1, facing.getOpposite()));
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
     }
 }

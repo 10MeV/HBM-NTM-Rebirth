@@ -14,6 +14,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Exact one-slot, redstone-edge-driven carrier for legacy TileEntityPistonInserter. */
@@ -30,6 +35,59 @@ public class PistonInserterBlockEntity extends BlockEntity {
     private double lastExtend;
     private int syncExtend;
     private int turnProgress;
+    /**
+     * Legacy TileEntityPistonInserter is an unrestricted one-slot IInventory:
+     * pipes/hoppers may insert or extract from every side, independently of
+     * the front-face player's retract-only ejection rule.
+     */
+    private final LazyOptional<IItemHandler> itemCapability = LazyOptional.of(() -> new IItemHandler() {
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slotIndex) {
+            return slotIndex == 0 ? slot : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slotIndex, @NotNull ItemStack stack, boolean simulate) {
+            if (slotIndex != 0 || stack.isEmpty() || !slot.isEmpty()) {
+                return stack;
+            }
+            ItemStack remainder = stack.copy();
+            remainder.shrink(1);
+            if (!simulate) {
+                slot = stack.copyWithCount(1);
+                sync();
+            }
+            return remainder;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slotIndex, int amount, boolean simulate) {
+            if (slotIndex != 0 || amount <= 0 || slot.isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+            ItemStack extracted = slot.copyWithCount(1);
+            if (!simulate) {
+                slot = ItemStack.EMPTY;
+                sync();
+            }
+            return extracted;
+        }
+
+        @Override
+        public int getSlotLimit(int slotIndex) {
+            return slotIndex == 0 ? 1 : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slotIndex, @NotNull ItemStack stack) {
+            return slotIndex == 0;
+        }
+    });
 
     public PistonInserterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.PISTON_INSERTER.get(), pos, state);
@@ -124,7 +182,6 @@ public class PistonInserterBlockEntity extends BlockEntity {
         tag.putInt("extend", extend);
         tag.putBoolean("retract", retracting);
         tag.putBoolean("state", lastState);
-        tag.putInt("delay", delay);
         if (!slot.isEmpty()) {
             tag.put("stack", slot.save(new CompoundTag()));
         }
@@ -136,19 +193,28 @@ public class PistonInserterBlockEntity extends BlockEntity {
         extend = tag.getInt("extend");
         retracting = tag.getBoolean("retract");
         lastState = tag.getBoolean("state");
-        delay = tag.getInt("delay");
         slot = tag.contains("stack") ? ItemStack.of(tag.getCompound("stack")) : ItemStack.EMPTY;
         syncExtend = extend;
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // TileEntityPistonInserter's runtime packet carried only the visible
+        // piston position and its one displayed stack.  Keep the initial
+        // chunk snapshot equally narrow: retract/delay/redstone are server
+        // control state and must not be reconstructed on the client.
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("extend", extend);
+        if (!slot.isEmpty()) {
+            tag.put("stack", slot.save(new CompoundTag()));
+        }
+        return tag;
+    }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        syncExtend = tag.getInt("extend");
+        slot = tag.contains("stack") ? ItemStack.of(tag.getCompound("stack")) : ItemStack.EMPTY;
         turnProgress = 2;
     }
 
@@ -169,6 +235,20 @@ public class PistonInserterBlockEntity extends BlockEntity {
     @Override
     public AABB getRenderBoundingBox() {
         return new AABB(worldPosition).expandTowards(facing().getStepX(), facing().getStepY(), facing().getStepZ());
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        itemCapability.invalidate();
+    }
+
+    @Override
+    public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
+        if (capability == ForgeCapabilities.ITEM_HANDLER) {
+            return itemCapability.cast();
+        }
+        return super.getCapability(capability, side);
     }
 
     private void sync() {

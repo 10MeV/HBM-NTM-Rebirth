@@ -44,7 +44,7 @@ public class CyclotronScreen extends AbstractContainerScreen<CyclotronMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, title, 79 - font.width(title) / 2, 6, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -52,19 +52,19 @@ public class CyclotronScreen extends AbstractContainerScreen<CyclotronMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(168, 18, 16, 63, mouseX, mouseY)) {
+        if (isLegacyHovering(168, 18, 16, 63, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 168, topPos + 18, 16, 63, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(11, 81, 34, 7, mouseX, mouseY)) {
+        } else if (isLegacyHovering(11, 81, 34, 7, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getWaterTank(),
                     menu.getWaterTank().tooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(11, 90, 34, 7, mouseX, mouseY)) {
+        } else if (isLegacyHovering(11, 90, 34, 7, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getSpentSteamTank(),
                     menu.getSpentSteamTank().tooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(107, 81, 34, 16, mouseX, mouseY)) {
+        } else if (isLegacyHovering(107, 81, 34, 16, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getAmatTank(),
                     menu.getAmatTank().tooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(49, 85, 8, 8, mouseX, mouseY)) {
+        } else if (isLegacyHovering(49, 85, 8, 8, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, List.of(
                     Component.translatableWithFallback("desc.gui.upgrade", "Upgrades"),
                     Component.translatableWithFallback("desc.gui.upgrade.speed", "Speed"),
@@ -73,5 +73,9 @@ public class CyclotronScreen extends AbstractContainerScreen<CyclotronMenu> {
                     mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

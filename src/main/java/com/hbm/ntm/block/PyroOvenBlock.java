@@ -39,6 +39,10 @@ public class PyroOvenBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // MachinePyroOven delegates to BlockDummyable#standardOpenBehavior.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof PyroOvenBlockEntity pyroOven) {
             NetworkHooks.openScreen(serverPlayer, pyroOven, pyroOven.getBlockPos());

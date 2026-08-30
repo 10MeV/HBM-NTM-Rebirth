@@ -164,4 +164,17 @@ public class DfcReceiverBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         cryogel.readFromNbt(tag, "tank");
     }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong("joules", joules);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        joules = tag.getLong("joules");
+    }
 }

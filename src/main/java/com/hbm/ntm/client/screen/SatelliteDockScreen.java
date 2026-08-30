@@ -9,24 +9,25 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 public class SatelliteDockScreen extends AbstractContainerScreen<SatelliteDockMenu> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/gui_dock.png");
+    private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
+            "textures/gui/storage/gui_sat_dock.png");
 
     public SatelliteDockScreen(SatelliteDockMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = 176;
-        imageHeight = 168;
+        imageHeight = 186;
         inventoryLabelY = imageHeight - 96 + 2;
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 36, 2);
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 7, topPos + 36, 2);
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, title, 115 - font.width(title) / 2, 6, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -35,7 +36,7 @@ public class SatelliteDockScreen extends AbstractContainerScreen<SatelliteDockMe
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         LegacyGuiElements.renderCustomInfoStat(graphics, font, mouseX, mouseY,
-                leftPos - 16, topPos + 36, 16, 16, leftPos - 8, topPos + 52,
+                leftPos - 7, topPos + 36, 16, 16, leftPos - 7, topPos + 52,
                 Component.translatable("container.hbm_ntm_rebirth.sat_dock.info.0"),
                 Component.translatable("container.hbm_ntm_rebirth.sat_dock.info.1"),
                 Component.translatable("container.hbm_ntm_rebirth.sat_dock.info.2"));

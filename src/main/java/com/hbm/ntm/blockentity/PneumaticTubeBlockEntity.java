@@ -447,6 +447,25 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
         refreshTubeModelData();
     }
 
+    /**
+     * Legacy TileEntityPneumoTube sent its live control state through networkPackNT and
+     * sent the endpoint directions in its description packet.  Both are needed by the
+     * modern baked model and collision shape as soon as a client starts tracking a chunk.
+     */
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        writeRuntimeState(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readRuntimeState(tag);
+        refreshTubeModelData();
+    }
+
     @Override
     public Component getDisplayName() {
         return Component.translatableWithFallback("container.pneumoTube", "Pneumatic Tube");
@@ -619,5 +638,25 @@ public class PneumaticTubeBlockEntity extends HbmFluidNetworkBlockEntity impleme
     private static Direction byteToDirection(byte value) {
         Direction[] values = Direction.values();
         return value >= 0 && value < values.length ? values[value] : null;
+    }
+
+    private void writeRuntimeState(CompoundTag tag) {
+        tag.putByte(TAG_INSERTION, directionToByte(insertionDirection));
+        tag.putByte(TAG_EJECTION, directionToByte(ejectionDirection));
+        tag.putBoolean(TAG_WHITELIST, whitelist);
+        tag.putBoolean(TAG_REDSTONE, redstone);
+        tag.putByte(TAG_SEND_ORDER, sendOrder);
+        tag.putByte(TAG_RECEIVE_ORDER, receiveOrder);
+        pattern.writeToNbt(tag);
+    }
+
+    private void readRuntimeState(CompoundTag tag) {
+        insertionDirection = byteToDirection(tag.getByte(TAG_INSERTION));
+        ejectionDirection = byteToDirection(tag.getByte(TAG_EJECTION));
+        whitelist = tag.getBoolean(TAG_WHITELIST);
+        redstone = tag.getBoolean(TAG_REDSTONE);
+        sendOrder = tag.getByte(TAG_SEND_ORDER);
+        receiveOrder = tag.getByte(TAG_RECEIVE_ORDER);
+        pattern.readFromNbt(tag);
     }
 }

@@ -90,23 +90,23 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
                     ObjModelLibrary.MACHINE_BAT9000.renderAll(poseStack, buffer, modelLight, packedOverlay);
                 }
                 LegacyFluidTankRenderHelper.renderBat9000Fluid(blockEntity.getTank(), state, poseStack, buffer,
-                        modelLight, packedOverlay);
+                        packedLight, packedOverlay);
                 if (hasRenderableTankType(blockEntity)) {
                     var tankType = blockEntity.getTank().getTankType();
                     LegacyFluidTankRenderHelper.enqueueBat9000Diamonds(PresentStage.AFTER_BLOCK_ENTITIES,
-                            tankType, poseStack, buffer, modelLight, packedOverlay);
+                            tankType, poseStack, buffer, packedLight, packedOverlay);
                 }
             } else if (blockEntity instanceof BigAssTankBlockEntity) {
                 if (!usesBakedBigAssTankBody(blockEntity, state)) {
                     ObjModelLibrary.MACHINE_BIGASSTANK.renderAll(poseStack, buffer, modelLight, packedOverlay);
                 }
                 LegacyFluidTankRenderHelper.renderBigAssTankFluid(blockEntity.getTank(), state, poseStack,
-                        buffer, modelLight, packedOverlay, blockEntity.getLevel() == null ? partialTick
+                        buffer, packedLight, packedOverlay, blockEntity.getLevel() == null ? partialTick
                                 : blockEntity.getLevel().getGameTime() + partialTick);
                 if (hasRenderableTankType(blockEntity)) {
                     var tankType = blockEntity.getTank().getTankType();
                     LegacyFluidTankRenderHelper.enqueueBigAssTankDiamonds(PresentStage.AFTER_BLOCK_ENTITIES,
-                            tankType, poseStack, buffer, modelLight, packedOverlay);
+                            tankType, poseStack, buffer, packedLight, packedOverlay);
                 }
             } else {
                 if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
@@ -118,7 +118,7 @@ public class FluidTankRenderer<T extends FluidTankBlockEntity> implements BlockE
                 if (hasRenderableTankType(blockEntity)) {
                     var tankType = blockEntity.getTank().getTankType();
                     LegacyFluidTankRenderHelper.enqueueSmallTankDiamonds(PresentStage.AFTER_BLOCK_ENTITIES,
-                            tankType, poseStack, buffer, modelLight, packedOverlay);
+                            tankType, poseStack, buffer, packedLight, packedOverlay);
                 }
             }
         }

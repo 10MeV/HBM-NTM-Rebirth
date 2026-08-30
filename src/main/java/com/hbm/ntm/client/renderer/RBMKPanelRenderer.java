@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.RBMKPanelBlock;
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
+import com.hbm.ntm.client.screen.RBMKPanelScreen;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.Minecraft;
@@ -59,8 +60,9 @@ public class RBMKPanelRenderer implements BlockEntityRenderer<RBMKPanelBlockEnti
                 case TERMINAL -> {
                     Font font = Minecraft.getInstance().font;
                     LegacyRbmkMachineRenderer.renderTerminalModel(poseStack, buffer, light, packedOverlay);
-                    LegacyRbmkMachineRenderer.renderTerminalText(font, poseStack, buffer, panel.terminal(), "",
-                            (System.currentTimeMillis() / 500L) % 2L == 0L);
+                    RBMKPanelScreen.TerminalRenderInput input = RBMKPanelScreen.terminalRenderInput(panel);
+                    LegacyRbmkMachineRenderer.renderTerminalText(font, poseStack, buffer, panel.terminal(),
+                            input.workingLine(), input.cursor());
                 }
                 case DISPLAY -> {
                     LegacyRbmkDisplayRenderer.renderDisplay(poseStack, buffer, light, packedOverlay,

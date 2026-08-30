@@ -30,7 +30,7 @@ public class CompressorScreen extends AbstractContainerScreen<CompressorMenu> {
         if (menu.getPower() >= menu.getPowerRequirement()) {
             graphics.blit(TEXTURE, leftPos + 156, topPos + 4, 176, 52, 9, 12);
         }
-        graphics.blit(TEXTURE, leftPos + 43 + menu.getInputPressure() * 11, topPos + 46, 193, 18, 8, 14);
+        graphics.blit(TEXTURE, leftPos + 43 + menu.getInputPressure() * 11, topPos + 46, 193, 18, 8, 124);
 
         int progress = menu.getProgressWidth(55);
         if (progress > 0) {
@@ -56,18 +56,18 @@ public class CompressorScreen extends AbstractContainerScreen<CompressorMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(17, 18, 16, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(17, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(),
                     menu.getInputTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(107, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(107, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(),
                     menu.getOutputTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(152, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(152, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 152, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
         } else {
             for (int pressure = 0; pressure < 5; pressure++) {
-                if (isHovering(43 + pressure * 11, 46, 8, 14, mouseX, mouseY)) {
+                if (isLegacyHovering(43 + pressure * 11, 46, 8, 14, mouseX, mouseY)) {
                     graphics.renderTooltip(font,
                             Component.literal(pressure + " PU -> " + (pressure + 1) + " PU"),
                             mouseX, mouseY);
@@ -81,13 +81,17 @@ public class CompressorScreen extends AbstractContainerScreen<CompressorMenu> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         for (int pressure = 0; pressure < 5; pressure++) {
-            if (isHovering(43 + pressure * 11, 46, 8, 14, mouseX, mouseY)) {
+            if (isLegacyHovering(43 + pressure * 11, 46, 8, 14, mouseX, mouseY)) {
                 ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), pressure,
                         CompressorBlockEntity.CONTROL_INPUT_PRESSURE);
                 return true;
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private static List<net.minecraft.util.FormattedCharSequence> split(List<Component> tooltip) {

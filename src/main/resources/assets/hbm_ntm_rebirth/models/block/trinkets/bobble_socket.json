@@ -1,6 +1,9 @@
 {
-    "render_type":  "minecraft:solid",
-    "loader":  "forge:obj",
+    "render_type":  "hbm_ntm_rebirth:legacy_lit_solid",
+    "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+    "shade_quads": false,
+    "emissive_ambient": false,
+    "legacy_normal_mode": "face",
     "flip_v":  true,
   "automatic_culling": false,
     "model":  "hbm_ntm_rebirth:models/block/trinkets/bobble_socket.obj",

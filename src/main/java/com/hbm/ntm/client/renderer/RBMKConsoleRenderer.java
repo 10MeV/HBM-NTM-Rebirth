@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -62,14 +61,14 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
                         LegacyTexturedRenderMode.CUTOUT_CULL);
             }
             if (renderDynamicOverlay) {
-                renderDynamicOverlay(console, poseStack, buffer);
+                renderDynamicOverlay(console, poseStack, buffer, packedLight);
             }
         }
         poseStack.popPose();
     }
 
     private static void renderDynamicOverlay(RBMKConsoleBlockEntity console, PoseStack poseStack,
-            MultiBufferSource buffer) {
+            MultiBufferSource buffer, int packedLight) {
         RBMKConsolePlanner.ColumnSnapshot[] columns = console.columns();
         List<RBMKWorldRenderPlanner.ConsoleColumnInput> inputs = new ArrayList<>(columns.length);
         for (RBMKConsolePlanner.ColumnSnapshot column : columns) {
@@ -108,7 +107,7 @@ public class RBMKConsoleRenderer implements BlockEntityRenderer<RBMKConsoleBlock
             poseStack.scale(plan.scale(), -plan.scale(), plan.scale());
             LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
             font.drawInBatch(text, -font.width(text) * 0.5F, -font.lineHeight * 0.5F, plan.color(), false,
-                    poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+                    poseStack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0, packedLight);
             poseStack.popPose();
         }
     }

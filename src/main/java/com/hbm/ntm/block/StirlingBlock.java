@@ -119,6 +119,12 @@ public class StirlingBlock extends LegacyVisibleMultiblockMachineBlock {
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
             TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
+        // 1.7.10 MachineStirling#addInformation delegates to addStandardInfo.
+        LegacyStandardInfoTooltip.append(tooltip, switch (kind) {
+            case NORMAL -> "machine_stirling";
+            case STEEL -> "machine_stirling_steel";
+            case CREATIVE -> "machine_stirling_creative";
+        });
         CompoundTag tag = stack.getTag();
         if (tag != null && tag.contains(HbmPersistentBlockState.TAG_PERSISTENT, Tag.TAG_COMPOUND)
                 && tag.getCompound(HbmPersistentBlockState.TAG_PERSISTENT).getBoolean("missingCog")) {

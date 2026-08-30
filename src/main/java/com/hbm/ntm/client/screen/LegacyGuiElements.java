@@ -472,7 +472,7 @@ public final class LegacyGuiElements {
                 return;
             }
         }
-        graphics.blit(GUI_UTILITY, x, y, u, v, width, height, 40, 48);
+        graphics.blit(GUI_UTILITY, x, y, u, v, width, height, 256, 256);
     }
 
     public static void renderItem(GuiGraphics graphics, ItemStack stack, int guiLeft, int guiTop, int x, int y) {
@@ -642,7 +642,11 @@ public final class LegacyGuiElements {
     }
 
     public static void playClickSound() {
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        playClickSound(1.0F);
+    }
+
+    public static void playClickSound(float pitch) {
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, pitch));
     }
 
     public static EditBox createLegacyTextField(Font font, int x, int y, int width, int height, int maxLength,

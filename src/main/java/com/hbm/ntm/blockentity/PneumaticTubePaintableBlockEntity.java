@@ -103,8 +103,21 @@ public class PneumaticTubePaintableBlockEntity extends PneumaticTubeBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        savePaint(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        loadPaint(tag);
+    }
 
     @Nullable
     @Override

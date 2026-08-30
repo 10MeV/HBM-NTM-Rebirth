@@ -89,7 +89,8 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(AccessibleItemHandler::new);
 
     private int progress;
     private int processTime = PROCESS_TIME_BASE;
@@ -480,12 +481,13 @@ public class ExposureChamberBlockEntity extends HbmEnergyBlockEntity implements 
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? itemHandler : externalItemHandler).cast();
         }
         return super.getCapability(capability, side);
     }

@@ -7,7 +7,6 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
 
 public class ArcWelderScreen extends AbstractContainerScreen<ArcWelderMenu> {
     private static final ResourceLocation TEXTURE =
@@ -17,7 +16,8 @@ public class ArcWelderScreen extends AbstractContainerScreen<ArcWelderMenu> {
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 204;
-        titleLabelX = 20;
+        // Legacy centers the title at xSize / 2 - 18, leaving room for the right-side controls.
+        titleLabelX = imageWidth / 2 - 18;
         titleLabelY = 6;
         inventoryLabelY = imageHeight - 96 + 2;
     }
@@ -38,11 +38,7 @@ public class ArcWelderScreen extends AbstractContainerScreen<ArcWelderMenu> {
         }
         LegacyFluidGuiRenderer.renderHorizontalTank(graphics, leftPos + 35, topPos + 79,
                 34, 16, menu.getInputTankData());
-        graphics.blit(TEXTURE, leftPos + 78, topPos + 67, 176, 0, 8, 8);
-        ItemStack display = menu.getBlockEntity().getDisplayOutput();
-        if (!display.isEmpty()) {
-            graphics.renderItem(display, leftPos + 80, topPos + 36);
-        }
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos + 78, topPos + 67, 8);
     }
 
     @Override
@@ -55,14 +51,21 @@ public class ArcWelderScreen extends AbstractContainerScreen<ArcWelderMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(152, 18, 16, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(152, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 152, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(35, 63, 34, 16, mouseX, mouseY)
-                || isHovering(35, 79, 34, 16, mouseX, mouseY)) {
+        } else if (isLegacyHovering(35, 63, 34, 16, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(),
                     menu.getInputTankTooltip(hasShiftDown()), mouseX, mouseY);
+        } else {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 78, topPos + 67, 8, 8, leftPos + 78, topPos + 67,
+                    LegacyGuiElements.getUpgradeInfo(menu));
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

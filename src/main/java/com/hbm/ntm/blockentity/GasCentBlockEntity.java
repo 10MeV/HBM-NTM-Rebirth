@@ -572,8 +572,43 @@ public class GasCentBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong("power", energy.getPower());
+        tag.putInt("progress", progress);
+        tag.putBoolean("isProgressing", isProgressing);
+        tank.writeToNbt(tag, "tank");
+        inputTank.writeToNbt(tag, "inputTank");
+        outputTank.writeToNbt(tag, "outputTank");
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
+        if (tag.contains("progress")) {
+            progress = tag.getInt("progress");
+        }
+        if (tag.contains("isProgressing")) {
+            isProgressing = tag.getBoolean("isProgressing");
+        }
+        if (tag.contains("tank") || tag.contains("tank_type") || tag.contains("tank_type_id")) {
+            tank.readFromNbt(tag, "tank");
+        }
+        if (tag.contains("inputTank") || tag.contains("inputTank_type") || tag.contains("inputTank_type_id")) {
+            inputTank.readFromNbt(tag, "inputTank");
+        }
+        if (tag.contains("outputTank") || tag.contains("outputTank_type") || tag.contains("outputTank_type_id")) {
+            outputTank.readFromNbt(tag, "outputTank");
+        }
+    }
 
     @Nullable
     @Override

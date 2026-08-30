@@ -4,7 +4,6 @@ import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.LargeLaunchPadBlock;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.LargeLaunchPadBlockEntity;
-import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.hbm.ntm.item.missile.MissileItem;
@@ -47,7 +46,7 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         Direction facing = launchPad.getBlockState().hasProperty(LargeLaunchPadBlock.FACING)
                 ? launchPad.getBlockState().getValue(LargeLaunchPadBlock.FACING)
                 : Direction.NORTH;
-        ItemStack missile = launchPad.getItems().getStackInSlot(LaunchPadBlockEntity.SLOT_MISSILE);
+        ItemStack missile = launchPad.getRenderMissile();
         int modelLight = LegacyRenderLighting.resolveBoundsLight(launchPad,
                 launchPadLightingBounds(launchPad.getBlockPos(), !missile.isEmpty()), packedLight);
 
@@ -60,23 +59,25 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
                 ObjLaunchModels.renderMissileErectorPart("Pad", ObjLaunchModels.MISSILE_ERECTOR_TEXTURE,
                         poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
             }
-            renderFormFactorParts(launchPad, missile, partialTick, poseStack, buffer, modelLight, packedOverlay);
+            renderFormFactorParts(launchPad, missile, partialTick, poseStack, buffer,
+                    modelLight, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }
 
     private static void renderFormFactorParts(LargeLaunchPadBlockEntity launchPad, ItemStack missile,
-            float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            float partialTick, PoseStack poseStack, MultiBufferSource buffer,
+            int fixedLight, int movingLight, int packedOverlay) {
         ErectorParts parts = partsFor(launchPad.getFormFactor());
         if (parts == null) {
             return;
         }
 
         poseStack.pushPose();
-        ObjLaunchModels.renderMissileErectorPart(parts.pad(), parts.texture(), poseStack, buffer, packedLight,
+        ObjLaunchModels.renderMissileErectorPart(parts.pad(), parts.texture(), poseStack, buffer, fixedLight,
                 packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         if (!missile.isEmpty() && launchPad.isErected()) {
-            ObjLaunchModels.renderMissileErectorPart(parts.rope(), parts.texture(), poseStack, buffer, packedLight,
+            ObjLaunchModels.renderMissileErectorPart(parts.rope(), parts.texture(), poseStack, buffer, movingLight,
                     packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         }
 
@@ -85,10 +86,10 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         poseStack.translate(0.0D, parts.pivotY(), -parts.pivotZ());
         LegacyPoseRotations.rotateXDegrees(poseStack, -(erectorAngle));
         poseStack.translate(0.0D, -parts.pivotY(), parts.pivotZ());
-        ObjLaunchModels.renderMissileErectorPart(parts.pivot(), parts.texture(), poseStack, buffer, packedLight,
+        ObjLaunchModels.renderMissileErectorPart(parts.pivot(), parts.texture(), poseStack, buffer, movingLight,
                 packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         poseStack.translate(0.0D, lift, 0.0D);
-        ObjLaunchModels.renderMissileErectorPart(parts.erector(), parts.texture(), poseStack, buffer, packedLight,
+        ObjLaunchModels.renderMissileErectorPart(parts.erector(), parts.texture(), poseStack, buffer, movingLight,
                 packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         // RenderLaunchPadLarge deliberately leaves the erector transform once the
         // missile is upright.  The launched-ready preview stays vertical at the
@@ -99,7 +100,7 @@ public class LargeLaunchPadRenderer implements BlockEntityRenderer<LargeLaunchPa
         }
         if (!missile.isEmpty() && (launchPad.isErected() || launchPad.isReadyToLoad())) {
             poseStack.translate(0.0D, 2.0D, 0.0D);
-            MissileItemRenderer.renderRawMissile(missile, poseStack, buffer, packedLight, packedOverlay);
+            MissileItemRenderer.renderRawMissile(missile, poseStack, buffer, movingLight, packedOverlay);
         }
         poseStack.popPose();
     }

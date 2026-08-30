@@ -60,6 +60,11 @@ public class LiftConveyorBlock extends ConveyorBlock {
     }
 
     @Override
+    protected String tooltipId() {
+        return "conveyor_lift";
+    }
+
+    @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return ConveyorMath.isLiftTop(level, pos) ? TOP_SHAPE : FULL_SHAPE;
     }

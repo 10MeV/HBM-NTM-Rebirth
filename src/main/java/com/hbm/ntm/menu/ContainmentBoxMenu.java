@@ -2,6 +2,7 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.block.CrateBlock;
 import com.hbm.ntm.item.ContainmentBoxItem;
+import com.hbm.ntm.item.MassStorageBlockItem;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.registry.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
@@ -39,6 +40,7 @@ public class ContainmentBoxMenu extends LegacyItemBagMenu {
     }
 
     private static boolean canStoreItem(ItemStack stack) {
-        return !(stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof CrateBlock);
+        return !(stack.getItem() instanceof MassStorageBlockItem)
+                && !(stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof CrateBlock);
     }
 }

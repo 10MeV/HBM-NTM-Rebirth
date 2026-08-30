@@ -90,7 +90,7 @@ public final class BulletRicochetUtil {
         ShredderBlockTouch touch = applyShredderBlockTouch(level, hitBlock, source);
         if (touch.brokeGlass()) {
             return new BlockHitResult(false, motion, noRicochet(motion, 0.0D),
-                    new BulletImpactUtil.BlockImpactResult(false, false, false, false, false, false, false, false,
+                    new BulletImpactUtil.BlockImpactResult(false, false, false, false, false, false, false,
                             true, true, touch.shotDetonated(), false, Collections.emptyList()),
                     false);
         }
@@ -103,13 +103,13 @@ public final class BulletRicochetUtil {
             Vec3 reflected = reflect(motion, side);
             return new BlockHitResult(true, reflected, new BulletRuntimeUtil.RicochetRoll(true, reflected,
                     true, false, angle),
-                    new BulletImpactUtil.BlockImpactResult(false, false, false, false, false, false, false, false,
+                    new BulletImpactUtil.BlockImpactResult(false, false, false, false, false, false, false,
                             true, touch.shotDetonated(), touch.shotDetonated(), false, Collections.emptyList()),
                     false);
         }
 
         return new BlockHitResult(false, motion, noRicochet(motion, angle),
-                new BulletImpactUtil.BlockImpactResult(true, false, false, false, false, false, false, false,
+                new BulletImpactUtil.BlockImpactResult(true, false, false, false, false, false, false,
                         touch.shotDetonated(), touch.shotDetonated(), touch.shotDetonated(), false,
                         Collections.emptyList()),
                 false);

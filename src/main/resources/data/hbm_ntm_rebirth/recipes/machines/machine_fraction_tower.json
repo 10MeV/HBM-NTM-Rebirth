@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "H": { "tag": "forge:welded_plates/steel" },
+    "G": { "item": "hbm_ntm_rebirth:steel_grate" }
+  },
+  "pattern": [ "H", "G", "H" ],
+  "result": { "item": "hbm_ntm_rebirth:machine_fraction_tower" },
+  "show_notification": true
+}

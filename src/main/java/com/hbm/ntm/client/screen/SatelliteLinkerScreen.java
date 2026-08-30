@@ -9,20 +9,21 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 public class SatelliteLinkerScreen extends AbstractContainerScreen<SatelliteLinkerMenu> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/gui_linker.png");
+    private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
+            "textures/gui/machine/gui_sat_linker.png");
 
     public SatelliteLinkerScreen(SatelliteLinkerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = 176;
-        imageHeight = 166;
-        inventoryLabelY = 72;
+        imageHeight = 186;
+        inventoryLabelY = imageHeight - 96 + 2;
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 36, 2);
-        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 52, 3);
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos + 12, topPos + 28, 2);
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos + 12, topPos + 44, 3);
     }
 
     @Override
@@ -35,15 +36,12 @@ public class SatelliteLinkerScreen extends AbstractContainerScreen<SatelliteLink
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        // GUIMachineSatLinker used GuiInfoContainer#drawCustomInfoStat for
-        // both icons: the legacy panel and its tooltip are deliberately
-        // anchored at guiLeft - 8, guiTop + 52 rather than at the cursor.
         LegacyGuiElements.renderCustomInfoStat(graphics, font, mouseX, mouseY,
-                leftPos - 16, topPos + 36, 16, 16, leftPos - 8, topPos + 52,
+                leftPos + 12, topPos + 28, 16, 16, leftPos + 20, topPos + 44,
                 Component.translatable("container.hbm_ntm_rebirth.sat_linker.copy.0"),
                 Component.translatable("container.hbm_ntm_rebirth.sat_linker.copy.1"));
         LegacyGuiElements.renderCustomInfoStat(graphics, font, mouseX, mouseY,
-                leftPos - 16, topPos + 52, 16, 16, leftPos - 8, topPos + 52,
+                leftPos + 12, topPos + 44, 16, 16, leftPos + 20, topPos + 60,
                 Component.translatable("container.hbm_ntm_rebirth.sat_linker.randomize.0"),
                 Component.translatable("container.hbm_ntm_rebirth.sat_linker.randomize.1"));
         renderTooltip(graphics, mouseX, mouseY);

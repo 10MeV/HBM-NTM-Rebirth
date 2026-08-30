@@ -5,8 +5,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
@@ -25,6 +23,8 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
@@ -84,10 +84,13 @@ public class NTMAnvilBlock extends FallingBlock {
             return InteractionResult.PASS;
         }
         if (level.isClientSide) {
+            // GUIAnvil uses gui.button.press.  Play the registered modern equivalent through the
+            // client level rather than the legacy string bridge: this path remains valid while
+            // the server opens the menu on the following packet.
+            level.playLocalSound(pos, SoundEvents.UI_BUTTON_CLICK.get(), SoundSource.MASTER, 1.0F, 1.0F, false);
             return InteractionResult.SUCCESS;
         }
         if (player instanceof ServerPlayer serverPlayer) {
-            level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.8F, 1.0F);
             MenuProvider provider = new SimpleMenuProvider(
                     (containerId, inventory, openedPlayer) -> new AnvilMenu(containerId, inventory, tier),
                     Component.translatable("container.anvil", tier));

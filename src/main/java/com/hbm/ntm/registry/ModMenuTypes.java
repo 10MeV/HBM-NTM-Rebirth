@@ -37,6 +37,7 @@ import com.hbm.ntm.menu.DroneLogisticsMenu;
 import com.hbm.ntm.menu.DroneCrateMenu;
 import com.hbm.ntm.menu.CrucibleMenu;
 import com.hbm.ntm.menu.CrateMenu;
+import com.hbm.ntm.menu.HeldCrateMenu;
 import com.hbm.ntm.menu.CustomNukeMenu;
 import com.hbm.ntm.menu.CyclotronMenu;
 import com.hbm.ntm.menu.DfcCoreMenu;
@@ -88,6 +89,7 @@ import com.hbm.ntm.menu.ParticleAcceleratorMenu;
 import com.hbm.ntm.menu.PneumaticTubeMenu;
 import com.hbm.ntm.menu.PneumaticStorageAccessMenu;
 import com.hbm.ntm.menu.PneumaticStorageClutterMenu;
+import com.hbm.ntm.menu.PneumaticStorageMonoMenu;
 import com.hbm.ntm.menu.PneumaticStorageImporterMenu;
 import com.hbm.ntm.menu.PneumaticStorageExporterMenu;
 import com.hbm.ntm.menu.PlasticBagMenu;
@@ -440,6 +442,9 @@ public final class ModMenuTypes {
     public static final RegistryObject<MenuType<PneumaticStorageClutterMenu>> PNEUMATIC_STORAGE_CLUTTER =
             MENUS.register("pneumatic_storage_clutter", () -> IForgeMenuType.create(PneumaticStorageClutterMenu::new));
 
+    public static final RegistryObject<MenuType<PneumaticStorageMonoMenu>> PNEUMATIC_STORAGE_MONO =
+            MENUS.register("pneumatic_storage_mono", () -> IForgeMenuType.create(PneumaticStorageMonoMenu::new));
+
     public static final RegistryObject<MenuType<PneumaticStorageImporterMenu>> PNEUMATIC_STORAGE_IMPORTER =
             MENUS.register("pneumatic_storage_importer", () -> IForgeMenuType.create(PneumaticStorageImporterMenu::new));
 
@@ -457,6 +462,9 @@ public final class ModMenuTypes {
 
     public static final RegistryObject<MenuType<CrateMenu>> STORAGE_CRATE =
             MENUS.register("storage_crate", () -> IForgeMenuType.create(CrateMenu::new));
+
+    public static final RegistryObject<MenuType<HeldCrateMenu>> HELD_STORAGE_CRATE =
+            MENUS.register("held_storage_crate", () -> IForgeMenuType.create(HeldCrateMenu::new));
 
     public static final RegistryObject<MenuType<CartCrateMenu>> CART_CRATE =
             MENUS.register("cart_crate", () -> IForgeMenuType.create(CartCrateMenu::new));

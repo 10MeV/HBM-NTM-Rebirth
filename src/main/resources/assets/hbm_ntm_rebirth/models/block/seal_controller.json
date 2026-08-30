@@ -1,6 +1,22 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "all": "hbm_ntm_rebirth:block/seal_controller"
-  }
+    "frame": "hbm_ntm_rebirth:block/seal_frame",
+    "controller": "hbm_ntm_rebirth:block/seal_controller",
+    "particle": "hbm_ntm_rebirth:block/seal_frame"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "down": { "texture": "#frame", "cullface": "down" },
+        "up": { "texture": "#frame", "cullface": "up" },
+        "north": { "texture": "#controller", "cullface": "north" },
+        "south": { "texture": "#frame", "cullface": "south" },
+        "west": { "texture": "#frame", "cullface": "west" },
+        "east": { "texture": "#frame", "cullface": "east" }
+      }
+    }
+  ]
 }

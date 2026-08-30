@@ -1,7 +1,10 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LaunchPadBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.ObjLaunchModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -24,7 +27,7 @@ public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEnti
 
     @Override
     public boolean shouldRender(LaunchPadBlockEntity launchPad, Vec3 cameraPos) {
-        return hasMissile(launchPad)
+        return (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer() || hasMissile(launchPad))
                 && BlockEntityRenderer.super.shouldRender(launchPad, cameraPos)
                 && LegacyBlockEntityRenderCulling.shouldRenderMachine(launchPad, getViewDistance());
     }
@@ -33,9 +36,6 @@ public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEnti
     public void render(LaunchPadBlockEntity launchPad, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ItemStack missile = missileStack(launchPad);
-        if (missile.isEmpty()) {
-            return;
-        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(launchPad, getViewDistance())) {
             return;
         }
@@ -49,10 +49,16 @@ public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEnti
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, yRotation(facing));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(launchPad)) {
-            poseStack.pushPose();
-            poseStack.translate(0.0D, 1.0D, 0.0D);
-            MissileItemRenderer.renderRawMissile(missile, poseStack, buffer, modelLight, packedOverlay);
-            poseStack.popPose();
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                ObjLaunchModels.MISSILE_PAD.renderAll(ObjLaunchModels.MISSILE_PAD_TEXTURE,
+                        poseStack, buffer, modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+            }
+            if (!missile.isEmpty()) {
+                poseStack.pushPose();
+                poseStack.translate(0.0D, 1.0D, 0.0D);
+                MissileItemRenderer.renderRawMissile(missile, poseStack, buffer, packedLight, packedOverlay);
+                poseStack.popPose();
+            }
         }
         poseStack.popPose();
     }
@@ -62,7 +68,7 @@ public class LaunchPadRenderer implements BlockEntityRenderer<LaunchPadBlockEnti
     }
 
     private static ItemStack missileStack(LaunchPadBlockEntity launchPad) {
-        return launchPad.getItems().getStackInSlot(LaunchPadBlockEntity.SLOT_MISSILE);
+        return launchPad.getRenderMissile();
     }
 
     private static AABB launchPadLightingBounds(BlockPos pos, boolean missileLoaded) {

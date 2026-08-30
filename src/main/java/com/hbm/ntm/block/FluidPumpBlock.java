@@ -5,6 +5,7 @@ import com.hbm.ntm.blockentity.FluidPumpBlockEntity;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.registry.ModBlockEntities;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -97,7 +98,7 @@ public class FluidPumpBlock extends BaseEntityBlock implements EntityBlock {
             return InteractionResult.PASS;
         }
         ItemStack held = player.getItemInHand(hand);
-        if (!(held.getItem() instanceof IFluidIdentifierItem identifier)
+        if (!(held.getItem() instanceof IFluidIdentifierItem)
                 || !(level.getBlockEntity(pos) instanceof FluidPumpBlockEntity pump)) {
             if (!level.isClientSide && level.getBlockEntity(pos) instanceof FluidPumpBlockEntity pump
                     && player instanceof ServerPlayer serverPlayer) {
@@ -107,13 +108,15 @@ public class FluidPumpBlock extends BaseEntityBlock implements EntityBlock {
         }
         if (!level.isClientSide) {
             var identifierReport = HbmFluidItemTransfer.identifyFluidFromStackReport(held, level, pos);
-            if (identifierReport.selectedNone()) {
-                return InteractionResult.sidedSuccess(false);
-            }
+            // The 1.7.10 pump applies the identifier result verbatim.  Its
+            // NONE result is therefore a valid way to clear a prior selection.
             FluidType type = identifierReport.selectedType();
             pump.setIdentifiedType(type);
             if (player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(Component.literal("Changed type to ").append(type.getDisplayName()), false);
+                serverPlayer.displayClientMessage(Component.literal("Changed type to ")
+                        .withStyle(ChatFormatting.YELLOW)
+                        .append(type.getDisplayName())
+                        .append(Component.literal("!").withStyle(ChatFormatting.YELLOW)), false);
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

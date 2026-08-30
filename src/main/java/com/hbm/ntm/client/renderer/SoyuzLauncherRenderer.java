@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SoyuzLauncherBlockEntity;
 import com.hbm.ntm.client.obj.ObjLaunchModels;
@@ -45,25 +44,24 @@ public class SoyuzLauncherRenderer implements BlockEntityRenderer<SoyuzLauncherB
                 : LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, -4.0D, 0.5D);
-        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            renderLauncher(blockEntity.getTowerRotation(partialTick), poseStack, buffer, modelLight,
-                    LegacyMachineRenderShapes.renderChunkBakedStaticsInBer());
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity);
+                var lightingScope = LegacyRenderLighting.pushModelViewSampling(blockEntity,
+                        poseStack.last().pose())) {
+            renderLauncher(blockEntity.getTowerRotation(partialTick), poseStack, buffer, modelLight, packedLight);
             if (SoyuzRocketItem.isValidSkin(blockEntity.getRocketType())) {
                 poseStack.translate(0.0D, 5.0D, 0.0D);
                 ObjSoyuzModels.renderSoyuz(ObjSoyuzModels.textureSetForSkin(blockEntity.getRocketType()), poseStack,
-                        buffer, modelLight, OverlayTexture.NO_OVERLAY);
+                        buffer, packedLight, OverlayTexture.NO_OVERLAY);
             }
         }
         poseStack.popPose();
     }
 
-    private static void renderLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            boolean renderStaticParts) {
-        if (renderStaticParts) {
-            ObjLaunchModels.renderSoyuzLauncher(rotation, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
-        } else {
-            ObjLaunchModels.renderSoyuzLauncherMovingParts(rotation, poseStack, buffer, packedLight,
-                    OverlayTexture.NO_OVERLAY);
-        }
+    private static void renderLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer, int fixedLight,
+            int activityLight) {
+        // Keep SoyuzLauncherPronter's exact fixed/moving call order on the existing
+        // noSmooth prepared-VBO models.  ObjLaunchModels' default route is no-cull.
+        ObjLaunchModels.renderSoyuzLauncher(rotation, poseStack, buffer, fixedLight, activityLight,
+                OverlayTexture.NO_OVERLAY);
     }
 }

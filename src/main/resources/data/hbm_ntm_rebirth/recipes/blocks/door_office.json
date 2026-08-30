@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","pattern":["II","SS","II"],"key":{"I":{"tag":"minecraft:planks"},"S":{"item":"hbm_ntm_rebirth:plate_iron"}},"result":{"item":"hbm_ntm_rebirth:door_office"},"show_notification":true}

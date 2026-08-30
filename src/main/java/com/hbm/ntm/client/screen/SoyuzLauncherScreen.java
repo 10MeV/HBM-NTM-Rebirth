@@ -16,8 +16,9 @@ public class SoyuzLauncherScreen extends AbstractContainerScreen<SoyuzLauncherMe
 
     public SoyuzLauncherScreen(SoyuzLauncherMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        imageWidth = 176;
-        imageHeight = 222;
+        imageWidth = 194;
+        imageHeight = 244;
+        inventoryLabelX = 17;
         inventoryLabelY = imageHeight - 96 + 2;
     }
 
@@ -25,42 +26,43 @@ public class SoyuzLauncherScreen extends AbstractContainerScreen<SoyuzLauncherMe
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
 
-        int power = menu.getPowerBarHeight(34);
+        int power = menu.getPowerBarHeight(52);
         if (power > 0) {
-            graphics.blit(TEXTURE, leftPos + 49, topPos + 106 - power, 194, 52 - power, 6, power);
+            graphics.blit(TEXTURE, leftPos + 134, topPos + 96 - power, 194, 52 - power, 16, power);
         }
-        graphics.blit(TEXTURE, leftPos + 61, topPos + 17,
-                176 + (menu.getRocketStatus() > 0 ? 18 : 0), 0, 18, 18);
+        graphics.blit(TEXTURE, leftPos + 97, topPos + 79,
+                210 + (menu.getRocketStatus() > 0 ? 18 : 0), 8, 18, 18);
         if (menu.getDesignatorStatus() > 0) {
-            graphics.blit(TEXTURE, leftPos + 61, topPos + 35,
-                    176 + (menu.getDesignatorStatus() - 1) * 18, 0, 18, 18);
+            graphics.blit(TEXTURE, leftPos + 79, topPos + 79,
+                    210 + (menu.getDesignatorStatus() - 1) * 18, 8, 18, 18);
         }
-        graphics.blit(TEXTURE, leftPos + 88, topPos + 17 + menu.getMode() * 18,
-                176, 18 + menu.getMode() * 18, 18, 18);
+        graphics.blit(TEXTURE, leftPos + 97 - menu.getMode() * 18, topPos + 52,
+                228 - menu.getMode() * 18, 26, 18, 18);
         if (menu.getOrbitalStatus() > 0) {
-            graphics.blit(TEXTURE, leftPos + 115, topPos + 35,
-                    176 + (menu.getOrbitalStatus() - 1) * 18, 0, 18, 18);
+            graphics.blit(TEXTURE, leftPos + 79, topPos + 25,
+                    210 + (menu.getOrbitalStatus() - 1) * 18, 8, 18, 18);
         }
         if (menu.getSatelliteStatus() > 0) {
-            graphics.blit(TEXTURE, leftPos + 115, topPos + 17,
-                    176 + (menu.getSatelliteStatus() - 1) * 18, 0, 18, 18);
+            graphics.blit(TEXTURE, leftPos + 97, topPos + 25,
+                    210 + (menu.getSatelliteStatus() - 1) * 18, 8, 18, 18);
         }
         if (menu.isStarting()) {
-            graphics.blit(TEXTURE, leftPos + 151, topPos + 17, 176, 54, 18, 18);
+            graphics.blit(TEXTURE, leftPos + 88, topPos + 97, 210, 44, 18, 18);
         }
 
-        graphics.blit(TEXTURE, leftPos + 13, topPos + 23, menu.hasFuel() ? 212 : 218, 0, 6, 8);
-        graphics.blit(TEXTURE, leftPos + 31, topPos + 23, menu.hasOxygen() ? 212 : 218, 0, 6, 8);
-        graphics.blit(TEXTURE, leftPos + 49, topPos + 59, menu.hasPower() ? 212 : 218, 0, 6, 8);
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 8, topPos + 88,
+        graphics.blit(TEXTURE, leftPos + 157, topPos + 31, menu.hasFuel() ? 210 : 216, 0, 6, 8);
+        graphics.blit(TEXTURE, leftPos + 175, topPos + 31, menu.hasOxygen() ? 210 : 216, 0, 6, 8);
+        graphics.blit(TEXTURE, leftPos + 139, topPos + 31, menu.hasPower() ? 210 : 216, 0, 6, 8);
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 152, topPos + 96,
                 16, 52, menu.getKeroseneTankData());
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 26, topPos + 88,
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 170, topPos + 96,
                 16, 52, menu.getOxygenTankData());
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 53, 2);
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 4, 0xFFFFFF, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
 
         // GUISoyuzLauncher did not use a conventional zero-padded fractional
@@ -75,59 +77,51 @@ public class SoyuzLauncherScreen extends AbstractContainerScreen<SoyuzLauncherMe
             cents += "0";
         }
         String timer = secs + ":" + cents;
-        graphics.pose().pushPose();
-        graphics.pose().scale(0.5F, 0.5F, 1.0F);
-        graphics.drawString(font, timer, 307, 75, 0xFF0000, false);
-        graphics.pose().popPose();
+        graphics.drawString(font, timer, 85, 121, 0xFF0000, false);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        // GUISoyuzLauncher uses GuiInfoContainer#drawCustomInfoStat for these
-        // six source-defined hints.  Unlike the linker side panels, each old
-        // call deliberately anchors its tooltip to the live cursor.
-        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
-                leftPos + 43, topPos + 17, 18, 18, mouseX, mouseY, "The Soyuz goes here");
-        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
-                leftPos + 43, topPos + 35, 18, 18, mouseX, mouseY, "Designator only for CARGO MODE");
-        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
-                leftPos + 133, topPos + 17, 18, 18, mouseX, mouseY, "The payload for SATELLITE MODE");
-        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
-                leftPos + 133, topPos + 35, 18, 18, mouseX, mouseY, "The orbital module for special payloads");
-        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
-                leftPos + 88, topPos + 17, 18, 18, mouseX, mouseY, "SATELLITE MODE");
-        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
-                leftPos + 88, topPos + 35, 18, 18, mouseX, mouseY, "CARGO MODE");
-        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 8, topPos + 36, 16, 52)) {
+        LegacyGuiElements.renderCustomInfoStat(graphics, font, mouseX, mouseY,
+                leftPos - 16, topPos + 53, 16, 16, leftPos - 8, topPos + 69,
+                Component.translatable("container.hbm_ntm_rebirth.soyuz_launcher.desc.0"),
+                Component.translatable("container.hbm_ntm_rebirth.soyuz_launcher.desc.1"));
+        LegacyGuiElements.renderCustomInfoStat(graphics, font, mouseX, mouseY,
+                leftPos + 79, topPos + 52, 18, 18, mouseX, mouseY,
+                Component.translatable("container.hbm_ntm_rebirth.soyuz_launcher.cargo"));
+        LegacyGuiElements.renderCustomInfoStat(graphics, font, mouseX, mouseY,
+                leftPos + 97, topPos + 52, 18, 18, mouseX, mouseY,
+                Component.translatable("container.hbm_ntm_rebirth.soyuz_launcher.satellite"));
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 152, topPos + 44, 16, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getKeroseneTankData(),
                     menu.getKeroseneTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 26, topPos + 36, 16, 52)) {
+        } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 170, topPos + 44, 16, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOxygenTankData(),
                     menu.getOxygenTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 49, topPos + 72, 6, 34)) {
+        } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 134, topPos + 44, 16, 52)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
-                    leftPos + 49, topPos + 72, 6, 34, menu.getPower(), menu.getMaxPower());
+                    leftPos + 134, topPos + 44, 16, 52, menu.getPower(), menu.getMaxPower());
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 88, 17, 18, 18)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 97, 52, 18, 18)) {
             LegacyGuiElements.playClickSound();
             ModMessages.sendAuxButton(menu.getBlockEntity().getBlockPos(),
                     SoyuzLauncherBlockEntity.MODE_SATELLITE, SoyuzLauncherBlockEntity.CONTROL_MODE);
             return true;
         }
-        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 88, 35, 18, 18)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 79, 52, 18, 18)) {
             LegacyGuiElements.playClickSound();
             ModMessages.sendAuxButton(menu.getBlockEntity().getBlockPos(),
                     SoyuzLauncherBlockEntity.MODE_CARGO, SoyuzLauncherBlockEntity.CONTROL_MODE);
             return true;
         }
-        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 151, 17, 18, 18)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 88, 97, 18, 18)) {
             LegacyGuiElements.playClickSound();
             ModMessages.sendAuxButton(menu.getBlockEntity().getBlockPos(), 0,
                     SoyuzLauncherBlockEntity.CONTROL_START);

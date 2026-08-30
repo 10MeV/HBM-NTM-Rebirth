@@ -131,6 +131,8 @@
                    "hbm_ntm_rebirth:rbmk_lever",
                    "hbm_ntm_rebirth:rbmk_numitron",
                    "hbm_ntm_rebirth:rbmk_terminal",
+                   "hbm_ntm_rebirth:deco_rbmk",
+                   "hbm_ntm_rebirth:deco_rbmk_smooth",
                    "hbm_ntm_rebirth:rbmk_blank",
                    "hbm_ntm_rebirth:rbmk_moderator",
                    "hbm_ntm_rebirth:rbmk_reflector",
@@ -253,10 +255,20 @@
                    "hbm_ntm_rebirth:machine_compressor",
                    "hbm_ntm_rebirth:machine_compressor_compact",
                    "hbm_ntm_rebirth:machine_condenser",
+                   "hbm_ntm_rebirth:fan",
                    "hbm_ntm_rebirth:machine_condenser_powered",
                    "hbm_ntm_rebirth:machine_crucible",
                    "hbm_ntm_rebirth:machine_crystallizer",
                    "hbm_ntm_rebirth:machine_cyclotron",
+                   "hbm_ntm_rebirth:hadron_coil_alloy",
+                   "hbm_ntm_rebirth:hadron_coil_gold",
+                   "hbm_ntm_rebirth:hadron_coil_neodymium",
+                   "hbm_ntm_rebirth:hadron_coil_magtung",
+                   "hbm_ntm_rebirth:hadron_coil_schrabidium",
+                   "hbm_ntm_rebirth:hadron_coil_schrabidate",
+                   "hbm_ntm_rebirth:hadron_coil_starmetal",
+                   "hbm_ntm_rebirth:hadron_coil_chlorophyte",
+                   "hbm_ntm_rebirth:hadron_coil_mese",
                    "hbm_ntm_rebirth:machine_deuterium_tower",
                    "hbm_ntm_rebirth:machine_deuterium_extractor",
                    "hbm_ntm_rebirth:machine_drain",
@@ -374,7 +386,6 @@
                    "hbm_ntm_rebirth:substation",
                    "hbm_ntm_rebirth:vending_machine",
                    "hbm_ntm_rebirth:zirnox_destroyed",
-                   "hbm_ntm_rebirth:block_slag_broken",
                    "hbm_ntm_rebirth:block_niobium",
                    "hbm_ntm_rebirth:ore_uranium",
                    "hbm_ntm_rebirth:deepslate_ore_uranium",
@@ -480,5 +491,33 @@
                    ,"hbm_ntm_rebirth:vinyl_tile"
                    ,"hbm_ntm_rebirth:stone_biome"
                    ,"hbm_ntm_rebirth:platemetal"
+                   ,"hbm_ntm_rebirth:machine_industrial_generator"
+                   ,"hbm_ntm_rebirth:foundry_mold"
+                   ,"hbm_ntm_rebirth:foundry_basin"
+                   ,"hbm_ntm_rebirth:foundry_channel"
+                   ,"hbm_ntm_rebirth:foundry_tank"
+                   ,"hbm_ntm_rebirth:foundry_outlet"
+                   ,"hbm_ntm_rebirth:foundry_slagtap"
+                   ,"hbm_ntm_rebirth:part_emitter"
+                   ,"hbm_ntm_rebirth:seal_frame"
+                   ,"hbm_ntm_rebirth:seal_controller"
+                   ,"hbm_ntm_rebirth:door_metal"
+                   ,"hbm_ntm_rebirth:door_office"
+                   ,"hbm_ntm_rebirth:door_bunker"
+                   ,"hbm_ntm_rebirth:door_red"
+                   ,"hbm_ntm_rebirth:vault_door"
+                   ,"hbm_ntm_rebirth:fire_door"
+                   ,"hbm_ntm_rebirth:transition_seal"
+                   ,"hbm_ntm_rebirth:sliding_blast_door"
+                   ,"hbm_ntm_rebirth:large_vehicle_door"
+                   ,"hbm_ntm_rebirth:water_door"
+                   ,"hbm_ntm_rebirth:qe_containment"
+                   ,"hbm_ntm_rebirth:qe_sliding_door"
+                   ,"hbm_ntm_rebirth:round_airlock_door"
+                   ,"hbm_ntm_rebirth:secure_access_door"
+                   ,"hbm_ntm_rebirth:sliding_seal_door"
+                   ,"hbm_ntm_rebirth:silo_hatch"
+                   ,"hbm_ntm_rebirth:silo_hatch_large"
+                   ,"hbm_ntm_rebirth:cargo_door"
                ]
 }

@@ -46,6 +46,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.util.Mth;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -68,6 +69,9 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_CUSTOM_NAME = "name";
     private static final String TAG_LEGACY_POWER = "power";
     private static final String TAG_PROGRESS = "progress";
+    private static final String TAG_PROCESS_TIME = "processTime";
+    private static final String TAG_POWER_REQUIREMENT = "powerRequirement";
+    private static final String TAG_ON = "on";
     private static final String TAG_INPUT_PRESSURE = "inputPressure";
     private static final String TAG_LEGACY_COMPRESSION = "compression";
     private static final String TAG_LEGACY_INPUT_TANK = "0";
@@ -604,8 +608,45 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    /**
+     * The legacy compressor sent these values in its tile packet.  Keep a compact
+     * vanilla chunk/block-update snapshot as well: a player entering tracking
+     * range must not wait for the next periodic {@code networkPackNT} resend
+     * before the fluid bars and compressor animation have authoritative state.
+     */
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong(TAG_LEGACY_POWER, energy.getPower());
+        tag.putInt(TAG_PROGRESS, progress);
+        tag.putInt(TAG_PROCESS_TIME, processTime);
+        tag.putInt(TAG_POWER_REQUIREMENT, powerRequirement);
+        tag.putBoolean(TAG_ON, on);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_LEGACY_POWER, Tag.TAG_LONG)) {
+            energy.setPower(tag.getLong(TAG_LEGACY_POWER));
+        }
+        if (tag.contains(TAG_PROGRESS, Tag.TAG_INT)) {
+            progress = tag.getInt(TAG_PROGRESS);
+        }
+        if (tag.contains(TAG_PROCESS_TIME, Tag.TAG_INT)) {
+            processTime = Math.max(1, tag.getInt(TAG_PROCESS_TIME));
+        }
+        if (tag.contains(TAG_POWER_REQUIREMENT, Tag.TAG_INT)) {
+            powerRequirement = tag.getInt(TAG_POWER_REQUIREMENT);
+        }
+        if (tag.contains(TAG_ON, Tag.TAG_BYTE)) {
+            on = tag.getBoolean(TAG_ON);
+        }
+    }
 
     @Nullable
     @Override
@@ -689,6 +730,11 @@ public class CompressorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public float getVolume(float baseVolume) {
         return baseVolume;
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
     }
 
 }

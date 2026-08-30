@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:red_wire_coated" },
+    { "item": "hbm_ntm_rebirth:ingot_steel" },
+    { "item": "hbm_ntm_rebirth:circuit_basic" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:red_cable_gauge"
+  }
+}

@@ -28,9 +28,9 @@ public class SoyuzCapsuleMenu extends AbstractContainerMenu {
         super(ModMenuTypes.SOYUZ_CAPSULE.get(), containerId);
         this.blockEntity = blockEntity;
 
-        HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(), 0, 44, 17, 3, 6);
-        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(), SoyuzCapsuleBlockEntity.SLOT_ROCKET, 8, 35));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
+        HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(), 0, 62, 18, 3, 6);
+        addSlot(HbmInventoryMenuHelper.validatedSlot(blockEntity.getItems(), SoyuzCapsuleBlockEntity.SLOT_ROCKET, 17, 36));
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
     }
 
     public SoyuzCapsuleBlockEntity getBlockEntity() {

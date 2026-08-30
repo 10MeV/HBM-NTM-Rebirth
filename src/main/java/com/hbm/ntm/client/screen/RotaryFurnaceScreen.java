@@ -1,7 +1,12 @@
 package com.hbm.ntm.client.screen;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.RotaryFurnaceBlockEntity;
 import com.hbm.ntm.menu.RotaryFurnaceMenu;
+import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -40,6 +45,12 @@ public class RotaryFurnaceScreen extends AbstractContainerScreen<RotaryFurnaceMe
                     ((color >> 8) & 255) / 255.0F,
                     (color & 255) / 255.0F, 1.0F);
             graphics.blit(TEXTURE, leftPos + 98, topPos + 70 - output, 176, 76 - output, 16, output);
+            RenderSystem.enableBlend();
+            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+            graphics.setColor(1.0F, 1.0F, 1.0F, 0.3F);
+            graphics.blit(TEXTURE, leftPos + 98, topPos + 70 - output, 176, 76 - output, 16, output);
+            RenderSystem.disableBlend();
+            RenderSystem.defaultBlendFunc();
             graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
         LegacyFluidGuiRenderer.renderHorizontalTank(graphics, leftPos + 8, topPos + 52, 52, 16,
@@ -60,18 +71,33 @@ public class RotaryFurnaceScreen extends AbstractContainerScreen<RotaryFurnaceMe
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(8, 36, 52, 16, mouseX, mouseY)) {
+        if (isLegacyHovering(8, 36, 52, 16, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTank(),
                     menu.getInputTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(134, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(134, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getSteamTank(),
                     menu.getSteamTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(152, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(152, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getSpentSteamTank(),
                     menu.getSpentSteamTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(98, 18, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getOutputText(hasShiftDown())), mouseX, mouseY);
+        } else if (menu.getSlot(4).getItem().isEmpty()
+                && LegacyGuiElements.isMouseOverSlot(menu.getSlot(4), leftPos, topPos, mouseX, mouseY)) {
+            List<Component> bonuses = RotaryFurnaceBlockEntity.burnModule().getDescription().stream()
+                    .map(Component::literal)
+                    .map(Component.class::cast)
+                    .toList();
+            if (!bonuses.isEmpty()) {
+                graphics.renderComponentTooltip(font, bonuses, mouseX, mouseY);
+            }
+        } else if (isLegacyHovering(98, 18, 16, 52, mouseX, mouseY)) {
+            Component output = Component.literal(menu.getOutputText(hasShiftDown()))
+                    .withStyle(menu.getOutputAmount() > 0 ? ChatFormatting.YELLOW : ChatFormatting.RED);
+            graphics.renderTooltip(font, output, mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

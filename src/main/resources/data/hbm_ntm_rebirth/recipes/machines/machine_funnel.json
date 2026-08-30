@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "S": { "tag": "forge:ingots/steel" },
+    "R": { "item": "minecraft:redstone" }
+  },
+  "pattern": [ "S S", "SRS", " S " ],
+  "result": { "item": "hbm_ntm_rebirth:machine_funnel" },
+  "show_notification": true
+}

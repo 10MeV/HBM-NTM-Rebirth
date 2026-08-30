@@ -61,27 +61,31 @@ public class GasCentScreen extends AbstractContainerScreen<GasCentMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(15, 15, 24, 55, mouseX, mouseY)) {
+        if (isLegacyHovering(15, 15, 24, 55, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTank(),
                     menu.pseudoTankTooltip(menu.getInputTank(), true, hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(137, 15, 25, 55, mouseX, mouseY)) {
+        } else if (isLegacyHovering(137, 15, 25, 55, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTank(),
                     menu.pseudoTankTooltip(menu.getOutputTank(), false, hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(182, 17, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(182, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 182, topPos + 17, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(-12, 16, 16, 16, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font,
+        } else if (isLegacyHovering(-12, 16, 16, 16, mouseX, mouseY)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 12, topPos + 16, 16, 16, leftPos - 8, topPos + 32,
                     splitLegacyInfo(Component.translatableWithFallback("desc.gui.gasCent.enrichment",
-                            "Enrichment$Uranium enrichment requires cascades.$Two-centrifuge cascades will give$uranium fuel, four-centrifuge cascades$will give total separation.")),
-                    mouseX, mouseY);
-        } else if (isHovering(-12, 32, 16, 16, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font,
+                            "Enrichment$Uranium enrichment requires cascades.$Two-centrifuge cascades will give$uranium fuel, four-centrifuge cascades$will give total separation.")));
+        } else if (isLegacyHovering(-12, 32, 16, 16, mouseX, mouseY)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 12, topPos + 32, 16, 16, leftPos - 8, topPos + 48,
                     splitLegacyInfo(Component.translatableWithFallback("desc.gui.gasCent.output",
-                            "Fluid Transfer$Fluid can be transferred to another centrifuge$via the output port for further processing.")),
-                    mouseX, mouseY);
+                            "Fluid Transfer$Fluid can be transferred to another centrifuge$via the output port for further processing.")));
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private static List<Component> splitLegacyInfo(Component text) {

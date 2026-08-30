@@ -15,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -135,6 +136,15 @@ public class CrucibleMenu extends AbstractContainerMenu {
         }
         return HbmInventoryMenuHelper.moveMachineStack(slots, this::moveItemStackTo, index,
                 MACHINE_SLOT_COUNT, PLAYER_INVENTORY_START, PLAYER_SLOT_END);
+    }
+
+    @Override
+    public void clicked(int slotId, int button, ClickType clickType, Player player) {
+        // ContainerCrucible#slotClick rejects legacy mode 2, which maps to modern hotbar SWAP.
+        if (clickType == ClickType.SWAP) {
+            return;
+        }
+        super.clicked(slotId, button, clickType, player);
     }
 
     private void addDataSlots() {

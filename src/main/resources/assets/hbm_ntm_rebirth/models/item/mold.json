@@ -1,6 +1,33 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "hbm_ntm_rebirth:item/mold_base"
-  }
+    "layer0": "hbm_ntm_rebirth:item/mold_nugget"
+  },
+  "overrides": [
+    { "predicate": { "hbm_ntm_rebirth:mold": 1.0 }, "model": "hbm_ntm_rebirth:item/mold_billet" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 2.0 }, "model": "hbm_ntm_rebirth:item/mold_ingot" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 3.0 }, "model": "hbm_ntm_rebirth:item/mold_plate" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 4.0 }, "model": "hbm_ntm_rebirth:item/mold_wire" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 5.0 }, "model": "hbm_ntm_rebirth:item/mold_blade" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 6.0 }, "model": "hbm_ntm_rebirth:item/mold_blades" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 7.0 }, "model": "hbm_ntm_rebirth:item/mold_stamp" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 8.0 }, "model": "hbm_ntm_rebirth:item/mold_shell" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 9.0 }, "model": "hbm_ntm_rebirth:item/mold_pipe" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 10.0 }, "model": "hbm_ntm_rebirth:item/mold_ingots" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 11.0 }, "model": "hbm_ntm_rebirth:item/mold_plates" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 12.0 }, "model": "hbm_ntm_rebirth:item/mold_block" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 13.0 }, "model": "hbm_ntm_rebirth:item/mold_plates_cast" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 16.0 }, "model": "hbm_ntm_rebirth:item/mold_c9" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 17.0 }, "model": "hbm_ntm_rebirth:item/mold_c50" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 19.0 }, "model": "hbm_ntm_rebirth:item/mold_plate_cast" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 20.0 }, "model": "hbm_ntm_rebirth:item/mold_wire_dense" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 21.0 }, "model": "hbm_ntm_rebirth:item/mold_wires_dense" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 22.0 }, "model": "hbm_ntm_rebirth:item/mold_barrel_light" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 23.0 }, "model": "hbm_ntm_rebirth:item/mold_barrel_heavy" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 24.0 }, "model": "hbm_ntm_rebirth:item/mold_receiver_light" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 25.0 }, "model": "hbm_ntm_rebirth:item/mold_receiver_heavy" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 26.0 }, "model": "hbm_ntm_rebirth:item/mold_mechanism" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 27.0 }, "model": "hbm_ntm_rebirth:item/mold_stock" },
+    { "predicate": { "hbm_ntm_rebirth:mold": 28.0 }, "model": "hbm_ntm_rebirth:item/mold_grip" }
+  ]
 }

@@ -202,8 +202,15 @@ public class GenericMachineRecipe implements Recipe<Container> {
     }
 
     public List<Component> getDisplayLines() {
+        return getDisplayLines(false);
+    }
+
+    public List<Component> getDisplayLines(boolean showInternalName) {
         List<Component> lines = new ArrayList<>();
         lines.add(getDisplayName().copy().withStyle(ChatFormatting.YELLOW));
+        if (showInternalName) {
+            lines.add(Component.literal("Internal: " + getInternalName()).withStyle(ChatFormatting.DARK_GRAY));
+        }
         if (autoSwitchGroup != null) {
             addAutoSwitchLines(lines);
         }

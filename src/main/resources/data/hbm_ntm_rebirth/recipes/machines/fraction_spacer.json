@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "H": { "tag": "forge:shells/steel" },
+    "B": { "item": "minecraft:iron_bars" }
+  },
+  "pattern": [ "BHB" ],
+  "result": { "item": "hbm_ntm_rebirth:fraction_spacer" },
+  "show_notification": true
+}

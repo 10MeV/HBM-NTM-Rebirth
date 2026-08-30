@@ -64,7 +64,8 @@ public class LargeLaunchPadBlock extends LegacyXrMultiblockBlock implements Enti
     protected LegacyMultiblockLayout getLayout(BlockState state) {
         Direction facing = state.getValue(FACING);
         return LegacyMultiblockLayout.ofLegacyXrChecked(LEGACY_XR_DIMENSIONS, facing)
-                .withExtraProxyOffsets(EXTRA_PORTS, LegacyProxyMode.combo(true, true, true));
+                .withProxyOffsets(EXTRA_PORTS, LegacyProxyMode.combo(true, true, true))
+                .withLegacyExtraOffsets(EXTRA_PORTS);
     }
 
     @Nullable

@@ -2,11 +2,13 @@
   "loader": "forge:composite",
   "children": {
     "legs": {
-      "loader": "forge:obj",
+      "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+      "shade_quads": false,
+      "emissive_ambient": false,
       "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_legs.obj",
       "flip_v": true,
       "automatic_culling": false,
-      "render_type": "minecraft:cutout",
+      "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
       "transform": {
         "translation": [0.5, -4.0, 0.5],
         "rotation": [0, 0, 0],
@@ -18,11 +20,13 @@
       }
     },
     "table": {
-      "loader": "forge:obj",
+      "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+      "shade_quads": false,
+      "emissive_ambient": false,
       "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_table.obj",
       "flip_v": true,
       "automatic_culling": false,
-      "render_type": "minecraft:cutout",
+      "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
       "transform": {
         "translation": [0.5, -4.0, 0.5],
         "rotation": [0, 0, 0],
@@ -34,11 +38,13 @@
       }
     },
     "tower_base": {
-      "loader": "forge:obj",
+      "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+      "shade_quads": false,
+      "emissive_ambient": false,
       "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_tower_base.obj",
       "flip_v": true,
       "automatic_culling": false,
-      "render_type": "minecraft:cutout",
+      "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
       "transform": {
         "translation": [0.5, -4.0, 0.5],
         "rotation": [0, 0, 0],
@@ -50,11 +56,13 @@
       }
     },
     "support_base": {
-      "loader": "forge:obj",
+      "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+      "shade_quads": false,
+      "emissive_ambient": false,
       "model": "hbm_ntm_rebirth:models/block/launch_table/soyuz_launcher_support_base.obj",
       "flip_v": true,
       "automatic_culling": false,
-      "render_type": "minecraft:cutout",
+      "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
       "transform": {
         "translation": [0.5, -4.0, 0.5],
         "rotation": [0, 0, 0],

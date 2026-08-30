@@ -146,7 +146,10 @@ public final class LegacyMetaItemMappings {
                 39, requireLegacyItem("plate_cast_combine_steel"),
                 46, requireLegacyItem("plate_cast_bismuth_bronze"),
                 47, requireLegacyItem("plate_cast_arsenic_bronze"),
-                7_400, requireLegacyItem("plate_cast_tungsten")));
+                8_300, requireLegacyItem("plate_cast_bismuth"),
+                7_900, requireLegacyItem("plate_cast_gold"),
+                7_400, requireLegacyItem("plate_cast_tungsten"),
+                12_600, requireLegacyItem("plate_cast_schrabidate")));
         registerSparse(PLATE_WELDED, sparseMap(
                 2_600, requireLegacyItem("plate_welded_iron"),
                 30, requireLegacyItem("plate_welded_steel"),
@@ -171,7 +174,7 @@ public final class LegacyMetaItemMappings {
                 7_900, requireLegacyItem("wire_gold"),
                 8_200, requireLegacyItem("wire_fine_lead"),
                 12_626, requireLegacyItem("wire_fine_schrabidium")));
-        registerSparse(WIRE_DENSE, Map.of(
+        registerSparse(WIRE_DENSE, sparseMap(
                 2_200, requireLegacyItem("wire_dense_titanium"),
                 2_900, requireLegacyItem("wire_dense_copper"),
                 4_100, requireLegacyItem("wire_dense_niobium"),
@@ -179,9 +182,14 @@ public final class LegacyMetaItemMappings {
                 31, requireLegacyItem("wire_dense_mingrade"),
                 38, requireLegacyItem("wire_dense_magnetized_tungsten"),
                 48, requireLegacyItem("wire_dense_bscco"),
-                6_000, requireLegacyItem("wire_dense_neodymium")));
-        registerSparse(PIPE, Map.of(
-                30, requireLegacyItem("pipes_steel")));
+                6_000, requireLegacyItem("wire_dense_neodymium"),
+                7_400, requireLegacyItem("wire_dense_tungsten"),
+                12_600, requireLegacyItem("wire_dense_schrabidate"),
+                12_626, requireLegacyItem("wire_dense_schrabidium")));
+        registerSparse(PIPE, sparseMap(
+                30, requireLegacyItem("pipes_steel"),
+                1_300, requireLegacyItem("pipes_aluminium"),
+                2_600, requireLegacyItem("pipes_iron")));
         registerSparse(COKE, Map.of(
                 0, requireLegacyItem("coke_coal"),
                 1, requireLegacyItem("coke_lignite"),

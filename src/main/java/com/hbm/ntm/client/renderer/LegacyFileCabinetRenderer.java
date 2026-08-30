@@ -52,7 +52,7 @@ public class LegacyFileCabinetRenderer implements BlockEntityRenderer<LegacyFile
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, legacyYaw(state));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            renderModel(poseStack, buffer, texture(blockEntity.variant()), modelLight, packedOverlay,
+            renderModel(poseStack, buffer, texture(blockEntity.variant()), modelLight, packedLight, packedOverlay,
                     blockEntity.lowerExtent(partialTick), blockEntity.upperExtent(partialTick),
                     LegacyMachineRenderShapes.renderChunkBakedStaticsInBer());
         }
@@ -61,23 +61,23 @@ public class LegacyFileCabinetRenderer implements BlockEntityRenderer<LegacyFile
 
     public static void renderItemModel(PoseStack poseStack, MultiBufferSource buffer, BlockState state, int variant,
             int packedLight, int packedOverlay) {
-        renderModel(poseStack, buffer, texture(variant), packedLight, packedOverlay, 0.0F, 0.0F, true);
+        renderModel(poseStack, buffer, texture(variant), packedLight, packedLight, packedOverlay, 0.0F, 0.0F, true);
     }
 
     private static void renderModel(PoseStack poseStack, MultiBufferSource buffer, ResourceLocation texture,
-            int packedLight, int packedOverlay, float lower, float upper, boolean includeCabinet) {
+            int fixedLight, int movingLight, int packedOverlay, float lower, float upper, boolean includeCabinet) {
         if (includeCabinet) {
-            renderPart(texture, CABINET, poseStack, buffer, packedLight, packedOverlay);
+            renderPart(texture, CABINET, poseStack, buffer, fixedLight, packedOverlay);
         }
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, DRAWER_TRAVEL * lower);
-        renderPart(texture, LOWER_DRAWER, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(texture, LOWER_DRAWER, poseStack, buffer, movingLight, packedOverlay);
         poseStack.popPose();
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, DRAWER_TRAVEL * upper);
-        renderPart(texture, UPPER_DRAWER, poseStack, buffer, packedLight, packedOverlay);
+        renderPart(texture, UPPER_DRAWER, poseStack, buffer, movingLight, packedOverlay);
         poseStack.popPose();
     }
 
@@ -95,11 +95,18 @@ public class LegacyFileCabinetRenderer implements BlockEntityRenderer<LegacyFile
         Direction facing = state.hasProperty(LegacyFileCabinetBlock.FACING)
                 ? state.getValue(LegacyFileCabinetBlock.FACING)
                 : Direction.NORTH;
-        return switch (facing) {
-            case SOUTH -> 0.0F;
-            case WEST -> 270.0F;
-            case EAST -> 90.0F;
-            default -> 180.0F;
-        };
+        // Keep the legacy four-way mapping explicit. An enum switch creates a
+        // compiler-generated $1 class, which is not reliably copied into the
+        // Forge dev runtime's bin/main output during incremental compilation.
+        if (facing == Direction.SOUTH) {
+            return 0.0F;
+        }
+        if (facing == Direction.WEST) {
+            return 270.0F;
+        }
+        if (facing == Direction.EAST) {
+            return 90.0F;
+        }
+        return 180.0F;
     }
 }

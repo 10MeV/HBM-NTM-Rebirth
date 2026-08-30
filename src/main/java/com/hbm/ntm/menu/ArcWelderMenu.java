@@ -1,9 +1,11 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.blockentity.ArcWelderBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.item.ItemMachineUpgrade;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -19,12 +21,17 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.List;
+import java.util.Map;
 
-public class ArcWelderMenu extends AbstractContainerMenu {
+public class ArcWelderMenu extends AbstractContainerMenu implements LegacyUpgradeInfoProvider {
     private static final int MACHINE_SLOT_COUNT = 8;
     private static final int PLAYER_INVENTORY_START = MACHINE_SLOT_COUNT;
     private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
     private static final int HOTBAR_END = PLAYER_INVENTORY_END + 9;
+    private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
+            UpgradeType.SPEED, 3,
+            UpgradeType.POWER, 3,
+            UpgradeType.OVERDRIVE, 3);
 
     private final ArcWelderBlockEntity blockEntity;
     private long power;
@@ -85,6 +92,11 @@ public class ArcWelderMenu extends AbstractContainerMenu {
 
     public List<Component> getInputTankTooltip(boolean showHidden) {
         return inputTank.tooltip(showHidden);
+    }
+
+    @Override
+    public Map<UpgradeType, Integer> getValidUpgrades() {
+        return VALID_UPGRADES;
     }
 
     @Override

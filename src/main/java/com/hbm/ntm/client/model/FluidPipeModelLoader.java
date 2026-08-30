@@ -113,8 +113,8 @@ public class FluidPipeModelLoader implements IGeometryLoader<FluidPipeModelLoade
 
         private ObjModel loadObj(ResourceLocation location) {
             try {
-                return ObjLoader.INSTANCE.loadModel(new ObjModel.ModelSettings(location, false, true, flipV,
-                        true, null));
+                return ObjLoader.INSTANCE.loadModel(new ObjModel.ModelSettings(location, false, false, flipV,
+                        false, null));
             } catch (Exception exception) {
                 throw new RuntimeException("Failed to load fluid pipe OBJ model: " + location, exception);
             }

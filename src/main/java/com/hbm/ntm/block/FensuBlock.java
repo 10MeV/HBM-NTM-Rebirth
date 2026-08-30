@@ -2,6 +2,7 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.FensuBlockEntity;
 import com.hbm.ntm.blockentity.MachineBatteryBlockEntity;
+import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -9,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -18,6 +20,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
@@ -59,11 +64,31 @@ public class FensuBlock extends LegacyXrMultiblockBlock implements EntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof FensuBlockEntity fensu) {
             NetworkHooks.openScreen(serverPlayer, fensu, fensu.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide && resolveCoreBlockEntity(level, pos) instanceof HbmPersistentBlockState persistent) {
+            persistent.readPersistentStateFromStack(stack);
+        }
+    }
+
+    @Override
+    public java.util.List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        if (builder.getLevel() instanceof ServerLevel
+                && builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof FensuBlockEntity fensu) {
+            return java.util.List.of(fensu.createPersistentBlockDrop(asItem()));
+        }
+        return super.getDrops(state, builder);
     }
 
     @Nullable

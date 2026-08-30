@@ -89,6 +89,10 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        // Legacy MachineAssemblyMachine calls standardOpenBehavior.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof AssemblyMachineBlockEntity assembler) {
             NetworkHooks.openScreen(serverPlayer, assembler, assembler.getBlockPos());
@@ -134,7 +138,7 @@ public class AssemblyMachineBlock extends LegacyXrMultiblockBlock implements Ent
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override

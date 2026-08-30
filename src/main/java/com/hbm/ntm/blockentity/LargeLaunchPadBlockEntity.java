@@ -21,6 +21,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
@@ -416,5 +417,61 @@ public class LargeLaunchPadBlockEntity extends LaunchPadBlockEntity {
         prevErector = tag.contains(TAG_PREV_ERECTOR) ? tag.getFloat(TAG_PREV_ERECTOR) : erector;
         liftMoving = tag.getBoolean(TAG_LIFT_MOVING);
         erectorMoving = tag.getBoolean(TAG_ERECTOR_MOVING);
+    }
+
+    @Override
+    protected void writeClientRuntimeSnapshot(CompoundTag tag) {
+        super.writeClientRuntimeSnapshot(tag);
+        tag.putInt(TAG_FORM_FACTOR, formFactor);
+        tag.putBoolean(TAG_ERECTED, erected);
+        tag.putBoolean(TAG_READY_TO_LOAD, readyToLoad);
+        tag.putFloat(TAG_LIFT, lift);
+        tag.putFloat(TAG_ERECTOR, erector);
+        tag.putBoolean(TAG_LIFT_MOVING, liftMoving);
+        tag.putBoolean(TAG_ERECTOR_MOVING, erectorMoving);
+    }
+
+    @Override
+    protected void readClientRuntimeSnapshot(CompoundTag tag) {
+        super.readClientRuntimeSnapshot(tag);
+        formFactor = tag.contains(TAG_FORM_FACTOR) ? tag.getInt(TAG_FORM_FACTOR) : formFactor;
+        erected = tag.contains(TAG_ERECTED) && tag.getBoolean(TAG_ERECTED);
+        readyToLoad = tag.contains(TAG_READY_TO_LOAD) && tag.getBoolean(TAG_READY_TO_LOAD);
+        if (tag.contains(TAG_LIFT)) {
+            prevLift = lift;
+            lift = tag.getFloat(TAG_LIFT);
+        }
+        if (tag.contains(TAG_ERECTOR)) {
+            prevErector = erector;
+            erector = tag.getFloat(TAG_ERECTOR);
+        }
+        liftMoving = tag.contains(TAG_LIFT_MOVING) && tag.getBoolean(TAG_LIFT_MOVING);
+        erectorMoving = tag.contains(TAG_ERECTOR_MOVING) && tag.getBoolean(TAG_ERECTOR_MOVING);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        super.serializeLegacyBufPacket(data);
+        data.writeBoolean(liftMoving);
+        data.writeBoolean(erectorMoving);
+        data.writeBoolean(erected);
+        data.writeBoolean(readyToLoad);
+        data.writeByte(formFactor);
+        data.writeFloat(lift);
+        data.writeFloat(erector);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        super.deserializeLegacyBufPacket(data);
+        liftMoving = data.readBoolean();
+        erectorMoving = data.readBoolean();
+        erected = data.readBoolean();
+        readyToLoad = data.readBoolean();
+        formFactor = data.readByte();
+        prevLift = lift;
+        lift = data.readFloat();
+        prevErector = erector;
+        erector = data.readFloat();
     }
 }

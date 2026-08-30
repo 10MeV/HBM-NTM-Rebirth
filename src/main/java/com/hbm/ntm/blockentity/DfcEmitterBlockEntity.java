@@ -47,6 +47,10 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int CONTROL_TOGGLE = 1;
 
     private static final List<FluidPort> FLUID_PORTS = HbmFluidPortLayouts.allAdjacent();
+    private static final String TAG_WATTS = "watts";
+    private static final String TAG_PREV = "prev";
+    private static final String TAG_BEAM = "beam";
+    private static final String TAG_ON = "isOn";
 
     private final HbmFluidTank cryogel;
     private int watts = 1;
@@ -261,13 +265,19 @@ public class DfcEmitterBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
-        tag.putInt("beam", beam);
+        tag.putInt(TAG_WATTS, watts);
+        tag.putLong(TAG_PREV, prev);
+        tag.putInt(TAG_BEAM, beam);
+        tag.putBoolean(TAG_ON, isOn);
         return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
-        beam = tag.getInt("beam");
+        watts = tag.getInt(TAG_WATTS);
+        prev = tag.getLong(TAG_PREV);
+        beam = tag.getInt(TAG_BEAM);
+        isOn = tag.getBoolean(TAG_ON);
     }
 }

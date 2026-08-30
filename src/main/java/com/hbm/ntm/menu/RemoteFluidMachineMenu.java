@@ -48,7 +48,7 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
         super(ModMenuTypes.REMOTE_FLUID_MACHINE.get(), containerId);
         this.blockEntity = blockEntity;
         this.profile = blockEntity.getLegacyGuiProfile();
-        this.machineSlotCount = addMachineSlots();
+        this.machineSlotCount = addMachineSlots(playerInventory);
         this.playerInventoryStart = machineSlotCount;
         this.playerSlotEnd = playerInventoryStart + PLAYER_INVENTORY_SIZE;
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory,
@@ -169,13 +169,13 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
         }
     }
 
-    private int addMachineSlots() {
+    private int addMachineSlots(Inventory playerInventory) {
         ItemStackHandler items = blockEntity.getItems();
         if (items == null) {
             return 0;
         }
         switch (profile) {
-            case COKER -> addCokerSlots(items);
+            case COKER -> addCokerSlots(items, playerInventory.player);
             case HYDROTREATER -> addHydrotreaterSlots(items);
             case CATALYTIC_REFORMER -> addCatalyticReformerSlots(items);
             case VACUUM_DISTILL -> addVacuumDistillSlots(items);
@@ -186,9 +186,9 @@ public class RemoteFluidMachineMenu extends AbstractContainerMenu {
         return items.getSlots();
     }
 
-    private void addCokerSlots(ItemStackHandler items) {
+    private void addCokerSlots(ItemStackHandler items, Player player) {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, CokerBlockEntity.SLOT_IDENTIFIER, 35, 72));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, CokerBlockEntity.SLOT_OUTPUT, 97, 27));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(player, items, CokerBlockEntity.SLOT_OUTPUT, 97, 27));
     }
 
     private void addHydrotreaterSlots(ItemStackHandler items) {

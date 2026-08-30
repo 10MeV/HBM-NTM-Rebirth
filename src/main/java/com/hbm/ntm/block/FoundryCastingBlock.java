@@ -110,9 +110,7 @@ public class FoundryCastingBlock extends Block implements EntityBlock, ICrucible
         ItemStack held = player.getItemInHand(hand);
         FoundryMoldItem.Mold mold = FoundryMoldItem.getMold(held);
         if (mold != null && mold.size() == casting.getMoldSize() && casting.installMold(held)) {
-            if (!player.getAbilities().instabuild) {
-                held.shrink(1);
-            }
+            held.shrink(1);
             return InteractionResult.CONSUME;
         }
         if (isShovel(held)) {
@@ -128,6 +126,11 @@ public class FoundryCastingBlock extends Block implements EntityBlock, ICrucible
     @Override
     public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
         if (tool != ToolType.SCREWDRIVER || !(level.getBlockEntity(pos) instanceof FoundryCastingBlockEntity casting)) {
+            return false;
+        }
+        // FoundryCastingBase#onScrew only consumed the screwdriver action when
+        // a mold was installed and its casting reservoir was empty.
+        if (casting.getMoldStack().isEmpty() || casting.getAmount() > 0) {
             return false;
         }
         if (!level.isClientSide) {

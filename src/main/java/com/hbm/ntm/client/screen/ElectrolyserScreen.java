@@ -73,16 +73,16 @@ public class ElectrolyserScreen extends AbstractContainerScreen<ElectrolyserMenu
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (menu.isMetalMode()) {
-            if (isHovering(36, 18, 16, 52, mouseX, mouseY)) {
+            if (isLegacyHovering(36, 18, 16, 52, mouseX, mouseY)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.tank(3),
                         menu.tankTooltip(3, hasShiftDown()), mouseX, mouseY);
-            } else if (isHovering(58, 18, 34, 42, mouseX, mouseY)) {
+            } else if (isLegacyHovering(58, 18, 34, 42, mouseX, mouseY)) {
                 graphics.renderComponentTooltip(font,
                         List.of(menu.materialTooltip(menu.getLeftMaterialId(), menu.getLeftAmount(),
                                 hasShiftDown()).withStyle(menu.getLeftAmount() > 0
                                         ? ChatFormatting.YELLOW : ChatFormatting.RED)),
                         mouseX, mouseY);
-            } else if (isHovering(96, 18, 34, 42, mouseX, mouseY)) {
+            } else if (isLegacyHovering(96, 18, 34, 42, mouseX, mouseY)) {
                 graphics.renderComponentTooltip(font,
                         List.of(menu.materialTooltip(menu.getRightMaterialId(), menu.getRightAmount(),
                                 hasShiftDown()).withStyle(menu.getRightAmount() > 0
@@ -90,18 +90,18 @@ public class ElectrolyserScreen extends AbstractContainerScreen<ElectrolyserMenu
                         mouseX, mouseY);
             }
         } else {
-            if (isHovering(42, 18, 16, 52, mouseX, mouseY)) {
+            if (isLegacyHovering(42, 18, 16, 52, mouseX, mouseY)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.tank(0),
                         menu.tankTooltip(0, hasShiftDown()), mouseX, mouseY);
-            } else if (isHovering(96, 18, 16, 52, mouseX, mouseY)) {
+            } else if (isLegacyHovering(96, 18, 16, 52, mouseX, mouseY)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.tank(1),
                         menu.tankTooltip(1, hasShiftDown()), mouseX, mouseY);
-            } else if (isHovering(116, 18, 16, 52, mouseX, mouseY)) {
+            } else if (isLegacyHovering(116, 18, 16, 52, mouseX, mouseY)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.tank(2),
                         menu.tankTooltip(2, hasShiftDown()), mouseX, mouseY);
             }
         }
-        if (isHovering(186, 18, 16, 89, mouseX, mouseY)) {
+        if (isLegacyHovering(186, 18, 16, 89, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 186, topPos + 18, 16, 89, menu.getPower(), menu.getMaxPower());
         }
@@ -110,7 +110,7 @@ public class ElectrolyserScreen extends AbstractContainerScreen<ElectrolyserMenu
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && isHovering(8, 82, 54, 12, mouseX, mouseY)) {
+        if (button == 0 && isLegacyHovering(8, 82, 54, 12, mouseX, mouseY)) {
             int control = menu.isMetalMode()
                     ? ElectrolyserBlockEntity.CONTROL_FLUID_MODE
                     : ElectrolyserBlockEntity.CONTROL_METAL_MODE;
@@ -121,6 +121,10 @@ public class ElectrolyserScreen extends AbstractContainerScreen<ElectrolyserMenu
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private void renderMaterial(GuiGraphics graphics, int x, int y, int amount, int color) {

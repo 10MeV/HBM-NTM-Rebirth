@@ -1,5 +1,7 @@
 package api.hbm.redstoneoverradio;
 
+import java.util.Locale;
+
 /**
  * Legacy 1.7.10 package bridge for Redstone-over-Radio command endpoints.
  */
@@ -16,7 +18,7 @@ public interface IRORInteractive extends IRORInfo, com.hbm.ntm.api.redstoneoverr
         if (parts[0].isEmpty()) {
             throw new RORFunctionException(EX_NULL);
         }
-        return parts[0];
+        return parts[0].toLowerCase(Locale.US);
     }
 
     static String[] getParams(String input) {
@@ -33,12 +35,20 @@ public interface IRORInteractive extends IRORInfo, com.hbm.ntm.api.redstoneoverr
         return parts[1].split(PARAM_SEPARATOR);
     }
 
+    static int parseInt(String value) {
+        return parseInt(value, Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
+
     static int parseInt(String value, int min, int max) {
         int result;
         try {
             result = Integer.parseInt(value);
         } catch (Exception ex) {
-            throw new RORFunctionException(EX_FORMAT);
+            try {
+                result = (int) Math.round(Double.parseDouble(value));
+            } catch (Exception decimalEx) {
+                throw new RORFunctionException(EX_FORMAT);
+            }
         }
         if (result < min || result > max) {
             throw new RORFunctionException(EX_FORMAT);

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "S": { "tag": "forge:plates/steel" },
+    "I": { "tag": "forge:ingots/rubber" },
+    "C": { "item": "hbm_ntm_rebirth:circuit_vacuum_tube" },
+    "R": { "item": "minecraft:redstone" }
+  },
+  "pattern": [ "SIS", "ICI", "SRS" ],
+  "result": { "item": "hbm_ntm_rebirth:machine_siren" },
+  "show_notification": true
+}

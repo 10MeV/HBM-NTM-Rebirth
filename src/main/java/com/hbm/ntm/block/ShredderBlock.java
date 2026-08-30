@@ -34,6 +34,12 @@ public class ShredderBlock extends HorizontalMachineBlock implements EntityBlock
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // MachineShredder returns false for a crouching server-side click, so
+        // the click must not open its inventory. Its client branch still
+        // consumes the prediction just as the 1.7.10 block did.
+        if (player.isShiftKeyDown()) {
+            return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof ShredderBlockEntity shredder) {
             NetworkHooks.openScreen(serverPlayer, shredder, pos);

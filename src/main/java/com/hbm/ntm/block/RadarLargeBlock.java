@@ -63,7 +63,10 @@ public class RadarLargeBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
-        return RadarBlockSupport.redstoneOutput(level, pos);
+        // The 1.7.10 core did not directly provide radar power. Its four
+        // adjacent TileEntityProxyCombo dummies performed the directional
+        // delegation, which DummyBlock now preserves.
+        return 0;
     }
 
     @Override

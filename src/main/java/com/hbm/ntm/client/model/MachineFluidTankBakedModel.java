@@ -88,7 +88,7 @@ public class MachineFluidTankBakedModel implements BakedModel {
             @Nullable RenderType renderType) {
         BakedModel part = parts.get(key);
         if (part != null) {
-            quads.addAll(part.getQuads(state, side, BakedModelQuadRandom.seeded(), ModelData.EMPTY, renderType));
+            quads.addAll(partQuads(part, state, side, renderType));
         }
     }
 
@@ -98,8 +98,16 @@ public class MachineFluidTankBakedModel implements BakedModel {
         if (part == null) {
             return;
         }
-        quads.addAll(retextureTankQuads(part.getQuads(state, side, BakedModelQuadRandom.seeded(),
-                ModelData.EMPTY, renderType), tankSprite));
+        quads.addAll(retextureTankQuads(partQuads(part, state, side, renderType), tankSprite));
+    }
+
+    private static List<BakedQuad> partQuads(BakedModel part, @Nullable BlockState state,
+            @Nullable Direction side, @Nullable RenderType renderType) {
+        RandomSource random = BakedModelQuadRandom.seeded();
+        if (state == null && part instanceof LegacyLitObjBakedModel legacyLitPart) {
+            return legacyLitPart.getItemQuads(null, side, random, ModelData.EMPTY, renderType);
+        }
+        return part.getQuads(state, side, random, ModelData.EMPTY, renderType);
     }
 
     private static List<BakedQuad> retextureTankQuads(List<BakedQuad> originalQuads, ResourceLocation tankSprite) {
@@ -120,7 +128,7 @@ public class MachineFluidTankBakedModel implements BakedModel {
         TextureAtlasSprite oldSprite = original.getSprite();
         if (oldSprite == null) {
             return new BakedQuad(original.getVertices().clone(), TANK_TINT_INDEX,
-                    original.getDirection(), newSprite, original.isShade());
+                    original.getDirection(), newSprite, false, false);
         }
         float oldUSize = oldSprite.getU1() - oldSprite.getU0();
         float oldVSize = oldSprite.getV1() - oldSprite.getV0();
@@ -139,12 +147,22 @@ public class MachineFluidTankBakedModel implements BakedModel {
                 data[offset + 5] = Float.floatToRawIntBits(newSprite.getV0() + normalizedV * newVSize);
             }
         }
-        return new BakedQuad(data, TANK_TINT_INDEX, original.getDirection(), newSprite, original.isShade());
+        return new BakedQuad(data, TANK_TINT_INDEX, original.getDirection(), newSprite, false, false);
     }
 
     @Override
     public boolean useAmbientOcclusion() {
-        return true;
+        return false;
+    }
+
+    @Override
+    public boolean useAmbientOcclusion(BlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean useAmbientOcclusion(BlockState state, RenderType renderType) {
+        return false;
     }
 
     @Override

@@ -49,7 +49,6 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(fensu, getViewDistance())) {
             return;
         }
-        int modelLight = LegacyRenderLighting.resolveMultiblockLight(fensu, packedLight);
         BlockState state = fensu.getBlockState();
 
         poseStack.pushPose();
@@ -61,7 +60,7 @@ public class FensuRenderer implements BlockEntityRenderer<FensuBlockEntity> {
             poseStack.translate(0.0D, 2.5D, 0.0D);
             LegacyPoseRotations.rotateXDegrees(poseStack, fensu.getInterpolatedRotation(partialTick));
             poseStack.translate(0.0D, -2.5D, 0.0D);
-            renderPart(DISC, poseStack, buffer, modelLight, packedOverlay);
+            renderPart(DISC, poseStack, buffer, packedLight, packedOverlay);
             poseStack.popPose();
 
             renderPart(LIGHTS, poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay);

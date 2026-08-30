@@ -175,31 +175,37 @@ public final class ObjLaunchModels {
 
     public static void renderSoyuzLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        renderSoyuzLauncher(rotation, poseStack, buffer, packedLight, packedOverlay, true);
+        renderSoyuzLauncher(rotation, poseStack, buffer, packedLight, packedLight, packedOverlay, true);
+    }
+
+    public static void renderSoyuzLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer,
+            int fixedLight, int activityLight, int packedOverlay) {
+        renderSoyuzLauncher(rotation, poseStack, buffer, fixedLight, activityLight, packedOverlay, true);
     }
 
     public static void renderSoyuzLauncherMovingParts(float rotation, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        renderSoyuzLauncher(rotation, poseStack, buffer, packedLight, packedOverlay, false);
+        renderSoyuzLauncher(rotation, poseStack, buffer, packedLight, packedLight, packedOverlay, false);
     }
 
     private static void renderSoyuzLauncher(float rotation, PoseStack poseStack, MultiBufferSource buffer,
-            int packedLight, int packedOverlay, boolean includeFixedParts) {
+            int fixedLight, int activityLight, int packedOverlay, boolean includeFixedParts) {
         if (includeFixedParts) {
-            renderLauncherPart(SOYUZ_LAUNCHER_LEGS_SPEC, poseStack, buffer, packedLight, packedOverlay);
-            renderLauncherPart(SOYUZ_LAUNCHER_TABLE_SPEC, poseStack, buffer, packedLight, packedOverlay);
-            renderLauncherPart(SOYUZ_LAUNCHER_TOWER_BASE_SPEC, poseStack, buffer, packedLight, packedOverlay);
+            renderLauncherPart(SOYUZ_LAUNCHER_LEGS_SPEC, poseStack, buffer, fixedLight, packedOverlay);
+            renderLauncherPart(SOYUZ_LAUNCHER_TABLE_SPEC, poseStack, buffer, fixedLight, packedOverlay);
+            renderLauncherPart(SOYUZ_LAUNCHER_TOWER_BASE_SPEC, poseStack, buffer, fixedLight, packedOverlay);
         }
-        renderMovingLauncherPart(SOYUZ_LAUNCHER_TOWER_SPEC, rotation, poseStack, buffer, packedLight, packedOverlay);
+        renderMovingLauncherPart(SOYUZ_LAUNCHER_TOWER_SPEC, rotation, poseStack, buffer, activityLight, packedOverlay);
         if (includeFixedParts) {
-            renderLauncherPart(SOYUZ_LAUNCHER_SUPPORT_BASE_SPEC, poseStack, buffer, packedLight, packedOverlay);
+            renderLauncherPart(SOYUZ_LAUNCHER_SUPPORT_BASE_SPEC, poseStack, buffer, fixedLight, packedOverlay);
         }
-        renderMovingLauncherPart(SOYUZ_LAUNCHER_SUPPORT_SPEC, rotation, poseStack, buffer, packedLight, packedOverlay);
+        renderMovingLauncherPart(SOYUZ_LAUNCHER_SUPPORT_SPEC, rotation, poseStack, buffer, activityLight, packedOverlay);
     }
 
     private static void renderLauncherPart(SoyuzLauncherPartSpec spec, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        spec.model().renderAll(spec.texture(), poseStack, buffer, packedLight, packedOverlay);
+        spec.model().renderAll(spec.texture(), poseStack, buffer, packedLight, packedOverlay,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL);
     }
 
     private static void renderMovingLauncherPart(SoyuzLauncherPartSpec spec, float rotation, PoseStack poseStack,

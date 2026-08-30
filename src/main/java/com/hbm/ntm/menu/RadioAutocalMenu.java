@@ -2,7 +2,6 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.RadioAutocalBlockEntity;
 import com.hbm.ntm.registry.ModMenuTypes;
-import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -30,7 +29,12 @@ public class RadioAutocalMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 15.0D * 15.0D);
+        // TileEntityRadioAUTOCAL#hasPermission measures from y + 1, not the
+        // usual block-center y + 0.5 used by inventory menus.
+        return !blockEntity.isRemoved() && player.distanceToSqr(
+                blockEntity.getBlockPos().getX() + 0.5D,
+                blockEntity.getBlockPos().getY() + 1.0D,
+                blockEntity.getBlockPos().getZ() + 0.5D) <= 225.0D;
     }
 
     @Override

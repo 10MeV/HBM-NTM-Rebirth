@@ -83,6 +83,9 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_PLASMA_G = "plasmaG";
     private static final String TAG_PLASMA_B = "plasmaB";
     private static final String TAG_CONNECTIONS = "connections";
+    private static final String TAG_TEMPERATURE = "temperature";
+    private static final String TAG_PROGRESS = "progress0";
+    private static final String TAG_BONUS = "bonus0";
     private static final String[] ROR = {
             RORInfo.PREFIX_VALUE + "plasma",
             RORInfo.PREFIX_VALUE + "consumption"
@@ -472,6 +475,9 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putFloat(TAG_PLASMA_R, plasmaR);
         tag.putFloat(TAG_PLASMA_G, plasmaG);
         tag.putFloat(TAG_PLASMA_B, plasmaB);
+        tag.putFloat(TAG_TEMPERATURE, temperature);
+        tag.putDouble(TAG_PROGRESS, progress);
+        tag.putDouble(TAG_BONUS, bonus);
         byte[] connectionBytes = new byte[connections.length];
         for (int i = 0; i < connections.length; i++) {
             connectionBytes[i] = (byte) (connections[i] ? 1 : 0);
@@ -491,6 +497,9 @@ public class FusionTorusBlockEntity extends HbmEnergyAndFluidBlockEntity
         plasmaR = tag.getFloat(TAG_PLASMA_R);
         plasmaG = tag.getFloat(TAG_PLASMA_G);
         plasmaB = tag.getFloat(TAG_PLASMA_B);
+        temperature = tag.getFloat(TAG_TEMPERATURE);
+        progress = tag.getDouble(TAG_PROGRESS);
+        bonus = tag.getDouble(TAG_BONUS);
         byte[] connectionBytes = tag.getByteArray(TAG_CONNECTIONS);
         for (int i = 0; i < connections.length; i++) {
             connections[i] = i < connectionBytes.length && connectionBytes[i] != 0;

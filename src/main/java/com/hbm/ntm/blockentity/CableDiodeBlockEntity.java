@@ -245,7 +245,7 @@ public class CableDiodeBlockEntity extends BlockEntity
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-}
+    }
 
     @Nullable
     @Override
@@ -265,7 +265,10 @@ public class CableDiodeBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        CompoundTag tag = new CompoundTag();
+        tag.putLong(CONTROL_LIMIT, throughputLimit);
+        tag.putByte(TAG_PRIORITY, (byte) priority.ordinal());
+        return tag;
     }
 
     @Override

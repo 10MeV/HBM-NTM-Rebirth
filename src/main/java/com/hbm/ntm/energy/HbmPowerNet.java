@@ -25,25 +25,25 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider
         this.timeoutMs = Math.max(0L, timeoutMs);
     }
 
-    public void resetTrackers() {
+    public synchronized void resetTrackers() {
         energyTracker = 0L;
     }
 
-    public long getEnergyTracker() {
+    public synchronized long getEnergyTracker() {
         return energyTracker;
     }
 
-    public int getReceiverCount() {
+    public synchronized int getReceiverCount() {
         pruneStale(System.currentTimeMillis());
         return receiverEntries.size();
     }
 
-    public int getProviderCount() {
+    public synchronized int getProviderCount() {
         pruneStale(System.currentTimeMillis());
         return providerEntries.size();
     }
 
-    public DebugSnapshot createDebugSnapshot() {
+    public synchronized DebugSnapshot createDebugSnapshot() {
         long timestamp = System.currentTimeMillis();
         pruneStale(timestamp);
 
@@ -92,35 +92,35 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider
                 oldestReceiverAgeMs);
     }
 
-    public boolean isSubscribed(HbmEnergyReceiver receiver) {
+    public synchronized boolean isSubscribed(HbmEnergyReceiver receiver) {
         return receiverEntries.containsKey(receiver);
     }
 
-    public void addReceiver(HbmEnergyReceiver receiver) {
+    public synchronized void addReceiver(HbmEnergyReceiver receiver) {
         if (receiver != null) {
             receiverEntries.put(receiver, System.currentTimeMillis());
         }
     }
 
-    public void removeReceiver(HbmEnergyReceiver receiver) {
+    public synchronized void removeReceiver(HbmEnergyReceiver receiver) {
         receiverEntries.remove(receiver);
     }
 
-    public boolean isProvider(HbmEnergyProvider provider) {
+    public synchronized boolean isProvider(HbmEnergyProvider provider) {
         return providerEntries.containsKey(provider);
     }
 
-    public void addProvider(HbmEnergyProvider provider) {
+    public synchronized void addProvider(HbmEnergyProvider provider) {
         if (provider != null) {
             providerEntries.put(provider, System.currentTimeMillis());
         }
     }
 
-    public void removeProvider(HbmEnergyProvider provider) {
+    public synchronized void removeProvider(HbmEnergyProvider provider) {
         providerEntries.remove(provider);
     }
 
-    public void clearSubscriptions() {
+    public synchronized void clearSubscriptions() {
         receiverEntries.clear();
         providerEntries.clear();
         energyTracker = 0L;
@@ -132,13 +132,14 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider
     }
 
     @Override
-    public void destroy() {
+    public synchronized void destroy() {
         super.destroy();
         clearSubscriptions();
     }
 
     @Override
-    public void joinNetwork(com.hbm.ntm.uninos.HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider, HbmEnergyNode> network) {
+    public synchronized void joinNetwork(
+            com.hbm.ntm.uninos.HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider, HbmEnergyNode> network) {
         if (!(network instanceof HbmPowerNet powerNet) || powerNet == this) {
             super.joinNetwork(network);
             return;
@@ -155,7 +156,7 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider
         }
     }
 
-    public long update() {
+    public synchronized long update() {
         if (providerEntries.isEmpty() || receiverEntries.isEmpty()) {
             return 0L;
         }
@@ -173,7 +174,7 @@ public class HbmPowerNet extends HbmNodeNet<HbmEnergyReceiver, HbmEnergyProvider
         return energyUsed;
     }
 
-    public long sendPowerDiode(long power) {
+    public synchronized long sendPowerDiode(long power) {
         if (receiverEntries.isEmpty()) {
             return power;
         }

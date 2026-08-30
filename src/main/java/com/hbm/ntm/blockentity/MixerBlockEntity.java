@@ -26,8 +26,10 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -509,6 +511,61 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
         inputTank1.readFromNbt(tag, "0");
         inputTank2.readFromNbt(tag, "1");
         outputTank.readFromNbt(tag, "2");
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        writeClientSyncFields(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    private void writeClientSyncFields(CompoundTag tag) {
+        // TileEntityMachineMixer#serialize adds these runtime fields after the
+        // LoadedBase, power and three tank values already written by super.
+        tag.putInt(TAG_PROCESS_TIME, processTime);
+        tag.putInt(TAG_PROGRESS, progress);
+        tag.putInt(TAG_RECIPE, recipeIndex);
+        tag.putBoolean(TAG_WAS_ON, wasOn);
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        if (tag.contains(TAG_PROCESS_TIME)) {
+            processTime = Math.max(0, tag.getInt(TAG_PROCESS_TIME));
+        }
+        if (tag.contains(TAG_PROGRESS)) {
+            progress = Math.max(0, tag.getInt(TAG_PROGRESS));
+        }
+        if (tag.contains(TAG_RECIPE)) {
+            recipeIndex = tag.getInt(TAG_RECIPE);
+        }
+        if (tag.contains(TAG_WAS_ON)) {
+            wasOn = tag.getBoolean(TAG_WAS_ON);
+        }
     }
 
     private LegacyMachineUpgradeManager.Levels upgradeLevels() {

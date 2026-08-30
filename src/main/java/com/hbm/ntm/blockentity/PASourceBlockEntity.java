@@ -41,20 +41,25 @@ public class PASourceBlockEntity extends PABlockEntity {
         if (level == null || level.isClientSide) {
             return;
         }
-        if (particle != null) {
-            int steps = 1 + Mth.clamp(particle.momentum / 1_000, 0, 9);
-            for (int i = 0; i < steps && particle != null; i++) {
+        // Keep the legacy loop structure: the number of passes is sampled from
+        // the particle that existed at tick start.  If a fast particle crashes
+        // during an early pass, a remaining pass may start the next queued run
+        // immediately instead of adding an artificial one-tick idle gap.
+        int steps = particle == null ? 1 : 1 + Mth.clamp(particle.momentum / 1_000, 0, 9);
+        for (int i = 0; i < steps; i++) {
+            if (particle != null) {
                 state = PAState.RUNNING;
                 stepParticle();
                 debugSpeed = particle == null ? 0 : particle.momentum;
                 if (particle != null && particle.invalid) {
                     particle = null;
                 }
+            } else if (getPower() >= USAGE
+                    && !items.getStackInSlot(SLOT_INPUT_1).isEmpty()
+                    && !items.getStackInSlot(SLOT_INPUT_2).isEmpty()) {
+                tryRun();
+                break;
             }
-        } else if (getPower() >= USAGE
-                && !items.getStackInSlot(SLOT_INPUT_1).isEmpty()
-                && !items.getStackInSlot(SLOT_INPUT_2).isEmpty()) {
-            tryRun();
         }
         super.serverTick();
     }
@@ -67,6 +72,11 @@ public class PASourceBlockEntity extends PABlockEntity {
     @Override
     protected boolean isItemValid(int slot, ItemStack stack) {
         return super.isItemValid(slot, stack) || slot == SLOT_INPUT_1 || slot == SLOT_INPUT_2;
+    }
+
+    @Override
+    protected int getItemSlotLimit(int slot) {
+        return 1;
     }
 
     @Override
@@ -85,7 +95,10 @@ public class PASourceBlockEntity extends PABlockEntity {
                 fluidPort(rel(facing, -2), facing.getOpposite()),
                 fluidPort(rel(facing, -2).offset(rel(side, 2)), facing.getOpposite()),
                 fluidPort(rel(facing, -2).offset(rel(side, -2)), facing.getOpposite()),
-                fluidPort(rel(side, 5), side));
+                fluidPort(rel(side, 5), side),
+                fluidPort(BlockPos.ZERO.below(2), facing),
+                fluidPort(rel(side, 2).below(2), facing),
+                fluidPort(rel(side, -2).below(2), facing));
     }
 
     public void stepParticle() {
@@ -184,6 +197,26 @@ public class PASourceBlockEntity extends PABlockEntity {
         tag.putInt(TAG_STATE, state.ordinal());
         if (particle != null) {
             tag.put(TAG_PARTICLE, particle.write());
+        }
+    }
+
+    @Override
+    protected void writePaClientSync(CompoundTag tag) {
+        tag.putInt(TAG_DEBUG_SPEED, debugSpeed);
+        tag.putInt(TAG_LAST_SPEED, lastSpeed);
+        tag.putInt(TAG_STATE, state.ordinal());
+    }
+
+    @Override
+    protected void readPaClientSync(CompoundTag tag) {
+        if (tag.contains(TAG_DEBUG_SPEED)) {
+            debugSpeed = tag.getInt(TAG_DEBUG_SPEED);
+        }
+        if (tag.contains(TAG_LAST_SPEED)) {
+            lastSpeed = tag.getInt(TAG_LAST_SPEED);
+        }
+        if (tag.contains(TAG_STATE)) {
+            state = PAState.byOrdinal(tag.getInt(TAG_STATE));
         }
     }
 
@@ -334,6 +367,10 @@ public class PASourceBlockEntity extends PABlockEntity {
 
         public boolean invalid() {
             return invalid;
+        }
+
+        public void invalidate() {
+            invalid = true;
         }
 
         public ItemStack input1() {

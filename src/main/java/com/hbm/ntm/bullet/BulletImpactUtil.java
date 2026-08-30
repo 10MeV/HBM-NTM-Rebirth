@@ -86,7 +86,7 @@ public final class BulletImpactUtil {
 
         boolean discard = shouldDiscardAfterBlockImpact(config, hitBlock != null, inGround);
         if (level.isClientSide()) {
-            return new BlockImpactResult(discard, false, false, false, false, false, false, false, false, false, false,
+            return new BlockImpactResult(discard, false, false, false, false, false, false, false, false, false,
                     false, Collections.emptyList());
         }
 
@@ -100,7 +100,6 @@ public final class BulletImpactUtil {
         boolean explosion = applyExplosion(config, level, position, source, hitSide,
                 impactDamage(config, impactDamage));
         boolean shrapnel = applyShrapnel(config, level, position, source);
-        boolean rainbow = applyRainbow(config, level, position);
         boolean nuke = applyNuke(config, level, position);
         boolean flameBlockIgnited = applyFlameBlockImpact(config, level, hitBlock, hitSide);
         fire |= flameBlockIgnited;
@@ -113,7 +112,7 @@ public final class BulletImpactUtil {
                 BulletSpecialSpawnUtil.collectImpactSpawnRequests(config, level, source, position, null, hitSide,
                         impactDamage(config, impactDamage));
         BlockBreakResult blockBreak = applyBlockBreak(config, level, hitBlock, source);
-        return new BlockImpactResult(discard, fire || lingeringFire, emp, jolt, explosion, shrapnel, rainbow, nuke,
+        return new BlockImpactResult(discard, fire || lingeringFire, emp, jolt, explosion, shrapnel, nuke,
                 specialBehavior || lingeringFire || extinguish || extinguisherRepair || extinguisherPlacement,
                 blockBreak.destroyedBlock() || blockBreak.brokeGlass() || blockBreak.shotDetonated(),
                 blockBreak.shotDetonated(), extinguish, spawnRequests);
@@ -158,7 +157,7 @@ public final class BulletImpactUtil {
         merged.addAll(result.spawnRequests());
         merged.addAll(additional);
         return new BlockImpactResult(result.discardProjectile(), result.placedFire(), result.emp(), result.jolt(),
-                result.explosion(), result.shrapnel(), result.rainbow(), result.nuke(), result.specialBehavior(),
+                result.explosion(), result.shrapnel(), result.nuke(), result.specialBehavior(),
                 result.brokeOrDestroyedBlock(), result.shotDetonated(), result.extinguishedFire(),
                 Collections.unmodifiableList(merged));
     }
@@ -808,19 +807,6 @@ public final class BulletImpactUtil {
         return true;
     }
 
-    private static boolean applyRainbow(BulletConfig config, Level level, Vec3 position) {
-        if (config.rainbow() <= 0) {
-            return false;
-        }
-        boolean spawned = NuclearExplosionUtil.spawnFleijaRainbow(level, position.x, position.y, position.z,
-                config.rainbow(), config.rainbow());
-        if (spawned) {
-            LegacySoundPlayer.playSoundEffectRandomPitch(level, position, "random.explode",
-                    SoundSource.BLOCKS, 100.0F, 0.9F, 0.1F);
-        }
-        return spawned;
-    }
-
     private static boolean applyNuke(BulletConfig config, Level level, Vec3 position) {
         if (config.nuke() <= 0) {
             return false;
@@ -999,12 +985,12 @@ public final class BulletImpactUtil {
     }
 
     public record BlockImpactResult(boolean discardProjectile, boolean placedFire, boolean emp, boolean jolt,
-            boolean explosion, boolean shrapnel, boolean rainbow, boolean nuke, boolean specialBehavior,
+            boolean explosion, boolean shrapnel, boolean nuke, boolean specialBehavior,
             boolean brokeOrDestroyedBlock, boolean shotDetonated,
             boolean extinguishedFire,
             List<BulletSpecialSpawnUtil.SpawnRequest> spawnRequests) {
         public static final BlockImpactResult NONE = new BlockImpactResult(false, false, false, false, false, false,
-                false, false, false, false, false, false, Collections.emptyList());
+                false, false, false, false, false, Collections.emptyList());
     }
 
     public record EntityImpactResult(boolean discardProjectile, EntityHurtResult hurt, BlockImpactResult blockImpact) {

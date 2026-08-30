@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "minecraft:stone" }, "count": 8 },
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 2, "legacy_ore": "plateSteel" },
+    { "ingredient": { "tag": "forge:ingots/iron" }, "count": 4, "legacy_ore": "ingotIron" }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:machine_ashpit" },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

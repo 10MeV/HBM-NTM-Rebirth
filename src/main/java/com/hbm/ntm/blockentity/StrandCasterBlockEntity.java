@@ -61,6 +61,7 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
     private static final String TAG_TYPE = "type";
     private static final String TAG_AMOUNT = "amount";
     private static final String TAG_LAST_PROGRESS = "t";
+    private static final String TAG_CLIENT_MOLD = "clientMold";
     private static final int WATER_CAPACITY = 64_000;
     private static final int STEAM_CAPACITY = 64_000;
 
@@ -70,6 +71,9 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (level != null && !level.isClientSide) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            }
         }
 
         @Override
@@ -144,7 +148,6 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
 
     public void setMold(ItemStack mold) {
         items.setStackInSlot(SLOT_MOLD, mold);
-        setChanged();
     }
 
     public ItemStack removeMold() {
@@ -153,7 +156,6 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
             return ItemStack.EMPTY;
         }
         items.setStackInSlot(SLOT_MOLD, ItemStack.EMPTY);
-        setChanged();
         return mold.copy();
     }
 
@@ -326,7 +328,7 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
     @Nullable
     @Override
     public ICapabilityProvider getLegacyProxyDelegate(BlockPos proxyPos) {
-        return fluidPortPositions().contains(proxyPos) ? fluidDelegate : null;
+        return fluidProxyPositions().contains(proxyPos) ? fluidDelegate : null;
     }
 
     @Override
@@ -371,6 +373,34 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         type = tag.contains(TAG_TYPE) ? Mats.matById.get(tag.getInt(TAG_TYPE)) : null;
         amount = tag.getInt(TAG_AMOUNT);
         lastProgressTick = tag.getLong(TAG_LAST_PROGRESS);
+        if (amount <= 0 || type == null) {
+            amount = 0;
+            type = null;
+        }
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        // The legacy caster sent a block update whenever its casting material
+        // or amount changed.  Those values drive both the world renderer and
+        // the look overlay, independently of an open menu.
+        tag.putInt(TAG_TYPE, type == null ? -1 : type.id);
+        tag.putInt(TAG_AMOUNT, amount);
+        ItemStack mold = items.getStackInSlot(SLOT_MOLD);
+        if (!mold.isEmpty()) {
+            tag.put(TAG_CLIENT_MOLD, mold.save(new CompoundTag()));
+        }
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        type = Mats.matById.get(tag.getInt(TAG_TYPE));
+        amount = tag.getInt(TAG_AMOUNT);
+        items.setStackInSlot(SLOT_MOLD, tag.contains(TAG_CLIENT_MOLD)
+                ? ItemStack.of(tag.getCompound(TAG_CLIENT_MOLD)) : ItemStack.EMPTY);
         if (amount <= 0 || type == null) {
             amount = 0;
             type = null;
@@ -484,14 +514,19 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
         }
     }
 
-    private List<BlockPos> fluidPortPositions() {
+    private List<BlockPos> fluidProxyPositions() {
         Direction facing = facing(getBlockState());
         Direction rot = facing.getClockWise();
+        // MachineStrandCaster#fillSpace creates these four makeExtra dummies.
+        // They sit one block inward from the Fluid Mk2 connection endpoints in
+        // TileEntityMachineStrandCaster#getFluidConPos. Capability forwarding
+        // belongs to the formed dummies; getFluidPorts() below deliberately
+        // keeps the distinct external endpoint coordinates.
         return List.of(
-                worldPosition.offset(relative(facing, rot, -1, 2, 0)),
-                worldPosition.offset(relative(facing, rot, -1, -1, 0)),
-                worldPosition.offset(relative(facing, rot, -5, 2, 0)),
-                worldPosition.offset(relative(facing, rot, -5, -1, 0)));
+                worldPosition.offset(relative(facing, rot, -1, 1, 0)),
+                worldPosition.offset(relative(facing, rot, -1, 0, 0)),
+                worldPosition.offset(relative(facing, rot, -5, 0, 0)),
+                worldPosition.offset(relative(facing, rot, -5, 1, 0)));
     }
 
     private List<BlockPos> metalPourPositions() {

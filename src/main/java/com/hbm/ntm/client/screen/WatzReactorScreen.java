@@ -5,7 +5,6 @@ import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.WatzReactorMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
-import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -68,25 +67,21 @@ public class WatzReactorScreen extends AbstractContainerScreen<WatzReactorMenu> 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(13, 100, 18, 18, mouseX, mouseY)) {
-            graphics.renderTooltip(font,
-                    Component.literal(String.format(Locale.US, "%,d TU", menu.getHeat())), mouseX, mouseY);
-        } else if (isHovering(143, 71, 16, 16, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(Component.literal(menu.isLocked()
-                    ? "Unlock pellet IO configuration"
-                    : "Lock pellet IO configuration")), mouseX, mouseY);
-        } else {
-            renderTankTooltip(graphics, mouseX, mouseY, menu.getCoolantTank(), 142, 23, 6, 45);
-            renderTankTooltip(graphics, mouseX, mouseY, menu.getHotCoolantTank(), 148, 23, 6, 45);
-            renderTankTooltip(graphics, mouseX, mouseY, menu.getMudTank(), 154, 23, 6, 45);
-        }
+        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
+                leftPos + 13, topPos + 100, 18, 18, mouseX, mouseY,
+                String.format(Locale.US, "%,d", menu.getHeat()) + " TU");
+        LegacyGuiElements.renderCustomInfoTextStat(graphics, font, mouseX, mouseY,
+                leftPos + 143, topPos + 71, 16, 16, mouseX, mouseY,
+                menu.isLocked() ? "Unlock pellet IO configuration" : "Lock pellet IO configuration");
+        renderTankTooltip(graphics, mouseX, mouseY, menu.getCoolantTank(), 142, 23, 6, 45);
+        renderTankTooltip(graphics, mouseX, mouseY, menu.getHotCoolantTank(), 148, 23, 6, 45);
+        renderTankTooltip(graphics, mouseX, mouseY, menu.getMudTank(), 154, 23, 6, 45);
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (leftPos + 142 <= mouseX && mouseX < leftPos + 160 && topPos + 70 < mouseY
-                && mouseY <= topPos + 88) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 142, 70, 18, 18)) {
             CompoundTag tag = new CompoundTag();
             tag.putBoolean("lock", true);
             ModMessages.sendToServer(new TileControlPacket(menu.getBlockEntity().getBlockPos(), tag));
@@ -103,8 +98,9 @@ public class WatzReactorScreen extends AbstractContainerScreen<WatzReactorMenu> 
 
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY, HbmFluidGuiHelper.TankData tank,
             int x, int y, int width, int height) {
-        if (isHovering(x, y, width, height, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + x, topPos + y, width, height)) {
+            LegacyGuiElements.renderFluidTooltip(graphics, font, tank,
+                    tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         }
     }
 

@@ -74,14 +74,16 @@ public class FluidBarrelBlock extends Block implements EntityBlock {
             ItemStack held = player.getItemInHand(hand);
             var identifier = HbmFluidItemTransfer.identifyFluidFromStackReport(held, level, pos);
             if (player.isShiftKeyDown() && identifier.identifierItem()) {
-                if (!identifier.selectedNone() && barrel.setIdentifiedType(identifier.selectedType())) {
-                    player.displayClientMessage(Component.literal("Changed type to ")
-                            .withStyle(ChatFormatting.YELLOW)
-                            .append(identifier.selectedType().getDisplayName())
-                            .append(Component.literal("!").withStyle(ChatFormatting.YELLOW)), true);
-                    return InteractionResult.CONSUME;
-                }
-                return InteractionResult.PASS;
+                // BlockFluidBarrel applies its identifier result verbatim,
+                // including Fluids.NONE, and emits this ordinary chat message
+                // even for an already-selected type.
+                barrel.setIdentifiedType(identifier.selectedType());
+                barrel.setChanged();
+                serverPlayer.displayClientMessage(Component.literal("Changed type to ")
+                        .withStyle(ChatFormatting.YELLOW)
+                        .append(identifier.selectedType().getDisplayName())
+                        .append(Component.literal("!").withStyle(ChatFormatting.YELLOW)), false);
+                return InteractionResult.CONSUME;
             }
             NetworkHooks.openScreen(serverPlayer, barrel, pos);
         }

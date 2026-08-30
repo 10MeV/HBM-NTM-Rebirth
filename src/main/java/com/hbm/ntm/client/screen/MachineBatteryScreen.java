@@ -6,6 +6,7 @@ import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.menu.MachineBatteryMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
+import com.hbm.ntm.util.BobMathUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -88,11 +89,12 @@ public class MachineBatteryScreen extends AbstractContainerScreen<MachineBattery
 
     private List<Component> energyTooltip() {
         List<Component> tooltip = new ArrayList<>();
-        tooltip.add(Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE"));
+        tooltip.add(Component.literal(BobMathUtil.getShortNumber(menu.getPower()) + "/"
+                + BobMathUtil.getShortNumber(menu.getMaxPower()) + "HE"));
         long delta = menu.getDelta();
         ChatFormatting color = delta > 0L ? ChatFormatting.GREEN : delta < 0L ? ChatFormatting.RED : ChatFormatting.YELLOW;
         String sign = delta >= 0L ? "+" : "-";
-        tooltip.add(Component.literal(sign + Math.abs(delta) + " HE/s").withStyle(color));
+        tooltip.add(Component.literal(sign + BobMathUtil.getShortNumber(Math.abs(delta)) + "HE/s").withStyle(color));
         return tooltip;
     }
 
@@ -107,10 +109,16 @@ public class MachineBatteryScreen extends AbstractContainerScreen<MachineBattery
     }
 
     private List<Component> priorityTooltip() {
-        return List.of(
-                Component.translatable("container.hbm_ntm_rebirth.battery.priority"),
-                Component.translatable("container.hbm_ntm_rebirth.battery.priority." + priorityName(menu.getPriority())).withStyle(ChatFormatting.YELLOW),
-                Component.translatable("container.hbm_ntm_rebirth.battery.priority.recommended").withStyle(ChatFormatting.GRAY));
+        String priority = priorityName(menu.getPriority());
+        List<Component> tooltip = new ArrayList<>();
+        tooltip.add(Component.translatable("container.hbm_ntm_rebirth.battery.priority." + priority));
+        tooltip.add(Component.translatable("container.hbm_ntm_rebirth.battery.priority.recommended"));
+        String description = Component.translatable("container.hbm_ntm_rebirth.battery.priority."
+                + priority + ".desc").getString();
+        for (String line : description.split("\\$", -1)) {
+            tooltip.add(Component.literal(line));
+        }
+        return tooltip;
     }
 
     private static String modeName(int mode) {

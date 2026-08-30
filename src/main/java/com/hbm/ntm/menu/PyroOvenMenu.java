@@ -49,6 +49,10 @@ public class PyroOvenMenu extends AbstractContainerMenu {
         addDataSlots();
     }
 
+    public PyroOvenBlockEntity getBlockEntity() {
+        return blockEntity;
+    }
+
     public long getPower() {
         return power;
     }

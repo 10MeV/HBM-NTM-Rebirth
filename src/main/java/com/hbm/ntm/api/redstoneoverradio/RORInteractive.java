@@ -1,5 +1,7 @@
 package com.hbm.ntm.api.redstoneoverradio;
 
+import java.util.Locale;
+
 public interface RORInteractive extends RORInfo {
     String NAME_SEPARATOR = "!";
     String PARAM_SEPARATOR = ":";
@@ -21,7 +23,7 @@ public interface RORInteractive extends RORInfo {
         if (parts[0].isEmpty()) {
             throw new RORFunctionException(EX_NULL);
         }
-        return parts[0];
+        return parts[0].toLowerCase(Locale.US);
     }
 
     static String[] getParams(String input) {

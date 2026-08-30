@@ -198,10 +198,10 @@ public class PurexRecipeSelectorScreen extends Screen {
     private void renderHover(GuiGraphics graphics, int mouseX, int mouseY) {
         int index = hoveredRecipeIndex(mouseX, mouseY);
         if (index >= 0 && index < visibleRecipes.size()) {
-            LegacyGuiElements.renderRecipeTooltip(graphics, font, visibleRecipes.get(index).getDisplayLines(),
+            LegacyGuiElements.renderRecipeTooltip(graphics, font, visibleRecipes.get(index).getDisplayLines(hasShiftDown()),
                     mouseX, mouseY);
         } else if (isInside(mouseX, mouseY, 151, 71, 18, 18) && selectedRecipe() != null) {
-            LegacyGuiElements.renderRecipeTooltip(graphics, font, selectedRecipe().getDisplayLines(), mouseX, mouseY);
+            LegacyGuiElements.renderRecipeTooltip(graphics, font, selectedRecipe().getDisplayLines(hasShiftDown()), mouseX, mouseY);
         } else if (isInside(mouseX, mouseY, 152, 90, 16, 16)) {
             graphics.renderTooltip(font, Component.literal("Close"), mouseX, mouseY);
         } else if (isInside(mouseX, mouseY, 134, 108, 16, 16)) {

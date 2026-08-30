@@ -39,6 +39,9 @@ public class GasCentBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof GasCentBlockEntity gasCent) {
             NetworkHooks.openScreen(serverPlayer, gasCent, gasCent.getBlockPos());

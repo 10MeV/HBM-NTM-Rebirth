@@ -435,8 +435,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, Player player, BlockPos viewedPos) {
-        if (player == null || !player.getMainHandItem().is(ModItems.BLOWTORCH.get())
-                || !isDamagedForFluidRepair()) {
+        if (!isDamagedForFluidRepair()) {
             return null;
         }
         return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.repairMaterials(getFluidRepairMaterials()));
@@ -712,8 +711,40 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        // The legacy tank packet carried mode, damage state and tank data.
+        // Mode drives the GUI/overlay; exploded drives the small-tank model.
+        tag.putInt("mode", mode);
+        tag.putBoolean("exploded", exploded);
+        tag.putBoolean("onFire", onFire);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        boolean clientSmallTankModel = usesSmallTankBakedModel() && level != null && level.isClientSide;
+        ResourceLocation previousTexture = clientSmallTankModel ? getSmallTankAtlasTexture() : null;
+        boolean previousExploded = clientSmallTankModel && exploded;
+        super.handleClientSyncTag(tag);
+        if (tag.contains("mode")) {
+            mode = Math.max(MODE_INPUT, Math.min(MODE_NONE, tag.getInt("mode")));
+        }
+        if (tag.contains("exploded")) {
+            exploded = tag.getBoolean("exploded");
+        }
+        if (tag.contains("onFire")) {
+            onFire = tag.getBoolean("onFire");
+        }
+        if (clientSmallTankModel
+                && (previousExploded != exploded || !previousTexture.equals(getSmallTankAtlasTexture()))) {
+            refreshSmallTankModelData();
+        }
+    }
 
     @Nullable
     @Override

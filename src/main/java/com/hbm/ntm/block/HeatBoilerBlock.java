@@ -7,8 +7,13 @@ import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingType;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
+import com.hbm.ntm.registry.ModBlocks;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -45,6 +50,15 @@ public class HeatBoilerBlock extends LegacyVisibleMultiblockMachineBlock {
     }
 
     @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        LegacyStandardInfoTooltip.append(tooltip,
+                stack.is(ModBlocks.MACHINE_INDUSTRIAL_BOILER.get().asItem())
+                        ? "machine_industrial_boiler" : "machine_boiler");
+    }
+
+    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(VISUAL);
@@ -59,18 +73,26 @@ public class HeatBoilerBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        ItemStack held = player.getItemInHand(hand);
-        if (!level.isClientSide && !player.isShiftKeyDown()
-                && held.getItem() instanceof IFluidIdentifierItem identifier
-                && resolveCoreBlockEntity(level, pos) instanceof BoilerBlockEntity boiler) {
-            FluidType type = identifier.getIdentifiedFluid(level, boiler.getBlockPos(), held);
-            if (isBoilerHeatable(type)) {
-                boiler.setFeedTankType(type);
-                return InteractionResult.CONSUME;
-            }
-            return InteractionResult.FAIL;
+        // MachineHeatBoiler / MachineHeatBoilerIndustrial return true for the
+        // client and for sneaking, but let ordinary non-identifier clicks pass.
+        if (level.isClientSide || player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        ItemStack held = player.getItemInHand(hand);
+        if (!(held.getItem() instanceof IFluidIdentifierItem identifier)
+                || !(resolveCoreBlockEntity(level, pos) instanceof BoilerBlockEntity boiler)) {
+            return InteractionResult.PASS;
+        }
+        FluidType type = identifier.getIdentifiedFluid(level, boiler.getBlockPos(), held);
+        if (isBoilerHeatable(type)) {
+            boiler.setFeedTankType(type);
+            player.displayClientMessage(Component.literal("Changed type to ")
+                    .withStyle(ChatFormatting.YELLOW)
+                    .append(type.getDisplayName())
+                    .append(Component.literal("!")), false);
+        }
+        // Old code consumes every identifier click, including a rejected fluid.
+        return InteractionResult.CONSUME;
     }
 
     @Nullable

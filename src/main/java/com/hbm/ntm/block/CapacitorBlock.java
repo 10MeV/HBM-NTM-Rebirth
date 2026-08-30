@@ -151,6 +151,9 @@ public class CapacitorBlock extends DirectionalBlock implements EntityBlock, Leg
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
             TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
+        // MachineCapacitor's second ITooltipProvider overload exposes the
+        // Shift-gated Input/Output description in addition to persistent power.
+        LegacyStandardInfoTooltip.append(tooltip, "capacitor");
         tooltip.add(Component.literal("Stores up to " + BobMathUtil.getShortNumber(maxPower) + "HE")
                 .withStyle(ChatFormatting.GOLD));
         tooltip.add(Component.literal("Charge speed: " + BobMathUtil.getShortNumber(legacyTooltipChargeSpeed()) + "HE")

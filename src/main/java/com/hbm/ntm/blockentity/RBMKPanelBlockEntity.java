@@ -41,6 +41,9 @@ public class RBMKPanelBlockEntity extends BlockEntity
     private RBMKPanelPlanner.IndicatorUnit[] indicators = defaultIndicators();
     private RBMKPanelPlanner.KeyUnit[] keys = defaultKeys();
     private RBMKPanelPlanner.LeverUnit[] levers = defaultLevers();
+    /** Client-only counterpart of legacy LeverUnit.flipSync/turnProgress. */
+    private final float[] leverFlipSync = new float[RBMKPanelPlanner.LEVER_COUNT];
+    private final int[] leverTurnProgress = new int[RBMKPanelPlanner.LEVER_COUNT];
     private RBMKPanelPlanner.NumitronUnit[] numitrons = defaultNumitrons();
     private RBMKPanelPlanner.TerminalState terminal = RBMKPanelPlanner.TerminalState.empty();
     private int targetX;
@@ -187,6 +190,13 @@ public class RBMKPanelBlockEntity extends BlockEntity
         if (panel.panelType() == RBMKPanelPlanner.PanelType.GAUGE) {
             for (int i = 0; i < panel.gauges.length; i++) {
                 panel.gauges[i] = RBMKPanelPlanner.tickGaugeClient(panel.gauges[i]);
+            }
+        } else if (panel.panelType() == RBMKPanelPlanner.PanelType.LEVER) {
+            for (int i = 0; i < panel.levers.length; i++) {
+                RBMKPanelPlanner.LeverClientTickPlan plan = RBMKPanelPlanner.tickLeverClient(panel.levers[i],
+                        panel.leverFlipSync[i], panel.leverTurnProgress[i]);
+                panel.levers[i] = plan.unit();
+                panel.leverTurnProgress[i] = plan.remainingTurnProgress();
             }
         }
     }
@@ -717,7 +727,11 @@ public class RBMKPanelBlockEntity extends BlockEntity
                     float syncProgress = data.readFloat();
                     levers[i] = new RBMKPanelPlanner.LeverUnit(i, active, polling, BufferUtil.readString(data),
                             BufferUtil.readString(data), BufferUtil.readString(data), BufferUtil.readString(data),
-                            previous.isTurningOn(), syncProgress, previous.flipProgress());
+                            previous.isTurningOn(), clientSide() ? previous.flipProgress() : syncProgress,
+                            previous.prevFlipProgress());
+                    if (clientSide()) {
+                        startClientLeverSync(i, syncProgress);
+                    }
                 }
             }
             case NUMITRON -> {
@@ -796,11 +810,16 @@ public class RBMKPanelBlockEntity extends BlockEntity
             }
             case LEVER -> {
                 for (int i = 0; i < levers.length; i++) {
+                    RBMKPanelPlanner.LeverUnit previous = levers[i];
+                    float syncProgress = tag.getFloat("flipProgress" + i);
                     levers[i] = new RBMKPanelPlanner.LeverUnit(i, tag.getBoolean("active" + i),
                             tag.getBoolean("polling" + i), tag.getString("label" + i), tag.getString("rtty" + i),
                             tag.getString("commandOn" + i), tag.getString("commandOff" + i),
-                            tag.getBoolean("isTurningOn" + i), tag.getFloat("flipProgress" + i),
-                            tag.getFloat("prevFlipProgress" + i));
+                            tag.getBoolean("isTurningOn" + i), clientSide() ? previous.flipProgress() : syncProgress,
+                            clientSide() ? previous.prevFlipProgress() : tag.getFloat("prevFlipProgress" + i));
+                    if (clientSide()) {
+                        startClientLeverSync(i, syncProgress);
+                    }
                 }
             }
             case NUMITRON -> {
@@ -970,6 +989,18 @@ public class RBMKPanelBlockEntity extends BlockEntity
                 level.updateNeighborsAt(worldPosition, state.getBlock());
             }
         }
+    }
+
+    private boolean clientSide() {
+        return level != null && level.isClientSide;
+    }
+
+    private void startClientLeverSync(int index, float syncProgress) {
+        if (index < 0 || index >= leverFlipSync.length) {
+            return;
+        }
+        leverFlipSync[index] = Math.max(0.0F, Math.min(1.0F, syncProgress));
+        leverTurnProgress[index] = 3;
     }
 
     private static RBMKPanelPlanner.GaugeUnit[] defaultGauges() {

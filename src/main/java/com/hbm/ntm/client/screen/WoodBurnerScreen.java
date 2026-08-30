@@ -6,6 +6,7 @@ import com.hbm.ntm.menu.WoodBurnerMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.recipe.WoodBurnerRecipeRuntime;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -58,49 +59,50 @@ public class WoodBurnerScreen extends AbstractContainerScreen<WoodBurnerMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(143, 18, 16, 34, mouseX, mouseY)) {
+        if (isLegacyHovering(143, 18, 16, 34, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 143, topPos + 18, 16, 34, menu.getPower(), menu.getMaxPower());
-        } else if (menu.isLiquidBurn() && isHovering(80, 18, 16, 52, mouseX, mouseY)) {
+        } else if (menu.isLiquidBurn() && isLegacyHovering(80, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
                     menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (!menu.isLiquidBurn() && isHovering(16, 17, 8, 54, mouseX, mouseY)) {
+        } else if (!menu.isLiquidBurn() && isLegacyHovering(16, 17, 8, 54, mouseX, mouseY)) {
             graphics.renderTooltip(font, List.of(
                     Component.literal((menu.getBurnTime() / 20) + "s").getVisualOrderText()), mouseX, mouseY);
         } else if (menu.getCarried().isEmpty()
-                && menu.getBlockEntity().getItems().getStackInSlot(WoodBurnerBlockEntity.SLOT_FUEL).isEmpty()
-                && isHovering(26, 18, 16, 16, mouseX, mouseY)) {
+                && menu.getSlot(WoodBurnerBlockEntity.SLOT_FUEL).getItem().isEmpty()
+                && LegacyGuiElements.isMouseOverSlot(menu.getSlot(WoodBurnerBlockEntity.SLOT_FUEL),
+                        leftPos, topPos, mouseX, mouseY)) {
             List<Component> bonuses = WoodBurnerRecipeRuntime.burnModule().getDescription().stream()
                     .map(text -> (Component) Component.literal(text))
                     .toList();
             if (!bonuses.isEmpty()) {
                 graphics.renderComponentTooltip(font, bonuses, mouseX, mouseY);
             }
-        } else if (isHovering(53, 17, 16, 15, mouseX, mouseY)) {
+        } else if (isLegacyHovering(53, 17, 16, 15, mouseX, mouseY)) {
             graphics.renderTooltip(font, List.of(
-                    Component.literal(menu.isOn() ? "ON" : "OFF").getVisualOrderText()), mouseX, mouseY);
-        } else if (isHovering(46, 37, 30, 14, mouseX, mouseY)) {
-            graphics.renderTooltip(font, List.of(
-                    Component.literal(menu.isLiquidBurn() ? "Liquid fuel" : "Solid fuel").getVisualOrderText()),
-                    mouseX, mouseY);
-        } else if (menu.getPowerGen() > 0 && isHovering(53, 52, 24, 12, mouseX, mouseY)) {
-            graphics.renderTooltip(font, List.of(
-                    Component.literal(menu.getPowerGen() + " HE/t").getVisualOrderText(),
-                    Component.literal((menu.getPowerGen() * 20L) + " HE/s").getVisualOrderText()), mouseX, mouseY);
+                    Component.literal(menu.isOn() ? "ON" : "OFF")
+                            .withStyle(menu.isOn() ? ChatFormatting.GREEN : ChatFormatting.RED)
+                            .getVisualOrderText()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(53, 17, 16, 15, mouseX, mouseY)) {
+        if (isLegacyHovering(53, 17, 16, 15, mouseX, mouseY)) {
+            LegacyGuiElements.playClickSound();
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0, WoodBurnerBlockEntity.CONTROL_TOGGLE);
             return true;
         }
-        if (isHovering(46, 37, 30, 14, mouseX, mouseY)) {
+        if (isLegacyHovering(46, 37, 30, 14, mouseX, mouseY)) {
+            LegacyGuiElements.playClickSound();
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0, WoodBurnerBlockEntity.CONTROL_SWITCH);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

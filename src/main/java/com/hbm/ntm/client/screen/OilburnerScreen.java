@@ -57,34 +57,39 @@ public class OilburnerScreen extends AbstractContainerScreen<OilburnerMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(116, 17, 16, 52, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(List.of(Component.literal(NUMBER_FORMAT.format(menu.getHeatEnergy())
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 116, 17, 16, 52)) {
+            graphics.renderTooltip(font, split(List.of(Component.literal(NUMBER_FORMAT.format(
+                    Math.min(menu.getHeatEnergy(), OilburnerBlockEntity.MAX_HEAT))
                     + " / " + NUMBER_FORMAT.format(OilburnerBlockEntity.MAX_HEAT) + " TU"))), mouseX, mouseY);
-        } else if (isHovering(79, 34, 18, 18, mouseX, mouseY)
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 79, 34, 18, 18)
                 && menu.getTankData() != null
                 && menu.getTankData().type().hasTrait(FlammableFluidTrait.class)) {
             graphics.renderTooltip(font, split(List.of(
                     Component.literal(menu.getSetting() + " mB/t"),
-                    Component.literal(NUMBER_FORMAT.format(menu.getCurrentHeatOutputPerTick()) + " TU/t"))),
+                    Component.literal(NUMBER_FORMAT.format(legacyHeatOutputPerTick()) + " TU/t"))),
                     mouseX, mouseY);
-        } else if (isHovering(44, 17, 16, 52, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 44, 17, 16, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
                     menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(80, 54, 16, 14, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(List.of(
-                    Component.literal("Burner"),
-                    Component.literal(menu.isOn() ? "On" : "Off"))), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(80, 54, 16, 14, mouseX, mouseY)) {
+        boolean handled = super.mouseClicked(mouseX, mouseY, button);
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 80, 54, 16, 14)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0, OilburnerBlockEntity.CONTROL_TOGGLE);
+            LegacyGuiElements.playClickSound();
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return handled;
+    }
+
+    private int legacyHeatOutputPerTick() {
+        FlammableFluidTrait flammable = menu.getTankData().type().getTrait(FlammableFluidTrait.class);
+        return flammable == null ? 0
+                : (int) (flammable.getHeatEnergyPerBucket() / 1_000L) * menu.getSetting();
     }
 
     private static List<net.minecraft.util.FormattedCharSequence> split(List<Component> tooltip) {

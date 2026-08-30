@@ -25,7 +25,7 @@ public class RadioReceiverScreen extends AbstractContainerScreen<RadioReceiverMe
         super(menu, inventory, title);
         imageWidth = 220;
         imageHeight = 42;
-        titleLabelY = 1000;
+        titleLabelY = 6;
         inventoryLabelY = 1000;
     }
 
@@ -45,6 +45,13 @@ public class RadioReceiverScreen extends AbstractContainerScreen<RadioReceiverMe
         if (menu.getBlockEntity().isOn()) {
             graphics.blit(TEXTURE, leftPos + 173, topPos + 17, 0, 42, 18, 18);
         }
+    }
+
+    @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        String name = title.getString();
+        graphics.drawString(font, name, imageWidth / 2 - font.width(name) / 2,
+                titleLabelY, 0x404040, false);
     }
 
     @Override

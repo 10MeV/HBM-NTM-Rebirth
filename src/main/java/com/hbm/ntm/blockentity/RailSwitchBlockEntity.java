@@ -56,8 +56,8 @@ public final class RailSwitchBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return clientStateTag();
+    }
 
     @Nullable
     @Override
@@ -69,17 +69,27 @@ public final class RailSwitchBlockEntity extends BlockEntity {
     public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet) {
         CompoundTag tag = packet.getTag();
         if (tag != null) {
-            load(tag);
+            readClientStateTag(tag);
         }
     }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        readClientStateTag(tag);
     }
 
     @Override
     public AABB getRenderBoundingBox() {
         return new AABB(worldPosition.offset(-16, 0, -16), worldPosition.offset(17, 3, 17));
+    }
+
+    private CompoundTag clientStateTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean(TAG_SWITCHED, switched);
+        return tag;
+    }
+
+    private void readClientStateTag(CompoundTag tag) {
+        switched = tag.getBoolean(TAG_SWITCHED);
     }
 }

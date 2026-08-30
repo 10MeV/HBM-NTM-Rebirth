@@ -53,6 +53,8 @@ public final class ModCreativeTabs {
                                 DepletedFuelItem.addCreativeStacks(dedupedOutput, depletedFuel);
                             } else if (item.get() instanceof NuclearWasteItem waste) {
                                 NuclearWasteItem.addCreativeStacks(dedupedOutput, waste);
+                            } else if (item.get() instanceof FoundryScrapsItem scraps) {
+                                FoundryScrapsItem.addCreativeStacks(dedupedOutput, scraps);
                             } else {
                                 dedupedOutput.accept(item.get());
                             }
@@ -68,6 +70,7 @@ public final class ModCreativeTabs {
                         CreativeModeTab.Output dedupedOutput = deduplicating(output);
                           ModBlocks.MACHINE_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
                           ModBlocks.MACHINE_TAB_EXTRA_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
+                          ModBlocks.TRANSPORT_TAB_BLOCKS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
                           ModBlocks.LEGACY_STAIRS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
                           ModBlocks.LEGACY_SLABS.forEach(block -> acceptBlockItem(dedupedOutput, block.get().asItem()));
                         if (ModItems.CONVEYOR_WAND.get() instanceof ConveyorWandItem conveyorWand) {

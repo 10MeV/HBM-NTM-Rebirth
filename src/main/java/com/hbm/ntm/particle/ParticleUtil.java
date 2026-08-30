@@ -1717,6 +1717,11 @@ public final class ParticleUtil {
     }
 
     public static void spawnFoundry(Level level, double x, double y, double z, int color, int direction, float length, float base, float offset) {
+        spawnFoundry(level, x, y, z, color, direction, length, base, offset, 96.0D);
+    }
+
+    private static void spawnFoundry(Level level, double x, double y, double z, int color, int direction,
+            float length, float base, float offset, double radius) {
         CompoundTag data = new CompoundTag();
         data.putString("type", TYPE_FOUNDRY);
         data.putInt("color", color);
@@ -1724,7 +1729,7 @@ public final class ParticleUtil {
         data.putFloat("len", length);
         data.putFloat("base", base);
         data.putFloat("off", offset);
-        spawnAux(level, x, y, z, data, 96.0D);
+        spawnAux(level, x, y, z, data, radius);
     }
 
     public static void spawnFoundry(Level level, Vec3 position, int color, Direction direction, float length, float base, float offset) {
@@ -1739,7 +1744,11 @@ public final class ParticleUtil {
     }
 
     public static void spawnFoundryOutletPour(Level level, Vec3 position, int color, Direction direction, float length) {
-        spawnFoundry(level, position, color, direction, length, 0.0F, 0.375F);
+        if (position == null) {
+            return;
+        }
+        spawnFoundry(level, position.x, position.y, position.z, color, legacyDirectionOrdinal(direction),
+                length, 0.0F, 0.375F, 50.0D);
     }
 
     public static void spawnFoundryMachinePour(Level level, BlockPos pos, Direction direction, double horizontalOffset,
@@ -1764,7 +1773,7 @@ public final class ParticleUtil {
                 pos.getX() + 0.5D - dir.getStepX() * 0.125D,
                 pos.getY() + 0.125D,
                 pos.getZ() + 0.5D - dir.getStepZ() * 0.125D,
-                color, legacyDirectionOrdinal(dir), length, 0.0F, 0.375F);
+                color, legacyDirectionOrdinal(dir), length, 0.0F, 0.375F, 50.0D);
     }
 
     public static void spawnChaosCloud(Level level, double x, double y, double z, double motionX, double motionY, double motionZ, String mode) {

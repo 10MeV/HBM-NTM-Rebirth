@@ -91,7 +91,9 @@ public class CargoElevatorBlock extends LegacyXrMultiblockBlock implements Entit
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
+            // BlockCargoElevator consumes client activation before its server-only
+            // sneaking branch declines the interaction.
+            return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
         BlockPos corePos = MultiblockHelper.resolveCorePos(level, pos);
         if (!(level.getBlockEntity(corePos) instanceof CargoElevatorBlockEntity elevator)) {

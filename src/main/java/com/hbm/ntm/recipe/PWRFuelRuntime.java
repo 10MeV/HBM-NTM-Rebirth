@@ -5,6 +5,7 @@ import com.hbm.ntm.util.HbmMathUtil;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import net.minecraft.ChatFormatting;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -164,7 +165,16 @@ public final class PWRFuelRuntime {
         public String dangerLabel() {
             return switch (kind) {
                 case SQRT -> "MEDIUM / SQUARE ROOT";
-                case LOGARITHMIC -> "MEDIUM / LOGARITHMIC";
+                // FunctionLogarithmic#getDangerFromFuel in the 1.7.10
+                // source explicitly labels logarithmic PWR fuel passive.
+                case LOGARITHMIC -> "SAFE / PASSIVE";
+            };
+        }
+
+        public ChatFormatting dangerStyle() {
+            return switch (kind) {
+                case SQRT -> ChatFormatting.YELLOW;
+                case LOGARITHMIC -> ChatFormatting.DARK_GREEN;
             };
         }
 

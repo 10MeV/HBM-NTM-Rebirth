@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 300,
+  "input_fluids": [],
+  "input_items": [
+    {"count": 16, "ingredient": {"tag": "forge:plates/steel"}, "legacy_ore": "plateSteel"},
+    {"count": 8, "ingredient": {"tag": "forge:bolts/dura_steel"}, "legacy_ore": "boltDuraSteel"},
+    {"count": 2, "ingredient": {"item": "hbm_ntm_rebirth:motor"}}
+  ],
+  "internal_name": "ass.firedoor",
+  "output_fluids": [],
+  "output_items": [{"item": "hbm_ntm_rebirth:fire_door"}],
+  "pools": [],
+  "power": 100,
+  "source_order": 58
+}

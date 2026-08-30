@@ -52,7 +52,7 @@ public class WoodBurnerMenu extends AbstractContainerMenu {
                 98, 36));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), WoodBurnerBlockEntity.SLOT_BATTERY,
                 143, 54));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 186);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
         addDataSlots();
     }
 

@@ -278,12 +278,26 @@ public class AmmoPressBlockEntity extends BlockEntity implements MenuProvider, H
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        // TileEntityMachineAmmoPress#serialize sends the selected recipe and
+        // animation countdown.  Mirror the same transient state in the Forge
+        // chunk/update snapshot so a newly tracking client does not first load
+        // the persistent defaults and miss an active press cycle.
+        CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
+        tag.putInt(TAG_RECIPE, selectedRecipe);
+        tag.putInt(TAG_PLAY_ANIMATION, playAnimation);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_RECIPE)) {
+            selectedRecipe = tag.getInt(TAG_RECIPE);
+        }
+        if (tag.contains(TAG_PLAY_ANIMATION)) {
+            playAnimation = tag.getInt(TAG_PLAY_ANIMATION);
+        }
     }
 
     @Override
@@ -324,6 +338,19 @@ public class AmmoPressBlockEntity extends BlockEntity implements MenuProvider, H
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
     }
 
     @Override

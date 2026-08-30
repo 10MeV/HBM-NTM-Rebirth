@@ -2,7 +2,9 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.handler.pollution.PollutionHandler;
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
+import com.hbm.ntm.block.ElectricFurnaceBlock;
 import com.hbm.ntm.energy.IBatteryItem;
+import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
@@ -11,6 +13,7 @@ import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.ElectricFurnaceMenu;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmInventoryUtil;
 import java.util.List;
@@ -18,6 +21,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -45,7 +49,9 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
     private static final String TAG_ITEMS = "Items";
     private static final String TAG_POWER = "power";
     private static final String TAG_PROGRESS = "progress";
+    private static final String TAG_MAX_PROGRESS = "maxProgress";
     private static final String TAG_ACTIVE = "active";
+    private static final String TAG_NAME = "name";
 
     public static final long MAX_POWER = 100_000L;
     public static final int SLOT_BATTERY = 0;
@@ -92,6 +98,8 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
     private int consumption = 50;
     private int cooldown;
     private boolean active;
+    @Nullable
+    private String customName;
 
     public ElectricFurnaceBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ELECTRIC_FURNACE.get(), pos, state,
@@ -134,6 +142,8 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
             furnace.progress = 0;
             furnace.active = false;
         }
+
+        furnace.updateLegacyActiveBlock(level, pos, state);
 
         furnace.networkPackNT(50);
         if (oldPower != furnace.energy.getPower() || oldProgress != furnace.progress || oldActive != furnace.active) {
@@ -187,6 +197,16 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
         return active;
     }
 
+    private void updateLegacyActiveBlock(Level level, BlockPos pos, BlockState state) {
+        if (!(state.getBlock() instanceof ElectricFurnaceBlock block) || block.isActiveVariant() == active) {
+            return;
+        }
+        BlockState replacement = (active ? ModBlocks.MACHINE_ELECTRIC_FURNACE_ON.get()
+                : ModBlocks.MACHINE_ELECTRIC_FURNACE_OFF.get()).defaultBlockState()
+                .setValue(ElectricFurnaceBlock.FACING, state.getValue(ElectricFurnaceBlock.FACING));
+        level.setBlock(pos, replacement, Block.UPDATE_CLIENTS);
+    }
+
     public boolean hasPower() {
         return energy.getPower() >= consumption;
     }
@@ -210,7 +230,14 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.electricFurnace", "Electric Furnace");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.electricFurnace", "Electric Furnace");
+    }
+
+    public void setCustomName(String customName) {
+        this.customName = customName == null || customName.isBlank() ? null : customName;
+        setChanged();
     }
 
     @Nullable
@@ -244,6 +271,10 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
         tag.putLong(TAG_POWER, energy.getPower());
         tag.putInt(TAG_PROGRESS, progress);
         tag.putBoolean(TAG_ACTIVE, active);
+        if (customName != null) {
+            // TileEntityMachineBase writes this exact legacy key.
+            tag.putString(TAG_NAME, customName);
+        }
     }
 
     @Override
@@ -255,17 +286,35 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
         }
         progress = tag.getInt(TAG_PROGRESS);
         active = tag.getBoolean(TAG_ACTIVE);
+        customName = tag.contains(TAG_NAME, Tag.TAG_STRING) ? tag.getString(TAG_NAME) : null;
         upgradeSlotCache.invalidate();
     }
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        CompoundTag tag = super.getClientSyncTag();
+        // TileEntityMachineElectricFurnace#serialize appends these two
+        // values after LoadedBase/power.  Its active flag is menu/runtime
+        // local and was not part of the legacy packet.
+        tag.putInt(TAG_MAX_PROGRESS, maxProgress);
+        tag.putInt(TAG_PROGRESS, progress);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_MAX_PROGRESS)) {
+            maxProgress = Math.max(1, tag.getInt(TAG_MAX_PROGRESS));
+        }
+        if (tag.contains(TAG_PROGRESS)) {
+            progress = tag.getInt(TAG_PROGRESS);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
     }
 
     @Override
@@ -369,7 +418,8 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
                 return ItemStack.EMPTY;
             }
             int target = slots[slot];
-            if (target == SLOT_OUTPUT || target == SLOT_BATTERY) {
+            if (target == SLOT_OUTPUT
+                    || target == SLOT_BATTERY && HbmBatteryTransfer.isEmptyBattery(items.getStackInSlot(target))) {
                 return items.extractItem(target, amount, simulate);
             }
             return ItemStack.EMPTY;

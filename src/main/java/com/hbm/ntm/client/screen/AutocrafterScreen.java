@@ -35,13 +35,18 @@ public class AutocrafterScreen extends AbstractContainerScreen<AutocrafterMenu> 
     }
 
     @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
+    }
+
+    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(17, 45, 16, 52, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font,
-                    List.of(Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE")),
-                    mouseX, mouseY);
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 17, topPos + 45, 16, 52)) {
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 17, topPos + 45, 16, 52, menu.getPower(), menu.getMaxPower());
         } else if (menu.getCarried().isEmpty()) {
             for (int slot = AutocrafterBlockEntity.SLOT_TEMPLATE_START;
                     slot <= AutocrafterBlockEntity.SLOT_TEMPLATE_END; slot++) {
@@ -50,7 +55,7 @@ public class AutocrafterScreen extends AbstractContainerScreen<AutocrafterMenu> 
                     LegacyGuiElements.renderTooltip(graphics, font,
                             List.of(Component.literal("Right click to change").withStyle(ChatFormatting.RED),
                                     menu.getModeLabel(slot)),
-                            mouseX, mouseY);
+                            mouseX, mouseY - 30);
                     renderTooltip(graphics, mouseX, mouseY);
                     return;
                 }
@@ -60,7 +65,7 @@ public class AutocrafterScreen extends AbstractContainerScreen<AutocrafterMenu> 
                 LegacyGuiElements.renderTooltip(graphics, font,
                         List.of(Component.literal("Right click to change").withStyle(ChatFormatting.RED),
                                 menu.getRecipeLabel()),
-                        mouseX, mouseY);
+                        mouseX, mouseY - 30);
             }
         }
         renderTooltip(graphics, mouseX, mouseY);

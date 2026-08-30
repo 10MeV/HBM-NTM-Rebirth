@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.handler.radiation.ChunkRadiationManager;
-import com.hbm.ntm.api.common.OpenComputersComponent;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.block.WatzEndBlock;
@@ -58,8 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
-        implements MenuProvider, HbmStandardFluidTransceiver, HbmLegacyControlReceiver, RORValueProvider,
-        OpenComputersComponent {
+        implements MenuProvider, HbmStandardFluidTransceiver, HbmLegacyControlReceiver, RORValueProvider {
     public static final int PELLET_SLOT_COUNT = 24;
     public static final int SLOT_COUNT = PELLET_SLOT_COUNT;
     public static final int TANK_CAPACITY = 64_000;
@@ -73,15 +71,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
             RORInfo.PREFIX_VALUE + "mud",
             RORInfo.PREFIX_VALUE + "coolant_hot",
             RORInfo.PREFIX_VALUE + "coolant_cold"
-    };
-    private static final String[] COMPUTER_METHODS = {
-            "getComponentName",
-            "getHeat",
-            "getFlux",
-            "getCoolantInfo",
-            "getWasteInfo",
-            "isOn",
-            "getInfo"
     };
 
     private final HbmFluidTank coolantTank;
@@ -213,39 +202,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     public boolean isLocked() {
         return locked;
-    }
-
-    /** Source: {@code TileEntityWatz#getComponentName}. */
-    @Override
-    public String getComponentName() {
-        return "watz_reactor";
-    }
-
-    /** Source: {@code TileEntityWatz#methods}. */
-    @Override
-    public String[] methods() {
-        return COMPUTER_METHODS.clone();
-    }
-
-    /**
-     * Source-backed OpenComputers method dispatcher.  It deliberately exposes
-     * the old read-only callback names and result tuple ordering; a modern OC
-     * adapter can supply its own context/arguments around this stable surface.
-     */
-    @Override
-    public Object[] invoke(String method) throws NoSuchMethodException {
-        return switch (method) {
-            case "getHeat" -> new Object[]{heat};
-            case "getFlux" -> new Object[]{fluxLastBase + fluxLastReaction};
-            case "getCoolantInfo" -> new Object[]{coolantTank.getFill(), coolantTank.getMaxFill(),
-                    hotCoolantTank.getFill(), hotCoolantTank.getMaxFill()};
-            case "getWasteInfo" -> new Object[]{mudTank.getFill(), mudTank.getMaxFill()};
-            case "isOn" -> new Object[]{on};
-            case "getInfo" -> new Object[]{coolantTank.getFill(), coolantTank.getMaxFill(),
-                    hotCoolantTank.getFill(), hotCoolantTank.getMaxFill(), mudTank.getFill(), mudTank.getMaxFill(),
-                    heat, fluxLastBase + fluxLastReaction, on};
-            default -> throw new NoSuchMethodException(method);
-        };
     }
 
     /** Source: {@code TileEntityWatz#getFunctionInfo}. */

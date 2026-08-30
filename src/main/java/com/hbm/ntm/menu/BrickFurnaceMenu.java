@@ -43,6 +43,10 @@ public class BrickFurnaceMenu extends AbstractContainerMenu {
         return maxBurnTime <= 0 ? 0 : burnTime * width / maxBurnTime;
     }
 
+    public boolean isBurning() {
+        return burnTime > 0;
+    }
+
     public int getProgressWidth(int width) {
         return progress * width / BrickFurnaceBlockEntity.PROCESS_TIME;
     }

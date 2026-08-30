@@ -37,20 +37,20 @@ public class RefineryMenu extends AbstractContainerMenu {
         super(ModMenuTypes.REFINERY.get(), containerId);
         this.blockEntity = blockEntity;
         ItemStackHandler items = blockEntity.getItems();
-        addSlot(HbmInventoryMenuHelper.plainMachineSlot(items, RefineryBlockEntity.SLOT_BATTERY, 186, 72));
-        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_INPUT_CONTAINER, 8, 99));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 8, 119));
-        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_HEAVY_CONTAINER, 86, 99));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_HEAVY_CONTAINER_OUTPUT, 86, 119));
-        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_NAPHTHA_CONTAINER, 106, 99));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_NAPHTHA_CONTAINER_OUTPUT, 106, 119));
-        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_LIGHT_CONTAINER, 126, 99));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_LIGHT_CONTAINER_OUTPUT, 126, 119));
-        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_PETROLEUM_CONTAINER, 146, 99));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_PETROLEUM_CONTAINER_OUTPUT, 146, 119));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_SOLID_OUTPUT, 58, 119));
-        addSlot(HbmInventoryMenuHelper.plainMachineSlot(items, RefineryBlockEntity.SLOT_IDENTIFIER, 186, 106));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 150, 208);
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(items, RefineryBlockEntity.SLOT_BATTERY, 158, 108));
+        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_INPUT_CONTAINER, 12, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_INPUT_CONTAINER_OUTPUT, 12, 108));
+        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_HEAVY_CONTAINER, 64, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_HEAVY_CONTAINER_OUTPUT, 64, 108));
+        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_NAPHTHA_CONTAINER, 82, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_NAPHTHA_CONTAINER_OUTPUT, 82, 108));
+        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_LIGHT_CONTAINER, 100, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_LIGHT_CONTAINER_OUTPUT, 100, 108));
+        addSlot(new SlotItemHandler(items, RefineryBlockEntity.SLOT_PETROLEUM_CONTAINER, 118, 90));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_PETROLEUM_CONTAINER_OUTPUT, 118, 108));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, RefineryBlockEntity.SLOT_SOLID_OUTPUT, 38, 90));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(items, RefineryBlockEntity.SLOT_IDENTIFIER, 38, 108));
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 11, 158, 216);
         addDataSlots();
     }
 

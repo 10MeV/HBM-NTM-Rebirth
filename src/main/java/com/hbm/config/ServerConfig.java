@@ -20,8 +20,12 @@ public final class ServerConfig extends RunningConfig {
     public static final ConfigWrapper<Boolean> TAINT_TRAILS = wrap(false,
             com.hbm.ntm.config.ServerConfig::taintTrailsEnabled,
             value -> setBoolean(com.hbm.ntm.config.ServerConfig.TAINT_TRAILS, value));
-    public static final ConfigWrapper<Boolean> CRATE_OPEN_HELD = wrap(true);
-    public static final ConfigWrapper<Boolean> CRATE_KEEP_CONTENTS = wrap(true);
+    public static final ConfigWrapper<Boolean> CRATE_OPEN_HELD = wrap(true,
+            com.hbm.ntm.config.ServerConfig::crateOpenHeldEnabled,
+            value -> setBoolean(com.hbm.ntm.config.ServerConfig.CRATE_OPEN_HELD, value));
+    public static final ConfigWrapper<Boolean> CRATE_KEEP_CONTENTS = wrap(true,
+            com.hbm.ntm.config.ServerConfig::crateKeepContentsEnabled,
+            value -> setBoolean(com.hbm.ntm.config.ServerConfig.CRATE_KEEP_CONTENTS, value));
     public static final ConfigWrapper<Integer> ITEM_HAZARD_DROP_TICKRATE = wrap(2,
             com.hbm.ntm.config.ServerConfig::droppedItemHazardTickRate,
             value -> setInt(com.hbm.ntm.config.ServerConfig.ITEM_HAZARD_DROP_TICKRATE, value));

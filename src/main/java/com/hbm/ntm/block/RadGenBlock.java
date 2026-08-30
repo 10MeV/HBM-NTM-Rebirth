@@ -40,6 +40,10 @@ public class RadGenBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // 1.7.10 MachineRadGen returns false instead of opening when sneaking.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof RadGenBlockEntity radGen) {
             NetworkHooks.openScreen(serverPlayer, radGen, radGen.getBlockPos());

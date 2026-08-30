@@ -21,14 +21,18 @@ public class BrickFurnaceScreen extends AbstractContainerScreen<BrickFurnaceMenu
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        int burn = menu.getBurnWidth(13);
-        if (burn > 0) {
+        if (menu.isBurning()) {
+            int burn = menu.getBurnWidth(13);
             graphics.blit(TEXTURE, leftPos + 62, topPos + 54 + 12 - burn, 176, 12 - burn, 14, burn + 1);
-        }
-        int progress = menu.getProgressWidth(24);
-        if (progress > 0) {
+            int progress = menu.getProgressWidth(24);
             graphics.blit(TEXTURE, leftPos + 85, topPos + 34, 176, 14, progress + 1, 16);
         }
+    }
+
+    @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0xFFFFFF, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xFFFFFF, false);
     }
 
     @Override

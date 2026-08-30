@@ -42,11 +42,11 @@ public class MixerMenu extends AbstractContainerMenu {
     public MixerMenu(int containerId, Inventory playerInventory, MixerBlockEntity blockEntity) {
         super(ModMenuTypes.MIXER.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_BATTERY, 23, 77));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_SOLID_INPUT, 43, 77));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_FLUID_ID, 117, 77));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_UPGRADE_1, 137, 24));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_UPGRADE_2, 137, 42));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_BATTERY, 12, 72));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_SOLID_INPUT, 52, 72));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_FLUID_ID, 126, 72));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_UPGRADE_1, 148, 18));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), MixerBlockEntity.SLOT_UPGRADE_2, 148, 36));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 122, 180);
         tanks = HbmFluidGuiHelper.watchTanks(this::addDataSlot, blockEntity.getAllTanks());
         addDataSlots();

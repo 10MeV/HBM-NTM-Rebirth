@@ -1,7 +1,6 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.LegacyFurnaceBlockEntity;
-import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
@@ -16,11 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class LegacyFurnaceMenu extends AbstractContainerMenu {
-    private static final int MACHINE_SLOT_COUNT = 6;
-    private static final int PLAYER_INVENTORY_START = MACHINE_SLOT_COUNT;
-    private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
-    private static final int HOTBAR_END = PLAYER_INVENTORY_END + 9;
-
     private final LegacyFurnaceBlockEntity blockEntity;
     private int maxBurnTime;
     private int burnTime;
@@ -50,9 +44,9 @@ public class LegacyFurnaceMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 53, 17));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 53, 53));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 2, 71, 53));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 3, 125, 35));
+        addSlot(HbmInventoryMenuHelper.smeltingOutputSlot(playerInventory.player,
+                blockEntity.getItems(), 3, 125, 35, null));
         addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 4, 17, 35));
-        addSlot(HbmInventoryMenuHelper.deprecatedSlot(blockEntity.getItems(), 5, -2000, -2000));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
     }
 
@@ -60,9 +54,12 @@ public class LegacyFurnaceMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 35, 17));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 35, 35));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 2, 35, 53));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 3, 125, 17));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 4, 125, 35));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 5, 125, 53));
+        addSlot(HbmInventoryMenuHelper.smeltingOutputSlot(playerInventory.player,
+                blockEntity.getItems(), 3, 125, 17, null));
+        addSlot(HbmInventoryMenuHelper.smeltingOutputSlot(playerInventory.player,
+                blockEntity.getItems(), 4, 125, 35, null));
+        addSlot(HbmInventoryMenuHelper.smeltingOutputSlot(playerInventory.player,
+                blockEntity.getItems(), 5, 125, 53, null));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
     }
 
@@ -74,8 +71,20 @@ public class LegacyFurnaceMenu extends AbstractContainerMenu {
         return ironProcessingTime <= 0 ? 0 : ironProgress * maxWidth / ironProcessingTime;
     }
 
+    public int getIronProgress() {
+        return ironProgress;
+    }
+
+    public int getIronProcessingTime() {
+        return ironProcessingTime;
+    }
+
     public int getBurnWidth(int maxWidth) {
         return maxBurnTime <= 0 ? 0 : burnTime * maxWidth / maxBurnTime;
+    }
+
+    public int getBurnTime() {
+        return burnTime;
     }
 
     public boolean wasOn() {
@@ -84,6 +93,26 @@ public class LegacyFurnaceMenu extends AbstractContainerMenu {
 
     public int getHeatBarHeight(int maxHeight) {
         return heat * maxHeight / 100_000;
+    }
+
+    public int getHeat() {
+        return heat;
+    }
+
+    public int getSteelMaxHeat() {
+        return 100_000;
+    }
+
+    public int getSteelProcessTime() {
+        return 40_000;
+    }
+
+    public int getSteelProgress(int lane) {
+        return lane >= 0 && lane < steelProgress.length ? steelProgress[lane] : 0;
+    }
+
+    public int getSteelBonus(int lane) {
+        return lane >= 0 && lane < steelBonus.length ? steelBonus[lane] : 0;
     }
 
     public int getSteelProgressWidth(int lane, int maxWidth) {
@@ -110,8 +139,10 @@ public class LegacyFurnaceMenu extends AbstractContainerMenu {
         }
         ItemStack stack = slot.getItem();
         ItemStack original = stack.copy();
-        if (index < MACHINE_SLOT_COUNT) {
-            if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, HOTBAR_END, true)) {
+        int machineSlotCount = machineSlotCount();
+        int playerSlotEnd = machineSlotCount + 36;
+        if (index < machineSlotCount) {
+            if (!moveItemStackTo(stack, machineSlotCount, playerSlotEnd, true)) {
                 return ItemStack.EMPTY;
             }
         } else if (!movePlayerStackToMachine(stack)) {
@@ -121,15 +152,13 @@ public class LegacyFurnaceMenu extends AbstractContainerMenu {
         return original;
     }
 
+    private int machineSlotCount() {
+        return blockEntity.kind() == LegacyFurnaceBlockEntity.Kind.IRON ? 5 : 6;
+    }
+
     private boolean movePlayerStackToMachine(ItemStack stack) {
         if (blockEntity.kind() == LegacyFurnaceBlockEntity.Kind.IRON) {
-            if (stack.getItem() instanceof ItemMachineUpgrade) {
-                return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 4, 5);
-            }
-            if (HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 1, 3)) {
-                return true;
-            }
-            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 0, 1);
+            return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 0, 5);
         }
         return HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 0, 3);
     }

@@ -50,6 +50,7 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
     private static final String TAG_POWER = "power";
     private static final String TAG_RETRACTING = "ret";
     private static final String TAG_DELAY = "delay";
+    private static final String TAG_SYNC_RENDER_INPUT = "renderInput";
 
     public static final long MAX_POWER = 50_000L;
     public static final long CONSUMPTION = 100L;
@@ -231,10 +232,7 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         readLegacyLoadedTileBinary(data);
-        energy.setPower(data.readLong());
-        syncPress = data.readInt();
-        syncRenderInput = data.readItem();
-        turnProgress = 2;
+        readClientRuntimeSnapshot(data.readLong(), data.readInt(), data.readItem());
     }
 
     public List<ItemStack> getDrops() {
@@ -319,18 +317,46 @@ public class ElectricPressBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        CompoundTag tag = new CompoundTag();
+        tag.putLong(TAG_POWER, energy.getPower());
+        tag.putInt(TAG_PRESS, press);
+        ItemStack input = items.getStackInSlot(SLOT_INPUT);
+        if (!input.isEmpty()) {
+            tag.put(TAG_SYNC_RENDER_INPUT, input.save(new CompoundTag()));
+        }
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        if (tag.contains(TAG_POWER) && tag.contains(TAG_PRESS)) {
+            ItemStack input = tag.contains(TAG_SYNC_RENDER_INPUT)
+                    ? ItemStack.of(tag.getCompound(TAG_SYNC_RENDER_INPUT))
+                    : ItemStack.EMPTY;
+            readClientRuntimeSnapshot(tag.getLong(TAG_POWER), tag.getInt(TAG_PRESS), input);
+        }
     }
 
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
 }
+
+    private void readClientRuntimeSnapshot(long power, int pressValue, ItemStack input) {
+        energy.setPower(power);
+        press = pressValue;
+        syncRenderInput = input.copy();
+        boolean targetChanged = pressValue != syncPress;
+        syncPress = pressValue;
+        if (!clientRenderInitialized) {
+            renderPress = pressValue;
+            lastPress = pressValue;
+            clientRenderInitialized = true;
+            turnProgress = 0;
+        } else if (targetChanged) {
+            turnProgress = 2;
+        }
+    }
 
     @Nullable
     @Override

@@ -160,8 +160,7 @@ public class GasCentMenu extends AbstractContainerMenu {
         }
         return List.of(
                 name,
-                Component.literal(pseudo.fill() + " / " + pseudo.capacity() + " mB"),
-                getTank().type().getDisplayName());
+                Component.literal(pseudo.fill() + " / " + pseudo.capacity() + " mB"));
     }
 
     public List<Component> realTankTooltip(boolean showHidden) {

@@ -1,14 +1,17 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.GasFlareBlockEntity;
-import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -22,6 +25,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @SuppressWarnings("deprecation")
 public class GasFlareBlock extends LegacyVisibleMultiblockMachineBlock {
     public static final BooleanProperty TILTED = BooleanProperty.create("tilted");
@@ -29,6 +34,24 @@ public class GasFlareBlock extends LegacyVisibleMultiblockMachineBlock {
     public GasFlareBlock(Properties properties, LegacyMachineDefinition definition) {
         super(properties, definition);
         registerDefaultState(defaultBlockState().setValue(TILTED, false));
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        // Exact 1.7.10 MachineGasFlare#addInformation literals.
+        tooltip.add(Component.literal("Can burn fluids and vent gasses").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("Burns up to ").withStyle(ChatFormatting.GOLD)
+                .append(Component.literal("10mB/t").withStyle(ChatFormatting.RED)));
+        tooltip.add(Component.literal("Vents up to ").withStyle(ChatFormatting.GOLD)
+                .append(Component.literal("50mB/t").withStyle(ChatFormatting.RED)));
+        tooltip.add(Component.empty());
+        tooltip.add(Component.literal("Fuel efficiency:").withStyle(ChatFormatting.YELLOW));
+        tooltip.add(Component.literal("-Flammable Gasses: ").withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal("20%").withStyle(ChatFormatting.RED)));
+        tooltip.add(Component.literal("-Flammable Liquids: ").withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal("10%").withStyle(ChatFormatting.RED)));
     }
 
     @Nullable
@@ -48,19 +71,13 @@ public class GasFlareBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // MachineGasFlare delegates to BlockDummyable#standardOpenBehavior:
+        // sneaking consumes the interaction but cannot mutate the tank or open a menu.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof GasFlareBlockEntity gasFlare) {
-            ItemStack held = player.getItemInHand(hand);
-            if (player.isShiftKeyDown()) {
-                var identifier = HbmFluidItemTransfer.setTankTypeFromIdentifierStackReport(
-                        held, gasFlare.getTank(), level, gasFlare.getBlockPos());
-                if (identifier.changed()) {
-                    gasFlare.setChanged();
-                    level.sendBlockUpdated(gasFlare.getBlockPos(), gasFlare.getBlockState(),
-                            gasFlare.getBlockState(), Block.UPDATE_CLIENTS);
-                    return InteractionResult.CONSUME;
-                }
-            }
             NetworkHooks.openScreen(serverPlayer, gasFlare, gasFlare.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

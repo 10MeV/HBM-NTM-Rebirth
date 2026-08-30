@@ -39,24 +39,31 @@ public final class LegacyLookOverlayRenderer {
         }
 
         LegacyLookOverlay overlay = resolveOverlay(minecraft, hitResult);
-        if (overlay == null) {
-            return;
+        if (overlay != null) {
+            renderPanel(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(),
+                    event.getWindow().getGuiScaledHeight(), overlay);
         }
 
-        renderPanel(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(),
-                event.getWindow().getGuiScaledHeight(), overlay);
+        // Keep the legacy event ordering: the optional block-state diagnostic was
+        // rendered after ILookOverlay#printHook, rather than replacing it.
+        if (hitResult instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK
+                && HbmClientConfig.showBlockStateOverlay()) {
+            renderPanel(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(),
+                    event.getWindow().getGuiScaledHeight(),
+                    debugBlockStateOverlay(minecraft.level.getBlockState(blockHit.getBlockPos())));
+        }
     }
 
     private static LegacyLookOverlay resolveOverlay(Minecraft minecraft, HitResult hitResult) {
         if (hitResult instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
             BlockState state = minecraft.level.getBlockState(blockHit.getBlockPos());
-            if (HbmClientConfig.showBlockStateOverlay()) {
-                return debugBlockStateOverlay(state);
+            // In 1.7.10, merely holding an ILookOverlay item selected its
+            // printHook branch. A null/no-op item hook did not fall through to
+            // the viewed block's hook.
+            if (hasHeldItemOverlayProvider(minecraft)) {
+                return resolveHeldItemOverlay(minecraft, blockHit);
             }
-            LegacyLookOverlay overlay = resolveHeldItemOverlay(minecraft, blockHit);
-            if (overlay == null) {
-                overlay = resolveBlockOverlay(minecraft, blockHit, state);
-            }
+            LegacyLookOverlay overlay = resolveBlockOverlay(minecraft, blockHit, state);
             if (overlay == null) {
                 overlay = resolveBlockEntityOverlay(minecraft, blockHit);
             }
@@ -82,6 +89,11 @@ public final class LegacyLookOverlayRenderer {
             return provider.getLookOverlay(minecraft.level, minecraft.player, stack, hit);
         }
         return null;
+    }
+
+    private static boolean hasHeldItemOverlayProvider(Minecraft minecraft) {
+        ItemStack stack = minecraft.player.getMainHandItem();
+        return !stack.isEmpty() && stack.getItem() instanceof LegacyLookOverlayItemProvider;
     }
 
     private static LegacyLookOverlay resolveBlockOverlay(Minecraft minecraft, BlockHitResult hit, BlockState state) {

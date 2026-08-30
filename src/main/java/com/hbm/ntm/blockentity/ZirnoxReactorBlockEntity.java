@@ -557,21 +557,21 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         if (!HbmCommonConfig.machineGravityEnabled()) {
             return setTiltedState(level, false);
         }
-        if (FLOOR_COUNT <= 0) {
+        if (getFloorCount() <= 0) {
             return setTiltedState(level, false);
         }
         if ((level.getGameTime() + blockIdentity(worldPosition)) % 20L != 0L) {
             return false;
         }
         boolean changed = false;
-        if (tiltBlocksChecked >= FLOOR_COUNT) {
+        if (tiltBlocksChecked >= getFloorCount()) {
             changed = setTiltedState(level, tiltBlocksValid < tiltBlocksChecked * 0.95D);
             tiltBlocksChecked = 0;
             tiltBlocksValid = 0;
         }
         changed = syncTiltedBlockState(level, isTilted()) || changed;
 
-        BlockPos floor = standardFloor5x5(tiltBlocksChecked);
+        BlockPos floor = getFloorPosFromIndex(tiltBlocksChecked);
         tiltBlocksChecked++;
         if (isValidHeavyFoundation(level, floor)) {
             tiltBlocksValid++;
@@ -603,6 +603,19 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
         level.setBlock(worldPosition, state.setValue(ZirnoxReactorBlock.TILTED, tilted), Block.UPDATE_CLIENTS);
         return true;
+    }
+
+    /**
+     * Preserves the public floor-sampler contract inherited by the 1.7.10
+     * {@code TileEntityReactorZirnox}.  Audit fixtures use the same production
+     * coordinates instead of duplicating or rotating the footprint.
+     */
+    public int getFloorCount() {
+        return FLOOR_COUNT;
+    }
+
+    public BlockPos getFloorPosFromIndex(int index) {
+        return standardFloor5x5(index);
     }
 
     private BlockPos standardFloor5x5(int index) {
@@ -719,7 +732,7 @@ public class ZirnoxReactorBlockEntity extends HbmFluidNetworkBlockEntity
             return;
         }
         int cycle = (int) (((heat - 10_256F) / MAX_HEAT)
-                * Math.min(carbonDioxideTank.getFill() / 14_000F, 1.0F) * 25F * 5F);
+                * Math.min(carbonDioxideTank.getFill() / 14_000F, 1.0F) * 25F * 7.5F);
         output = cycle;
         waterTank.setFill(waterTank.getFill() - cycle);
         steamTank.setFill(steamTank.getFill() + cycle);

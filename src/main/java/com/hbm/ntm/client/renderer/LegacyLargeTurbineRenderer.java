@@ -9,7 +9,6 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjModelLibrary;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -81,7 +80,7 @@ public class LegacyLargeTurbineRenderer implements BlockEntityRenderer<LegacyLar
                 poseStack.translate(0.0D, -LegacyTileRenderPlans.BIG_TURBINE_BLADE_PIVOT_Y, 0.0D);
                 MODEL.renderOnlyInCallOrder(
                         definition.partTextures().getOrDefault("Blades", definition.textureLocation()),
-                        poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay, BLADES, renderMode);
+                        poseStack, buffer, packedLight, packedOverlay, BLADES, renderMode);
                 poseStack.popPose();
             }
         }

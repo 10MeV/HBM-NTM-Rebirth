@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "hbm_ntm_rebirth:anvil_steel"
+    },
+    "U": {
+      "item": "hbm_ntm_rebirth:undefined"
+    }
+  },
+  "pattern": [
+    "UUU",
+    "UAU",
+    "UUU"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:anvil_murky"
+  },
+  "show_notification": true
+}

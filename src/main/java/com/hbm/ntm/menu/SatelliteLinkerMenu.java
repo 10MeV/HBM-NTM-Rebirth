@@ -28,10 +28,10 @@ public class SatelliteLinkerMenu extends AbstractContainerMenu {
         super(ModMenuTypes.SATELLITE_LINKER.get(), containerId);
         this.blockEntity = blockEntity;
 
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), SatelliteLinkerBlockEntity.SLOT_SOURCE, 44, 35));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), SatelliteLinkerBlockEntity.SLOT_TARGET, 80, 35));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), SatelliteLinkerBlockEntity.SLOT_RANDOMIZE, 116, 35));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), SatelliteLinkerBlockEntity.SLOT_SOURCE, 44, 36));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), SatelliteLinkerBlockEntity.SLOT_TARGET, 80, 36));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), SatelliteLinkerBlockEntity.SLOT_RANDOMIZE, 116, 36));
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
     }
 
     public SatelliteLinkerBlockEntity getBlockEntity() {

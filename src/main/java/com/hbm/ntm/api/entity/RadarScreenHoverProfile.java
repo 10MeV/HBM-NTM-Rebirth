@@ -32,17 +32,6 @@ public final class RadarScreenHoverProfile {
     }
 
     public static Hover slots(int leftPos, int topPos, double mouseX, double mouseY) {
-        if (RadarGuiHitProfile.hitsArea(leftPos, topPos, RadarGuiLayout.SLOT_ENERGY_X,
-                RadarGuiLayout.SLOT_ENERGY_Y, RadarGuiLayout.SLOT_ENERGY_WIDTH,
-                RadarGuiLayout.SLOT_ENERGY_HEIGHT, mouseX, mouseY)) {
-            return Hover.energy();
-        }
-        for (RadarControlPanel.Button button : RadarControlPanel.buttons()) {
-            if (RadarGuiHitProfile.hitsArea(leftPos, topPos, button.slotX(), button.slotY(),
-                    RadarControlPanel.BUTTON_SIZE, RadarControlPanel.BUTTON_SIZE, mouseX, mouseY)) {
-                return Hover.control(button);
-            }
-        }
         if (RadarGuiHitProfile.hitsArea(leftPos, topPos, RadarGuiLayout.SLOT_TOGGLE_VIEW_X,
                 RadarGuiLayout.SLOT_TOGGLE_VIEW_Y, RadarGuiLayout.SLOT_TOGGLE_VIEW_SIZE,
                 RadarGuiLayout.SLOT_TOGGLE_VIEW_SIZE, mouseX, mouseY)) {

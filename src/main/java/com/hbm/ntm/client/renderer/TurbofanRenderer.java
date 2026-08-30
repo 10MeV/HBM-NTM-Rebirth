@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.TurbofanBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -66,12 +67,15 @@ public class TurbofanRenderer implements BlockEntityRenderer<TurbofanBlockEntity
         LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                renderPart(BODY, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+            }
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 poseStack.pushPose();
                 poseStack.translate(0.0D, LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
                 LegacyPoseRotations.rotateZDegrees(poseStack, -(blockEntity.getBladeSpin(partialTick)));
                 poseStack.translate(0.0D, -LegacyTileRenderPlans.TURBOFAN_BLADE_PIVOT_Y, 0.0D);
-                renderPart(BLADES, definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay);
+                renderPart(BLADES, definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
             }
 

@@ -12,9 +12,6 @@ public final class RadarGuiRenderProfile {
     public static final int NOISE_GRID_SIZE = 5;
     public static final int NOISE_TILE_SIZE = 40;
     public static final int NOISE_TEXTURE_VARIANTS = 81;
-    public static final int SLOT_TOGGLE_BACKGROUND = 0xFF101010;
-    public static final int SLOT_TOGGLE_ACTIVE_BORDER = 0xFF1F8F32;
-    public static final int SLOT_TOGGLE_INACTIVE_BORDER = 0xFF4C4C4C;
 
     private static final List<NoiseTile> NOISE_TILES = createNoiseTiles();
 
@@ -74,30 +71,8 @@ public final class RadarGuiRenderProfile {
         }
     }
 
-    public static TextureBlit slotControlIcon(int leftPos, int topPos, RadarControlPanel.Button button) {
-        return new TextureBlit(leftPos + button.slotX(), topPos + button.slotY(), button.iconU(), button.iconV(),
-                RadarControlPanel.BUTTON_SIZE, RadarControlPanel.BUTTON_SIZE);
-    }
-
     public static List<NoiseTile> noiseTiles() {
         return NOISE_TILES;
-    }
-
-    public static SlotToggleFrame slotToggleFrame(RadarControlPanel.Button button, boolean active) {
-        return new SlotToggleFrame(button.slotX(), button.slotY(),
-                active ? SLOT_TOGGLE_ACTIVE_BORDER : SLOT_TOGGLE_INACTIVE_BORDER);
-    }
-
-    public static SlotToggleFrame slotToggleFrame(RadarControlPanel.Button button, RadarMenuState state) {
-        return slotToggleFrame(button, controlActive(state, button));
-    }
-
-    public static void forEachSlotToggle(int leftPos, int topPos, RadarMenuState state, Consumer<SlotToggle> consumer) {
-        for (RadarControlPanel.Button button : RadarControlPanel.buttons()) {
-            boolean active = controlActive(state, button);
-            consumer.accept(new SlotToggle(slotToggleFrame(button, active), slotControlIcon(leftPos, topPos, button),
-                    active));
-        }
     }
 
     public static MainContentPlan mainContent(RadarMenuState state, long consumption) {
@@ -174,32 +149,6 @@ public final class RadarGuiRenderProfile {
     public record NoiseTile(int x, int y) {
     }
 
-    public record SlotToggleFrame(int x, int y, int borderColor) {
-        public int outerLeft() {
-            return x - 1;
-        }
-
-        public int outerTop() {
-            return y - 1;
-        }
-
-        public int outerRight() {
-            return x + RadarControlPanel.BUTTON_SIZE + 1;
-        }
-
-        public int outerBottom() {
-            return y + RadarControlPanel.BUTTON_SIZE + 1;
-        }
-
-        public int iconRight() {
-            return x + RadarControlPanel.BUTTON_SIZE;
-        }
-
-        public int iconBottom() {
-            return y + RadarControlPanel.BUTTON_SIZE;
-        }
-    }
-
     public record EnergyBar(int x, int y, int u, int v, int width, int height) {
     }
 
@@ -218,8 +167,5 @@ public final class RadarGuiRenderProfile {
         public boolean renderSweepAndBlips() {
             return renderContent && !renderNoise;
         }
-    }
-
-    public record SlotToggle(SlotToggleFrame frame, TextureBlit icon, boolean active) {
     }
 }

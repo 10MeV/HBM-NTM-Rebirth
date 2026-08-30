@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": { "item": "minecraft:brick" },
+    "B": { "item": "minecraft:stone" }
+  },
+  "pattern": [ "III", "I I", "BBB" ],
+  "result": { "item": "hbm_ntm_rebirth:machine_furnace_brick_off" },
+  "show_notification": true
+}

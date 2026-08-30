@@ -21,6 +21,10 @@ import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingStep;
 import com.hbm.ntm.fluid.trait.HeatableFluidTrait.HeatingType;
+import com.hbm.ntm.explosion.vnt.ExplosionVnt;
+import com.hbm.ntm.explosion.vnt.standard.EntityProcessorStandard;
+import com.hbm.ntm.explosion.vnt.standard.ExplosionEffectStandard;
+import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
@@ -33,7 +37,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -52,6 +58,12 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     private int heat;
     private boolean active;
     private boolean hasExploded;
+    // The legacy boilers built their binary sync payload during the server tick,
+    // before boiling consumed feed/heat and before remote ports drained steam.
+    private int legacyPacketHeat;
+    private boolean legacyPacketExploded;
+    private HbmFluidTank legacyPacketFeedTank;
+    private HbmFluidTank legacyPacketSteamTank;
     private Object audioLoop;
 
     public BoilerBlockEntity(BlockPos pos, BlockState state) {
@@ -79,6 +91,8 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
                 .build();
         this.feedTank.conform(new HbmFluidStack(HbmFluids.WATER, 0));
         this.steamTank.conform(new HbmFluidStack(HbmFluids.STEAM, 0));
+        captureLegacyPacketPreConversion();
+        legacyPacketSteamTank = copyPacketTank(steamTank);
     }
 
     public HbmFluidTank getFeedTank() {
@@ -210,6 +224,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         }
         if (blockEntity.hasExploded) {
             blockEntity.active = false;
+            blockEntity.legacyPacketExploded = true;
             state = blockEntity.syncVisualBlockState(level, pos, state);
             blockEntity.networkPackNT(25);
             return;
@@ -218,9 +233,11 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
         blockEntity.prepareOutputTank();
         HbmFluidNetworkBlockEntity.serverTick(level, pos, state, blockEntity);
         blockEntity.pullHeatFromBelow(level, pos);
+        blockEntity.captureLegacyPacketPreConversion();
         blockEntity.pullHeatFromTomFire(level, pos);
         HbmFluidThermalExchange.ThermalResult result = blockEntity.tryBoil(blockEntity.heat, false);
         blockEntity.active = result.converted();
+        blockEntity.legacyPacketSteamTank = copyPacketTank(blockEntity.steamTank);
         if (blockEntity.active && level.random.nextInt(400) == 0) {
             level.playSound(null, pos.getX() + 0.5D, pos.getY() + 2.0D, pos.getZ() + 0.5D,
                     ModSounds.BLOCK_BOILER_GROAN.get(), SoundSource.BLOCKS, 0.5F, 1.0F);
@@ -405,7 +422,7 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
-        tag.putBoolean("isOn", active);
+        writeRuntimeSync(tag);
         return tag;
     }
 
@@ -416,24 +433,37 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     }
 
     @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         // The two 1.7.10 boiler tiles deliberately have different hand-written packets.
         // Neither calls TileEntityLoadedBase#serialize, so there is no loaded-tile prefix here.
         if (profile.industrial) {
             // TileEntityHeatBoilerIndustrial#serialize: heat, water, steam, isOn, muffled.
-            data.writeInt(heat);
-            LegacyFluidTankPacket.write(data, feedTank);
-            LegacyFluidTankPacket.write(data, steamTank);
+            data.writeInt(legacyPacketHeat);
+            LegacyFluidTankPacket.write(data, legacyPacketFeedTank);
+            LegacyFluidTankPacket.write(data, legacyPacketSteamTank);
             data.writeBoolean(active);
             data.writeBoolean(isMuffled());
             return;
         }
         // TileEntityHeatBoiler#serialize: exploded guard; normal state then heat, water, steam, muffled, isOn.
-        data.writeBoolean(hasExploded);
-        if (!hasExploded) {
-            data.writeInt(heat);
-            LegacyFluidTankPacket.write(data, feedTank);
-            LegacyFluidTankPacket.write(data, steamTank);
+        data.writeBoolean(legacyPacketExploded);
+        if (!legacyPacketExploded) {
+            data.writeInt(legacyPacketHeat);
+            LegacyFluidTankPacket.write(data, legacyPacketFeedTank);
+            LegacyFluidTankPacket.write(data, legacyPacketSteamTank);
             data.writeBoolean(isMuffled());
             data.writeBoolean(active);
         }
@@ -465,9 +495,36 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     }
 
     private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("heat")) {
+            heat = Math.min(maxHeat(), Math.max(0, tag.getInt("heat")));
+        }
+        if (tag.contains("exploded")) {
+            hasExploded = tag.getBoolean("exploded");
+        }
         if (tag.contains("isOn")) {
             active = tag.getBoolean("isOn");
         }
+    }
+
+    private void writeRuntimeSync(CompoundTag tag) {
+        // TileEntityHeatBoilerIndustrial#serialize writes heat after its two
+        // tanks; the parent snapshot already supplies both tanks and muffling.
+        tag.putInt("heat", heat);
+        tag.putBoolean("exploded", hasExploded);
+        tag.putBoolean("isOn", active);
+    }
+
+    private void captureLegacyPacketPreConversion() {
+        legacyPacketExploded = hasExploded;
+        legacyPacketHeat = heat;
+        legacyPacketFeedTank = copyPacketTank(feedTank);
+    }
+
+    private static HbmFluidTank copyPacketTank(HbmFluidTank source) {
+        HbmFluidTank copy = new HbmFluidTank(source.getTankType(), source.getMaxFill());
+        copy.withPressure(source.getPressure());
+        copy.setFill(source.getFill());
+        return copy;
     }
 
     private int maxHeat() {
@@ -477,10 +534,16 @@ public class BoilerBlockEntity extends HbmFluidNetworkBlockEntity implements Hbm
     private void burst(Level level, BlockPos pos) {
         hasExploded = true;
         active = false;
-        heat = 0;
         MultiblockHelper.removeOffsets(level, pos, basicBoilerBurstOffsets());
-        level.explode(null, pos.getX() + 0.5D, pos.getY() + 2.0D, pos.getZ() + 0.5D,
-                5.0F, false, Level.ExplosionInteraction.BLOCK);
+        // TileEntityHeatBoiler deliberately configured ExplosionVNT without a
+        // block allocator or block processor. Only the explicitly listed burst
+        // dummies disappear; the source core survives to publish/render the
+        // boiler_burst state on the following production tick.
+        new ExplosionVnt(level, pos.getX() + 0.5D, pos.getY() + 2.0D, pos.getZ() + 0.5D, 5.0F)
+                .setEntityProcessor(new EntityProcessorStandard().withRangeMod(3.0F))
+                .setPlayerProcessor(new PlayerProcessorStandard())
+                .setSFX(new ExplosionEffectStandard())
+                .explode();
     }
 
     private static List<BlockPos> basicBoilerBurstOffsets() {

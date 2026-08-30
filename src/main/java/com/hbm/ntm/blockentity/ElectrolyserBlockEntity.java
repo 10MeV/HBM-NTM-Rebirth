@@ -88,11 +88,15 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_PROCESS_FLUID_TIME = "processFluidTime";
     private static final String TAG_PROGRESS_ORE = "progressOre";
     private static final String TAG_PROCESS_ORE_TIME = "processOreTime";
+    private static final String TAG_USAGE_FLUID = "usageFluid";
+    private static final String TAG_USAGE_ORE = "usageOre";
     private static final String TAG_LAST_SELECTED_GUI = "lastSelectedGUI";
     private static final String TAG_LEFT_TYPE = "leftType";
     private static final String TAG_LEFT_AMOUNT = "leftAmount";
     private static final String TAG_RIGHT_TYPE = "rightType";
     private static final String TAG_RIGHT_AMOUNT = "rightAmount";
+    private static final String TAG_SYNC_LEFT_PRESENT = "syncLeftPresent";
+    private static final String TAG_SYNC_RIGHT_PRESENT = "syncRightPresent";
     private static final String[] TAG_LEGACY_TANKS = new String[] { "t0", "t1", "t2", "t3" };
     private static final long MAX_POWER = 20_000_000L;
     private static final int TANK_CAPACITY = 16_000;
@@ -137,7 +141,8 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(AccessibleItemHandler::new);
     private int progressFluid;
     private int processFluidTime = 100;
     private int progressOre;
@@ -298,6 +303,82 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
         leftStack = readMaterialStack(data);
         rightStack = readMaterialStack(data);
         lastSelectedGui = data.readInt();
+    }
+
+    /**
+     * Mirrors the runtime fields in TileEntityElectrolyser#serialize for the
+     * normal Forge block-entity update path. The superclass already includes
+     * the four tanks; these are the electrolyser-specific fields after them.
+     */
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        writeClientSyncFields(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readClientSyncFields(tag);
+    }
+
+    private void writeClientSyncFields(CompoundTag tag) {
+        tag.putLong(TAG_LEGACY_POWER, energy.getPower());
+        tag.putInt(TAG_PROGRESS_FLUID, progressFluid);
+        tag.putInt(TAG_PROGRESS_ORE, progressOre);
+        tag.putInt(TAG_USAGE_ORE, usageOre);
+        tag.putInt(TAG_USAGE_FLUID, usageFluid);
+        tag.putInt(TAG_PROCESS_FLUID_TIME, processFluidTime);
+        tag.putInt(TAG_PROCESS_ORE_TIME, processOreTime);
+        tag.putInt(TAG_LAST_SELECTED_GUI, lastSelectedGui);
+        boolean leftPresent = leftStack != null && !leftStack.isEmpty() && leftStack.material != null;
+        tag.putBoolean(TAG_SYNC_LEFT_PRESENT, leftPresent);
+        if (leftPresent) {
+            tag.putInt(TAG_LEFT_TYPE, leftStack.material.id);
+            tag.putInt(TAG_LEFT_AMOUNT, leftStack.amount);
+        }
+        boolean rightPresent = rightStack != null && !rightStack.isEmpty() && rightStack.material != null;
+        tag.putBoolean(TAG_SYNC_RIGHT_PRESENT, rightPresent);
+        if (rightPresent) {
+            tag.putInt(TAG_RIGHT_TYPE, rightStack.material.id);
+            tag.putInt(TAG_RIGHT_AMOUNT, rightStack.amount);
+        }
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        if (tag.contains(TAG_LEGACY_POWER)) {
+            energy.setPower(tag.getLong(TAG_LEGACY_POWER));
+        }
+        if (tag.contains(TAG_PROGRESS_FLUID)) {
+            progressFluid = tag.getInt(TAG_PROGRESS_FLUID);
+        }
+        if (tag.contains(TAG_PROGRESS_ORE)) {
+            progressOre = tag.getInt(TAG_PROGRESS_ORE);
+        }
+        if (tag.contains(TAG_USAGE_ORE)) {
+            usageOre = tag.getInt(TAG_USAGE_ORE);
+        }
+        if (tag.contains(TAG_USAGE_FLUID)) {
+            usageFluid = tag.getInt(TAG_USAGE_FLUID);
+        }
+        if (tag.contains(TAG_PROCESS_FLUID_TIME)) {
+            processFluidTime = tag.getInt(TAG_PROCESS_FLUID_TIME);
+        }
+        if (tag.contains(TAG_PROCESS_ORE_TIME)) {
+            processOreTime = tag.getInt(TAG_PROCESS_ORE_TIME);
+        }
+        if (tag.contains(TAG_LAST_SELECTED_GUI)) {
+            lastSelectedGui = tag.getInt(TAG_LAST_SELECTED_GUI);
+        }
+        if (tag.contains(TAG_SYNC_LEFT_PRESENT)) {
+            leftStack = tag.getBoolean(TAG_SYNC_LEFT_PRESENT)
+                    ? readMaterialStack(tag, TAG_LEFT_TYPE, TAG_LEFT_AMOUNT) : null;
+        }
+        if (tag.contains(TAG_SYNC_RIGHT_PRESENT)) {
+            rightStack = tag.getBoolean(TAG_SYNC_RIGHT_PRESENT)
+                    ? readMaterialStack(tag, TAG_RIGHT_TYPE, TAG_RIGHT_AMOUNT) : null;
+        }
     }
 
     private static void writeMaterialStack(FriendlyByteBuf data, @Nullable MaterialStack stack) {
@@ -813,13 +894,14 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItemHandler.invalidate();
         itemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? internalItemHandler.cast() : itemHandler.cast();
         }
         return super.getCapability(capability, side);
     }

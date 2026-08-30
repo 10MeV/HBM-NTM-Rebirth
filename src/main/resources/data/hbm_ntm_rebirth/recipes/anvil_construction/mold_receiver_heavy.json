@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:mold_base" }, "count": 1 },
+    { "ingredient": { "tag": "forge:ingots/steel" }, "count": 4, "legacy_ore": "ingotSteel" }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:mold", "nbt": "{mold:25}" },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

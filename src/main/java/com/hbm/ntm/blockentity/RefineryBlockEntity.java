@@ -522,8 +522,7 @@ public class RefineryBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public LegacyLookOverlay getLookOverlay(Level level, Player player, BlockPos viewedPos) {
-        if (player == null || !player.getMainHandItem().is(ModItems.BLOWTORCH.get())
-                || !isDamagedForFluidRepair()) {
+        if (!isDamagedForFluidRepair()) {
             return null;
         }
         return LegacyLookOverlay.forBlock(this, LegacyLookOverlayLines.repairMaterials(getFluidRepairMaterials()));

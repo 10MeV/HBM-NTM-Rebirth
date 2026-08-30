@@ -50,18 +50,18 @@ public class MassStorageScreen extends AbstractContainerScreen<MassStorageMenu> 
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
-        if (isHovering(96, 16, 18, 90, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 96, topPos + 16, 18, 90)) {
             String percent = (((int) (menu.stockpile() * 1000D / (double) menu.capacity())) / 10D) + "%";
             graphics.renderComponentTooltip(font, List.of(
                     Component.literal(String.format(Locale.US, "%,d", menu.stockpile()) + " / "
                             + String.format(Locale.US, "%,d", menu.capacity())),
                     Component.literal(percent)), mouseX, mouseY);
         }
-        if (isHovering(62, 72, 14, 14, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 62, topPos + 72, 14, 14)) {
             graphics.renderComponentTooltip(font, List.of(Component.literal("Click: Provide one"),
                     Component.literal("Shift-click: Provide stack")), mouseX, mouseY);
         }
-        if (isHovering(80, 72, 14, 14, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 80, topPos + 72, 14, 14)) {
             graphics.renderComponentTooltip(font, List.of(Component.literal("Toggle output")), mouseX, mouseY);
         }
     }
@@ -69,14 +69,14 @@ public class MassStorageScreen extends AbstractContainerScreen<MassStorageMenu> 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean handled = super.mouseClicked(mouseX, mouseY, button);
-        if (isHovering(62, 72, 14, 14, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 62, topPos + 72, 14, 14)) {
             playButtonClick();
             CompoundTag tag = new CompoundTag();
             tag.putBoolean("provide", Screen.hasShiftDown());
             ModMessages.sendToServer(new TileControlPacket(menu.getBlockEntity().getBlockPos(), tag));
             return true;
         }
-        if (isHovering(80, 72, 14, 14, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 80, topPos + 72, 14, 14)) {
             playButtonClick();
             CompoundTag tag = new CompoundTag();
             tag.putBoolean("toggle", false);

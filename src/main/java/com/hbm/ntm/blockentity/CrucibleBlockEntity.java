@@ -95,6 +95,8 @@ public class CrucibleBlockEntity extends BlockEntity
     };
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler =
+            LazyOptional.of(() -> new CrucibleExternalItemHandler(items));
     private final List<MaterialStack> recipeStack = new ArrayList<>();
     private final List<MaterialStack> wasteStack = new ArrayList<>();
 
@@ -122,6 +124,7 @@ public class CrucibleBlockEntity extends BlockEntity
             crucible.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+        crucible.networkPackNT(25);
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, CrucibleBlockEntity crucible) {
@@ -282,15 +285,64 @@ public class CrucibleBlockEntity extends BlockEntity
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? itemHandler : externalItemHandler).cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    /**
+     * {@code TileEntityCrucible#getAccessibleSlotsFromSide} exposed only the
+     * nine visible input slots (legacy indexes 1..9), while the inherited
+     * extraction predicate rejected every sided extraction.  Slot zero is an
+     * internal padding slot retained for the original inventory/NBT layout.
+     */
+    private static final class CrucibleExternalItemHandler implements IItemHandler {
+        private final ItemStackHandler items;
+
+        private CrucibleExternalItemHandler(ItemStackHandler items) {
+            this.items = items;
+        }
+
+        @Override
+        public int getSlots() {
+            return SLOT_INPUT_END - SLOT_INPUT_START;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return valid(slot) ? items.getStackInSlot(SLOT_INPUT_START + slot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return valid(slot) ? items.insertItem(SLOT_INPUT_START + slot, stack, simulate) : stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return valid(slot) ? items.getSlotLimit(SLOT_INPUT_START + slot) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return valid(slot) && items.isItemValid(SLOT_INPUT_START + slot, stack);
+        }
+
+        private boolean valid(int slot) {
+            return slot >= 0 && slot < getSlots();
+        }
     }
 
     @Override

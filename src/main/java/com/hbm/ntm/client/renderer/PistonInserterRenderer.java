@@ -54,7 +54,7 @@ public final class PistonInserterRenderer implements BlockEntityRenderer<PistonI
                 poseStack.translate(0.0D, blockEntity.getInterpolatedExtend(partialTick)
                         / PistonInserterBlockEntity.MAX_EXTEND * 0.9375D, 0.0D);
                 ObjModelLibrary.MACHINE_PISTON_INSERTER.renderPart("Piston",
-                        ObjMachineModels.PISTON_INSERTER_TEXTURE, poseStack, buffer, modelLight, packedOverlay);
+                        ObjMachineModels.PISTON_INSERTER_TEXTURE, poseStack, buffer, packedLight, packedOverlay);
                 renderHeldItem(blockEntity.getSlot(), blockEntity, poseStack, buffer, packedLight);
                 poseStack.popPose();
             }

@@ -95,7 +95,7 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
 
             poseStack.pushPose();
             LegacyPoseRotations.rotateYDegrees(poseStack, (float) yaw);
-            renderModelPart("Pivot", ObjMachineModels.MINING_LASER_PIVOT_TEXTURE, poseStack, buffer, modelLight,
+            renderModelPart("Pivot", ObjMachineModels.MINING_LASER_PIVOT_TEXTURE, poseStack, buffer, packedLight,
                     packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
             poseStack.popPose();
 
@@ -104,7 +104,7 @@ public class MiningLaserRenderer implements BlockEntityRenderer<MiningLaserBlock
             poseStack.translate(0.0D, -1.0D, 0.0D);
             LegacyPoseRotations.rotateXDegrees(poseStack, -((float) pitch + 90.0F));
             poseStack.translate(0.0D, 1.0D, 0.0D);
-            renderModelPart("Laser", ObjMachineModels.MINING_LASER_LASER_TEXTURE, poseStack, buffer, modelLight,
+            renderModelPart("Laser", ObjMachineModels.MINING_LASER_LASER_TEXTURE, poseStack, buffer, packedLight,
                     packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
             poseStack.popPose();
         }

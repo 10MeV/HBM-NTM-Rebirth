@@ -52,6 +52,7 @@ import com.hbm.ntm.block.RedCableBoxBlock;
 import com.hbm.ntm.block.RedCableGaugeBlock;
 import com.hbm.ntm.block.RefineryBlock;
 import com.hbm.ntm.block.SteelScaffoldBlock;
+import com.hbm.ntm.block.SoyuzCapsuleBlock;
 import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.block.WatzEndBlock;
 import com.hbm.ntm.block.ZirnoxReactorBlock;
@@ -276,7 +277,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_RADAR_LARGE, "machines/radar_large");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SATLINK, "machines/satlink");
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_RADAR_SCREEN, "radar_screen",
-                HbmBlockStateProvider::solidifierRotation);
+                HbmBlockStateProvider::radarScreenChunkRotation);
         vendingMachineWithItemRenderer();
         simpleSidedCubeWithItem(ModBlocks.MACHINE_TELEPORTER,
                 "teleporter_bottom",
@@ -346,6 +347,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         existingModelWithItem(ModBlocks.RBMK_LEVER, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_NUMITRON, "rbmk_panel_base");
         existingModelWithItem(ModBlocks.RBMK_TERMINAL, "rbmk_panel_base");
+        simpleCubeWithItem(ModBlocks.DECO_RBMK, "rbmk/rbmk_top");
+        simpleCubeWithItem(ModBlocks.DECO_RBMK_SMOOTH, "rbmk/rbmk_blank_top");
         rbmkColumnWithItem(ModBlocks.RBMK_BLANK, "rbmk_blank");
         rbmkColumnWithItem(ModBlocks.RBMK_MODERATOR, "rbmk_moderator");
         rbmkColumnWithItem(ModBlocks.RBMK_REFLECTOR, "rbmk_reflector");
@@ -370,6 +373,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         rbmkOwnLidColumnWithItem(ModBlocks.RBMK_CONTROL_REASIM_AUTO,
                 "rbmk_control_reasim_auto", "rbmk_control_reasim_auto_bottom");
         graphiteBlockWithItem();
+        simpleBlock(ModBlocks.ORE_BEDROCK_OIL.get(),
+                models().cubeAll("ore_bedrock_oil", modLoc("block/ore_bedrock_oil")));
         frameStateVisibleMachineWithItemRenderer(ModBlocks.MACHINE_ASSEMBLY_MACHINE,
                 HbmBlockStateProvider::assemblyMachineRotation);
         forceFieldWithItem();
@@ -396,7 +401,8 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_BAT9000, "machine_bat9000",
                 HbmBlockStateProvider::bat9000Rotation);
         bigAssTankWithItemRenderer();
-        visibleMachineWithItemRenderer(ModBlocks.MACHINE_FLUIDTANK, "machines/fluidtank");
+        legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_FLUIDTANK, "machine_fluidtank",
+                HbmBlockStateProvider::southZeroRotation);
         hexafluorideTankWithCustomItem(ModBlocks.MACHINE_UF6_TANK, "machine_uf6_tank");
         hexafluorideTankWithCustomItem(ModBlocks.MACHINE_PUF6_TANK, "machine_puf6_tank");
         existingModelWithCustomItemNoRotation(ModBlocks.MACHINE_STORAGE_DRUM, "machine_storage_drum");
@@ -425,6 +431,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         industrialBoilerWithItemRenderer();
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMBUSTION_ENGINE, "machines/combustion_engine");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_DIESEL, "machines/dieselgen");
+        visibleMachineWithItemRenderer(ModBlocks.MACHINE_INDUSTRIAL_GENERATOR, "machines/igen");
         visibleMachineWithItemRenderer(ModBlocks.PUMP_STEAM, "machines/pump");
         visibleMachineWithItemRenderer(ModBlocks.PUMP_ELECTRIC, "machines/pump_electric");
         legacyMachineStaticWithCustomItem(ModBlocks.HEATER_HEATEX, "heater_heatex",
@@ -491,6 +498,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_TOWER_SMALL, "machine_tower_small",
                 HbmBlockStateProvider::noRotation);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_LARGE, "machines/tower_large");
+        hiddenBerBlockWithItem(ModBlocks.FAN);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBOFAN, "machines/turbofan");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBINEGAS, "machines/turbinegas");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_AMMO_PRESS, "machines/ammo_press");
@@ -506,7 +514,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_MINING_LASER, "machine_mining_laser",
                 HbmBlockStateProvider::noRotation);
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_EXCAVATOR, "machine_excavator",
-                HbmBlockStateProvider::eastZeroRotation);
+                HbmBlockStateProvider::southZeroRotation);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_STRAND_CASTER, "machines/strand_caster");
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_WOOD_BURNER, "machine_wood_burner",
                 HbmBlockStateProvider::southZeroRotation);
@@ -962,7 +970,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 .forAllStates(state -> ConfiguredModel.builder()
                         .modelFile(state.getValue(HeatBoilerBlock.VISUAL)
                                 == HeatBoilerBlock.BoilerVisualState.NORMAL ? normal : dynamicMarker)
-                        .rotationY(boilerRotation(state.getValue(HorizontalMachineBlock.FACING)))
+                        .rotationY(southZeroRotation(state.getValue(HorizontalMachineBlock.FACING)))
                         .build());
         customBlockItem(ModBlocks.MACHINE_BOILER);
     }
@@ -1093,6 +1101,23 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         };
     }
 
+    /**
+     * Forge blockstate Y rotations use the opposite 90-degree sign from the
+     * PoseStack/JOML rotation used by the legacy radar-screen BER.  The fixed
+     * shell is chunk baked while its CRT overlay remains in the BER, so the
+     * blockstate numbers must be the inverse of the 1.7.10 metadata yaw table.
+     * Zero and 180 degrees are unchanged, which is why the regression was only
+     * visible in the north/south audit captures.
+     */
+    private static int radarScreenChunkRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 270;
+            case WEST -> 180;
+            case SOUTH -> 90;
+            default -> 0;
+        };
+    }
+
     private static int assemblyMachineRotation(Direction facing) {
         return switch (facing) {
             case SOUTH -> 90;
@@ -1158,15 +1183,6 @@ public class HbmBlockStateProvider extends BlockStateProvider {
 
     private static int noRotation(Direction facing) {
         return 0;
-    }
-
-    private static int boilerRotation(Direction facing) {
-        return switch (facing) {
-            case EAST -> 90;
-            case SOUTH -> 180;
-            case WEST -> 270;
-            default -> 0;
-        };
     }
 
     private static int catalyticRotation(Direction facing) {
@@ -1621,8 +1637,11 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     private void soyuzCapsuleWithItem() {
-        ModelFile model = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/soyuz_capsule"));
-        simpleBlock(ModBlocks.SOYUZ_CAPSULE.get(), model);
+        ModelFile normal = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/soyuz_capsule"));
+        ModelFile rusted = new ModelFile.UncheckedModelFile(new ResourceLocation(HbmNtm.MOD_ID, "block/soyuz_capsule_rusted"));
+        getVariantBuilder(ModBlocks.SOYUZ_CAPSULE.get()).forAllStates(state -> ConfiguredModel.builder()
+                .modelFile(state.getValue(SoyuzCapsuleBlock.RUSTED) ? rusted : normal)
+                .build());
         generatedBlockItem(ModBlocks.SOYUZ_CAPSULE, "item/soyuz_lander");
     }
 

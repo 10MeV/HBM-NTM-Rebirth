@@ -34,10 +34,15 @@ public class ArmorTableScreen extends AbstractContainerScreen<ArmorTableMenu> {
         super(menu, inventory, title);
         imageWidth = 198;
         imageHeight = 222;
-        titleLabelX = 22 + (176 - font.width(title)) / 2;
         titleLabelY = 6;
         inventoryLabelX = 30;
         inventoryLabelY = 128;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        titleLabelX = 22 + (176 - font.width(title)) / 2;
     }
 
     @Override

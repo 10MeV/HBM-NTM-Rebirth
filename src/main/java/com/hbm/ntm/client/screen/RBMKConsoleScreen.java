@@ -7,14 +7,27 @@ import com.hbm.ntm.menu.RBMKConsoleMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.neutron.RBMKConsolePlanner;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import org.joml.Matrix4f;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class RBMKConsoleScreen extends AbstractContainerScreen<RBMKConsoleMenu> {
     private static final ResourceLocation TEXTURE =
@@ -58,6 +71,7 @@ public class RBMKConsoleScreen extends AbstractContainerScreen<RBMKConsoleMenu> 
             }
         }
         renderColumns(graphics, console().columns());
+        renderFluxGraph(graphics);
     }
 
     @Override
@@ -84,6 +98,7 @@ public class RBMKConsoleScreen extends AbstractContainerScreen<RBMKConsoleMenu> 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
+        renderLegacyTooltips(graphics, mouseX, mouseY);
         renderTooltip(graphics, mouseX, mouseY);
     }
 
@@ -284,6 +299,131 @@ public class RBMKConsoleScreen extends AbstractContainerScreen<RBMKConsoleMenu> 
                 graphics.blit(TEXTURE, x, y, 0, 192, CELL, CELL);
             }
         }
+    }
+
+    private void renderFluxGraph(GuiGraphics graphics) {
+        int[] flux = console().fluxBuffer();
+        if (flux.length < 2) {
+            return;
+        }
+        int highest = Integer.MIN_VALUE;
+        int lowest = Integer.MAX_VALUE;
+        for (int value : flux) {
+            highest = Math.max(highest, value);
+            lowest = Math.min(lowest, value);
+        }
+        int range = Math.max(highest - lowest, 1);
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.lineWidth(2.0F);
+        Matrix4f matrix = graphics.pose().last().pose();
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+        buffer.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
+        for (int i = 0; i < flux.length - 1; i++) {
+            float x0 = leftPos + 7.0F + i * 74.0F / flux.length;
+            float y0 = topPos + 127.0F - (flux[i] - lowest) * 24.0F / range;
+            float x1 = leftPos + 7.0F + (i + 1) * 74.0F / flux.length;
+            float y1 = topPos + 127.0F - (flux[i + 1] - lowest) * 24.0F / range;
+            buffer.vertex(matrix, x0, y0, 10.0F).color(0, 255, 0, 255).endVertex();
+            buffer.vertex(matrix, x1, y1, 10.0F).color(0, 255, 0, 255).endVertex();
+        }
+        BufferUploader.drawWithShader(buffer.end());
+        RenderSystem.lineWidth(1.0F);
+    }
+
+    private void renderLegacyTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (mouseX >= leftPos + GRID_X && mouseX < leftPos + GRID_X + GRID_SIZE * CELL
+                && mouseY > topPos + GRID_Y && mouseY <= topPos + GRID_Y + GRID_SIZE * CELL) {
+            int x = (mouseX - leftPos - GRID_X) / CELL;
+            int y = (mouseY - topPos - GRID_Y) / CELL;
+            RBMKConsolePlanner.ColumnSnapshot column = columnAt(console().columns(), y * GRID_SIZE + x);
+            if (column != null && column.type() != null) {
+                List<Component> lines = new ArrayList<>();
+                lines.add(Component.literal(column.type().toString()));
+                RBMKConsolePlanner.FancyStatsPlan stats = RBMKConsolePlanner.fancyStats(column);
+                for (RBMKConsolePlanner.FancyStatLine line : stats.lines()) {
+                    lines.add(fancyStat(line));
+                }
+                graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
+                return;
+            }
+        }
+        if (isHovering(61, 70, 10, 10, mouseX, mouseY)) {
+            graphics.renderTooltip(font, Component.literal("Select all control rods"), mouseX, mouseY);
+            return;
+        }
+        if (isHovering(72, 70, 10, 10, mouseX, mouseY)) {
+            graphics.renderTooltip(font, Component.literal("Deselect all"), mouseX, mouseY);
+            return;
+        }
+        if (isHovering(70, 82, 12, 12, mouseX, mouseY)) {
+            graphics.renderTooltip(font, Component.literal("Cycle steam channel compressor setting"), mouseX, mouseY);
+            return;
+        }
+        ChatFormatting[] colors = {ChatFormatting.RED, ChatFormatting.YELLOW, ChatFormatting.GREEN,
+                ChatFormatting.BLUE, ChatFormatting.LIGHT_PURPLE};
+        for (int color = 0; color < colors.length; color++) {
+            if (isHovering(6 + color * 11, 70, 10, 10, mouseX, mouseY)) {
+                graphics.renderComponentTooltip(font, List.of(
+                        Component.literal("Left click: Select " + colorName(color) + " group").withStyle(colors[color]),
+                        Component.literal("Right click: Assign " + colorName(color) + " group").withStyle(colors[color])),
+                        mouseX, mouseY);
+                return;
+            }
+        }
+        RBMKConsolePlanner.ScreenState[] screens = console().screens();
+        for (int row = 0; row < 3; row++) {
+            for (int column = 0; column < 2; column++) {
+                int id = row * 2 + column;
+                if (isHovering(6 + 40 * column, 8 + 21 * row, 18, 18, mouseX, mouseY)) {
+                    RBMKConsolePlanner.ScreenType type = id < screens.length
+                            ? screens[id].type() : RBMKConsolePlanner.ScreenType.NONE;
+                    graphics.renderTooltip(font, Component.translatableWithFallback(
+                            "rbmk.console." + type.name().toLowerCase(Locale.ROOT),
+                            type.name() + " " + (id + 1)).withStyle(ChatFormatting.YELLOW), mouseX, mouseY);
+                    return;
+                }
+                if (isHovering(24 + 40 * column, 8 + 21 * row, 18, 18, mouseX, mouseY)) {
+                    graphics.renderTooltip(font, Component.translatableWithFallback("rbmk.console.assign",
+                            "Assign selection to screen " + (id + 1), id + 1), mouseX, mouseY);
+                    return;
+                }
+            }
+        }
+    }
+
+    private Component fancyStat(RBMKConsolePlanner.FancyStatLine line) {
+        ChatFormatting style = switch (line.style()) {
+            case YELLOW -> ChatFormatting.YELLOW;
+            case GREEN -> ChatFormatting.GREEN;
+            case DARK_PURPLE -> ChatFormatting.DARK_PURPLE;
+            case DARK_RED -> ChatFormatting.DARK_RED;
+            case RED -> ChatFormatting.RED;
+            case BLUE -> ChatFormatting.BLUE;
+            case WHITE -> ChatFormatting.WHITE;
+        };
+        Component component;
+        if (line.fluidId() != null) {
+            Component fluid = HbmFluids.fromId(line.fluidId()).getDisplayName();
+            if (line.literalFluidLine()) {
+                String value = line.arguments().isEmpty() ? "" : line.arguments().get(0);
+                component = fluid.copy().append(Component.literal(": " + value));
+            } else {
+                component = Component.translatable(line.translationKey(), fluid);
+            }
+        } else {
+            component = Component.translatable(line.translationKey(), line.arguments().toArray());
+        }
+        return component.copy().withStyle(style);
+    }
+
+    private static String colorName(int color) {
+        return switch (color) {
+            case 0 -> "red";
+            case 1 -> "yellow";
+            case 2 -> "green";
+            case 3 -> "blue";
+            default -> "purple";
+        };
     }
 
     private void renderColumnOverlays(GuiGraphics graphics, int x, int y, RBMKConsolePlanner.ColumnSnapshot column) {

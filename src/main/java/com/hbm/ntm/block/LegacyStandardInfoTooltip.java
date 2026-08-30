@@ -6,11 +6,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-final class LegacyStandardInfoTooltip {
+public final class LegacyStandardInfoTooltip {
     private LegacyStandardInfoTooltip() {
     }
 
-    static void append(List<Component> tooltip, String id) {
+    public static void append(List<Component> tooltip, String id) {
         if (Screen.hasShiftDown()) {
             appendDescriptionLines(tooltip, id);
             return;
@@ -21,7 +21,7 @@ final class LegacyStandardInfoTooltip {
                 .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
     }
 
-    static void appendDirectDescription(List<Component> tooltip, String id) {
+    public static void appendDirectDescription(List<Component> tooltip, String id) {
         appendDescriptionLines(tooltip, id);
     }
 

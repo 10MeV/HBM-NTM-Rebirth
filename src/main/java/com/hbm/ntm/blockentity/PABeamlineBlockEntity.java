@@ -92,10 +92,6 @@ public class PABeamlineBlockEntity extends PABlockEntity implements PAParticleUs
     @Override
     protected void loadPa(CompoundTag tag) {
         window = tag.getBoolean(TAG_WINDOW);
-        didPass = tag.getBoolean(TAG_DID_PASS);
-        if (level != null && level.isClientSide && didPass) {
-            light = 2.0F;
-        }
     }
 
     @Override
@@ -107,8 +103,24 @@ public class PABeamlineBlockEntity extends PABlockEntity implements PAParticleUs
     @Override
     protected void savePa(CompoundTag tag) {
         tag.putBoolean(TAG_WINDOW, window);
+    }
+
+    @Override
+    protected void writePaClientSync(CompoundTag tag) {
+        tag.putBoolean(TAG_WINDOW, window);
         tag.putBoolean(TAG_DID_PASS, didPass);
         didPass = false;
+    }
+
+    @Override
+    protected void readPaClientSync(CompoundTag tag) {
+        if (tag.contains(TAG_WINDOW)) {
+            window = tag.getBoolean(TAG_WINDOW);
+        }
+        didPass = tag.getBoolean(TAG_DID_PASS);
+        if (level != null && level.isClientSide && didPass) {
+            light = 2.0F;
+        }
     }
 
     @Override

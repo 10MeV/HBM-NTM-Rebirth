@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -142,8 +143,21 @@ public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implemen
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    /** The legacy paint packet plus the parent pipe's displayed fluid type. */
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        writeClientTypeTag(tag);
+        savePaint(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncTag(tag);
+    }
 
     @Nullable
     @Override
@@ -151,10 +165,23 @@ public class FluidDuctPaintableBlockEntity extends FluidPipeBlockEntity implemen
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncTag(tag);
+        }
+    }
+
     private void refreshPaintModelData() {
         if (level != null && level.isClientSide) {
             requestModelDataUpdate();
             ClientGeometryInvalidationBridge.schedule(worldPosition);
         }
+    }
+
+    private void readClientSyncTag(CompoundTag tag) {
+        readClientTypeTag(tag);
+        loadPaint(tag);
     }
 }

@@ -58,7 +58,6 @@ public final class AchievementHandler {
     public static final ResourceLocation SPACE = new ResourceLocation(HbmNtm.MOD_ID, "space");
     public static final ResourceLocation SCHRAB = new ResourceLocation(HbmNtm.MOD_ID, "schrab");
     public static final ResourceLocation ACIDIZER = new ResourceLocation(HbmNtm.MOD_ID, "acidizer");
-    public static final ResourceLocation CHICAGO_PILE = new ResourceLocation(HbmNtm.MOD_ID, "chicago_pile");
     public static final ResourceLocation SILEX = new ResourceLocation(HbmNtm.MOD_ID, "silex");
     public static final ResourceLocation WATZ = new ResourceLocation(HbmNtm.MOD_ID, "watz");
     public static final ResourceLocation RBMK = new ResourceLocation(HbmNtm.MOD_ID, "rbmk");
@@ -107,7 +106,6 @@ public final class AchievementHandler {
         registerCraftingAchievement(ModItems.legacyItem("mp_warhead_15_nuclear_shark").get(), RED_BALLOONS);
         registerCraftingAchievement(ModItems.legacyItem("mp_warhead_15_boxcar").get(), RED_BALLOONS);
         registerCraftingAchievement(ModBlocks.FUSION_TORUS.get(), FUSION);
-        registerCraftingAchievement(ModItems.legacyItem("billet_pu_mix").get(), CHICAGO_PILE);
         registerCraftingAchievement(ModItems.legacyItem("particle_digamma").get(), new ResourceLocation(HbmNtm.MOD_ID, "omega12"));
     }
 

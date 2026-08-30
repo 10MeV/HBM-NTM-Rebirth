@@ -168,8 +168,13 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
 
     @Override
     public void load(CompoundTag tag) {
-        FluidType previous = type;
         super.load(tag);
+        readClientTypeTag(tag);
+    }
+
+    /** Reads the narrow fluid-type snapshot without invoking persistence loading. */
+    protected void readClientTypeTag(CompoundTag tag) {
+        FluidType previous = type;
         type = HbmFluidJsonUtil.readFluidReference(tag.getString(TAG_TYPE));
         if (type == HbmFluids.NONE && tag.contains(TAG_TYPE + "_id")) {
             type = HbmFluids.fromId(tag.getInt(TAG_TYPE + "_id"));
@@ -182,13 +187,20 @@ public class FluidPipeBlockEntity extends BlockEntity implements HbmFluidConnect
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        CompoundTag tag = new CompoundTag();
+        writeClientTypeTag(tag);
+        return tag;
+    }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    protected void writeClientTypeTag(CompoundTag tag) {
+        tag.putString(TAG_TYPE, type.getName());
+        tag.putInt(TAG_TYPE + "_id", type.getId());
     }
 
     @Override

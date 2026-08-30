@@ -30,6 +30,7 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
     private long power;
     private long maxPower;
     private int progress;
+    private int restrictedMode;
     private HbmFluidGuiHelper.TankData inputTank;
     private HbmFluidGuiHelper.TankData outputTank;
 
@@ -72,7 +73,11 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
     }
 
     public int getProgressWidth(int maxWidth) {
-        return progress * maxWidth / 10_000;
+        return (int) Math.ceil(progress * maxWidth / 10_000.0D);
+    }
+
+    public boolean isRestrictedMode() {
+        return restrictedMode != 0;
     }
 
     public int getPowerBarHeight(int maxHeight) {
@@ -182,6 +187,8 @@ public class AssemblyMachineMenu extends AbstractContainerMenu {
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getPower(), () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
         HbmMenuDataSlots.addProgress(this::addDataSlot, () -> blockEntity.getProgress(), value -> progress = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, () -> blockEntity.isRorRestrictedMode() ? 1 : 0,
+                value -> restrictedMode = value);
         inputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getInputTank());
         outputTank = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getOutputTank());
     }

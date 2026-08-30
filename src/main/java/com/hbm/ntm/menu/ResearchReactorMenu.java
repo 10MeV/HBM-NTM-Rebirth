@@ -94,12 +94,12 @@ public class ResearchReactorMenu extends AbstractContainerMenu {
         }
         ItemStack stack = slot.getItem();
         ItemStack original = stack.copy();
-        if (index < MACHINE_SLOT_COUNT) {
-            if (!moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_SLOT_END, true)) {
+        if (index <= MACHINE_SLOT_COUNT) {
+            if (!moveItemStackTo(stack, PLAYER_INVENTORY_START + 1, PLAYER_SLOT_END, true)) {
                 return ItemStack.EMPTY;
             }
         } else if (ResearchReactorFuelRuntime.isFuel(stack)) {
-            if (!HbmInventoryMenuHelper.moveStackToAnyRange(slots, stack, 0, MACHINE_SLOT_COUNT)) {
+            if (!moveItemStackTo(stack, 0, MACHINE_SLOT_COUNT, true)) {
                 return ItemStack.EMPTY;
             }
         } else {

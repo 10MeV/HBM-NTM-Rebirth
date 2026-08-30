@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "A": { "tag": "forge:plates/aluminium" },
+    "B": { "item": "hbm_ntm_rebirth:steel_beam" },
+    "S": { "tag": "forge:ingots/steel" }
+  },
+  "pattern": [ "AAA", " B ", "SSS" ],
+  "result": { "item": "hbm_ntm_rebirth:solar_mirror", "count": 3 },
+  "show_notification": true
+}

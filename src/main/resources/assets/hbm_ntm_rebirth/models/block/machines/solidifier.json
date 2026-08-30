@@ -1,9 +1,11 @@
 {
-  "loader": "forge:obj",
+  "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+  "shade_quads": false,
+  "emissive_ambient": false,
   "model": "hbm_ntm_rebirth:models/block/machines/solidifier.obj",
   "flip_v": true,
   "automatic_culling": false,
-  "render_type": "minecraft:translucent",
+  "render_type": "hbm_ntm_rebirth:legacy_lit_translucent",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/solidifier",
     "default": "hbm_ntm_rebirth:block/machines/solidifier",

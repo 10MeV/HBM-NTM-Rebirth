@@ -121,7 +121,9 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
         // players.  Preserve the server-side false branch as a modern PASS so
         // a held item can receive the interaction.
         if (player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
+            // LaunchTable/CompactLauncher consume client activation first;
+            // only the legacy server sneaking branch returned false.
+            return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof CustomMissileLauncherBlockEntity launcher) {
@@ -297,8 +299,15 @@ public class CustomMissileLauncherBlock extends LegacyXrMultiblockBlock implemen
     }
 
     private static boolean isLaunchTablePlateOffset(Direction facing, BlockPos offset) {
-        boolean xAxisPlate = facing == Direction.EAST || facing == Direction.WEST;
-        return xAxisPlate ? offset.getX() != 0 && offset.getZ() == 0 : offset.getX() == 0 && offset.getZ() != 0;
+        // LaunchTable#onBlockPlacedBy: legacy d=0/2 (modern NORTH/SOUTH)
+        // places ports on the X axis and zero-height plates on the Z axis;
+        // d=1/3 (modern EAST/WEST) swaps those axes.  This predicate also
+        // controls which dummies get the proxy I/O mode, so it must not merely
+        // be visually correct.
+        boolean portsAlongX = facing.getAxis() == Direction.Axis.Z;
+        return portsAlongX
+                ? offset.getX() == 0 && offset.getZ() != 0
+                : offset.getX() != 0 && offset.getZ() == 0;
     }
 
     public enum Kind {

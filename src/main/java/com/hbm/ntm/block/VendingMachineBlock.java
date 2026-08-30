@@ -72,17 +72,14 @@ public class VendingMachineBlock extends LegacyXrMultiblockBlock implements Enti
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
-        }
         ItemStack held = player.getItemInHand(hand);
         if (!held.is(ModItems.COIN_TOKEN.get())) {
             return InteractionResult.PASS;
         }
         if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
-            if (!player.getAbilities().instabuild) {
-                held.shrink(1);
-            }
+            // BlockVendingMachine decrements a token unconditionally; this
+            // deliberately includes creative players in the legacy contract.
+            held.shrink(1);
             BlockPos clickedPos = clickedBlockPos(hit);
             String pool = state.getValue(VARIANT) == 0 ? HbmItemPoolIds.POOL_SODA : HbmItemPoolIds.POOL_SNACKS;
             ItemStack stack = HbmItemPoolRegistry.getStack(serverLevel, pool, Vec3.atCenterOf(clickedPos));

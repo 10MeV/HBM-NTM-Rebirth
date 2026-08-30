@@ -70,14 +70,14 @@ public class ChungusRenderer implements BlockEntityRenderer<ChungusBlockEntity> 
                 poseStack.translate(0.0D, 0.0D, 4.5D);
                 LegacyPoseRotations.rotateXDegrees(poseStack, blockEntity.getLeverAngle());
                 poseStack.translate(0.0D, 0.0D, -4.5D);
-                renderPart(LEVER, poseStack, buffer, modelLight, packedOverlay);
+                renderPart(LEVER, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
 
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 2.5D, 0.0D);
                 LegacyPoseRotations.rotateZDegrees(poseStack, -blockEntity.getRotor(partialTick));
                 poseStack.translate(0.0D, -2.5D, 0.0D);
-                renderPart(BLADES, poseStack, buffer, modelLight, packedOverlay);
+                renderPart(BLADES, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
             }
 

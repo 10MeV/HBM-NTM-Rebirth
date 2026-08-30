@@ -1,6 +1,8 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.multiblock.DummyBlock;
+import com.hbm.ntm.multiblock.MultiblockCoreBlock;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -32,11 +34,21 @@ public class RailDummyBlock extends DummyBlock {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core != null && core.state().getBlock() instanceof MultiblockCoreBlock coreBlock
+                && coreBlock.usesForwardedDummyShape(core.state(), level, core.pos())) {
+            return coreBlock.getMultiblockDummyShape(core.state(), level, core.pos(), pos, context);
+        }
         return RAIL_SHAPE;
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        if (core != null && core.state().getBlock() instanceof MultiblockCoreBlock coreBlock
+                && coreBlock.usesForwardedDummyCollisionShape(core.state(), level, core.pos())) {
+            return coreBlock.getMultiblockDummyCollisionShape(core.state(), level, core.pos(), pos, context);
+        }
         return RAIL_SHAPE;
     }
 }

@@ -33,7 +33,7 @@ public final class CargoTramScreen extends AbstractContainerScreen<CargoTramMenu
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0xFFFFFF, false);
+        graphics.drawString(font, title, 70 - font.width(title) / 2, 6, 0xFFFFFF, false);
         graphics.drawString(font, playerInventoryTitle, 8, inventoryLabelY, 0x404040, false);
     }
 
@@ -41,6 +41,11 @@ public final class CargoTramScreen extends AbstractContainerScreen<CargoTramMenu
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
+        if (isHovering(152, 18, 16, 52, mouseX, mouseY)) {
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 152, topPos + 18, 16, 52,
+                    menu.tram().getPower(), menu.tram().getMaxPower());
+        }
         renderTooltip(graphics, mouseX, mouseY);
     }
 }

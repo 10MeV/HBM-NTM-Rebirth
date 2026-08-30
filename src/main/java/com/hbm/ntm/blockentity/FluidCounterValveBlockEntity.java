@@ -97,8 +97,12 @@ public class FluidCounterValveBlockEntity extends FluidValveBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // Preserve FluidPipeBlockEntity's type snapshot and add the only
+        // counter-specific field used by the legacy look overlay.
+        CompoundTag tag = super.getUpdateTag();
+        tag.putLong(TAG_COUNTER, counter);
+        return tag;
+    }
 
     @Nullable
     @Override

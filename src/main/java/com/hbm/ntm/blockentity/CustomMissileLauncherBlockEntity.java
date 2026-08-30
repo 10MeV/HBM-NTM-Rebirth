@@ -9,6 +9,7 @@ import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.entity.missile.CustomMissileEntity;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
@@ -29,6 +30,8 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
@@ -68,6 +71,10 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
     private static final String TAG_POWER = "power";
     private static final String TAG_SOLID = "solidfuel";
     private static final String TAG_PAD_SIZE = "padSize";
+    private static final String TAG_CLIENT_WARHEAD = "clientWarhead";
+    private static final String TAG_CLIENT_FUSELAGE = "clientFuselage";
+    private static final String TAG_CLIENT_FINS = "clientFins";
+    private static final String TAG_CLIENT_THRUSTER = "clientThruster";
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -573,13 +580,100 @@ public abstract class CustomMissileLauncherBlockEntity extends HbmEnergyAndFluid
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt(TAG_SOLID, solidFuel);
+        tag.putInt(TAG_PAD_SIZE, padSize.ordinal());
+        writeMultipartSnapshot(tag, multipartSnapshot());
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_SOLID)) {
+            solidFuel = Math.max(0, tag.getInt(TAG_SOLID));
+        }
+        if (tag.contains(TAG_PAD_SIZE)) {
+            int ordinal = tag.getInt(TAG_PAD_SIZE);
+            PartSize[] values = PartSize.values();
+            padSize = ordinal >= 0 && ordinal < values.length ? values[ordinal] : defaultPadSize();
+        }
+        clientMultipart = readMultipartSnapshot(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet) {
+        if (packet.getTag() != null) {
+            handleClientSyncTag(packet.getTag());
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityLaunchTable/TileEntityCompactLauncher deliberately omit
+        // inventory and loaded-tile fields from this packet.
+        data.writeLong(energy.getPower());
+        data.writeInt(solidFuel);
+        if (kind() == CustomMissileLauncherBlock.Kind.LAUNCH_TABLE) {
+            data.writeByte(padSize.ordinal());
+        }
+        LegacyFluidTankPacket.write(data, fuelTank());
+        LegacyFluidTankPacket.write(data, oxidizerTank());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        energy.setPower(data.readLong());
+        solidFuel = Math.max(0, data.readInt());
+        if (kind() == CustomMissileLauncherBlock.Kind.LAUNCH_TABLE) {
+            int ordinal = data.readByte();
+            PartSize[] values = PartSize.values();
+            padSize = ordinal >= 0 && ordinal < values.length ? values[ordinal] : defaultPadSize();
+        }
+        LegacyFluidTankPacket.read(data, fuelTank());
+        LegacyFluidTankPacket.read(data, oxidizerTank());
+    }
+
+    private static void writeMultipartSnapshot(CompoundTag tag, MissileMultipartSnapshot multipart) {
+        writeMultipartPart(tag, TAG_CLIENT_WARHEAD, multipart.warhead());
+        writeMultipartPart(tag, TAG_CLIENT_FUSELAGE, multipart.fuselage());
+        writeMultipartPart(tag, TAG_CLIENT_FINS, multipart.fins());
+        writeMultipartPart(tag, TAG_CLIENT_THRUSTER, multipart.thruster());
+    }
+
+    private static void writeMultipartPart(CompoundTag tag, String key, @Nullable net.minecraft.resources.ResourceLocation id) {
+        if (id != null) {
+            tag.putString(key, id.toString());
+        }
+    }
+
+    private static MissileMultipartSnapshot readMultipartSnapshot(CompoundTag tag) {
+        return new MissileMultipartSnapshot(
+                readMultipartPart(tag, TAG_CLIENT_WARHEAD),
+                readMultipartPart(tag, TAG_CLIENT_FUSELAGE),
+                readMultipartPart(tag, TAG_CLIENT_FINS),
+                readMultipartPart(tag, TAG_CLIENT_THRUSTER));
+    }
+
+    @Nullable
+    private static net.minecraft.resources.ResourceLocation readMultipartPart(CompoundTag tag, String key) {
+        return tag.contains(key) ? net.minecraft.resources.ResourceLocation.tryParse(tag.getString(key)) : null;
     }
 
     @Override

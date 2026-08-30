@@ -18,7 +18,7 @@ public class RtgScreen extends AbstractContainerScreen<RtgMenu> {
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 188;
-        titleLabelX = 13;
+        titleLabelX = 60;
         titleLabelY = 7;
         inventoryLabelX = 8;
         inventoryLabelY = imageHeight - 96 + 2;
@@ -40,7 +40,7 @@ public class RtgScreen extends AbstractContainerScreen<RtgMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, titleLabelX, titleLabelY, 0xA6B96E, false);
+        graphics.drawString(font, title, titleLabelX - font.width(title) / 2, titleLabelY, 0xA6B5AE, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -48,16 +48,17 @@ public class RtgScreen extends AbstractContainerScreen<RtgMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(146, 9, 16, 51, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 146, 9, 16, 51)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 146, topPos + 9, 16, 51, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(124, 9, 16, 51, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 124, 9, 16, 51)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(
                     Component.translatableWithFallback("desc.gui.rtg.heat",
-                            "Current heat level: " + menu.getHeat(), menu.getHeat()),
-                    Component.literal(menu.getProduction() + " HE/t")), mouseX, mouseY);
+                            "\u00a7eCurrent heat level: %s", menu.getHeat())), mouseX, mouseY);
         } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 12, topPos + 25, 16, 16)) {
-            LegacyGuiElements.renderTooltip(graphics, font, RtgBlockEntity.acceptedPelletTooltip(), mouseX, mouseY);
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 12, topPos + 25, 16, 16, leftPos - 8, topPos + 52,
+                    RtgBlockEntity.acceptedPelletTooltip());
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

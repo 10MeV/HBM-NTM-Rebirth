@@ -7,6 +7,7 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.block.GasFlareBlock;
+import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidCopiable;
@@ -27,6 +28,8 @@ import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
@@ -39,6 +42,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
@@ -60,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         implements HbmStandardFluidReceiver, HbmLegacyButtonReceiver, MenuProvider {
+    private static final int FLOOR_COUNT = 2 * 2;
     public static final int SLOT_ENERGY_OUTPUT = 0;
     public static final int SLOT_FLUID_INPUT = 1;
     public static final int SLOT_FLUID_OUTPUT = 2;
@@ -121,6 +126,8 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int lastOutput;
     private int speedLevel;
     private int effectLevel;
+    private int tiltBlocksChecked;
+    private int tiltBlocksValid;
     @Nullable
     private String customName;
 
@@ -139,7 +146,9 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
             return;
         }
         HbmEnergyAndFluidBlockEntity.serverTick(level, pos, state, blockEntity);
-        boolean changed = false;
+        // 1.7.10 TileEntityMachineGasFlare#updateEntity checked the standard
+        // 3x3 foundation before consuming fluid every server tick.
+        boolean changed = blockEntity.checkTiltAgainstFoundation(level);
         int oldFill = blockEntity.tank.getFill();
         long oldPower = blockEntity.energy.getPower();
         boolean oldOn = blockEntity.on;
@@ -445,6 +454,78 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
         return true;
     }
 
+    private boolean checkTiltAgainstFoundation(Level level) {
+        if (!HbmCommonConfig.machineGravityEnabled() || getFloorCount() <= 0) {
+            tiltBlocksChecked = 0;
+            tiltBlocksValid = 0;
+            return setTiltedState(level, false);
+        }
+        if ((level.getGameTime() + blockIdentity(worldPosition)) % 20L != 0L) {
+            return false;
+        }
+        boolean changed = false;
+        if (tiltBlocksChecked >= getFloorCount()) {
+            changed = setTiltedState(level, tiltBlocksValid < tiltBlocksChecked * 0.95D);
+            tiltBlocksChecked = 0;
+            tiltBlocksValid = 0;
+        }
+        changed = syncTiltedBlockState(level, isTilted()) || changed;
+
+        BlockPos floor = getFloorPosFromIndex(tiltBlocksChecked);
+        tiltBlocksChecked++;
+        if (isValidStandardFoundation(level, floor)) {
+            tiltBlocksValid++;
+        }
+        return changed;
+    }
+
+    private boolean setTiltedState(Level level, boolean tilted) {
+        if (isTilted() == tilted) {
+            return syncTiltedBlockState(level, tilted);
+        }
+        if (tilted) {
+            level.playSound(null, worldPosition, ModSounds.BLOCK_METAL_IMPACT.get(),
+                    SoundSource.BLOCKS, 3.0F, 1.0F);
+        }
+        setTilted(tilted);
+        setChanged();
+        if (!syncTiltedBlockState(level, tilted)) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+        return true;
+    }
+
+    /**
+     * Preserves TileEntityMachineGasFlare's public 1.7.10 floor sampler.
+     * The four samples are the corners at y-1 of the standard 3x3 footprint.
+     */
+    public int getFloorCount() {
+        return FLOOR_COUNT;
+    }
+
+    public BlockPos getFloorPosFromIndex(int index) {
+        if (index < 0 || index >= FLOOR_COUNT) {
+            throw new IndexOutOfBoundsException("gas flare floor sample " + index);
+        }
+        return new BlockPos(
+                worldPosition.getX() - 1 + (index / 2) * 2,
+                worldPosition.getY() - 1,
+                worldPosition.getZ() - 1 + (index % 2) * 2);
+    }
+
+    private static int blockIdentity(BlockPos pos) {
+        return (pos.getY() + pos.getZ() * 27_644_437) * 27_644_437 + pos.getX();
+    }
+
+    private static boolean isValidStandardFoundation(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.isFaceSturdy(level, pos, Direction.UP)
+                && !state.is(BlockTags.SAND)
+                && !state.is(ModBlocks.legacyBlock("dirt_dead").get())
+                && !state.is(ModBlocks.legacyBlock("dirt_oily").get())
+                && !state.is(ModBlocks.legacyBlock("stone_cracked").get());
+    }
+
     private int maxVent() {
         return BASE_MAX_VENT + BASE_MAX_VENT * speedLevel;
     }
@@ -523,8 +604,37 @@ public class GasFlareBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        // TileEntityMachineGasFlare#serialize included valve/burn state with
+        // its power and gas tank; the extra two counters back the modern UI.
+        tag.putBoolean("isOn", on);
+        tag.putBoolean("doesBurn", burn);
+        tag.putInt("fluidUsed", fluidUsed);
+        tag.putInt("output", lastOutput);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("isOn")) {
+            on = tag.getBoolean("isOn");
+        }
+        if (tag.contains("doesBurn")) {
+            burn = tag.getBoolean("doesBurn");
+        }
+        if (tag.contains("fluidUsed")) {
+            fluidUsed = Math.max(0, tag.getInt("fluidUsed"));
+        }
+        if (tag.contains("output")) {
+            lastOutput = Math.max(0, tag.getInt("output"));
+        }
+    }
 
     @Nullable
     @Override

@@ -56,7 +56,8 @@ public class CustomMissileItemRenderer extends BlockEntityWithoutLevelRenderer {
 
         poseStack.translate(0.5D, 0.5D, 0.5D);
         if (displayContext == ItemDisplayContext.GUI) {
-            LegacyPoseRotations.rotateZDegrees(poseStack, 135.0F);
+            // Same GUI orientation as prebuilt missiles and their individual custom parts.
+            LegacyPoseRotations.rotateZDegrees(poseStack, 45.0F);
             LegacyPoseRotations.rotateXDegrees(poseStack, 215.0F);
             LegacyPoseRotations.rotateYDegrees(poseStack, -((System.currentTimeMillis() / 25L) % 360L));
         } else {

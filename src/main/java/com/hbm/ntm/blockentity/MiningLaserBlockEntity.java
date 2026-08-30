@@ -30,8 +30,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -93,6 +95,7 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_LAST_TARGET_Z = "lastTargetZ";
     private static final String TAG_BEAM = "beam";
     private static final String TAG_BREAK_PROGRESS = "breakProgress";
+    private static final String TAG_REDSTONE_POWERED = "redstonePowered";
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(
             UpgradeType.SPEED, 12,
             UpgradeType.POWER, 12,
@@ -765,6 +768,96 @@ public class MiningLaserBlockEntity extends HbmEnergyAndFluidBlockEntity
         clientBreakProgress = breakProgress;
         upgradeSlotCache.invalidate();
         updateUpgrades();
+    }
+
+    /**
+     * TileEntityMachineMiningLaser#serialize carried its target interpolation
+     * and beam state in addition to the loaded-tile energy/tank state.  The
+     * base update tag only has the latter, which made a newly watched laser
+     * render from its placement defaults until its next binary packet.
+     */
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        writeClientRuntimeState(tag);
+        return tag;
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readClientRuntimeState(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Nullable
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    private void writeClientRuntimeState(CompoundTag tag) {
+        tag.putInt(TAG_TARGET_X, targetX);
+        tag.putInt(TAG_TARGET_Y, targetY);
+        tag.putInt(TAG_TARGET_Z, targetZ);
+        tag.putInt(TAG_LAST_TARGET_X, lastTargetX);
+        tag.putInt(TAG_LAST_TARGET_Y, lastTargetY);
+        tag.putInt(TAG_LAST_TARGET_Z, lastTargetZ);
+        tag.putBoolean(TAG_BEAM, beam);
+        tag.putBoolean(TAG_IS_ON, isOn);
+        tag.putDouble(TAG_BREAK_PROGRESS, breakProgress);
+        tag.putBoolean(TAG_REDSTONE_POWERED, redstonePowered);
+    }
+
+    private void readClientRuntimeState(CompoundTag tag) {
+        if (tag.contains(TAG_TARGET_X)) {
+            targetX = tag.getInt(TAG_TARGET_X);
+        }
+        if (tag.contains(TAG_TARGET_Y)) {
+            targetY = tag.getInt(TAG_TARGET_Y);
+        }
+        if (tag.contains(TAG_TARGET_Z)) {
+            targetZ = tag.getInt(TAG_TARGET_Z);
+        }
+        if (tag.contains(TAG_LAST_TARGET_X)) {
+            lastTargetX = tag.getInt(TAG_LAST_TARGET_X);
+        }
+        if (tag.contains(TAG_LAST_TARGET_Y)) {
+            lastTargetY = tag.getInt(TAG_LAST_TARGET_Y);
+        }
+        if (tag.contains(TAG_LAST_TARGET_Z)) {
+            lastTargetZ = tag.getInt(TAG_LAST_TARGET_Z);
+        }
+        if (tag.contains(TAG_BEAM)) {
+            beam = tag.getBoolean(TAG_BEAM);
+        }
+        if (tag.contains(TAG_IS_ON)) {
+            isOn = tag.getBoolean(TAG_IS_ON);
+        }
+        if (tag.contains(TAG_BREAK_PROGRESS)) {
+            breakProgress = tag.getDouble(TAG_BREAK_PROGRESS);
+            clientBreakProgress = breakProgress;
+        }
+        if (tag.contains(TAG_REDSTONE_POWERED)) {
+            redstonePowered = tag.getBoolean(TAG_REDSTONE_POWERED);
+        }
     }
 
     @Override

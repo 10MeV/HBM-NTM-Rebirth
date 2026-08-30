@@ -6,6 +6,7 @@ import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.sound.LegacySoundPlayer;
+import com.hbm.ntm.util.BufferUtil;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
@@ -15,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -114,6 +116,26 @@ public class TeleporterBlockEntity extends HbmEnergyBlockEntity implements Legac
         setChanged();
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineTeleporter#serialize sends exactly this payload;
+        // unlike the generic LoadedBase machines it has no base-tile prefix.
+        data.writeLong(energy.getPower());
+        BufferUtil.writeIntArray(data, new int[] { targetX, targetY, targetZ, targetDim });
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        energy.setPower(data.readLong());
+        int[] target = BufferUtil.readIntArray(data);
+        if (target.length >= 4) {
+            targetX = target[0];
+            targetY = target[1];
+            targetZ = target[2];
+            targetDim = target[3];
         }
     }
 

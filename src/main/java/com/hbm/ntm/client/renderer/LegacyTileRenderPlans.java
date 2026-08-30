@@ -1459,7 +1459,7 @@ public final class LegacyTileRenderPlans {
         StrandCasterLavaPlan lava = null;
         if (active) {
             plate = new StrandCasterPlatePlan("plate", Math.max(-offset + STRAND_CASTER_PLATE_BASE_Z, 0.0D),
-                    new ClipPlanePlan(0.0D, 0.0D, -1.0D, 0.5D), color, true);
+                    new ClipPlanePlan(0.0D, 0.0D, -1.0D, 0.5D), color, false);
             lava = new StrandCasterLavaPlan("lava_gray", lightmapOnlyFullbrightPlan(),
                     false, color, strandCasterLavaQuad(level));
         }

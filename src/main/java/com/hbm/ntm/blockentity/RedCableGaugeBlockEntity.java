@@ -54,13 +54,18 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
         HbmEnergyNodeBlockEntity.serverTick(level, pos, state, gauge);
         HbmEnergyNode node = gauge.getEnergyNode();
         HbmPowerNet net = node == null ? null : node.getPowerNet();
-        gauge.deltaTick = net == null ? 0L : Math.max(0L, net.getEnergyTracker());
-        gauge.deltaSecond += gauge.deltaTick;
-
-        if (level.getGameTime() % 20L == 0L) {
-            gauge.deltaLastSecond = gauge.deltaSecond;
-            gauge.deltaSecond = 0L;
-            gauge.setChanged();
+        // BlockCableGauge.TileEntityCableGauge only touches these counters while
+        // it belongs to a power network.  It also closes a 20-tick window before
+        // adding the tick on the boundary, so the first new sample becomes part
+        // of the next displayed second.
+        if (net != null) {
+            gauge.deltaTick = Math.max(0L, net.getEnergyTracker());
+            if (level.getGameTime() % 20L == 0L) {
+                gauge.deltaLastSecond = gauge.deltaSecond;
+                gauge.deltaSecond = 0L;
+                gauge.setChanged();
+            }
+            gauge.deltaSecond += gauge.deltaTick;
         }
         gauge.networkPackNT(25);
     }
@@ -98,8 +103,12 @@ public class RedCableGaugeBlockEntity extends HbmEnergyNodeBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // BlockCableGauge#serialize sends precisely the two displayed rates.
+        CompoundTag tag = new CompoundTag();
+        tag.putLong(TAG_DELTA_TICK, deltaTick);
+        tag.putLong(TAG_DELTA_LAST_SECOND, deltaLastSecond);
+        return tag;
+    }
 
     @Nullable
     @Override

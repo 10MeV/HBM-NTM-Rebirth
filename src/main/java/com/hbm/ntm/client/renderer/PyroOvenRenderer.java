@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
@@ -71,6 +72,10 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
         LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(pyroOven)) {
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                renderModelPart(model, "Oven", definition.textureLocation(), poseStack, buffer,
+                        modelLight, packedOverlay);
+            }
             double sliderX = LegacyObjTransforms.softPeakSine(
                     anim * LegacyTileRenderPlans.PYRO_OVEN_SLIDER_ANIM_SCALE)
                     * LegacyTileRenderPlans.PYRO_OVEN_SLIDER_TRAVEL_SCALE
@@ -78,11 +83,11 @@ public class PyroOvenRenderer implements BlockEntityRenderer<PyroOvenBlockEntity
             double fanAngle = anim * LegacyTileRenderPlans.PYRO_OVEN_FAN_ROTATION_SCALE % 360.0D;
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(pyroOven)) {
                 renderTranslatedPart(model, "Slider", definition.textureLocation(), sliderX, 0.0D, 0.0D,
-                        poseStack, buffer, modelLight, packedOverlay);
+                        poseStack, buffer, packedLight, packedOverlay);
                 renderRotatingYPart(model, "Fan", definition.textureLocation(),
                         LegacyTileRenderPlans.PYRO_OVEN_FAN_PIVOT_X,
                         LegacyTileRenderPlans.PYRO_OVEN_FAN_PIVOT_Z,
-                        fanAngle, poseStack, buffer, modelLight, packedOverlay);
+                        fanAngle, poseStack, buffer, packedLight, packedOverlay);
             }
         }
 

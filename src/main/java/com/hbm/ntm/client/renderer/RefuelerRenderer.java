@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -24,6 +25,8 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
             MODEL.prepareRenderOnlyInCallOrder("Fueler");
     private static final LegacyWavefrontModel.SelectionHandle FLUID =
             MODEL.prepareRenderOnlyInCallOrder("Fluid");
+    private static final ResourceLocation WHITE_TEXTURE =
+            new ResourceLocation("minecraft", "textures/misc/white.png");
     private static final int FLUID_ALPHA = 191;
 
     public RefuelerRenderer(BlockEntityRendererProvider.Context context) {
@@ -64,7 +67,7 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
                         packedOverlay, FUELER);
             }
             if (visibleFluid) {
-                enqueueFluid(refueler, partialTick, poseStack, buffer);
+                enqueueFluid(refueler, partialTick, poseStack, buffer, packedLight, packedOverlay);
             }
         }
         poseStack.popPose();
@@ -92,7 +95,7 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
     }
 
     private static void enqueueFluid(RefuelerBlockEntity refueler, float partialTick, PoseStack poseStack,
-            MultiBufferSource buffer) {
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         double fillLevel = Math.max(0.0D, Math.min(1.0D, refueler.getInterpolatedFillLevel(partialTick)));
         if (fillLevel <= 1.0E-5D) {
             return;
@@ -102,11 +105,11 @@ public class RefuelerRenderer implements BlockEntityRenderer<RefuelerBlockEntity
         double clipD = LegacyTileRenderPlans.REFUELER_FLUID_CLIP_D + translateY;
         poseStack.pushPose();
         poseStack.translate(0.0D, translateY, 0.0D);
-        LegacyMachineEffectPresenter.enqueueUntexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
-                poseStack, buffer, parts -> parts.addClipped(MODEL, FLUID,
-                        red(color), green(color), blue(color), FLUID_ALPHA,
-                        LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
-                        0.0D, 1.0D, 0.0D, clipD));
+        LegacyMachineEffectPresenter.enqueue(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+                replay -> MODEL.renderPartClipped("Fluid", WHITE_TEXTURE, replay, buffer,
+                        packedLight, packedOverlay, red(color), green(color), blue(color), FLUID_ALPHA,
+                        false, LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE,
+                        LegacyWavefrontModel.UvTransform.DEFAULT, 0.0D, 1.0D, 0.0D, clipD));
         poseStack.popPose();
     }
 

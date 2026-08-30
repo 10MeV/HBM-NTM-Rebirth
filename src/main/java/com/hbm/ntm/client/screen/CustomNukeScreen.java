@@ -80,35 +80,50 @@ public class CustomNukeScreen extends AbstractContainerScreen<CustomNukeMenu> {
             lines = List.of(
                     line("Conventional Explosives", stats.tnt(), Math.min(stats.tnt(), CustomNukeExplosion.MAX_TNT), ChatFormatting.YELLOW),
                     Component.literal("Caps at " + CustomNukeExplosion.MAX_TNT),
-                    Component.literal("N2-like above level 75"),
+                    Component.literal("N²-like above level 75"),
                     Component.literal("\"Goes boom\"").withStyle(ChatFormatting.ITALIC));
         } else if (inside(localX, 34)) {
             lines = List.of(
                     line("Nuclear", stats.nuke(), stats.adjustedNuke(), ChatFormatting.YELLOW),
                     Component.literal("Requires TNT level 16"),
                     Component.literal("Caps at " + CustomNukeExplosion.MAX_NUKE),
-                    Component.literal("Has fallout"));
+                    Component.literal("Has fallout"),
+                    Component.literal("\"Now I am become death, destroyer of worlds.\"")
+                            .withStyle(ChatFormatting.ITALIC));
         } else if (inside(localX, 52)) {
             lines = List.of(
                     line("Thermonuclear", stats.hydro(), stats.adjustedHydro(), ChatFormatting.YELLOW),
                     Component.literal("Requires nuclear level 100"),
                     Component.literal("Caps at " + CustomNukeExplosion.MAX_HYDRO),
-                    Component.literal("Salted fallout contribution is reduced by 75%"));
+                    Component.literal("Reduces added fallout by salted stage by 75%"),
+                    Component.literal("\"And for my next trick, I'll make")
+                            .withStyle(ChatFormatting.ITALIC),
+                    Component.literal("the island of Elugelab disappear!\"")
+                            .withStyle(ChatFormatting.ITALIC));
         } else if (inside(localX, 70)) {
             lines = List.of(
                     line("Antimatter", stats.amat(), stats.adjustedAmat(), ChatFormatting.YELLOW),
                     Component.literal("Requires nuclear level 50"),
-                    Component.literal("Caps at " + CustomNukeExplosion.MAX_AMAT));
+                    Component.literal("Caps at " + CustomNukeExplosion.MAX_AMAT),
+                    Component.literal("\"Antimatter, Balefire, whatever.\"")
+                            .withStyle(ChatFormatting.ITALIC));
         } else if (inside(localX, 88)) {
             lines = List.of(
                     line("Salted", stats.dirty(), Math.min(stats.dirty(), 100.0F), ChatFormatting.YELLOW),
-                    Component.literal("Extends nuclear and thermonuclear fallout"),
-                    Component.literal("Caps at 100"));
+                    Component.literal("Extends fallout of nuclear and"),
+                    Component.literal("thermonuclear stages"),
+                    Component.literal("Caps at 100"),
+                    Component.literal("\"Not to be confused with tablesalt.\"")
+                            .withStyle(ChatFormatting.ITALIC));
         } else if (inside(localX, 106)) {
             lines = List.of(
                     line("Schrabidium", stats.schrab(), stats.adjustedSchrab(), ChatFormatting.YELLOW),
                     Component.literal("Requires nuclear level 50"),
-                    Component.literal("Caps at " + CustomNukeExplosion.MAX_SCHRAB));
+                    Component.literal("Caps at " + CustomNukeExplosion.MAX_SCHRAB),
+                    Component.literal("\"For the hundredth time,")
+                            .withStyle(ChatFormatting.ITALIC),
+                    Component.literal("you can't bypass these caps!\"")
+                            .withStyle(ChatFormatting.ITALIC));
         } else if (inside(localX, 142)) {
             lines = List.of(
                     Component.literal("Ice cream (Level unknown)").withStyle(ChatFormatting.YELLOW),
@@ -116,7 +131,7 @@ public class CustomNukeScreen extends AbstractContainerScreen<CustomNukeMenu> {
         }
 
         if (lines != null) {
-            graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
+            LegacyGuiElements.renderTooltip(graphics, font, lines, mouseX, mouseY);
         }
     }
 
@@ -129,10 +144,7 @@ public class CustomNukeScreen extends AbstractContainerScreen<CustomNukeMenu> {
     }
 
     private static String fmt(float value) {
-        if (Math.abs(value - Math.round(value)) < 0.05F) {
-            return Integer.toString(Math.round(value));
-        }
-        return String.format(java.util.Locale.ROOT, "%.1f", value);
+        return Float.toString(value);
     }
 
     private void blitIcon(GuiGraphics graphics, int x, int y, int v) {

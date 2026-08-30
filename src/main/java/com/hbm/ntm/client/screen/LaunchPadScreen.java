@@ -45,9 +45,11 @@ public class LaunchPadScreen extends AbstractContainerScreen<LaunchPadMenu> {
         if (power > 0) {
             graphics.blit(TEXTURE, leftPos + 107, topPos + 88 - power, 176, 52 - power, 16, power);
         }
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 125, topPos + 36,
+        // LegacyFluidGuiRenderer takes a bottom edge, matching the old
+        // GUILaunchPadLarge renderTank(..., guiTop + 88, ..., 52) calls.
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 125, topPos + 88,
                 16, 52, menu.getFuelTankData());
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 143, topPos + 36,
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 143, topPos + 88,
                 16, 52, menu.getOxidizerTankData());
 
         ItemStack missile = menu.getMissileStack();

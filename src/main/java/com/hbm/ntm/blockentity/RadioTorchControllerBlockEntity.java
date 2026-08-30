@@ -2,7 +2,6 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayLines;
-import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RTTYControllerState;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
@@ -36,7 +35,10 @@ public class RadioTorchControllerBlockEntity extends RadioTorchBlockEntity {
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchControllerBlockEntity torch) {
         if (!torch.radio.channel().isEmpty()) {
             BlockEntity attached = torch.attachedBlockEntity(level);
-            if (attached instanceof RORInteractive interactive && ROR.hasFunctionInfo(interactive)) {
+            // TileEntityRadioTorchController likewise invokes every
+            // IRORInteractive endpoint. Its legacy GUI may list
+            // getFunctionInfo(), but that list does not authorize commands.
+            if (attached instanceof RORInteractive interactive) {
                 RTTYSystem.RTTYChannel channel = RTTYSystem.listen(level, torch.radio.channel());
                 RTTYControllerState.ControllerRunResult result =
                         torch.radio.runFromChannel(interactive, channel, level.getGameTime());
@@ -93,8 +95,18 @@ public class RadioTorchControllerBlockEntity extends RadioTorchBlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // Legacy runtime sync is polling + channel.  "previous" is only the
+        // server-side controller de-duplication cache.
+        CompoundTag tag = new CompoundTag();
+        radio.save(tag);
+        tag.remove("prev");
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        radio.load(tag);
+    }
 
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {

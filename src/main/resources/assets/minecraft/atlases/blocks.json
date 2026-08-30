@@ -190,6 +190,10 @@
                     },
                     {
                         "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/mining_drill"
+                    },
+                    {
+                        "type": "single",
                         "resource": "hbm_ntm_rebirth:models/machines/oilburner"
                     },
                     {
@@ -267,6 +271,10 @@
                     {
                         "type": "single",
                         "resource": "hbm_ntm_rebirth:models/radiolysis"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/zirnox_destroyed"
                     }
                 ]
 }

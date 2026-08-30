@@ -667,10 +667,15 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_mingrade", "Mingrade");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_bscco", "BSCCO");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_neodymium", "Neodymium");
+        addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_schrabidium", "Schrabidium", "SA326");
+        addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_schrabidate", "Schrabidate");
+        addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_tungsten", "Tungsten");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_dineutronium", "Dineutronium");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_magnetized_tungsten", "MagnetizedTungsten");
         addLegacyMaterialAliases("wireDense", "dense_wires", "wire_dense_starmetal", "Starmetal", "Star");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_steel", "Steel");
+        addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_aluminium", "Aluminum", "Aluminium");
+        addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_iron", "Iron");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_copper", "Copper");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_rubber", "Rubber");
         addLegacyMaterialAliases("ntmpipe", "pipes", "pipes_dura_steel", "DuraSteel");
@@ -678,6 +683,8 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
 
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_iron", "Iron");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_iron", "Iron");
+        addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_gold", "Gold");
+        addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_gold", "Gold");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_steel", "Steel");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_steel", "Steel");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_lead", "Lead");
@@ -707,6 +714,10 @@ public class HbmItemTagsProvider extends ItemTagsProvider {
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_osmiridium", "Osmiridium");
         addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_schrabidium", "Schrabidium");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_schrabidium", "Schrabidium");
+        addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_schrabidate", "Schrabidate");
+        addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_schrabidate", "Schrabidate");
+        addLegacyMaterialAliases("plateTriple", "cast_plates", "plate_cast_bismuth", "Bismuth");
+        addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_bismuth", "Bismuth");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_desh", "WorkersAlloy");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_weaponsteel", "WeaponSteel");
         addLegacyMaterialAliases("plateCast", "cast_plates", "plate_cast_saturnite", "Saturnite");

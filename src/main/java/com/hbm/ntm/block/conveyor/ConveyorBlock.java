@@ -4,6 +4,7 @@ import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.api.conveyor.ConveyorMath;
 import com.hbm.ntm.api.conveyor.ConveyorPathType;
 import com.hbm.ntm.api.conveyor.IConveyorBelt;
+import com.hbm.ntm.block.LegacyStandardInfoTooltip;
 import com.hbm.ntm.entity.item.MovingItemEntity;
 import com.hbm.ntm.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -22,10 +24,12 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class ConveyorBlock extends Block implements IConveyorBelt, Toolable {
@@ -45,6 +49,17 @@ public class ConveyorBlock extends Block implements IConveyorBelt, Toolable {
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return stateFromLegacyMetadata(ConveyorMath.legacyMetadataForPlacementYaw(context.getRotation()));
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<net.minecraft.network.chat.Component> tooltip,
+            TooltipFlag flag) {
+        LegacyStandardInfoTooltip.append(tooltip, tooltipId());
+    }
+
+    /** Legacy {@code BlockConveyorBase#addInformation} description key. */
+    protected String tooltipId() {
+        return "conveyor";
     }
 
 
@@ -87,16 +102,6 @@ public class ConveyorBlock extends Block implements IConveyorBelt, Toolable {
         BlockState nextState = nextScrewdriverState(state, metadata, baseMetadata, path, player.isShiftKeyDown());
         level.setBlock(pos, nextState, 3);
         return true;
-    }
-
-    @Override
-    public net.minecraft.world.InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
-            net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
-        if (player.getItemInHand(hand).isEmpty()
-                && onToolUse(level, player, pos, hit.getDirection(), hit.getLocation(), ToolType.SCREWDRIVER)) {
-            return net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide);
-        }
-        return super.use(state, level, pos, player, hand, hit);
     }
 
     @Override

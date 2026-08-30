@@ -1,19 +1,19 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_industrial_turbine"
-    },
-    "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_industrial_turbine",
       "y": 90
     },
-    "facing=south": {
+    "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_industrial_turbine",
-      "y": 270
+      "y": 180
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machine_industrial_turbine"
     },
     "facing=west": {
       "model": "hbm_ntm_rebirth:block/machine_industrial_turbine",
-      "y": 180
+      "y": 270
     }
   }
 }

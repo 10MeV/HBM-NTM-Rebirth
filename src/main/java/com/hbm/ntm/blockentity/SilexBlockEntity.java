@@ -57,6 +57,13 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
     public static final int SLOT_QUEUE_START = 5;
     public static final int SLOT_QUEUE_END = 10;
     public static final int SLOT_COUNT = 11;
+    /**
+     * TileEntitySILEX#getAccessibleSlotsFromSide exposed this same set from every
+     * physical side.  Keep the GUI/internal handler separate: this mapping is
+     * exclusively for directional Forge item capabilities.
+     */
+    private static final int[] EXTERNAL_ITEM_SLOTS = {SLOT_INPUT, SLOT_QUEUE_START, SLOT_QUEUE_START + 1,
+            SLOT_QUEUE_START + 2, SLOT_QUEUE_START + 3, SLOT_QUEUE_START + 4, SLOT_QUEUE_END};
     public static final int CONTROL_VOID = 0;
     public static final int MAX_FILL = 16_000;
     public static final int PROCESS_TIME = 100;
@@ -102,6 +109,7 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> sidedItemHandler = LazyOptional.of(SilexAccessibleItemHandler::new);
 
     private int currentFill;
     private int progress;
@@ -415,14 +423,63 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        sidedItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? itemHandler : sidedItemHandler).cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    /**
+     * Forge has no ISidedInventory equivalent, so this maps its exposed indexes
+     * back to TileEntitySILEX's old physical-side slots.  Slot 0 is input-only;
+     * queue slots 5..10 are output-only.  Identifier, fluid-container and
+     * in-flight output slots deliberately remain internal/Menu-only.
+     */
+    private final class SilexAccessibleItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return EXTERNAL_ITEM_SLOTS.length;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            int mapped = mapExternalSlot(slot);
+            return mapped < 0 ? ItemStack.EMPTY : items.getStackInSlot(mapped);
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            int mapped = mapExternalSlot(slot);
+            return mapped == SLOT_INPUT ? items.insertItem(mapped, stack, simulate) : stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            int mapped = mapExternalSlot(slot);
+            return amount > 0 && mapped >= SLOT_QUEUE_START ? items.extractItem(mapped, amount, simulate)
+                    : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            int mapped = mapExternalSlot(slot);
+            return mapped < 0 ? 0 : items.getSlotLimit(mapped);
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            int mapped = mapExternalSlot(slot);
+            return mapped == SLOT_INPUT && items.isItemValid(mapped, stack);
+        }
+
+        private int mapExternalSlot(int slot) {
+            return slot >= 0 && slot < EXTERNAL_ITEM_SLOTS.length ? EXTERNAL_ITEM_SLOTS[slot] : -1;
+        }
     }
 
     private void loadItems(CompoundTag tag) {

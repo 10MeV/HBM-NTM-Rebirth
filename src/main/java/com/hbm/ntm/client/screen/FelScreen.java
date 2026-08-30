@@ -39,8 +39,8 @@ public class FelScreen extends AbstractContainerScreen<FelMenu> {
         }
         if (menu.isBeamActive()) {
             int color = guiColor(LaserWavelength.byOrdinal(menu.getModeOrdinal()));
-            graphics.fill(leftPos + 113, topPos + 30, leftPos + 136, topPos + 33, 0xFF000000 | color);
-            graphics.fill(0, topPos + 30, leftPos + 5, topPos + 33, 0xFF000000 | color);
+            graphics.fill(leftPos + 113, topPos + 29, leftPos + 135, topPos + 34, 0xFF000000 | color);
+            graphics.fill(0, topPos + 29, leftPos + 4, topPos + 34, 0xFF000000 | color);
         }
     }
 
@@ -53,7 +53,9 @@ public class FelScreen extends AbstractContainerScreen<FelMenu> {
             Component state = menu.isMissingValidSilex()
                     ? Component.literal("ERR.").withStyle(ChatFormatting.RED)
                     : Component.literal("LIVE").withStyle(ChatFormatting.GREEN);
-            graphics.drawString(font, state, 54 + imageWidth / 2 - font.width(title) / 2, 9, 0xFFFFFF, false);
+            int stateOffset = menu.isMissingValidSilex() ? 55 : 54;
+            graphics.drawString(font, state, stateOffset + imageWidth / 2 - font.width(title) / 2,
+                    9, 0xFFFFFF, false);
         }
     }
 
@@ -61,7 +63,7 @@ public class FelScreen extends AbstractContainerScreen<FelMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(182, 27, 16, 113, mouseX, mouseY)) {
+        if (isLegacyHovering(182, 27, 16, 113, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 182, topPos + 27, 16, 113, menu.getPower(), menu.getMaxPower());
         }
@@ -70,12 +72,16 @@ public class FelScreen extends AbstractContainerScreen<FelMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && isHovering(142, 41, 29, 17, mouseX, mouseY)) {
+        if (button == 0 && isLegacyHovering(142, 41, 29, 17, mouseX, mouseY)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity(), 0, FelBlockEntity.CONTROL_POWER);
             LegacyGuiElements.playClickSound();
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private static int guiColor(LaserWavelength wavelength) {

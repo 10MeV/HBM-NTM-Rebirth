@@ -79,7 +79,7 @@ public final class BombConfig {
                 .comment("Legacy 6.05_enableChunkLoading: allows procedural nuclear explosions to keep their work chunks loaded.")
                 .define("enableChunkLoading", true);
         EXPLOSION_ALGORITHM = builder
-                .comment("Legacy 6.06_explosionAlgorithm: 0 legacy, 1 threaded DDA, 2 threaded DDA with damage accumulation. Modern port safely delegates threaded mode to the batched worker.")
+                .comment("Legacy 6.06_explosionAlgorithm: 0 legacy batched, 1 threaded DDA, 2 threaded DDA with damage accumulation. DDA uses main-thread snapshots and block mutation with background ray calculation.")
                 .defineInRange("explosionAlgorithm", 2, 0, 2);
         builder.pop();
     }

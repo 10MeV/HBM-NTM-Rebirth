@@ -105,9 +105,10 @@ public class PneumaticTubeBlock extends BaseEntityBlock implements Toolable {
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (ToolType.getType(player.getItemInHand(hand)) == ToolType.SCREWDRIVER
-                && onToolUse(level, player, pos, hit.getDirection(), hit.getLocation(), ToolType.SCREWDRIVER)) {
-            return InteractionResult.sidedSuccess(level.isClientSide);
+        if (ToolType.getType(player.getItemInHand(hand)) == ToolType.SCREWDRIVER) {
+            // Legacy PneumoTube lets ItemTooling dispatch onScrew after block activation returns false.
+            // Preserve that order so LegacyToolItem owns its shared success hooks and durability cost.
+            return InteractionResult.PASS;
         }
         if (!player.isShiftKeyDown() && level.getBlockEntity(pos) instanceof PneumaticTubeBlockEntity tube
                 && (tube.isCompressor() || tube.isEndpoint())) {

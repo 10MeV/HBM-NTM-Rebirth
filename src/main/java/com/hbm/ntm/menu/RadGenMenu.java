@@ -91,7 +91,7 @@ public class RadGenMenu extends AbstractContainerMenu {
     }
 
     public int getRemainingTicks(int lane) {
-        return hasLaneProgress(lane) ? Math.max(0, maxProgress[lane] - progress[lane]) : 0;
+        return hasLaneProgress(lane) ? maxProgress[lane] - progress[lane] : 0;
     }
 
     public int getRemainingPercent(int lane) {

@@ -84,7 +84,7 @@ public class DfcStabilizerScreen extends AbstractContainerScreen<DfcStabilizerMe
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        LegacyGuiElements.drawCenteredLabel(graphics, font, title, 0, 6, imageWidth, 0x404040);
+        LegacyGuiElements.drawCenteredLabel(graphics, font, title, imageWidth / 2, 6, imageWidth, 0x404040);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 

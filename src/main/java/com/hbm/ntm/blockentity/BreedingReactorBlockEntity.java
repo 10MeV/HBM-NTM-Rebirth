@@ -14,6 +14,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -120,7 +121,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
             return true;
         }
         ItemStack recipeOutput = recipe.output();
-        return ItemStack.isSameItem(output, recipeOutput) && output.getCount() < output.getMaxStackSize();
+        return ItemStack.isSameItemSameTags(output, recipeOutput) && output.getCount() < output.getMaxStackSize();
     }
 
     private void processItem(Level level, BreederRecipe recipe) {
@@ -131,7 +132,7 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
         ItemStack recipeOutput = recipe.output();
         if (output.isEmpty()) {
             items.setStackInSlot(OUTPUT_SLOT, recipeOutput.copy());
-        } else if (ItemStack.isSameItem(output, recipeOutput)) {
+        } else if (ItemStack.isSameItemSameTags(output, recipeOutput)) {
             output.grow(recipeOutput.getCount());
             items.setStackInSlot(OUTPUT_SLOT, output);
         }
@@ -196,12 +197,19 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        CompoundTag tag = new CompoundTag();
+        writeClientSyncFields(tag);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncFields(tag);
     }
 
     @Override
@@ -225,8 +233,28 @@ public class BreedingReactorBlockEntity extends BlockEntity implements MenuProvi
     }
 
     @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncFields(tag);
+        }
+    }
+
+    private void writeClientSyncFields(CompoundTag tag) {
+        writeLegacyLoadedTileClientTag(tag);
+        tag.putInt(TAG_FLUX, flux);
+        tag.putFloat(TAG_PROGRESS, progress);
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_FLUX)) flux = tag.getInt(TAG_FLUX);
+        if (tag.contains(TAG_PROGRESS)) progress = tag.getFloat(TAG_PROGRESS);
+    }
+
+    @Override
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition, worldPosition.offset(1, 3, 1));
+        return new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 4, 2));
     }
 
     @Override

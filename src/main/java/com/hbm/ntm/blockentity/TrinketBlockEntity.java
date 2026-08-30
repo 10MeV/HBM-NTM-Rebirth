@@ -85,8 +85,13 @@ public class TrinketBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncTag(tag);
+    }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
@@ -95,7 +100,7 @@ public class TrinketBlockEntity extends BlockEntity {
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        readClientSyncTag(packet.getTag());
     }
 
     private void setChangedAndSync() {
@@ -103,5 +108,22 @@ public class TrinketBlockEntity extends BlockEntity {
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         }
+    }
+
+    private CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(TrinketVariant.TAG_VARIANT, variant());
+        tag.putInt(TAG_YAW_STEPS, yawSteps());
+        tag.putInt(TAG_SQUISH_TIMER, squishTimer);
+        return tag;
+    }
+
+    private void readClientSyncTag(CompoundTag tag) {
+        if (tag == null) {
+            return;
+        }
+        variant = TrinketVariant.clamp(kind(), tag.getInt(TrinketVariant.TAG_VARIANT));
+        yawSteps = tag.getInt(TAG_YAW_STEPS) & 15;
+        squishTimer = Math.max(0, tag.getInt(TAG_SQUISH_TIMER));
     }
 }

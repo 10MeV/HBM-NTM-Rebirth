@@ -36,16 +36,14 @@ public class DieselGeneratorMenu extends AbstractContainerMenu {
         super(ModMenuTypes.DIESEL_GENERATOR.get(), containerId);
         this.blockEntity = blockEntity;
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
-                DieselGeneratorBlockEntity.SLOT_FLUID_INPUT, 44, 17));
+                DieselGeneratorBlockEntity.SLOT_FLUID_INPUT, 17, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
-                DieselGeneratorBlockEntity.SLOT_FLUID_OUTPUT, 44, 53));
+                DieselGeneratorBlockEntity.SLOT_FLUID_OUTPUT, 17, 53));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
-                DieselGeneratorBlockEntity.SLOT_BATTERY, 116, 53));
+                DieselGeneratorBlockEntity.SLOT_BATTERY, 141, 71));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
-                DieselGeneratorBlockEntity.SLOT_IDENTIFIER, 8, 17));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
-                DieselGeneratorBlockEntity.SLOT_IDENTIFIER_OUTPUT, 8, 53));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
+                DieselGeneratorBlockEntity.SLOT_IDENTIFIER, 35, 71));
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 121, 179);
         addDataSlots();
     }
 
@@ -114,10 +112,7 @@ public class DieselGeneratorMenu extends AbstractContainerMenu {
                 DieselGeneratorBlockEntity.SLOT_FLUID_INPUT + 1, false)) {
             if (!HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack,
                     DieselGeneratorBlockEntity.SLOT_BATTERY,
-                    DieselGeneratorBlockEntity.SLOT_BATTERY + 1, false)
-                    && !HbmInventoryMenuHelper.legacyMergeItemStack(slots, stack,
-                    DieselGeneratorBlockEntity.SLOT_IDENTIFIER_OUTPUT,
-                    DieselGeneratorBlockEntity.SLOT_IDENTIFIER_OUTPUT + 1, false)) {
+                    DieselGeneratorBlockEntity.SLOT_BATTERY + 1, false)) {
                 return ItemStack.EMPTY;
             }
         }

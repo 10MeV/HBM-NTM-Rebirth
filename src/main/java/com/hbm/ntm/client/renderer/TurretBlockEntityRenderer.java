@@ -84,15 +84,15 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
             if (turret instanceof TurretArtyBlockEntity) {
                 renderArtilleryPose(turret, StaticTurretModel.ARTY, yawDegrees(turret, partialTick),
                         pitchDegrees(turret, partialTick), artyBarrelPos((TurretArtyBlockEntity) turret, partialTick),
-                        poseStack, buffer, light, packedOverlay);
+                        poseStack, buffer, light, packedLight, packedOverlay);
             } else if (turret instanceof TurretHimarsBlockEntity himars) {
                 renderHimarsPose(himars, yawDegrees(turret, partialTick), pitchDegrees(turret, partialTick),
-                        partialTick, poseStack, buffer, light, packedOverlay);
+                        partialTick, poseStack, buffer, light, packedLight, packedOverlay);
             } else if (turret instanceof TurretSentryBlockEntity
                     || turret instanceof TurretSentryDamagedBlockEntity) {
                 renderSentryPose(turret, turret instanceof TurretSentryDamagedBlockEntity,
                         sentryYawDegrees(turret, partialTick), pitchDegrees(turret, partialTick), barrelLeftPos(turret, partialTick),
-                        barrelRightPos(turret, partialTick), poseStack, buffer, light, packedOverlay);
+                        barrelRightPos(turret, partialTick), poseStack, buffer, light, packedLight, packedOverlay);
             } else if (turret instanceof TurretHowardBlockEntity
                     || turret instanceof TurretHowardDamagedBlockEntity) {
                 if (turret instanceof TurretHowardBlockEntity) {
@@ -100,11 +100,11 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
                 }
                 renderHowardPose(turret, turret instanceof TurretHowardDamagedBlockEntity, yawDegrees(turret, partialTick),
                         pitchDegrees(turret, partialTick), spinDegrees(turret, partialTick),
-                        poseStack, buffer, light, packedOverlay);
+                        poseStack, buffer, light, packedLight, packedOverlay);
             } else {
                 renderStandardPose(turret, standardModel(turret), yawDegrees(turret, partialTick),
                         pitchDegrees(turret, partialTick), spinDegrees(turret, partialTick),
-                        poseStack, buffer, light, packedOverlay, partialTick);
+                        poseStack, buffer, light, packedLight, packedOverlay, partialTick);
             }
         }
 
@@ -134,15 +134,16 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
     public static void renderStaticModel(StaticTurretModel model, PoseStack poseStack,
             MultiBufferSource buffer, int light, int overlay) {
         if (model == StaticTurretModel.ARTY || model == StaticTurretModel.HIMARS) {
-            renderArtilleryPose(null, model, STATIC_YAW, STATIC_PITCH, 0.0F, poseStack, buffer, light, overlay);
+            renderArtilleryPose(null, model, STATIC_YAW, STATIC_PITCH, 0.0F, poseStack, buffer, light, light, overlay);
         } else if (model == StaticTurretModel.SENTRY || model == StaticTurretModel.SENTRY_DAMAGED) {
             renderSentryPose(null, model == StaticTurretModel.SENTRY_DAMAGED, 0.0F, STATIC_PITCH, 0.0F, 0.0F,
-                    poseStack, buffer, light, overlay);
+                    poseStack, buffer, light, light, overlay);
         } else if (model == StaticTurretModel.HOWARD || model == StaticTurretModel.HOWARD_DAMAGED) {
             renderHowardPose(null, model == StaticTurretModel.HOWARD_DAMAGED, STATIC_YAW, STATIC_PITCH, 0.0F,
-                    poseStack, buffer, light, overlay);
+                    poseStack, buffer, light, light, overlay);
         } else {
-            renderStandardPose(null, model, STATIC_YAW, STATIC_PITCH, 0.0F, poseStack, buffer, light, overlay, 0.0F);
+            renderStandardPose(null, model, STATIC_YAW, STATIC_PITCH, 0.0F,
+                    poseStack, buffer, light, light, overlay, 0.0F);
         }
     }
 
@@ -182,8 +183,8 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
     }
 
     private static void renderStandardPose(TurretBlockEntityBase turret, StaticTurretModel model, float yaw,
-            float pitch, float spin, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay,
-            float partialTick) {
+            float pitch, float spin, PoseStack poseStack, MultiBufferSource buffer, int light, int activityLight,
+            int overlay, float partialTick) {
         if (turret != null) {
             boolean fluid = turret instanceof TurretFritzBlockEntity;
             FluidType type = fluid ? ((TurretFritzBlockEntity) turret).getTank().getTankType() : HbmFluids.NONE;
@@ -195,13 +196,13 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
         LegacyPoseRotations.rotateYDegrees(poseStack, yaw);
         if (model == StaticTurretModel.MAXWELL) {
             renderAnimated(turret, () -> ObjTurretModels.renderHowardCarriage(false,
-                    ObjTurretModels.CARRIAGE_CIWS_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.CARRIAGE_CIWS_TEXTURE, poseStack, buffer, activityLight, overlay));
         } else {
             renderAnimated(turret, () -> ObjTurretModels.renderChekhovCarriage(
                     model == StaticTurretModel.FRIENDLY
                             ? ObjTurretModels.CARRIAGE_FRIENDLY_TEXTURE
                             : ObjTurretModels.CARRIAGE_TEXTURE,
-                    poseStack, buffer, light, overlay));
+                    poseStack, buffer, activityLight, overlay));
         }
 
         poseStack.translate(0.0D, 1.5D, 0.0D);
@@ -210,17 +211,17 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
 
         if (model == StaticTurretModel.JEREMY) {
             renderAnimated(turret, () -> ObjTurretModels.renderJeremyGun(
-                    ObjTurretModels.JEREMY_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.JEREMY_TEXTURE, poseStack, buffer, activityLight, overlay));
         } else if (model == StaticTurretModel.RICHARD) {
             int loaded = turret instanceof TurretRichardBlockEntity richard ? richard.getLoaded() : 1;
             renderAnimated(turret, () -> {
                 ObjTurretModels.renderRichardLauncher(ObjTurretModels.RICHARD_TEXTURE,
-                        poseStack, buffer, light, overlay);
-                renderRichardLoadedMissiles(loaded, poseStack, buffer, light, overlay);
+                        poseStack, buffer, activityLight, overlay);
+                renderRichardLoadedMissiles(loaded, poseStack, buffer, activityLight, overlay);
             });
         } else if (model == StaticTurretModel.TAUON) {
             renderAnimated(turret, () -> ObjTurretModels.renderTauonCannon(
-                    ObjTurretModels.TAUON_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.TAUON_TEXTURE, poseStack, buffer, activityLight, overlay));
             if (turret != null) {
                 renderTauonBeam(turret, poseStack, buffer, partialTick);
             }
@@ -229,26 +230,26 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
             LegacyPoseRotations.rotateXDegrees(poseStack, -spin);
             poseStack.translate(0.0D, -1.375D, 0.0D);
             renderAnimated(turret, () -> ObjTurretModels.renderTauonRotor(
-                    ObjTurretModels.TAUON_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.TAUON_TEXTURE, poseStack, buffer, activityLight, overlay));
             poseStack.popPose();
         } else if (model == StaticTurretModel.MAXWELL) {
             renderAnimated(turret, () -> ObjTurretModels.renderMaxwellMicrowave(
-                    ObjTurretModels.MAXWELL_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.MAXWELL_TEXTURE, poseStack, buffer, activityLight, overlay));
             if (turret != null) {
                 renderMaxwellBeam(turret, poseStack, buffer, partialTick);
             }
         } else if (model == StaticTurretModel.FRITZ) {
             renderAnimated(turret, () -> ObjTurretModels.renderFritzGun(
-                    ObjTurretModels.FRITZ_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.FRITZ_TEXTURE, poseStack, buffer, activityLight, overlay));
         } else {
             renderAnimated(turret, () -> ObjTurretModels.renderChekhovBody(
-                    ObjTurretModels.CHEKHOV_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.CHEKHOV_TEXTURE, poseStack, buffer, activityLight, overlay));
             poseStack.pushPose();
             poseStack.translate(0.0D, 1.5D, 0.0D);
             LegacyPoseRotations.rotateXDegrees(poseStack, -spin);
             poseStack.translate(0.0D, -1.5D, 0.0D);
             renderAnimated(turret, () -> ObjTurretModels.renderChekhovBarrels(
-                    ObjTurretModels.CHEKHOV_BARRELS_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.CHEKHOV_BARRELS_TEXTURE, poseStack, buffer, activityLight, overlay));
             poseStack.popPose();
         }
 
@@ -409,7 +410,7 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
     }
 
     private static void renderHowardPose(TurretBlockEntityBase turret, boolean damaged, float yaw, float pitch, float spin,
-            PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
+            PoseStack poseStack, MultiBufferSource buffer, int light, int activityLight, int overlay) {
         ObjTurretModels.renderChekhovBase(damaged ? ObjTurretModels.BASE_RUSTED_TEXTURE : ObjTurretModels.BASE_TEXTURE,
                 poseStack, buffer, light, overlay);
 
@@ -424,57 +425,58 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
         poseStack.pushPose();
         LegacyPoseRotations.rotateYDegrees(poseStack, yaw);
         renderAnimated(turret, () -> ObjTurretModels.renderHowardCarriage(damaged, carriageTexture,
-                poseStack, buffer, light, overlay));
+                poseStack, buffer, activityLight, overlay));
         poseStack.translate(0.0D, 2.25D, 0.0D);
         LegacyPoseRotations.rotateZDegrees(poseStack, pitch);
         poseStack.translate(0.0D, -2.25D, 0.0D);
         renderAnimated(turret, () -> ObjTurretModels.renderHowardBody(damaged, bodyTexture,
-                poseStack, buffer, light, overlay));
+                poseStack, buffer, activityLight, overlay));
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 2.5D, 0.0D);
         LegacyPoseRotations.rotateXDegrees(poseStack, -spin);
         poseStack.translate(0.0D, -2.5D, 0.0D);
         renderAnimated(turret, () -> ObjTurretModels.renderHowardBarrelsTop(damaged, barrelsTexture,
-                poseStack, buffer, light, overlay));
+                poseStack, buffer, activityLight, overlay));
         poseStack.popPose();
 
         if (damaged) {
             renderAnimated(turret, () -> ObjTurretModels.renderHowardBarrelsBottom(true, barrelsTexture,
-                    poseStack, buffer, light, overlay));
+                    poseStack, buffer, activityLight, overlay));
         } else {
             poseStack.pushPose();
             poseStack.translate(0.0D, 2.0D, 0.0D);
             LegacyPoseRotations.rotateXDegrees(poseStack, spin);
             poseStack.translate(0.0D, -2.0D, 0.0D);
             renderAnimated(turret, () -> ObjTurretModels.renderHowardBarrelsBottom(false, barrelsTexture,
-                    poseStack, buffer, light, overlay));
+                    poseStack, buffer, activityLight, overlay));
             poseStack.popPose();
         }
         poseStack.popPose();
     }
 
     private static void renderSentryPose(TurretBlockEntityBase turret, boolean damaged, float yaw, float pitch,
-            float leftRecoil, float rightRecoil, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
+            float leftRecoil, float rightRecoil, PoseStack poseStack, MultiBufferSource buffer, int light,
+            int activityLight, int overlay) {
         ResourceLocation texture = damaged ? ObjTurretModels.SENTRY_DAMAGED_TEXTURE : ObjTurretModels.SENTRY_TEXTURE;
 
         ObjTurretModels.renderSentryBase(texture, poseStack, buffer, light, overlay);
         poseStack.pushPose();
         LegacyPoseRotations.rotateYDegrees(poseStack, yaw);
         renderAnimated(turret, () -> ObjTurretModels.renderSentryPivot(texture,
-                poseStack, buffer, light, overlay));
+                poseStack, buffer, activityLight, overlay));
         poseStack.translate(0.0D, 1.25D, 0.0D);
         LegacyPoseRotations.rotateXDegrees(poseStack, -pitch);
         poseStack.translate(0.0D, -1.25D, 0.0D);
         renderAnimated(turret, () -> {
-            ObjTurretModels.renderSentryBody(texture, poseStack, buffer, light, overlay);
-            ObjTurretModels.renderSentryDrum(texture, poseStack, buffer, light, overlay);
+            ObjTurretModels.renderSentryBody(texture, poseStack, buffer, activityLight, overlay);
+            ObjTurretModels.renderSentryDrum(texture, poseStack, buffer, activityLight, overlay);
         });
 
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, leftRecoil * -0.5D);
         renderAnimated(turret, () -> ObjTurretModels.renderSentryBarrelL(texture,
-                poseStack, buffer, light, overlay));
+                poseStack, buffer, activityLight, overlay));
         poseStack.popPose();
 
         poseStack.pushPose();
@@ -486,43 +488,44 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
             poseStack.translate(0.0D, 0.0D, rightRecoil * -0.5D);
         }
         renderAnimated(turret, () -> ObjTurretModels.renderSentryBarrelR(texture,
-                poseStack, buffer, light, overlay));
+                poseStack, buffer, activityLight, overlay));
         poseStack.popPose();
         poseStack.popPose();
     }
 
     private static void renderArtilleryPose(TurretBlockEntityBase turret, StaticTurretModel model, float yaw,
-            float pitch, float barrelPos, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
+            float pitch, float barrelPos, PoseStack poseStack, MultiBufferSource buffer, int light,
+            int activityLight, int overlay) {
         ObjTurretModels.renderArtyBase(ObjTurretModels.ARTY_TEXTURE, poseStack, buffer, light, overlay);
         poseStack.pushPose();
         LegacyPoseRotations.rotateYDegrees(poseStack, yaw - 90.0F);
         if (model == StaticTurretModel.ARTY) {
             renderAnimated(turret, () -> ObjTurretModels.renderArtyCarriage(
-                    ObjTurretModels.ARTY_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.ARTY_TEXTURE, poseStack, buffer, activityLight, overlay));
             poseStack.translate(0.0D, 3.0D, 0.0D);
             LegacyPoseRotations.rotateXDegrees(poseStack, pitch);
             poseStack.translate(0.0D, -3.0D, 0.0D);
             renderAnimated(turret, () -> ObjTurretModels.renderArtyCannon(
-                    ObjTurretModels.ARTY_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.ARTY_TEXTURE, poseStack, buffer, activityLight, overlay));
             poseStack.translate(0.0D, 0.0D, barrelPos * 2.5D);
             renderAnimated(turret, () -> ObjTurretModels.renderArtyBarrel(
-                    ObjTurretModels.ARTY_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.ARTY_TEXTURE, poseStack, buffer, activityLight, overlay));
         } else {
             renderAnimated(turret, () -> ObjTurretModels.renderHimarsCarriage(
-                    ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay));
+                    ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, activityLight, overlay));
             poseStack.translate(0.0D, 2.25D, 2.0D);
             LegacyPoseRotations.rotateXDegrees(poseStack, pitch);
             poseStack.translate(0.0D, -2.25D, -2.0D);
             renderAnimated(turret, () -> {
                 ObjTurretModels.renderHimarsLauncher(ObjTurretModels.HIMARS_TEXTURE,
-                        poseStack, buffer, light, overlay);
+                        poseStack, buffer, activityLight, overlay);
                 ObjTurretModels.renderHimarsCrane(ObjTurretModels.HIMARS_TEXTURE,
-                        poseStack, buffer, light, overlay);
+                        poseStack, buffer, activityLight, overlay);
                 ObjTurretModels.renderHimarsTubeStandard(ObjProjectileModels.HIMARS_STANDARD_TEXTURE, poseStack, buffer,
-                        light, overlay);
+                        activityLight, overlay);
                 for (int cap = 1; cap <= 6; cap++) {
                     ObjTurretModels.renderHimarsCapStandard(cap, ObjProjectileModels.HIMARS_STANDARD_TEXTURE,
-                            poseStack, buffer, light, overlay);
+                            poseStack, buffer, activityLight, overlay);
                 }
             });
         }
@@ -530,22 +533,22 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
     }
 
     private static void renderHimarsPose(TurretHimarsBlockEntity turret, float yaw, float pitch, float partialTick,
-            PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
+            PoseStack poseStack, MultiBufferSource buffer, int light, int activityLight, int overlay) {
         ObjTurretModels.renderArtyBase(ObjTurretModels.ARTY_TEXTURE, poseStack, buffer, light, overlay);
         poseStack.pushPose();
         LegacyPoseRotations.rotateYDegrees(poseStack, yaw - 90.0F);
         renderAnimated(turret, () -> ObjTurretModels.renderHimarsCarriage(
-                ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay));
+                ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, activityLight, overlay));
         poseStack.translate(0.0D, 2.25D, 2.0D);
         LegacyPoseRotations.rotateXDegrees(poseStack, pitch);
         poseStack.translate(0.0D, -2.25D, -2.0D);
         renderAnimated(turret, () -> ObjTurretModels.renderHimarsLauncher(
-                ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay));
+                ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, activityLight, overlay));
 
         float crane = Mth.lerp(partialTick, turret.getLastCrane(), turret.getCrane());
         poseStack.translate(0.0D, 0.0D, crane * -5.0D);
         renderAnimated(turret, () -> ObjTurretModels.renderHimarsCrane(
-                ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, light, overlay));
+                ObjTurretModels.HIMARS_TEXTURE, poseStack, buffer, activityLight, overlay));
 
         int typeLoaded = turret.getTypeLoaded();
         List<LegacyArtilleryAmmoCatalog.HimarsRocket> rockets = LegacyArtilleryAmmoCatalog.himarsRockets();
@@ -553,17 +556,20 @@ public class TurretBlockEntityRenderer<T extends TurretBlockEntityBase> implemen
             LegacyArtilleryAmmoCatalog.HimarsRocket rocket = rockets.get(typeLoaded);
             ResourceLocation texture = himarsRocketTexture(rocket);
             if (rocket.modelType() == 0) {
-                renderAnimated(turret, () -> ObjTurretModels.renderHimarsTubeStandard(texture, poseStack, buffer, light, overlay));
+                renderAnimated(turret, () -> ObjTurretModels.renderHimarsTubeStandard(
+                        texture, poseStack, buffer, activityLight, overlay));
                 int loaded = Mth.clamp(turret.getAmmoLoaded(), 0, rocket.amount());
                 for (int i = 0; i < loaded; i++) {
                     int cap = 6 - i;
                     renderAnimated(turret, () -> ObjTurretModels.renderHimarsCapStandard(cap, texture,
-                            poseStack, buffer, light, overlay));
+                            poseStack, buffer, activityLight, overlay));
                 }
             } else if (rocket.modelType() == 1) {
-                renderAnimated(turret, () -> ObjTurretModels.renderHimarsTubeSingle(texture, poseStack, buffer, light, overlay));
+                renderAnimated(turret, () -> ObjTurretModels.renderHimarsTubeSingle(
+                        texture, poseStack, buffer, activityLight, overlay));
                 if (turret.hasAmmo()) {
-                    renderAnimated(turret, () -> ObjTurretModels.renderHimarsCapSingle(texture, poseStack, buffer, light, overlay));
+                    renderAnimated(turret, () -> ObjTurretModels.renderHimarsCapSingle(
+                            texture, poseStack, buffer, activityLight, overlay));
                 }
             }
         }

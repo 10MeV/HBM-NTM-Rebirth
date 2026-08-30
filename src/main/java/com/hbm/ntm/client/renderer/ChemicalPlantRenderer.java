@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ChemicalPlantBlockEntity;
 import com.hbm.ntm.client.obj.LegacyObjTransforms;
@@ -94,15 +93,15 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
                         anim * LegacyTileRenderPlans.CHEMICAL_PLANT_SLIDER_ANIM_SCALE)
                         * LegacyTileRenderPlans.CHEMICAL_PLANT_SLIDER_TRAVEL_SCALE;
                 renderTranslatedPart(model, "Slider", sliderX, 0.0D, 0.0D, texture,
-                        poseStack, buffer, modelLight, packedOverlay);
+                        poseStack, buffer, packedLight, packedOverlay);
                 double spinnerAngle = anim * LegacyTileRenderPlans.CHEMICAL_PLANT_SPINNER_ROTATION_SCALE % 360.0D;
                 renderRotatingYPart(model, "Spinner",
                         LegacyTileRenderPlans.CHEMICAL_PLANT_SPINNER_PIVOT_X, 0.0D,
                         LegacyTileRenderPlans.CHEMICAL_PLANT_SPINNER_PIVOT_Z, spinnerAngle,
-                        texture, poseStack, buffer, modelLight, packedOverlay);
+                        texture, poseStack, buffer, packedLight, packedOverlay);
             }
 
-            renderProcessingFluid(chemicalPlant, model, poseStack, buffer, modelLight, packedOverlay, anim);
+            renderProcessingFluid(chemicalPlant, model, poseStack, buffer, packedLight, packedOverlay, anim);
 
             poseStack.popPose();
         }
@@ -163,9 +162,6 @@ public class ChemicalPlantRenderer implements BlockEntityRenderer<ChemicalPlantB
     private static void renderStaticBaseFrame(LegacyWavefrontModel model, boolean frameVisible,
             ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay) {
-        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-            return;
-        }
         model.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
                 frameVisible ? BASE_FRAME : BASE);
     }

@@ -1,6 +1,8 @@
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
+displayURL="https://github.com/10MeV/HBM-NTM-Rebirth"
+issueTrackerURL="https://github.com/10MeV/HBM-NTM-Rebirth/issues"
 
 [[mods]]
 modId="${mod_id}"
@@ -43,7 +45,7 @@ side="CLIENT"
 [[dependencies."${mod_id}"]]
 modId="oculus"
 mandatory=false
-versionRange="[1.20.1-1.8.0,)"
+versionRange="[1.8.0,)"
 ordering="NONE"
 side="CLIENT"
 

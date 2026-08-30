@@ -163,6 +163,21 @@ public class DfcStabilizerBlockEntity extends HbmEnergyBlockEntity
     }
 
     @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("watts", watts);
+        tag.putInt("beam", beam);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        watts = tag.getInt("watts");
+        beam = tag.getInt("beam");
+    }
+
+    @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         CompoundTag tag = saveWithoutMetadata();
         tag.putInt("beam", beam);
@@ -187,7 +202,7 @@ public class DfcStabilizerBlockEntity extends HbmEnergyBlockEntity
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }

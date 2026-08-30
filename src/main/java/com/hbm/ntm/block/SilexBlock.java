@@ -39,9 +39,18 @@ public class SilexBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
-                && resolveCoreBlockEntity(level, pos) instanceof SilexBlockEntity silex) {
-            NetworkHooks.openScreen(serverPlayer, silex, silex.getBlockPos());
+        if (player.isShiftKeyDown()) {
+            // MachineSILEX#onBlockActivated returns true on the client but false on a sneaking server click.
+            return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        }
+        if (!level.isClientSide) {
+            if (!(resolveCoreBlockEntity(level, pos) instanceof SilexBlockEntity silex)) {
+                // A detached legacy dummy reports false rather than swallowing the click.
+                return InteractionResult.PASS;
+            }
+            if (player instanceof ServerPlayer serverPlayer) {
+                NetworkHooks.openScreen(serverPlayer, silex, silex.getBlockPos());
+            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

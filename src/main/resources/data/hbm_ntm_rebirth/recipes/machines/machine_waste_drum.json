@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": {
+      "item": "minecraft:iron_bars"
+    },
+    "L": {
+      "tag": "forge:ingots/lead"
+    },
+    "R": {
+      "item": "hbm_ntm_rebirth:rod_quad_empty"
+    }
+  },
+  "pattern": [
+    "LRL",
+    "BRB",
+    "LRL"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_waste_drum"
+  },
+  "show_notification": true
+}

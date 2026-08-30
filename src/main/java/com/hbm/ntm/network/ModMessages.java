@@ -42,6 +42,10 @@ import com.hbm.ntm.player.HbmLivingProperties;
 import com.hbm.ntm.player.HbmPlayerProperties;
 import com.hbm.ntm.util.HbmMachinePerformanceCounters;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -93,6 +97,13 @@ public final class ModMessages {
     private static final String EXPECTED_LAST_LEGACY_PACKET_NAME = "MuzzleFlashPacket";
     private static final int LEGACY_PLAYER_INFORM_DEFAULT_MILLIS = 1_000;
     private static final int LIBRARY_FOUNDATION_PROGRESS_PERCENT = 99;
+    /** A C2S control packet never needs a bulk payload; binary sync is S2C-only. */
+    private static final int MAX_C2S_DECODE_BYTES = 32 * 1024;
+    private static final int MAX_C2S_NBT_DEPTH = 16;
+    private static final int MAX_C2S_NBT_NODES = 1_024;
+    private static final int MAX_C2S_NBT_COMPOUND_ENTRIES = 256;
+    private static final int MAX_C2S_NBT_LIST_ENTRIES = 256;
+    private static final int MAX_C2S_NBT_STRING_LENGTH = 4_096;
     private static int packetId;
     private static final AtomicBoolean REGISTERED = new AtomicBoolean();
     private static final List<PacketRegistration> PACKET_REGISTRATIONS = new ArrayList<>();
@@ -3176,6 +3187,10 @@ public final class ModMessages {
             CODEC_DECODES.incrementAndGet();
             int startReadableBytes = buffer.readableBytes();
             try {
+                if ("C2S".equals(direction) && startReadableBytes > MAX_C2S_DECODE_BYTES) {
+                    throw new IllegalArgumentException("C2S payload exceeds " + MAX_C2S_DECODE_BYTES
+                            + " bytes: " + startReadableBytes);
+                }
                 MSG message = decoder.apply(buffer);
                 int remainingBytes = Math.max(0, buffer.readableBytes());
                 int consumedBytes = Math.max(0, startReadableBytes - remainingBytes);
@@ -3208,12 +3223,80 @@ public final class ModMessages {
                 HANDLER_DISPATCHES_C2S.incrementAndGet();
             }
             try {
+                if ("C2S".equals(direction)) {
+                    NetworkEvent.Context context = contextSupplier.get();
+                    ServerPlayer player = context.getSender();
+                    if (!ServerActionRateLimiter.tryAcquire(player, type)) {
+                        HbmNtm.LOGGER.warn("Blocked C2S {} from {} by server action quota.", type.getSimpleName(),
+                                player == null ? "unknown" : player.getGameProfile().getName());
+                        context.setPacketHandled(true);
+                        return;
+                    }
+                    if (!hasSafeC2sNbtPayload(message)) {
+                        HbmNtm.LOGGER.warn("Blocked C2S {} from {} due to unsafe NBT control payload.",
+                                type.getSimpleName(), player.getGameProfile().getName());
+                        context.setPacketHandled(true);
+                        return;
+                    }
+                }
                 handler.accept(message, contextSupplier);
             } catch (RuntimeException | Error exception) {
                 recordHandlerFailure(type, direction, exception);
                 throw exception;
             }
         };
+    }
+
+    /** Validates only C2S control compounds; S2C state snapshots retain their existing contracts. */
+    private static boolean hasSafeC2sNbtPayload(Object message) {
+        CompoundTag data = null;
+        if (message instanceof CoordinateActionPacket packet) {
+            data = packet.data();
+        } else if (message instanceof ItemActionPacket packet) {
+            data = packet.data();
+        } else if (message instanceof ItemControlPacket packet) {
+            data = packet.data();
+        } else if (message instanceof MenuActionPacket packet) {
+            data = packet.data();
+        } else if (message instanceof ServerEntityActionPacket packet) {
+            data = packet.data();
+        } else if (message instanceof ServerTileActionPacket packet) {
+            data = packet.data();
+        } else if (message instanceof TileControlPacket packet) {
+            data = packet.data();
+        } else if (message instanceof TypedMenuActionPacket packet) {
+            data = packet.data();
+        }
+        return data == null || isSafeC2sNbtTag(data, 0, new int[]{0});
+    }
+
+    private static boolean isSafeC2sNbtTag(Tag tag, int depth, int[] nodes) {
+        if (tag == null || depth > MAX_C2S_NBT_DEPTH || ++nodes[0] > MAX_C2S_NBT_NODES) {
+            return false;
+        }
+        if (tag instanceof CompoundTag compound) {
+            if (compound.getAllKeys().size() > MAX_C2S_NBT_COMPOUND_ENTRIES) {
+                return false;
+            }
+            for (String key : compound.getAllKeys()) {
+                if (key.length() > MAX_C2S_NBT_STRING_LENGTH
+                        || !isSafeC2sNbtTag(compound.get(key), depth + 1, nodes)) {
+                    return false;
+                }
+            }
+        } else if (tag instanceof ListTag list) {
+            if (list.size() > MAX_C2S_NBT_LIST_ENTRIES) {
+                return false;
+            }
+            for (Tag child : list) {
+                if (!isSafeC2sNbtTag(child, depth + 1, nodes)) {
+                    return false;
+                }
+            }
+        } else if (tag instanceof StringTag string && string.getAsString().length() > MAX_C2S_NBT_STRING_LENGTH) {
+            return false;
+        }
+        return true;
     }
 
     private static void recordHandlerFailure(Class<?> type, String direction, Throwable exception) {

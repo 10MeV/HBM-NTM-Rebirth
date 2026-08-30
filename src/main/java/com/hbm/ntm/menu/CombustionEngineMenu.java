@@ -95,7 +95,7 @@ public class CombustionEngineMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity, 625.0D);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 128.0D);
     }
 
     @Override

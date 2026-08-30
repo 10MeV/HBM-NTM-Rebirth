@@ -246,8 +246,10 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityTesla#serialize delegates to TileEntityMachineBase first.
+        writeLegacyLoadedTileBinary(data);
         data.writeLong(energy.getPower());
-        data.writeVarInt(targets.size());
+        data.writeShort(targets.size());
         for (TeslaTarget target : targets) {
             data.writeDouble(target.x());
             data.writeDouble(target.y());
@@ -257,9 +259,10 @@ public class TeslaBlockEntity extends HbmEnergyBlockEntity implements HbmLegacyL
 
     @Override
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
         energy.setPower(data.readLong());
         targets.clear();
-        int count = Math.min(data.readVarInt(), Short.MAX_VALUE);
+        int count = Math.max(0, data.readShort());
         for (int i = 0; i < count; i++) {
             targets.add(new TeslaTarget(data.readDouble(), data.readDouble(), data.readDouble()));
         }

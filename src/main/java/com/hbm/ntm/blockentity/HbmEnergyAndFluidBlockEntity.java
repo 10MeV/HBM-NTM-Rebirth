@@ -82,6 +82,26 @@ public abstract class HbmEnergyAndFluidBlockEntity extends HbmFluidNetworkBlockE
         CompatEnergyControl.getEnergyData(this, data);
     }
 
+    /**
+     * The fluid base serializes its tanks for chunk and block-update packets,
+     * but an energy-and-fluid machine also needs its HE store at that same
+     * boundary.  Legacy packet serializers carried both values together.
+     */
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.put(TAG_ENERGY, energy.serializeNBT());
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_ENERGY)) {
+            energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
+        }
+    }
+
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
         return HbmEnergySideMode.BOTH;
     }

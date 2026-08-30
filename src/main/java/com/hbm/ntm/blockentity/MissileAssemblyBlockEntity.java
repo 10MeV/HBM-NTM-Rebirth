@@ -1,12 +1,12 @@
 package com.hbm.ntm.blockentity;
 
-import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.item.missile.CustomMissileItem;
 import com.hbm.ntm.item.missile.CustomMissilePartProfile;
 import com.hbm.ntm.item.missile.MissilePartItem;
 import com.hbm.ntm.menu.MissileAssemblyMenu;
 import com.hbm.ntm.network.HbmClientMissileMultipartReceiver;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.network.MissileMultipartSnapshot;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -17,6 +17,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -40,8 +41,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyButtonReceiver,
-        HbmClientMissileMultipartReceiver {
+        HbmClientMissileMultipartReceiver, HbmTileSyncable {
     private static final String TAG_INVENTORY = "Inventory";
+    private static final String TAG_CLIENT_WARHEAD = "clientWarhead";
+    private static final String TAG_CLIENT_FUSELAGE = "clientFuselage";
+    private static final String TAG_CLIENT_FINS = "clientFins";
+    private static final String TAG_CLIENT_THRUSTER = "clientThruster";
     private static final double MULTIPART_SYNC_RANGE = 250.0D;
 
     public static final int SLOT_CHIP = 0;
@@ -293,6 +298,7 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
     public void setCustomName(String name) {
         customName = name;
         setChanged();
+        syncToClient();
     }
 
     @Nullable
@@ -322,12 +328,43 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        writeMultipartSnapshot(tag, multipartSnapshot());
+        if (customName != null && !customName.isEmpty()) {
+            tag.putString("name", customName);
+        }
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        clientMultipart = readMultipartSnapshot(tag);
+        if (tag.contains("name")) {
+            customName = tag.getString("name");
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
 
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {
         return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection connection,
+            net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket packet) {
+        if (packet.getTag() != null) {
+            handleClientSyncTag(packet.getTag());
+        }
     }
 
     @Override
@@ -346,19 +383,11 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public AABB getRenderBoundingBox() {
-        BlockState state = getBlockState();
-        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
-                ? state.getValue(HorizontalMachineBlock.FACING)
-                : Direction.SOUTH;
-        double centerX = worldPosition.getX() + 0.5D;
-        double centerZ = worldPosition.getZ() + 0.5D;
-        double halfLength = 13.5D;
-        double halfWidth = 4.0D;
-        boolean lengthAlongZ = facing.getAxis() == Direction.Axis.X;
-        double halfX = lengthAlongZ ? halfWidth : halfLength;
-        double halfZ = lengthAlongZ ? halfLength : halfWidth;
-        return new AABB(centerX - halfX, worldPosition.getY() - 1.0D, centerZ - halfZ,
-                centerX + halfX, worldPosition.getY() + 5.0D, centerZ + halfZ);
+        // TileEntityMachineMissileAssembly used TileEntity.INFINITE_EXTENT_AABB.
+        // Its multipart preview and struts have no source-bounded maximum extent,
+        // so a guessed finite box can cull them before the renderer's existing
+        // global 512-block distance guard runs.
+        return LegacyMachineRenderBounds.INFINITE_EXTENT_AABB;
     }
 
     private void syncToClient() {
@@ -372,6 +401,32 @@ public class MissileAssemblyBlockEntity extends BlockEntity implements MenuProvi
                         MULTIPART_SYNC_RANGE);
             }
         }
+    }
+
+    private static void writeMultipartSnapshot(CompoundTag tag, MissileMultipartSnapshot multipart) {
+        writeMultipartPart(tag, TAG_CLIENT_WARHEAD, multipart.warhead());
+        writeMultipartPart(tag, TAG_CLIENT_FUSELAGE, multipart.fuselage());
+        writeMultipartPart(tag, TAG_CLIENT_FINS, multipart.fins());
+        writeMultipartPart(tag, TAG_CLIENT_THRUSTER, multipart.thruster());
+    }
+
+    private static void writeMultipartPart(CompoundTag tag, String key, @Nullable ResourceLocation id) {
+        if (id != null) {
+            tag.putString(key, id.toString());
+        }
+    }
+
+    private static MissileMultipartSnapshot readMultipartSnapshot(CompoundTag tag) {
+        return new MissileMultipartSnapshot(
+                readMultipartPart(tag, TAG_CLIENT_WARHEAD),
+                readMultipartPart(tag, TAG_CLIENT_FUSELAGE),
+                readMultipartPart(tag, TAG_CLIENT_FINS),
+                readMultipartPart(tag, TAG_CLIENT_THRUSTER));
+    }
+
+    @Nullable
+    private static ResourceLocation readMultipartPart(CompoundTag tag, String key) {
+        return tag.contains(key) ? ResourceLocation.tryParse(tag.getString(key)) : null;
     }
 
     /**

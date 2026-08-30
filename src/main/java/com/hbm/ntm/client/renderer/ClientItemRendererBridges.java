@@ -79,6 +79,18 @@ public final class ClientItemRendererBridges {
         LegacyItemRendererBridge.accept(consumer, () -> LegacyLanternItemRenderer.INSTANCE);
     }
 
+    public static void acceptLandmine(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> LandmineItemRenderer.INSTANCE);
+    }
+
+    public static void acceptLegacyDetCord(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> LegacyDetCordItemRenderer.INSTANCE);
+    }
+
+    public static void acceptRbmkPanel(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> RBMKPanelItemRenderer.INSTANCE);
+    }
+
     public static void acceptShimmerWeapon(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> LegacyShimmerWeaponItemRenderer.INSTANCE);
     }
@@ -117,5 +129,9 @@ public final class ClientItemRendererBridges {
 
     public static void acceptVisibleMachine(Consumer<IClientItemExtensions> consumer) {
         LegacyItemRendererBridge.accept(consumer, () -> LegacyVisibleMachineItemRenderer.INSTANCE);
+    }
+
+    public static void acceptFan(Consumer<IClientItemExtensions> consumer) {
+        LegacyItemRendererBridge.accept(consumer, () -> LegacyFanItemRenderer.INSTANCE);
     }
 }

@@ -10,6 +10,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -26,6 +27,8 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.SupportType;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /** 1.7.10 PistonInserter: no menu, only front-face load/eject and rising-edge actuation. */
 public class PistonInserterBlock extends BaseEntityBlock {
@@ -116,9 +119,10 @@ public class PistonInserterBlock extends BaseEntityBlock {
         }
         ItemStack held = player.getItemInHand(hand);
         if (!held.isEmpty() && piston.loadOne(held)) {
-            if (!player.getAbilities().instabuild) {
-                held.shrink(1);
-            }
+            // PistonInserter#onBlockActivated always used decrStackSize on the
+            // selected inventory slot.  It therefore consumed the loaded item
+            // for creative players too; do not introduce a modern exemption.
+            held.shrink(1);
             return InteractionResult.CONSUME;
         }
         return InteractionResult.PASS;
@@ -138,6 +142,14 @@ public class PistonInserterBlock extends BaseEntityBlock {
             SupportType supportType) {
         Direction facing = state.getValue(FACING);
         return side != facing && side != facing.getOpposite();
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<net.minecraft.network.chat.Component> tooltip,
+            TooltipFlag flag) {
+        // Legacy PistonInserter implements ITooltipProvider and calls
+        // addStandardInfo, including its Shift-gated four-line description.
+        LegacyStandardInfoTooltip.append(tooltip, "piston_inserter");
     }
 
     @Override

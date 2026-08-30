@@ -34,6 +34,9 @@ public class KeyForgeBlock extends HorizontalMachineBlock implements EntityBlock
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof KeyForgeBlockEntity keyForge) {
             NetworkHooks.openScreen(serverPlayer, keyForge, pos);

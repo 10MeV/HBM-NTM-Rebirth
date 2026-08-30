@@ -35,6 +35,12 @@ public class MicrowaveScreen extends AbstractContainerScreen<MicrowaveMenu> {
     }
 
     @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
+    }
+
+    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
@@ -47,11 +53,11 @@ public class MicrowaveScreen extends AbstractContainerScreen<MicrowaveMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(43, 25, 18, 18, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 43, topPos + 25, 18, 18)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity(), 0, MicrowaveBlockEntity.CONTROL_SPEED_UP);
             return true;
         }
-        if (isHovering(43, 43, 18, 18, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 43, topPos + 43, 18, 18)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity(), 0, MicrowaveBlockEntity.CONTROL_SPEED_DOWN);
             return true;
         }

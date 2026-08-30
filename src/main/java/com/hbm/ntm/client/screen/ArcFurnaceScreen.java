@@ -3,7 +3,6 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.ArcFurnaceMenu;
 import com.hbm.ntm.network.ModMessages;
-import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -28,7 +27,6 @@ public class ArcFurnaceScreen extends AbstractContainerScreen<ArcFurnaceMenu> {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         if (menu.isLiquidMode()) {
             graphics.blit(TEXTURE, leftPos + 151, topPos + 17, 190, 18, 18, 18);
-            renderLiquid(graphics);
         }
         if (menu.isProgressing()) {
             graphics.blit(TEXTURE, leftPos + 7, topPos + 17, 190, 0, 18, 18);
@@ -41,6 +39,9 @@ public class ArcFurnaceScreen extends AbstractContainerScreen<ArcFurnaceMenu> {
         if (progress > 0) {
             graphics.blit(TEXTURE, leftPos + 17, topPos + 106 - progress, 183, 70 - progress, 7, progress);
         }
+        // The legacy liquid stack is rendered at x=152 with the full 16px column,
+        // regardless of the currently selected input mode.
+        renderLiquid(graphics);
     }
 
     @Override
@@ -53,29 +54,27 @@ public class ArcFurnaceScreen extends AbstractContainerScreen<ArcFurnaceMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(8, 36, 7, 70, mouseX, mouseY)) {
+        if (isLegacyHovering(8, 36, 7, 70, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 8, topPos + 36, 7, 70, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(151, 17, 18, 18, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(
-                    Component.literal(menu.isLiquidMode() ? "Liquid mode" : "Solid mode"),
-                    menu.liquidTooltip(hasShiftDown()).withStyle(menu.getLiquidAmount() > 0
-                            ? ChatFormatting.YELLOW : ChatFormatting.GRAY)), mouseX, mouseY);
-        } else if (isHovering(7, 17, 18, 18, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(
-                    Component.literal(menu.isProgressing() ? "Processing" : "Idle"),
-                    Component.literal("Consumption: " + menu.getConsumption() + " HE/t")), mouseX, mouseY);
+        } else if (isLegacyHovering(152, 36, 16, 70, mouseX, mouseY)) {
+            graphics.renderTooltip(font, menu.liquidTooltip(hasShiftDown()).withStyle(
+                    menu.getLiquidAmount() > 0 ? ChatFormatting.YELLOW : ChatFormatting.RED), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && isHovering(151, 17, 18, 18, mouseX, mouseY)) {
+        if (button == 0 && isLegacyHovering(151, 17, 18, 18, mouseX, mouseY)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0, 0);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private void renderLiquid(GuiGraphics graphics) {
@@ -87,7 +86,9 @@ public class ArcFurnaceScreen extends AbstractContainerScreen<ArcFurnaceMenu> {
         graphics.setColor(((color >> 16) & 255) / 255.0F,
                 ((color >> 8) & 255) / 255.0F,
                 (color & 255) / 255.0F, 1.0F);
-        graphics.blit(TEXTURE, leftPos + 160, topPos + 106 - height, 176, 70 - height, 7, height);
+        graphics.blit(TEXTURE, leftPos + 152, topPos + 106 - height, 208, 70 - height, 16, height);
+        graphics.setColor(1.0F, 1.0F, 1.0F, 0.3F);
+        graphics.blit(TEXTURE, leftPos + 152, topPos + 106 - height, 208, 70 - height, 16, height);
         graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 }

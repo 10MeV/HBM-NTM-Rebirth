@@ -1,19 +1,19 @@
 {
   "variants": {
     "facing=east": {
-      "model": "hbm_ntm_rebirth:block/machine_excavator"
-    },
-    "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_excavator",
       "y": 90
     },
-    "facing=south": {
+    "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_excavator",
-      "y": 270
+      "y": 180
+    },
+    "facing=south": {
+      "model": "hbm_ntm_rebirth:block/machine_excavator"
     },
     "facing=west": {
       "model": "hbm_ntm_rebirth:block/machine_excavator",
-      "y": 180
+      "y": 270
     }
   }
 }

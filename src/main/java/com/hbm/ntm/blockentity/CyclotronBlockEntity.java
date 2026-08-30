@@ -100,7 +100,10 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
                 return CyclotronRecipeRuntime.isValidInput(CyclotronBlockEntity.this.level, stack);
             }
             if (slot == SLOT_BATTERY) {
-                return HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
+                // The legacy container used an ordinary Slot for slot 9.  It
+                // accepted arbitrary manual placement; only chargeTEFromItems
+                // decided whether the stack could actually charge the machine.
+                return true;
             }
             if (slot == SLOT_UPGRADE_0 || slot == SLOT_UPGRADE_1) {
                 return stack.getItem() instanceof ItemMachineUpgrade;
@@ -113,12 +116,6 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
 
-        @Override
-        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return slot >= SLOT_OUTPUT_START && slot < SLOT_OUTPUT_START + 3
-                    ? super.extractItem(slot, amount, simulate)
-                    : ItemStack.EMPTY;
-        }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(CoreItemHandler::new);
     private final LazyOptional<IItemHandler>[] laneItemHandlers;
@@ -164,9 +161,11 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
 
         HbmEnergyUtil.chargeStorageFromItem(cyclotron.items.getStackInSlot(SLOT_BATTERY), cyclotron.energy,
                 cyclotron.energy.getReceiverSpeed());
-        if (level.getGameTime() % 20L == 0L) {
-            HbmEnergyUtil.subscribeReceiverToPorts(level, pos, cyclotron.energyPorts(), cyclotron);
-        }
+        // Legacy updateConnections() visited all eight conductors every server
+        // tick for both the Energy MK2 receiver and the typed WATER receiver.
+        // A 20-tick energy retry delays reconnection after a cable/network
+        // replacement, which the old cyclotron did not do.
+        HbmEnergyUtil.subscribeReceiverToPorts(level, pos, cyclotron.energyPorts(), cyclotron);
 
         LegacyMachineUpgradeManager.Levels upgrades = cyclotron.upgradeLevels();
         if (cyclotron.canProcess(upgrades)) {
@@ -254,7 +253,9 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
             if (existing.isEmpty()) {
                 items.setStackInSlot(outputSlot, output);
             } else {
-                existing.grow(output.getCount());
+                // The legacy filled-output branch is stackSize++, even if a
+                // custom hbmCyclotron.json output stack has a greater count.
+                existing.grow(1);
                 items.setStackInSlot(outputSlot, existing);
             }
             amat().fill(HbmFluids.AMAT, recipe.get().antimatterMb(), 0, false);
@@ -272,8 +273,11 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
         }
         ItemStack existing = items.getStackInSlot(SLOT_OUTPUT_START + lane);
         return existing.isEmpty()
-                || (ItemStack.isSameItemSameTags(existing, output)
-                        && existing.getCount() + output.getCount() <= existing.getMaxStackSize());
+                // TileEntityMachineCyclotron compares only the legacy item and
+                // damage value, then checks stackSize < maxStackSize.  Modern
+                // metadata variants are separate items, so item identity is
+                // the corresponding carrier and NBT is intentionally ignored.
+                || (existing.is(output.getItem()) && existing.getCount() < output.getMaxStackSize());
     }
 
     private void trySendFluids() {

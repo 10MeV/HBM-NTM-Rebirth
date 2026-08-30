@@ -62,8 +62,11 @@ public class FusionTorusRenderer implements BlockEntityRenderer<FusionTorusBlock
 
             poseStack.pushPose();
             LegacyPoseRotations.rotateYDegrees(poseStack, blockEntity.getMagnet(partialTick));
+            // The legacy TESR lit this moving part from the controller position. Keep the
+            // multiblock aggregate reserved for the static shell so the magnet cannot flare
+            // when any remote proxy happens to sit in brighter light.
             ObjFusionModels.renderTorusPart(ObjFusionModels.TORUS_LEGACY, ObjFusionModels.TORUS_TEXTURE,
-                    poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Magnet");
+                    poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Magnet");
             poseStack.popPose();
 
             if (blockEntity.getConnection(0)) {

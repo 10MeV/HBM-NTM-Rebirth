@@ -30,8 +30,8 @@ public class SatelliteDockMenu extends AbstractContainerMenu {
         super(ModMenuTypes.SATELLITE_DOCK.get(), containerId);
         this.blockEntity = blockEntity;
 
-        HbmInventoryMenuHelper.addTakeOnlySlots(this::addSlot, blockEntity.getItems(), 0, 62, 17, 3, 5, 18);
-        addSlot(new SlotItemHandler(blockEntity.getItems(), SatelliteDockBlockEntity.SLOT_CHIP, 26, 35) {
+        HbmInventoryMenuHelper.addTakeOnlySlots(this::addSlot, blockEntity.getItems(), 0, 71, 18, 3, 5, 18);
+        addSlot(new SlotItemHandler(blockEntity.getItems(), SatelliteDockBlockEntity.SLOT_CHIP, 26, 36) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 // ContainerSatDock accepts ItemSatChip and its subclasses, not
@@ -39,7 +39,7 @@ public class SatelliteDockMenu extends AbstractContainerMenu {
                 return stack.getItem() instanceof SatelliteChipItem;
             }
         });
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
     }
 
     public SatelliteDockBlockEntity getBlockEntity() {

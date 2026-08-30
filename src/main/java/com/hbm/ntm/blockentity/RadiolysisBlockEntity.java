@@ -306,6 +306,29 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
     }
 
     @Override
+    public CompoundTag getClientSyncTag() {
+        // The legacy NT packet carries these immediately after the loaded-tile
+        // state.  Include them in the initial chunk/update tag as well so a
+        // newly tracking client does not show the zero-value constructor state
+        // until the next 50-tick legacy packet.
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong(TAG_POWER, power);
+        tag.putInt(TAG_HEAT, heat);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_POWER)) {
+            setPower(tag.getLong(TAG_POWER));
+        }
+        if (tag.contains(TAG_HEAT)) {
+            heat = tag.getInt(TAG_HEAT);
+        }
+    }
+
+    @Override
     public AABB getRenderBoundingBox() {
         return new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 3, 2));
     }

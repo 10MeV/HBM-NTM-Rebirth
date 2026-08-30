@@ -17,7 +17,7 @@ public class StorageDrumScreen extends AbstractContainerScreen<StorageDrumMenu> 
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 234;
-        inventoryLabelY = 141;
+        inventoryLabelY = imageHeight - 96 + 2;
     }
 
     @Override
@@ -39,9 +39,9 @@ public class StorageDrumScreen extends AbstractContainerScreen<StorageDrumMenu> 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(17, 24, 7, 106, mouseX, mouseY)) {
+        if (isHovering(16, 23, 9, 108, mouseX, mouseY)) {
             renderTankTooltip(graphics, menu.getLiquidTank(), mouseX, mouseY);
-        } else if (isHovering(152, 24, 7, 106, mouseX, mouseY)) {
+        } else if (isHovering(151, 23, 9, 108, mouseX, mouseY)) {
             renderTankTooltip(graphics, menu.getGasTank(), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);

@@ -1,7 +1,6 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.CombustionEngineBlockEntity;
-import com.hbm.ntm.fluid.HbmFluidItemTransfer;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,18 +41,12 @@ public class CombustionEngineBlock extends LegacyVisibleMultiblockMachineBlock {
             BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof CombustionEngineBlockEntity engine) {
-            ItemStack held = player.getItemInHand(hand);
-            if (player.isShiftKeyDown()) {
-                var identifier = HbmFluidItemTransfer.setTankTypeFromIdentifierStackReport(
-                        held, engine.getTank(), level, engine.getBlockPos());
-                if (identifier.changed()) {
-                    engine.setChanged();
-                    level.sendBlockUpdated(engine.getBlockPos(), engine.getBlockState(), engine.getBlockState(),
-                            Block.UPDATE_CLIENTS);
-                    return InteractionResult.CONSUME;
-                }
+            // MachineCombustionEngine delegates to BlockDummyable's standard
+            // open behavior: sneaking consumes the interaction but never changes
+            // a tank. The legacy slot-4 identifier remains the sole selector.
+            if (!player.isShiftKeyDown()) {
+                NetworkHooks.openScreen(serverPlayer, engine, engine.getBlockPos());
             }
-            NetworkHooks.openScreen(serverPlayer, engine, engine.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

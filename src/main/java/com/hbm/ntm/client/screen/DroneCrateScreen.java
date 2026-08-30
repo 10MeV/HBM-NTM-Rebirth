@@ -21,6 +21,7 @@ public class DroneCrateScreen extends AbstractContainerScreen<DroneCrateMenu> {
     }
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) { graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false); graphics.drawString(font, playerInventoryTitle, 8, 91, 0x404040, false); }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partial) {
+        renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partial);
         if (isHovering(125, 17, 16, 34, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),

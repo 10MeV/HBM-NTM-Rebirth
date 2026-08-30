@@ -37,18 +37,21 @@ public class ProcessingMachineBlock extends LegacyVisibleMultiblockMachineBlock 
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return usesChunkBakedStaticModel()
-                ? LegacyMachineRenderShapes.chunkBakedStaticOrEntity()
+        return kind == ProcessingMachineBlockEntity.Kind.CENTRIFUGE
+                ? RenderShape.ENTITYBLOCK_ANIMATED
                 : super.getRenderShape(state);
     }
 
     public boolean usesChunkBakedStaticModel() {
-        return kind == ProcessingMachineBlockEntity.Kind.CENTRIFUGE;
+        return false;
     }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof ProcessingMachineBlockEntity machine) {
             NetworkHooks.openScreen(serverPlayer, machine, machine.getBlockPos());

@@ -21,6 +21,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -334,16 +335,52 @@ public class RadGenBlockEntity extends BlockEntity
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-}
+    }
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        // TileEntityMachineRadGen#serialize sends the loaded-tile state,
+        // queue progress, energy and on/off renderer state.  A chunk tag must
+        // carry the same client-visible subset; returning an empty tag used to
+        // make handleClientSyncTag load a blank persistent state on tracking.
+        CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
+        tag.put(TAG_ENERGY, energy.serializeNBT());
+        tag.putIntArray(TAG_PROGRESS, progress);
+        tag.putIntArray(TAG_MAX_PROGRESS, maxProgress);
+        tag.putIntArray(TAG_PRODUCTION, production);
+        tag.putBoolean(TAG_IS_ON, isOn);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        if (tag == null || tag.isEmpty()) {
+            return;
+        }
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_ENERGY)) {
+            energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
+        } else if (tag.contains(TAG_LEGACY_POWER)) {
+            energy.setPower(tag.getLong(TAG_LEGACY_POWER));
+        }
+        if (tag.contains(TAG_PROGRESS, Tag.TAG_INT_ARRAY)) {
+            copyArray(tag.getIntArray(TAG_PROGRESS), progress);
+        }
+        if (tag.contains(TAG_MAX_PROGRESS, Tag.TAG_INT_ARRAY)) {
+            copyArray(tag.getIntArray(TAG_MAX_PROGRESS), maxProgress);
+        }
+        if (tag.contains(TAG_PRODUCTION, Tag.TAG_INT_ARRAY)) {
+            copyArray(tag.getIntArray(TAG_PRODUCTION), production);
+        }
+        if (tag.contains(TAG_IS_ON)) {
+            isOn = tag.getBoolean(TAG_IS_ON);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
     }
 
     @Override
@@ -372,6 +409,14 @@ public class RadGenBlockEntity extends BlockEntity
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override

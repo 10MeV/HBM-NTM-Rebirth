@@ -27,6 +27,7 @@ public class ChungusBlockEntity extends LegacySteamTurbineBlockEntity implements
     private static final double CONSUMPTION_PERCENT = 1.0D;
     private static final long MAX_TRANSIENT_POWER = Long.MAX_VALUE;
     private static final int TURN_TIMER_ACTIVE = 25;
+    private static final String TAG_TURN_TIMER = "turnTimer";
     private int turnTimer;
     private float rotor;
     private float lastRotor;
@@ -152,6 +153,28 @@ public class ChungusBlockEntity extends LegacySteamTurbineBlockEntity implements
         turnTimer = data.readInt();
     }
 
+    /**
+     * The legacy turbine packet appends {@code turnTimer} after its inherited
+     * tanks and power buffer.  The timer is the authoritative active-state
+     * input for the client-local rotor, smoke and looped sound, so include it
+     * in the modern chunk/block-update snapshot as well as the periodic
+     * legacy binary packet.
+     */
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt(TAG_TURN_TIMER, turnTimer);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_TURN_TIMER)) {
+            turnTimer = tag.getInt(TAG_TURN_TIMER);
+        }
+    }
+
     @Override
     public String[] getFunctionInfo() {
         return ror.getFunctionInfo();
@@ -189,7 +212,7 @@ public class ChungusBlockEntity extends LegacySteamTurbineBlockEntity implements
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt("turnTimer", turnTimer);
+        tag.putInt(TAG_TURN_TIMER, turnTimer);
         tag.putFloat("rotor", rotor);
         tag.putFloat("lastRotor", lastRotor);
         tag.putFloat("fanAcceleration", fanAcceleration);
@@ -210,7 +233,7 @@ public class ChungusBlockEntity extends LegacySteamTurbineBlockEntity implements
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
         }
-        turnTimer = tag.getInt("turnTimer");
+        turnTimer = tag.getInt(TAG_TURN_TIMER);
         rotor = tag.getFloat("rotor");
         lastRotor = tag.getFloat("lastRotor");
         fanAcceleration = Math.max(0.0F, tag.getFloat("fanAcceleration"));

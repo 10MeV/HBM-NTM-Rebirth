@@ -5,6 +5,8 @@ import com.hbm.ntm.block.RustedLaunchPadBlock;
 import com.hbm.ntm.entity.missile.MissileEntity;
 import com.hbm.ntm.menu.RustedLaunchPadMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.network.HbmLegacyBufPacketReceiver;
+import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModEntityTypes;
@@ -15,6 +17,8 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -38,7 +42,8 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyButtonReceiver {
+public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyButtonReceiver,
+        HbmLegacyBufPacketReceiver, HbmTileSyncable {
     public static final int SLOT_RELEASED_MISSILE = 0;
     public static final int SLOT_CODE = 1;
     public static final int SLOT_KEY = 2;
@@ -97,6 +102,8 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
             launchPad.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+        // TileEntityLaunchPadRusted#updateEntity broadcasts missileLoaded every tick.
+        launchPad.networkPackNT(250);
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, RustedLaunchPadBlockEntity launchPad) {
@@ -254,13 +261,49 @@ public class RustedLaunchPadBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean(TAG_MISSILE_LOADED, missileLoaded);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        if (tag.contains(TAG_MISSILE_LOADED)) {
+            missileLoaded = tag.getBoolean(TAG_MISSILE_LOADED);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet) {
+        if (packet.getTag() != null) {
+            handleClientSyncTag(packet.getTag());
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        data.writeBoolean(missileLoaded);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        missileLoaded = data.readBoolean();
     }
 
     @Override

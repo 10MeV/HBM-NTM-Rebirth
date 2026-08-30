@@ -66,7 +66,7 @@ public class FusionPlasmaForgeRenderer implements BlockEntityRenderer<FusionPlas
             renderForgePart(poseStack, buffer, light, packedOverlay, "Body");
             renderLegacyDormantPlasma(blockEntity, poseStack, buffer);
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
-                renderArticulatedParts(blockEntity, poseStack, buffer, light, packedOverlay, partialTick);
+                renderArticulatedParts(blockEntity, poseStack, buffer, packedLight, packedOverlay, partialTick);
             }
             renderLegacyActivePlasma(blockEntity, poseStack, buffer, packedOverlay);
         }

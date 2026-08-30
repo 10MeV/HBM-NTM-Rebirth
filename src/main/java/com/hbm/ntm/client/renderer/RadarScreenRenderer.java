@@ -79,16 +79,16 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
         RadarScreenDisplayProfile.WorldOverlay overlay =
                 RadarScreenDisplayProfile.overlay(snapshot, gameTime, partialTick, screen.getBlockPos());
         if (overlay.linked()) {
-            enqueueLinkedOverlay(overlay, poseStack, buffer, packedOverlay);
+            enqueueLinkedOverlay(overlay, poseStack, buffer, packedLight, packedOverlay);
         } else {
-            enqueueNoiseOverlay(overlay, poseStack, buffer, packedOverlay);
+            enqueueNoiseOverlay(overlay, poseStack, buffer, packedLight, packedOverlay);
         }
 
         poseStack.popPose();
     }
 
     private static void enqueueLinkedOverlay(RadarScreenDisplayProfile.WorldOverlay overlay, PoseStack poseStack,
-            MultiBufferSource buffer, int packedOverlay) {
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyMachineEffectPresenter.enqueueUntexturedQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
                 LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE, 0,
                 group -> LegacyRadarDisplayRenderer.emitWorldLinkedSweep(group, overlay.sweepOffset()));
@@ -101,17 +101,17 @@ public class RadarScreenRenderer implements BlockEntityRenderer<RadarScreenBlock
                 RADAR_GUI_TEXTURE, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
                 group -> {
                     for (RadarEntry entry : snapshot.entries()) {
-                        LegacyRadarDisplayRenderer.emitWorldBlip(group, packedOverlay, entry,
+                        LegacyRadarDisplayRenderer.emitWorldBlip(group, packedLight, packedOverlay, entry,
                                 snapshot.refPos(), snapshot.range());
                     }
                 });
     }
 
     private static void enqueueNoiseOverlay(RadarScreenDisplayProfile.WorldOverlay overlay, PoseStack poseStack,
-            MultiBufferSource buffer, int packedOverlay) {
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyMachineEffectPresenter.enqueueTexturedQuadGroup(PresentStage.AFTER_BLOCK_ENTITIES, poseStack, buffer,
                 RADAR_GUI_TEXTURE, LegacyTexturedRenderMode.CUTOUT_NO_CULL,
-                group -> LegacyRadarDisplayRenderer.emitWorldNoise(group, packedOverlay,
+                group -> LegacyRadarDisplayRenderer.emitWorldNoise(group, packedLight, packedOverlay,
                         LegacyRadarDisplayRenderer.noiseV(overlay.noiseSeed())));
     }
 }

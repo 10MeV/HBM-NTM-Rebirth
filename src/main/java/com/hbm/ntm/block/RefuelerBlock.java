@@ -93,11 +93,16 @@ public class RefuelerBlock extends HorizontalDirectionalBlock implements EntityB
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // BlockRefueler consumed all client-side clicks and every sneaking click;
+        // only a server-side, non-sneaking click with an invalid held item fell through.
+        if (level.isClientSide || player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         ItemStack held = player.getItemInHand(hand);
-        if (player.isShiftKeyDown() || held.isEmpty() || !(held.getItem() instanceof IFluidIdentifierItem identifier)) {
+        if (held.isEmpty() || !(held.getItem() instanceof IFluidIdentifierItem identifier)) {
             return InteractionResult.PASS;
         }
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof RefuelerBlockEntity refueler) {
+        if (level.getBlockEntity(pos) instanceof RefuelerBlockEntity refueler) {
             FluidType type = identifier.getIdentifiedFluid(level, pos, held);
             if (refueler.setTankType(type)) {
                 player.displayClientMessage(Component.literal("Changed type to ")

@@ -54,9 +54,13 @@ public abstract class CustomMissileLauncherScreen<T extends CustomMissileLaunche
             drawPadSizeButton(graphics);
         }
 
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 116, topPos + 36,
+        // Both legacy launch-table variants expose these two help panels just outside the GUI.
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 36, 2);
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 52, 11);
+
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 116, topPos + 70,
                 16, 34, menu.getFuelTankData());
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 134, topPos + 36,
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 134, topPos + 70,
                 16, 34, menu.getOxidizerTankData());
         renderMissilePreview(graphics);
     }
@@ -89,6 +93,18 @@ public abstract class CustomMissileLauncherScreen<T extends CustomMissileLaunche
             graphics.renderTooltip(font, Component.literal("Size 15 & 15/20"), mouseX, mouseY);
         } else if (hasPadSizeButtons && isHovering(43, 98, 18, 18, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal("Size 20"), mouseX, mouseY);
+        } else if (isHovering(-16, 36, 16, 16, mouseX, mouseY)) {
+            String[] lines = hasPadSizeButtons
+                    ? new String[] { "Accepts custom missiles", "of all sizes, as long as the",
+                            "correct size setting is selected." }
+                    : new String[] { "Only accepts custom missiles", "of size 10 and 10/15." };
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 36, 16, 16, leftPos - 8, topPos + 52,
+                    java.util.Arrays.stream(lines).<Component>map(Component::literal).toList());
+        } else if (isHovering(-16, 52, 16, 16, mouseX, mouseY)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 52, 16, 16, leftPos - 8, topPos + 52,
+                    java.util.List.of(Component.literal("Detonator can only trigger center block.")));
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

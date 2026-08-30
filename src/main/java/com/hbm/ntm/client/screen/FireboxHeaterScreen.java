@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.FireboxHeaterBlockEntity;
 import com.hbm.ntm.menu.FireboxHeaterMenu;
 import java.util.List;
 import java.util.Locale;
@@ -45,15 +46,36 @@ public class FireboxHeaterScreen extends AbstractContainerScreen<FireboxHeaterMe
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        renderTooltip(graphics, mouseX, mouseY);
-        if (isHovering(80, 27, 71, 7, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(Component.literal(String.format(Locale.US, "%,d / %,d TU",
+        if (menu.getCarried().isEmpty() && renderEmptyFuelSlotTooltip(graphics, mouseX, mouseY)) {
+            // The legacy GUI reserves empty fuel-slot hover for the burn-module description.
+        } else if (isLegacyHovering(80, 27, 71, 7, mouseX, mouseY)) {
+            graphics.renderComponentTooltip(font, List.of(Component.literal(String.format(Locale.US, "%,d / %,dTU",
                     menu.getHeatEnergy(), menu.getMaxHeat()))), mouseX, mouseY);
-        } else if (isHovering(80, 36, 71, 7, mouseX, mouseY)) {
+        } else if (isLegacyHovering(80, 36, 71, 7, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, List.of(
-                    Component.literal(menu.getBurnHeat() + " TU/t"),
+                    Component.literal(menu.getBurnHeat() + "TU/t"),
                     Component.literal((menu.getBurnTime() / 20) + "s")),
                     mouseX, mouseY);
         }
+        renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean renderEmptyFuelSlotTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        for (int slot = 0; slot < 2; slot++) {
+            if (!isHovering(44 + slot * 18, 27, 16, 16, mouseX, mouseY) || menu.getSlot(slot).hasItem()) {
+                continue;
+            }
+            List<Component> description = FireboxHeaterBlockEntity.burnModule().getDescription().stream()
+                    .map(text -> (Component) Component.literal(text)).toList();
+            if (!description.isEmpty()) {
+                graphics.renderComponentTooltip(font, description, mouseX, mouseY);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

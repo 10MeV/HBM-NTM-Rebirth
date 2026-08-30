@@ -49,6 +49,9 @@ public class SatelliteLinkerBlock extends Block implements EntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide) {
+            return null;
+        }
         return type == ModBlockEntities.MACHINE_SATLINKER.get()
                 ? (tickLevel, tickPos, tickState, blockEntity) ->
                 SatelliteLinkerBlockEntity.serverTick(tickLevel, tickPos, tickState, (SatelliteLinkerBlockEntity) blockEntity)

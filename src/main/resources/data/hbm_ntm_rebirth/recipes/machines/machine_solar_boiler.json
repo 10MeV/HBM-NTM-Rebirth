@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "S": { "tag": "forge:ingots/steel" },
+    "H": { "tag": "forge:shells/steel" },
+    "D": { "tag": "forge:dyes/black" }
+  },
+  "pattern": [ "SHS", "DHD", "SHS" ],
+  "result": { "item": "hbm_ntm_rebirth:machine_solar_boiler" },
+  "show_notification": true
+}

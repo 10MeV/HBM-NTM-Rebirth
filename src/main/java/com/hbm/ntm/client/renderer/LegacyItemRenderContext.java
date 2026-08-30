@@ -22,6 +22,17 @@ public final class LegacyItemRenderContext {
         return CURRENT.get() == ItemDisplayContext.GUI;
     }
 
+    /**
+     * Returns whether the shared OBJ backend is currently being called from a BEWLR.
+     *
+     * <p>Every item display context is rendered into a caller-owned buffer lifecycle. This is
+     * broader than {@link #isGui()}: dropped items, item frames and both hand views can also be
+     * submitted outside the block-entity backend's queued-flush window.</p>
+     */
+    public static boolean isActive() {
+        return CURRENT.get() != null;
+    }
+
     static void restore(ItemDisplayContext previous) {
         if (previous == null) {
             CURRENT.remove();

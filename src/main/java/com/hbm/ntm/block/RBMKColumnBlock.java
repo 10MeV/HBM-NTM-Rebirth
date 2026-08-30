@@ -47,6 +47,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -122,14 +123,6 @@ public class RBMKColumnBlock extends BaseEntityBlock
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         fillColumnLayout(level, pos, state);
-    }
-
-    @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
-        super.onPlace(state, level, pos, oldState, movedByPiston);
-        if (!oldState.is(state.getBlock())) {
-            fillColumnLayout(level, pos, state);
-        }
     }
 
     @Nullable
@@ -392,7 +385,10 @@ public class RBMKColumnBlock extends BaseEntityBlock
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && !player.getAbilities().instabuild) {
             CoreColumnLookup core = resolveOwnedColumn(level, pos);
-            if (core != null) {
+            // Legacy RBMKRod#breakBlock melts a rod at the failure threshold
+            // before the ordinary BlockDummyable inventory-drop path.  Do not
+            // turn that destructive path into a free hot-rod item drop.
+            if (core != null && !core.entity().wouldTriggerLegacyBreakMeltdown()) {
                 dropCoreContents(level, core.pos(), core.state(), core.block(), core.entity());
             }
         }
@@ -400,19 +396,47 @@ public class RBMKColumnBlock extends BaseEntityBlock
     }
 
     @Override
-    public void beforeMultiblockDummyDestroysCore(Level level, BlockPos corePos, BlockState coreState,
+    public boolean beforeMultiblockDummyDestroysCore(Level level, BlockPos corePos, BlockState coreState,
             BlockPos dummyPos, boolean drop) {
-        if (drop && !level.isClientSide
+        if (!level.isClientSide
                 && coreState.getBlock() instanceof RBMKColumnBlock column
                 && level.getBlockEntity(corePos) instanceof RBMKColumnBlockEntity blockEntity) {
-            dropCoreContents(level, corePos, coreState, column, blockEntity);
+            if (blockEntity.triggerLegacyBreakMeltdown()) {
+                return true;
+            }
+            if (drop) {
+                dropCoreContents(level, corePos, coreState, column, blockEntity);
+            }
         }
+        return false;
+    }
+
+    @Override
+    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player,
+            boolean willHarvest, FluidState fluidState) {
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof RBMKColumnBlockEntity column
+                && column.triggerLegacyBreakMeltdown()) {
+            // The old RBMKRod#breakBlock replaces the fuel column from inside
+            // the break callback.  Returning false stops vanilla from erasing
+            // the freshly-created corium/debris result afterwards.
+            return false;
+        }
+        return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluidState);
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
-            MultiblockHelper.removeLayout(level, pos, layoutForCurrentHeight(state));
+            // playerWillDestroy and dummy destruction above preserve the old
+            // drop order, while this final hook covers command, piston and
+            // other non-player removals.  The fuel state is still present at
+            // this point, just as it was in the old TileEntity invalidate
+            // callback.
+            boolean melted = level.getBlockEntity(pos) instanceof RBMKColumnBlockEntity column
+                    && column.triggerLegacyBreakMeltdown();
+            if (!melted) {
+                MultiblockHelper.removeLayout(level, pos, layoutForCurrentHeight(state));
+            }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
@@ -583,6 +607,13 @@ public class RBMKColumnBlock extends BaseEntityBlock
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
+        // TileEntityRBMKBase#updateEntity only advanced the reactor on the
+        // logical server.  The client receives its column state through the
+        // existing sync packet; running the full thermal/neutron/fluid tick
+        // locally would mutate a second, unsynchronised reactor simulation.
+        if (level.isClientSide) {
+            return null;
+        }
         return createTickerHelper(type, ModBlockEntities.RBMK_COLUMN.get(), RBMKColumnBlockEntity::serverTick);
     }
 

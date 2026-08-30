@@ -36,11 +36,11 @@ public class CombinationOvenMenu extends AbstractContainerMenu {
         this.blockEntity = blockEntity;
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 CombinationOvenBlockEntity.SLOT_INPUT, 26, 36));
-        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
-                CombinationOvenBlockEntity.SLOT_OUTPUT, 89, 36));
+        addSlot(HbmInventoryMenuHelper.smeltingOutputSlot(playerInventory.player, blockEntity.getItems(),
+                CombinationOvenBlockEntity.SLOT_OUTPUT, 89, 36, null));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 CombinationOvenBlockEntity.SLOT_TANK_INPUT, 136, 18));
-        addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(),
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
                 CombinationOvenBlockEntity.SLOT_TANK_OUTPUT, 136, 54));
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
         addDataSlots();

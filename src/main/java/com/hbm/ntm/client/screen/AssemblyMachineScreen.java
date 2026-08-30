@@ -36,7 +36,8 @@ public class AssemblyMachineScreen extends AbstractContainerScreen<AssemblyMachi
         }
         int progress = menu.getProgressWidth(70);
         if (progress > 0) {
-            graphics.blit(TEXTURE, leftPos + 62, topPos + 126, 176, 61, progress, 16);
+            graphics.blit(TEXTURE, leftPos + 62, topPos + 126, 176,
+                    61 + (menu.isRestrictedMode() ? 16 : 0), progress, 16);
         }
         LegacyFluidGuiRenderer.renderHorizontalTank(graphics, leftPos + 8, topPos + 115,
                 52, 16, menu.getInputTankData());

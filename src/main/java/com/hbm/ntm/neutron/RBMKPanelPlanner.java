@@ -495,6 +495,27 @@ public final class RBMKPanelPlanner {
         return new LeverTickPlan(safe.withProgress(progress, previous), broadcast, stopSound, arcFlash);
     }
 
+    /**
+     * Mirrors {@code TileEntityRBMKLever.LeverUnit#updateClient}: packet progress is
+     * approached across three client ticks instead of being applied in one frame.
+     * The target and remaining steps deliberately live in the block entity because
+     * they are client-only packet interpolation state, not persisted lever state.
+     */
+    public static LeverClientTickPlan tickLeverClient(LeverUnit unit, float syncProgress, int turnProgress) {
+        LeverUnit safe = unit == null ? defaultLever(0) : unit;
+        float previous = safe.flipProgress();
+        float progress;
+        int remaining;
+        if (turnProgress > 0) {
+            progress = previous + (syncProgress - previous) / (float) turnProgress;
+            remaining = turnProgress - 1;
+        } else {
+            progress = syncProgress;
+            remaining = 0;
+        }
+        return new LeverClientTickPlan(safe.withProgress(progress, previous), remaining);
+    }
+
     public static NumitronUnit tickNumitron(NumitronUnit unit, RttySignal signal) {
         NumitronUnit safe = unit == null ? defaultNumitron(0) : unit;
         if (!safe.active() || safe.rtty().isEmpty()) {
@@ -962,6 +983,9 @@ public final class RBMKPanelPlanner {
     }
 
     public record LeverTickPlan(LeverUnit unit, RttyBroadcast broadcast, boolean stopSound, boolean arcFlash) {
+    }
+
+    public record LeverClientTickPlan(LeverUnit unit, int remainingTurnProgress) {
     }
 
     public record LeverControlEntry(String label, String rtty, String commandOn, String commandOff) {

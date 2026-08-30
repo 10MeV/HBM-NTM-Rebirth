@@ -117,12 +117,20 @@ public class KeyForgeBlockEntity extends BlockEntity implements MenuProvider {
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        CompoundTag tag = packet.getTag();
+        // The legacy TileEntityMachineKeyForge had no description packet; its
+        // inventory is menu-synced. Do not let an intentional empty update tag
+        // clear the client-side handler through persistent-NBT loading.
+        if (tag != null && !tag.isEmpty()) {
+            load(tag);
+        }
     }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        if (tag != null && !tag.isEmpty()) {
+            load(tag);
+        }
     }
 
     @Override

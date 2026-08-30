@@ -54,7 +54,6 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
             return;
         }
         BlockState state = thresher.getBlockState();
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(thresher, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, rotation(state));
@@ -70,22 +69,22 @@ public class ThresherRenderer implements BlockEntityRenderer<ThresherBlockEntity
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(thresher)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(thresher)) {
                 poseStack.translate(0.0D, engineTranslateY, 0.0D);
-                renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
+                renderPart(ENGINE, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.translate(0.0D, -engineTranslateY, 0.0D);
                 renderPivotedX(ARM_UPPER, LegacyTileRenderPlans.THRESHER_ARM_PIVOT_Y,
                         LegacyTileRenderPlans.THRESHER_ARM_UPPER_Z, armAngle, 0.0D, poseStack, buffer,
-                        modelLight, packedOverlay);
+                        packedLight, packedOverlay);
                 renderPivotedX(ARM_LOWER, LegacyTileRenderPlans.THRESHER_ARM_PIVOT_Y,
                         LegacyTileRenderPlans.THRESHER_ARM_LOWER_Z, armAngle * -2.0D,
-                        LegacyTileRenderPlans.THRESHER_ARM_LOWER_NUDGE_X, poseStack, buffer, modelLight,
+                        LegacyTileRenderPlans.THRESHER_ARM_LOWER_NUDGE_X, poseStack, buffer, packedLight,
                         packedOverlay);
                 renderPivotedX(FRONT, LegacyTileRenderPlans.THRESHER_ARM_PIVOT_Y,
                         LegacyTileRenderPlans.THRESHER_FRONT_Z, armAngle,
-                        LegacyTileRenderPlans.THRESHER_FRONT_NUDGE_X, poseStack, buffer, modelLight,
+                        LegacyTileRenderPlans.THRESHER_FRONT_NUDGE_X, poseStack, buffer, packedLight,
                         packedOverlay);
                 renderPivotedX(WHEEL, LegacyTileRenderPlans.THRESHER_ARM_PIVOT_Y,
                         LegacyTileRenderPlans.THRESHER_WHEEL_Z, -wheelSpin, 0.0D, poseStack, buffer,
-                        modelLight, packedOverlay);
+                        packedLight, packedOverlay);
             }
         }
         poseStack.popPose();

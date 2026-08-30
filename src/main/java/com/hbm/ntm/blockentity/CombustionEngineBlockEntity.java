@@ -137,14 +137,17 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         engine.wasOn = false;
         engine.lastFuelUsedTenths = 0;
         engine.lastPowerProduced = 0L;
+        // TileEntityMachineCombustionEngine adds fuel HE before charging its
+        // battery/ports and only caps the buffer afterwards. Open a transient
+        // storage window so HbmEnergyStorage does not discard that source-backed
+        // one-tick surplus before the legacy settlement phase.
+        engine.energy.setMaxPower(Long.MAX_VALUE);
         changed |= engine.burnFuel(level, pos);
         HbmEnergyUtil.chargeItemFromStorage(engine.items.getStackInSlot(SLOT_ENERGY_OUTPUT),
                 engine.energy, engine.energy.getProviderSpeed());
         engine.tryProvideEnergyToPorts();
         engine.sendSmokeToPorts(level, pos);
-        if (engine.energy.getPower() > MAX_POWER) {
-            engine.energy.setPower(MAX_POWER);
-        }
+        engine.energy.setMaxPower(MAX_POWER);
         if (engine.tank.getTankType() != HbmFluids.NONE) {
             engine.refreshTrackedReceiverFluidPorts(engine.tank, engine);
         }
@@ -200,7 +203,7 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         long produced = Math.round(toBurnTenths * (combustible.getCombustionEnergyPerBucket() / 10_000.0D) * efficiency);
         long oldPower = energy.getPower();
-        energy.setPower(Math.min(MAX_POWER, oldPower + produced));
+        energy.setPower(oldPower + produced);
         lastPowerProduced = Math.max(0L, energy.getPower() - oldPower);
         fillTenths -= toBurnTenths;
         tank.setFill(fillTenths / 10);
@@ -313,6 +316,15 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     public int getFuelUsedTenths() {
         return lastFuelUsedTenths;
+    }
+
+    /**
+     * Read-only legacy open-inventory count used by the renderer and audit
+     * evidence.  Production mutation remains exclusively in createMenu and
+     * CombustionEngineMenu#removed -> closeMenu.
+     */
+    public int getPlayersUsing() {
+        return playersUsing;
     }
 
     public long getLastPowerProduced() {
@@ -586,8 +598,46 @@ public class CombustionEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        // TileEntityMachineCombustionEngine#serialize sent these runtime
+        // fields with its fuel tank so the hatch, GUI controls and sound had
+        // a valid state as soon as the machine entered client range.
+        tag.putInt("playersUsing", playersUsing);
+        tag.putInt("setting", throttle);
+        tag.putBoolean("isOn", on);
+        tag.putBoolean("wasOn", wasOn);
+        tag.putInt("fuelUsedTenths", lastFuelUsedTenths);
+        tag.putLong("lastPowerProduced", lastPowerProduced);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("playersUsing")) {
+            playersUsing = Math.max(0, tag.getInt("playersUsing"));
+        }
+        if (tag.contains("setting")) {
+            throttle = Mth.clamp(tag.getInt("setting"), 0, 30);
+        }
+        if (tag.contains("isOn")) {
+            on = tag.getBoolean("isOn");
+        }
+        if (tag.contains("wasOn")) {
+            wasOn = tag.getBoolean("wasOn");
+        }
+        if (tag.contains("fuelUsedTenths")) {
+            lastFuelUsedTenths = Math.max(0, tag.getInt("fuelUsedTenths"));
+        }
+        if (tag.contains("lastPowerProduced")) {
+            lastPowerProduced = Math.max(0L, tag.getLong("lastPowerProduced"));
+        }
+    }
 
     @Nullable
     @Override

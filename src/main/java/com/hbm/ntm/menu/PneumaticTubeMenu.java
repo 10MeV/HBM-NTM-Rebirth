@@ -87,7 +87,7 @@ public class PneumaticTubeMenu extends AbstractContainerMenu {
             return Component.empty();
         }
         String mode = LegacyPatternMatcher.modeForIndex(blockEntity.getFilterStack(slot), modeIndexes[slot]);
-        return LegacyPatternMatcher.label(mode).copy().withStyle(ChatFormatting.RED);
+        return LegacyPatternMatcher.label(mode).copy().withStyle(ChatFormatting.YELLOW);
     }
 
     @Override

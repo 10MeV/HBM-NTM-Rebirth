@@ -99,46 +99,60 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
         renderTankTooltip(graphics, mouseX, mouseY, menu.getRecipeTank(3), 152, 18, 16, 52);
         renderTankTooltip(graphics, mouseX, mouseY, menu.getCoolantTank(), 188, 46, 16, 52);
         renderTankTooltip(graphics, mouseX, mouseY, menu.getHotCoolantTank(), 206, 46, 16, 52);
-        if (isHovering(8, 18, 16, 62, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 8, 18, 16, 62)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 8, topPos + 18, 16, 62, menu.getPower(), FusionTorusBlockEntity.MAX_POWER);
         }
         GenericMachineRecipe recipe = selectedRecipe();
         FusionStats stats = fusionStats(recipe);
-        if (isHovering(43, 80, 18, 18, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 43, 80, 18, 18)) {
             if (recipe != null) {
-                LegacyGuiElements.renderRecipeTooltip(graphics, font, recipe.getDisplayLines(), mouseX, mouseY);
+                LegacyGuiElements.renderRecipeTooltip(graphics, font, recipe.getDisplayLines(hasShiftDown()),
+                        mouseX, mouseY);
             } else {
                 graphics.renderTooltip(font,
                         Component.translatableWithFallback("gui.recipe.setRecipe", "Select recipe")
                                 .withStyle(ChatFormatting.YELLOW), mouseX, mouseY);
             }
-        } else if (isHovering(43, 115, 18, 18, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal("-> "
-                    + shortNumber(menu.getKlystronEnergy()) + "KyU / " + shortNumber(stats.ignitionTemp()) + "KyU")), mouseX, mouseY);
-        } else if (isHovering(79, 115, 18, 18, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal("<- "
-                    + shortNumber(menu.getPlasmaEnergy()) + "TU / " + shortNumber(stats.outputTemp()) + "TU")), mouseX, mouseY);
-        } else if (isHovering(115, 115, 18, 18, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, fuelLines(recipe), mouseX, mouseY);
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 43, 115, 18, 18)) {
+            Component line = recipe == null
+                    ? Component.literal("0KyU / 0KyU")
+                    : Component.literal("-> ").withStyle(ChatFormatting.GREEN)
+                            .append(Component.literal(shortNumber(menu.getKlystronEnergy()) + "KyU / "
+                                    + shortNumber(stats.ignitionTemp()) + "KyU").withStyle(ChatFormatting.RESET));
+            LegacyGuiElements.renderTooltip(graphics, font, List.of(line), mouseX, mouseY);
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 79, 115, 18, 18)) {
+            Component line = recipe == null
+                    ? Component.literal("0TU / 0TU")
+                    : Component.literal("<- ").withStyle(ChatFormatting.RED)
+                            .append(Component.literal(shortNumber(menu.getPlasmaEnergy()) + "TU / "
+                                    + shortNumber(stats.outputTemp()) + "TU").withStyle(ChatFormatting.RESET));
+            LegacyGuiElements.renderTooltip(graphics, font, List.of(line), mouseX, mouseY);
+        } else if (recipe != null
+                && LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 115, 115, 18, 18)) {
+            List<Component> lines = fuelLines(recipe);
+            if (!lines.isEmpty()) {
+                LegacyGuiElements.renderTooltip(graphics, font, lines, mouseX, mouseY);
+            }
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        boolean handled = super.mouseClicked(mouseX, mouseY, button);
         if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 43, 80, 18, 18)) {
-            LegacyGuiElements.playClickSound();
             minecraft.setScreen(new FusionTorusRecipeSelectorScreen(this));
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return handled;
     }
 
     private boolean renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY, HbmFluidGuiHelper.TankData tank,
             int x, int y, int width, int height) {
-        if (!isHovering(x, y, width, height, mouseX, mouseY)) return false;
-        graphics.renderComponentTooltip(font, tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+        if (!LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height)) return false;
+        LegacyGuiElements.renderFluidTooltip(graphics, font, tank,
+                tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         return true;
     }
 
@@ -156,15 +170,13 @@ public class FusionTorusScreen extends AbstractContainerScreen<FusionTorusMenu> 
     }
 
     private List<Component> fuelLines(GenericMachineRecipe recipe) {
-        if (recipe == null) {
-            return List.of(Component.literal("0mB/t"));
-        }
         List<Component> lines = recipe.getFluidInputs().stream()
-                .<Component>map(input -> Component.literal("-> "
-                        + (int) Math.ceil(input.amount() * menu.getFuelConsumption()) + "mB/t ")
-                        .append(input.type().getDisplayName()))
+                .<Component>map(input -> Component.literal("-> ").withStyle(ChatFormatting.GREEN)
+                        .append(Component.literal((int) Math.ceil(input.amount() * menu.getFuelConsumption())
+                                + "mB/t ").withStyle(ChatFormatting.RESET))
+                        .append(input.type().getDisplayName().copy().withStyle(ChatFormatting.RESET)))
                 .toList();
-        return lines.isEmpty() ? List.of(Component.literal("0mB/t")) : lines;
+        return lines;
     }
 
     private static String shortNumber(long value) {

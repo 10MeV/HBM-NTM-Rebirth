@@ -11,12 +11,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,12 +28,36 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
     private BlockState originalState;
     private BlockPos corePos;
     private boolean port;
+    /**
+     * Capability caches belong to this port position, not to the controller it
+     * currently reaches. This keeps a cached external optional from surviving
+     * a port replacement or chunk unload.
+     */
+    private final java.util.Map<PortCapabilityKey, LazyOptional<?>> forwardedCapabilities = new java.util.HashMap<>();
 
     public ICFAssembledBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ICF_BLOCK.get(), pos, state);
     }
 
+    /**
+     * Mirrors BlockICF.TileEntityBlockICF#updateEntity: an assembled facade
+     * only restores itself after the saved controller chunk is available, so
+     * an unloaded controller cannot spuriously dismantle the laser assembly.
+     */
+    public static void serverTick(Level level, BlockPos pos, BlockState state,
+            ICFAssembledBlockEntity blockEntity) {
+        if (level.getGameTime() % 20L != 0L || blockEntity.corePos == null
+                || !level.hasChunk(blockEntity.corePos.getX() >> 4, blockEntity.corePos.getZ() >> 4)) {
+            return;
+        }
+        BlockEntity core = level.getBlockEntity(blockEntity.corePos);
+        if (!(core instanceof ICFControllerBlockEntity controller) || !controller.isAssembled()) {
+            blockEntity.restoreOriginalBlock();
+        }
+    }
+
     public void setOriginal(BlockState state, BlockPos corePos, boolean port) {
+        invalidateForwardedCapabilities();
         this.originalState = state;
         this.originalBlockId = ForgeRegistries.BLOCKS.getKey(state.getBlock());
         this.corePos = corePos.immutable();
@@ -55,6 +81,7 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
     }
 
     public void suppressRestore() {
+        invalidateForwardedCapabilities();
         originalBlockId = null;
         originalState = null;
         corePos = null;
@@ -79,7 +106,7 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
 
     @Override
     public boolean canConnectEnergy(@Nullable Direction side) {
-        return port && side != null && hasOriginalBlock() && core() != null;
+        return side != null && getPortCore() != null;
     }
 
     @Override
@@ -106,6 +133,7 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        invalidateForwardedCapabilities();
         originalBlockId = null;
         originalState = null;
         corePos = null;
@@ -128,12 +156,61 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        ICFControllerBlockEntity controller = core();
-        if (port && side != null && hasOriginalBlock() && capability == ForgeCapabilities.ENERGY
-                && controller != null) {
-            return controller.getCapability(capability, side);
+        if (capability == ForgeCapabilities.ENERGY && side != null && getPortCore() != null) {
+            return forwardedEnergyCapability(side).cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    private LazyOptional<IEnergyStorage> forwardedEnergyCapability(Direction side) {
+        PortCapabilityKey key = new PortCapabilityKey(ForgeCapabilities.ENERGY, side);
+        LazyOptional<?> cached = forwardedCapabilities.get(key);
+        if (cached != null) {
+            if (cached.isPresent()) {
+                return cached.cast();
+            }
+            forwardedCapabilities.remove(key, cached);
+        }
+
+        ICFControllerBlockEntity controller = getPortCore();
+        LazyOptional<IEnergyStorage> controllerCapability = controller == null
+                ? LazyOptional.empty()
+                : controller.getCapability(ForgeCapabilities.ENERGY, side);
+        if (!controllerCapability.isPresent()) {
+            return LazyOptional.empty();
+        }
+        LazyOptional<IEnergyStorage> forwarded = LazyOptional.of(() -> new PortEnergyStorage(side));
+        forwardedCapabilities.put(key, forwarded);
+        controllerCapability.addListener(ignored -> invalidateForwardedCapability(key, forwarded));
+        return forwarded;
+    }
+
+    private void invalidateForwardedCapability(PortCapabilityKey key, LazyOptional<?> capability) {
+        capability.invalidate();
+        forwardedCapabilities.remove(key, capability);
+    }
+
+    private void invalidateForwardedCapabilities() {
+        forwardedCapabilities.values().forEach(LazyOptional::invalidate);
+        forwardedCapabilities.clear();
+    }
+
+    @Override
+    public void invalidateCaps() {
+        invalidateForwardedCapabilities();
+        super.invalidateCaps();
+    }
+
+    @Override
+    public void setRemoved() {
+        invalidateForwardedCapabilities();
+        super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        invalidateForwardedCapabilities();
+        super.onChunkUnloaded();
     }
 
     @Nullable
@@ -142,6 +219,18 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
             return null;
         }
         return level.getBlockEntity(corePos) instanceof ICFControllerBlockEntity controller ? controller : null;
+    }
+
+    @Nullable
+    private ICFControllerBlockEntity getPortCore() {
+        ICFControllerBlockEntity controller = core();
+        return isActivePort() && controller != null && controller.isAssembled() ? controller : null;
+    }
+
+    private boolean isActivePort() {
+        BlockState state = getBlockState();
+        return port && hasOriginalBlock() && state.is(ModBlocks.ICF_BLOCK.get())
+                && state.hasProperty(ICFAssembledBlock.PORT) && state.getValue(ICFAssembledBlock.PORT);
     }
 
     private boolean hasOriginalBlock() {
@@ -167,5 +256,60 @@ public class ICFAssembledBlockEntity extends BlockEntity implements HbmEnergyCon
         if (block == ModBlocks.ICF_LASER_CAPACITOR.get()) return 4;
         if (block == ModBlocks.ICF_LASER_TURBO.get()) return 5;
         return -1;
+    }
+
+    private final class PortEnergyStorage implements IEnergyStorage {
+        private final Direction side;
+
+        private PortEnergyStorage(Direction side) {
+            this.side = side;
+        }
+
+        @Nullable
+        private IEnergyStorage current() {
+            ICFControllerBlockEntity controller = getPortCore();
+            return controller == null
+                    ? null
+                    : controller.getCapability(ForgeCapabilities.ENERGY, side).resolve().orElse(null);
+        }
+
+        @Override
+        public int receiveEnergy(int maxReceive, boolean simulate) {
+            IEnergyStorage storage = current();
+            return storage == null ? 0 : storage.receiveEnergy(maxReceive, simulate);
+        }
+
+        @Override
+        public int extractEnergy(int maxExtract, boolean simulate) {
+            IEnergyStorage storage = current();
+            return storage == null ? 0 : storage.extractEnergy(maxExtract, simulate);
+        }
+
+        @Override
+        public int getEnergyStored() {
+            IEnergyStorage storage = current();
+            return storage == null ? 0 : storage.getEnergyStored();
+        }
+
+        @Override
+        public int getMaxEnergyStored() {
+            IEnergyStorage storage = current();
+            return storage == null ? 0 : storage.getMaxEnergyStored();
+        }
+
+        @Override
+        public boolean canExtract() {
+            IEnergyStorage storage = current();
+            return storage != null && storage.canExtract();
+        }
+
+        @Override
+        public boolean canReceive() {
+            IEnergyStorage storage = current();
+            return storage != null && storage.canReceive();
+        }
+    }
+
+    private record PortCapabilityKey(Capability<?> capability, Direction side) {
     }
 }

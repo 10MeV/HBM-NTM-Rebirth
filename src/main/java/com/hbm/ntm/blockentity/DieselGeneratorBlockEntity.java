@@ -58,8 +58,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int SLOT_FLUID_OUTPUT = 1;
     public static final int SLOT_BATTERY = 2;
     public static final int SLOT_IDENTIFIER = 3;
-    public static final int SLOT_IDENTIFIER_OUTPUT = 4;
-    public static final int SLOT_COUNT = 5;
+    public static final int SLOT_COUNT = 4;
     public static final int CONTROL_TOGGLE = 0;
     public static final long MAX_POWER = 50_000L;
     public static final int TANK_CAPACITY = 16_000;
@@ -91,7 +90,14 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case SLOT_FLUID_INPUT -> HbmFluidItemTransfer.getItemFluid(stack).amount() > 0;
+                // TileEntityMachineDiesel#isItemValidForSlot only accepts a filled
+                // container whose fluid already matches the selected tank type. The
+                // identifier slot, rather than an arbitrary input canister, is what
+                // changes that type in the legacy machine.
+                case SLOT_FLUID_INPUT -> {
+                    HbmFluidStack contained = HbmFluidItemTransfer.getItemFluid(stack);
+                    yield contained.amount() > 0 && contained.type() == tank.getTankType();
+                }
                 case SLOT_BATTERY -> HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
                 case SLOT_IDENTIFIER -> true;
                 default -> false;
@@ -143,7 +149,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         diesel.lastPowerProduced = 0L;
 
         if (HbmFluidItemTransfer.setTankTypeFromIdentifierSlot(diesel.items,
-                SLOT_IDENTIFIER, SLOT_IDENTIFIER_OUTPUT, diesel.tank, level, pos)) {
+                SLOT_IDENTIFIER, diesel.tank, level, pos)) {
             oldType = HbmFluids.NONE;
         }
         diesel.processFluidItemLoadTransfer(diesel.items, SLOT_FLUID_INPUT, SLOT_FLUID_OUTPUT, diesel.tank);
@@ -155,15 +161,18 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (diesel.energy.getPower() > diesel.powerCap) {
             diesel.energy.setPower(diesel.powerCap);
         }
-        HbmEnergyUtil.chargeItemFromStorage(diesel.items.getStackInSlot(SLOT_BATTERY),
-                diesel.energy, diesel.energy.getProviderSpeed());
-        if (diesel.on) {
-            diesel.generate(level, pos);
-        }
+        // Keep TileEntityMachineDiesel#updateEntity ordering: existing buffer is
+        // offered first, smoke/input ports are refreshed second, then the battery
+        // is charged and this tick's fuel becomes next-tick output.
         diesel.tryProvideEnergyToPorts();
         diesel.sendSmokeToPorts(level, pos);
         if (diesel.tank.getTankType() != HbmFluids.NONE) {
             diesel.refreshTrackedReceiverFluidPorts(diesel.tank, diesel);
+        }
+        HbmEnergyUtil.chargeItemFromStorage(diesel.items.getStackInSlot(SLOT_BATTERY),
+                diesel.energy, diesel.energy.getProviderSpeed());
+        if (diesel.on) {
+            diesel.generate(level, pos);
         }
         diesel.networkPackNT(50);
 
@@ -223,6 +232,15 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         double efficiency = FUEL_EFFICIENCY.getOrDefault(fuel.getGrade(), 0.0D);
         return (long) (fuel.getCombustionEnergyPerBucket() / 1_000L * efficiency);
+    }
+
+    /**
+     * Legacy {@code MachineDiesel#addInformation} exposed exactly the grades
+     * configured by the generator. Keep the item tooltip coupled to the same
+     * table used by the runtime calculation.
+     */
+    public static double getFuelEfficiency(CombustibleFluidTrait.FuelGrade grade) {
+        return FUEL_EFFICIENCY.getOrDefault(grade, 0.0D);
     }
 
     public HbmFluidTank getTank() {
@@ -418,6 +436,7 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
+        tag.putLong("powerCap", powerCap);
         tag.putBoolean("isOn", on);
         tag.putBoolean("wasOn", wasOn);
         tag.putLong("lastPowerProduced", lastPowerProduced);
@@ -426,11 +445,14 @@ public class DieselGeneratorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        super.handleClientSyncTag(tag);
         readRuntimeSync(tag);
     }
 
     private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("powerCap")) {
+            powerCap = Math.max(0L, tag.getLong("powerCap"));
+        }
         if (tag.contains("isOn")) {
             on = tag.getBoolean("isOn");
         }

@@ -155,7 +155,7 @@ public class FoundryTankBlock extends Block implements EntityBlock, ICrucibleAcc
 
     private static boolean isOutletFacing(BlockGetter level, BlockPos pos, Direction direction) {
         BlockState state = level.getBlockState(pos);
-        return (state.is(ModBlocks.FOUNDRY_OUTLET.get()) || state.is(ModBlocks.FOUNDRY_SLAGTAP.get()))
+        return state.is(ModBlocks.FOUNDRY_OUTLET.get())
                 && state.hasProperty(FoundryOutletBlock.FACING)
                 && state.getValue(FoundryOutletBlock.FACING) == direction;
     }

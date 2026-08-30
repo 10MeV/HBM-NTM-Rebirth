@@ -473,7 +473,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
 
     private void detachFluidPortSubscriptions() {
         if (level != null && !level.isClientSide) {
-            fluidPortSubscriptions.detachAll(level, worldPosition, kind.fluidPorts, this, this);
+            fluidPortSubscriptions.detachAllTracked(level, worldPosition, this, this);
         }
     }
 
@@ -776,7 +776,6 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
         readClientSyncFields(tag);
     }
 
@@ -815,11 +814,36 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     }
 
     private void writeClientSyncFields(CompoundTag tag) {
+        // TileEntityMachinePrecAss/TileEntityMachinePUREX's runtime packet carries
+        // process tanks, power, progress and the selected recipe.  The Forge
+        // chunk/update tag is the first state a newly tracking client receives,
+        // so it must contain that same render/GUI state rather than only the
+        // processing flag.  Persistence-only inventory data deliberately stays
+        // out of this compact snapshot.
+        writeLegacyLoadedTileClientTag(tag);
+        tag.put(TAG_ENERGY, energy.serializeNBT());
+        writeTanks(tag);
+        tag.putDouble(TAG_PROGRESS, progress);
+        tag.putString(TAG_RECIPE, selectedRecipe);
         tag.putBoolean(TAG_DID_PROCESS, didProcess);
     }
 
     private void readClientSyncFields(CompoundTag tag) {
-        didProcess = tag.getBoolean(TAG_DID_PROCESS);
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_ENERGY, Tag.TAG_COMPOUND)) {
+            energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
+        }
+        if (tag.contains(TAG_RECIPE, Tag.TAG_STRING)) {
+            selectedRecipe = GenericMachineRecipeSelector.normalize(tag.getString(TAG_RECIPE));
+            updateDynamicCapacity(getSelectedRecipeDefinition());
+        }
+        readTanks(tag);
+        if (tag.contains(TAG_PROGRESS, Tag.TAG_DOUBLE)) {
+            progress = tag.getDouble(TAG_PROGRESS);
+        }
+        if (tag.contains(TAG_DID_PROCESS, Tag.TAG_BYTE)) {
+            didProcess = tag.getBoolean(TAG_DID_PROCESS);
+        }
     }
 
     @Nullable

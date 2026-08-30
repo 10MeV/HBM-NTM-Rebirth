@@ -45,7 +45,7 @@ public class WatzReactorBlock extends LegacyVisibleMultiblockMachineBlock {
             return InteractionResult.PASS;
         }
         if (player.isShiftKeyDown()) {
-            return InteractionResult.sidedSuccess(level.isClientSide);
+            return InteractionResult.PASS;
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             NetworkHooks.openScreen(serverPlayer, watz, watz.getBlockPos());

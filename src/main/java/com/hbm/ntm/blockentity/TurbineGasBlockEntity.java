@@ -461,9 +461,8 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (level == null || level.isClientSide) {
             return;
         }
-        Direction facing = facing();
-        fuelLubePortSubscriptions.detachAllDetailed(level, worldPosition, fuelLubeFluidPorts(facing), this, null);
-        waterPortSubscriptions.detachAllDetailed(level, worldPosition, waterFluidPorts(facing), this, null);
+        fuelLubePortSubscriptions.detachAllTrackedDetailed(level, worldPosition, this, null);
+        waterPortSubscriptions.detachAllTrackedDetailed(level, worldPosition, this, null);
     }
 
     public ItemStackHandler getItems() {
@@ -561,7 +560,9 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
-        return HbmEnergySideMode.OUTPUT;
+        // TileEntityMachineTurbineGas#canConnect rejects DOWN for Energy Mk2
+        // just as it does for Fluid Mk2. Null remains the internal query path.
+        return side == Direction.DOWN ? HbmEnergySideMode.NONE : HbmEnergySideMode.OUTPUT;
     }
 
     @Override
@@ -954,7 +955,7 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }

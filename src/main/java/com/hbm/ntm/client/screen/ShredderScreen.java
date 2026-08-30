@@ -11,13 +11,13 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class ShredderScreen extends AbstractContainerScreen<ShredderMenu> {
     private static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID,
-            "textures/gui/gui_shredder.png");
+            "textures/gui/processing/gui_shredder.png");
 
     public ShredderScreen(ShredderMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 233;
-        inventoryLabelY = 137;
+        inventoryLabelY = 139;
     }
 
     @Override
@@ -33,22 +33,28 @@ public class ShredderScreen extends AbstractContainerScreen<ShredderMenu> {
         drawGear(graphics, menu.getLeftGear(), leftPos + 43, topPos + 71, 176);
         drawGear(graphics, menu.getRightGear(), leftPos + 79, topPos + 71, 194);
         if (menu.bladesBrokenOrMissing()) {
-            graphics.blit(TEXTURE, leftPos - 16, topPos + 36, 176, 72, 16, 16);
+            LegacyGuiElements.renderInfoPanel(graphics, leftPos - 16, topPos + 36, 6);
         }
+    }
+
+    @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, 106 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(8, 18, 16, 88, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font,
-                    List.of(Component.literal(menu.getPower() + " / " + menu.getMaxPower() + " HE")),
-                    mouseX, mouseY);
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 8, topPos + 18, 16, 88)) {
+            LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 8, topPos + 18, 16, 88, menu.getPower(), menu.getMaxPower());
         } else if (menu.bladesBrokenOrMissing()
-                && mouseX >= leftPos - 16 && mouseX < leftPos && mouseY >= topPos + 36 && mouseY < topPos + 52) {
+                && LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 36, 16, 16)) {
             LegacyGuiElements.renderTooltip(graphics, font,
-                    List.of(Component.literal("Error: Shredder blades are broken or missing!")), mouseX, mouseY);
+                    List.of(Component.literal("Error: Shredder blades are broken or missing!")),
+                    leftPos - 8, topPos + 52);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

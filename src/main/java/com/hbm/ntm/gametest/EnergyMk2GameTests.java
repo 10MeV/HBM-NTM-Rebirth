@@ -133,6 +133,7 @@ import com.hbm.ntm.blockentity.IntakeBlockEntity;
 import com.hbm.ntm.blockentity.LargeLaunchPadBlockEntity;
 import com.hbm.ntm.blockentity.LaunchPadBlockEntity;
 import com.hbm.ntm.blockentity.LaunchTableBlockEntity;
+import com.hbm.ntm.blockentity.LegacyMachineRenderBounds;
 import com.hbm.ntm.blockentity.LegacyGenericSelectorMachineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLargeTurbineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLightBlockEntity;
@@ -1173,8 +1174,9 @@ public final class EnergyMk2GameTests {
                 "TOM blast keeps EntityExplosionChunkloading's legacy default collision/physics state");
         assertFalse(blast.fireImmune(),
                 "TOM blast does not gain a constructor or registry fire-immunity flag absent from EntityTomBlast");
-        assertEquals(1000, ModEntityTypes.DEATH_BLAST.get().clientTrackingRange(),
-                "Satellite laser DeathBlast retains EntityMappings' legacy 1000-block tracking range");
+        assertEquals(63, ModEntityTypes.DEATH_BLAST.get().clientTrackingRange(),
+                "Satellite laser DeathBlast retains EntityMappings' legacy 1000-block tracking range after "
+                        + "the Forge 1.20 chunk-unit conversion");
         helper.succeed();
     }
 
@@ -2319,7 +2321,7 @@ public final class EnergyMk2GameTests {
      * designator/radar coordinates must reach the spawned missile as the same legacy
      * integer X/Z endpoints, including Java's truncation of a negative launch position.
      */
-    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "missile_workspace", batch = "missileLaunchChain")
     public static void missileLaunchChainRetainsSpecifiedCoordinates(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
 
@@ -2436,7 +2438,7 @@ public final class EnergyMk2GameTests {
      * Both retain supplied coordinate-command X/Z independently, including their
      * entity-command overloads under the protected modern coordinate correction.
      */
-    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "missile_workspace", batch = "missileLaunchChain")
     public static void customLauncherLaunchChainRetainsSpecifiedCoordinates(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
 
@@ -2635,7 +2637,7 @@ public final class EnergyMk2GameTests {
      * launchers: ordinary and large pads launch only on a rising edge.  A signal
      * that was already present while the pad became ready must not fire it.
      */
-    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "missileLaunchChain")
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "missile_workspace", batch = "missileLaunchChain")
     public static void ordinaryLaunchPadsKeepLegacyRedstoneEdge(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         // Each GameTest receives an isolated ticking test area. Keep the fixture
@@ -2666,8 +2668,6 @@ public final class EnergyMk2GameTests {
         tickLaunchPad(level, normalPad);
         assertTrue(level.hasNeighborSignal(normalPos.east()),
                 "ordinary launch_pad east dummy receives its source-backed external redstone signal");
-        assertTrue(normalPad.getUpdateTag().getBoolean("redstonePower"),
-                "ordinary launch_pad records the initial powered state before it becomes launch-ready");
         prepareSolidTestMissileLaunch(level, normalPad);
         assertTrue(missilesAt(level, normalPos).isEmpty(),
                 "ordinary launch_pad does not launch merely because readiness followed an existing signal");
@@ -2675,8 +2675,6 @@ public final class EnergyMk2GameTests {
         tickLaunchPad(level, normalPad);
         level.setBlock(normalSignal, Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
         tickLaunchPad(level, normalPad);
-        assertTrue(normalPad.getUpdateTag().getBoolean("redstonePower"),
-                "ordinary launch_pad records its external rising edge");
         assertFalse(normalPad.isMissileValid(),
                 "ordinary launch_pad consumes its launchable fueled missile on the rising edge");
         assertMissileEndpointTags(singleMissileAt(level, normalPos), normalPos.getX(), normalPos.getZ(), -31, 47,
@@ -4067,6 +4065,8 @@ public final class EnergyMk2GameTests {
         if (!(level.getBlockEntity(assemblyPos) instanceof MissileAssemblyBlockEntity assembly)) {
             throw new AssertionError("No missile assembly block entity for inventory-boundary test");
         }
+        assertSame(LegacyMachineRenderBounds.INFINITE_EXTENT_AABB, assembly.getRenderBoundingBox(),
+                "missile assembly keeps TileEntityMachineMissileAssembly's infinite render boundary");
 
         ItemStack dirt = new ItemStack(Blocks.DIRT);
         ItemStack validChip = customMissilePart("mp_c_5");
@@ -17269,8 +17269,8 @@ public final class EnergyMk2GameTests {
                     "fluid pump keeps its old remote ports without an ordinary water core node");
             assertEquals(1, HbmFluidNodespace.getNetworkReceiverCount(level, pumpInputPipePos, HbmFluids.WATER),
                     "fluid pump subscribes on the old facing-rotation input side");
-            assertEquals(0, HbmFluidNodespace.getNetworkProviderCount(level, pumpOutputPipePos, HbmFluids.WATER),
-                    "empty fluid pump does not advertise its opposite output side");
+            assertEquals(1, HbmFluidNodespace.getNetworkProviderCount(level, pumpOutputPipePos, HbmFluids.WATER),
+                    "empty fluid pump keeps its source-backed opposite output provider subscription");
 
             TestFluidProvider pumpSource = new TestFluidProvider(HbmFluids.WATER, 500);
             assertTrue(HbmFluidUtil.subscribeProviderToNetwork(level, pumpInputPipePos, Direction.EAST,
@@ -17903,7 +17903,7 @@ public final class EnergyMk2GameTests {
                             ModBlocks.PA_DIPOLE.get().defaultBlockState());
                     PADetectorBlockEntity detector = new PADetectorBlockEntity(BlockPos.ZERO,
                             ModBlocks.PA_DETECTOR.get().defaultBlockState());
-                    assertEquals(7, source.fluidPorts().size(), "PA source keeps all seven legacy coolant ports");
+                    assertEquals(10, source.fluidPorts().size(), "PA source keeps all ten legacy coolant ports");
                     assertEquals(6, rfc.fluidPorts().size(), "PA RFC keeps all six legacy coolant ports");
                     assertEquals(4, quadrupole.fluidPorts().size(), "PA quadrupole keeps all four legacy coolant ports");
                     assertEquals(8, dipole.fluidPorts().size(), "PA dipole keeps all eight legacy coolant ports");
@@ -20361,6 +20361,12 @@ public final class EnergyMk2GameTests {
                     || !(level.getBlockEntity(clutterPos) instanceof PneumaticStorageClutterBlockEntity clutter)) {
                 throw new AssertionError("Pneumatic storage fixture did not create its required block entities");
             }
+
+            // TileEntityPneumaticStorageBase only publishes slot monitors while
+            // its AIR buffer is non-empty.  Prime the fixture through that
+            // source-backed availability gate before asserting cache contents;
+            // an empty storage is intentionally absent from every access cache.
+            clutter.compair().setFill(clutter.compair().getMaxFill());
 
             assertTrue(access.canConnectPneumatic(Direction.SOUTH),
                     "legacy pneumatic storage access exposes only its facing-opposite connection side");

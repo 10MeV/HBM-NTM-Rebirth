@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.PneumaticTubeMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -99,8 +100,11 @@ public class PneumaticTubeScreen extends AbstractContainerScreen<PneumaticTubeMe
                 return;
             }
             if (isHovering(7, 52, 18, 18, mouseX, mouseY)) {
-                graphics.renderComponentTooltip(font, List.of(Component.literal(
-                        (menu.isRedstoneEnabled() ? "ON " : "OFF ") + "with Redstone")), mouseX, mouseY);
+                Component redstone = Component.empty()
+                        .append(Component.literal(menu.isRedstoneEnabled() ? "ON " : "OFF ")
+                                .withStyle(menu.isRedstoneEnabled() ? ChatFormatting.GREEN : ChatFormatting.RED))
+                        .append(Component.literal("with Redstone"));
+                graphics.renderComponentTooltip(font, List.of(redstone), mouseX, mouseY);
                 return;
             }
             if (isHovering(6, 36, 20, 8, mouseX, mouseY)) {
@@ -111,14 +115,14 @@ public class PneumaticTubeScreen extends AbstractContainerScreen<PneumaticTubeMe
             }
             if (isHovering(151, 16, 18, 18, mouseX, mouseY)) {
                 graphics.renderComponentTooltip(font, List.of(
-                        Component.literal("Receiver order:"),
+                        Component.literal("Receiver order:").withStyle(ChatFormatting.YELLOW),
                         Component.literal(menu.getReceiveOrder() == 0 ? "Round robin" : "Random")),
                         mouseX, mouseY);
                 return;
             }
             if (isHovering(151, 52, 18, 18, mouseX, mouseY)) {
                 graphics.renderComponentTooltip(font, List.of(
-                        Component.literal("Provider slot order:"),
+                        Component.literal("Provider slot order:").withStyle(ChatFormatting.YELLOW),
                         Component.literal(switch (menu.getSendOrder()) {
                             case 1 -> "Last to first";
                             case 2 -> "Random";
@@ -134,7 +138,8 @@ public class PneumaticTubeScreen extends AbstractContainerScreen<PneumaticTubeMe
                     Component mode = menu.getModeLabel(slotIndex);
                     if (!mode.getString().isEmpty()) {
                         graphics.renderComponentTooltip(font,
-                                List.of(Component.literal("Right click to change"), mode), mouseX, mouseY);
+                                List.of(Component.literal("Right click to change").withStyle(ChatFormatting.RED), mode),
+                                mouseX, mouseY);
                     }
                     return;
                 }

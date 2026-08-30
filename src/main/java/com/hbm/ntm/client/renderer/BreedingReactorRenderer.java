@@ -1,8 +1,11 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
+import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.BreedingReactorBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
+import com.hbm.ntm.client.obj.ObjReactorModels;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter;
 import com.hbm.ntm.client.render.LegacyMachineEffectPresenter.PresentStage;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -32,7 +35,7 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
 
     @Override
     public boolean shouldRender(BreedingReactorBlockEntity blockEntity, Vec3 cameraPos) {
-        return blockEntity.getProgress() > 0.0F
+        return (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer() || blockEntity.getProgress() > 0.0F)
                 && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
                 && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
@@ -45,7 +48,8 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
     @Override
     public void render(BreedingReactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (blockEntity.getProgress() <= 0.0F) {
+        boolean renderStaticBody = LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
+        if (!renderStaticBody && blockEntity.getProgress() <= 0.0F) {
             return;
         }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
@@ -58,6 +62,15 @@ public class BreedingReactorRenderer implements BlockEntityRenderer<BreedingReac
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, yRotation(facing));
+        if (renderStaticBody) {
+            int modelLight = state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block
+                    ? LegacyRenderLighting.resolveMachineLight(blockEntity, state, block.definition(), packedLight)
+                    : packedLight;
+            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+                ObjReactorModels.BREEDER.renderAll(ObjReactorModels.BREEDER_TEXTURE, poseStack, buffer,
+                        modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+            }
+        }
         enqueueLegacySparks(blockEntity, poseStack, buffer);
         poseStack.popPose();
     }

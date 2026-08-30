@@ -10,7 +10,9 @@ import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmItemStackUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -269,12 +271,33 @@ public class LegacyFileCabinetBlockEntity extends BlockEntity implements MenuPro
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // The legacy binary packet synchronised precisely these animation
+        // drivers.  Drawer extents remain client-interpolated and the cabinet
+        // inventory/lock state is deliberately not exposed to chunk watchers.
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("timer", timer);
+        tag.putInt("playersUsing", playersUsing);
+        return tag;
+    }
+
+    @Nullable
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleUpdateTag(tag);
+        }
+    }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        timer = tag.getInt("timer");
+        playersUsing = tag.getInt("playersUsing");
     }
 
     @Override

@@ -14,10 +14,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import org.apache.commons.lang3.math.NumberUtils;
 
 public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReactorMenu> {
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/reactors/gui_research_reactor.png");
+    private final LegacyNumberDisplay[] displays = {
+            new LegacyNumberDisplay(14, 25, 0x08FF00).setDigitLength(4),
+            new LegacyNumberDisplay(12, 63, 0x08FF00).setDigitLength(3),
+            new LegacyNumberDisplay(5, 101, 0x08FF00).setDigitLength(3)
+    };
 
     private EditBox levelField;
     private int buttonTimer;
@@ -36,7 +42,7 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
         levelField.setBordered(false);
         levelField.setMaxLength(3);
         levelField.setValue(Integer.toString(menu.getLevelPercent()));
-        addRenderableWidget(levelField);
+        addWidget(levelField);
     }
 
     @Override
@@ -58,11 +64,11 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
             graphics.blit(TEXTURE, leftPos + 44, topPos + 97, 176, 8, 11, 20);
             buttonTimer--;
         }
+        displays[0].drawNumber(graphics, leftPos, topPos, menu.getTotalFlux());
+        displays[1].drawNumber(graphics, leftPos, topPos, menu.getTemperatureDisplay());
+        displays[2].drawNumber(graphics, leftPos, topPos, normalizeLevelField());
         LegacyGuiElements.renderInfoPanel(graphics, leftPos - 14, topPos + 23, 3);
         LegacyGuiElements.renderInfoPanel(graphics, leftPos - 14, topPos + 61, 2);
-        drawDisplay(graphics, 14, 25, menu.getTotalFlux(), 4);
-        drawDisplay(graphics, 12, 63, menu.getTemperatureDisplay(), 3);
-        drawDisplay(graphics, 5, 101, parseLevelField(), 3);
     }
 
     @Override
@@ -78,27 +84,33 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(-14, 23, 16, 16, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, java.util.List.of(
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 14, topPos + 23, 16, 16)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 14, topPos + 23, 16, 16, leftPos - 6, topPos + 39, java.util.List.of(
                     Component.literal("The reactor has to be submerged"),
                     Component.literal("in water on its sides to cool."),
                     Component.literal("The neutron flux is provided to"),
-                    Component.literal("adjacent breeding reactors.")), mouseX, mouseY);
-        } else if (isHovering(-14, 61, 16, 16, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, java.util.List.of(
+                    Component.literal("adjacent breeding reactors.")));
+        } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 14, topPos + 61, 16, 16)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 14, topPos + 61, 16, 16, leftPos - 6, topPos + 77, java.util.List.of(
                     Component.literal("This reactor is fueled with plate fuel."),
-                    Component.literal("The reaction needs a neutron source to start.")), mouseX, mouseY);
+                    Component.literal("The reaction needs a neutron source to start.")));
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (leftPos + 44 <= mouseX && mouseX < leftPos + 55 && topPos + 97 < mouseY && mouseY <= topPos + 117) {
+        boolean handled = super.mouseClicked(mouseX, mouseY, button);
+        boolean fieldHovered = LegacyGuiElements.isMouseOver(
+                mouseX, mouseY, leftPos + 8, topPos + 99, 33, 16);
+        displays[2].setBlinks(fieldHovered);
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 44, topPos + 97, 11, 20)) {
             sendLevel();
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return handled;
     }
 
     @Override
@@ -111,8 +123,7 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
 
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        return Character.isDigit(codePoint) && levelField.charTyped(codePoint, modifiers)
-                || super.charTyped(codePoint, modifiers);
+        return levelField.charTyped(codePoint, modifiers) || super.charTyped(codePoint, modifiers);
     }
 
     private void sendLevel() {
@@ -130,27 +141,20 @@ public class ResearchReactorScreen extends AbstractContainerScreen<ResearchReact
         }
     }
 
-    private int parseLevelField() {
-        try {
-            return Mth.clamp(Integer.parseInt(levelField.getValue()), 0, 100);
-        } catch (NumberFormatException ignored) {
-            return 0;
-        }
+    private int normalizeLevelField() {
+        String value = levelField.getValue();
+        int level = NumberUtils.isDigits(value)
+                ? (int) Mth.clamp(Double.parseDouble(value), 0.0D, 100.0D)
+                : 0;
+        levelField.setValue(Integer.toString(level));
+        return level;
     }
 
     private Integer parseLevelFieldForSubmit() {
-        try {
-            return Mth.clamp((int) Double.parseDouble(levelField.getValue()), 0, 100);
-        } catch (NumberFormatException ignored) {
+        String value = levelField.getValue();
+        if (!NumberUtils.isNumber(value)) {
             return null;
         }
-    }
-
-    private void drawDisplay(GuiGraphics graphics, int x, int y, int value, int digits) {
-        String text = Integer.toString(Math.max(0, value));
-        if (text.length() > digits) {
-            text = text.substring(text.length() - digits);
-        }
-        graphics.drawString(font, text, x, y, 0x08FF00, false);
+        return (int) Mth.clamp(Double.parseDouble(value), 0.0D, 100.0D);
     }
 }

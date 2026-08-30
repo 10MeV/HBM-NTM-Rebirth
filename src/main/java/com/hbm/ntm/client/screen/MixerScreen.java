@@ -22,30 +22,29 @@ public class MixerScreen extends AbstractContainerScreen<MixerMenu> {
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 204;
-        titleLabelX = 8;
-        titleLabelY = 6;
         inventoryLabelY = imageHeight - 96 + 2;
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        int power = menu.getPowerBarHeight(53);
+        int power = menu.getPowerBarHeight(52);
         if (power > 0) {
-            graphics.blit(TEXTURE, leftPos + 23, topPos + 75 - power, 176, 52 - power, 16, power);
+            graphics.blit(TEXTURE, leftPos + 12, topPos + 70 - power, 176, 52 - power, 16, power);
         }
-        int progress = menu.getProgressWidth(53);
+        int progress = menu.getProgressWidth(52);
         if (progress > 0) {
-            graphics.blit(TEXTURE, leftPos + 62, topPos + 36, 192, 0, progress, 44);
+            graphics.blit(TEXTURE, leftPos + 71, topPos + 31, 192, 0, progress, 44);
         }
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 43, topPos + 75, 7, 52, menu.tank(0));
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 52, topPos + 75, 7, 52, menu.tank(1));
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 117, topPos + 75, 16, 52, menu.tank(2));
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 52, topPos + 70, 7, 52, menu.tank(0));
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 61, topPos + 70, 7, 52, menu.tank(1));
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 126, topPos + 70, 16, 52, menu.tank(2));
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos + 152, topPos + 55, 8);
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, titleLabelX, titleLabelY, 0x404040, false);
+        graphics.drawString(font, title, imageWidth / 2 + 20 - font.width(title) / 2, 6, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -53,19 +52,26 @@ public class MixerScreen extends AbstractContainerScreen<MixerMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(23, 23, 16, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(12, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
-                    leftPos + 23, topPos + 23, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(43, 23, 7, 52, mouseX, mouseY)) {
+                    leftPos + 12, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
+        } else if (isLegacyHovering(52, 18, 7, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.tank(0),
                     menu.tankTooltip(0, hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(52, 23, 7, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(61, 18, 7, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.tank(1),
                     menu.tankTooltip(1, hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(117, 23, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(126, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.tank(2),
                     menu.tankTooltip(2, hasShiftDown()), mouseX, mouseY);
-        } else if (hasMultipleRecipes() && isHovering(62, 22, 12, 12, mouseX, mouseY)) {
+        } else if (isLegacyHovering(152, 55, 8, 8, mouseX, mouseY)) {
+            graphics.renderComponentTooltip(font, List.of(
+                    Component.translatableWithFallback("desc.gui.upgrade", "Acceptable Upgrades:"),
+                    Component.translatableWithFallback("desc.gui.upgrade.speed", " * Speed: Stacks to level 3"),
+                    Component.translatableWithFallback("desc.gui.upgrade.power", " * Power-Saving: Stacks to level 3"),
+                    Component.translatableWithFallback("desc.gui.upgrade.overdrive", " * Overdrive: Stacks to level 3")),
+                    mouseX, mouseY);
+        } else if (hasMultipleRecipes() && isLegacyRecipeButton(mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, recipeTooltip(), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
@@ -73,12 +79,23 @@ public class MixerScreen extends AbstractContainerScreen<MixerMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && hasMultipleRecipes()
-                && isHovering(62, 22, 12, 12, mouseX, mouseY)) {
+        boolean handled = super.mouseClicked(mouseX, mouseY, button);
+        if (hasMultipleRecipes() && isLegacyRecipeButton(mouseX, mouseY)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity(), 0, com.hbm.ntm.blockentity.MixerBlockEntity.CONTROL_NEXT_RECIPE);
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return handled;
+    }
+
+    private boolean isLegacyRecipeButton(double mouseX, double mouseY) {
+        double relativeX = mouseX - leftPos;
+        double relativeY = mouseY - topPos;
+        return relativeX >= 71.0D && relativeX < 83.0D
+                && relativeY > 17.0D && relativeY <= 29.0D;
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private boolean hasMultipleRecipes() {
@@ -94,14 +111,13 @@ public class MixerScreen extends AbstractContainerScreen<MixerMenu> {
         List<Component> tooltip = new ArrayList<>();
         tooltip.add(Component.literal("Current recipe (" + (Math.floorMod(menu.getRecipeIndex(), recipes.size()) + 1)
                 + "/" + recipes.size() + "):").withStyle(ChatFormatting.YELLOW));
-        recipe.input1().ifPresent(input -> tooltip.add(input.type().getDisplayName().copy().append(
-                Component.literal(" " + input.amount() + "mB"))));
-        recipe.input2().ifPresent(input -> tooltip.add(input.type().getDisplayName().copy().append(
-                Component.literal(" " + input.amount() + "mB"))));
+        recipe.input1().ifPresent(input -> tooltip.add(Component.literal("-").append(input.type().getDisplayName())));
+        recipe.input2().ifPresent(input -> tooltip.add(Component.literal("-").append(input.type().getDisplayName())));
         recipe.solidInput().ifPresent(input -> {
             List<ItemStack> stacks = input.displayStacks();
             if (!stacks.isEmpty()) {
-                tooltip.add(stacks.get((int) (System.currentTimeMillis() / 1000L % stacks.size())).getHoverName());
+                tooltip.add(Component.literal("-").append(
+                        stacks.get((int) (System.currentTimeMillis() / 1000L % stacks.size())).getHoverName()));
             }
         });
         tooltip.add(Component.literal("Click to change!").withStyle(ChatFormatting.RED));

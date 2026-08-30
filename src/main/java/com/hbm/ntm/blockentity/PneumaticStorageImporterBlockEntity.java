@@ -45,7 +45,8 @@ public class PneumaticStorageImporterBlockEntity extends BlockEntity implements 
             setChanged();
         }
     };
-    private final LazyOptional<IItemHandler> itemCapability = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> internalItems = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalInputItems = LazyOptional.of(ExternalInputHandler::new);
     private PneumaticNode node;
     private PneumaticStackCache cache;
 
@@ -108,9 +109,12 @@ public class PneumaticStorageImporterBlockEntity extends BlockEntity implements 
     }
 
     @Override public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        return cap == ForgeCapabilities.ITEM_HANDLER ? itemCapability.cast() : super.getCapability(cap, side);
+        if (cap == ForgeCapabilities.ITEM_HANDLER) {
+            return (side == null ? internalItems : externalInputItems).cast();
+        }
+        return super.getCapability(cap, side);
     }
-    @Override public void invalidateCaps() { super.invalidateCaps(); itemCapability.invalidate(); }
+    @Override public void invalidateCaps() { super.invalidateCaps(); internalItems.invalidate(); externalInputItems.invalidate(); }
     @Override public void setRemoved() { removeNetwork(); super.setRemoved(); }
     @Override public void onChunkUnloaded() { removeNetwork(); super.onChunkUnloaded(); }
 
@@ -124,5 +128,21 @@ public class PneumaticStorageImporterBlockEntity extends BlockEntity implements 
         if (level != null && !level.isClientSide) PneumaticNodespace.destroyNode(level, worldPosition);
         node = null;
         if (cache != null) { cache.dissolveCache(); cache = null; }
+    }
+
+    /** Old ISidedInventory exposed all nine slots for insertion but never allowed extraction. */
+    private final class ExternalInputHandler implements IItemHandler {
+        @Override public int getSlots() { return SLOT_COUNT; }
+        @Override public ItemStack getStackInSlot(int slot) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.getStackInSlot(slot) : ItemStack.EMPTY;
+        }
+        @Override public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.insertItem(slot, stack, simulate) : stack;
+        }
+        @Override public ItemStack extractItem(int slot, int amount, boolean simulate) { return ItemStack.EMPTY; }
+        @Override public int getSlotLimit(int slot) { return slot >= 0 && slot < SLOT_COUNT ? items.getSlotLimit(slot) : 0; }
+        @Override public boolean isItemValid(int slot, ItemStack stack) {
+            return slot >= 0 && slot < SLOT_COUNT && items.isItemValid(slot, stack);
+        }
     }
 }

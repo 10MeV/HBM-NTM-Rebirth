@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "S": { "item": "minecraft:lever" },
+    "W": { "item": "hbm_ntm_rebirth:red_wire_coated" }
+  },
+  "pattern": [
+    "S",
+    "W"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:cable_switch"
+  },
+  "show_notification": true
+}

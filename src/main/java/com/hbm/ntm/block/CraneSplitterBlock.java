@@ -16,6 +16,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
@@ -32,6 +34,12 @@ public class CraneSplitterBlock extends LegacyXrMultiblockBlock implements Entit
 
     public CraneSplitterBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level,
+            List<net.minecraft.network.chat.Component> tooltip, TooltipFlag flag) {
+        LegacyStandardInfoTooltip.append(tooltip, "crane_splitter");
     }
 
     @Override

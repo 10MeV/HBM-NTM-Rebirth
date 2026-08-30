@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {"count": 6, "ingredient": {"tag": "forge:cast_plates/steel"}, "legacy_ore": "plateCastSteel"},
+    {"count": 8, "ingredient": {"item": "hbm_ntm_rebirth:plate_polymer"}},
+    {"count": 2, "ingredient": {"item": "hbm_ntm_rebirth:motor"}},
+    {"count": 32, "ingredient": {"tag": "forge:bolts/dura_steel"}, "legacy_ore": "boltDuraSteel"},
+    {"count": 4, "ingredient": {"tag": "forge:dyes/black"}, "legacy_ore": "dyeBlack"}
+  ],
+  "internal_name": "ass.qedoor",
+  "output_fluids": [],
+  "output_items": [{"item": "hbm_ntm_rebirth:qe_containment"}],
+  "pools": [],
+  "power": 100,
+  "source_order": 63
+}

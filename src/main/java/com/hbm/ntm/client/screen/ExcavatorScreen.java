@@ -45,14 +45,14 @@ public class ExcavatorScreen extends AbstractContainerScreen<ExcavatorMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         for (int i = 0; i < TOGGLES.length; i++) {
-            if (isHovering(6 + i * 24, 42, 20, 40, mouseX, mouseY)) {
+            if (isLegacyHovering(6 + i * 24, 42, 20, 40, mouseX, mouseY)) {
                 graphics.renderTooltip(font, Component.translatable("excavator." + TOGGLES[i]), mouseX, mouseY);
             }
         }
-        if (isHovering(220, 18, 16, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(220, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 220, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(202, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(202, 18, 16, 52, mouseX, mouseY)) {
             List<Component> tooltip = menu.getTankTooltip(hasShiftDown());
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTank(), tooltip, mouseX, mouseY);
         }
@@ -63,7 +63,7 @@ public class ExcavatorScreen extends AbstractContainerScreen<ExcavatorMenu> {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean handled = super.mouseClicked(mouseX, mouseY, button);
         for (int i = 0; i < TOGGLES.length; i++) {
-            if (isHovering(6 + i * 24, 42, 20, 40, mouseX, mouseY)) {
+            if (isLegacyHovering(6 + i * 24, 42, 20, 40, mouseX, mouseY)) {
                 CompoundTag tag = new CompoundTag();
                 tag.putBoolean(TOGGLES[i], true);
                 minecraft.player.playSound(SoundEvents.LEVER_CLICK, 1.0F, 1.0F);
@@ -72,6 +72,10 @@ public class ExcavatorScreen extends AbstractContainerScreen<ExcavatorMenu> {
             }
         }
         return handled;
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private void renderEnergy(GuiGraphics graphics) {

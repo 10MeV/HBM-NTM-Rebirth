@@ -1,9 +1,14 @@
 package com.hbm.ntm.block;
 
+import com.hbm.ntm.api.block.Toolable;
+import com.hbm.ntm.api.block.Toolable.ToolType;
 import com.hbm.ntm.blockentity.ElectricPressBlockEntity;
+import com.hbm.ntm.multiblock.DummyBlock;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -18,11 +23,12 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class ElectricPressBlock extends LegacyXrMultiblockBlock implements EntityBlock {
+public class ElectricPressBlock extends LegacyXrMultiblockBlock implements EntityBlock, Toolable {
     private static final int[] LEGACY_DIMENSIONS = { 2, 0, 0, 0, 0, 0 };
 
     public ElectricPressBlock(Properties properties) {
@@ -58,11 +64,30 @@ public class ElectricPressBlock extends LegacyXrMultiblockBlock implements Entit
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // MachineEPress uses BlockDummyable#standardOpenBehavior, including
+        // consuming a crouching click without opening the GUI.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof ElectricPressBlockEntity machine) {
             NetworkHooks.openScreen(serverPlayer, machine, machine.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    /** See {@link PressMachineBlock#onToolUse}. */
+    @Override
+    public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
+        if (tool != ToolType.HAND_DRILL || !(level.getBlockState(pos).getBlock() instanceof DummyBlock)) {
+            return false;
+        }
+        if (level.isClientSide) {
+            return true;
+        }
+        MultiblockHelper.CoreLookup core = MultiblockHelper.findCore(level, pos);
+        return core != null && core.state().is(this)
+                && MultiblockHelper.removeOwnedDummySafely(level, core.pos(), pos);
     }
 
     @Nullable

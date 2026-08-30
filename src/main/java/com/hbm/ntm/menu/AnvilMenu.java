@@ -6,13 +6,12 @@ import com.hbm.ntm.recipe.AnvilConstructionRecipe;
 import com.hbm.ntm.recipe.AnvilConstructionRecipeRuntime;
 import com.hbm.ntm.recipe.AnvilSmithingRecipeRuntime;
 import com.hbm.ntm.registry.ModMenuTypes;
+import com.hbm.ntm.util.AchievementHandler;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -52,17 +51,41 @@ public class AnvilMenu extends AbstractContainerMenu implements HbmTypedMenuActi
         addSlot(new SmithingInputSlot(input, 0, 17, 27));
         addSlot(new SmithingInputSlot(input, 1, 53, 27));
         addSlot(new Slot(output, 0, 89, 27) {
+            private int removeCount;
+
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
             }
 
             @Override
+            public ItemStack remove(int amount) {
+                if (hasItem()) {
+                    removeCount += Math.min(amount, getItem().getCount());
+                }
+                return super.remove(amount);
+            }
+
+            @Override
+            protected void onQuickCraft(ItemStack stack, int amount) {
+                removeCount += amount;
+                super.onQuickCraft(stack, amount);
+            }
+
+            private void fireOutputHooks(ItemStack stack) {
+                stack.onCraftedBy(playerInventory.player.level(), playerInventory.player, removeCount);
+                AchievementHandler.fire(playerInventory.player, stack);
+                removeCount = 0;
+            }
+
+            @Override
             public void onTake(Player player, ItemStack stack) {
+                // 1.7.10 used SlotCraftingOutput here.  Its onCrafting callback both notified
+                // the item and fired HBM's output achievement hook before inputs were consumed.
+                // A plain modern Slot does neither automatically for this non-vanilla recipe type.
+                fireOutputHooks(stack);
                 super.onTake(player, stack);
                 if (AnvilSmithingRecipeRuntime.consume(player.level(), input, tier)) {
-                    player.level().playSound(null, player.blockPosition(), SoundEvents.ANVIL_USE,
-                            SoundSource.BLOCKS, 0.8F, 1.0F);
                     updateSmithingOutput();
                 }
             }
@@ -143,12 +166,7 @@ public class AnvilMenu extends AbstractContainerMenu implements HbmTypedMenuActi
     }
 
     private void craftConstruction(ServerPlayer player, AnvilConstructionRecipe recipe, boolean batch) {
-        AnvilConstructionRecipeRuntime.CraftResult result = AnvilConstructionRecipeRuntime.craft(player, recipe, tier,
-                batch);
-        if (result.craftedAny()) {
-            player.level().playSound(null, player.blockPosition(), SoundEvents.ANVIL_USE,
-                    SoundSource.BLOCKS, 0.8F, 1.0F);
-        }
+        AnvilConstructionRecipeRuntime.craft(player, recipe, tier, batch);
         player.inventoryMenu.broadcastChanges();
     }
 

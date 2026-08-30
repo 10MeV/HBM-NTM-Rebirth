@@ -77,13 +77,17 @@ public class AnnihilatorScreen extends AbstractContainerScreen<AnnihilatorMenu> 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(151, 35, 18, 18, mouseX, mouseY)) {
+        if (isLegacyHovering(151, 35, 18, 18, mouseX, mouseY)) {
             List<Component> tooltip = monitorTooltip();
             if (!tooltip.isEmpty()) {
                 graphics.renderComponentTooltip(font, tooltip, mouseX, mouseY);
             }
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private List<Component> monitorTooltip() {

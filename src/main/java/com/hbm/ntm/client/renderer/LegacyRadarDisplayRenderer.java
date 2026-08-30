@@ -16,7 +16,6 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -73,8 +72,8 @@ public final class LegacyRadarDisplayRenderer {
     }
 
     public static void renderWorldNoise(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
-            int packedOverlay, int vOffset) {
-        LegacyTexturedQuadRenderer.pixelQuadDirect(texture, poseStack, buffer, LightTexture.FULL_BRIGHT, packedOverlay,
+            int packedLight, int packedOverlay, int vOffset) {
+        LegacyTexturedQuadRenderer.pixelQuadDirect(texture, poseStack, buffer, packedLight, packedOverlay,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL, 0.0F, 1.0F, 0.0F, TEXTURE_SIZE, TEXTURE_SIZE,
                 WORLD_PANEL_X, WORLD_PANEL_Y_MAX, WORLD_PANEL_Z_MAX, 216.0D, vOffset + 40.0D,
                 WORLD_PANEL_X, WORLD_PANEL_Y_MAX, WORLD_PANEL_Z_MIN, 256.0D, vOffset + 40.0D,
@@ -83,8 +82,8 @@ public final class LegacyRadarDisplayRenderer {
                 0xFFFFFF, 255);
     }
 
-    public static void emitWorldNoise(TexturedQuadGroup group, int packedOverlay, int vOffset) {
-        group.add(LightTexture.FULL_BRIGHT, packedOverlay,
+    public static void emitWorldNoise(TexturedQuadGroup group, int packedLight, int packedOverlay, int vOffset) {
+        group.add(packedLight, packedOverlay,
                 0.0F, 1.0F, 0.0F,
                 WORLD_PANEL_X, WORLD_PANEL_Y_MAX, WORLD_PANEL_Z_MAX,
                 216.0D / TEXTURE_SIZE, (vOffset + 40.0D) / TEXTURE_SIZE, 255,
@@ -98,16 +97,17 @@ public final class LegacyRadarDisplayRenderer {
     }
 
     public static void renderWorldBlip(ResourceLocation texture, PoseStack poseStack, MultiBufferSource buffer,
-            int packedOverlay, RadarEntry entry, BlockPos reference, int range) {
-        renderWorldBlip(worldBlipBatch(texture, poseStack, buffer, packedOverlay), entry, reference, range);
+            int packedLight, int packedOverlay, RadarEntry entry, BlockPos reference, int range) {
+        renderWorldBlip(worldBlipBatch(texture, poseStack, buffer, packedLight, packedOverlay),
+                entry, reference, range);
     }
 
     public static WorldBlipBatch worldBlipBatch(ResourceLocation texture, PoseStack poseStack,
-            MultiBufferSource buffer, int packedOverlay) {
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
         return new WorldBlipBatch(
                 LegacyTexturedQuadRenderer.vertexAlphaConsumer(texture, buffer,
                         LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE),
-                poseStack.last(), packedOverlay);
+                poseStack.last(), packedLight, packedOverlay);
     }
 
     public static void renderWorldBlip(WorldBlipBatch batch, RadarEntry entry, BlockPos reference, int range) {
@@ -116,7 +116,7 @@ public final class LegacyRadarDisplayRenderer {
         int blip = Mth.clamp(entry.blipLevel(), 0, 31);
         double v0 = blip * BLIP_SIZE;
         double v1 = v0 + BLIP_SIZE;
-        LegacyTexturedQuadRenderer.quadWithVertexAlpha(batch.consumer(), batch.pose(), LightTexture.FULL_BRIGHT,
+        LegacyTexturedQuadRenderer.quadWithVertexAlpha(batch.consumer(), batch.pose(), batch.packedLight(),
                 batch.packedOverlay(), 0.0F, 1.0F, 0.0F,
                 WORLD_PANEL_X, 1.0D - offset.z() + WORLD_BLIP_SIZE,
                 0.5D - offset.x() + WORLD_BLIP_SIZE, (double) BLIP_U / TEXTURE_SIZE, v1 / TEXTURE_SIZE, 255,
@@ -131,14 +131,14 @@ public final class LegacyRadarDisplayRenderer {
                 0xFFFFFF);
     }
 
-    public static void emitWorldBlip(TexturedQuadGroup group, int packedOverlay,
+    public static void emitWorldBlip(TexturedQuadGroup group, int packedLight, int packedOverlay,
             RadarEntry entry, BlockPos reference, int range) {
         RadarDisplayProjection.WorldOffset offset =
                 RadarDisplayProjection.worldBlipOffset(entry.pos(), reference, range);
         int blip = Mth.clamp(entry.blipLevel(), 0, 31);
         double v0 = blip * BLIP_SIZE;
         double v1 = v0 + BLIP_SIZE;
-        group.add(LightTexture.FULL_BRIGHT, packedOverlay,
+        group.add(packedLight, packedOverlay,
                 0.0F, 1.0F, 0.0F,
                 WORLD_PANEL_X, 1.0D - offset.z() + WORLD_BLIP_SIZE,
                 0.5D - offset.x() + WORLD_BLIP_SIZE, (double) BLIP_U / TEXTURE_SIZE, v1 / TEXTURE_SIZE, 255,
@@ -211,7 +211,8 @@ public final class LegacyRadarDisplayRenderer {
     public record ScreenOffset(double x, double z) {
     }
 
-    public record WorldBlipBatch(VertexConsumer consumer, PoseStack.Pose pose, int packedOverlay) {
+    public record WorldBlipBatch(VertexConsumer consumer, PoseStack.Pose pose,
+                                 int packedLight, int packedOverlay) {
     }
 
     private LegacyRadarDisplayRenderer() {

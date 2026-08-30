@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:brick_concrete" }, "count": 64 },
+    { "ingredient": { "item": "minecraft:iron_bars" }, "count": 128 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:machine_condenser" }, "count": 4 }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:machine_tower_small" },
+  "tier_lower": 3,
+  "overlay": "construction"
+}

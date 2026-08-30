@@ -13,6 +13,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.menu.SoyuzLauncherMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
@@ -31,6 +32,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -77,6 +79,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_STARTING = "starting";
     private static final String TAG_COUNTDOWN = "countdown";
     private static final String TAG_POWER = "power";
+    private static final String TAG_ROCKET_TYPE = "rocketType";
     private static final String TAG_CUSTOM_NAME = "name";
 
     private final HbmFluidTank keroseneTank = new HbmFluidTank(HbmFluids.KEROSENE, TANK_CAPACITY);
@@ -104,6 +107,7 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int mode;
     private boolean starting;
     private int countdown;
+    private int syncedRocketType = -1;
     private String customName;
     private Object audioLoop;
     private List<LauncherPort> launcherPorts;
@@ -373,6 +377,9 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     public int getRocketType() {
+        if (level != null && level.isClientSide) {
+            return syncedRocketType;
+        }
         return hasRocket() ? SoyuzRocketItem.getRawSkin(items.getStackInSlot(SLOT_ROCKET)) : -1;
     }
 
@@ -562,8 +569,72 @@ public class SoyuzLauncherBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong(TAG_POWER, energy.getPower());
+        tag.putByte(TAG_MODE, (byte) mode);
+        tag.putBoolean(TAG_STARTING, starting);
+        tag.putInt(TAG_COUNTDOWN, countdown);
+        tag.putByte(TAG_ROCKET_TYPE, (byte) getRocketType());
+        keroseneTank().writeToNbt(tag, "fuel");
+        oxygenTank().writeToNbt(tag, "oxidizer");
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_POWER)) {
+            energy.setPower(tag.getLong(TAG_POWER));
+        }
+        if (tag.contains(TAG_MODE)) {
+            mode = tag.getByte(TAG_MODE);
+        }
+        if (tag.contains(TAG_STARTING)) {
+            starting = tag.getBoolean(TAG_STARTING);
+        }
+        if (tag.contains(TAG_COUNTDOWN)) {
+            countdown = tag.getInt(TAG_COUNTDOWN);
+        }
+        if (tag.contains(TAG_ROCKET_TYPE)) {
+            syncedRocketType = tag.getByte(TAG_ROCKET_TYPE);
+        }
+        if (tag.contains("fuel") || tag.contains("fuel_type") || tag.contains("fuel_type_id")) {
+            keroseneTank().readFromNbt(tag, "fuel");
+            keroseneTank().setTankType(HbmFluids.KEROSENE);
+        }
+        if (tag.contains("oxidizer") || tag.contains("oxidizer_type") || tag.contains("oxidizer_type_id")) {
+            oxygenTank().readFromNbt(tag, "oxidizer");
+            oxygenTank().setTankType(HbmFluids.OXYGEN);
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntitySoyuzLauncher#serialize: this state drives the world animation and ready loop.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeByte(mode);
+        data.writeBoolean(starting);
+        data.writeByte(getRocketType());
+        LegacyFluidTankPacket.write(data, keroseneTank());
+        LegacyFluidTankPacket.write(data, oxygenTank());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        mode = data.readByte();
+        starting = data.readBoolean();
+        syncedRocketType = data.readByte();
+        LegacyFluidTankPacket.read(data, keroseneTank());
+        LegacyFluidTankPacket.read(data, oxygenTank());
+    }
 
     @Nullable
     @Override

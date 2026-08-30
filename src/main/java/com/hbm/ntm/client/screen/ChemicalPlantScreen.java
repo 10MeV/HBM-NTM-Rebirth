@@ -8,7 +8,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -36,7 +35,8 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
         }
         int progress = menu.getProgressWidth(70);
         if (progress > 0) {
-            graphics.blit(TEXTURE, leftPos + 62, topPos + 126, 176, 61, progress, 16);
+            graphics.blit(TEXTURE, leftPos + 62, topPos + 126, 176,
+                    61 + (menu.isRestrictedMode() ? 16 : 0), progress, 16);
         }
         for (int i = 0; i < 3; i++) {
             LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 8 + i * 18, topPos + 52,
@@ -69,9 +69,9 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(7, 125, 18, 18, mouseX, mouseY)) {
+        if (isLegacyHovering(7, 125, 18, 18, mouseX, mouseY)) {
             LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(), mouseX, mouseY);
-        } else if (isHovering(152, 18, 16, 61, mouseX, mouseY)) {
+        } else if (isLegacyHovering(152, 18, 16, 61, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 152, topPos + 18, 16, 61, menu.getPower(), menu.getMaxPower());
         } else {
@@ -82,7 +82,7 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(7, 125, 18, 18, mouseX, mouseY)) {
+        if (isLegacyHovering(7, 125, 18, 18, mouseX, mouseY)) {
             minecraft.setScreen(new ChemicalPlantRecipeSelectorScreen(this));
             return true;
         }
@@ -91,12 +91,12 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
 
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
         for (int i = 0; i < 3; i++) {
-            if (isHovering(8 + i * 18, 18, 16, 34, mouseX, mouseY)) {
+            if (isLegacyHovering(8 + i * 18, 18, 16, 34, mouseX, mouseY)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(i),
                         menu.getInputTankTooltip(i, hasShiftDown()), mouseX, mouseY);
                 return;
             }
-            if (isHovering(80 + i * 18, 18, 16, 34, mouseX, mouseY)) {
+            if (isLegacyHovering(80 + i * 18, 18, 16, 34, mouseX, mouseY)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(i),
                         menu.getOutputTankTooltip(i, hasShiftDown()), mouseX, mouseY);
                 return;
@@ -110,11 +110,11 @@ public class ChemicalPlantScreen extends AbstractContainerScreen<ChemicalPlantMe
             return List.of(Component.translatableWithFallback("gui.recipe.setRecipe", "Set recipe")
                     .withStyle(ChatFormatting.YELLOW));
         }
-        return recipe.getDisplayLines();
+        return recipe.getDisplayLines(hasShiftDown());
     }
 
-    private static List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {
-        return tooltip.stream().map(Component::getVisualOrderText).toList();
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private static ItemStack recipeIcon(GenericMachineRecipe recipe) {

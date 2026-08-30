@@ -30,6 +30,9 @@ public abstract class RadioTorchRedstoneBlock extends RadioTorchBlock {
     @Override
     @SuppressWarnings("deprecation")
     public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
-        return getSignal(state, level, pos, direction);
+        // RadioTorchReceiver/RadioTorchLogic implement only
+        // isProvidingWeakPower in 1.7.10.  Do not upgrade their wireless
+        // output into vanilla's direct/strong redstone path.
+        return 0;
     }
 }

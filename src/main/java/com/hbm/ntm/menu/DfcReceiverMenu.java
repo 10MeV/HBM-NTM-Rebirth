@@ -26,7 +26,7 @@ public class DfcReceiverMenu extends AbstractContainerMenu {
     public DfcReceiverMenu(int id, Inventory inventory, DfcReceiverBlockEntity blockEntity) {
         super(ModMenuTypes.DFC_RECEIVER.get(), id);
         this.blockEntity = blockEntity;
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 166);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 142);
         cryogel = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getCryogelTank());
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getJoules, () -> joules, value -> joules = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getOutputPower, () -> outputPower, value -> outputPower = value);

@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.api.block.LegacyLookOverlay;
-import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.api.redstoneoverradio.RTTYReaderState;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -35,8 +34,10 @@ public class RadioTorchReaderBlockEntity extends RadioTorchBlockEntity {
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RadioTorchReaderBlockEntity torch) {
         BlockEntity attached = torch.attachedBlockEntity(level);
+        // TileEntityRadioTorchReader executes against every
+        // IRORValueProvider. getFunctionInfo() is only a discovery aid for
+        // the configuration screen and never gated legacy value reads.
         if (attached instanceof RORValueProvider provider
-                && ROR.hasValueInfo(provider)
                 && torch.radio.broadcastChangedValues(level, provider) > 0) {
             torch.setChangedAndSync(false);
         }
@@ -98,8 +99,20 @@ public class RadioTorchReaderBlockEntity extends RadioTorchBlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // TileEntityRadioTorchReader#serialize sends polling, channels and
+        // names.  The p0..p7 values are server-side change-detection caches.
+        CompoundTag tag = new CompoundTag();
+        radio.save(tag);
+        for (int i = 0; i < RTTYReaderState.SLOT_COUNT; i++) {
+            tag.remove("p" + i);
+        }
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        radio.load(tag);
+    }
 
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {

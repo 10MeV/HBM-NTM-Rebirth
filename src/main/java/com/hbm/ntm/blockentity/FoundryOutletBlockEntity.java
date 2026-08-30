@@ -102,7 +102,9 @@ public class FoundryOutletBlockEntity extends FoundryBaseBlockEntity implements 
     public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos) {
         List<Component> lines = new ArrayList<>();
         if (filter != null) {
-            lines.add(Component.translatable("foundry.filter", filter.names[0]).withStyle(ChatFormatting.YELLOW));
+            lines.add(Component.translatable("foundry.filter",
+                    Component.translatableWithFallback(filter.getUnlocalizedName(), filter.names[0]))
+                    .withStyle(ChatFormatting.YELLOW));
         }
         if (invertFilter) {
             lines.add(Component.translatable("foundry.invertFilter").withStyle(ChatFormatting.YELLOW));
@@ -176,11 +178,13 @@ public class FoundryOutletBlockEntity extends FoundryBaseBlockEntity implements 
     private MaterialStack flowSlag(Level level, Direction side, MaterialStack stack) {
         BlockHitResult hit = slagTarget(level);
         if (hit == null || hit.getType() != HitResult.Type.BLOCK) {
-            return stack;
+            // TileEntityFoundrySlagtap discarded the offered flow when its
+            // raycast target disappeared between acceptance and transfer.
+            return null;
         }
         boolean didFlow = fillSlag(level, hit.getBlockPos(), stack);
         if (stack.amount > 0) {
-            didFlow |= fillSlag(level, hit.getBlockPos().above(), stack);
+            didFlow |= fillNewSlag(level, hit.getBlockPos().above(), stack);
         }
         if (didFlow) {
             spawnPourParticle(level, side, stack.material.moltenColor, hit.getLocation(), 15.0F);
@@ -217,6 +221,27 @@ public class FoundryOutletBlockEntity extends FoundryBaseBlockEntity implements 
                 level.scheduleTick(pos, com.hbm.ntm.registry.ModBlocks.FOUNDRY_SLAG.get(), 1);
                 return transfer > 0;
             }
+        }
+        return false;
+    }
+
+    /**
+     * The legacy slagtap only used its upper overflow position when it was
+     * replaceable.  Unlike the directly hit position, an existing slag block
+     * above it was not merged into.
+     */
+    private boolean fillNewSlag(Level level, BlockPos pos, MaterialStack stack) {
+        if (level.isOutsideBuildHeight(pos) || stack.amount <= 0 || !level.getBlockState(pos).canBeReplaced()) {
+            return false;
+        }
+        level.setBlock(pos, com.hbm.ntm.registry.ModBlocks.FOUNDRY_SLAG.get().defaultBlockState(), Block.UPDATE_ALL);
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof FoundrySlagBlockEntity slag) {
+            int transfer = Math.min(FoundrySlagBlockEntity.MAX_AMOUNT, stack.amount);
+            slag.addMaterial(stack.material, transfer);
+            stack.amount -= transfer;
+            level.scheduleTick(pos, com.hbm.ntm.registry.ModBlocks.FOUNDRY_SLAG.get(), 1);
+            return transfer > 0;
         }
         return false;
     }

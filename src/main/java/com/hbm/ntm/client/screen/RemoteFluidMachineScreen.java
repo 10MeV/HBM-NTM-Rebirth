@@ -2,10 +2,9 @@ package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.LegacyRemoteFluidMachineBlockEntity.LegacyGuiProfile;
-import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.RemoteFluidMachineMenu;
+import com.hbm.ntm.registry.ModItems;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
@@ -13,17 +12,20 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFluidMachineMenu> {
     private static final int TANK_WIDTH = 16;
     private static final int TANK_HEIGHT = 52;
+    private static final int ENERGY_SOURCE_HEIGHT = 52;
+    private static final int LEGACY_ENERGY_SCALE_HEIGHT = 54;
     private static final NumberFormat NUMBER_FORMAT = NumberFormat.getIntegerInstance(Locale.US);
 
     public RemoteFluidMachineScreen(RemoteFluidMachineMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = menu.getImageWidth();
         imageHeight = menu.getImageHeight();
-        titleLabelY = 5;
+        titleLabelY = menu.getProfile() == LegacyGuiProfile.COKER ? 6 : 5;
         inventoryLabelY = imageHeight - 96 + 2;
     }
 
@@ -41,7 +43,8 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         int color = menu.getProfile() == LegacyGuiProfile.COKER ? 0xC7C1A3 : 0xFFFFFF;
-        LegacyGuiText.drawCenteredLabel(graphics, font, title.getString(), 0, titleLabelY, imageWidth, color);
+        LegacyGuiText.drawCenteredLabel(graphics, font, title.getString(), imageWidth / 2, titleLabelY,
+                imageWidth, color);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -50,7 +53,8 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         for (TankRect rect : tankRects(menu.getProfile())) {
-            if (isHovering(rect.x(), rect.bottom() - TANK_HEIGHT, TANK_WIDTH, TANK_HEIGHT, mouseX, mouseY)) {
+            if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos,
+                    rect.x(), rect.bottom() - TANK_HEIGHT, TANK_WIDTH, TANK_HEIGHT)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTank(rect.index()),
                         menu.getTankTooltip(rect.index(), hasShiftDown()), mouseX, mouseY);
                 renderTooltip(graphics, mouseX, mouseY);
@@ -58,21 +62,26 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
             }
         }
         EnergyRect energy = energyRect(menu.getProfile());
-        if (energy != null && isHovering(energy.x(), energy.bottom() - energy.height(), energy.width(),
-                energy.height(), mouseX, mouseY)) {
+        if (energy != null && LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos,
+                energy.x(), energy.bottom() - energy.height(), energy.width(), energy.height())) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + energy.x(), topPos + energy.bottom() - energy.height(),
                     energy.width(), energy.height(), menu.getPower(), menu.getMaxPower());
         }
         if (menu.getProfile() == LegacyGuiProfile.COKER) {
-            if (isHovering(60, 45, 54, 7, mouseX, mouseY)) {
-                graphics.renderTooltip(font, Component.literal(NUMBER_FORMAT.format(menu.getCokerProgress()) + " / "
-                        + NUMBER_FORMAT.format(menu.getCokerProcessTime()) + "TU"), mouseX, mouseY);
-            } else if (isHovering(60, 54, 54, 7, mouseX, mouseY)) {
-                graphics.renderTooltip(font, Component.literal(NUMBER_FORMAT.format(menu.getCokerHeat()) + " / "
-                        + NUMBER_FORMAT.format(menu.getCokerMaxHeat()) + "TU"), mouseX, mouseY);
+            if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 60, 45, 54, 7)) {
+                LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                        leftPos + 60, topPos + 45, 54, 7, mouseX, mouseY,
+                        List.of(Component.literal(NUMBER_FORMAT.format(menu.getCokerProgress()) + " / "
+                                + NUMBER_FORMAT.format(menu.getCokerProcessTime()) + "TU")));
+            } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 60, 54, 54, 7)) {
+                LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                        leftPos + 60, topPos + 54, 54, 7, mouseX, mouseY,
+                        List.of(Component.literal(NUMBER_FORMAT.format(menu.getCokerHeat()) + " / "
+                                + NUMBER_FORMAT.format(menu.getCokerMaxHeat()) + "TU")));
             }
         }
+        renderCatalystTooltip(graphics, mouseX, mouseY);
         renderTooltip(graphics, mouseX, mouseY);
     }
 
@@ -81,11 +90,25 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
         if (rect == null) {
             return;
         }
-        int height = menu.getPowerBarHeight(rect.height());
+        int height = menu.getPowerBarHeight(LEGACY_ENERGY_SCALE_HEIGHT);
         if (height > 0) {
             graphics.blit(texture(menu.getProfile()), leftPos + rect.x(), topPos + rect.bottom() - height,
-                    176, rect.height() - height, rect.width(), height);
+                    176, ENERGY_SOURCE_HEIGHT - height, rect.width(), height);
         }
+    }
+
+    private void renderCatalystTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        if ((menu.getProfile() != LegacyGuiProfile.HYDROTREATER
+                && menu.getProfile() != LegacyGuiProfile.CATALYTIC_REFORMER)
+                || !menu.getCarried().isEmpty()
+                || menu.getSlot(10).hasItem()
+                || !LegacyGuiElements.isMouseOverSlot(menu.getSlot(10), leftPos, topPos, mouseX, mouseY)) {
+            return;
+        }
+        ItemStack converter = new ItemStack(ModItems.CATALYTIC_CONVERTER.get());
+        LegacyGuiElements.renderStackText(graphics, font, List.of(
+                List.of(LegacyGuiElements.StackTextPart.stack(converter)),
+                List.of(LegacyGuiElements.StackTextPart.text(converter.getHoverName()))), mouseX, mouseY);
     }
 
     private void renderCokerBars(GuiGraphics graphics) {
@@ -144,10 +167,6 @@ public class RemoteFluidMachineScreen extends AbstractContainerScreen<RemoteFlui
             case VACUUM_DISTILL -> new EnergyRect(26, 70, 16, 52);
             default -> null;
         };
-    }
-
-    private static List<net.minecraft.util.FormattedCharSequence> split(List<Component> tooltip) {
-        return tooltip.stream().map(Component::getVisualOrderText).toList();
     }
 
     private record TankRect(int index, int x, int bottom) {

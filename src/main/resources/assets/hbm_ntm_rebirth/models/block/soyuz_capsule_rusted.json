@@ -1,0 +1,22 @@
+{
+  "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+  "shade_quads": false,
+  "emissive_ambient": false,
+  "model": "hbm_ntm_rebirth:models/soyuz_lander.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
+  "transform": {
+    "translation": [0.5, -0.25, 0.5],
+    "rotation": [0, -25, 15],
+    "scale": 1.0
+  },
+  "visibility": {
+    "Capsule": true,
+    "Chute": false
+  },
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/soyuz/capsule/soyuz_lander_rust",
+    "default": "hbm_ntm_rebirth:models/soyuz_capsule/soyuz_lander_rust"
+  }
+}

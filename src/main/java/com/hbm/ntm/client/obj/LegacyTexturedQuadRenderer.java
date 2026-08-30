@@ -957,8 +957,8 @@ public final class LegacyTexturedQuadRenderer {
 
     public static Vector3f normal(float x, float y, float z) {
         float lengthSquared = x * x + y * y + z * z;
-        if (lengthSquared <= 1.0E-6F) {
-            return new Vector3f(0.0F, 1.0F, 0.0F);
+        if (!(lengthSquared >= 1.0E-8F) || !Float.isFinite(lengthSquared)) {
+            return new Vector3f();
         }
         float invLength = (float) (1.0D / Math.sqrt(lengthSquared));
         return new Vector3f(x * invLength, y * invLength, z * invLength);
@@ -983,9 +983,9 @@ public final class LegacyTexturedQuadRenderer {
         float normalZ = edgeAX * edgeBY - edgeAY * edgeBX;
         float lengthSquared = normalX * normalX + normalY * normalY + normalZ * normalZ;
         float[] normal = NORMAL_SCRATCH.get();
-        if (lengthSquared <= 1.0E-6F) {
+        if (!(lengthSquared >= 1.0E-8F) || !Float.isFinite(lengthSquared)) {
             normal[0] = 0.0F;
-            normal[1] = 1.0F;
+            normal[1] = 0.0F;
             normal[2] = 0.0F;
         } else {
             float invLength = (float) (1.0D / Math.sqrt(lengthSquared));

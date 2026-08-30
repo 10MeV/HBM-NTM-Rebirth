@@ -15,9 +15,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 
-import java.util.List;
-import java.util.Locale;
-
 public class FluidPumpScreen extends AbstractContainerScreen<FluidPumpMenu> {
     private EditBox throughputField;
     private Button pressureButton;
@@ -38,36 +35,31 @@ public class FluidPumpScreen extends AbstractContainerScreen<FluidPumpMenu> {
         pressure = menu.getPressure();
         priorityOrdinal = menu.getPriority().ordinal();
 
-        throughputField = addRenderableWidget(new EditBox(font, leftPos + 10, topPos + 55, 90, 20,
+        throughputField = addRenderableWidget(new EditBox(font, width / 2 - 150, 100, 90, 20,
                 Component.empty()));
         throughputField.setMaxLength(5);
         throughputField.setValue(Integer.toString(menu.getBufferSize()));
         throughputField.setFilter(value -> value.isEmpty() || value.matches("\\d{0,5}"));
 
         pressureButton = addRenderableWidget(Button.builder(pressureLabel(), button -> cyclePressure())
-                .bounds(leftPos + 115, topPos + 55, 90, 20)
+                .bounds(width / 2 - 50, 100, 90, 20)
                 .build());
         priorityButton = addRenderableWidget(Button.builder(priorityLabel(), button -> cyclePriority())
-                .bounds(leftPos + 220, topPos + 55, 90, 20)
+                .bounds(width / 2 + 50, 100, 90, 20)
                 .build());
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xC0101010);
-        graphics.fill(leftPos + 4, topPos + 4, leftPos + imageWidth - 4, topPos + imageHeight - 4, 0xFF202020);
-        graphics.fill(leftPos + 8, topPos + 27, leftPos + imageWidth - 8, topPos + 28, 0xFF606060);
-        graphics.fill(leftPos + 8, topPos + 96, leftPos + imageWidth - 8, topPos + 97, 0xFF606060);
+        // Legacy GUIPump has no panel texture; drawDefaultBackground is supplied by renderBackground().
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 8, 0xE0E0E0, false);
-        graphics.drawString(font, "Throughput:", 10, 36, 0xA0A0A0, false);
-        graphics.drawString(font, "(max. 10,000mB)", 10, 46, 0xA0A0A0, false);
-        graphics.drawString(font, "Pressure:", 115, 36, 0xA0A0A0, false);
-        graphics.drawString(font, "Priority:", 220, 36, 0xA0A0A0, false);
-        graphics.drawString(font, statusText(), 10, 108, 0xA0A0A0, false);
+        graphics.drawString(font, "Throughput:", width / 2 - 150 - leftPos, 80 - topPos, 0xA0A0A0, false);
+        graphics.drawString(font, "(max. 10,000mB)", width / 2 - 150 - leftPos, 90 - topPos, 0xA0A0A0, false);
+        graphics.drawString(font, "Pressure:", width / 2 - 50 - leftPos, 80 - topPos, 0xA0A0A0, false);
+        graphics.drawString(font, "Priority:", width / 2 + 50 - leftPos, 80 - topPos, 0xA0A0A0, false);
     }
 
     @Override
@@ -75,9 +67,6 @@ public class FluidPumpScreen extends AbstractContainerScreen<FluidPumpMenu> {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
-        if (isHovering(10, 55, 90, 20, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(Component.literal("0 - 10,000 mB/t")), mouseX, mouseY);
-        }
     }
 
     @Override
@@ -119,11 +108,6 @@ public class FluidPumpScreen extends AbstractContainerScreen<FluidPumpMenu> {
                 ? values[priorityOrdinal]
                 : HbmEnergyReceiver.ConnectionPriority.NORMAL;
         return Component.literal(priority.name());
-    }
-
-    private String statusText() {
-        String state = menu.isRedstoneBlocked() ? "redstone locked" : "active";
-        return String.format(Locale.US, "Buffered: %,d mB, %s", menu.getFill(), state);
     }
 
     private void sendSettings() {

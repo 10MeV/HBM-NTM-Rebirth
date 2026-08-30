@@ -1,6 +1,7 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.MassStorageBlockEntity;
+import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
@@ -99,12 +100,23 @@ public class MassStorageBlock extends HorizontalMachineBlock implements EntityBl
     @Override
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof MassStorageBlockEntity storage) {
-            if (player.getAbilities().instabuild) {
-                storage.clearForRemoval();
+            if (ServerConfig.crateKeepContentsEnabled()) {
+                if (player.getAbilities().instabuild) {
+                    storage.clearForRemoval();
+                } else {
+                    ItemStack drop = storage.createDroppedStack();
+                    storage.clearForRemoval();
+                    Block.popResource(level, pos, drop);
+                }
             } else {
-                ItemStack drop = storage.createDroppedStack();
-                storage.clearForRemoval();
-                Block.popResource(level, pos, drop);
+                if (!player.getAbilities().instabuild) {
+                    Block.popResource(level, pos, new ItemStack(this));
+                }
+                if (storage.isLocked()) {
+                    // BlockMassStorage shares the old locked-container behavior:
+                    // no loose inventory spill when the preservation option is off.
+                    storage.clearForRemoval();
+                }
             }
         }
         super.playerWillDestroy(level, pos, state, player);

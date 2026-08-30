@@ -8,6 +8,7 @@ import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.fluid.HbmStandardFluidSender;
 import com.hbm.ntm.particle.ParticleUtil;
@@ -16,6 +17,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -193,9 +195,6 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt("age", age);
-        tag.putInt("waterTimer", waterTimer);
-        tag.putInt("throughput", throughput);
     }
 
     @Override
@@ -210,9 +209,53 @@ public abstract class CoolingTowerBlockEntity extends HbmFluidNetworkBlockEntity
             }
         }
         normalizeConfigCapacity();
-        age = Math.floorMod(tag.getInt("age"), 2);
-        waterTimer = Math.max(0, tag.getInt("waterTimer"));
-        throughput = Math.max(0, tag.getInt("throughput"));
+        // TileEntityTowerSmall/Large inherit TileEntityCondenser's world-NBT
+        // contract: only their tanks persist. These are packet-only runtime fields.
+        age = 0;
+        waterTimer = 0;
+        throughput = 0;
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("age", age);
+        tag.putInt("waterTimer", waterTimer);
+        tag.putInt("throughput", throughput);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readRuntimeSync(tag);
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityTowerSmall/Large inherit TileEntityCondenser's packet layout.
+        LegacyFluidTankPacket.write(data, inputTank);
+        LegacyFluidTankPacket.write(data, outputTank);
+        data.writeByte(waterTimer);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        LegacyFluidTankPacket.read(data, inputTank);
+        LegacyFluidTankPacket.read(data, outputTank);
+        waterTimer = Math.max(0, data.readByte());
+    }
+
+    private void readRuntimeSync(CompoundTag tag) {
+        if (tag.contains("age")) {
+            age = Math.floorMod(tag.getInt("age"), 2);
+        }
+        if (tag.contains("waterTimer")) {
+            waterTimer = Math.max(0, tag.getInt("waterTimer"));
+        }
+        if (tag.contains("throughput")) {
+            throughput = Math.max(0, tag.getInt("throughput"));
+        }
     }
 
     protected void normalizeConfigCapacity() {

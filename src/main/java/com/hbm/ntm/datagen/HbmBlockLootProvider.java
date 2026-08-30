@@ -453,6 +453,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
         dropSelf(ModBlocks.ORE_METEOR_RAREEARTH.get());
         dropSelf(ModBlocks.ORE_METEOR_COBALT.get());
         addNoDrop(ModBlocks.ORE_BEDROCK_COLTAN.get());
+        addNoDrop(ModBlocks.ORE_BEDROCK_OIL.get());
     }
 
     private void addLegacySingleOreDrop(String blockName, String itemName) {

@@ -36,7 +36,7 @@ public class StrandCasterBlock extends LegacyVisibleMultiblockMachineBlock imple
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Nullable
@@ -91,6 +91,13 @@ public class StrandCasterBlock extends LegacyVisibleMultiblockMachineBlock imple
     @Override
     public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
         if (tool != ToolType.SCREWDRIVER) {
+            return false;
+        }
+        if (!(MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof StrandCasterBlockEntity existingCaster)
+                || existingCaster.getMold().isEmpty()) {
+            // MachineStrandCaster#onScrew returned false without an installed
+            // mold.  Unlike the foundry basin/mold, it intentionally permits
+            // removal while molten material remains.
             return false;
         }
         if (!level.isClientSide

@@ -43,7 +43,10 @@ public class GeigerBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        // GeigerCounter#onBlockPlacedBy writes the player's horizontal facing directly
+        // (yaw 0/1/2/3 -> legacy SOUTH/WEST/NORTH/EAST metadata).  This block's
+        // state/model rotation uses that same north/west/south/east mapping.
+        return defaultBlockState().setValue(FACING, context.getHorizontalDirection());
     }
 
     @Override

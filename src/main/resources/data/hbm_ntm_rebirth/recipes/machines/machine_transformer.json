@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "S": { "tag": "forge:ingots/iron" },
+    "M": { "item": "hbm_ntm_rebirth:coil_copper" },
+    "D": { "tag": "forge:ingots/mingrade" },
+    "C": { "item": "hbm_ntm_rebirth:circuit_capacitor" }
+  },
+  "pattern": [
+    "SCS",
+    "MDM",
+    "SCS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:machine_transformer"
+  },
+  "show_notification": true
+}

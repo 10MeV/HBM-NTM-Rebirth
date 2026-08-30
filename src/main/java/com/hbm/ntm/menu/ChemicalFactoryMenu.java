@@ -47,7 +47,7 @@ public class ChemicalFactoryMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
                 ChemicalFactoryBlockEntity.SLOT_BATTERY, 224, 88));
         HbmInventoryMenuHelper.addUpgradeSlots(this::addSlot, blockEntity.getItems(),
-                ChemicalFactoryBlockEntity.SLOT_UPGRADE_START, 206, 125, 1, 3);
+                ChemicalFactoryBlockEntity.SLOT_UPGRADE_START, 206, 125, 3, 1);
         for (int module = 0; module < 4; module++) {
             int y = 20 + module * 22;
             addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(),
@@ -82,7 +82,7 @@ public class ChemicalFactoryMenu extends AbstractContainerMenu {
     }
 
     public int getProgressWidth(int module, int maxWidth) {
-        return progress[module] * maxWidth / 10_000;
+        return (int) Math.ceil(progress[module] * maxWidth / 10_000.0D);
     }
 
     public boolean canCool() {

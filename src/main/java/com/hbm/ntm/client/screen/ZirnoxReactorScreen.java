@@ -24,7 +24,7 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
         super(menu, inventory, title);
         imageWidth = 203;
         imageHeight = 256;
-        inventoryLabelY = imageHeight - 96 + 2;
+        inventoryLabelY = imageHeight - 96;
     }
 
     @Override
@@ -79,45 +79,51 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
         renderTankTooltip(graphics, mouseX, mouseY, menu.getSteamTank(), 160, 108, 18, 12);
         renderTankTooltip(graphics, mouseX, mouseY, menu.getCarbonDioxideTank(), 142, 108, 18, 12);
         renderTankTooltip(graphics, mouseX, mouseY, menu.getWaterTank(), 178, 108, 18, 12);
-        if (isHovering(160, 33, 18, 17, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 160, 33, 18, 17)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(
                     Component.literal("Temperature:"),
                     Component.literal("   " + menu.getTemperatureDisplay() + "\u00b0C")), mouseX, mouseY);
-        } else if (isHovering(178, 33, 18, 17, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 178, 33, 18, 17)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(
                     Component.literal("Pressure:"),
                     Component.literal("   " + menu.getPressureDisplay() + " bar")), mouseX, mouseY);
         } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 36, 16, 16)) {
-            LegacyGuiElements.renderTooltip(graphics, font, splitLegacyInfo(Component.translatableWithFallback(
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 36, 16, 16, leftPos - 8, topPos + 52,
+                    splitLegacyInfo(Component.translatableWithFallback(
                     "desc.gui.zirnox.coolant",
                     "\u00a73Coolant\u00a7r$CO2 transfers heat from the core to the water."
                             + "$This will boil it into super dense steam."
-                            + "$The efficiency of cooling and steam production$is based on pressure.")),
-                    mouseX, mouseY);
+                            + "$The efficiency of cooling and steam production$is based on pressure.")));
         } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 52, 16, 16)) {
-            LegacyGuiElements.renderTooltip(graphics, font, splitLegacyInfo(Component.translatableWithFallback(
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 52, 16, 16, leftPos - 8, topPos + 68,
+                    splitLegacyInfo(Component.translatableWithFallback(
                     "desc.gui.zirnox.pressure",
                     "\u00a76Pressure\u00a7r$Pressure can be reduced by venting CO2."
                             + "$However, too low a pressure, and cooling$efficiency and steam production will be reduced."
-                            + "$Look out for meltdowns!")), mouseX, mouseY);
+                            + "$Look out for meltdowns!")));
         } else if (menu.getWaterTank().fill() <= 0
                 && LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 68, 16, 16)) {
-            LegacyGuiElements.renderTooltip(graphics, font, splitLegacyInfo(Component.translatableWithFallback(
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 68, 16, 16, leftPos - 8, topPos + 84,
+                    splitLegacyInfo(Component.translatableWithFallback(
                     "desc.gui.zirnox.warning1",
-                    "\u00a7cError:\u00a7r Water is required for$the reactor to function properly!")),
-                    mouseX, mouseY);
+                    "\u00a7cError:\u00a7r Water is required for$the reactor to function properly!")));
         } else if (menu.getCarbonDioxideTank().fill() < 4000
                 && LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 84, 16, 16)) {
-            LegacyGuiElements.renderTooltip(graphics, font, splitLegacyInfo(Component.translatableWithFallback(
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 84, 16, 16, leftPos - 8, topPos + 100,
+                    splitLegacyInfo(Component.translatableWithFallback(
                     "desc.gui.zirnox.warning2",
-                    "\u00a7cError:\u00a7r CO2 is required for$the reactor to function properly!")),
-                    mouseX, mouseY);
+                    "\u00a7cError:\u00a7r CO2 is required for$the reactor to function properly!")));
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        boolean handled = super.mouseClicked(mouseX, mouseY, button);
         if (leftPos + 144 <= mouseX && mouseX < leftPos + 158 && topPos + 35 < mouseY && mouseY <= topPos + 49) {
             CompoundTag tag = new CompoundTag();
             tag.putBoolean("control", true);
@@ -132,13 +138,14 @@ public class ZirnoxReactorScreen extends AbstractContainerScreen<ZirnoxReactorMe
             playClick();
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return handled;
     }
 
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY, HbmFluidGuiHelper.TankData tank,
             int x, int y, int width, int height) {
-        if (isHovering(x, y, width, height, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height)) {
+            LegacyGuiElements.renderFluidTooltip(graphics, font, tank,
+                    tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         }
     }
 

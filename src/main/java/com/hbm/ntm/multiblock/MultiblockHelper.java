@@ -421,6 +421,18 @@ public final class MultiblockHelper {
         return removeOffsets(level, corePos, layout.offsets());
     }
 
+    /**
+     * Removes exactly one owned dummy without allowing its {@link DummyBlock}
+     * removal hook to tear down the core. This is the narrow modern equivalent
+     * of a source-backed {@code BlockDummyable.safeRem} single-dummy removal.
+     */
+    public static boolean removeOwnedDummySafely(Level level, BlockPos corePos, BlockPos dummyPos) {
+        if (level.isClientSide || !isOwnedDummy(level, corePos, dummyPos)) {
+            return false;
+        }
+        return withClearing(level, corePos, () -> level.removeBlock(dummyPos, false));
+    }
+
     public static boolean removeOffsets(Level level, BlockPos corePos, Iterable<BlockPos> offsets) {
         if (level.isClientSide) {
             return false;

@@ -120,10 +120,15 @@ public final class ObjRbmkModels {
     public static void renderControlRodPart(String partName, ResourceLocation texture, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (CONTROL_LID_PART.equals(partName)) {
-            RODS_VBO.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay, CONTROL_LID_HANDLE);
+            // RenderRBMKControlRod enables GL_CULL_FACE. Its Lid underside meets
+            // the pipe-pad top at y=1.125 and must not be submitted no-cull.
+            RODS_VBO.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
+                    CONTROL_LID_HANDLE, LegacyTexturedRenderMode.CUTOUT_CULL);
             return;
         }
-        RODS_VBO.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay);
+        RODS_VBO.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                255, 255, 255, 255, false, LegacyTexturedRenderMode.CUTOUT_CULL,
+                LegacyWavefrontModel.UvTransform.DEFAULT);
     }
 
     public static void renderTerminal(PoseStack poseStack, MultiBufferSource buffer, int packedLight,

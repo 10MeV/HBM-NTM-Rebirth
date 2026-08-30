@@ -93,7 +93,7 @@ public class MachineBatterySocketRenderer implements BlockEntityRenderer<Machine
             }
         }
         if (creativeBattery) {
-            renderCreativeBatteryEffect(socket, partialTick, poseStack, buffer, modelLight, packedOverlay);
+            renderCreativeBatteryEffect(socket, partialTick, poseStack, buffer, packedLight, packedOverlay);
         }
 
         poseStack.popPose();

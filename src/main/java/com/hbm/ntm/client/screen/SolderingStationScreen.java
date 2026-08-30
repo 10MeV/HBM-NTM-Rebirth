@@ -57,13 +57,13 @@ public class SolderingStationScreen extends AbstractContainerScreen<SolderingSta
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(152, 18, 16, 52, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 152, 18, 16, 52)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 152, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(35, 63, 34, 16, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 35, 63, 34, 16)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTank(),
                     menu.tankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(5, 66, 10, 10, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 5, 66, 10, 10)) {
             graphics.renderComponentTooltip(font, List.of(
                     Component.literal("Recipe Collision Prevention: ")
                             .append(Component.literal(menu.isCollisionPrevention() ? "ON" : "OFF")
@@ -71,17 +71,23 @@ public class SolderingStationScreen extends AbstractContainerScreen<SolderingSta
                                             ? ChatFormatting.GREEN : ChatFormatting.RED)),
                     Component.literal("Prevents no-fluid recipes from being processed"),
                     Component.literal("when fluid is present.")), mouseX, mouseY);
+        } else {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 78, topPos + 67, 8, 8, leftPos + 78, topPos + 67,
+                    LegacyGuiElements.getUpgradeInfo(menu.getBlockEntity()));
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && isHovering(5, 66, 10, 10, mouseX, mouseY)) {
+        boolean handled = super.mouseClicked(mouseX, mouseY, button);
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 5, 66, 10, 10)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0,
                     SolderingStationBlockEntity.CONTROL_COLLISION_PREVENTION);
+            LegacyGuiElements.playClickSound();
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return handled;
     }
 }

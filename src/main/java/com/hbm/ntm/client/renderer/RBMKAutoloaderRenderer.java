@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.RBMKAutoloaderBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -28,12 +27,13 @@ public class RBMKAutoloaderRenderer implements BlockEntityRenderer<RBMKAutoloade
                 var samplingScope = LegacyRenderLighting.pushModelViewSampling(autoloader, poseStack.last().pose())) {
             poseStack.pushPose();
             poseStack.translate(0.5D, 0.0D, 0.5D);
-            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-                LegacyRbmkMachineRenderer.renderAutoloaderBase(poseStack, buffer, light, packedOverlay,
-                        LegacyTexturedRenderMode.CUTOUT_NO_CULL);
-            }
+            // Legacy RenderRBMKAutoloader submits Base and Piston in one TESR.
+            // The chunk-baked Base can fail independently, leaving only the
+            // animated piston visible, so keep both parts on this BER path.
+            LegacyRbmkMachineRenderer.renderAutoloaderBase(poseStack, buffer, light, packedOverlay,
+                    LegacyTexturedRenderMode.CUTOUT_NO_CULL);
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(autoloader)) {
-                LegacyRbmkMachineRenderer.renderAutoloaderPiston(poseStack, buffer, light, packedOverlay,
+                LegacyRbmkMachineRenderer.renderAutoloaderPiston(poseStack, buffer, packedLight, packedOverlay,
                         autoloader.lastPiston(), autoloader.renderPiston(), partialTick,
                         LegacyTexturedRenderMode.CUTOUT_NO_CULL);
             }

@@ -35,25 +35,53 @@ public class RebarPlacerMenu extends LegacyItemBagMenu {
     }
 
     @Override
+    protected Slot createBagSlot(int slot, int x, int y) {
+        return new Slot(bagInventory, slot, x, y) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return bagInventory.canPlaceItem(slot, stack);
+            }
+
+            @Override
+            public boolean mayPickup(Player player) {
+                return false;
+            }
+
+            @Override
+            public int getMaxStackSize() {
+                return 1;
+            }
+
+            @Override
+            public int getMaxStackSize(ItemStack stack) {
+                return 1;
+            }
+
+            @Override
+            public void set(ItemStack stack) {
+                ItemStack pattern = stack.isEmpty() ? ItemStack.EMPTY : stack.copy();
+                if (!pattern.isEmpty()) {
+                    pattern.setCount(1);
+                }
+                super.set(pattern);
+            }
+        };
+    }
+
+    @Override
     public void clicked(int slotId, int button, ClickType clickType, Player player) {
         if (hand == InteractionHand.MAIN_HAND
                 && HbmInventoryMenuHelper.shouldBlockOpenItemContainerClick(slotId, button, clickType,
                         playerInventory, bagSlotCount)) {
             return;
         }
-        if (slotId != 0 || clickType != ClickType.PICKUP) {
+        if (slotId != 0) {
             super.clicked(slotId, button, clickType, player);
             return;
         }
 
         Slot slot = slots.get(0);
-        ItemStack previous = slot.hasItem() ? slot.getItem().copy() : ItemStack.EMPTY;
-        ItemStack next = getCarried().isEmpty() ? ItemStack.EMPTY : getCarried().copy();
-        if (!next.isEmpty()) {
-            next.setCount(1);
-        }
-        slot.set(next);
-        setCarried(previous);
+        slot.set(getCarried());
         broadcastChanges();
     }
 

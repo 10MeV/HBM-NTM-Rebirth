@@ -21,7 +21,7 @@ public class FusionBreederScreen extends AbstractContainerScreen<FusionBreederMe
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 200;
-        inventoryLabelY = 106;
+        inventoryLabelY = imageHeight - 93;
     }
 
     @Override
@@ -50,12 +50,12 @@ public class FusionBreederScreen extends AbstractContainerScreen<FusionBreederMe
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTankTooltip(graphics, mouseX, mouseY, menu.getInputTank(), 26, 18, 16, 52);
         renderTankTooltip(graphics, mouseX, mouseY, menu.getOutputTank(), 134, 18, 16, 52);
-        if (isHovering(79, 23, 18, 18, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 79, 23, 18, 18)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal("-> ")
                     .withStyle(ChatFormatting.GREEN)
                     .append(Component.literal((int) Math.ceil(menu.getNeutronEnergy()) + " flux/t")
                             .withStyle(ChatFormatting.RESET))), mouseX, mouseY);
-        } else if (isHovering(67, 46, 42, 14, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 67, 46, 42, 14)) {
             LegacyGuiElements.renderTooltip(graphics, font, List.of(Component.literal(
                     BobMathUtil.format((int) Math.ceil(menu.getProgress())) + " / "
                             + BobMathUtil.format((int) Math.ceil(FusionBreederBlockEntity.CAPACITY))
@@ -66,8 +66,9 @@ public class FusionBreederScreen extends AbstractContainerScreen<FusionBreederMe
 
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY, HbmFluidGuiHelper.TankData tank,
             int x, int y, int width, int height) {
-        if (isHovering(x, y, width, height, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height)) {
+            LegacyGuiElements.renderFluidTooltip(graphics, font, tank,
+                    tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         }
     }
 }

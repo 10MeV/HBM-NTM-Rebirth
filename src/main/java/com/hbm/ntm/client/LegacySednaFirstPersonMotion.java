@@ -1,16 +1,12 @@
 package com.hbm.ntm.client;
 
 import com.hbm.ntm.client.render.LegacyPoseRotations;
-import com.hbm.ntm.config.HbmClientConfig;
 import com.hbm.ntm.item.SednaGunItem;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.tags.FluidTags;
-import org.joml.Matrix4f;
 
 /**
  * ItemRenderWeaponBase#setupTransformsAndRender on the 1.7.10 renderer owned the
@@ -55,7 +51,7 @@ public final class LegacySednaFirstPersonMotion {
         }
         applyLegacyWeaponBaseRoot(minecraft, poseStack, partialTick,
                 turnMagnitude(gun.gunConfig().legacyName(), gun.legacyIsAiming(stack)),
-                gun.legacyIsAiming(stack) ? 0.1F : 0.5F, 0.75F, gun);
+                gun.legacyIsAiming(stack) ? 0.1F : 0.5F, 0.75F);
     }
 
     /**
@@ -65,11 +61,11 @@ public final class LegacySednaFirstPersonMotion {
      * overrides the two sway parameters.
      */
     public static void applyPowerArmorMelee(Minecraft minecraft, PoseStack poseStack, float partialTick) {
-        applyLegacyWeaponBaseRoot(minecraft, poseStack, partialTick, 2.75F, 2.0F, 0.5F, null);
+        applyLegacyWeaponBaseRoot(minecraft, poseStack, partialTick, 2.75F, 2.0F, 0.5F);
     }
 
     private static void applyLegacyWeaponBaseRoot(Minecraft minecraft, PoseStack poseStack, float partialTick,
-            float turnMagnitude, float swayMagnitude, float swayPeriod, SednaGunItem sednaGun) {
+            float turnMagnitude, float swayMagnitude, float swayPeriod) {
         LocalPlayer player = minecraft.player;
         if (player == null) {
             return;
@@ -102,44 +98,6 @@ public final class LegacySednaFirstPersonMotion {
         LegacyPoseRotations.rotateXDegrees(poseStack,
                 (float) (Math.abs(Math.cos(phase - 0.2F) * camYaw) * 5.0F));
         LegacyPoseRotations.rotateXDegrees(poseStack, Mth.lerp(partialTick, previousCameraPitch, cameraPitch));
-        applyLegacyGunModelProjection(minecraft, player, sednaGun, poseStack, partialTick);
-    }
-
-    /**
-     * Replaces the first-person item projection used by the modern hand renderer with the
-     * source ItemRenderWeaponBase#getFOVModifier projection. Rather than changing global
-     * render state, left-multiply the root pose by inv(currentProjection) * legacyProjection:
-     * currentProjection * correction * modelPose is therefore exactly legacyProjection * modelPose.
-     */
-    private static void applyLegacyGunModelProjection(Minecraft minecraft, LocalPlayer player, SednaGunItem gun,
-            PoseStack poseStack, float partialTick) {
-        float fov = HbmClientConfig.gunModelFov() ? minecraft.options.fov().get()
-                : legacyBaseGunModelFov(gun, partialTick);
-        if (player.getHealth() <= 0.0F) {
-            float deathTime = player.deathTime + partialTick;
-            fov /= (1.0F - 500.0F / (deathTime + 500.0F)) * 2.0F + 1.0F;
-        }
-        if (player.isEyeInFluid(FluidTags.WATER)) {
-            fov *= 60.0F / 70.0F;
-        }
-
-        float width = minecraft.getWindow().getWidth();
-        float height = minecraft.getWindow().getHeight();
-        if (width <= 0.0F || height <= 0.0F) {
-            return;
-        }
-        float farPlane = minecraft.options.renderDistance().get() * 16.0F * 2.0F;
-        Matrix4f legacyProjection = new Matrix4f().setPerspective((float) Math.toRadians(fov), width / height,
-                0.05F, farPlane);
-        Matrix4f correction = new Matrix4f(RenderSystem.getProjectionMatrix()).invert().mul(legacyProjection);
-        poseStack.last().pose().mulLocal(correction);
-    }
-
-    private static float legacyBaseGunModelFov(SednaGunItem gun, float partialTick) {
-        if (gun == null || !"gun_stg77".equals(gun.gunConfig().legacyName())) {
-            return 70.0F;
-        }
-        return 70.0F - LegacySednaAimProgress.interpolated(partialTick) * 65.0F;
     }
 
     private static void undoVanillaViewBob(Minecraft minecraft, LocalPlayer player, PoseStack poseStack,

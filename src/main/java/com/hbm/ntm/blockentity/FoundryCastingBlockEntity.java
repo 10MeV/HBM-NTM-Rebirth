@@ -20,9 +20,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity implements LegacyLookOverlayProvider {
     private static final int FOUNDRY_TITLE_COLOR = 0xFF4000;
@@ -30,7 +34,6 @@ public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity implements
     public static final int SLOT_MOLD = 0;
     public static final int SLOT_OUTPUT = 1;
     private static final String TAG_ITEMS = "items";
-    private static final String TAG_COOLOFF = "cooloff";
 
     private final int moldSize;
     private final ItemStackHandler items = new ItemStackHandler(2) {
@@ -49,6 +52,38 @@ public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity implements
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
+    private final IItemHandler externalItems = new IItemHandler() {
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot == 0 ? items.getStackInSlot(SLOT_OUTPUT) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return slot == 0 ? items.extractItem(SLOT_OUTPUT, amount, simulate) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot == 0 ? items.getSlotLimit(SLOT_OUTPUT) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return false;
+        }
+    };
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(() -> externalItems);
     private int cooloff = 100;
 
     public FoundryCastingBlockEntity(BlockEntityType<?> entityType, BlockPos pos, BlockState state, int moldSize) {
@@ -78,7 +113,7 @@ public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity implements
     }
 
     public IItemHandler getExternalItemHandler() {
-        return items;
+        return externalItems;
     }
 
     public ItemStack getMoldStack() {
@@ -170,7 +205,8 @@ public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity implements
             }
         }
         if (type != null && amount > 0) {
-            lines.add(Component.literal(type.names[0] + ": " + amount + " / " + getCapacity())
+            lines.add(Component.translatableWithFallback(type.getUnlocalizedName(), type.names[0])
+                    .append(": " + amount + " / " + getCapacity())
                     .withStyle(ChatFormatting.YELLOW));
         }
         return LegacyLookOverlay.withTitle(Component.translatable(getBlockState().getBlock().getDescriptionId()),
@@ -227,13 +263,26 @@ public class FoundryCastingBlockEntity extends FoundryBaseBlockEntity implements
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, TAG_ITEMS, items);
-        tag.putInt(TAG_COOLOFF, cooloff);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
-        cooloff = tag.contains(TAG_COOLOFF) ? tag.getInt(TAG_COOLOFF) : 200;
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        externalItemHandler.invalidate();
+    }
+
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
+            @Nullable Direction side) {
+        if (capability == ForgeCapabilities.ITEM_HANDLER) {
+            return externalItemHandler.cast();
+        }
+        return super.getCapability(capability, side);
     }
 }

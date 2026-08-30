@@ -56,14 +56,14 @@ public final class RBMKPanelScreenPlanner {
                 for (int i = 0; i < RBMKPanelPlanner.GAUGE_COUNT; i++) {
                     fields.add(rowField(i, "color", "color" + i, 27, 55, 72, 6, 36));
                     fields.add(rowField(i, "label", "label" + i, 175, 55, 72, 15, 36));
-                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 73, 72, 10, 36));
+                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 73, 72, 15, 36));
                     fields.add(rowField(i, "min", "min" + i, 121, 73, 52, 32, 36));
                     fields.add(rowField(i, "max", "max" + i, 195, 73, 52, 32, 36));
                 }
             }
             case GRAPH -> {
                 for (int i = 0; i < RBMKPanelPlanner.GRAPH_COUNT; i++) {
-                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 55, 72, 10, 54));
+                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 55, 72, 15, 54));
                     fields.add(rowField(i, "label", "label" + i, 27, 73, 72, 30, 54));
                     fields.add(rowField(i, "min", "min" + i, 175, 55, 72, 15, 54));
                     fields.add(rowField(i, "max", "max" + i, 175, 73, 72, 15, 54));
@@ -73,7 +73,7 @@ public final class RBMKPanelScreenPlanner {
                 for (int i = 0; i < RBMKPanelPlanner.INDICATOR_COUNT; i++) {
                     fields.add(rowField(i, "color", "color" + i, 27, 37, 72, 6, 36));
                     fields.add(rowField(i, "label", "label" + i, 175, 37, 72, 15, 36));
-                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 55, 72, 10, 36));
+                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 55, 72, 15, 36));
                     fields.add(rowField(i, "min", "min" + i, 121, 55, 52, 32, 36));
                     fields.add(rowField(i, "max", "max" + i, 195, 55, 52, 32, 36));
                 }
@@ -82,13 +82,13 @@ public final class RBMKPanelScreenPlanner {
                 for (int i = 0; i < RBMKPanelPlanner.KEY_COUNT; i++) {
                     fields.add(rowField(i, "color", "color" + i, 27, 55, 72, 6, 36));
                     fields.add(rowField(i, "label", "label" + i, 175, 55, 72, 15, 36));
-                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 73, 72, 10, 36));
+                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 73, 72, 15, 36));
                     fields.add(rowField(i, "command", "cmd" + i, 121, 73, 126, 32, 36));
                 }
             }
             case LEVER -> {
                 for (int i = 0; i < RBMKPanelPlanner.LEVER_COUNT; i++) {
-                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 55, 72, 10, 54));
+                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 55, 72, 15, 54));
                     fields.add(rowField(i, "label", "label" + i, 175, 55, 72, 15, 54));
                     fields.add(rowField(i, "commandOn", "cmdOn" + i, 45, 73, 81, 32, 54));
                     fields.add(rowField(i, "commandOff", "cmdOff" + i, 166, 73, 81, 32, 54));
@@ -96,7 +96,7 @@ public final class RBMKPanelScreenPlanner {
             }
             case NUMITRON -> {
                 for (int i = 0; i < RBMKPanelPlanner.NUMITRON_COUNT; i++) {
-                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 55, 85, 10, 54));
+                    fields.add(rowField(i, "rtty", "rtty" + i, 27, 55, 85, 15, 54));
                     fields.add(rowField(i, "label", "label" + i, 27, 73, 85, 30, 54));
                 }
             }
@@ -104,10 +104,10 @@ public final class RBMKPanelScreenPlanner {
                     0,
                     "line",
                     "cmd",
-                    2,
-                    162,
-                    252,
-                    14,
+                    0,
+                    0,
+                    0,
+                    0,
                     TERMINAL_LINE_MAX_LENGTH,
                     TEXT_FIELD_COLOR,
                     false));

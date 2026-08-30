@@ -19,9 +19,11 @@ import net.minecraftforge.network.NetworkHooks;
 /** Common server flight/client interpolation-and-exhaust contract of EntityDroneBase. */
 public abstract class DroneBaseEntity extends Entity {
     private static final EntityDataAccessor<Byte> APPEARANCE = SynchedEntityData.defineId(DroneBaseEntity.class, EntityDataSerializers.BYTE);
-    // EntityDroneBase used targetY == -1 as its persisted "no target" sentinel.  Keep
-    // that state-machine contract even though 1.20.1 worlds can now contain Y=-1.
+    private static final String TAG_HAS_TARGET = "hasTarget";
+    // The 1.7.10 sentinel used Y=-1, which is valid in modern worlds. Keep the
+    // coordinates separate from whether a route has been programmed.
     protected double targetX = -1.0D, targetY = -1.0D, targetZ = -1.0D;
+    private boolean targetPresent;
     /** Client-only network interpolation state from EntityDroneBase#setPositionAndRotation2. */
     private int turnProgress;
     private double syncPosX;
@@ -40,8 +42,13 @@ public abstract class DroneBaseEntity extends Entity {
         setNoGravity(true);
     }
 
-    public void setTarget(double x, double y, double z) { targetX = x; targetY = y; targetZ = z; }
-    public boolean hasTarget() { return targetY != -1.0D; }
+    public void setTarget(double x, double y, double z) {
+        targetX = x;
+        targetY = y;
+        targetZ = z;
+        targetPresent = true;
+    }
+    public boolean hasTarget() { return targetPresent; }
     public void setAppearance(int appearance) { entityData.set(APPEARANCE, (byte) appearance); }
     public int appearance() { return entityData.get(APPEARANCE); }
     public double speed() { return 0.125D; }
@@ -120,6 +127,7 @@ public abstract class DroneBaseEntity extends Entity {
     @Override protected void defineSynchedData() { entityData.define(APPEARANCE, (byte) 0); }
     @Override protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putDouble("tX", targetX); tag.putDouble("tY", targetY); tag.putDouble("tZ", targetZ);
+        tag.putBoolean(TAG_HAS_TARGET, targetPresent);
         tag.putByte("app", entityData.get(APPEARANCE));
     }
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
@@ -131,6 +139,11 @@ public abstract class DroneBaseEntity extends Entity {
             targetX = tag.getDouble("tX");
             targetY = tag.getDouble("tY");
             targetZ = tag.getDouble("tZ");
+            // Existing 1.20.1 saves have no explicit state bit, so preserve the
+            // old sentinel interpretation only while migrating those saves.
+            targetPresent = tag.contains(TAG_HAS_TARGET)
+                    ? tag.getBoolean(TAG_HAS_TARGET)
+                    : targetY != -1.0D;
         }
         setAppearance(tag.getByte("app"));
     }

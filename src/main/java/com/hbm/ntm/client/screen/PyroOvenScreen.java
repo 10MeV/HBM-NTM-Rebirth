@@ -16,7 +16,7 @@ public class PyroOvenScreen extends AbstractContainerScreen<PyroOvenMenu> {
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 204;
-        titleLabelX = 52;
+        titleLabelX = 70;
         titleLabelY = 6;
         inventoryLabelY = imageHeight - 96 + 2;
     }
@@ -34,6 +34,7 @@ public class PyroOvenScreen extends AbstractContainerScreen<PyroOvenMenu> {
         }
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 8, topPos + 70, 16, 52, menu.getInputTank());
         LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 116, topPos + 70, 16, 52, menu.getOutputTank());
+        LegacyGuiElements.renderInfoPanel(graphics, leftPos + 108, topPos + 76, 8);
     }
 
     @Override
@@ -46,18 +47,23 @@ public class PyroOvenScreen extends AbstractContainerScreen<PyroOvenMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(8, 18, 16, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(8, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTank(),
                     menu.getInputTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(116, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(116, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTank(),
                     menu.getOutputTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(152, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(152, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 152, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(108, 76, 8, 8, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getUsage() + " HE/t"), mouseX, mouseY);
+        } else if (isLegacyHovering(108, 76, 8, 8, mouseX, mouseY)) {
+            LegacyGuiElements.renderUpgradeInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 108, topPos + 76, 8, 8, menu.getBlockEntity());
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

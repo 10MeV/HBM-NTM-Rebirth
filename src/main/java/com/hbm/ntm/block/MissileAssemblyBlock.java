@@ -37,7 +37,10 @@ public class MissileAssemblyBlock extends HorizontalMachineBlock implements Enti
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
+            // Old client consumed every activation, while its server-side
+            // sneaking branch returned false.  Keep that split so a held item
+            // is only considered on the authoritative server path.
+            return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MissileAssemblyBlockEntity assembly) {
@@ -59,6 +62,9 @@ public class MissileAssemblyBlock extends HorizontalMachineBlock implements Enti
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
+        if (level.isClientSide) {
+            return null;
+        }
         return type == ModBlockEntities.MISSILE_ASSEMBLY.get()
                 ? (tickLevel, tickPos, tickState, blockEntity) -> MissileAssemblyBlockEntity.serverTick(
                 tickLevel, tickPos, tickState, (MissileAssemblyBlockEntity) blockEntity)

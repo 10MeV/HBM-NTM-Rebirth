@@ -30,6 +30,7 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
     private long power;
     private long maxPower;
     private int progress;
+    private int restrictedMode;
     private final HbmFluidGuiHelper.TankData[] inputTanks = new HbmFluidGuiHelper.TankData[3];
     private final HbmFluidGuiHelper.TankData[] outputTanks = new HbmFluidGuiHelper.TankData[3];
 
@@ -87,7 +88,11 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
     }
 
     public int getProgressWidth(int maxWidth) {
-        return progress * maxWidth / 10_000;
+        return (int) Math.ceil(progress * maxWidth / 10_000.0D);
+    }
+
+    public boolean isRestrictedMode() {
+        return restrictedMode != 0;
     }
 
     public int getPowerBarHeight(int maxHeight) {
@@ -198,6 +203,8 @@ public class ChemicalPlantMenu extends AbstractContainerMenu {
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getPower(), () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, () -> blockEntity.getMaxPower(), () -> maxPower, value -> maxPower = value);
         HbmMenuDataSlots.addProgress(this::addDataSlot, () -> blockEntity.getProgress(), value -> progress = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, () -> blockEntity.isRorRestrictedMode() ? 1 : 0,
+                value -> restrictedMode = value);
         for (int i = 0; i < 3; i++) {
             inputTanks[i] = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getInputTank(i));
             outputTanks[i] = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getOutputTank(i));

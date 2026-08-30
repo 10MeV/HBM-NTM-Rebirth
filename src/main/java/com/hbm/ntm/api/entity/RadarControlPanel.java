@@ -9,9 +9,6 @@ public final class RadarControlPanel {
     public static final int MAIN_BUTTON_STEP_Y = 10;
     public static final int MAIN_TOGGLE_VIEW_Y = 158;
     public static final int MAIN_CLEAR_MAP_Y = 178;
-    public static final int SLOT_TOGGLE_START_X = 52;
-    public static final int SLOT_TOGGLE_Y = 82;
-    public static final int SLOT_TOGGLE_STEP_X = 12;
     public static final int ICON_U = 238;
     public static final int ICON_START_V = 4;
     public static final int ICON_STEP_V = 10;
@@ -46,14 +43,6 @@ public final class RadarControlPanel {
 
         public int mainY() {
             return MAIN_BUTTON_START_Y + index * MAIN_BUTTON_STEP_Y;
-        }
-
-        public int slotX() {
-            return SLOT_TOGGLE_START_X + index * SLOT_TOGGLE_STEP_X;
-        }
-
-        public int slotY() {
-            return SLOT_TOGGLE_Y;
         }
 
         public int iconU() {

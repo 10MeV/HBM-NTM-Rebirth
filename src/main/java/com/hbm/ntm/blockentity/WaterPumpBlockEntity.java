@@ -420,6 +420,28 @@ public class WaterPumpBlockEntity extends HbmFluidNetworkBlockEntity
         return LegacyLookOverlay.forBlock(this, lines);
     }
 
+    /**
+     * Legacy TileEntityMachinePumpBase#serialize sends both runtime booleans
+     * before its tank data.  The base fluid tag already covers the tanks and
+     * the energy-and-fluid parent covers the electric buffer, but neither
+     * carries these booleans on an initial chunk snapshot.  In particular,
+     * {@link #onGround} controls the look-overlay ground warning.
+     */
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean(TAG_ACTIVE, active);
+        tag.putBoolean(TAG_ON_GROUND, onGround);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        active = tag.getBoolean(TAG_ACTIVE);
+        onGround = tag.getBoolean(TAG_ON_GROUND);
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);

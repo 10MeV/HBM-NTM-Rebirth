@@ -297,8 +297,36 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putByte(TAG_PRIORITY, (byte) priority.ordinal());
+        tag.putInt(TAG_BUFFER, bufferSize);
+        tag.putBoolean(TAG_REDSTONE, redstone);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_PRIORITY)) {
+            HbmEnergyReceiver.ConnectionPriority[] values = HbmEnergyReceiver.ConnectionPriority.values();
+            int ordinal = tag.getByte(TAG_PRIORITY);
+            priority = ordinal >= 0 && ordinal < values.length
+                    ? values[ordinal]
+                    : HbmEnergyReceiver.ConnectionPriority.NORMAL;
+        }
+        if (tag.contains(TAG_BUFFER)) {
+            bufferSize = Math.max(0, Math.min(MAX_BUFFER_SIZE, tag.getInt(TAG_BUFFER)));
+        }
+        if (tag.contains(TAG_REDSTONE)) {
+            redstone = tag.getBoolean(TAG_REDSTONE);
+        }
+        normalizeBuffer();
+    }
 
     @Nullable
     @Override
@@ -312,8 +340,15 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
         }
         HbmFluidTank activeReceivingTank = bufferSize < tank.getFill() ? null : tank;
         inputPortSubscriptions.refreshReceiver(level, worldPosition, inputPort(), activeReceivingTank, this);
-        HbmFluidTank activeSendingTank = !redstone && tank.getFill() > 0 ? tank : null;
-        outputPortSubscriptions.refreshProvider(level, worldPosition, outputPort(), activeSendingTank, this);
+        // Legacy IFluidStandardSenderMK2#tryProvide added this pump to the
+        // opposite Fluid Mk2 net whenever redstone allowed output, before it
+        // considered the tank's available amount.  Keeping the empty provider
+        // registered is necessary after a redstone recovery: the START-phase
+        // net update may have consumed the last buffered fluid before this
+        // following machine tick re-advertises the endpoint.
+        HbmFluidTank activeSendingTank = !redstone ? tank : null;
+        outputPortSubscriptions.refreshProviderIncludingEmpty(
+                level, worldPosition, outputPort(), activeSendingTank, this);
     }
 
     @Override
@@ -332,8 +367,8 @@ public class FluidPumpBlockEntity extends HbmFluidNetworkBlockEntity
         if (level == null || level.isClientSide) {
             return;
         }
-        inputPortSubscriptions.detachAll(level, worldPosition, inputPort(), this, null);
-        outputPortSubscriptions.detachAll(level, worldPosition, outputPort(), null, this);
+        inputPortSubscriptions.detachAllTracked(level, worldPosition, this, null);
+        outputPortSubscriptions.detachAllTracked(level, worldPosition, null, this);
     }
 
     private boolean normalizeBuffer() {

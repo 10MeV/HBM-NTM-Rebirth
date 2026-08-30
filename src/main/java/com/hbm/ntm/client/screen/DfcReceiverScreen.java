@@ -25,12 +25,12 @@ public class DfcReceiverScreen extends AbstractContainerScreen<DfcReceiverMenu> 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 8, topPos + 17, 16, 52, menu.getCryogel());
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 8, topPos + 69, 16, 52, menu.getCryogel());
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        LegacyGuiElements.drawCenteredLabel(graphics, font, title, 0, 6, imageWidth, 0x404040);
+        LegacyGuiElements.drawCenteredLabel(graphics, font, title, imageWidth / 2, 6, imageWidth, 0x404040);
         graphics.drawString(font, "Input:", 40, 25, 0xFF7F7F, false);
         graphics.drawString(font, BobMathUtil.getShortNumber(menu.getJoules()) + "Spk", 50, 35, 0xFF7F7F, false);
         graphics.drawString(font, "Output:", 40, 45, 0xFF7F7F, false);
@@ -43,8 +43,8 @@ public class DfcReceiverScreen extends AbstractContainerScreen<DfcReceiverMenu> 
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(8, 17, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getCryogel().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getCryogel(),
+                    menu.getCryogel().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

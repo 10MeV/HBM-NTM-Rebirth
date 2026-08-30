@@ -3,6 +3,7 @@ package com.hbm.ntm.item;
 import com.hbm.inventory.material.MaterialShapes;
 import com.hbm.inventory.material.Mats;
 import com.hbm.inventory.material.NTMMaterial;
+import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModItems;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,20 +35,6 @@ public class FoundryMoldItem extends Item {
         register(new MoldShape(4, 0, "wire", MaterialShapes.WIRE, 8));
         register(new MoldShape(19, 0, "plate_cast", MaterialShapes.CASTPLATE));
         register(new MoldShape(20, 0, "wire_dense", MaterialShapes.DENSEWIRE));
-        register(new MoldShape(8, 0, "shell", MaterialShapes.SHELL));
-        register(new MoldShape(9, 0, "pipe", MaterialShapes.PIPE));
-        register(new MoldShape(10, 1, "ingots", MaterialShapes.INGOT, 9));
-        register(new MoldShape(11, 1, "plates", MaterialShapes.PLATE, 9));
-        register(new MoldShape(13, 1, "plates_cast", MaterialShapes.CASTPLATE, 3));
-        register(new MoldShape(21, 1, "wires_dense", MaterialShapes.DENSEWIRE, 9));
-        register(new MoldShape(12, 1, "block", MaterialShapes.BLOCK));
-        register(new MoldShape(22, 0, "barrel_light", MaterialShapes.LIGHTBARREL));
-        register(new MoldShape(23, 0, "barrel_heavy", MaterialShapes.HEAVYBARREL));
-        register(new MoldShape(24, 0, "receiver_light", MaterialShapes.LIGHTRECEIVER));
-        register(new MoldShape(25, 0, "receiver_heavy", MaterialShapes.HEAVYRECEIVER));
-        register(new MoldShape(26, 0, "mechanism", MaterialShapes.MECHANISM));
-        register(new MoldShape(27, 0, "stock", MaterialShapes.STOCK));
-        register(new MoldShape(28, 0, "grip", MaterialShapes.GRIP));
         register(new MoldMapped(5, 0, "blade", MaterialShapes.INGOT.q(3), Map.of(
                 "Titanium", "blade_titanium",
                 "Tungsten", "blade_tungsten")));
@@ -60,12 +47,26 @@ public class FoundryMoldItem extends Item {
                 "Steel", "stamp_steel_flat",
                 "Titanium", "stamp_titanium_flat",
                 "Obsidian", "stamp_obsidian_flat")));
+        register(new MoldShape(8, 0, "shell", MaterialShapes.SHELL));
+        register(new MoldShape(9, 0, "pipe", MaterialShapes.PIPE));
+        register(new MoldShape(10, 1, "ingots", MaterialShapes.INGOT, 9));
+        register(new MoldShape(11, 1, "plates", MaterialShapes.PLATE, 9));
+        register(new MoldShape(13, 1, "plates_cast", MaterialShapes.CASTPLATE, 3));
+        register(new MoldShape(21, 1, "wires_dense", MaterialShapes.DENSEWIRE, 9));
+        register(new MoldShape(12, 1, "block", MaterialShapes.BLOCK));
         register(new MoldMapped(16, 0, "c9", MaterialShapes.PLATE.q(1, 4), Map.of(
                 "Gunmetal", "casing_small",
                 "WeaponSteel", "casing_small_steel")));
         register(new MoldMapped(17, 0, "c50", MaterialShapes.PLATE.q(1, 2), Map.of(
                 "Gunmetal", "casing_large",
                 "WeaponSteel", "casing_large_steel")));
+        register(new MoldShape(22, 0, "barrel_light", MaterialShapes.LIGHTBARREL));
+        register(new MoldShape(23, 0, "barrel_heavy", MaterialShapes.HEAVYBARREL));
+        register(new MoldShape(24, 0, "receiver_light", MaterialShapes.LIGHTRECEIVER));
+        register(new MoldShape(25, 0, "receiver_heavy", MaterialShapes.HEAVYRECEIVER));
+        register(new MoldShape(26, 0, "mechanism", MaterialShapes.MECHANISM));
+        register(new MoldShape(27, 0, "stock", MaterialShapes.STOCK));
+        register(new MoldShape(28, 0, "grip", MaterialShapes.GRIP));
     }
 
     public FoundryMoldItem(Properties properties) {
@@ -98,6 +99,17 @@ public class FoundryMoldItem extends Item {
         return getMold(stack) != null;
     }
 
+    /**
+     * Legacy {@code ItemMold#getIconFromDamage} selected the icon from the
+     * mold's stable metadata id.  The modern item keeps that id in NBT, so the
+     * client item-property bridge exposes the same value to its model
+     * overrides.
+     */
+    public static float modelVariant(ItemStack stack) {
+        Mold mold = getMold(stack);
+        return mold == null ? 0.0F : mold.id();
+    }
+
     public static List<Mold> molds() {
         return List.copyOf(MOLDS);
     }
@@ -115,12 +127,7 @@ public class FoundryMoldItem extends Item {
 
     @Override
     public Component getName(ItemStack stack) {
-        Mold mold = getMold(stack);
-        return mold == null
-                ? super.getName(stack)
-                : Component.translatable("item.hbm_ntm_rebirth.mold")
-                        .append(" - ")
-                        .append(mold.title());
+        return super.getName(stack);
     }
 
     @Override
@@ -128,6 +135,12 @@ public class FoundryMoldItem extends Item {
         Mold mold = getMold(stack);
         if (mold != null) {
             tooltip.add(mold.title().copy().withStyle(ChatFormatting.YELLOW));
+            // Legacy ItemMold identifies the compatible casting vessel below the
+            // shape title: the small molds fit a foundry mold, large molds a basin.
+            tooltip.add(Component.translatable(mold.size() == 0
+                    ? ModBlocks.FOUNDRY_MOLD.get().getDescriptionId()
+                    : ModBlocks.FOUNDRY_BASIN.get().getDescriptionId())
+                    .withStyle(mold.size() == 0 ? ChatFormatting.GOLD : ChatFormatting.RED));
         }
     }
 
@@ -186,7 +199,7 @@ public class FoundryMoldItem extends Item {
     private record MoldMapped(int id, int size, String name, int cost, Map<String, String> outputs) implements Mold {
         @Override
         public Component title() {
-            return Component.translatable("shape." + name);
+            return Component.translatable("shape." + name).append(" x1");
         }
 
         @Override

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    {
+      "tag": "forge:glass"
+    },
+    {
+      "tag": "forge:dusts/redstone"
+    },
+    {
+      "type": "hbm_ntm_rebirth:fluid_container",
+      "fluid": "hbm_ntm_rebirth:tritium",
+      "amount": 1000
+    },
+    {
+      "tag": "forge:dusts/aluminium"
+    }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:lamp_tritium_blue_off"
+  }
+}

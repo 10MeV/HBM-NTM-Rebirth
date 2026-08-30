@@ -68,7 +68,9 @@ public class ConveyorPressBlockEntity extends HbmEnergyBlockEntity implements Le
             setChangedAndSync();
         }
     };
+    // The unrestricted handler is retained for the menu and internal machine code.
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> sidedItemHandler = LazyOptional.of(SidedItemHandler::new);
 
     private double press;
     private double renderPress;
@@ -288,14 +290,53 @@ public class ConveyorPressBlockEntity extends HbmEnergyBlockEntity implements Le
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        sidedItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? itemHandler : sidedItemHandler).cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    /**
+     * 1.7.10 {@code TileEntityConveyorPress} exposed only its stamp slot to
+     * {@code ISidedInventory}; {@code TileEntityMachineBase} then rejected
+     * every sided extraction.  Do not expose the raw menu handler to pipes.
+     */
+    private final class SidedItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot == 0 ? items.getStackInSlot(SLOT_STAMP) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return slot == 0 ? items.insertItem(SLOT_STAMP, stack, simulate) : stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            // Legacy TileEntityMachineBase#canExtractItem always returned false.
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot == 0 ? items.getSlotLimit(SLOT_STAMP) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return slot == 0 && items.isItemValid(SLOT_STAMP, stack);
+        }
     }
 
     private boolean canExtend() {

@@ -88,6 +88,9 @@ public class CableDiodeBlock extends HbmEnergyNodeBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof CableDiodeBlockEntity diode) {
             NetworkHooks.openScreen(serverPlayer, diode, pos);

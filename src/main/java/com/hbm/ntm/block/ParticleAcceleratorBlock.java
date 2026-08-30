@@ -136,6 +136,9 @@ public class ParticleAcceleratorBlock extends LegacyXrMultiblockBlock implements
         if (variant == Variant.BEAMLINE) {
             return InteractionResult.PASS;
         }
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
@@ -207,7 +210,10 @@ public class ParticleAcceleratorBlock extends LegacyXrMultiblockBlock implements
                 rel(facing, 1).offset(rel(side, -2)),
                 rel(facing, -1),
                 rel(facing, -1).offset(rel(side, 2)),
-                rel(facing, -1).offset(rel(side, -2)));
+                rel(facing, -1).offset(rel(side, -2)),
+                BlockPos.ZERO.below(),
+                rel(side, 2).below(),
+                rel(side, -2).below());
     }
 
     private static List<BlockPos> detectorExtraOffsets(Direction facing) {

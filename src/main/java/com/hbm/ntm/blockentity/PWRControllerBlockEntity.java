@@ -41,8 +41,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -486,6 +488,54 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("rodCount", rodCount);
+        tag.putLong("coreHeatL", coreHeat);
+        tag.putLong("hullHeatL", hullHeat);
+        tag.putDouble("flux", flux);
+        tag.putDouble("processTime", processTime);
+        tag.putDouble("progress", progress);
+        tag.putInt("typeLoaded", typeLoaded);
+        tag.putInt("amountLoaded", amountLoaded);
+        tag.putDouble("rodLevel", rodLevel);
+        tag.putDouble("rodTarget", rodTarget);
+        tag.putLong("coreHeatCapacityL", coreHeatCapacity);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("rodCount")) rodCount = tag.getInt("rodCount");
+        if (tag.contains("coreHeatL")) coreHeat = tag.getLong("coreHeatL");
+        if (tag.contains("hullHeatL")) hullHeat = tag.getLong("hullHeatL");
+        if (tag.contains("flux")) flux = tag.getDouble("flux");
+        if (tag.contains("processTime")) processTime = tag.getDouble("processTime");
+        if (tag.contains("progress")) progress = tag.getDouble("progress");
+        if (tag.contains("typeLoaded")) typeLoaded = tag.getInt("typeLoaded");
+        if (tag.contains("amountLoaded")) amountLoaded = tag.getInt("amountLoaded");
+        if (tag.contains("rodLevel")) rodLevel = tag.getDouble("rodLevel");
+        if (tag.contains("rodTarget")) rodTarget = tag.getDouble("rodTarget");
+        if (tag.contains("coreHeatCapacityL")) {
+            coreHeatCapacity = Math.max(CORE_HEAT_CAPACITY_BASE, tag.getLong("coreHeatCapacityL"));
+        }
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         data.writeBoolean(false);
         writeLegacyLoadedTileBinary(data);
@@ -629,7 +679,16 @@ public class PWRControllerBlockEntity extends HbmFluidNetworkBlockEntity
             double fluxPerRod = flux / rodCount;
             double outputPerRod = fuel.curve().eval(fluxPerRod);
             double totalOutput = outputPerRod * amountLoaded * usedRods;
-            coreHeat += totalOutput * fuel.heatEmission();
+            double totalHeatOutput = totalOutput * fuel.heatEmission();
+            // The legacy PWR applies the moderator multiplier to heat as well
+            // as to the next tick's flux, but only while coolant is present.
+            // Keep that ordering: the fuel curve above still sees the previous
+            // tick's flux, exactly as TileEntityPWRController did.
+            PwrModeratorFluidTrait moderator = coolantTank.getTankType().getTrait(PwrModeratorFluidTrait.class);
+            if (moderator != null && coolantTank.getFill() > 0) {
+                totalHeatOutput *= moderator.getMultiplier();
+            }
+            coreHeat += totalHeatOutput;
             newFlux = (int) (newFlux + totalOutput);
             processTime = (int) fuel.yield();
             progress += totalOutput;

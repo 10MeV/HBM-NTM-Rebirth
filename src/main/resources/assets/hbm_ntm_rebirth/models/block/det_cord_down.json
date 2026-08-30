@@ -1,17 +1,13 @@
 {
-  "parent": "hbm_ntm_rebirth:block/det_cord_part",
-  "elements": [
-    {
-      "from": [6, 0, 6],
-      "to": [10, 6, 10],
-      "faces": {
-        "down": { "texture": "#cord" },
-        "up": { "texture": "#cord" },
-        "north": { "texture": "#cord" },
-        "south": { "texture": "#cord" },
-        "west": { "texture": "#cord" },
-        "east": { "texture": "#cord" }
-      }
-    }
-  ]
+  "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+  "shade_quads": false,
+  "emissive_ambient": false,
+  "legacy_normal_mode": "face",
+  "model": "hbm_ntm_rebirth:models/blocks/cable_neo.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
+  "transform": { "translation": [0.5, 0.5, 0.5], "rotation": [0, 0, 0], "scale": 1.0 },
+  "visibility": { "negY": true },
+  "textures": { "particle": "hbm_ntm_rebirth:block/det_cord", "default": "hbm_ntm_rebirth:block/det_cord", "texture0": "hbm_ntm_rebirth:block/det_cord" }
 }

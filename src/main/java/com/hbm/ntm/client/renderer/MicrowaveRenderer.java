@@ -44,7 +44,6 @@ public class MicrowaveRenderer implements BlockEntityRenderer<MicrowaveBlockEnti
             return;
         }
         BlockState state = microwave.getBlockState();
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(microwave, packedLight);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(microwave);
                 LegacyRenderLighting.ModelViewSamplingScope ignored =
                 LegacyRenderLighting.pushModelViewSampling(microwave, poseStack.last().pose())) {
@@ -58,7 +57,7 @@ public class MicrowaveRenderer implements BlockEntityRenderer<MicrowaveBlockEnti
                 LegacyPoseRotations.rotateYDegrees(poseStack, (float) rotation);
                 poseStack.translate(-0.575D, 0.0D, 0.45D);
             }
-            MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, modelLight,
+            MODEL.renderOnlyInCallOrder(ObjMachineModels.MICROWAVE_TEXTURE, poseStack, buffer, packedLight,
                     packedOverlay, PLATE);
             poseStack.popPose();
         }

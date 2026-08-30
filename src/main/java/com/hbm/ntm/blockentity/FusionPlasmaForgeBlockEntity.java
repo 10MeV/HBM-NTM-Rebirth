@@ -453,6 +453,9 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putFloat(TAG_PLASMA_R, plasmaR);
         tag.putFloat(TAG_PLASMA_G, plasmaG);
         tag.putFloat(TAG_PLASMA_B, plasmaB);
+        tag.putDouble(TAG_PROGRESS, progress);
+        tag.putInt(TAG_BOOSTER, booster);
+        tag.putInt(TAG_MAX_BOOSTER, maxBooster);
         return tag;
     }
 
@@ -466,6 +469,15 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
         plasmaR = tag.getFloat(TAG_PLASMA_R);
         plasmaG = tag.getFloat(TAG_PLASMA_G);
         plasmaB = tag.getFloat(TAG_PLASMA_B);
+        if (tag.contains(TAG_PROGRESS)) {
+            progress = tag.getDouble(TAG_PROGRESS);
+        }
+        if (tag.contains(TAG_BOOSTER)) {
+            booster = tag.getInt(TAG_BOOSTER);
+        }
+        if (tag.contains(TAG_MAX_BOOSTER)) {
+            maxBooster = tag.getInt(TAG_MAX_BOOSTER);
+        }
     }
 
     @Override

@@ -23,10 +23,10 @@ public class AssemblyFactoryScreen extends AbstractContainerScreen<AssemblyFacto
         super(menu, inventory, title);
         imageWidth = 256;
         imageHeight = 240;
-        titleLabelX = 92;
+        titleLabelX = 113;
         titleLabelY = 6;
         inventoryLabelX = 33;
-        inventoryLabelY = 148;
+        inventoryLabelY = 146;
     }
 
     @Override
@@ -68,7 +68,7 @@ public class AssemblyFactoryScreen extends AbstractContainerScreen<AssemblyFacto
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        LegacyGuiText.drawCenteredLabel(graphics, font, title.getString(), titleLabelX, titleLabelY, 120, 0x404040);
+        graphics.drawString(font, title, titleLabelX - font.width(title) / 2, titleLabelY, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -76,7 +76,7 @@ public class AssemblyFactoryScreen extends AbstractContainerScreen<AssemblyFacto
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(234, 18, 16, 92, mouseX, mouseY)) {
+        if (isLegacyHovering(234, 18, 16, 92, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 234, topPos + 18, 16, 92, menu.getPower(), menu.getMaxPower());
         } else {
@@ -90,7 +90,7 @@ public class AssemblyFactoryScreen extends AbstractContainerScreen<AssemblyFacto
         for (int module = 0; module < 4; module++) {
             int ox = (module % 2) * 109;
             int oy = (module / 2) * 56;
-            if (isHovering(6 + ox, 53 + oy, 18, 18, mouseX, mouseY)) {
+            if (isLegacyHovering(6 + ox, 53 + oy, 18, 18, mouseX, mouseY)) {
                 minecraft.setScreen(new AssemblyFactoryRecipeSelectorScreen(this, module));
                 return true;
             }
@@ -102,25 +102,25 @@ public class AssemblyFactoryScreen extends AbstractContainerScreen<AssemblyFacto
         for (int module = 0; module < 4; module++) {
             int ox = (module % 2) * 109;
             int oy = (module / 2) * 56;
-            if (isHovering(6 + ox, 53 + oy, 18, 18, mouseX, mouseY)) {
+            if (isLegacyHovering(6 + ox, 53 + oy, 18, 18, mouseX, mouseY)) {
                 LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(module), mouseX, mouseY);
                 return;
             }
-            if (isHovering(105 + ox, 20 + oy, 5, 32, mouseX, mouseY)) {
+            if (isLegacyHovering(105 + ox, 20 + oy, 5, 32, mouseX, mouseY)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(module),
                         menu.getInputTankTooltip(module, hasShiftDown()), mouseX, mouseY);
                 return;
             }
-            if (isHovering(105 + ox, 54 + oy, 5, 16, mouseX, mouseY)) {
+            if (isLegacyHovering(105 + ox, 54 + oy, 5, 16, mouseX, mouseY)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(module),
                         menu.getOutputTankTooltip(module, hasShiftDown()), mouseX, mouseY);
                 return;
             }
         }
-        if (isHovering(232, 149, 7, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(232, 149, 7, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getWaterTankData(),
                     menu.getWaterTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(241, 149, 7, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(241, 149, 7, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getSpentSteamTankData(),
                     menu.getSpentSteamTankTooltip(hasShiftDown()), mouseX, mouseY);
         }
@@ -133,6 +133,10 @@ public class AssemblyFactoryScreen extends AbstractContainerScreen<AssemblyFacto
                     .withStyle(ChatFormatting.YELLOW));
         }
         return recipe.getDisplayLines();
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private static List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {

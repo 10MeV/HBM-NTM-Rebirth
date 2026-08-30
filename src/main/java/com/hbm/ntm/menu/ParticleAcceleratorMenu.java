@@ -25,7 +25,7 @@ public class ParticleAcceleratorMenu extends AbstractContainerMenu {
     private final int machineSlotCount;
     private long power;
     private long maxPower;
-    private int temperatureTimesTen;
+    private int temperatureKelvin;
     private int usageLow;
     private int stateOrdinal;
     private int lastSpeed;
@@ -66,7 +66,7 @@ public class ParticleAcceleratorMenu extends AbstractContainerMenu {
     }
 
     public int getTemperatureKelvin() {
-        return Math.round(temperatureTimesTen / 10.0F);
+        return temperatureKelvin;
     }
 
     public int getUsageLow() {
@@ -148,10 +148,10 @@ public class ParticleAcceleratorMenu extends AbstractContainerMenu {
         switch (getVariant()) {
             case SOURCE -> {
                 addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 0, 8, 72));
-                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 1, 62, 18));
-                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 2, 80, 18));
-                addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(), 3, 62, 45));
-                addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(), 4, 80, 45));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 1, 62, 16));
+                addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 2, 80, 16));
+                addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(), 3, 62, 43));
+                addSlot(HbmInventoryMenuHelper.takeOnlySlot(blockEntity.getItems(), 4, 80, 43));
             }
             case DETECTOR -> {
                 addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), 0, 8, 72));
@@ -177,8 +177,8 @@ public class ParticleAcceleratorMenu extends AbstractContainerMenu {
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getMaxPower, () -> maxPower, value -> maxPower = value);
-        HbmMenuDataSlots.addInt(this::addDataSlot, () -> Math.round(blockEntity.getTemperature() * 10.0F),
-                value -> temperatureTimesTen = value);
+        HbmMenuDataSlots.addInt(this::addDataSlot, () -> (int) Math.ceil(blockEntity.getTemperature()),
+                value -> temperatureKelvin = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, () -> (int) Math.min(Integer.MAX_VALUE, blockEntity.getUsage()),
                 value -> usageLow = value);
         HbmMenuDataSlots.addInt(this::addDataSlot,

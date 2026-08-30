@@ -4,6 +4,9 @@ import com.hbm.ntm.energy.IEnergyConnectorBlock;
 import com.hbm.ntm.util.ConnectionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.DirectionalBlock;
@@ -12,6 +15,8 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class CapacitorBusBlock extends DirectionalBlock
@@ -45,6 +50,15 @@ public class CapacitorBusBlock extends DirectionalBlock
     @Override
     public boolean canConnectEnergy(BlockGetter level, BlockPos pos, Direction side) {
         return canConnect(level, pos, side);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        // MachineCapacitorBus#addInformation delegates to ITooltipProvider's
+        // standard Shift-gated `tile.capacitor_bus.desc` text.
+        LegacyStandardInfoTooltip.append(tooltip, "capacitor_bus");
     }
 
     @Override

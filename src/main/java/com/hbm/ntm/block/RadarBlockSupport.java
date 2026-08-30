@@ -16,20 +16,23 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.network.NetworkHooks;
 
-final class RadarBlockSupport {
+public final class RadarBlockSupport {
     private RadarBlockSupport() {
     }
 
     static InteractionResult useRadarCore(Level level, BlockPos pos, Player player) {
-        if (player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
-        }
+        // MachineRadar and MachineRadarLarge check altitude before their
+        // sneaking branch.  A low-altitude radar therefore consumes every
+        // activation (including sneak-use) and reports the legacy error.
         if (pos.getY() < RadarConfig.radarAltitude()) {
             if (!level.isClientSide && player instanceof ServerPlayer) {
                 player.displayClientMessage(Component.literal("[Radar] Error: Radar altitude not sufficient.")
                         .withStyle(ChatFormatting.RED), false);
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
         }
         if (!level.isClientSide
                 && player instanceof ServerPlayer serverPlayer
@@ -42,6 +45,17 @@ final class RadarBlockSupport {
     static int redstoneOutput(BlockGetter level, BlockPos pos) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
         return blockEntity instanceof RadarRedstoneSource source ? source.redstoneOutput() : 0;
+    }
+
+    /**
+     * {@code MachineRadarLarge#isProvidingWeakPower} delegated only through a
+     * dummy when its queried side pointed directly at the radar core.  Thus
+     * the four adjacent legacy power proxies expose output on their outer
+     * face, while the core and all remaining faces stay silent.
+     */
+    public static int legacyLargeRadarProxyRedstoneOutput(BlockGetter level, BlockPos proxyPos,
+            net.minecraft.core.Direction queriedSide) {
+        return redstoneOutput(level, proxyPos.relative(queriedSide));
     }
 
     static void refreshEnergyConnections(Level level, BlockPos pos) {

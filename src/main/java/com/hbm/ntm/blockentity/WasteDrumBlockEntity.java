@@ -139,7 +139,12 @@ public class WasteDrumBlockEntity extends BlockEntity implements MenuProvider {
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        // TileEntityWasteDrum had no legacy description packet; its inventory
+        // is synchronized by the container. An empty initial update tag must
+        // not be interpreted as an empty persistent inventory on the client.
+        if (tag != null && !tag.isEmpty()) {
+            load(tag);
+        }
     }
 
     @Override

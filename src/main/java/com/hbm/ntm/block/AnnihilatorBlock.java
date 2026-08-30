@@ -39,6 +39,11 @@ public class AnnihilatorBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // 1.7.10 MachineAnnihilator uses standardOpenBehavior, which consumes
+        // crouching interaction without opening its GUI.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof AnnihilatorBlockEntity annihilator) {
             NetworkHooks.openScreen(serverPlayer, annihilator, annihilator.getBlockPos());

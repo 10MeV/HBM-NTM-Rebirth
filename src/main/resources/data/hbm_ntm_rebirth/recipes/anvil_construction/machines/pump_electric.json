@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "minecraft:stone_bricks" }, "count": 8 },
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 16, "legacy_ore": "plateSteel" },
+    { "ingredient": { "tag": "forge:pipes/lead" }, "count": 4, "legacy_ore": "pipeLead" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 2 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_vacuum_tube" }, "count": 4, "legacy_id": "hbm:circuit", "legacy_meta": 0 }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:pump_electric" },
+  "tier_lower": 3,
+  "overlay": "construction"
+}

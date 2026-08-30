@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": { "tag": "forge:bolts/steel" },
+    "P": { "tag": "forge:plates/iron" },
+    "R": { "item": "minecraft:redstone" }
+  },
+  "pattern": ["BPB", "PRP", "BPB"],
+  "result": { "item": "hbm_ntm_rebirth:fan" },
+  "show_notification": true
+}

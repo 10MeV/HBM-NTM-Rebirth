@@ -1,6 +1,7 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.StorageCrateBlockEntity;
+import com.hbm.ntm.config.ServerConfig;
 import com.hbm.ntm.item.PadlockItem;
 import com.hbm.ntm.registry.ModItems;
 import net.minecraft.core.BlockPos;
@@ -93,12 +94,25 @@ public class CrateBlock extends Block implements EntityBlock {
     @Override
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof StorageCrateBlockEntity crate) {
-            if (player.getAbilities().instabuild) {
-                crate.clearItems();
+            if (ServerConfig.crateKeepContentsEnabled()) {
+                if (player.getAbilities().instabuild) {
+                    crate.clearItems();
+                } else {
+                    ItemStack drop = crate.createDroppedStack();
+                    crate.clearItems();
+                    Block.popResource(level, pos, drop);
+                }
             } else {
-                ItemStack drop = crate.createDroppedStack();
-                crate.clearItems();
-                Block.popResource(level, pos, drop);
+                if (!player.getAbilities().instabuild) {
+                    // Vanilla loot is disabled below, so this is the legacy empty
+                    // block drop. onRemove subsequently ejects the unlocked slots.
+                    Block.popResource(level, pos, new ItemStack(this));
+                }
+                if (crate.isLocked()) {
+                    // BlockStorageCrate#removedByPlayer suppresses its breakBlock
+                    // inventory spill for locked crates when keep-contents is off.
+                    crate.clearItems();
+                }
             }
         }
         super.playerWillDestroy(level, pos, state, player);

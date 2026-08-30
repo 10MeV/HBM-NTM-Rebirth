@@ -11,7 +11,7 @@ public final class RadarGuiLayout {
     public static final int RADAR_AREA_SIZE = 200;
     public static final int RADAR_CENTER_X = 108;
     public static final int RADAR_CENTER_Y = 117;
-    public static final int MAP_PIXEL_OFFSET_Y = 1;
+    public static final int MAP_PIXEL_OFFSET_Y = 0;
 
     public static final int MAIN_ENERGY_X = 8;
     public static final int MAIN_ENERGY_Y = 221;

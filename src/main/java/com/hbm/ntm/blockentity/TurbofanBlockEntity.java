@@ -515,13 +515,6 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
         pollution.writeLegacyNbt(tag);
         tag.putLong(TAG_LEGACY_POWER, energy.getPower());
         tag.putBoolean(TAG_SHOW_BLOOD, showBlood);
-        tag.putInt("afterburner", afterburner);
-        tag.putBoolean("wasOn", wasOn);
-        tag.putInt("output", lastOutput);
-        tag.putInt("consumption", lastConsumption);
-        tag.putFloat("spin", spin);
-        tag.putFloat("lastSpin", lastSpin);
-        tag.putInt("momentum", momentum);
         fuelTank.writeToNbt(tag, "fuel");
         bloodTank.writeToNbt(tag, "blood");
     }
@@ -535,13 +528,15 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
             energy.setPower(tag.getLong(TAG_LEGACY_POWER));
         }
         showBlood = tag.getBoolean(TAG_SHOW_BLOOD);
-        afterburner = tag.getInt("afterburner");
-        wasOn = tag.getBoolean("wasOn");
-        lastOutput = tag.getInt("output");
-        lastConsumption = tag.getInt("consumption");
-        spin = tag.getFloat("spin");
-        lastSpin = tag.getFloat("lastSpin");
-        momentum = tag.getInt("momentum");
+        // TileEntityMachineTurbofan only persisted power, the two tanks and
+        // showBlood. The remaining running/animation values are recomputed.
+        afterburner = 0;
+        wasOn = false;
+        lastOutput = 0;
+        lastConsumption = 0;
+        spin = 0.0F;
+        lastSpin = 0.0F;
+        momentum = 0;
         if (tag.contains("fuel") || tag.contains("fuel_type")) {
             fuelTank.readFromNbt(tag, "fuel");
         }
@@ -555,8 +550,41 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        // TileEntityMachineTurbofan#serialize sent this exact running state
+        // and both tanks.  The two counters are modern overlay/UI consumers.
+        tag.putInt("afterburner", afterburner);
+        tag.putBoolean("wasOn", wasOn);
+        tag.putBoolean(TAG_SHOW_BLOOD, showBlood);
+        tag.putInt("output", lastOutput);
+        tag.putInt("consumption", lastConsumption);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("afterburner")) {
+            afterburner = Math.max(0, tag.getInt("afterburner"));
+        }
+        if (tag.contains("wasOn")) {
+            wasOn = tag.getBoolean("wasOn");
+        }
+        if (tag.contains(TAG_SHOW_BLOOD)) {
+            showBlood = tag.getBoolean(TAG_SHOW_BLOOD);
+        }
+        if (tag.contains("output")) {
+            lastOutput = Math.max(0, tag.getInt("output"));
+        }
+        if (tag.contains("consumption")) {
+            lastConsumption = Math.max(0, tag.getInt("consumption"));
+        }
+    }
 
     @Nullable
     @Override
@@ -573,7 +601,9 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            // TileEntityMachineTurbofan inherits TileEntityMachineBase's empty
+            // ISidedInventory contract. Its GUI inventory is not pipe-accessible.
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }

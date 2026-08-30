@@ -35,7 +35,7 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, 
         return type;
     }
 
-    public void resetTrackers() {
+    public synchronized void resetTrackers() {
         fluidTracker = 0L;
         Arrays.fill(lastAttemptedByPressure, 0L);
         Arrays.fill(lastTransferredByPressure, 0L);
@@ -43,21 +43,21 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, 
         Arrays.fill(lastUnaccountedByPressure, 0L);
     }
 
-    public long getFluidTracker() {
+    public synchronized long getFluidTracker() {
         return fluidTracker;
     }
 
-    public int getReceiverCount() {
+    public synchronized int getReceiverCount() {
         pruneExpired(System.currentTimeMillis());
         return receiverEntries.size();
     }
 
-    public int getProviderCount() {
+    public synchronized int getProviderCount() {
         pruneExpired(System.currentTimeMillis());
         return providerEntries.size();
     }
 
-    public DebugSnapshot createDebugSnapshot() {
+    public synchronized DebugSnapshot createDebugSnapshot() {
         pruneExpired(System.currentTimeMillis());
         long[] providerAvailable = new long[HbmFluidUser.HIGHEST_VALID_PRESSURE + 1];
         long[] providerRate = new long[HbmFluidUser.HIGHEST_VALID_PRESSURE + 1];
@@ -111,7 +111,7 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, 
                 receiversByPriority);
     }
 
-    public PressureBalanceSnapshot createPressureBalanceSnapshot() {
+    public synchronized PressureBalanceSnapshot createPressureBalanceSnapshot() {
         pruneExpired(System.currentTimeMillis());
         PressureBalanceAccumulator[] balances = new PressureBalanceAccumulator[HbmFluidUser.HIGHEST_VALID_PRESSURE + 1];
         for (int pressure = 0; pressure < balances.length; pressure++) {
@@ -162,35 +162,35 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, 
                 lastUnaccountedByPressure.clone());
     }
 
-    public void addReceiver(HbmFluidReceiver receiver) {
+    public synchronized void addReceiver(HbmFluidReceiver receiver) {
         if (receiver != null) {
             receiverEntries.put(receiver, System.currentTimeMillis());
         }
     }
 
-    public boolean isSubscribed(HbmFluidReceiver receiver) {
+    public synchronized boolean isSubscribed(HbmFluidReceiver receiver) {
         return receiverEntries.containsKey(receiver);
     }
 
-    public void removeReceiver(HbmFluidReceiver receiver) {
+    public synchronized void removeReceiver(HbmFluidReceiver receiver) {
         receiverEntries.remove(receiver);
     }
 
-    public void addProvider(HbmFluidProvider provider) {
+    public synchronized void addProvider(HbmFluidProvider provider) {
         if (provider != null) {
             providerEntries.put(provider, System.currentTimeMillis());
         }
     }
 
-    public boolean isProvider(HbmFluidProvider provider) {
+    public synchronized boolean isProvider(HbmFluidProvider provider) {
         return providerEntries.containsKey(provider);
     }
 
-    public void removeProvider(HbmFluidProvider provider) {
+    public synchronized void removeProvider(HbmFluidProvider provider) {
         providerEntries.remove(provider);
     }
 
-    public void clearSubscriptions() {
+    public synchronized void clearSubscriptions() {
         receiverEntries.clear();
         providerEntries.clear();
         fluidTracker = 0L;
@@ -201,12 +201,12 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, 
         clearSubscriptions();
     }
 
-    public List<HbmFluidReceiver> getSubscribedReceivers() {
+    public synchronized List<HbmFluidReceiver> getSubscribedReceivers() {
         pruneExpired(System.currentTimeMillis());
         return List.copyOf(receiverEntries.keySet());
     }
 
-    public int damageSubscribedReceiversFromOverpressure() {
+    public synchronized int damageSubscribedReceiversFromOverpressure() {
         pruneExpired(System.currentTimeMillis());
         int damaged = 0;
         for (HbmFluidReceiver receiver : List.copyOf(receiverEntries.keySet())) {
@@ -218,13 +218,14 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, 
     }
 
     @Override
-    public void destroy() {
+    public synchronized void destroy() {
         super.destroy();
         clearSubscriptions();
     }
 
     @Override
-    public void joinNetwork(com.hbm.ntm.uninos.HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, HbmFluidNode> network) {
+    public synchronized void joinNetwork(
+            com.hbm.ntm.uninos.HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, HbmFluidNode> network) {
         if (!(network instanceof HbmFluidNet fluidNet) || fluidNet == this) {
             super.joinNetwork(network);
             return;
@@ -241,7 +242,7 @@ public class HbmFluidNet extends HbmNodeNet<HbmFluidReceiver, HbmFluidProvider, 
         }
     }
 
-    public long update() {
+    public synchronized long update() {
         if (type == HbmFluids.NONE || providerEntries.isEmpty() || receiverEntries.isEmpty()) {
             return 0L;
         }

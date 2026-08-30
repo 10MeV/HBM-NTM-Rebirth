@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.LegacyEmitterBlock;
 import com.hbm.ntm.client.obj.LegacyEmitterBeamRenderer;
+import com.hbm.ntm.network.HbmLegacyBufPacketReceiver;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -15,7 +16,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public class LegacyEmitterBlockEntity extends BlockEntity {
+public class LegacyEmitterBlockEntity extends BlockEntity implements HbmLegacyBufPacketReceiver {
+    private static final String TAG_BEAM = "beam";
+    private static final String TAG_COLOR = "color";
+    private static final String TAG_GIRTH = "girth";
+    private static final String TAG_EFFECT = "effect";
     private static final int RANGE = 100;
     private static final int EFFECT_COUNT = 5;
 
@@ -45,6 +50,9 @@ public class LegacyEmitterBlockEntity extends BlockEntity {
         if (changed) {
             emitter.setChangedAndSync();
         }
+        // TileEntityEmitter networkPackNT(150) carried the live beam length
+        // and effect presentation state every server tick.
+        emitter.sendBufPacket(150);
     }
 
     private int scanBeam(Level level, BlockPos pos, Direction direction) {
@@ -143,8 +151,8 @@ public class LegacyEmitterBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return createRuntimeSnapshot();
+    }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
@@ -153,7 +161,43 @@ public class LegacyEmitterBlockEntity extends BlockEntity {
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        applyRuntimeSnapshot(packet.getTag());
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(net.minecraft.network.FriendlyByteBuf data) {
+        // TileEntityEmitter#serialize order.
+        data.writeInt(beam);
+        data.writeInt(color);
+        data.writeFloat(girth);
+        data.writeInt(effect);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(net.minecraft.network.FriendlyByteBuf data) {
+        beam = Math.max(0, data.readInt());
+        color = data.readInt() & 0xFFFFFF;
+        girth = Math.max(0.125F, data.readFloat());
+        effect = Math.floorMod(data.readInt(), EFFECT_COUNT);
+    }
+
+    private CompoundTag createRuntimeSnapshot() {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(TAG_BEAM, beam);
+        tag.putInt(TAG_COLOR, color);
+        tag.putFloat(TAG_GIRTH, girth);
+        tag.putInt(TAG_EFFECT, effect);
+        return tag;
+    }
+
+    private void applyRuntimeSnapshot(CompoundTag tag) {
+        if (tag == null) {
+            return;
+        }
+        beam = Math.max(0, tag.getInt(TAG_BEAM));
+        color = tag.getInt(TAG_COLOR) & 0xFFFFFF;
+        girth = tag.contains(TAG_GIRTH) ? Math.max(0.125F, tag.getFloat(TAG_GIRTH)) : 0.5F;
+        effect = Math.floorMod(tag.getInt(TAG_EFFECT), EFFECT_COUNT);
     }
 
     private void setChangedAndSync() {

@@ -75,13 +75,13 @@ public class ConveyorPressRenderer implements BlockEntityRenderer<ConveyorPressB
                     poseStack.pushPose();
                     poseStack.translate(0.0D, pistonTranslateY, 0.0D);
                     ObjMachineModels.CONVEYOR_PRESS.renderOnlyInCallOrder(ObjMachineModels.CONVEYOR_PRESS_TEXTURE,
-                            poseStack, buffer, modelLight, OverlayTexture.NO_OVERLAY, PISTON,
+                            poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, PISTON,
                             LegacyTexturedRenderMode.CUTOUT_CULL);
                     poseStack.popPose();
                 }
 
                 ObjMachineModels.CONVEYOR_PRESS.renderOnlyInCallOrder(
-                        ObjMachineModels.CONVEYOR_PRESS_BELT_TEXTURE, poseStack, buffer, modelLight,
+                        ObjMachineModels.CONVEYOR_PRESS_BELT_TEXTURE, poseStack, buffer, packedLight,
                         OverlayTexture.NO_OVERLAY, 255, 255, 255, 255, false,
                         LegacyTexturedRenderMode.CUTOUT_CULL, beltTransform, BELT);
                 poseStack.popPose();

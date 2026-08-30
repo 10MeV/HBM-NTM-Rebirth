@@ -33,8 +33,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -84,6 +86,7 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
     private static final String TAG_OUT_AMOUNT = "outAmount";
     private static final String TAG_STEAM_USED = "steamUsed";
     private static final String TAG_VENTING = "isVenting";
+    private static final String TAG_PROGRESSING = "isProgressing";
     private static final String TAG_ANIM = "anim";
     private static final String TAG_LAST_ANIM = "lastAnim";
     private static final LegacyBurnTimeModule BURN_MODULE = new LegacyBurnTimeModule()
@@ -94,6 +97,10 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
             .setSolidHeatMod(1.5D)
             .setRocketHeatMod(3.0D)
             .setBalefireHeatMod(10.0D);
+
+    public static LegacyBurnTimeModule burnModule() {
+        return BURN_MODULE;
+    }
 
     private final HbmFluidTank inputTank;
     private final HbmFluidTank steamTank;
@@ -310,6 +317,77 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
         }
     }
 
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        writeClientSyncFields(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    private void writeClientSyncFields(CompoundTag tag) {
+        // TileEntityMachineRotaryFurnace#serialize: super supplies all four
+        // tanks; this is the remaining visual/runtime packet contract.
+        tag.putBoolean(TAG_VENTING, isVenting);
+        tag.putBoolean(TAG_PROGRESSING, isProgressing);
+        tag.putFloat(TAG_PROGRESS, progress);
+        tag.putInt(TAG_BURN, burnTime);
+        tag.putInt(TAG_MAX_BURN, maxBurnTime);
+        if (output != null && !output.isEmpty() && output.material != null) {
+            tag.putInt(TAG_OUT_TYPE, output.material.id);
+            tag.putInt(TAG_OUT_AMOUNT, output.amount);
+        }
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        if (tag.contains(TAG_VENTING)) {
+            isVenting = tag.getBoolean(TAG_VENTING);
+        }
+        if (tag.contains(TAG_PROGRESSING)) {
+            isProgressing = tag.getBoolean(TAG_PROGRESSING);
+        }
+        if (tag.contains(TAG_PROGRESS)) {
+            progress = Math.max(0.0F, tag.getFloat(TAG_PROGRESS));
+        }
+        if (tag.contains(TAG_BURN)) {
+            burnTime = Math.max(0, tag.getInt(TAG_BURN));
+        }
+        if (tag.contains(TAG_MAX_BURN)) {
+            maxBurnTime = Math.max(0, tag.getInt(TAG_MAX_BURN));
+        }
+        if (tag.contains(TAG_OUT_TYPE) && tag.contains(TAG_OUT_AMOUNT)) {
+            output = new MaterialStack(Mats.matById.get(tag.getInt(TAG_OUT_TYPE)), tag.getInt(TAG_OUT_AMOUNT));
+            if (output.isEmpty()) {
+                output = null;
+            }
+        } else {
+            output = null;
+        }
+    }
+
     public boolean isProgressing() {
         return isProgressing;
     }
@@ -320,7 +398,8 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
 
     public float getPistonOffset(float partialTick) {
         float lerped = Mth.lerp(partialTick, lastAnim, anim);
-        return (float) Math.sin(lerped / 10.0D) * 0.375F;
+        // RenderRotaryFurnace: BobMathUtil.sps((anim * 0.75) * 0.125) * 0.5 - 0.5.
+        return (float) (Math.sin(Math.PI / 2.0D * Math.cos(lerped * 0.09375D)) * 0.5D - 0.5D);
     }
 
     public List<ItemStack> getDrops() {
@@ -738,22 +817,22 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
         Direction facing = facing(state);
         Direction rot = legacyDownSide(facing);
         return List.of(
-                port(relative(facing, rot, -1, -1, 0), facing.getOpposite()),
-                port(relative(facing, rot, -1, -2, 0), facing.getOpposite()));
+                port(relative(facing, rot, -2, -2, 0), facing.getOpposite()),
+                port(relative(facing, rot, -2, -1, 0), facing.getOpposite()));
     }
 
     private static List<FluidPort> processFluidPorts(BlockState state) {
         Direction facing = facing(state);
         Direction rot = legacyDownSide(facing);
         return List.of(
-                port(relative(facing, rot, 1, 2, 0), rot),
-                port(relative(facing, rot, -1, 2, 0), rot));
+                port(relative(facing, rot, 1, 3, 0), rot),
+                port(relative(facing, rot, -1, 3, 0), rot));
     }
 
     private static List<FluidPort> smokeFluidPorts(BlockState state) {
         Direction facing = facing(state);
         Direction rot = legacyDownSide(facing);
-        return List.of(port(relative(facing, rot, 0, 1, 4), Direction.UP));
+        return List.of(port(relative(facing, rot, 0, 1, 5), Direction.UP));
     }
 
     private static FluidPort port(BlockPos offset, Direction direction) {

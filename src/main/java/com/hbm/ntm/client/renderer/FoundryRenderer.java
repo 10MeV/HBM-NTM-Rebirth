@@ -234,7 +234,7 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
         LegacyPoseRotations.rotateXDegrees(poseStack, 90.0F);
         poseStack.scale(0.375F, 0.375F, 0.375F);
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED,
-                Math.max(packedLight, LightTexture.FULL_BRIGHT), OverlayTexture.NO_OVERLAY, poseStack, buffer,
+                packedLight, OverlayTexture.NO_OVERLAY, poseStack, buffer,
                 blockEntity.getLevel(), 0);
         poseStack.popPose();
     }
@@ -386,7 +386,7 @@ public class FoundryRenderer<T extends BlockEntity> implements BlockEntityRender
             return false;
         }
         BlockState state = level.getBlockState(pos);
-        return (state.is(ModBlocks.FOUNDRY_OUTLET.get()) || state.is(ModBlocks.FOUNDRY_SLAGTAP.get()))
+        return state.is(ModBlocks.FOUNDRY_OUTLET.get())
                 && state.hasProperty(FoundryOutletBlock.FACING)
                 && state.getValue(FoundryOutletBlock.FACING) == direction;
     }

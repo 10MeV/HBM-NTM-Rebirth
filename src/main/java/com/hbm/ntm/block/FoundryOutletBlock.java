@@ -86,10 +86,9 @@ public class FoundryOutletBlock extends Block implements EntityBlock, ICrucibleA
         if (!(level.getBlockEntity(pos) instanceof FoundryOutletBlockEntity outlet)) {
             return InteractionResult.PASS;
         }
-        if (player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
-        }
-        if (!level.isClientSide) {
+        // Legacy FoundryOutlet consumed activation even while sneaking, but
+        // deliberately left its redstone/filter state unchanged in that case.
+        if (!level.isClientSide && !player.isShiftKeyDown()) {
             ItemStack held = player.getItemInHand(hand);
             MaterialStack material = FoundryScrapsItem.getMaterial(held);
             if (held.is(ModItems.FOUNDRY_SCRAPS.get()) && material != null) {

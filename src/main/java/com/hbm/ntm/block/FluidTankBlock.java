@@ -1,10 +1,13 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
+import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.blockentity.FluidTankBlockEntity;
 import com.hbm.ntm.entity.projectile.AirstrikeBombletEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluidItemTransfer;
+import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
+import com.hbm.ntm.fluid.HbmFluidRepairable;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.trait.FlammableFluidTrait;
@@ -14,6 +17,7 @@ import com.hbm.ntm.util.AchievementHandler;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
@@ -39,6 +43,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -47,7 +52,7 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implements EntityBlock {
+public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implements EntityBlock, Toolable {
     public FluidTankBlock(Properties properties, LegacyMachineDefinition definition) {
         super(properties, definition);
     }
@@ -64,7 +69,7 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
     }
 
     private boolean usesSmallTankChunkModel() {
-        return "models/machines/fluidtank.obj".equals(definition().modelLocation().getPath());
+        return "models/fluidtank.obj".equals(definition().modelLocation().getPath());
     }
 
     private boolean usesBat9000ChunkModel() {
@@ -85,18 +90,35 @@ public class FluidTankBlock extends LegacyVisibleMultiblockMachineBlock implemen
             ItemStack held = player.getItemInHand(hand);
             var identifier = HbmFluidItemTransfer.identifyFluidFromStackReport(held, level, tank.getBlockPos());
             if (player.isShiftKeyDown() && identifier.identifierItem()) {
-                if (!identifier.selectedNone() && tank.setIdentifiedType(identifier.selectedType())) {
-                    serverPlayer.displayClientMessage(Component.literal("Changed type to ")
-                            .withStyle(ChatFormatting.YELLOW)
-                            .append(identifier.selectedType().getDisplayName())
-                            .append(Component.literal("!").withStyle(ChatFormatting.YELLOW)), true);
-                    return InteractionResult.CONSUME;
-                }
-                return InteractionResult.PASS;
+                // MachineFluidTank and MachineBigAssTank write the identifier
+                // result verbatim, including Fluids.NONE, and always report it
+                // in the normal chat log even when the type was unchanged.
+                tank.setIdentifiedType(identifier.selectedType());
+                tank.setChanged();
+                serverPlayer.displayClientMessage(Component.literal("Changed type to ")
+                        .withStyle(ChatFormatting.YELLOW)
+                        .append(identifier.selectedType().getDisplayName())
+                        .append(Component.literal("!").withStyle(ChatFormatting.YELLOW)), false);
+                return InteractionResult.CONSUME;
             }
             NetworkHooks.openScreen(serverPlayer, tank, tank.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    /** 1.7.10 MachineFluidTank#onScrew: TORCH repairs the damaged multiblock core. */
+    @Override
+    public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
+        if (tool != ToolType.TORCH
+                || !(resolveCoreBlockEntity(level, pos) instanceof HbmFluidRepairable repairable)
+                || !repairable.isDamagedForFluidRepair()) {
+            return false;
+        }
+        if (level.isClientSide) {
+            return player.getAbilities().instabuild
+                    || HbmFluidRepairMaterials.hasMaterials(player, repairable.getFluidRepairMaterials());
+        }
+        return HbmFluidRepairMaterials.tryRepair(player, repairable);
     }
 
     @Nullable

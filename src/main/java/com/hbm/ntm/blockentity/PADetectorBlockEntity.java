@@ -68,7 +68,9 @@ public class PADetectorBlockEntity extends PABlockEntity implements PAParticleUs
 
     @Override
     public void onParticleEnter(PASourceBlockEntity.Particle particle, Direction dir) {
-        particle.crash(PASourceBlockEntity.PAState.SUCCESS);
+        // Legacy consumes the particle here, but reports SUCCESS only after a
+        // recipe has actually committed its outputs.
+        particle.invalidate();
         if (particle.defocus() > 0) {
             particle.crash(PASourceBlockEntity.PAState.CRASH_DEFOCUS);
             return;
@@ -96,10 +98,13 @@ public class PADetectorBlockEntity extends PABlockEntity implements PAParticleUs
         if (!canAccept(recipe)) {
             return;
         }
-        addOutput(SLOT_OUTPUT_1, recipe.output1Stack());
-        addOutput(SLOT_OUTPUT_2, recipe.output2Stack());
-        if (recipe.output1Stack().is(ModItems.PARTICLE_DIGAMMA.get())
-                || recipe.output2Stack().is(ModItems.PARTICLE_DIGAMMA.get())) {
+        ItemStack output1 = recipe.output1Stack();
+        ItemStack output2 = recipe.output2Stack();
+        consumeOutputContainer(SLOT_CONTAINER_1, output1);
+        consumeOutputContainer(SLOT_CONTAINER_2, output2);
+        addOutput(SLOT_OUTPUT_1, output1);
+        addOutput(SLOT_OUTPUT_2, output2);
+        if (output1.is(ModItems.PARTICLE_DIGAMMA.get()) || output2.is(ModItems.PARTICLE_DIGAMMA.get())) {
             for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
                     new net.minecraft.world.phys.AABB(worldPosition).inflate(100.0D, 50.0D, 100.0D))) {
                 AchievementHandler.award(player, AchievementHandler.OMEGA12);
@@ -109,11 +114,16 @@ public class PADetectorBlockEntity extends PABlockEntity implements PAParticleUs
                 worldPosition.getX(), worldPosition.getZ());
         SatelliteRayScan.reportEvent(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
                 RayEvent.INFO_PARTICLE, 600);
+        particle.crash(PASourceBlockEntity.PAState.SUCCESS);
         setChanged();
     }
 
     public boolean canAccept(ParticleAcceleratorRecipeRegistry.Recipe recipe) {
-        return canFit(SLOT_OUTPUT_1, recipe.output1Stack()) && canFit(SLOT_OUTPUT_2, recipe.output2Stack());
+        ItemStack output1 = recipe.output1Stack();
+        ItemStack output2 = recipe.output2Stack();
+        return canFit(SLOT_OUTPUT_1, output1) && canFit(SLOT_OUTPUT_2, output2)
+                && hasMatchingContainer(SLOT_CONTAINER_1, output1)
+                && hasMatchingContainer(SLOT_CONTAINER_2, output2);
     }
 
     private boolean canFit(int slot, ItemStack output) {
@@ -123,6 +133,21 @@ public class PADetectorBlockEntity extends PABlockEntity implements PAParticleUs
         ItemStack current = items.getStackInSlot(slot);
         return current.isEmpty() || ItemStack.isSameItemSameTags(current, output)
                 && current.getCount() + output.getCount() <= current.getMaxStackSize();
+    }
+
+    private boolean hasMatchingContainer(int slot, ItemStack output) {
+        if (output.isEmpty() || !output.hasCraftingRemainingItem()) {
+            return true;
+        }
+        ItemStack expected = output.getCraftingRemainingItem();
+        ItemStack current = items.getStackInSlot(slot);
+        return !expected.isEmpty() && ItemStack.isSameItemSameTags(current, expected);
+    }
+
+    private void consumeOutputContainer(int slot, ItemStack output) {
+        if (!output.isEmpty() && output.hasCraftingRemainingItem()) {
+            items.extractItem(slot, 1, false);
+        }
     }
 
     private void addOutput(int slot, ItemStack output) {

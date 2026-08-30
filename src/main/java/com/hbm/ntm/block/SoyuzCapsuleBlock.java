@@ -17,14 +17,24 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class SoyuzCapsuleBlock extends BaseEntityBlock {
+    /** Exact modern carrier for RenderCapsule's legacy metadata == 3 texture branch. */
+    public static final BooleanProperty RUSTED = BooleanProperty.create("rusted");
+
     public SoyuzCapsuleBlock(Properties properties) {
         super(properties);
+        registerDefaultState(defaultBlockState().setValue(RUSTED, false));
+    }
+
+    public static boolean isRusted(BlockState state) {
+        return state.hasProperty(RUSTED) && state.getValue(RUSTED);
     }
 
     @Nullable
@@ -69,5 +79,11 @@ public class SoyuzCapsuleBlock extends BaseEntityBlock {
             HbmInventoryMenuHelper.spillItems(level, pos, capsule.getItems());
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(RUSTED);
     }
 }

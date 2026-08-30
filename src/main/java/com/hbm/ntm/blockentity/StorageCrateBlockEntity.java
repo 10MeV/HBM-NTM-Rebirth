@@ -16,7 +16,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.monster.CaveSpider;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.Container;
@@ -431,12 +433,36 @@ public class StorageCrateBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // The old description packet contained the full crate NBT.  The
+        // modern overlay and tungsten-crate particles need only these two
+        // client-visible fields; inventory, lock and spider data stay server
+        // side until a menu is opened.
+        CompoundTag tag = new CompoundTag();
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(LEGACY_NAME_TAG, customName);
+        }
+        tag.putInt(LEGACY_HEAT_TIMER_TAG, heatTimer);
+        return tag;
+    }
+
+    @Nullable
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleUpdateTag(tag);
+        }
+    }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        customName = tag.contains(LEGACY_NAME_TAG) ? tag.getString(LEGACY_NAME_TAG) : null;
+        heatTimer = tag.getInt(LEGACY_HEAT_TIMER_TAG);
     }
 
     @Override

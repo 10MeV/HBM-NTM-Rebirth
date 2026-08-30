@@ -2,5 +2,10 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "hbm_ntm_rebirth:item/scraps"
-  }
+  },
+  "overrides": [
+    { "predicate": { "hbm_ntm_rebirth:scraps": 1.0 }, "model": "hbm_ntm_rebirth:item/scraps_liquid" },
+    { "predicate": { "hbm_ntm_rebirth:scraps": 2.0 }, "model": "hbm_ntm_rebirth:item/scraps_additive" },
+    { "predicate": { "hbm_ntm_rebirth:scraps": 3.0 }, "model": "hbm_ntm_rebirth:item/scraps_bismuth" }
+  ]
 }

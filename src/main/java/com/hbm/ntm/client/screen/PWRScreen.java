@@ -105,11 +105,11 @@ public class PWRScreen extends AbstractContainerScreen<PWRMenu> {
                 && menu.getTypeLoaded() >= 0 && menu.getAmountLoaded() > 0) {
             graphics.renderTooltip(font, loadedFuelStack(), mouseX, mouseY);
         } else if (isHovering(8, 5, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getCoolantTank().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getCoolantTank(),
+                    menu.getCoolantTank().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         } else if (isHovering(26, 5, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getHotCoolantTank().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getHotCoolantTank(),
+                    menu.getHotCoolantTank().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

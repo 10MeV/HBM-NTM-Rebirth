@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "B": { "tag": "forge:ingots/beryllium" },
+    "W": { "tag": "forge:cast_plates/copper" },
+    "F": { "item": "minecraft:furnace" },
+    "R": { "item": "hbm_ntm_rebirth:coil_tungsten" }
+  },
+  "pattern": [ "BBB", "WFW", "RRR" ],
+  "result": { "item": "hbm_ntm_rebirth:machine_electric_furnace_off" },
+  "show_notification": true
+}

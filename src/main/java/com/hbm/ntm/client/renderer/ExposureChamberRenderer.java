@@ -58,7 +58,6 @@ public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureCham
         }
 
         LegacyMachineDefinition definition = block.definition();
-        int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
         Level level = blockEntity.getLevel();
         long gameTime = level == null ? 0L : level.getGameTime();
         long currentMillis = System.currentTimeMillis();
@@ -81,7 +80,7 @@ public class ExposureChamberRenderer implements BlockEntityRenderer<ExposureCham
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             poseStack.pushPose();
             LegacyPoseRotations.rotateYDegrees(poseStack, (float) rotation);
-            MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+            MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
                     MAGNETS);
             poseStack.popPose();
 

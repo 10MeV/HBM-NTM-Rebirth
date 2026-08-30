@@ -55,12 +55,12 @@ public class ICFReactorScreen extends AbstractContainerScreen<ICFReactorMenu> {
         if (!renderTankTooltip(graphics, mouseX, mouseY, menu.getCoolantTank(), 44, 18, 16, 70)
                 && !renderTankTooltip(graphics, mouseX, mouseY, menu.getHotCoolantTank(), 188, 18, 16, 70)
                 && !renderTankTooltip(graphics, mouseX, mouseY, menu.getStellarFluxTank(), 224, 18, 16, 70)) {
-            if (isHovering(8, 18, 16, 70, mouseX, mouseY)) {
+            if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 8, 18, 16, 70)) {
                 String laser = menu.getMaxLaser() <= 0L ? "OFFLINE"
                         : shortNumber(menu.getLaser()) + "TU/t - "
                                 + (menu.getLaser() * 1000L / menu.getMaxLaser()) / 10.0D + "%";
                 graphics.renderComponentTooltip(font, List.of(Component.literal(laser)), mouseX, mouseY);
-            } else if (isHovering(187, 89, 18, 18, mouseX, mouseY)) {
+            } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 187, 89, 18, 18)) {
                 graphics.renderComponentTooltip(font, List.of(Component.literal(shortNumber(menu.getHeat()) + " / "
                         + shortNumber(ICFReactorBlockEntity.MAX_HEAT) + "TU")), mouseX, mouseY);
             }
@@ -70,10 +70,11 @@ public class ICFReactorScreen extends AbstractContainerScreen<ICFReactorMenu> {
 
     private boolean renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY, HbmFluidGuiHelper.TankData tank,
             int x, int y, int width, int height) {
-        if (!isHovering(x, y, width, height, mouseX, mouseY)) {
+        if (!LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height)) {
             return false;
         }
-        graphics.renderComponentTooltip(font, tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+        LegacyGuiElements.renderFluidTooltip(graphics, font, tank,
+                tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         return true;
     }
 

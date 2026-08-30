@@ -86,6 +86,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -148,6 +149,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
     private static final String TAG_COOLER_COLD = "t0";
     private static final String TAG_COOLER_WARM = "t1";
     private static final String TAG_OUTGASSER_GAS = "gas";
+    private static final String TAG_CLIENT_SYNC = "rbmkClientState";
     private static final int BOILER_FEED_CAPACITY = 10_000;
     private static final int BOILER_STEAM_CAPACITY = 1_000_000;
     private static final int HEATER_TANK_CAPACITY = 16_000;
@@ -192,6 +194,8 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
     private int reasimWater;
     private int reasimSteam;
     private int craneIndicator;
+    /** Guards the recursive onRemove calls caused by a meltdown replacing its own columns. */
+    private boolean legacyBreakMeltdownInProgress;
     private int boilerVentDelay;
     private int lastBoilerConsumption;
     private int lastBoilerOutput;
@@ -387,18 +391,13 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         blockEntity.networkPackNT(25);
     }
 
-    @Override
-    public void onLoad() {
-        super.onLoad();
-        if (level != null && !level.isClientSide) {
-            if (!ensureColumnLayoutNow(level, worldPosition)) {
-                removeFluidNode();
-                removeNeutronNodesForColumn(level);
-            }
-        }
-    }
-
     private boolean ensureColumnLayout(Level level, BlockPos pos) {
+        // Do not invoke the write-capable layout repair path from onLoad().
+        // Legacy RBMK tiles waited for the normal world tick, after all dummy
+        // tile entities in the chunk had completed deserialization.  The
+        // immediate modern onLoad check could otherwise mistake a saved dummy
+        // whose BE was not published yet for a missing part and mutate the
+        // column while the chunk was still loading.
         if (level.isClientSide || (level.getGameTime() + pos.asLong()) % LAYOUT_REPAIR_INTERVAL != 0) {
             return MultiblockHelper.isOperationalCoreLayoutComplete(level, pos);
         }
@@ -1059,12 +1058,12 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public long getPower() {
-        return kind().control() ? controlState.power() : 0L;
+        return hasOperationalLayout() && kind().control() ? controlState.power() : 0L;
     }
 
     @Override
     public void setPower(long power) {
-        if (!kind().control()) {
+        if (!hasOperationalLayout() || !kind().control()) {
             return;
         }
         controlState.setPower(power);
@@ -1073,7 +1072,7 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public long getMaxPower() {
-        return isPoweredControlRod() ? RBMKControlState.MAX_POWER : 0L;
+        return hasOperationalLayout() && isPoweredControlRod() ? RBMKControlState.MAX_POWER : 0L;
     }
 
     @Override
@@ -2297,45 +2296,50 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        RBMKColumnBlock.Kind kind = kind();
         tag.putDouble(TAG_HEAT, heat);
         tag.putInt(TAG_REASIM_WATER, reasimWater);
         tag.putInt(TAG_REASIM_STEAM, reasimSteam);
         tag.putInt(TAG_CRANE_INDICATOR, craneIndicator);
-        if (kind().rod()) {
+        if (kind.rod()) {
             rodFluxState.save(tag);
             if (!fuelRod.isEmpty()) {
                 tag.put(TAG_FUEL_ROD, fuelRod.save(new CompoundTag()));
             }
         }
-        if (kind().storage()) {
+        if (kind.storage()) {
             tag.put(TAG_STORAGE_ITEMS, HbmItemStackUtil.saveSlottedItems(storageItems, TAG_STORAGE_SLOT));
         }
-        if (kind() == RBMKColumnBlock.Kind.BOILER) {
+        if (kind == RBMKColumnBlock.Kind.BOILER) {
             boilerFeedTank.writeToNbt(tag, TAG_BOILER_FEED);
             boilerSteamTank.writeToNbt(tag, TAG_BOILER_STEAM);
         }
-        if (kind() == RBMKColumnBlock.Kind.HEATER) {
+        if (kind == RBMKColumnBlock.Kind.HEATER) {
             tag.put(TAG_HEATER_ITEMS, HbmItemStackUtil.saveSlottedItems(heaterItems, TAG_STORAGE_SLOT));
             heaterFeedTank.writeToNbt(tag, TAG_HEATER_FEED);
             heaterOutputTank.writeToNbt(tag, TAG_HEATER_OUTPUT);
         }
-        if (kind() == RBMKColumnBlock.Kind.COOLER) {
+        if (kind == RBMKColumnBlock.Kind.COOLER) {
             coolerColdTank.writeToNbt(tag, TAG_COOLER_COLD);
             coolerWarmTank.writeToNbt(tag, TAG_COOLER_WARM);
         }
-        if (kind() == RBMKColumnBlock.Kind.OUTGASSER) {
+        if (kind == RBMKColumnBlock.Kind.OUTGASSER) {
             tag.put(TAG_OUTGASSER_ITEMS, HbmItemStackUtil.saveSlottedItems(outgasserItems, TAG_STORAGE_SLOT));
             outgasserState.save(tag);
             outgasserGasTank.writeToNbt(tag, TAG_OUTGASSER_GAS);
         }
-        if (kind().control()) {
+        if (kind.control()) {
             controlState.save(tag);
             tag.putDouble(TAG_STARTING_LEVEL, startingLevel);
-            tag.putDouble("mult", controlMultiplier());
+            // NBT serialization can run while this chunk is leaving the chunk map.
+            // The public runtime method validates the formed layout and may therefore
+            // load the same chunk again. The legacy persisted value is a pure control
+            // state calculation, so keep the save path world-independent.
+            tag.putDouble("mult", persistedControlMultiplier(kind));
             if (color != null) {
                 tag.putInt(TAG_COLOR, color.ordinal());
             }
-            if (kind().automatic()) {
+            if (kind.automatic()) {
                 tag.putDouble(TAG_LEVEL_LOWER, levelLower);
                 tag.putDouble(TAG_LEVEL_UPPER, levelUpper);
                 tag.putDouble(TAG_HEAT_LOWER, heatLower);
@@ -2400,8 +2404,115 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        CompoundTag state = new CompoundTag();
+        state.putDouble(TAG_HEAT, heat);
+        state.putInt(TAG_REASIM_WATER, reasimWater);
+        state.putInt(TAG_REASIM_STEAM, reasimSteam);
+        state.putInt(TAG_CRANE_INDICATOR, craneIndicator);
+
+        RBMKColumnBlock.Kind kind = kind();
+        if (kind.rod()) {
+            state.putDouble(RBMKRodFluxState.TAG_FLUX_QUANTITY, rodFluxState.lastFluxQuantity());
+            state.putDouble(RBMKRodFluxState.TAG_FLUX_MOD, rodFluxState.lastFluxRatio());
+            state.putBoolean(RBMKRodFluxState.TAG_HAS_ROD, rodFluxState.hasRod());
+            state.putInt("rodColor", rodFluxState.rodColor());
+            if (!fuelRod.isEmpty()) {
+                state.put(TAG_FUEL_ROD, fuelRod.save(new CompoundTag()));
+            }
+        }
+        if (kind.control()) {
+            state.putDouble(TAG_LEVEL, controlState.level());
+            state.putDouble("targetLevel", controlState.targetLevel());
+            state.putLong("power", controlState.power());
+            state.putBoolean("hasPower", controlState.hasPower());
+            if (kind.automatic()) {
+                state.putDouble(TAG_LEVEL_LOWER, levelLower);
+                state.putDouble(TAG_LEVEL_UPPER, levelUpper);
+                state.putDouble(TAG_HEAT_LOWER, heatLower);
+                state.putDouble(TAG_HEAT_UPPER, heatUpper);
+                state.putInt(TAG_FUNCTION, function.ordinal());
+            } else {
+                state.putDouble(TAG_STARTING_LEVEL, startingLevel);
+                state.putInt(TAG_COLOR, color == null ? -1 : color.ordinal());
+            }
+        }
+        if (kind == RBMKColumnBlock.Kind.OUTGASSER) {
+            state.putDouble(TAG_OUTGASSER_PROGRESS, outgasserState.progress());
+        }
+        tag.put(TAG_CLIENT_SYNC, state);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (!tag.contains(TAG_CLIENT_SYNC)) {
+            return;
+        }
+        CompoundTag state = tag.getCompound(TAG_CLIENT_SYNC);
+        heat = state.getDouble(TAG_HEAT);
+        reasimWater = state.getInt(TAG_REASIM_WATER);
+        reasimSteam = state.getInt(TAG_REASIM_STEAM);
+        craneIndicator = state.getInt(TAG_CRANE_INDICATOR);
+
+        RBMKColumnBlock.Kind kind = kind();
+        if (kind.rod()) {
+            rodFluxState.setLegacyClientFlux(
+                    state.getDouble(RBMKRodFluxState.TAG_FLUX_QUANTITY),
+                    state.getDouble(RBMKRodFluxState.TAG_FLUX_MOD));
+            rodFluxState.setHasRod(state.getBoolean(RBMKRodFluxState.TAG_HAS_ROD));
+            rodFluxState.setRodColor(state.getInt("rodColor"));
+            fuelRod = state.contains(TAG_FUEL_ROD)
+                    ? ItemStack.of(state.getCompound(TAG_FUEL_ROD)) : ItemStack.EMPTY;
+        }
+        if (kind.control()) {
+            controlState.setLevel(state.getDouble(TAG_LEVEL));
+            controlState.setTargetLevel(state.getDouble("targetLevel"));
+            controlState.setPower(state.getLong("power"));
+            controlState.setHasPower(state.getBoolean("hasPower"));
+            if (kind.automatic()) {
+                levelLower = state.getDouble(TAG_LEVEL_LOWER);
+                levelUpper = state.getDouble(TAG_LEVEL_UPPER);
+                heatLower = state.getDouble(TAG_HEAT_LOWER);
+                heatUpper = state.getDouble(TAG_HEAT_UPPER);
+                function = safeAutoFunction(state.getInt(TAG_FUNCTION));
+            } else {
+                startingLevel = state.getDouble(TAG_STARTING_LEVEL);
+                color = safeControlColor(state.getInt(TAG_COLOR));
+            }
+        }
+        if (kind == RBMKColumnBlock.Kind.OUTGASSER) {
+            outgasserState.setProgress(state.getDouble(TAG_OUTGASSER_PROGRESS));
+        }
+    }
+
+    private double persistedControlMultiplier(RBMKColumnBlock.Kind kind) {
+        if (!kind.control()) {
+            return 0.0D;
+        }
+        return kind.automatic()
+                ? controlState.level()
+                : RBMKControlRodPlanner.manualMultiplier(controlState, startingLevel, 1.0D);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
 
     @Nullable
     @Override
@@ -3199,7 +3310,8 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        if ((capability == ForgeCapabilities.ITEM_HANDLER || capability == ForgeCapabilities.FLUID_HANDLER)
+        if ((capability == ForgeCapabilities.ITEM_HANDLER || capability == ForgeCapabilities.FLUID_HANDLER
+                || capability == ForgeCapabilities.ENERGY)
                 && !hasCompleteLayout()) {
             return LazyOptional.empty();
         }
@@ -3210,10 +3322,10 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
             return storageItemHandler.cast();
         }
         if (kind().rod() && capability == ForgeCapabilities.ITEM_HANDLER) {
-            return rodItemHandler.cast();
+            return side == null ? rodItemHandler.cast() : LazyOptional.empty();
         }
         if (kind() == RBMKColumnBlock.Kind.HEATER && capability == ForgeCapabilities.ITEM_HANDLER) {
-            return heaterItemHandler.cast();
+            return side == null ? heaterItemHandler.cast() : LazyOptional.empty();
         }
         if (kind() == RBMKColumnBlock.Kind.OUTGASSER && capability == ForgeCapabilities.ITEM_HANDLER) {
             return outgasserAutomationItemHandler.cast();
@@ -3234,6 +3346,39 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
         if (level instanceof ServerLevel serverLevel) {
             executeMeltdownSequence(serverLevel);
         }
+    }
+
+    /**
+     * Mirrors {@code TileEntityRBMKRod#invalidate()} and
+     * {@code RBMKRod#breakBlock(...)}: removing a fuel column with a rod whose
+     * hull is already at the legacy failure threshold starts the normal RBMK
+     * meltdown sequence, unless reactor meltdowns are disabled.
+     */
+    public boolean triggerLegacyBreakMeltdown() {
+        if (legacyBreakMeltdownInProgress) {
+            return true;
+        }
+        if (!(level instanceof ServerLevel serverLevel) || !wouldTriggerLegacyBreakMeltdown()) {
+            return false;
+        }
+        legacyBreakMeltdownInProgress = true;
+        try {
+            executeMeltdownSequence(serverLevel);
+        } finally {
+            legacyBreakMeltdownInProgress = false;
+        }
+        return true;
+    }
+
+    /** True when the current fuel state is at the old block-break meltdown threshold. */
+    public boolean wouldTriggerLegacyBreakMeltdown() {
+        if (!hasOperationalLayout() || !kind().rod()
+                || !(fuelRod.getItem() instanceof RBMKFuelRodItem item)) {
+            return false;
+        }
+        return RBMKFuelRodColumnPlanner.planBreakMeltdown(
+                item.getLegacyRodId(), item.getState(fuelRod),
+                runtimeSettings().meltdownsDisabled(), true).shouldMelt();
     }
 
     @Nullable

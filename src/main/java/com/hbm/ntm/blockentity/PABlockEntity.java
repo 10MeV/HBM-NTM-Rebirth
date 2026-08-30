@@ -23,6 +23,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -91,6 +92,11 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
             @Override
             public boolean isItemValid(int slot, @NotNull ItemStack stack) {
                 return PABlockEntity.this.isItemValid(slot, stack);
+            }
+
+            @Override
+            public int getSlotLimit(int slot) {
+                return PABlockEntity.this.getItemSlotLimit(slot);
             }
 
             @Override
@@ -164,6 +170,10 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
 
     protected boolean isItemValid(int slot, ItemStack stack) {
         return slot == 0 && HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
+    }
+
+    protected int getItemSlotLimit(int slot) {
+        return 64;
     }
 
     public abstract List<EnergyPort> energyPorts();
@@ -342,12 +352,13 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = new CompoundTag();
+        writeClientSyncFields(tag);
         return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readClientSyncFields(tag);
     }
 
     @Nullable
@@ -362,6 +373,52 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
 }
 
     @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncFields(tag);
+        }
+    }
+
+    /** Runtime-only state; block update packets must not load inventories/persistence state. */
+    private void writeClientSyncFields(CompoundTag tag) {
+        writeLegacyLoadedTileClientTag(tag);
+        coldCoolant.writeToNbt(tag, TAG_TANK_COLD);
+        hotCoolant.writeToNbt(tag, TAG_TANK_HOT);
+        tag.putFloat(TAG_TEMPERATURE, temperature);
+        tag.putLong(TAG_POWER, energy.getPower());
+        writePaClientSync(tag);
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_TANK_COLD)) {
+            coldCoolant.readFromNbt(tag, TAG_TANK_COLD);
+        }
+        if (tag.contains(TAG_TANK_HOT)) {
+            hotCoolant.readFromNbt(tag, TAG_TANK_HOT);
+        }
+        if (tag.contains(TAG_TEMPERATURE)) {
+            temperature = tag.getFloat(TAG_TEMPERATURE);
+        }
+        if (tag.contains(TAG_POWER)) {
+            energy.setPower(tag.getLong(TAG_POWER));
+        }
+        readPaClientSync(tag);
+    }
+
+    protected void writePaClientSync(CompoundTag tag) {
+    }
+
+    protected void readPaClientSync(CompoundTag tag) {
+    }
+
+    @Override
     public Component getDisplayName() {
         return Component.translatable("container.hbm_ntm_rebirth.pa_" + variant.name().toLowerCase());
     }
@@ -369,6 +426,9 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        if (variant == ParticleAcceleratorBlock.Variant.BEAMLINE) {
+            return null;
+        }
         return new ParticleAcceleratorMenu(containerId, inventory, this);
     }
 
@@ -384,7 +444,7 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
 
     @Override
     public void setRemoved() {
-        fluidPortSubscriptions.detachAllDetailed(level, worldPosition, fluidPorts(), this, this);
+        fluidPortSubscriptions.detachAllTrackedDetailed(level, worldPosition, this, this);
         super.setRemoved();
     }
 
@@ -400,7 +460,7 @@ public abstract class PABlockEntity extends BlockEntity implements MenuProvider,
 
     @Override
     public void onChunkUnloaded() {
-        fluidPortSubscriptions.detachAllDetailed(level, worldPosition, fluidPorts(), this, this);
+        fluidPortSubscriptions.detachAllTrackedDetailed(level, worldPosition, this, this);
         super.onChunkUnloaded();
     }
 

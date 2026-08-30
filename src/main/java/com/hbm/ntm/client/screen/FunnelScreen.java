@@ -27,10 +27,16 @@ public class FunnelScreen extends AbstractContainerScreen<FunnelMenu> {
     }
 
     @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
+    }
+
+    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(159, 73, 10, 10, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 159, topPos + 73, 10, 10)) {
             graphics.renderTooltip(font, Component.literal("Mode: " + menu.getModeLabel()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
@@ -38,7 +44,8 @@ public class FunnelScreen extends AbstractContainerScreen<FunnelMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(159, 73, 10, 10, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 159, topPos + 73, 10, 10)) {
+            LegacyGuiElements.playClickSound();
             ModMessages.sendLegacyButton(menu.getBlockEntity(), 0, 0);
             return true;
         }

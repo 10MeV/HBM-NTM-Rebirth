@@ -2,6 +2,8 @@ package com.hbm.ntm.multiblock;
 
 import api.hbm.block.ICrucibleAcceptor;
 import com.hbm.inventory.material.Mats.MaterialStack;
+import com.hbm.ntm.block.RadarBlockSupport;
+import com.hbm.ntm.block.RadarLargeBlock;
 import com.hbm.ntm.blockentity.MultiblockDummyBlockEntity;
 import com.hbm.ntm.api.block.LegacyLookOverlay;
 import com.hbm.ntm.api.block.LegacyLookOverlayBlockProvider;
@@ -264,6 +266,9 @@ public class DummyBlock extends Block implements EntityBlock, DummyPart, IConvey
         MultiblockHelper.CoreLookup core = operationalCore(level, pos);
         if (core == null || !core.state().isSignalSource()) {
             return 0;
+        }
+        if (core.state().getBlock() instanceof RadarLargeBlock) {
+            return RadarBlockSupport.legacyLargeRadarProxyRedstoneOutput(level, pos, direction);
         }
         return core.state().getSignal(level, core.pos(), direction);
     }

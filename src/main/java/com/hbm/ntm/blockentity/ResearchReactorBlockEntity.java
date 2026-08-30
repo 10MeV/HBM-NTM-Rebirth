@@ -21,6 +21,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -407,12 +408,19 @@ public class ResearchReactorBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        CompoundTag tag = new CompoundTag();
+        writeClientSyncFields(tag);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncFields(tag);
     }
 
     @Override
@@ -439,10 +447,52 @@ public class ResearchReactorBlockEntity extends BlockEntity
         totalFlux = data.readInt();
     }
 
+    private void writeClientSyncFields(CompoundTag tag) {
+        writeLegacyLoadedTileClientTag(tag);
+        tag.putInt(TAG_HEAT, heat);
+        tag.putInt(TAG_WATER, water);
+        tag.putDouble(TAG_LEVEL, rodLevel);
+        tag.putDouble(TAG_TARGET_LEVEL, targetLevel);
+        tag.putIntArray(TAG_SLOT_FLUX, slotFlux);
+        tag.putInt(TAG_TOTAL_FLUX, totalFlux);
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_HEAT)) {
+            heat = tag.getInt(TAG_HEAT);
+        }
+        if (tag.contains(TAG_WATER)) {
+            water = tag.getInt(TAG_WATER);
+        }
+        if (tag.contains(TAG_LEVEL)) {
+            rodLevel = tag.getDouble(TAG_LEVEL);
+        }
+        if (tag.contains(TAG_TARGET_LEVEL)) {
+            targetLevel = tag.getDouble(TAG_TARGET_LEVEL);
+        }
+        if (tag.contains(TAG_SLOT_FLUX)) {
+            Arrays.fill(slotFlux, 0);
+            int[] packetFlux = tag.getIntArray(TAG_SLOT_FLUX);
+            System.arraycopy(packetFlux, 0, slotFlux, 0, Math.min(packetFlux.length, slotFlux.length));
+        }
+        if (tag.contains(TAG_TOTAL_FLUX)) {
+            totalFlux = tag.getInt(TAG_TOTAL_FLUX);
+        }
+    }
+
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncFields(tag);
+        }
     }
 
     @Override

@@ -78,7 +78,6 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
         }
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
-    private int age;
     private float rotor;
     private float lastRotor;
     private float fanAcceleration;
@@ -140,7 +139,6 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
     @Override
     protected void beforeTurbineTick() {
         normalizeConfigState();
-        age = (age + 1) % 2;
         handleInventoryFluidTransfer();
         HbmEnergyUtil.chargeItemFromStorage(items.getStackInSlot(SLOT_BATTERY),
                 energy, energy.getProviderSpeed());
@@ -246,7 +244,6 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
         if (tag.contains("power")) {
             energy.setPower(tag.getLong("power"));
         }
-        readRuntimeSync(tag);
     }
 
     @Override
@@ -267,18 +264,16 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        CompoundTag tag = super.getClientSyncTag();
-        tag.putInt("age", age);
-        tag.putFloat("rotor", rotor);
-        tag.putFloat("lastRotor", lastRotor);
-        tag.putFloat("fanAcceleration", fanAcceleration);
-        return tag;
+        // TileEntityMachineLargeTurbine#serialize only sent the operational
+        // flag and tank/energy state. Rotor position and acceleration were
+        // deliberately client-local. Sending the server-side zero-valued
+        // animation fields here resets the rotor on every production update.
+        return super.getClientSyncTag();
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
-        readRuntimeSync(tag);
     }
 
     @Override
@@ -300,21 +295,6 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
         setOperationalFromLegacyPacket(data.readBoolean());
         LegacyFluidTankPacket.read(data, inputTank);
         LegacyFluidTankPacket.read(data, outputTank);
-    }
-
-    private void readRuntimeSync(CompoundTag tag) {
-        if (tag.contains("age")) {
-            age = Math.floorMod(tag.getInt("age"), 2);
-        }
-        if (tag.contains("rotor")) {
-            rotor = tag.getFloat("rotor");
-        }
-        if (tag.contains("lastRotor")) {
-            lastRotor = tag.getFloat("lastRotor");
-        }
-        if (tag.contains("fanAcceleration")) {
-            fanAcceleration = Math.max(0.0F, Math.min(15.0F, tag.getFloat("fanAcceleration")));
-        }
     }
 
     @Nullable

@@ -38,14 +38,14 @@ public class OilDrillMenu extends AbstractContainerMenu {
         super(ModMenuTypes.OIL_DRILL.get(), containerId);
         this.blockEntity = blockEntity;
         ItemStackHandler items = blockEntity.getItems();
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_BATTERY, 8, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_OIL_CONTAINER, 80, 17));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, OilDrillBlockEntity.SLOT_OIL_CONTAINER_OUTPUT, 80, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_GAS_CONTAINER, 125, 17));
-        addSlot(HbmInventoryMenuHelper.outputSlot(items, OilDrillBlockEntity.SLOT_GAS_CONTAINER_OUTPUT, 125, 53));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_BATTERY, 8, 58));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_OIL_CONTAINER, 94, 22));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, OilDrillBlockEntity.SLOT_OIL_CONTAINER_OUTPUT, 94, 58));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_GAS_CONTAINER, 130, 22));
+        addSlot(HbmInventoryMenuHelper.outputSlot(items, OilDrillBlockEntity.SLOT_GAS_CONTAINER_OUTPUT, 130, 58));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_START, 156, 36));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, OilDrillBlockEntity.SLOT_UPGRADE_END, 156, 54));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 12, 108, 166);
         addDataSlots();
     }
 
@@ -84,8 +84,7 @@ public class OilDrillMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return HbmInventoryMenuHelper.stillValidMultiblockMachine(player, blockEntity,
-                HbmInventoryMenuHelper.LEGACY_MACHINE_USE_DISTANCE_SQR);
+        return HbmInventoryMenuHelper.stillValidBlockEntity(player, blockEntity, 128.0D);
     }
 
     @Override

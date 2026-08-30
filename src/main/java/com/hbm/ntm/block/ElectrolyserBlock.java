@@ -45,7 +45,7 @@ public class ElectrolyserBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
+        if (!player.isShiftKeyDown() && !level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof ElectrolyserBlockEntity electrolyser) {
             NetworkHooks.openScreen(serverPlayer, electrolyser, electrolyser.getBlockPos());
         }

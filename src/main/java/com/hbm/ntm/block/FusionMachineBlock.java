@@ -9,6 +9,9 @@ import com.hbm.ntm.blockentity.FusionKlystronCreativeBlockEntity;
 import com.hbm.ntm.blockentity.FusionMHDTBlockEntity;
 import com.hbm.ntm.blockentity.FusionPlasmaForgeBlockEntity;
 import com.hbm.ntm.blockentity.FusionTorusBlockEntity;
+import com.hbm.ntm.api.block.LegacyLookOverlay;
+import com.hbm.ntm.api.block.LegacyLookOverlayBlockProvider;
+import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -35,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @SuppressWarnings("deprecation")
-public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
+public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock implements LegacyLookOverlayBlockProvider {
     private final Kind kind;
 
     public FusionMachineBlock(Properties properties, LegacyMachineDefinition definition, Kind kind) {
@@ -49,9 +52,18 @@ public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return kind.hasChunkBakedStaticModel()
-                ? LegacyMachineRenderShapes.chunkBakedStaticOrEntity()
-                : super.getRenderShape(state);
+        /*
+         * The five formerly baked 1.7.10 Fusion bodies were TESRs rooted at the
+         * core's (+0.5, 0, +0.5) pose; the other Fusion kinds already require
+         * BER for their own animated/special pose contracts. These are large
+         * multiblocks, so baking a body into the core block both loses the five
+         * current JSONs' renderer-owned center pose and reduces the whole
+         * model's lightmap to the core/six-neighbour samples. Keep the existing
+         * prepared-VBO BER path for this family; the global chunk-baked
+         * optimization remains enabled for machines whose static bodies satisfy
+         * the block-model contract.
+         */
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
@@ -101,6 +113,27 @@ public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
             }
         }
         return InteractionResult.PASS;
+    }
+
+    /**
+     * {@link com.hbm.ntm.multiblock.DummyBlock} delegates look overlays to its
+     * resolved core block.  The 1.7.10 Fusion Boiler and MHDT instead resolve
+     * their core from every dummy before printing their {@code ILookOverlay},
+     * so retain that behavior by forwarding the request to the core BE here.
+     */
+    @Nullable
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, BlockPos viewedPos, BlockState viewedState) {
+        BlockEntity core = MultiblockHelper.resolveCoreBlockEntity(level, viewedPos);
+        return core instanceof LegacyLookOverlayProvider provider
+                ? provider.getLookOverlay(level, viewedPos)
+                : null;
+    }
+
+    @Nullable
+    @Override
+    public LegacyLookOverlay getLookOverlay(Level level, Player player, BlockPos viewedPos, BlockState viewedState) {
+        return getLookOverlay(level, viewedPos, viewedState);
     }
 
     @Nullable
@@ -195,13 +228,6 @@ public class FusionMachineBlock extends LegacyVisibleMultiblockMachineBlock {
 
         private boolean hasLegacyStandardInfo() {
             return this != PLASMA_FORGE;
-        }
-
-        private boolean hasChunkBakedStaticModel() {
-            return switch (this) {
-                case KLYSTRON, KLYSTRON_CREATIVE, BREEDER, COLLECTOR, BOILER, COUPLER, MHDT -> true;
-                case TORUS, PLASMA_FORGE -> false;
-            };
         }
 
         private String tooltipId() {

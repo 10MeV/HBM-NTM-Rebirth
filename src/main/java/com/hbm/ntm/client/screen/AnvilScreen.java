@@ -16,9 +16,9 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.sounds.SoundEvents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -246,6 +246,10 @@ public class AnvilScreen extends AbstractContainerScreen<AnvilMenu> {
                 return true;
             }
         }
+        if (button == 0 && hoveredSlot != null && hoveredSlot.index == 2 && hoveredSlot.hasItem()) {
+            // The two-input smithing result is taken by the vanilla slot path below.
+            playClick();
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -254,10 +258,12 @@ public class AnvilScreen extends AbstractContainerScreen<AnvilMenu> {
         if (isMouseInsideGui(mouseX, mouseY) && hoveredSlot == null) {
             if (delta > 0.0D && pageIndex > 0) {
                 pageIndex--;
+                playClick();
                 return true;
             }
             if (delta < 0.0D && pageIndex < maxPageIndex) {
                 pageIndex++;
+                playClick();
                 return true;
             }
         }
@@ -303,8 +309,9 @@ public class AnvilScreen extends AbstractContainerScreen<AnvilMenu> {
     }
 
     private void playClick() {
+        // GUIAnvil in 1.7.10 uses gui.button.press for page, selection and craft clicks.
         if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.ANVIL_USE, 0.8F));
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
         }
     }
 

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "B": {
+      "item": "minecraft:redstone_lamp"
+    },
+    "F": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "pattern": [
+    "FFF",
+    "FBF",
+    "FFF"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:reinforced_lamp_off"
+  }
+}

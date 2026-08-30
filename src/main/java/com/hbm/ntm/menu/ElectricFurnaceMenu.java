@@ -104,12 +104,12 @@ public class ElectricFurnaceMenu extends AbstractContainerMenu {
     }
 
     private void addMachineSlots(Inventory playerInventory, ItemStackHandler items) {
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, ElectricFurnaceBlockEntity.SLOT_BATTERY, 56, 53));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, ElectricFurnaceBlockEntity.SLOT_INPUT, 56, 17));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, ElectricFurnaceBlockEntity.SLOT_BATTERY, 152, 54));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, ElectricFurnaceBlockEntity.SLOT_INPUT, 20, 35));
         addSlot(HbmInventoryMenuHelper.smeltingOutputSlot(playerInventory.player, items,
-                ElectricFurnaceBlockEntity.SLOT_OUTPUT, 116, 35, null));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, ElectricFurnaceBlockEntity.SLOT_UPGRADE, 147, 34));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
+                ElectricFurnaceBlockEntity.SLOT_OUTPUT, 80, 35, null));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(items, ElectricFurnaceBlockEntity.SLOT_UPGRADE, 111, 34));
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
     }
 
     private void addDataSlots() {

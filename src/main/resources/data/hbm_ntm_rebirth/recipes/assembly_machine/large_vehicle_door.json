@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {"count": 16, "ingredient": {"tag": "forge:cast_plates/steel"}, "legacy_ore": "plateCastSteel"},
+    {"count": 4, "ingredient": {"item": "hbm_ntm_rebirth:plate_polymer"}},
+    {"count": 4, "ingredient": {"item": "hbm_ntm_rebirth:motor"}},
+    {"count": 16, "ingredient": {"tag": "forge:bolts/dura_steel"}, "legacy_ore": "boltDuraSteel"},
+    {"count": 4, "ingredient": {"tag": "forge:dyes/green"}, "legacy_ore": "dyeGreen"}
+  ],
+  "internal_name": "ass.vehicledoor",
+  "output_fluids": [],
+  "output_items": [{"item": "hbm_ntm_rebirth:large_vehicle_door"}],
+  "pools": [],
+  "power": 100,
+  "source_order": 61
+}

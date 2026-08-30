@@ -6,10 +6,11 @@ import com.hbm.ntm.menu.AmmoPressMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.recipe.AmmoPressRecipe;
 import com.hbm.ntm.recipe.AmmoPressRecipeRuntime;
+import com.hbm.ntm.registry.ModItems;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -37,7 +38,6 @@ public class AmmoPressScreen extends AbstractContainerScreen<AmmoPressMenu> {
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 200;
-        titleLabelX = 8;
         titleLabelY = 6;
         inventoryLabelY = imageHeight - 96 + 2;
     }
@@ -69,10 +69,10 @@ public class AmmoPressScreen extends AbstractContainerScreen<AmmoPressMenu> {
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        if (isHovering(7, 17, 9, 54, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 7, topPos + 17, 9, 54)) {
             graphics.blit(TEXTURE, leftPos + 7, topPos + 17, 176, 0, 9, 54);
         }
-        if (isHovering(88, 17, 9, 54, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 88, topPos + 17, 9, 54)) {
             graphics.blit(TEXTURE, leftPos + 88, topPos + 17, 185, 0, 9, 54);
         }
         if (search != null && search.isFocused()) {
@@ -92,10 +92,14 @@ public class AmmoPressScreen extends AbstractContainerScreen<AmmoPressMenu> {
             int y = 17 + 18 * (visibleIndex % RECIPE_ROWS);
             AmmoPressRecipe recipe = visibleRecipes.get(i);
             graphics.renderItem(recipe.output(), leftPos + x + 1, topPos + y + 1);
-            graphics.renderItemDecorations(font, recipe.output(), leftPos + x + 1, topPos + y + 1,
-                    recipe.output().getCount() > 1 ? Integer.toString(recipe.output().getCount()) : null);
             int frameU = menu.getSelectedRecipeIndex() == allRecipes.indexOf(recipe) ? 194 : 212;
             graphics.blit(TEXTURE, leftPos + x, topPos + y, frameU, 0, 18, 18);
+            graphics.pose().pushPose();
+            graphics.pose().translate(leftPos + x + 9, topPos + y + 9, 0.0F);
+            graphics.pose().scale(0.5F, 0.5F, 1.0F);
+            graphics.renderItemDecorations(font, recipe.output(), 0, 0,
+                    Integer.toString(recipe.output().getCount()));
+            graphics.pose().popPose();
         }
     }
 
@@ -107,24 +111,38 @@ public class AmmoPressScreen extends AbstractContainerScreen<AmmoPressMenu> {
         }
         AmmoPressRecipe recipe = allRecipes.get(selected);
         for (int slot = 0; slot < AmmoPressRecipe.INPUT_SLOTS; slot++) {
+            if (recipe.input(slot) == null) {
+                continue;
+            }
             if (menu.getBlockEntity().getItems().getStackInSlot(slot).isEmpty()) {
                 List<ItemStack> options = recipe.displayInputs(slot);
-                if (!options.isEmpty()) {
-                    ItemStack display = options.get((int) ((System.currentTimeMillis() / 1000L) % options.size()));
-                    int x = leftPos + 116 + 18 * (slot % 3);
-                    int y = topPos + 18 + 18 * (slot / 3);
-                    graphics.renderItem(display, x, y);
-                    graphics.renderItemDecorations(font, display, x, y,
-                            display.getCount() > 1 ? Integer.toString(display.getCount()) : null);
-                    graphics.fill(RenderType.guiOverlay(), x, y, x + 16, y + 16, 0x88FFFFFF);
-                }
+                ItemStack display = options.isEmpty()
+                        ? new ItemStack(ModItems.NOTHING.get())
+                        : options.get((int) ((System.currentTimeMillis() / 1000L) % options.size()));
+                int cellX = 116 + 18 * (slot % 3);
+                int cellY = 18 + 18 * (slot / 3);
+                int x = leftPos + cellX;
+                int y = topPos + cellY;
+                graphics.renderItem(display, x, y);
+                graphics.renderItemDecorations(font, display, x, y,
+                        display.getCount() > 1 ? Integer.toString(display.getCount()) : null);
+
+                RenderSystem.enableBlend();
+                RenderSystem.defaultBlendFunc();
+                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.5F);
+                graphics.pose().pushPose();
+                graphics.pose().translate(0.0F, 0.0F, 300.0F);
+                graphics.blit(TEXTURE, x, y, cellX, cellY, 18, 18);
+                graphics.pose().popPose();
+                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+                RenderSystem.disableBlend();
             }
         }
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, titleLabelX, titleLabelY, 0xFFFFFF, false);
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, titleLabelY, 0xFFFFFF, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -153,19 +171,25 @@ public class AmmoPressScreen extends AbstractContainerScreen<AmmoPressMenu> {
         if (super.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
-        if (isHovering(7, 17, 9, 54, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 7, topPos + 17, 9, 54)) {
+            LegacyGuiElements.playClickSound();
             page = Math.max(0, page - 1);
             return true;
         }
-        if (isHovering(88, 17, 9, 54, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 88, topPos + 17, 9, 54)) {
+            LegacyGuiElements.playClickSound();
             page = Math.min(maxPage(), page + 1);
             return true;
         }
         int index = recipeIndexAt(mouseX, mouseY);
         if (index >= 0 && index < visibleRecipes.size()) {
             int selection = AmmoPressRecipeRuntime.recipes(minecraft.level).indexOf(visibleRecipes.get(index));
+            if (selection == menu.getSelectedRecipeIndex()) {
+                selection = -1;
+            }
             CompoundTag tag = AmmoPressBlockEntity.selectionControlTag(selection);
             ModMessages.sendTileControl(menu.getBlockEntity().getBlockPos(), tag);
+            LegacyGuiElements.playClickSound();
             return true;
         }
         return false;
@@ -193,7 +217,7 @@ public class AmmoPressScreen extends AbstractContainerScreen<AmmoPressMenu> {
             int visibleIndex = i - start;
             int x = 16 + 18 * (visibleIndex / RECIPE_ROWS);
             int y = 17 + 18 * (visibleIndex % RECIPE_ROWS);
-            if (isHovering(x, y, 18, 18, mouseX, mouseY)) {
+            if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + x, topPos + y, 18, 18)) {
                 return i;
             }
         }

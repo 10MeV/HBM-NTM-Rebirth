@@ -95,8 +95,20 @@ public abstract class HbmLegacyWireNodeBlockEntity extends HbmEnergyNodeBlockEnt
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    /** The old pylon description packet only carries remote wires and their tint. */
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        saveWireConnections(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncTag(tag);
+    }
 
     @Nullable
     @Override
@@ -108,8 +120,12 @@ public abstract class HbmLegacyWireNodeBlockEntity extends HbmEnergyNodeBlockEnt
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
         CompoundTag tag = packet.getTag();
         if (tag != null) {
-            load(tag);
+            readClientSyncTag(tag);
         }
+    }
+
+    private void readClientSyncTag(CompoundTag tag) {
+        loadWireConnections(tag);
     }
 
     @Override

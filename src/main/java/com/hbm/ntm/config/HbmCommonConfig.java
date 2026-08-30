@@ -3,6 +3,9 @@ package com.hbm.ntm.config;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class HbmCommonConfig {
+    /** Process-local, opt-in world-model audit override; never written to Forge config. */
+    public static final String MACHINE_GRAVITY_AUDIT_OVERRIDE_PROPERTY =
+            "hbm_ntm.worldModelAuditMachineGravity";
     public static final ForgeConfigSpec SPEC;
 
     public static final ForgeConfigSpec.BooleanValue LOG_STARTUP;
@@ -106,7 +109,8 @@ public final class HbmCommonConfig {
     }
 
     public static boolean machineGravityEnabled() {
-        return booleanValue(ENABLE_MACHINE_GRAVITY, false);
+        return booleanValue(ENABLE_MACHINE_GRAVITY, false)
+                || Boolean.getBoolean(MACHINE_GRAVITY_AUDIT_OVERRIDE_PROPERTY);
     }
 
     public static boolean cataclysmEnabled() {

@@ -2,9 +2,14 @@ package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
 import com.hbm.ntm.blockentity.OilDrillBlockEntity;
-import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.explosion.vnt.ExplosionVnt;
+import com.hbm.ntm.explosion.vnt.standard.BlockAllocatorStandard;
+import com.hbm.ntm.explosion.vnt.standard.BlockProcessorStandard;
+import com.hbm.ntm.explosion.vnt.standard.EntityProcessorStandard;
+import com.hbm.ntm.explosion.vnt.standard.PlayerProcessorStandard;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.particle.LegacyParticleCreators;
 import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +53,7 @@ public class OilDrillBlock extends LegacyVisibleMultiblockMachineBlock {
     public RenderShape getRenderShape(BlockState state) {
         String modelPath = definition().modelLocation().getPath();
         if (PUMPJACK_MODEL.equals(modelPath)) {
-            return RenderShape.MODEL;
+            return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
         }
         return usesChunkBakedStaticModel()
                 ? LegacyMachineRenderShapes.chunkBakedStaticOrEntity()
@@ -68,7 +73,7 @@ public class OilDrillBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
+        if (!player.isShiftKeyDown() && !level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof OilDrillBlockEntity drill) {
             NetworkHooks.openScreen(serverPlayer, drill, drill.getBlockPos());
         }
@@ -114,11 +119,27 @@ public class OilDrillBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
-        if (resolveCoreBlockEntity(level, pos) instanceof OilDrillBlockEntity drill && drill.hasStoredFluid()) {
-            drill.clearStoredFluids();
-            BlockPos corePos = drill.getBlockPos();
-            level.explode(null, corePos.getX() + 0.5D, corePos.getY() + 0.5D, corePos.getZ() + 0.5D, 15.0F,
-                    Level.ExplosionInteraction.TNT);
+        if (resolveCoreBlockEntity(level, pos) instanceof OilDrillBlockEntity drill
+                && drill.getKind() == OilDrillBlockEntity.Kind.WELL) {
+            // MachineOilWell removes the hit core before the secondary VNT pass. This keeps the
+            // VNT allocator from re-entering the well's explosion hook while it clears dummies.
+            level.removeBlock(pos, false);
+            if (drill.hasStoredFluid()) {
+                drill.clearStoredFluids();
+                BlockPos corePos = drill.getBlockPos();
+                double x = corePos.getX() + 0.5D;
+                double y = corePos.getY() + 0.5D;
+                double z = corePos.getZ() + 0.5D;
+                new ExplosionVnt(level, x, y, z, 15.0F)
+                        .setBlockAllocator(new BlockAllocatorStandard(24))
+                        .setBlockProcessor(new BlockProcessorStandard().setNoDrop())
+                        .setEntityProcessor(new EntityProcessorStandard())
+                        .setPlayerProcessor(new PlayerProcessorStandard())
+                        .explode();
+                LegacyParticleCreators.composeEffect(level, x, y, z, 10, 2.0F, 0.5F, 25.0F,
+                        5, 8, 20, 0.75F, 1.0F, -2.0F, 150.0F);
+            }
+            return;
         }
         super.onBlockExploded(state, level, pos, explosion);
     }
@@ -134,8 +155,11 @@ public class OilDrillBlock extends LegacyVisibleMultiblockMachineBlock {
         CompoundTag persistent = tag.getCompound(HbmPersistentBlockState.TAG_PERSISTENT);
         tooltip.add(Component.literal(shortPower(persistent.getLong("power")) + "HE").withStyle(ChatFormatting.GREEN));
         for (HbmFluidTank tank : readTooltipTanks(persistent)) {
-            tooltip.add(HbmFluidGuiHelper.tankInfo(tank, tank.getFill(), tank.getMaxFill())
-                    .copy()
+            // MachineOilWell/MachinePumpjack/MachineFrackingTower all use the
+            // IPersistentInfoProvider format directly: no separators around
+            // the slash/unit and the fluid name follows the capacity.
+            tooltip.add(Component.literal(tank.getFill() + "/" + tank.getMaxFill() + "mB ")
+                    .append(tank.getTankType().getDisplayName())
                     .withStyle(ChatFormatting.YELLOW));
         }
     }
@@ -151,20 +175,38 @@ public class OilDrillBlock extends LegacyVisibleMultiblockMachineBlock {
     }
 
     private static String shortPower(long power) {
-        if (power < 1_000L) {
+        double value;
+        String suffix;
+        long absolute = Math.abs(power);
+        if (absolute >= 1_000_000_000_000_000_000L) {
+            value = power / 1_000_000_000_000_000_000.0D;
+            suffix = "E";
+        } else if (absolute >= 1_000_000_000_000_000L) {
+            value = power / 1_000_000_000_000_000.0D;
+            suffix = "P";
+        } else if (absolute >= 1_000_000_000_000L) {
+            value = power / 1_000_000_000_000.0D;
+            suffix = "T";
+        } else if (absolute >= 1_000_000_000L) {
+            value = power / 1_000_000_000.0D;
+            suffix = "G";
+        } else if (absolute >= 1_000_000L) {
+            value = power / 1_000_000.0D;
+            suffix = "M";
+        } else if (absolute >= 1_000L) {
+            value = power / 1_000.0D;
+            suffix = "k";
+        } else {
             return Long.toString(power);
         }
-        if (power < 1_000_000L) {
-            return trim(power / 1_000.0D) + "k";
-        }
-        if (power < 1_000_000_000L) {
-            return trim(power / 1_000_000.0D) + "M";
-        }
-        return trim(power / 1_000_000_000.0D) + "G";
-    }
 
-    private static String trim(double value) {
-        String text = String.format(java.util.Locale.ROOT, "%.1f", value);
-        return text.endsWith(".0") ? text.substring(0, text.length() - 2) : text;
+        // Exact BobMathUtil#getShortNumber rounding used by all three legacy
+        // oil-drill-family IPersistentInfoProvider implementations.
+        if (value <= -100.0D) {
+            value = Math.round(value * 10.0D) / 10.0D;
+        } else {
+            value = Math.round(value * 100.0D) / 100.0D;
+        }
+        return value + suffix;
     }
 }

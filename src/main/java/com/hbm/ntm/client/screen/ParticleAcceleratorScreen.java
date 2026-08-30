@@ -5,20 +5,30 @@ import com.hbm.ntm.block.ParticleAcceleratorBlock;
 import com.hbm.ntm.blockentity.PADipoleBlockEntity;
 import com.hbm.ntm.blockentity.PASourceBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
+import com.hbm.ntm.item.PACoilItem;
 import com.hbm.ntm.menu.ParticleAcceleratorMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.joml.Matrix4f;
 
 public class ParticleAcceleratorScreen extends AbstractContainerScreen<ParticleAcceleratorMenu> {
     private static final ResourceLocation SOURCE =
@@ -72,8 +82,18 @@ public class ParticleAcceleratorScreen extends AbstractContainerScreen<ParticleA
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         if (menu.getVariant() != ParticleAcceleratorBlock.Variant.RFC) {
             String name = title.getString();
-            graphics.drawString(font, name, imageWidth / 2 - font.width(name) / 2 - 9,
-                    menu.getVariant() == ParticleAcceleratorBlock.Variant.SOURCE ? 4 : 6, 0x404040, false);
+            int centerOffset = menu.getVariant() == ParticleAcceleratorBlock.Variant.DETECTOR ? -8 : -9;
+            int titleY = switch (menu.getVariant()) {
+                case SOURCE -> 4;
+                case DETECTOR -> 5;
+                default -> 6;
+            };
+            int titleColor = switch (menu.getVariant()) {
+                case SOURCE, DETECTOR, QUADRUPOLE -> 0xFFFFFF;
+                default -> 0x404040;
+            };
+            graphics.drawString(font, name, imageWidth / 2 - font.width(name) / 2 + centerOffset,
+                    titleY, titleColor, false);
         }
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
         TankCoords tanks = tankCoords();
@@ -94,26 +114,25 @@ public class ParticleAcceleratorScreen extends AbstractContainerScreen<ParticleA
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(powerX(), 18, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(Component.literal(menu.getPower() + " / "
-                    + menu.getMaxPower() + " HE")), mouseX, mouseY);
-        }
+        LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
+                leftPos + powerX(), topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
         TankCoords tanks = tankCoords();
-        if (isHovering(tanks.coldX, 36, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getColdCoolant().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
-                    mouseX, mouseY);
-        } else if (isHovering(tanks.hotX, 36, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getHotCoolant().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
-                    mouseX, mouseY);
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY,
+                leftPos + tanks.coldX, topPos + 36, 16, 52)) {
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getColdCoolant(),
+                    menu.getColdCoolant().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+        } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY,
+                leftPos + tanks.hotX, topPos + 36, 16, 52)) {
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getHotCoolant(),
+                    menu.getHotCoolant().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         } else if (menu.getVariant() == ParticleAcceleratorBlock.Variant.SOURCE
-                && isHovering(105, 18, 10, 10, mouseX, mouseY)) {
+                && LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 105, 16, 10, 10)) {
             PASourceBlockEntity.PAState state = PASourceBlockEntity.PAState.byOrdinal(menu.getStateOrdinal());
-            graphics.renderComponentTooltip(font, List.of(
-                    Component.literal(String.format(Locale.US, "Last momentum: %,d", menu.getLastSpeed())),
-                    Component.translatable("pa." + state.key() + ".desc")), mouseX, mouseY);
+            graphics.renderComponentTooltip(font, sourceStateTooltip(state), mouseX, mouseY);
         } else if (menu.getVariant() == ParticleAcceleratorBlock.Variant.SOURCE
-                && isHovering(105, 30, 10, 10, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(Component.literal("Cancel operation")), mouseX, mouseY);
+                && LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 105, 28, 10, 10)) {
+            graphics.renderComponentTooltip(font,
+                    List.of(Component.literal("Cancel operation").withStyle(ChatFormatting.RED)), mouseX, mouseY);
         } else if (menu.getVariant() == ParticleAcceleratorBlock.Variant.DIPOLE) {
             renderDipoleTooltip(graphics, mouseX, mouseY);
         }
@@ -123,7 +142,7 @@ public class ParticleAcceleratorScreen extends AbstractContainerScreen<ParticleA
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (menu.getVariant() == ParticleAcceleratorBlock.Variant.SOURCE
-                && inside(mouseX, mouseY, 105, 30, 10, 10)) {
+                && LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 105, 28, 10, 10)) {
             CompoundTag tag = new CompoundTag();
             tag.putBoolean("cancel", true);
             send(tag);
@@ -173,20 +192,34 @@ public class ParticleAcceleratorScreen extends AbstractContainerScreen<ParticleA
     private void renderStatusLights(GuiGraphics graphics) {
         int heat = menu.getTemperatureKelvin();
         switch (menu.getVariant()) {
-            case SOURCE, DETECTOR -> {
-                if (heat <= 123) graphics.blit(texture(), leftPos + 44, topPos + 18, 176, 8, 8, 8);
-                if (menu.getPower() >= menu.getUsageLow()) graphics.blit(texture(), leftPos + 44, topPos + 43, 176, 8, 8, 8);
+            case SOURCE -> {
+                if (heat <= 123) graphics.blit(texture(), leftPos + 44, topPos + 16, 176, 8, 8, 8);
+                if (menu.getPower() >= menu.getUsageLow()) graphics.blit(texture(), leftPos + 44, topPos + 41, 176, 8, 8, 8);
+            }
+            case DETECTOR -> {
+                if (heat <= 123) graphics.blit(texture(), leftPos + 43, topPos + 18, 176, 8, 8, 8);
+                if (menu.getPower() >= menu.getUsageLow()) graphics.blit(texture(), leftPos + 43, topPos + 43, 176, 8, 8, 8);
             }
             case QUADRUPOLE -> {
                 if (heat <= 123) graphics.blit(texture(), leftPos + 75, topPos + 64, 176, 8, 8, 8);
-                if (!menu.getBlockEntity().getItems().getStackInSlot(1).isEmpty()) {
+                PACoilItem.Type coilType = coilType();
+                if (coilType != null) {
                     graphics.blit(texture(), leftPos + 85, topPos + 64, 176, 8, 8, 8);
+                    int textureX = switch (coilType) {
+                        case GOLD, BSCCO -> 200;
+                        case NIOBIUM, CHLOROPHYTE -> 228;
+                    };
+                    int textureY = switch (coilType) {
+                        case GOLD, NIOBIUM -> 0;
+                        case BSCCO, CHLOROPHYTE -> 28;
+                    };
+                    graphics.blit(texture(), leftPos + 65, topPos + 30, textureX, textureY, 28, 28);
                 }
                 if (menu.getPower() >= menu.getUsageLow()) graphics.blit(texture(), leftPos + 65, topPos + 64, 176, 8, 8, 8);
             }
             case DIPOLE -> {
                 if (heat <= 123) graphics.blit(texture(), leftPos + 93, topPos + 54, 176, 8, 8, 8);
-                if (!menu.getBlockEntity().getItems().getStackInSlot(1).isEmpty()) {
+                if (coilType() != null) {
                     graphics.blit(texture(), leftPos + 103, topPos + 54, 176, 8, 8, 8);
                 }
                 if (menu.getPower() >= menu.getUsageLow()) graphics.blit(texture(), leftPos + 83, topPos + 54, 176, 8, 8, 8);
@@ -200,57 +233,62 @@ public class ParticleAcceleratorScreen extends AbstractContainerScreen<ParticleA
         PASourceBlockEntity.PAState state = PASourceBlockEntity.PAState.byOrdinal(menu.getStateOrdinal());
         int color = state.color();
         RenderSystem.enableBlend();
-        RenderSystem.setShaderColor(((color >> 16) & 0xFF) / 255.0F, ((color >> 8) & 0xFF) / 255.0F,
-                (color & 0xFF) / 255.0F, 1.0F);
+        RenderSystem.setShaderColor(legacyClampedColorChannel((color >> 16) & 0xFF),
+                legacyClampedColorChannel((color >> 8) & 0xFF), legacyClampedColorChannel(color & 0xFF), 1.0F);
         graphics.blit(texture(), leftPos + 45, topPos + 73, 176, 52, 68, 14);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableBlend();
     }
 
     private void renderDipoleDirections(GuiGraphics graphics) {
-        drawDirection(graphics, 68, 35, menu.getDirLower());
-        drawDirection(graphics, 68, 49, menu.getDirUpper());
-        drawDirection(graphics, 68, 63, menu.getDirRedstone());
+        float playerYaw = minecraft != null && minecraft.player != null ? minecraft.player.getYRot() : 0.0F;
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.lineWidth(3.0F);
+        Matrix4f matrix = graphics.pose().last().pose();
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+        buffer.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
+        addDirectionLines(buffer, matrix, 68, 35, playerYaw, menu.getDirLower());
+        addDirectionLines(buffer, matrix, 68, 49, playerYaw, menu.getDirUpper());
+        addDirectionLines(buffer, matrix, 68, 63, playerYaw, menu.getDirRedstone());
+        BufferUploader.drawWithShader(buffer.end());
+        RenderSystem.lineWidth(1.0F);
     }
 
-    private void drawDirection(GuiGraphics graphics, int x, int y, int dir) {
-        graphics.fill(leftPos + x - 6, topPos + y, leftPos + x + 7, topPos + y + 1, 0xFF8080FF);
-        int dx = switch (dir & 3) {
-            case 1 -> 6;
-            case 3 -> -6;
-            default -> 0;
-        };
-        int dy = switch (dir & 3) {
-            case 2 -> 6;
-            case 0 -> -6;
-            default -> 0;
-        };
-        int x1 = Math.min(leftPos + x, leftPos + x + dx);
-        int x2 = Math.max(leftPos + x + 1, leftPos + x + dx + 1);
-        int y1 = Math.min(topPos + y, topPos + y + dy);
-        int y2 = Math.max(topPos + y + 1, topPos + y + dy + 1);
-        graphics.fill(x1, y1, x2, y2, 0xFFFF0000);
+    private void addDirectionLines(BufferBuilder buffer, Matrix4f matrix, int x, int y, float playerYaw, int dir) {
+        addDirectionLine(buffer, matrix, x, y, 180.0F, 0x80, 0x80, 0xFF);
+        addDirectionLine(buffer, matrix, x, y, playerYaw - dir * 90.0F, 0xFF, 0x00, 0x00);
+    }
+
+    private void addDirectionLine(BufferBuilder buffer, Matrix4f matrix, int x, int y, float yaw,
+            int red, int green, int blue) {
+        double radians = Math.toRadians(yaw);
+        float startX = leftPos + x;
+        float startY = topPos + y;
+        float endX = startX + (float) (Math.sin(radians) * 6.0D);
+        float endY = startY + (float) (Math.cos(radians) * 6.0D);
+        buffer.vertex(matrix, startX, startY, 0.0F).color(red, green, blue, 0xFF).endVertex();
+        buffer.vertex(matrix, endX, endY, 0.0F).color(red, green, blue, 0xFF).endVertex();
     }
 
     private void renderDipoleTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
-        if (isHovering(62, 29, 12, 12, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 62, 29, 12, 12)) {
             dipoleTooltip(graphics, mouseX, mouseY, menu.getDirLower());
-        } else if (isHovering(62, 43, 12, 12, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 62, 43, 12, 12)) {
             dipoleTooltip(graphics, mouseX, mouseY, menu.getDirUpper());
-        } else if (isHovering(62, 57, 12, 12, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 62, 57, 12, 12)) {
             dipoleTooltip(graphics, mouseX, mouseY, menu.getDirRedstone());
         }
     }
 
     private void dipoleTooltip(GuiGraphics graphics, int mouseX, int mouseY, int dir) {
         graphics.renderComponentTooltip(font, List.of(
-                Component.literal("Player orientation"),
-                Component.literal("Output orientation:"),
-                Component.literal(PADipoleBlockEntity.ditToDirection(dir).getName())), mouseX, mouseY);
+                Component.literal("Player orientation").withStyle(ChatFormatting.BLUE),
+                Component.literal("Output orientation:").withStyle(ChatFormatting.RED),
+                Component.literal(PADipoleBlockEntity.ditToDirection(dir).name())), mouseX, mouseY);
     }
 
     private boolean dipoleButton(double mouseX, double mouseY, int y, String key) {
-        if (!inside(mouseX, mouseY, 62, y, 12, 12)) {
+        if (!LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 62, y, 12, 12)) {
             return false;
         }
         CompoundTag tag = new CompoundTag();
@@ -288,9 +326,27 @@ public class ParticleAcceleratorScreen extends AbstractContainerScreen<ParticleA
         }
     }
 
-    private boolean inside(double mouseX, double mouseY, int x, int y, int width, int height) {
-        return leftPos + x <= mouseX && mouseX < leftPos + x + width
-                && topPos + y <= mouseY && mouseY < topPos + y + height;
+    private List<Component> sourceStateTooltip(PASourceBlockEntity.PAState state) {
+        List<Component> lines = new ArrayList<>();
+        Component momentum = Component.empty()
+                .append(Component.literal("Last momentum: ").withStyle(ChatFormatting.BLUE))
+                .append(Component.literal(String.format(Locale.US, "%,d", menu.getLastSpeed())));
+        lines.add(momentum);
+        String description = Component.translatable("pa." + state.key() + ".desc").getString();
+        for (String line : description.split("\\$")) {
+            lines.add(Component.literal(line).withStyle(ChatFormatting.YELLOW));
+        }
+        return lines;
+    }
+
+    private static float legacyClampedColorChannel(int channel) {
+        return channel == 0 ? 0.0F : 1.0F;
+    }
+
+    private PACoilItem.Type coilType() {
+        return menu.getBlockEntity().getItems().getStackInSlot(1).getItem() instanceof PACoilItem coil
+                ? coil.type()
+                : null;
     }
 
     private ResourceLocation texture() {
@@ -300,7 +356,7 @@ public class ParticleAcceleratorScreen extends AbstractContainerScreen<ParticleA
             case RFC -> RFC;
             case QUADRUPOLE -> QUADRUPOLE;
             case DIPOLE -> DIPOLE;
-            case BEAMLINE -> SOURCE;
+            case BEAMLINE -> throw new IllegalStateException("Beamline has no GUI");
         };
     }
 

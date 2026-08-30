@@ -65,6 +65,7 @@
     "hbm_ntm_rebirth:block_actinium",
     "hbm_ntm_rebirth:block_australium",
     "hbm_ntm_rebirth:block_lithium",
-    "hbm_ntm_rebirth:block_slag"
+    "hbm_ntm_rebirth:block_slag",
+    "hbm_ntm_rebirth:block_slag_broken"
   ]
 }

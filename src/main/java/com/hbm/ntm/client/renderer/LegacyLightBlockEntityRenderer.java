@@ -55,7 +55,8 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         Direction face = state.getValue(LegacyDirectionalShapeBlock.FACE);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             if (block.kind() == LegacyDirectionalShapeBlock.Kind.FLOODLIGHT) {
-                renderFloodlight(blockEntity, face, state, poseStack, buffer, modelLight, packedOverlay);
+                renderFloodlight(blockEntity, face, state, poseStack, buffer, modelLight, packedLight,
+                        packedOverlay);
             } else {
                 renderSpotlight(block.kind(), face, state, poseStack, buffer, modelLight, packedOverlay);
             }
@@ -86,7 +87,8 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
     }
 
     private static void renderFloodlight(LegacyLightBlockEntity blockEntity, Direction face, BlockState state,
-                                         PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+                                         PoseStack poseStack, MultiBufferSource buffer, int fixedLight,
+                                         int movingLight, int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         applyFloodlightBaseRotation(poseStack, face);
@@ -96,7 +98,7 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
             LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         }
 
-        renderFloodlightPart(FLOODLIGHT_BASE, poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF);
+        renderFloodlightPart(FLOODLIGHT_BASE, poseStack, buffer, fixedLight, packedOverlay, 0xFFFFFF);
 
         float rotation = blockEntity.rotation();
         if (face == Direction.DOWN) {
@@ -110,9 +112,9 @@ public class LegacyLightBlockEntityRenderer implements BlockEntityRenderer<Legac
         poseStack.translate(0.0D, 0.5D, 0.0D);
         LegacyPoseRotations.rotateZDegrees(poseStack, rotation);
         poseStack.translate(0.0D, -0.5D, 0.0D);
-        renderFloodlightPart(FLOODLIGHT_LIGHTS, poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF);
+        renderFloodlightPart(FLOODLIGHT_LIGHTS, poseStack, buffer, movingLight, packedOverlay, 0xFFFFFF);
         renderFloodlightPart(FLOODLIGHT_LAMPS, poseStack, buffer,
-                blockEntity.isOn() ? LightTexture.FULL_BRIGHT : packedLight, packedOverlay,
+                blockEntity.isOn() ? LightTexture.FULL_BRIGHT : movingLight, packedOverlay,
                 blockEntity.isOn() ? 0xFFFFFF : 0x404040);
         poseStack.popPose();
 

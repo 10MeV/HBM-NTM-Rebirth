@@ -26,6 +26,7 @@ public class DroneLogisticsScreen extends AbstractContainerScreen<DroneLogistics
     @Override protected void renderBg(GuiGraphics graphics,float partial,int mouseX,int mouseY){graphics.blit(texture(),leftPos,topPos,0,0,imageWidth,imageHeight);}
     @Override protected void renderLabels(GuiGraphics graphics,int mouseX,int mouseY){graphics.drawString(font,title,imageWidth/2-font.width(title)/2,6,0x404040,false);graphics.drawString(font,playerInventoryTitle,8,inventoryLabelY,0x404040,false);}
     @Override public void render(GuiGraphics graphics,int mouseX,int mouseY,float partial){
+        renderBackground(graphics);
         super.render(graphics,mouseX,mouseY,partial);
         if (menu.getBlockEntity().kind() == DroneLogisticsBlockEntity.Kind.REQUESTER && menu.getCarried().isEmpty()) {
             for (int index = 0; index < 9; index++) if (isHovering(menu.slots.get(index).x, menu.slots.get(index).y, 16, 16, mouseX, mouseY)) {

@@ -30,7 +30,7 @@ public class ChemicalFactoryBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
@@ -48,6 +48,10 @@ public class ChemicalFactoryBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // Legacy MachineChemicalFactory calls standardOpenBehavior.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof ChemicalFactoryBlockEntity factory) {
             NetworkHooks.openScreen(serverPlayer, factory, factory.getBlockPos());

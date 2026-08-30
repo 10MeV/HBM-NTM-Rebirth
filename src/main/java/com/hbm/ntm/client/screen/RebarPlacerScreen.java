@@ -46,8 +46,7 @@ public class RebarPlacerScreen extends AbstractContainerScreen<RebarPlacerMenu> 
     }
 
     private void renderConcreteTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
-        if (!menu.getCarried().isEmpty()
-                || !LegacyGuiElements.isMouseOverSlot(menu.getSlot(0), leftPos, topPos, mouseX, mouseY)
+        if (!LegacyGuiElements.isMouseOverSlot(menu.getSlot(0), leftPos, topPos, mouseX, mouseY)
                 || menu.getSlot(0).hasItem()) {
             return;
         }

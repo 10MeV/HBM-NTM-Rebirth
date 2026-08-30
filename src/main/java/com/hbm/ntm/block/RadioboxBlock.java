@@ -55,10 +55,17 @@ public class RadioboxBlock extends BaseEntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // Radiobox#onBlockActivated consumes every client-side click before
+        // its server-only sneak check.  Keep that intentional legacy-side
+        // asymmetry so a sneaking client does not locally route the click to
+        // the held item while the server still declines the interaction.
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
         if (player.isShiftKeyDown()) {
             return InteractionResult.PASS;
         }
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof RadioboxBlockEntity box) {
+        if (level.getBlockEntity(pos) instanceof RadioboxBlockEntity box) {
             ItemStack stack = player.getItemInHand(hand);
             if (!stack.isEmpty() && stack.is(ModItems.BATTERY_SPARK.get()) && !box.isInfinite()) {
                 if (!(player instanceof ServerPlayer serverPlayer) || !serverPlayer.getAbilities().instabuild) {
@@ -73,7 +80,7 @@ public class RadioboxBlock extends BaseEntityBlock {
             level.setBlock(pos, state.setValue(ACTIVE, active), Block.UPDATE_CLIENTS);
             LegacySoundPlayer.playSoundEffect(level, pos, "hbm:block.reactorStart", 1.0F, active ? 1.0F : 0.85F);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     @Override

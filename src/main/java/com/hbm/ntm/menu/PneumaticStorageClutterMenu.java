@@ -1,6 +1,7 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.blockentity.PneumaticStorageClutterBlockEntity;
+import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public class PneumaticStorageClutterMenu extends AbstractContainerMenu {
     private static final int STORAGE_SLOT_COUNT = PneumaticStorageClutterBlockEntity.SLOT_COUNT;
     private final PneumaticStorageClutterBlockEntity blockEntity;
+    private final HbmFluidGuiHelper.TankData tankData;
 
     public PneumaticStorageClutterMenu(int containerId, Inventory inventory, FriendlyByteBuf data) {
         this(containerId, inventory, getBlockEntity(inventory, data.readBlockPos()));
@@ -25,6 +27,23 @@ public class PneumaticStorageClutterMenu extends AbstractContainerMenu {
         this.blockEntity = blockEntity;
         HbmInventoryMenuHelper.addSlots(this::addSlot, blockEntity.getItems(), 0, 8, 17, 6, 9, 18);
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 153, 211);
+        tankData = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.compair());
+    }
+
+    public PneumaticStorageClutterBlockEntity getBlockEntity() {
+        return blockEntity;
+    }
+
+    public HbmFluidGuiHelper.TankData getTankData() {
+        return tankData;
+    }
+
+    public java.util.List<net.minecraft.network.chat.Component> getTankTooltip(boolean showHidden) {
+        return tankData.tooltip(showHidden);
+    }
+
+    public int getRangeFromPressure() {
+        return com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticUtil.rangeForPressure(tankData.pressure());
     }
 
     @Override

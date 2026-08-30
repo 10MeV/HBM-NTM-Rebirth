@@ -618,8 +618,43 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong("power", energy.getPower());
+        tag.putLong("consumption", consumption);
+        tag.putFloat("progress", progress);
+        tag.putBoolean("processing", processing);
+        waterTank.writeToNbt(tag, "water");
+        slopTank.writeToNbt(tag, "slop");
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
+        if (tag.contains("consumption")) {
+            consumption = tag.getLong("consumption");
+        }
+        if (tag.contains("progress")) {
+            progress = tag.getFloat("progress");
+        }
+        if (tag.contains("processing")) {
+            processing = tag.getBoolean("processing");
+        }
+        if (hasTankTag(tag, "water")) {
+            waterTank.readFromNbt(tag, "water");
+        }
+        if (hasTankTag(tag, "slop")) {
+            slopTank.readFromNbt(tag, "slop");
+        }
+    }
 
     @Nullable
     @Override

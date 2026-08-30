@@ -31,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -135,7 +136,10 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
                 if (toBurn > 0) {
                     burner.tank.drain(toBurn, false);
                     int heat = (int) (flammable.getHeatEnergyPerBucket() / 1_000L);
-                    burner.heatEnergy = Math.min(MAX_HEAT, burner.heatEnergy + heat * toBurn);
+                    // TileEntityHeaterOilburner only gates entry on the pre-burn value being
+                    // below maxHeatEnergy. Its final burn may cross that boundary, and that
+                    // surplus remains stored until a heat consumer uses it.
+                    burner.heatEnergy += heat * toBurn;
                     burner.lastBurned = toBurn;
                     burner.lastHeatProduced = heat * toBurn;
                     if (level.getGameTime() % 5L == 0L) {
@@ -428,6 +432,9 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
         writeLegacyLoadedTileClientTag(tag);
+        tag.putBoolean(TAG_IS_ON, on);
+        tag.putInt(TAG_HEAT, heatEnergy);
+        tag.putInt(TAG_SETTING, setting);
         tag.putInt("lastBurned", lastBurned);
         tag.putInt("lastHeatProduced", lastHeatProduced);
         return tag;
@@ -437,8 +444,30 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_IS_ON)) {
+            on = tag.getBoolean(TAG_IS_ON);
+        }
+        if (tag.contains(TAG_HEAT)) {
+            heatEnergy = Math.max(0, tag.getInt(TAG_HEAT));
+        }
+        if (tag.contains(TAG_SETTING)) {
+            setting = Math.max(1, Math.min(10, tag.getInt(TAG_SETTING)));
+        }
         lastBurned = Math.max(0, tag.getInt("lastBurned"));
         lastHeatProduced = Math.max(0, tag.getInt("lastHeatProduced"));
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override
@@ -485,7 +514,7 @@ public class OilburnerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }

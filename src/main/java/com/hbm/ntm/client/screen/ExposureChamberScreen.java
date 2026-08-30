@@ -58,13 +58,17 @@ public class ExposureChamberScreen extends AbstractContainerScreen<ExposureChamb
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(152, 18, 16, 34, mouseX, mouseY)) {
+        if (isLegacyHovering(152, 18, 16, 34, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 152, topPos + 18, 16, 34, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(26, 36, 9, 16, mouseX, mouseY)) {
+        } else if (isLegacyHovering(26, 36, 9, 16, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, List.of(Component.literal(menu.getSavedParticles()
                     + " / " + ExposureChamberBlockEntity.MAX_PARTICLES)), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

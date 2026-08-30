@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.BlastFurnaceBlock;
 import com.hbm.ntm.block.HorizontalMachineBlock;
+import com.hbm.ntm.config.HbmCommonConfig;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.FluidReleaseType;
 import com.hbm.ntm.fluid.HbmFluidReleaseEffects;
@@ -18,6 +19,8 @@ import com.hbm.ntm.recipe.BlastFurnaceRecipe;
 import com.hbm.ntm.recipe.HbmItemOutput;
 import com.hbm.ntm.recipe.ModRecipes;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModBlocks;
+import com.hbm.ntm.registry.ModSounds;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmInventoryUtil;
@@ -30,6 +33,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -51,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         implements MenuProvider, HbmStandardFluidTransceiver {
+    private static final int FLOOR_COUNT = 2 * 2;
     public static final int SLOT_FUEL = 0;
     public static final int SLOT_INPUT_1 = 1;
     public static final int SLOT_INPUT_2 = 2;
@@ -70,6 +76,8 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     private static final String TAG_NAME = "name";
     private static final String TAG_PROGRESS = "progress";
     private static final String TAG_FUEL = "fuel";
+    private static final String TAG_SYNC_PROGRESSING = "syncProgressing";
+    private static final String TAG_SYNC_SPEED = "syncSpeed";
     private static final LegacyBurnTimeModule BURN_MODULE = new LegacyBurnTimeModule()
             .setWoodHeatMod(0D);
 
@@ -101,6 +109,8 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     private float progress;
     private float speed;
     private int fuel;
+    private int tiltBlocksChecked;
+    private int tiltBlocksValid;
     @Nullable
     private String customName;
 
@@ -121,7 +131,10 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         if (level.isClientSide) {
             return;
         }
-        boolean changed = furnace.tickServer(level, pos, state);
+        // 1.7.10 TileEntityMachineBlastFurnace#updateEntity checked the
+        // standard 3x3 foundation before processing every server tick.
+        boolean changed = furnace.checkTiltAgainstFoundation(level);
+        changed = furnace.tickServer(level, pos, state) || changed;
         changed = furnace.syncTiltedBlockState(level, furnace.isTilted()) || changed;
         furnace.networkPackNT(100);
         if (changed) {
@@ -170,12 +183,29 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         // The top lava/flue visual is driven from this exact server-side working snapshot.
         readLegacyLoadedTileBinary(data);
-        progressing = data.readBoolean();
-        progress = data.readFloat();
-        speed = data.readFloat();
-        fuel = data.readInt();
+        readClientRuntimeSnapshot(data.readBoolean(), data.readFloat(), data.readFloat(), data.readInt());
         LegacyFluidTankPacket.read(data, airblastTank);
         LegacyFluidTankPacket.read(data, flueTank);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean(TAG_SYNC_PROGRESSING, progressing);
+        tag.putFloat(TAG_PROGRESS, progress);
+        tag.putFloat(TAG_SYNC_SPEED, speed);
+        tag.putInt(TAG_FUEL, fuel);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_SYNC_PROGRESSING) && tag.contains(TAG_PROGRESS)
+                && tag.contains(TAG_SYNC_SPEED) && tag.contains(TAG_FUEL)) {
+            readClientRuntimeSnapshot(tag.getBoolean(TAG_SYNC_PROGRESSING), tag.getFloat(TAG_PROGRESS),
+                    tag.getFloat(TAG_SYNC_SPEED), tag.getInt(TAG_FUEL));
+        }
     }
 
     public ItemStackHandler getItems() {
@@ -212,6 +242,10 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
 
     public int getFuel() {
         return fuel;
+    }
+
+    public static LegacyBurnTimeModule burnModule() {
+        return BURN_MODULE;
     }
 
     public List<ItemStack> getDrops() {
@@ -324,6 +358,13 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         }
     }
 
+    private void readClientRuntimeSnapshot(boolean progressing, float progress, float speed, int fuel) {
+        this.progressing = progressing;
+        this.progress = Math.max(0.0F, progress);
+        this.speed = Math.max(0.0F, speed);
+        this.fuel = Math.max(0, fuel);
+    }
+
     @Override
     public AABB getRenderBoundingBox() {
         return new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 7, 2));
@@ -393,6 +434,78 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         }
         level.setBlock(worldPosition, state.setValue(BlastFurnaceBlock.TILTED, tilted), Block.UPDATE_CLIENTS);
         return true;
+    }
+
+    private boolean checkTiltAgainstFoundation(Level level) {
+        if (!HbmCommonConfig.machineGravityEnabled() || getFloorCount() <= 0) {
+            tiltBlocksChecked = 0;
+            tiltBlocksValid = 0;
+            return setTiltedState(level, false);
+        }
+        if ((level.getGameTime() + blockIdentity(worldPosition)) % 20L != 0L) {
+            return false;
+        }
+        boolean changed = false;
+        if (tiltBlocksChecked >= getFloorCount()) {
+            changed = setTiltedState(level, tiltBlocksValid < tiltBlocksChecked * 0.95D);
+            tiltBlocksChecked = 0;
+            tiltBlocksValid = 0;
+        }
+        changed = syncTiltedBlockState(level, isTilted()) || changed;
+
+        BlockPos floor = getFloorPosFromIndex(tiltBlocksChecked);
+        tiltBlocksChecked++;
+        if (isValidStandardFoundation(level, floor)) {
+            tiltBlocksValid++;
+        }
+        return changed;
+    }
+
+    private boolean setTiltedState(Level level, boolean tilted) {
+        if (isTilted() == tilted) {
+            return syncTiltedBlockState(level, tilted);
+        }
+        if (tilted) {
+            level.playSound(null, worldPosition, ModSounds.BLOCK_METAL_IMPACT.get(),
+                    SoundSource.BLOCKS, 3.0F, 1.0F);
+        }
+        setTilted(tilted);
+        setChanged();
+        if (!syncTiltedBlockState(level, tilted)) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+        return true;
+    }
+
+    /**
+     * Preserves TileEntityMachineBlastFurnace's public 1.7.10 floor sampler.
+     * The four samples are the corners at y-1 of the standard 3x3 footprint.
+     */
+    public int getFloorCount() {
+        return FLOOR_COUNT;
+    }
+
+    public BlockPos getFloorPosFromIndex(int index) {
+        if (index < 0 || index >= FLOOR_COUNT) {
+            throw new IndexOutOfBoundsException("blast furnace floor sample " + index);
+        }
+        return new BlockPos(
+                worldPosition.getX() - 1 + (index / 2) * 2,
+                worldPosition.getY() - 1,
+                worldPosition.getZ() - 1 + (index % 2) * 2);
+    }
+
+    private static int blockIdentity(BlockPos pos) {
+        return (pos.getY() + pos.getZ() * 27_644_437) * 27_644_437 + pos.getX();
+    }
+
+    private static boolean isValidStandardFoundation(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.isFaceSturdy(level, pos, Direction.UP)
+                && !state.is(BlockTags.SAND)
+                && !state.is(ModBlocks.legacyBlock("dirt_dead").get())
+                && !state.is(ModBlocks.legacyBlock("dirt_oily").get())
+                && !state.is(ModBlocks.legacyBlock("stone_cracked").get());
     }
 
     @Nullable

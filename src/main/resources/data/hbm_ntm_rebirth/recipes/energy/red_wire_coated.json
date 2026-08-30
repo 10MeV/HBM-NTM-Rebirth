@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": { "tag": "forge:ingots/mingrade" },
+    "R": { "item": "hbm_ntm_rebirth:wire_fine_mingrade" },
+    "W": { "item": "hbm_ntm_rebirth:plate_polymer" }
+  },
+  "pattern": [
+    "WRW",
+    "RIR",
+    "WRW"
+  ],
+  "result": {
+    "count": 16,
+    "item": "hbm_ntm_rebirth:red_wire_coated"
+  },
+  "show_notification": true
+}

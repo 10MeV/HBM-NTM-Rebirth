@@ -7,6 +7,7 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -104,13 +105,33 @@ public class RedCablePaintableBlockEntity extends HbmEnergyNodeBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    /** Only legacy paint state is client-visible; the energy node stays server-only. */
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        savePaint(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncTag(tag);
+    }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncTag(tag);
+        }
     }
 
     private void savePaint(CompoundTag tag) {
@@ -149,6 +170,10 @@ public class RedCablePaintableBlockEntity extends HbmEnergyNodeBlockEntity
         paintedState = state;
         paintedMeta = tag.getInt(TAG_PAINT_META) & 15;
         refreshPaintModelData();
+    }
+
+    private void readClientSyncTag(CompoundTag tag) {
+        loadPaint(tag);
     }
 
     private void refreshPaintModelData() {

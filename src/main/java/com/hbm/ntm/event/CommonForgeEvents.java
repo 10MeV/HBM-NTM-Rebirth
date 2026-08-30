@@ -50,6 +50,7 @@ import com.hbm.ntm.item.SednaGunItem;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.LoadedTileAccessCache;
 import com.hbm.ntm.network.ServerResyncRequestRateLimiter;
+import com.hbm.ntm.network.ServerActionRateLimiter;
 import com.hbm.ntm.network.ThreadedPacketDispatcher;
 import com.hbm.ntm.network.HbmServerKeybinds;
 import com.hbm.ntm.player.HbmExtendedProperties;
@@ -140,8 +141,6 @@ import net.minecraftforge.event.level.ChunkDataEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -1045,11 +1044,6 @@ public final class CommonForgeEvents {
     }
 
     @SubscribeEvent
-    public static void onServerAboutToStart(ServerAboutToStartEvent event) {
-        BlockMigrationHelper.loadLegacyItemIds(event.getServer().getWorldPath(LevelResource.ROOT));
-    }
-
-    @SubscribeEvent
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             HbmServerKeybinds.clearMovement(player);
@@ -1063,6 +1057,7 @@ public final class CommonForgeEvents {
             HbmServerKeybinds.clear(player);
             HbmPlayerProperties.clearRuntime(player);
             ServerResyncRequestRateLimiter.clearPlayer(player.getUUID());
+            ServerActionRateLimiter.clearPlayer(player.getUUID());
             SednaGunItem.clearServerRuntimeState(player.getUUID());
         }
     }
@@ -1075,6 +1070,7 @@ public final class CommonForgeEvents {
         NukeExplosionMk3Entity.clearAllAntiTeleportEntries();
         SednaGunItem.clearAllServerRuntimeState();
         ServerResyncRequestRateLimiter.clearAll();
+        ServerActionRateLimiter.clearAll();
         DroneLogisticsNetwork.clearAll();
         RadarScanner.clearRuntimeCache();
     }

@@ -50,6 +50,17 @@ public final class LegacyItemRendererBridge {
         }
     }
 
+    /**
+     * Verifies the production contextual wrapper/delegate identity without exposing the
+     * private wrapper implementation or allowing callers to replace its delegate.
+     */
+    public static boolean wraps(BlockEntityWithoutLevelRenderer contextualRenderer,
+            BlockEntityWithoutLevelRenderer expectedDelegate) {
+        synchronized (CONTEXTUAL_RENDERERS) {
+            return CONTEXTUAL_RENDERERS.get(expectedDelegate) == contextualRenderer;
+        }
+    }
+
     private static final class ContextualRenderer extends BlockEntityWithoutLevelRenderer {
         private final BlockEntityWithoutLevelRenderer delegate;
 

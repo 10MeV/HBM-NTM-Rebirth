@@ -65,7 +65,7 @@ public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlock
             renderConnectorIfConnected(barrel, Direction.SOUTH, -90.0F, barrelTexture, poseStack, buffer, modelLight,
                     packedOverlay);
             LegacyFluidTankRenderHelper.enqueueFluidBarrelDiamonds(PresentStage.AFTER_BLOCK_ENTITIES,
-                    type, poseStack, buffer, modelLight, packedOverlay);
+                    type, poseStack, buffer, packedLight, packedOverlay);
         }
         poseStack.popPose();
     }

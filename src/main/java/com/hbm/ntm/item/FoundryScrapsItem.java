@@ -67,11 +67,48 @@ public class FoundryScrapsItem extends Item {
         }
     }
 
+    /**
+     * Replays the old {@code ItemScraps#getIconIndex} branches for the modern
+     * NBT-backed item model.  Variant 1 is a castable liquid, 2 an additive
+     * liquid, and 3 the legacy solid-bismuth texture override.
+     */
+    public static float modelVariant(ItemStack stack) {
+        MaterialStack material = getMaterial(stack);
+        if (material == null) {
+            return 0.0F;
+        }
+        if (isLiquid(stack)) {
+            return material.material.smeltable == SmeltingBehavior.ADDITIVE ? 2.0F
+                    : material.material.smeltable == SmeltingBehavior.SMELTABLE ? 1.0F : 0.0F;
+        }
+        return material.material == Mats.MAT_BISMUTH ? 3.0F : 0.0F;
+    }
+
+    /**
+     * {@code ItemAutogen} tinted its shared scraps icon with moltenColor,
+     * except for its explicit solid-bismuth icon override.  Liquid scraps
+     * always used their material's molten color, including nonstandard NBT.
+     */
+    public static int getTintColor(ItemStack stack, int tintIndex) {
+        MaterialStack material = getMaterial(stack);
+        if (material == null || (!isLiquid(stack) && material.material == Mats.MAT_BISMUTH)) {
+            return 0xFFFFFF;
+        }
+        return material.material.moltenColor;
+    }
+
+    private static boolean isLiquid(ItemStack stack) {
+        return stack.hasTag() && stack.getTag().getBoolean(TAG_LIQUID);
+    }
+
     @Override
     public Component getName(ItemStack stack) {
         MaterialStack material = getMaterial(stack);
         if (material == null) {
             return super.getName(stack);
+        }
+        if (isLiquid(stack)) {
+            return Component.translatable(material.material.getUnlocalizedName());
         }
         return Component.translatable("item.hbm_ntm_rebirth.scraps",
                 Component.translatable(material.material.getUnlocalizedName()));

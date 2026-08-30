@@ -81,32 +81,32 @@ public class MachineLpw2Renderer implements BlockEntityRenderer<MachineLpw2Block
                     poseStack, buffer, modelLight, packedOverlay);
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 renderMainAssembly(sway, horizontal, vertical, piston, rotor, turbine, poseStack, buffer,
-                        modelLight, packedOverlay);
+                        packedLight, packedOverlay);
                 renderRotatingY("WireLeft", LegacyTileRenderPlans.LPW2_WIRE_LEFT_PIVOT_X,
                         LegacyTileRenderPlans.LPW2_WIRE_PIVOT_Z,
                         sway * LegacyTileRenderPlans.LPW2_WIRE_ROTATION_SCALE, poseStack, buffer,
-                        modelLight, packedOverlay);
+                        packedLight, packedOverlay);
                 renderRotatingY("WireRight", LegacyTileRenderPlans.LPW2_WIRE_RIGHT_PIVOT_X,
                         LegacyTileRenderPlans.LPW2_WIRE_PIVOT_Z,
                         sway * -LegacyTileRenderPlans.LPW2_WIRE_ROTATION_SCALE, poseStack, buffer,
-                        modelLight, packedOverlay);
+                        packedLight, packedOverlay);
                 renderTranslated("Cover", 0.0D, 0.0D, -cover * LegacyTileRenderPlans.LPW2_COVER_TRAVEL,
-                        poseStack, buffer, modelLight, packedOverlay);
+                        poseStack, buffer, packedLight, packedOverlay);
 
                 renderScaledZ("SuspensionCoverFront", 3.5D,
                         (3.0D + cover * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 3.0D,
-                        poseStack, buffer, modelLight, packedOverlay);
+                        poseStack, buffer, packedLight, packedOverlay);
                 renderScaledZ("SuspensionCoverBack", -5.5D,
                         (1.5D - cover * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.5D,
-                        poseStack, buffer, modelLight, packedOverlay);
+                        poseStack, buffer, packedLight, packedOverlay);
                 renderScaledZ("SuspensionBackOuter", -9.0D,
                         (1.25D - sway * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.25D,
-                        poseStack, buffer, modelLight, packedOverlay);
+                        poseStack, buffer, packedLight, packedOverlay);
                 renderScaledZ("SuspensionBackCenter", -9.5D,
                         (1.75D - sway * LegacyTileRenderPlans.LPW2_COVER_TRAVEL) / 1.75D,
-                        poseStack, buffer, modelLight, packedOverlay);
+                        poseStack, buffer, packedLight, packedOverlay);
 
-                renderServers(serverX, serverY, errorV, poseStack, buffer, modelLight, packedOverlay);
+                renderServers(serverX, serverY, errorV, poseStack, buffer, packedLight, packedOverlay);
             }
         }
         poseStack.popPose();

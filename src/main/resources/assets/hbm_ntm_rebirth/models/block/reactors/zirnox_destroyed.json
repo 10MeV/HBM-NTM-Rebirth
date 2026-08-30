@@ -1,9 +1,13 @@
 {
-  "loader": "forge:obj",
+  "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+  "shade_quads": false,
+  "emissive_ambient": false,
   "model": "hbm_ntm_rebirth:models/zirnox_destroyed.obj",
+  "mtl_override": "hbm_ntm_rebirth:models/block/reactors/hbm_default.mtl",
+  "legacy_default_material": "default",
   "flip_v": true,
   "automatic_culling": false,
-  "render_type": "minecraft:cutout",
+  "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
   "transform": {
     "translation": [0.5, 0.0, 0.5],
     "rotation": [0, 0, 0],

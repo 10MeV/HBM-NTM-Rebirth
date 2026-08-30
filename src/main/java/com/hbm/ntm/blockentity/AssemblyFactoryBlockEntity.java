@@ -44,6 +44,8 @@ import com.hbm.ntm.util.BufferUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -459,7 +461,11 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
         readClientSyncFields(tag);
     }
 
@@ -510,21 +516,65 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private void writeClientSyncFields(CompoundTag tag) {
+        // Keep this equivalent to TileEntityMachineAssemblyFactory#serialize,
+        // rather than leaking saveAdditional's inventory to every client.
+        writeLegacyLoadedTileClientTag(tag);
+        tag.put(TAG_ENERGY, energy.serializeNBT());
         for (int i = 0; i < MODULES; i++) {
+            inputTanks[i].writeToNbt(tag, TAG_INPUT_TANK + i);
+            outputTanks[i].writeToNbt(tag, TAG_OUTPUT_TANK + i);
             tag.putBoolean(TAG_DID_PROCESS + i, didProcess[i]);
+            tag.putDouble(TAG_PROGRESS + i, progress[i]);
+            tag.putString(TAG_RECIPE + i, selectedRecipes[i]);
         }
+        water.writeToNbt(tag, TAG_WATER);
+        spentSteam.writeToNbt(tag, TAG_SPENT_STEAM);
     }
 
     private void readClientSyncFields(CompoundTag tag) {
-        for (int i = 0; i < MODULES; i++) {
-            didProcess[i] = tag.getBoolean(TAG_DID_PROCESS + i);
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_ENERGY, Tag.TAG_COMPOUND)) {
+            energy.deserializeNBT(tag.getCompound(TAG_ENERGY));
         }
+        for (int i = 0; i < MODULES; i++) {
+            if (tag.contains(TAG_INPUT_TANK + i)) {
+                inputTanks[i].readFromNbt(tag, TAG_INPUT_TANK + i);
+            }
+            if (tag.contains(TAG_OUTPUT_TANK + i)) {
+                outputTanks[i].readFromNbt(tag, TAG_OUTPUT_TANK + i);
+            }
+            if (tag.contains(TAG_DID_PROCESS + i, Tag.TAG_BYTE)) {
+                didProcess[i] = tag.getBoolean(TAG_DID_PROCESS + i);
+            }
+            if (tag.contains(TAG_PROGRESS + i, Tag.TAG_DOUBLE)) {
+                progress[i] = tag.getDouble(TAG_PROGRESS + i);
+            }
+            if (tag.contains(TAG_RECIPE + i, Tag.TAG_STRING)) {
+                selectedRecipes[i] = GenericMachineRecipeSelector.normalize(tag.getString(TAG_RECIPE + i));
+            }
+        }
+        if (tag.contains(TAG_WATER)) {
+            water.readFromNbt(tag, TAG_WATER);
+        }
+        if (tag.contains(TAG_SPENT_STEAM)) {
+            spentSteam.readFromNbt(tag, TAG_SPENT_STEAM);
+        }
+        water.setTankType(HbmFluids.WATER);
+        spentSteam.setTankType(HbmFluids.SPENTSTEAM);
     }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncFields(tag);
+        }
     }
 
     @Override
@@ -601,8 +651,8 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private void detachFluidPortSubscriptions() {
-        recipeFluidPortSubscriptions.detachAllDetailed(level, worldPosition, recipeFluidPorts(), this, this);
-        coolingFluidPortSubscriptions.detachAllDetailed(level, worldPosition, coolingFluidPorts(),
+        recipeFluidPortSubscriptions.detachAllTrackedDetailed(level, worldPosition, this, this);
+        coolingFluidPortSubscriptions.detachAllTrackedDetailed(level, worldPosition,
                 coolingFluidNetwork, coolingFluidNetwork);
     }
 

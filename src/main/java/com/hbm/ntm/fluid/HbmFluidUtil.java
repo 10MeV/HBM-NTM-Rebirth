@@ -536,11 +536,16 @@ public final class HbmFluidUtil {
         Map<VisualPortKey, IdentityHashMap<Object, EnumSet<VisualRole>>> worldPorts =
                 REMOTE_VISUAL_PORTS.computeIfAbsent(level.dimension(), ignored -> new HashMap<>());
         VisualPortKey key = new VisualPortKey(connectorPos, connectorSide, type);
-        boolean newKey = !worldPorts.containsKey(key);
         IdentityHashMap<Object, EnumSet<VisualRole>> owners =
                 worldPorts.computeIfAbsent(key, ignored -> new IdentityHashMap<>());
         EnumSet<VisualRole> roles = owners.computeIfAbsent(owner, ignored -> EnumSet.noneOf(VisualRole.class));
-        if (roles.add(role) && newKey) {
+        // A fresh receiver/provider can reuse a key retained by an earlier
+        // remote owner.  Its connector block may meanwhile have been broken
+        // and replaced, so only refreshing on a brand-new key leaves the new
+        // port outside the rebuilt graph.  Every newly accepted owner role
+        // must therefore refresh the connector once; re-registering the same
+        // owner/role remains a no-op.
+        if (roles.add(role)) {
             refreshRemoteVisualPortBlock(level, connectorPos);
             return true;
         }

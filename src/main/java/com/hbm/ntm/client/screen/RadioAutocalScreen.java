@@ -8,7 +8,6 @@ import com.hbm.ntm.network.ModMessages;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -33,15 +32,6 @@ public class RadioAutocalScreen extends AbstractContainerScreen<RadioAutocalMenu
     @Override
     protected void init() {
         super.init();
-        addControlButton(8, 36, "on", Component.literal("I"));
-        addControlButton(28, 36, "ignore", Component.literal("!"));
-        addControlButton(48, 36, "auto", Component.literal("A"));
-        addRenderableWidget(Button.builder(Component.literal("Up"), button -> uploadClipboard())
-                .bounds(leftPos + 84, topPos + 36, BUTTON_SIZE, BUTTON_SIZE)
-                .build());
-        addRenderableWidget(Button.builder(Component.literal("Cp"), button -> copyScript())
-                .bounds(leftPos + 124, topPos + 36, BUTTON_SIZE, BUTTON_SIZE)
-                .build());
     }
 
     @Override
@@ -61,16 +51,13 @@ public class RadioAutocalScreen extends AbstractContainerScreen<RadioAutocalMenu
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        String name = title.getString();
-        graphics.drawString(font, name, imageWidth / 2 - font.width(name) / 2, titleLabelY, 0x404040, false);
-        graphics.drawString(font, statusLine(), 7, 61, 0x00AA00, false);
         String[] history = state().historyCopy();
         for (int i = 0; i < history.length; i++) {
             String line = history[i];
             if (line == null || line.isEmpty()) {
                 continue;
             }
-            graphics.drawString(font, trim(line, 156), 7, 73 + i * 10, 0x00FF00, false);
+            graphics.drawString(font, line, 7, 73 + i * 10, 0x00FF00, false);
         }
     }
 
@@ -82,10 +69,34 @@ public class RadioAutocalScreen extends AbstractContainerScreen<RadioAutocalMenu
         renderTooltip(graphics, mouseX, mouseY);
     }
 
-    private void addControlButton(int x, int y, String key, Component label) {
-        addRenderableWidget(Button.builder(label, button -> sendFlag(key))
-                .bounds(leftPos + x, topPos + y, BUTTON_SIZE, BUTTON_SIZE)
-                .build());
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (hovering(8, 36, mouseX, mouseY)) {
+            LegacyGuiElements.playClickSound();
+            sendFlag("on");
+            return true;
+        }
+        if (hovering(28, 36, mouseX, mouseY)) {
+            LegacyGuiElements.playClickSound();
+            sendFlag("ignore");
+            return true;
+        }
+        if (hovering(48, 36, mouseX, mouseY)) {
+            LegacyGuiElements.playClickSound();
+            sendFlag("auto");
+            return true;
+        }
+        if (hovering(84, 36, mouseX, mouseY)) {
+            LegacyGuiElements.playClickSound();
+            uploadClipboard();
+            return true;
+        }
+        if (hovering(124, 36, mouseX, mouseY)) {
+            LegacyGuiElements.playClickSound();
+            copyScript();
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     private void sendFlag(String key) {
@@ -111,29 +122,27 @@ public class RadioAutocalScreen extends AbstractContainerScreen<RadioAutocalMenu
         } else if (hovering(28, 36, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, List.of(
                     Component.literal("Ignore Errors").withStyle(ChatFormatting.RED),
-                    Component.literal("Skips instructions that error.")), mouseX, mouseY);
+                    Component.literal("Skips instructions that error,"),
+                    Component.literal("leaving the computer turned on."),
+                    Component.literal("May cause unintended behavior"),
+                    Component.literal("and inconsistencies.")), mouseX, mouseY);
         } else if (hovering(48, 36, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, List.of(
                     Component.literal("Automatic Reboot").withStyle(ChatFormatting.RED),
-                    Component.literal("Restarts when the program stops.")), mouseX, mouseY);
+                    Component.literal("Restarts the computer automatically when"),
+                    Component.literal("the program stops due to an error"),
+                    Component.literal("or after finishing.")), mouseX, mouseY);
         } else if (hovering(84, 36, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal("Upload Clipboard").withStyle(ChatFormatting.BLUE),
+            graphics.renderTooltip(font, Component.literal("Upload Program").withStyle(ChatFormatting.BLUE),
                     mouseX, mouseY);
         } else if (hovering(124, 36, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal("Copy Program").withStyle(ChatFormatting.BLUE),
+            graphics.renderTooltip(font, Component.literal("Download Program").withStyle(ChatFormatting.BLUE),
                     mouseX, mouseY);
         }
     }
 
-    private boolean hovering(int x, int y, int mouseX, int mouseY) {
+    private boolean hovering(int x, int y, double mouseX, double mouseY) {
         return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, BUTTON_SIZE, BUTTON_SIZE);
-    }
-
-    private String statusLine() {
-        RTTYAutocalState state = state();
-        return "PC " + state.context().current()
-                + "  CLK " + state.context().clockSpeed()
-                + "  " + (state.isOn() ? "ON" : "OFF");
     }
 
     private RTTYAutocalState state() {
@@ -141,15 +150,4 @@ public class RadioAutocalScreen extends AbstractContainerScreen<RadioAutocalMenu
         return blockEntity.autocalState();
     }
 
-    private String trim(String value, int width) {
-        if (font.width(value) <= width) {
-            return value;
-        }
-        String suffix = "...";
-        int end = value.length();
-        while (end > 0 && font.width(value.substring(0, end) + suffix) > width) {
-            end--;
-        }
-        return value.substring(0, end) + suffix;
-    }
 }

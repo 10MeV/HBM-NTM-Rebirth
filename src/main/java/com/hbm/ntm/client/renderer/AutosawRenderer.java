@@ -72,21 +72,21 @@ public class AutosawRenderer implements BlockEntityRenderer<AutosawBlockEntity> 
             double engineTranslateY = engine * LegacyTileRenderPlans.AUTOSAW_ENGINE_BOB;
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(autosaw)) {
                 LegacyPoseRotations.rotateYDegrees(poseStack, (float) -turn);
-                renderPart(MAIN, poseStack, buffer, modelLight, packedOverlay);
+                renderPart(MAIN, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.translate(0.0D, engineTranslateY, 0.0D);
-                renderPart(ENGINE, poseStack, buffer, modelLight, packedOverlay);
+                renderPart(ENGINE, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.translate(0.0D, -engineTranslateY, 0.0D);
                 renderPivotedX(ARM_UPPER, LegacyTileRenderPlans.AUTOSAW_ARM_PIVOT_Y, 0.0D, angle,
-                        0.0D, poseStack, buffer, modelLight, packedOverlay);
+                        0.0D, poseStack, buffer, packedLight, packedOverlay);
                 renderPivotedX(ARM_LOWER, LegacyTileRenderPlans.AUTOSAW_ARM_PIVOT_Y,
                         LegacyTileRenderPlans.AUTOSAW_ARM_LOWER_Z, angle * -2.0D,
-                        LegacyTileRenderPlans.AUTOSAW_ARM_LOWER_NUDGE_X, poseStack, buffer, modelLight,
+                        LegacyTileRenderPlans.AUTOSAW_ARM_LOWER_NUDGE_X, poseStack, buffer, packedLight,
                         packedOverlay);
                 renderPivotedX(ARM_TIP, LegacyTileRenderPlans.AUTOSAW_ARM_PIVOT_Y,
                         LegacyTileRenderPlans.AUTOSAW_ARM_TIP_Z, angle, 0.0D, poseStack, buffer,
-                        modelLight, packedOverlay);
+                        packedLight, packedOverlay);
                 renderPivotedY(SAWBLADE, LegacyTileRenderPlans.AUTOSAW_ARM_PIVOT_Y,
-                        LegacyTileRenderPlans.AUTOSAW_BLADE_Z, -bladeSpin, poseStack, buffer, modelLight,
+                        LegacyTileRenderPlans.AUTOSAW_BLADE_Z, -bladeSpin, poseStack, buffer, packedLight,
                         packedOverlay);
             }
             poseStack.popPose();

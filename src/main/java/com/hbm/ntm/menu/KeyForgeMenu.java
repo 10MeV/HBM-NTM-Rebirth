@@ -28,10 +28,10 @@ public class KeyForgeMenu extends AbstractContainerMenu {
     public KeyForgeMenu(int containerId, Inventory playerInventory, KeyForgeBlockEntity blockEntity) {
         super(ModMenuTypes.KEY_FORGE.get(), containerId);
         this.blockEntity = blockEntity;
-        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), KeyForgeBlockEntity.SLOT_SOURCE, 44, 35));
-        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), KeyForgeBlockEntity.SLOT_TARGET, 80, 35));
-        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), KeyForgeBlockEntity.SLOT_RANDOMIZE, 116, 35));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), KeyForgeBlockEntity.SLOT_SOURCE, 44, 36));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), KeyForgeBlockEntity.SLOT_TARGET, 80, 36));
+        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(), KeyForgeBlockEntity.SLOT_RANDOMIZE, 116, 36));
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
     }
 
     public KeyForgeBlockEntity getBlockEntity() {

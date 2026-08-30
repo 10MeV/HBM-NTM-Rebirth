@@ -1,6 +1,5 @@
 package com.hbm.ntm.block;
 
-import com.hbm.ntm.api.redstoneoverradio.ROR;
 import com.hbm.ntm.api.redstoneoverradio.RORInteractive;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.blockentity.RadioTorchBlockEntity;
@@ -71,6 +70,12 @@ public abstract class RadioTorchBlock extends BaseEntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // RadioTorchBase#onBlockActivated deliberately returned false while
+        // sneaking, so a held-item interaction could continue instead of
+        // unconditionally opening this configuration screen.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof RadioTorchBlockEntity torch) {
             NetworkHooks.openScreen(serverPlayer, torch, pos);
@@ -107,13 +112,18 @@ public abstract class RadioTorchBlock extends BaseEntityBlock {
     protected boolean hasAttachedRorValueProvider(LevelReader level, BlockPos pos, Direction facing) {
         BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level,
                 pos.relative(facing.getOpposite()));
-        return blockEntity instanceof RORValueProvider provider && ROR.hasValueInfo(provider);
+        // RadioTorchReader#canBlockStay accepted every IRORValueProvider. A
+        // function-info list only drives the optional GUI hint; it is not an
+        // attachment or execution precondition.
+        return blockEntity instanceof RORValueProvider;
     }
 
     protected boolean hasAttachedRorInteractive(LevelReader level, BlockPos pos, Direction facing) {
         BlockEntity blockEntity = MultiblockHelper.resolveOperationalCoreBlockEntity(level,
                 pos.relative(facing.getOpposite()));
-        return blockEntity instanceof RORInteractive interactive && ROR.hasFunctionInfo(interactive);
+        // RadioTorchController#canBlockStay likewise tested interface type
+        // only. Commands may be supplied without a discoverability listing.
+        return blockEntity instanceof RORInteractive;
     }
 
     protected boolean hasAttachedItemHandler(LevelReader level, BlockPos pos, Direction facing) {

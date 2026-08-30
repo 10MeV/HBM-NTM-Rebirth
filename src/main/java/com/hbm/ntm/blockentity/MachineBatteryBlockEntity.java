@@ -14,6 +14,7 @@ import com.hbm.ntm.block.MachineBatteryBlock;
 import com.hbm.ntm.compat.CompatEnergyControl;
 import com.hbm.ntm.energy.HbmBatteryTransfer;
 import com.hbm.ntm.energy.HbmEnergyNode;
+import com.hbm.ntm.energy.HbmEnergyProvider;
 import com.hbm.ntm.energy.HbmEnergyReceiver;
 import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyStorage;
@@ -26,6 +27,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -53,7 +57,7 @@ import java.util.function.IntSupplier;
 
 public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity implements MenuProvider, HbmTileSyncable,
         RORValueProvider, RORInteractive, LegacyLookOverlayProvider, ControlReceiver, CopiableSettings,
-        HbmPersistentBlockState {
+        HbmPersistentBlockState, HbmEnergyProvider, HbmEnergyReceiver {
     private static final String TAG_INVENTORY = "Inventory";
     protected static final long MAX_POWER = 1_000_000L;
     protected static final long MAX_RECEIVE = MAX_POWER / 200L;
@@ -69,6 +73,7 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     private static final String TAG_LAST_REDSTONE = "lastRedstone";
     private static final String TAG_PRIORITY = "priority";
     private static final String TAG_CONTROL = "control";
+    private static final String TAG_CUSTOM_NAME = "name";
 
     public static final int SLOT_DISCHARGE = 0;
     public static final int SLOT_CHARGE = 1;
@@ -111,6 +116,8 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
     private short redHigh = MODE_OUTPUT;
     private boolean lastRedstone;
     private int lastMode = MODE_NONE;
+    @Nullable
+    private String customName;
 
     public MachineBatteryBlockEntity(BlockPos pos, BlockState state) {
         this(ModBlockEntities.MACHINE_BATTERY.get(), pos, state, maxPowerFor(state), maxReceiveFor(state), maxExtractFor(state));
@@ -181,6 +188,38 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
             return 0;
         }
         return Mth.clamp((int) ((double) power / (double) energy.getMaxPower() * 15.0D) + 1, 0, 15);
+    }
+
+    @Override
+    public long transferPower(long power) {
+        return batteryEnergy.transferPower(power);
+    }
+
+    @Override
+    public long usePower(long power) {
+        return batteryEnergy.usePower(power);
+    }
+
+    @Override
+    public long getReceiverSpeed() {
+        return batteryEnergy.getReceiverSpeed();
+    }
+
+    @Override
+    public long getProviderSpeed() {
+        return batteryEnergy.getProviderSpeed();
+    }
+
+    @Override
+    public boolean allowDirectProvision() {
+        // TileEntityBatteryBase deliberately excluded ordinary direct provision;
+        // CableDiode remains its separate legacy direct-transfer special case.
+        return false;
+    }
+
+    @Override
+    public HbmEnergyReceiver.ConnectionPriority getPriority() {
+        return batteryEnergy.getPriority();
     }
 
     @Override
@@ -540,7 +579,8 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         if (getPower() == 0L && previousPowerState == 0L
                 && redLow == MODE_INPUT
                 && redHigh == MODE_OUTPUT
-                && batteryEnergy.getPriority() == HbmEnergyReceiver.ConnectionPriority.LOW) {
+                && batteryEnergy.getPriority() == HbmEnergyReceiver.ConnectionPriority.LOW
+                && !hasCustomName()) {
             return;
         }
         persistent.putLong("power", getPower());
@@ -548,6 +588,9 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         persistent.putShort(TAG_RED_LOW, redLow);
         persistent.putShort(TAG_RED_HIGH, redHigh);
         persistent.putInt(TAG_PRIORITY, batteryEnergy.getPriority().ordinal());
+        if (hasCustomName()) {
+            persistent.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
@@ -559,6 +602,8 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         if (persistent.contains(TAG_PRIORITY)) {
             batteryEnergy.setPriority(readLegacyPriority(persistent));
         }
+        customName = persistent.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING)
+                ? persistent.getString(TAG_CUSTOM_NAME) : null;
         markSettingsChanged();
     }
 
@@ -570,7 +615,24 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("container.hbm_ntm_rebirth.battery");
+        return hasCustomName() ? Component.literal(customName) : Component.translatable("container.hbm_ntm_rebirth.battery");
+    }
+
+    public void setCustomName(String name) {
+        customName = name;
+        setChanged();
+        syncToClient();
+    }
+
+    private void syncToClient() {
+        if (level != null && !level.isClientSide) {
+            BlockState state = getBlockState();
+            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
+        }
+    }
+
+    private boolean hasCustomName() {
+        return customName != null && !customName.isEmpty();
     }
 
     @Nullable
@@ -606,6 +668,9 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         tag.putLongArray("PowerLog", powerLog);
         tag.putInt("lastMode", lastMode);
         tag.putString(TAG_PRIORITY, batteryEnergy.getPriority().name());
+        if (hasCustomName()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
@@ -631,6 +696,75 @@ public class MachineBatteryBlockEntity extends HbmEnergyNetworkBlockEntity imple
         if (tag.contains(TAG_PRIORITY)) {
             batteryEnergy.setPriority(readLegacyPriority(tag));
         }
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong("Delta", delta);
+        tag.putShort(TAG_RED_LOW, redLow);
+        tag.putShort(TAG_RED_HIGH, redHigh);
+        tag.putByte(TAG_PRIORITY, (byte) batteryEnergy.getPriority().ordinal());
+        if (hasCustomName()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("Delta", Tag.TAG_LONG)) {
+            delta = tag.getLong("Delta");
+        }
+        if (tag.contains(TAG_RED_LOW, Tag.TAG_SHORT)) {
+            redLow = clampMode(tag.getShort(TAG_RED_LOW));
+        }
+        if (tag.contains(TAG_RED_HIGH, Tag.TAG_SHORT)) {
+            redHigh = clampMode(tag.getShort(TAG_RED_HIGH));
+        }
+        if (tag.contains(TAG_PRIORITY)) {
+            batteryEnergy.setPriority(readLegacyPriority(tag));
+        }
+        customName = tag.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING) ? tag.getString(TAG_CUSTOM_NAME) : null;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineBattery#serialize: loaded-tile flags precede live energy and mode state.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeLong(delta);
+        data.writeShort(redLow);
+        data.writeShort(redHigh);
+        data.writeByte(batteryEnergy.getPriority().ordinal());
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        delta = data.readLong();
+        redLow = clampMode(data.readShort());
+        redHigh = clampMode(data.readShort());
+        HbmEnergyReceiver.ConnectionPriority[] priorities = HbmEnergyReceiver.ConnectionPriority.values();
+        int ordinal = data.readByte();
+        batteryEnergy.setPriority(ordinal >= 0 && ordinal < priorities.length
+                ? priorities[ordinal] : HbmEnergyReceiver.ConnectionPriority.LOW);
     }
 
     @Override

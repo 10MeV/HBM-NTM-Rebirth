@@ -3,6 +3,7 @@ package com.hbm.ntm.blockentity;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.entity.mob.glyphid.EntityGlyphid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
@@ -13,6 +14,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 
 public class LegacyLanternBlockEntity extends BlockEntity implements HbmLegacyLoadedTile {
     private final HbmLegacyLoadedTileState legacyLoadedState = new HbmLegacyLoadedTileState();
@@ -34,6 +37,14 @@ public class LegacyLanternBlockEntity extends BlockEntity implements HbmLegacyLo
         if (blockEntity.comTimer >= 0) {
             blockEntity.comTimer--;
             blockEntity.setChanged();
+        }
+        // TileEntityLantern#updateEntity: the lamp's actual light sits five blocks above its base.
+        if (level.getGameTime() % 20L == 0L) {
+            AABB area = new AABB(pos.getX() + 0.5D, pos.getY() + 5.5D, pos.getZ() + 0.5D,
+                    pos.getX() + 0.5D, pos.getY() + 5.5D, pos.getZ() + 0.5D).inflate(7.5D);
+            for (EntityGlyphid glyphid : level.getEntitiesOfClass(EntityGlyphid.class, area)) {
+                glyphid.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0));
+            }
         }
         blockEntity.networkPackNT(250);
     }
@@ -85,8 +96,13 @@ public class LegacyLanternBlockEntity extends BlockEntity implements HbmLegacyLo
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
@@ -95,7 +111,30 @@ public class LegacyLanternBlockEntity extends BlockEntity implements HbmLegacyLo
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        handleClientSyncTag(packet.getTag());
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        // The normal lantern has no runtime packet in 1.7.10, while the
+        // Behemoth packet contains isBroken.  A modern chunk snapshot must
+        // also retain the loaded-tile state rather than calling load() with a
+        // partial tag and resetting it client-side.
+        writeLegacyLoadedTileClientTag(tag);
+        tag.putBoolean("isBroken", broken);
+        tag.putInt("comTimer", comTimer);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        if (tag == null) {
+            return;
+        }
+        readLegacyLoadedTileClientTag(tag);
+        broken = tag.getBoolean("isBroken");
+        comTimer = tag.getInt("comTimer");
     }
 
     @Override

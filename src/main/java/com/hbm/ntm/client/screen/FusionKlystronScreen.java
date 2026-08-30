@@ -7,6 +7,7 @@ import com.hbm.ntm.menu.FusionKlystronMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
 import com.hbm.ntm.util.BobMathUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -24,7 +25,7 @@ public class FusionKlystronScreen extends AbstractContainerScreen<FusionKlystron
         super(menu, inventory, title);
         imageWidth = 194;
         imageHeight = 200;
-        inventoryLabelX = 17;
+        inventoryLabelX = 35;
         inventoryLabelY = imageHeight - 93;
     }
 
@@ -83,7 +84,6 @@ public class FusionKlystronScreen extends AbstractContainerScreen<FusionKlystron
                 airGauge, 5, 2, 1, 0xA00000);
         LegacyGuiElements.drawSmoothGauge(graphics, leftPos + 124, topPos + 80,
                 powerGauge, 5, 2, 1, 0xA00000);
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 76, topPos + 71, 18, 52, menu.getAirTank());
     }
 
     @Override
@@ -101,19 +101,23 @@ public class FusionKlystronScreen extends AbstractContainerScreen<FusionKlystron
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(8, 18, 16, 52, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 8, 18, 16, 52)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 8, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(43, 71, 18, 18, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, java.util.List.of(Component.literal("<- "
-                    + shortNumber(menu.getOutput()) + "KyU / " + shortNumber(menu.getOutputTarget()) + "KyU")),
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 43, 71, 18, 18)) {
+            LegacyGuiElements.renderTooltip(graphics, font, java.util.List.of(Component.literal("<- ")
+                    .withStyle(ChatFormatting.RED)
+                    .append(Component.literal(shortNumber(menu.getOutput()) + "KyU / "
+                            + shortNumber(menu.getOutputTarget()) + "KyU").withStyle(ChatFormatting.RESET))),
                     mouseX, mouseY);
-        } else if (isHovering(76, 71, 18, 18, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getAirTank().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
-                    mouseX, mouseY);
-        } else if (isHovering(115, 71, 18, 18, mouseX, mouseY)) {
-            LegacyGuiElements.renderTooltip(graphics, font, java.util.List.of(Component.literal("-> "
-                    + shortNumber(menu.getOutput()) + "HE / " + shortNumber(menu.getOutputTarget()) + "HE")),
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 76, 71, 18, 18)) {
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getAirTank(),
+                    menu.getAirTank().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 115, 71, 18, 18)) {
+            LegacyGuiElements.renderTooltip(graphics, font, java.util.List.of(Component.literal("-> ")
+                    .withStyle(ChatFormatting.GREEN)
+                    .append(Component.literal(shortNumber(menu.getOutput()) + "HE / "
+                            + shortNumber(menu.getOutputTarget()) + "HE").withStyle(ChatFormatting.RESET))),
                     mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);

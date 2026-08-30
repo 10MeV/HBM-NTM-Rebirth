@@ -2,7 +2,6 @@ package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.TurbofanMenu;
-import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -57,25 +56,20 @@ public class TurbofanScreen extends AbstractContainerScreen<TurbofanMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(35, 17, 34, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(35, 17, 34, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getFuelTank(),
                     menu.fuelTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (menu.showsBlood() && isHovering(98, 17, 16, 16, mouseX, mouseY)) {
+        } else if (menu.showsBlood() && isLegacyHovering(98, 17, 16, 16, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getBloodTank(),
                     menu.bloodTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(143, 17, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(143, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 143, topPos + 17, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(98, 44, 16, 16, mouseX, mouseY) && menu.getAfterburner() > 0) {
-            graphics.renderTooltip(font, List.of(
-                    Component.literal("Afterburner: " + menu.getAfterburner()).getVisualOrderText()),
-                    mouseX, mouseY);
-        } else if (isHovering(116, 44, 52, 18, mouseX, mouseY)
-                && (menu.getOutput() > 0 || menu.getConsumption() > 0)) {
-            graphics.renderTooltip(font, List.of(
-                    Component.literal(menu.getOutput() + " HE/t").getVisualOrderText(),
-                    Component.literal(menu.getConsumption() + " mB/t").getVisualOrderText()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

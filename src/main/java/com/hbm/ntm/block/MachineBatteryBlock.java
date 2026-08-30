@@ -68,6 +68,9 @@ public class MachineBatteryBlock extends HorizontalMachineBlock implements Entit
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof MachineBatteryBlockEntity battery) {
             NetworkHooks.openScreen(serverPlayer, battery, pos);
@@ -78,8 +81,13 @@ public class MachineBatteryBlock extends HorizontalMachineBlock implements Entit
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof HbmPersistentBlockState persistent) {
-            persistent.readPersistentStateFromStack(stack);
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof MachineBatteryBlockEntity battery) {
+            battery.readPersistentStateFromStack(stack);
+            // MachineBattery#onBlockPlacedBy copied a renamed block item's
+            // display name into TileEntityMachineBattery for its GUI title.
+            if (stack.hasCustomHoverName()) {
+                battery.setCustomName(stack.getHoverName().getString());
+            }
         }
     }
 

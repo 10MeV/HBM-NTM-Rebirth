@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.RadarBlockEntity;
 import com.hbm.ntm.blockentity.RadarLargeBlockEntity;
@@ -17,9 +18,13 @@ import net.minecraft.world.phys.Vec3;
 
 public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRenderer<T> {
     private static final LegacyWavefrontModel SMALL_MODEL = ObjModelLibrary.MACHINE_RADAR_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle SMALL_BASE =
+            SMALL_MODEL.prepareRenderOnlyInCallOrder("Base");
     private static final LegacyWavefrontModel.SelectionHandle SMALL_DISH =
             SMALL_MODEL.prepareRenderOnlyInCallOrder("Dish");
     private static final LegacyWavefrontModel LARGE_MODEL = ObjModelLibrary.MACHINE_RADAR_LARGE_LEGACY;
+    private static final LegacyWavefrontModel.SelectionHandle LARGE_BODY =
+            LARGE_MODEL.prepareRenderOnlyInCallOrder("Radar");
     private static final LegacyWavefrontModel.SelectionHandle LARGE_DISH =
             LARGE_MODEL.prepareRenderOnlyInCallOrder("Dish");
 
@@ -63,12 +68,16 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(radar)) {
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                SMALL_MODEL.renderOnlyInCallOrder(SMALL_MODEL.textureLocation(), poseStack, buffer,
+                        modelLight, packedOverlay, SMALL_BASE);
+            }
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(radar)) {
                 poseStack.pushPose();
                 LegacyPoseRotations.rotateYDegrees(poseStack, -interpolatedRotation(radar, partialTick));
                 poseStack.translate(-0.125D, 0.0D, 0.0D);
                 SMALL_MODEL.renderOnlyInCallOrder(ObjModelLibrary.MACHINE_RADAR_DISH_TEXTURE,
-                        poseStack, buffer, modelLight, packedOverlay, SMALL_DISH);
+                        poseStack, buffer, packedLight, packedOverlay, SMALL_DISH);
                 poseStack.popPose();
             }
         }
@@ -94,10 +103,14 @@ public class RadarRenderer<T extends RadarBlockEntity> implements BlockEntityRen
         LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(radar)) {
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight,
+                        packedOverlay, LARGE_BODY);
+            }
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(radar)) {
                 poseStack.pushPose();
                 LegacyPoseRotations.rotateYDegrees(poseStack, -interpolatedRotation(radar, partialTick));
-                LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, modelLight,
+                LARGE_MODEL.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer, packedLight,
                         packedOverlay, LARGE_DISH);
                 poseStack.popPose();
             }

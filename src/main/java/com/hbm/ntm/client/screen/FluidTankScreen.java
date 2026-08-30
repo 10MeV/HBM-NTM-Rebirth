@@ -6,15 +6,11 @@ import com.hbm.ntm.blockentity.FluidTankBlockEntity;
 import com.hbm.ntm.blockentity.LegacyBigTankBlockEntity;
 import com.hbm.ntm.menu.FluidTankMenu;
 import com.hbm.ntm.network.ModMessages;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
     private static final ResourceLocation TANK_TEXTURE =
@@ -50,11 +46,9 @@ public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(71, 17, 34, 52, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 71, 17, 34, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
                     menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(151, 34, 18, 18, mouseX, mouseY)) {
-            graphics.renderTooltip(font, modeTooltip().stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
@@ -62,23 +56,16 @@ public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean handled = super.mouseClicked(mouseX, mouseY, button);
-        if (isHovering(151, 34, 18, 18, mouseX, mouseY)) {
+        if (isLegacyModeButton(mouseX, mouseY)) {
+            LegacyGuiElements.playClickSound();
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0, FluidTankBlockEntity.CONTROL_MODE);
             return true;
         }
         return handled;
     }
 
-    private List<Component> modeTooltip() {
-        List<Component> tooltip = new ArrayList<>();
-        tooltip.add(Component.translatable("container.fluidtank.mode"));
-        tooltip.add(Component.translatable("container.fluidtank.mode." + modeName(menu.getMode())).withStyle(ChatFormatting.YELLOW));
-        if (menu.isExploded()) {
-            tooltip.add(Component.translatable("container.fluidtank.damaged").withStyle(ChatFormatting.RED));
-        } else if (menu.isOnFire()) {
-            tooltip.add(Component.translatable("container.fluidtank.burning").withStyle(ChatFormatting.RED));
-        }
-        return tooltip;
+    private boolean isLegacyModeButton(double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 151, 35, 18, 18);
     }
 
     private ResourceLocation backgroundTexture() {
@@ -88,12 +75,4 @@ public class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
                 : TANK_TEXTURE;
     }
 
-    private static String modeName(int mode) {
-        return switch (mode) {
-            case FluidTankBlockEntity.MODE_BUFFER -> "buffer";
-            case FluidTankBlockEntity.MODE_OUTPUT -> "output";
-            case FluidTankBlockEntity.MODE_NONE -> "none";
-            default -> "input";
-        };
-    }
 }

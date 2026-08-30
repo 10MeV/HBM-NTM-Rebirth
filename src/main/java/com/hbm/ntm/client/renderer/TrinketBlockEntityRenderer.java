@@ -8,7 +8,6 @@ import com.hbm.ntm.client.obj.ObjTrinketModels;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -130,12 +129,13 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
         if (feature != null) {
             renderPart(feature, poseStack, buffer, state, packedLight, packedOverlay);
         }
-        renderSnowglobeLabel(variant, poseStack, buffer);
+        renderSnowglobeLabel(variant, poseStack, buffer, packedLight);
         renderPart(SNOWGLOBE_GLASS, poseStack, buffer, state, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
-    private static void renderSnowglobeLabel(int variant, PoseStack poseStack, MultiBufferSource buffer) {
+    private static void renderSnowglobeLabel(int variant, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight) {
         String label = TrinketVariant.snowglobeLabel(variant);
         if ("NONE".equals(label)) {
             return;
@@ -148,7 +148,7 @@ public class TrinketBlockEntityRenderer implements BlockEntityRenderer<TrinketBl
         LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         poseStack.translate(0.0D, 1.0D, 0.0D);
         font.drawInBatch(label, 0.0F, 0.0F, 0xFFFFFF, false, poseStack.last().pose(),
-                buffer, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+                buffer, Font.DisplayMode.NORMAL, 0, packedLight);
         poseStack.popPose();
     }
 

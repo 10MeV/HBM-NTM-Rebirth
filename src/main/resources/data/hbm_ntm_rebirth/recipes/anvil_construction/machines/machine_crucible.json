@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:ingot_firebrick" },
+      "count": 20
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/copper" },
+      "count": 8,
+      "legacy_ore": "ingotCopper"
+    },
+    {
+      "ingredient": { "tag": "forge:plates/steel" },
+      "count": 8,
+      "legacy_ore": "plateSteel"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:machine_crucible"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

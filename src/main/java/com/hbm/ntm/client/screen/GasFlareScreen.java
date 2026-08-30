@@ -56,39 +56,39 @@ public class GasFlareScreen extends AbstractContainerScreen<GasFlareMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(79, 16, 35, 10, mouseX, mouseY)) {
+        if (isLegacyHovering(79, 16, 35, 10, mouseX, mouseY)) {
             graphics.renderTooltip(font, split(List.of(
                     Component.literal("Valve"),
                     Component.literal(menu.isOn() ? "Open" : "Closed"))), mouseX, mouseY);
-        } else if (isHovering(79, 50, 35, 14, mouseX, mouseY)) {
+        } else if (isLegacyHovering(79, 50, 35, 14, mouseX, mouseY)) {
             graphics.renderTooltip(font, split(List.of(
                     Component.literal("Ignition"),
                     Component.literal(menu.doesBurn() ? "Burn" : "Vent"))), mouseX, mouseY);
-        } else if (isHovering(35, 17, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(35, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
                     menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(143, 17, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(143, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 143, topPos + 17, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(80, 71, 36, 18, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(List.of(
-                    Component.literal(menu.getFluidUsed() + " mB/t"),
-                    Component.literal(menu.getOutput() + " HE/t"))), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(89, 16, 16, 10, mouseX, mouseY)) {
+        if (isLegacyHovering(89, 16, 16, 10, mouseX, mouseY)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0, GasFlareBlockEntity.CONTROL_VALVE);
             return true;
         }
-        if (isHovering(89, 50, 16, 14, mouseX, mouseY)) {
+        if (isLegacyHovering(89, 50, 16, 14, mouseX, mouseY)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0, GasFlareBlockEntity.CONTROL_BURN);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private static List<net.minecraft.util.FormattedCharSequence> split(List<Component> tooltip) {

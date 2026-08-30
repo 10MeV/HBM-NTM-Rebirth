@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.AssemblyMachineBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -83,10 +82,10 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(assembler)) {
                 poseStack.pushPose();
                 LegacyPoseRotations.rotateYDegrees(poseStack, (float) assembler.getRing(partialTick));
-                renderModelPart("Ring", poseStack, buffer, modelLight, packedOverlay);
-                renderAssemblyMachineArm(poseStack, buffer, modelLight, packedOverlay,
+                renderModelPart("Ring", poseStack, buffer, packedLight, packedOverlay);
+                renderAssemblyMachineArm(poseStack, buffer, packedLight, packedOverlay,
                         1, 1.0D, 1.0D, assembler.getArm(0).getPositions(partialTick));
-                renderAssemblyMachineArm(poseStack, buffer, modelLight, packedOverlay,
+                renderAssemblyMachineArm(poseStack, buffer, packedLight, packedOverlay,
                         2, -1.0D, -1.0D, assembler.getArm(1).getPositions(partialTick));
                 poseStack.popPose();
             }
@@ -141,9 +140,6 @@ public class AssemblyMachineRenderer implements BlockEntityRenderer<AssemblyMach
 
     private static void renderStaticBaseFrame(boolean frameVisible, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay) {
-        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-            return;
-        }
         MODEL.renderOnlyInCallOrder(ObjMachineModels.ASSEMBLY_MACHINE_TEXTURE, poseStack, buffer,
                 packedLight, packedOverlay, frameVisible ? BASE_FRAME : BASE,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL);

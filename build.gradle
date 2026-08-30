@@ -87,7 +87,74 @@ minecraft {
             if (project.hasProperty('clientRunDir')) {
                 workingDirectory project.file(project.property('clientRunDir'))
             }
+            // Automated visual gates need a real player/server before their event
+            // handlers can initialize.  Keep quick play explicit so ordinary
+            // interactive runs still stop at the title screen, while audits can
+            // enter a known save without DPI-sensitive mouse automation.
+            if (project.hasProperty('clientQuickPlayWorld')) {
+                args '--quickPlaySingleplayer', project.property('clientQuickPlayWorld').toString()
+            }
             property 'forge.enabledGameTestNamespaces', gameTestNamespaces
+            if (project.hasProperty('guiAuditManifest')) {
+                property 'hbm_ntm.guiAuditManifest', project.property('guiAuditManifest').toString()
+            }
+            if (project.hasProperty('guiAuditOutput')) {
+                property 'hbm_ntm.guiAuditOutput', project.property('guiAuditOutput').toString()
+            }
+            if (project.hasProperty('guiAuditAutoExit')) {
+                property 'hbm_ntm.guiAuditAutoExit', project.property('guiAuditAutoExit').toString()
+            }
+            if (project.hasProperty('multiblockPlacementAuditManifest')) {
+                property 'hbm_ntm.multiblockPlacementAuditManifest', project.property('multiblockPlacementAuditManifest').toString()
+            }
+            if (project.hasProperty('multiblockPlacementAuditOutput')) {
+                property 'hbm_ntm.multiblockPlacementAuditOutput', project.property('multiblockPlacementAuditOutput').toString()
+            }
+            if (project.hasProperty('multiblockPlacementAuditAutoExit')) {
+                property 'hbm_ntm.multiblockPlacementAuditAutoExit', project.property('multiblockPlacementAuditAutoExit').toString()
+            }
+            if (project.hasProperty('multiblockPlacementAuditSettleTicks')) {
+                property 'hbm_ntm.multiblockPlacementAuditSettleTicks', project.property('multiblockPlacementAuditSettleTicks').toString()
+            }
+            if (project.hasProperty('worldModelAuditManifest')) {
+                property 'hbm_ntm.worldModelAuditManifest', project.property('worldModelAuditManifest').toString()
+            }
+            if (project.hasProperty('worldModelAuditOutput')) {
+                property 'hbm_ntm.worldModelAuditOutput', project.property('worldModelAuditOutput').toString()
+            }
+            if (project.hasProperty('worldModelAuditAutoExit')) {
+                property 'hbm_ntm.worldModelAuditAutoExit', project.property('worldModelAuditAutoExit').toString()
+            }
+            if (project.hasProperty('nonBlockGuiAuditManifest')) {
+                property 'hbm_ntm.nonBlockGuiAuditManifest', project.property('nonBlockGuiAuditManifest').toString()
+            }
+            if (project.hasProperty('nonBlockGuiAuditOutput')) {
+                property 'hbm_ntm.nonBlockGuiAuditOutput', project.property('nonBlockGuiAuditOutput').toString()
+            }
+            if (project.hasProperty('nonBlockGuiAuditAutoExit')) {
+                property 'hbm_ntm.nonBlockGuiAuditAutoExit', project.property('nonBlockGuiAuditAutoExit').toString()
+            }
+            if (project.hasProperty('fusionItemAuditOutput')) {
+                property 'hbm_ntm.fusionItemAuditOutput', project.property('fusionItemAuditOutput').toString()
+            }
+            if (project.hasProperty('fusionItemAuditAutoExit')) {
+                property 'hbm_ntm.fusionItemAuditAutoExit', project.property('fusionItemAuditAutoExit').toString()
+            }
+            if (project.hasProperty('fusionItemAuditDiagnosticCarrier')) {
+                property 'hbm_ntm.fusionItemAuditDiagnosticCarrier', project.property('fusionItemAuditDiagnosticCarrier').toString()
+            }
+            if (project.hasProperty('fluidTankItemAuditOutput')) {
+                property 'hbm_ntm.fluidTankItemAuditOutput', project.property('fluidTankItemAuditOutput').toString()
+            }
+            if (project.hasProperty('fluidTankItemAuditAutoExit')) {
+                property 'hbm_ntm.fluidTankItemAuditAutoExit', project.property('fluidTankItemAuditAutoExit').toString()
+            }
+            if (project.hasProperty('ironFurnaceItemAuditOutput')) {
+                property 'hbm_ntm.ironFurnaceItemAuditOutput', project.property('ironFurnaceItemAuditOutput').toString()
+            }
+            if (project.hasProperty('ironFurnaceItemAuditAutoExit')) {
+                property 'hbm_ntm.ironFurnaceItemAuditAutoExit', project.property('ironFurnaceItemAuditAutoExit').toString()
+            }
         }
 
         server {
@@ -127,10 +194,6 @@ minecraft {
             args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
         }
     }
-}
-
-sourceSets.main.resources {
-    srcDir 'src/generated/resources'
 }
 
 repositories {
@@ -201,12 +264,44 @@ tasks.register('resolvePerformanceMods') {
     }
 }
 
+// ForgeGradle writes the named development jar to build/libs before reobfJar
+// replaces it with the production-mapped jar.  Keep a separate, atomically
+// published release artifact so launchers cannot pick up that transient jar
+// while a build is still running.
+def publishedReleaseJar = layout.buildDirectory.file("release/${mod_id}-${mod_version}.jar")
+def publishReleaseJar = tasks.register('publishReleaseJar') {
+    group = 'build'
+    description = 'Publishes the production-mapped HBM jar after reobfuscation completes.'
+    dependsOn tasks.named('reobfJar')
+    inputs.file(tasks.named('jar').flatMap { it.archiveFile })
+    outputs.file(publishedReleaseJar)
+
+    doLast {
+        def source = tasks.named('jar').get().archiveFile.get().asFile.toPath()
+        def target = publishedReleaseJar.get().asFile.toPath()
+        java.nio.file.Files.createDirectories(target.parent)
+        def staged = target.resolveSibling(target.fileName.toString() + '.tmp')
+        java.nio.file.Files.copy(source, staged, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        try {
+            java.nio.file.Files.move(staged, target,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        } catch (java.nio.file.AtomicMoveNotSupportedException ignored) {
+            java.nio.file.Files.move(staged, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+}
+
+tasks.named('build').configure {
+    dependsOn publishReleaseJar
+}
+
 tasks.register('prepareEmbeddiumOculusProfile', Sync) {
     group = 'verification'
     description = 'Builds HBM and prepares an isolated optional Forge client mod profile with Embeddium and Oculus.'
-    dependsOn tasks.named('reobfJar')
+    dependsOn publishReleaseJar
     from(configurations.renderCompatibilityMods)
-    from(tasks.named('jar'))
+    from(publishedReleaseJar)
     into(layout.projectDirectory.dir('run-embeddium-oculus/mods'))
 }
 
@@ -236,6 +331,100 @@ tasks.named('processResources', ProcessResources).configure {
 
     filesMatching(['META-INF/mods.toml']) {
         expand replaceProperties
+    }
+}
+
+// Keep the complete project and upstream notices inside every distributable
+// mod jar.  The source directory remains easy to audit, while the generated
+// HBM subdirectories carry verbatim copies of the applicable GNU license
+// texts for recipients who only receive the binary jar.
+tasks.named('jar', Jar).configure {
+    from('LICENSE') {
+        into 'META-INF'
+        rename { "${mod_id}-LICENSE" }
+    }
+    from('NOTICE.md') {
+        into 'META-INF'
+        rename { "${mod_id}-NOTICE.md" }
+    }
+    from('third_party_licenses') {
+        into 'META-INF/third_party_licenses'
+    }
+    from('LICENSE') {
+        into 'META-INF/third_party_licenses/hbm-original'
+        rename { 'LICENSE' }
+    }
+    from('LICENSE.LESSER') {
+        into 'META-INF/third_party_licenses/hbm-original'
+        rename { 'LICENSE.LESSER' }
+    }
+    from('LICENSE') {
+        into 'META-INF/third_party_licenses/hbm-modernized'
+        rename { 'LICENSE' }
+    }
+}
+
+def requireStableJavaSourceSnapshot = providers.gradleProperty('guiAuditRequireStableSourceSnapshot')
+        .map { it.toBoolean() }.orElse(false)
+def mainJavaSourceSnapshotSha256 = {
+    def digest = java.security.MessageDigest.getInstance('SHA-256')
+    def entries = []
+    sourceSets.main.java.srcDirs.findAll { it.isDirectory() }.sort { it.canonicalPath }.each { sourceRoot ->
+        fileTree(sourceRoot) { include '**/*.java' }.files.each { sourceFile ->
+            entries << [root: sourceRoot.canonicalFile, file: sourceFile.canonicalFile]
+        }
+    }
+    entries.sort { left, right ->
+        def leftPath = left.root.toPath().relativize(left.file.toPath()).toString().replace('\\', '/')
+        def rightPath = right.root.toPath().relativize(right.file.toPath()).toString().replace('\\', '/')
+        (left.root.canonicalPath + '/' + leftPath) <=> (right.root.canonicalPath + '/' + rightPath)
+    }.each { entry ->
+        def relative = entry.root.toPath().relativize(entry.file.toPath()).toString().replace('\\', '/')
+        digest.update(entry.root.canonicalPath.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+        digest.update((byte) 0)
+        digest.update(relative.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+        digest.update((byte) 0)
+        digest.update(java.nio.file.Files.readAllBytes(entry.file.toPath()))
+        digest.update((byte) 0)
+    }
+    digest.digest().collect { String.format('%02x', it & 0xff) }.join()
+}
+def stableJavaSourceSnapshotFile = layout.buildDirectory.file('audit/main-java-source-snapshot.sha256')
+
+tasks.named('compileJava').configure {
+    doFirst {
+        if (requireStableJavaSourceSnapshot.get()) {
+            project.ext.hbmMainJavaSourceSnapshotBeforeCompile = mainJavaSourceSnapshotSha256()
+        }
+    }
+    doLast {
+        if (requireStableJavaSourceSnapshot.get()) {
+            def before = project.ext.hbmMainJavaSourceSnapshotBeforeCompile
+            def after = mainJavaSourceSnapshotSha256()
+            if (before != after) {
+                throw new GradleException('Main Java sources changed while compileJava was running; '
+                        + 'refusing a mixed source/class audit build.')
+            }
+            def snapshotFile = stableJavaSourceSnapshotFile.get().asFile
+            snapshotFile.parentFile.mkdirs()
+            snapshotFile.setText(after + System.lineSeparator(), 'UTF-8')
+        }
+    }
+}
+
+def verifyStableJavaSourceSnapshot = { String phase ->
+    if (!requireStableJavaSourceSnapshot.get()) {
+        return
+    }
+    def snapshotFile = stableJavaSourceSnapshotFile.get().asFile
+    if (!snapshotFile.isFile()) {
+        throw new GradleException("Stable Java source snapshot is missing before ${phase}: ${snapshotFile}")
+    }
+    def compiledSnapshot = snapshotFile.getText('UTF-8').trim()
+    def currentSnapshot = mainJavaSourceSnapshotSha256()
+    if (compiledSnapshot != currentSnapshot) {
+        throw new GradleException("Main Java sources changed after compileJava and before ${phase}; "
+                + 'refusing to launch Minecraft with stale or missing classes.')
     }
 }
 
@@ -287,12 +476,16 @@ def verifyRuntimeClasspath = tasks.register('verifyRuntimeClasspath') {
             throw new GradleException('Runtime resources are incomplete: META-INF/mods.toml is missing. '
                     + 'Rebuild the selected build directory before starting Minecraft.')
         }
+        verifyStableJavaSourceSnapshot('verifyRuntimeClasspath completion')
     }
 }
 
 tasks.configureEach { task ->
     if (task.name.startsWith('run') && task.name != 'runEnergyMk2SelfTest') {
         task.dependsOn(verifyRuntimeClasspath)
+        task.doFirst {
+            verifyStableJavaSourceSnapshot("${task.path} launch")
+        }
     }
 }
 

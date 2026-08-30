@@ -8,7 +8,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -70,9 +69,9 @@ public class PurexScreen extends AbstractContainerScreen<PurexMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(7, 125, 18, 18, mouseX, mouseY)) {
+        if (isLegacyHovering(7, 125, 18, 18, mouseX, mouseY)) {
             LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(), mouseX, mouseY);
-        } else if (isHovering(152, 18, 16, 61, mouseX, mouseY)) {
+        } else if (isLegacyHovering(152, 18, 16, 61, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 152, topPos + 18, 16, 61, menu.getPower(), menu.getMaxPower());
         } else {
@@ -83,7 +82,7 @@ public class PurexScreen extends AbstractContainerScreen<PurexMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(7, 125, 18, 18, mouseX, mouseY)) {
+        if (isLegacyHovering(7, 125, 18, 18, mouseX, mouseY)) {
             minecraft.setScreen(new PurexRecipeSelectorScreen(this));
             return true;
         }
@@ -92,16 +91,20 @@ public class PurexScreen extends AbstractContainerScreen<PurexMenu> {
 
     private void renderTankTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
         for (int i = 0; i < 3; i++) {
-            if (isHovering(8 + i * 18, 18, 16, 52, mouseX, mouseY)) {
+            if (isLegacyHovering(8 + i * 18, 18, 16, 52, mouseX, mouseY)) {
                 LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(i),
                         menu.getInputTankTooltip(i, hasShiftDown()), mouseX, mouseY);
                 return;
             }
         }
-        if (isHovering(116, 36, 16, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(116, 36, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(),
                     menu.getOutputTankTooltip(hasShiftDown()), mouseX, mouseY);
         }
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private List<Component> recipeTooltip() {
@@ -110,11 +113,7 @@ public class PurexScreen extends AbstractContainerScreen<PurexMenu> {
             return List.of(Component.translatableWithFallback("gui.recipe.setRecipe", "Set recipe")
                     .withStyle(ChatFormatting.YELLOW));
         }
-        return recipe.getDisplayLines();
-    }
-
-    private static List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {
-        return tooltip.stream().map(Component::getVisualOrderText).toList();
+        return recipe.getDisplayLines(hasShiftDown());
     }
 
     private static ItemStack recipeIcon(GenericMachineRecipe recipe) {

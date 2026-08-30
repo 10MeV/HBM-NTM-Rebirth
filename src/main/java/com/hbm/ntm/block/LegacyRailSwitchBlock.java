@@ -130,6 +130,10 @@ public final class LegacyRailSwitchBlock extends LegacyRailWaypointBlock impleme
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // Both 1.7.10 switch variants consumed the client-side click before
+        // checking sneak/train-item pass-through.  Preserve that asymmetric
+        // prediction contract; the server remains the authority that yields
+        // interaction to the player or ItemTrain.
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }

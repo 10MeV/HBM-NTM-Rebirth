@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "S": { "tag": "forge:plates/steel" },
+    "G": { "tag": "forge:glass_panes" },
+    "M": { "item": "hbm_ntm_rebirth:magnetron" },
+    "D": { "item": "hbm_ntm_rebirth:motor" }
+  },
+  "pattern": [ "III", "SGM", "IDI" ],
+  "result": { "item": "hbm_ntm_rebirth:machine_microwave" },
+  "show_notification": true
+}

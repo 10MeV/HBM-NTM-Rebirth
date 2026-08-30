@@ -6,8 +6,8 @@ import com.hbm.ntm.menu.RBMKPanelMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.hbm.ntm.neutron.RBMKPanelScreenPlanner;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
@@ -45,36 +45,37 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
             EditBox box = LegacyGuiElements.createLegacyTextField(font, leftPos + plan.x(), topPos + plan.y(),
                     plan.width(), plan.height(), plan.maxLength(), valueFor(plan));
             fields.put(plan.packetKey(), addRenderableWidget(box));
-        }
-        for (RBMKPanelScreenPlanner.TogglePlan plan : RBMKPanelScreenPlanner.toggles(panelType)) {
-            addRenderableWidget(Button.builder(toggleLabel(plan), button -> toggle(plan))
-                    .bounds(leftPos + plan.x(), topPos + plan.y(), plan.width(), plan.height())
-                    .build());
-        }
-        RBMKPanelScreenPlanner.SaveButtonPlan save = RBMKPanelScreenPlanner.saveButton(panelType);
-        if (save.present()) {
-            addRenderableWidget(Button.builder(Component.literal("S"), button -> save())
-                    .bounds(leftPos + save.x(), topPos + save.y(), save.width(), save.height())
-                    .build());
+            if (panelType == RBMKPanelPlanner.PanelType.TERMINAL) {
+                box.setFocused(true);
+                setFocused(box);
+            }
         }
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         if (panelType == RBMKPanelPlanner.PanelType.TERMINAL) {
-            graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xff000000);
             return;
         }
         if (panelType == RBMKPanelPlanner.PanelType.DISPLAY) {
             return;
         }
-        graphics.blit(texture(), leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, Math.max(256, imageHeight));
+        ResourceLocation texture = texture();
+        for (RBMKPanelScreenPlanner.TextureRect rect : RBMKPanelScreenPlanner.staticTextureRects(panelType)) {
+            graphics.blit(texture, leftPos + rect.x(), topPos + rect.y(), rect.u(), rect.v(),
+                    rect.width(), rect.height(), 256, 256);
+        }
+        for (RBMKPanelScreenPlanner.TogglePlan plan : RBMKPanelScreenPlanner.toggles(panelType)) {
+            if ((masks.getOrDefault(plan.maskKey(), 0) & (1 << plan.unit())) != 0) {
+                graphics.blit(texture, leftPos + plan.x(), topPos + plan.y(), plan.textureU(), plan.textureV(),
+                        plan.textureWidth(), plan.textureHeight(), 256, 256);
+            }
+        }
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         if (panelType == RBMKPanelPlanner.PanelType.TERMINAL) {
-            renderTerminalLabels(graphics);
             return;
         }
         String name = title.getString();
@@ -83,9 +84,38 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
+        if (panelType != RBMKPanelPlanner.PanelType.TERMINAL) {
+            renderBackground(graphics);
+        }
         super.render(graphics, mouseX, mouseY, partialTick);
+        if (panelType == RBMKPanelPlanner.PanelType.TERMINAL) {
+            renderTerminalHelp(graphics);
+        }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (super.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        for (RBMKPanelScreenPlanner.TogglePlan plan : RBMKPanelScreenPlanner.toggles(panelType)) {
+            if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos,
+                    plan.x(), plan.y(), plan.width(), plan.height())) {
+                toggle(plan);
+                boolean enabled = (masks.getOrDefault(plan.maskKey(), 0) & (1 << plan.unit())) != 0;
+                LegacyGuiElements.playClickSound(enabled ? 0.75F : 0.5F);
+                return true;
+            }
+        }
+        RBMKPanelScreenPlanner.SaveButtonPlan save = RBMKPanelScreenPlanner.saveButton(panelType);
+        if (save.present() && LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos,
+                save.x(), save.y(), save.width(), save.height())) {
+            save();
+            LegacyGuiElements.playClickSound();
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -95,23 +125,22 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
             sendTerminalCommand();
             return true;
         }
+        if (panelType == RBMKPanelPlanner.PanelType.TERMINAL
+                && (keyCode == GLFW.GLFW_KEY_HOME || keyCode == GLFW.GLFW_KEY_LEFT
+                || keyCode == GLFW.GLFW_KEY_RIGHT || keyCode == GLFW.GLFW_KEY_END)) {
+            return true;
+        }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    private void renderTerminalLabels(GuiGraphics graphics) {
-        RBMKPanelPlanner.TerminalState state = menu.getBlockEntity().terminal();
+    private void renderTerminalHelp(GuiGraphics graphics) {
         RBMKPanelScreenPlanner.TerminalScreenPlan plan = RBMKPanelScreenPlanner.terminalScreenPlan(false);
+        graphics.pose().pushPose();
+        graphics.pose().scale(0.5F, 0.5F, 1.0F);
         for (RBMKPanelScreenPlanner.HelpLine line : plan.helpLines()) {
-            graphics.drawString(font, line.text(), line.x(), line.y(), 0x808080, false);
+            graphics.drawString(font, line.text(), line.x(), line.y(), 0xFFFFFF, false);
         }
-        String[] history = state.history();
-        for (int i = 0; i < history.length; i++) {
-            String line = history[i] == null ? "" : history[i];
-            if (!line.isEmpty()) {
-                graphics.drawString(font, "> " + line, 2, 68 + i * 5, state.repeatCommand().isEmpty()
-                        ? 0x00ff00 : 0xff8000, false);
-            }
-        }
+        graphics.pose().popPose();
     }
 
     private void sendTerminalCommand() {
@@ -189,13 +218,6 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
         int mask = masks.getOrDefault(plan.maskKey(), 0);
         mask ^= 1 << plan.unit();
         masks.put(plan.maskKey(), mask);
-        if (getFocused() instanceof Button button) {
-            button.setMessage(toggleLabel(plan));
-        }
-    }
-
-    private Component toggleLabel(RBMKPanelScreenPlanner.TogglePlan plan) {
-        return Component.literal((masks.getOrDefault(plan.maskKey(), 0) & (1 << plan.unit())) != 0 ? "X" : "");
     }
 
     private void save() {
@@ -215,10 +237,24 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
     private void putField(CompoundTag tag, RBMKPanelScreenPlanner.TextFieldPlan plan) {
         String value = fields.containsKey(plan.packetKey()) ? fields.get(plan.packetKey()).getValue() : "";
         if (plan.name().equals("color")) {
-            tag.putInt(plan.packetKey(), parseColor(value));
+            Integer parsed = parseColor(value);
+            if (parsed != null) {
+                tag.putInt(plan.packetKey(), parsed);
+            }
         } else if (plan.name().equals("min") || plan.name().equals("max")) {
             if (!value.isBlank()) {
-                tag.putLong(plan.packetKey(), parseLong(value));
+                if (panelType == RBMKPanelPlanner.PanelType.GAUGE
+                        || panelType == RBMKPanelPlanner.PanelType.INDICATOR) {
+                    Integer parsed = parseInteger(value);
+                    if (parsed != null) {
+                        tag.putInt(plan.packetKey(), parsed);
+                    }
+                } else {
+                    Long parsed = parseLong(value);
+                    if (parsed != null) {
+                        tag.putLong(plan.packetKey(), parsed);
+                    }
+                }
             }
         } else {
             tag.putString(plan.packetKey(), value);
@@ -240,7 +276,7 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
 
     private static String gaugeValue(RBMKPanelPlanner.GaugeUnit unit, String name) {
         return switch (name) {
-            case "color" -> Integer.toHexString(unit.color());
+            case "color" -> hexColor(unit.color());
             case "label" -> unit.label();
             case "rtty" -> unit.rtty();
             case "min" -> Long.toString(unit.min());
@@ -261,7 +297,7 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
 
     private static String indicatorValue(RBMKPanelPlanner.IndicatorUnit unit, String name) {
         return switch (name) {
-            case "color" -> Integer.toHexString(unit.color());
+            case "color" -> hexColor(unit.color());
             case "label" -> unit.label();
             case "rtty" -> unit.rtty();
             case "min" -> Long.toString(unit.min());
@@ -272,7 +308,7 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
 
     private static String keyValue(RBMKPanelPlanner.KeyUnit unit, String name) {
         return switch (name) {
-            case "color" -> Integer.toHexString(unit.color());
+            case "color" -> hexColor(unit.color());
             case "label" -> unit.label();
             case "rtty" -> unit.rtty();
             case "command" -> unit.command();
@@ -298,20 +334,51 @@ public class RBMKPanelScreen extends AbstractContainerScreen<RBMKPanelMenu> {
         };
     }
 
-    private static int parseColor(String value) {
+    private static String hexColor(int value) {
+        return String.format("%06x", value & 0xFFFFFF);
+    }
+
+    private static Integer parseColor(String value) {
         try {
             return Integer.parseInt(value.trim().replace("#", ""), 16);
         } catch (RuntimeException ignored) {
-            return 0;
+            return null;
         }
     }
 
-    private static long parseLong(String value) {
+    private static Long parseLong(String value) {
         try {
             return Long.parseLong(value.trim());
         } catch (RuntimeException ignored) {
-            return 0L;
+            return null;
         }
+    }
+
+    private static Integer parseInteger(String value) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * Legacy RenderRBMKTerminal shows the input line only while this exact
+     * terminal's screen is open. The world renderer uses this snapshot.
+     */
+    public static TerminalRenderInput terminalRenderInput(RBMKPanelBlockEntity terminal) {
+        if (Minecraft.getInstance().screen instanceof RBMKPanelScreen screen
+                && screen.panelType == RBMKPanelPlanner.PanelType.TERMINAL
+                && screen.menu.getBlockEntity() == terminal) {
+            EditBox line = screen.fields.get("cmd");
+            return new TerminalRenderInput(line == null ? "" : line.getValue(),
+                    (System.currentTimeMillis() / 500L) % 2L == 0L);
+        }
+        return TerminalRenderInput.EMPTY;
+    }
+
+    public record TerminalRenderInput(String workingLine, boolean cursor) {
+        private static final TerminalRenderInput EMPTY = new TerminalRenderInput("", false);
     }
 
     private static int mask(int count, BoolAt predicate) {

@@ -3,9 +3,7 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.HeaterHeatexMenu;
 import com.hbm.ntm.network.ModMessages;
-import java.text.NumberFormat;
 import java.util.List;
-import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -17,8 +15,6 @@ import net.minecraft.world.entity.player.Inventory;
 public class HeaterHeatexScreen extends AbstractContainerScreen<HeaterHeatexMenu> {
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/machine/gui_heatex.png");
-    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getIntegerInstance(Locale.US);
-
     private EditBox cyclesField;
     private EditBox delayField;
 
@@ -78,21 +74,16 @@ public class HeaterHeatexScreen extends AbstractContainerScreen<HeaterHeatexMenu
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(44, 36, 16, 52, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 44, 36, 16, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(),
                     menu.getInputTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(116, 36, 16, 52, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 116, 36, 16, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(),
                     menu.getOutputTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(70, 26, 36, 18, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 70, 26, 36, 18)) {
             graphics.renderComponentTooltip(font, List.of(Component.literal("Amount per cycle")), mouseX, mouseY);
-        } else if (isHovering(70, 44, 36, 18, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 70, 44, 36, 18)) {
             graphics.renderComponentTooltip(font, List.of(Component.literal("Cycle tick delay")), mouseX, mouseY);
-        } else if (isHovering(70, 62, 36, 8, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(
-                    Component.literal(NUMBER_FORMAT.format(menu.getHeatEnergy()) + " TU"),
-                    Component.literal(menu.getLastInputUsed() + " mB -> " + menu.getLastOutputProduced() + " mB")),
-                    mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

@@ -18,6 +18,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -168,6 +169,10 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        savePaint(tag);
+    }
+
+    private void savePaint(CompoundTag tag) {
         if (paintedState == null) {
             tag.remove(TAG_PAINT_BLOCK);
             tag.remove(TAG_PAINT_BLOCK_NAME);
@@ -212,13 +217,33 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    /** Exhaust nodes are server-only; only the legacy paint state is rendered client-side. */
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        savePaint(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncTag(tag);
+    }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncTag(tag);
+        }
     }
 
     @Override
@@ -246,6 +271,30 @@ public class FluidDuctPaintableExhaustBlockEntity extends BlockEntity
         if (level != null && level.isClientSide) {
             requestModelDataUpdate();
             ClientGeometryInvalidationBridge.schedule(worldPosition);
+        }
+    }
+
+    private void readClientSyncTag(CompoundTag tag) {
+        BlockState previous = paintedState;
+        BlockState state = null;
+        if (tag.contains(TAG_PAINT_BLOCK_NAME)) {
+            ResourceLocation key = ResourceLocation.tryParse(tag.getString(TAG_PAINT_BLOCK_NAME));
+            Block block = key == null ? null : ForgeRegistries.BLOCKS.getValue(key);
+            if (block != null && block != Blocks.AIR) {
+                state = PaintableDuctBlockEntity.stateFromLegacyMeta(block, tag.getInt(TAG_PAINT_META));
+            }
+        }
+        if (state == null && tag.contains(TAG_PAINT_BLOCK)) {
+            BlockState legacyState = Block.stateById(tag.getInt(TAG_PAINT_BLOCK));
+            if (!legacyState.isAir()) {
+                state = PaintableDuctBlockEntity.stateFromLegacyMeta(legacyState.getBlock(),
+                        tag.getInt(TAG_PAINT_META));
+            }
+        }
+        paintedState = state;
+        paintedMeta = tag.getInt(TAG_PAINT_META) & 15;
+        if (previous != paintedState) {
+            refreshPaintModelData();
         }
     }
 }

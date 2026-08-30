@@ -22,8 +22,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
@@ -353,8 +355,56 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong(TAG_POWER, energy.getPower());
+        tag.putString(TAG_MODE, mode.name());
+        tag.putBoolean(TAG_ON, on);
+        tag.putBoolean(TAG_VALID, missingValidSilex);
+        tag.putInt(TAG_DISTANCE, distance);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        if (tag.contains(TAG_POWER)) {
+            energy.setPower(Math.max(0L, tag.getLong(TAG_POWER)));
+        }
+        if (tag.contains(TAG_MODE, Tag.TAG_STRING)) {
+            mode = safeWavelength(tag.getString(TAG_MODE));
+        }
+        if (tag.contains(TAG_ON)) {
+            on = tag.getBoolean(TAG_ON);
+        }
+        if (tag.contains(TAG_VALID)) {
+            missingValidSilex = tag.getBoolean(TAG_VALID);
+        }
+        if (tag.contains(TAG_DISTANCE)) {
+            distance = Math.max(0, tag.getInt(TAG_DISTANCE));
+        }
+    }
 
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
@@ -408,7 +458,7 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }

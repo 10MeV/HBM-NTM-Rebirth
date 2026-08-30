@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.blockentity.SatelliteLinkBlockEntity;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
@@ -43,7 +44,7 @@ public class SatelliteLinkRenderer implements BlockEntityRenderer<SatelliteLinkB
         }
         BlockState state = link.getBlockState();
         Direction facing = state.getValue(HorizontalMachineBlock.FACING);
-        Direction clockwise = facing.getClockWise();
+        Direction counterClockwise = facing.getCounterClockWise();
         int light = LegacyRenderLighting.resolveMultiblockLight(link, packedLight);
         float rotation = Mth.lerp(partialTick, link.getPreviousRotation(), link.getRotation());
         float lift = Mth.lerp(partialTick, link.getPreviousLift(), link.getLift());
@@ -51,21 +52,21 @@ public class SatelliteLinkRenderer implements BlockEntityRenderer<SatelliteLinkB
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
-        poseStack.translate((facing.getStepX() + clockwise.getStepX()) * 0.5D, 0.0D,
-                (facing.getStepZ() + clockwise.getStepZ()) * 0.5D);
+        poseStack.translate((facing.getStepX() + counterClockwise.getStepX()) * 0.5D, 0.0D,
+                (facing.getStepZ() + counterClockwise.getStepZ()) * 0.5D);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(link)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(link)) {
                 MODEL.renderOnlyInCallOrder(ObjMachineModels.SATLINK_TEXTURE, poseStack, buffer, light,
-                        packedOverlay, BASE);
+                        packedOverlay, BASE, LegacyTexturedRenderMode.CUTOUT_CULL);
                 poseStack.pushPose();
                 LegacyPoseRotations.rotateYDegrees(poseStack, rotation);
-                MODEL.renderOnlyInCallOrder(ObjMachineModels.SATLINK_TEXTURE, poseStack, buffer, light,
-                        packedOverlay, ROTOR);
+                MODEL.renderOnlyInCallOrder(ObjMachineModels.SATLINK_TEXTURE, poseStack, buffer, packedLight,
+                        packedOverlay, ROTOR, LegacyTexturedRenderMode.CUTOUT_CULL);
                 poseStack.translate(0.0D, 7.375D, 0.0D);
                 poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(lift));
                 poseStack.translate(0.0D, -7.375D, 0.0D);
-                MODEL.renderOnlyInCallOrder(ObjMachineModels.SATLINK_TEXTURE, poseStack, buffer, light,
-                        packedOverlay, DISH);
+                MODEL.renderOnlyInCallOrder(ObjMachineModels.SATLINK_TEXTURE, poseStack, buffer, packedLight,
+                        packedOverlay, DISH, LegacyTexturedRenderMode.CUTOUT_CULL);
                 poseStack.popPose();
             }
         }

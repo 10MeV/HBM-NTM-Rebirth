@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:concrete_smooth" }, "count": 128 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:steel_scaffold" }, "count": 32 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:machine_condenser" }, "count": 16 },
+    { "ingredient": { "tag": "forge:pipes/steel" }, "count": 8, "legacy_ore": "pipeSteel" }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:machine_tower_large" },
+  "tier_lower": 4,
+  "overlay": "construction"
+}

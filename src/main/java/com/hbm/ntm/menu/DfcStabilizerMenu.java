@@ -27,7 +27,7 @@ public class DfcStabilizerMenu extends AbstractContainerMenu {
         super(ModMenuTypes.DFC_STABILIZER.get(), id);
         this.blockEntity = blockEntity;
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 80, 17));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 166);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 142);
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getWatts, value -> watts = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getBeam, value -> beam = value);

@@ -23,10 +23,10 @@ public class ChemicalFactoryScreen extends AbstractContainerScreen<ChemicalFacto
         super(menu, inventory, title);
         imageWidth = 248;
         imageHeight = 216;
-        titleLabelX = 84;
+        titleLabelX = 106;
         titleLabelY = 6;
         inventoryLabelX = 26;
-        inventoryLabelY = 124;
+        inventoryLabelY = 122;
     }
 
     @Override
@@ -69,7 +69,7 @@ public class ChemicalFactoryScreen extends AbstractContainerScreen<ChemicalFacto
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        LegacyGuiText.drawCenteredLabel(graphics, font, title.getString(), titleLabelX, titleLabelY, 120, 0x404040);
+        graphics.drawString(font, title, titleLabelX - font.width(title) / 2, titleLabelY, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -77,7 +77,7 @@ public class ChemicalFactoryScreen extends AbstractContainerScreen<ChemicalFacto
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(224, 18, 16, 68, mouseX, mouseY)) {
+        if (isLegacyHovering(224, 18, 16, 68, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 224, topPos + 18, 16, 68, menu.getPower(), menu.getMaxPower());
         } else {
@@ -90,7 +90,7 @@ public class ChemicalFactoryScreen extends AbstractContainerScreen<ChemicalFacto
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         for (int module = 0; module < 4; module++) {
             int y = module * 22;
-            if (isHovering(74, 19 + y, 18, 18, mouseX, mouseY)) {
+            if (isLegacyHovering(74, 19 + y, 18, 18, mouseX, mouseY)) {
                 minecraft.setScreen(new ChemicalFactoryRecipeSelectorScreen(this, module));
                 return true;
             }
@@ -101,27 +101,27 @@ public class ChemicalFactoryScreen extends AbstractContainerScreen<ChemicalFacto
     private void renderModuleTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
         for (int module = 0; module < 4; module++) {
             int y = module * 22;
-            if (isHovering(74, 19 + y, 18, 18, mouseX, mouseY)) {
+            if (isLegacyHovering(74, 19 + y, 18, 18, mouseX, mouseY)) {
                 LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(module), mouseX, mouseY);
                 return;
             }
             for (int tank = 0; tank < 3; tank++) {
-                if (isHovering(60 + tank * 5, 20 + y, 3, 16, mouseX, mouseY)) {
+                if (isLegacyHovering(60 + tank * 5, 20 + y, 3, 16, mouseX, mouseY)) {
                     LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTankData(module, tank),
                             menu.getInputTankTooltip(module, tank, hasShiftDown()), mouseX, mouseY);
                     return;
                 }
-                if (isHovering(189 + tank * 5, 20 + y, 3, 16, mouseX, mouseY)) {
+                if (isLegacyHovering(189 + tank * 5, 20 + y, 3, 16, mouseX, mouseY)) {
                     LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTankData(module, tank),
                             menu.getOutputTankTooltip(module, tank, hasShiftDown()), mouseX, mouseY);
                     return;
                 }
             }
         }
-        if (isHovering(224, 125, 7, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(224, 125, 7, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getWaterTankData(),
                     menu.getWaterTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(233, 125, 7, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(233, 125, 7, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getSpentSteamTankData(),
                     menu.getSpentSteamTankTooltip(hasShiftDown()), mouseX, mouseY);
         }
@@ -134,6 +134,10 @@ public class ChemicalFactoryScreen extends AbstractContainerScreen<ChemicalFacto
                     .withStyle(ChatFormatting.YELLOW));
         }
         return recipe.getDisplayLines();
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private static List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {

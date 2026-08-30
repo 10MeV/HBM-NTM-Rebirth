@@ -69,6 +69,12 @@ public class RBMKUtilityBlock extends BaseEntityBlock implements HbmFluidConnect
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
+        // TileEntityRBMKInlet/Outlet performed their fluid transfers only on
+        // the logical server.  Their tanks are synchronised separately, so a
+        // client ticker is neither required nor part of the old contract.
+        if (level.isClientSide) {
+            return null;
+        }
         return switch (kind) {
             case STEAM_INLET -> createTickerHelper(type, ModBlockEntities.RBMK_STEAM_INLET.get(),
                     RBMKSteamInletBlockEntity::serverTick);

@@ -100,7 +100,8 @@ public class FusionTorusStructCoreBlockEntity extends BlockEntity {
 
     public static LegacyMultiblockLayout torusLayout() {
         return LegacyMultiblockLayout.ofOffsets(runtimeOffsets())
-                .withExtraProxyOffsets(EXTRA_PORTS, LegacyProxyMode.fullCombo());
+                .withProxyOffsets(EXTRA_PORTS, LegacyProxyMode.fullCombo())
+                .withLegacyExtraOffsets(EXTRA_PORTS);
     }
 
     public static int legacyLayoutComponent(int x, int y, int z) {

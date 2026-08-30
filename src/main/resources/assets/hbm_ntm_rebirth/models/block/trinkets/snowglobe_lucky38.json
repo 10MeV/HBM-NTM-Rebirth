@@ -1,6 +1,8 @@
 {
-    "render_type":  "minecraft:solid",
-    "loader":  "forge:obj",
+    "render_type":  "hbm_ntm_rebirth:legacy_lit_solid",
+    "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+    "shade_quads": false,
+    "emissive_ambient": false,
     "flip_v":  true,
   "automatic_culling": false,
     "model":  "hbm_ntm_rebirth:models/block/trinkets/snowglobe_lucky38.obj",

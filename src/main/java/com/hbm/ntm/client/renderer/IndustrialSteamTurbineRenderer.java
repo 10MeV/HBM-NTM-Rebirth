@@ -77,10 +77,10 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
             }
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 renderRotatingPart(MODEL, GAUGE, LegacyTileRenderPlans.INDUSTRIAL_TURBINE_PIVOT_Y,
-                        0.0F, 0.0F, 1.0F, gaugeDegrees, poseStack, buffer, modelLight, packedOverlay,
+                        0.0F, 0.0F, 1.0F, gaugeDegrees, poseStack, buffer, packedLight, packedOverlay,
                         renderMode);
                 renderRotatingPart(MODEL, FLYWHEEL, LegacyTileRenderPlans.INDUSTRIAL_TURBINE_PIVOT_Y,
-                        0.0F, 0.0F, -1.0F, flywheelDegrees, poseStack, buffer, modelLight, packedOverlay,
+                        0.0F, 0.0F, -1.0F, flywheelDegrees, poseStack, buffer, packedLight, packedOverlay,
                         renderMode);
             }
         }

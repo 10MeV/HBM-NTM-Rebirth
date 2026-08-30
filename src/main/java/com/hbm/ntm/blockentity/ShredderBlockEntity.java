@@ -85,6 +85,7 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
         }
     };
 
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> automationItems = LazyOptional.of(AccessibleItemHandler::new);
     private int progress;
     private int soundCycle;
@@ -215,12 +216,15 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        // TileEntityMachineShredder#serialize only carried the loaded-tile
+        // state and power.  Preserve the base snapshot for chunk/block updates
+        // instead of suppressing it until the next networkPackNT(50) resend.
+        return super.getClientSyncTag();
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        super.handleClientSyncTag(tag);
     }
 
     @Override
@@ -239,7 +243,7 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-}
+    }
 
     @Nullable
     @Override
@@ -250,13 +254,14 @@ public class ShredderBlockEntity extends HbmEnergyBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        itemHandler.invalidate();
         automationItems.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return automationItems.cast();
+            return (side == null ? itemHandler : automationItems).cast();
         }
         return super.getCapability(capability, side);
     }

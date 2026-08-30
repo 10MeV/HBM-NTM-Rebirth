@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 
 public final class LegacyUntexturedQuadRenderer {
     private static final int LEGACY_EFFECT_BUFFER_SIZE = 262_144;
@@ -37,6 +38,10 @@ public final class LegacyUntexturedQuadRenderer {
                         RenderSystem.disableBlend();
                         RenderSystem.defaultBlendFunc();
                     });
+    private static final RenderStateShard.TexturingStateShard FRONT_FACE_CW =
+            new RenderStateShard.TexturingStateShard("hbm_legacy_untextured_front_face_cw",
+                    () -> GL11.glFrontFace(GL11.GL_CW),
+                    () -> GL11.glFrontFace(GL11.GL_CCW));
 
     private static final RenderType LEGACY_ADDITIVE_NO_CULL = RenderType.create(
             "hbm_legacy_additive_no_cull",
@@ -79,6 +84,10 @@ public final class LegacyUntexturedQuadRenderer {
                     .setCullState(new RenderStateShard.CullStateShard(true))
                     .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, false))
                     .createCompositeState(false));
+    private static final RenderType LEGACY_ADDITIVE_REVERSED_CULL = createType(
+            "hbm_legacy_additive_reversed_cull",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeLightningShader),
+            LIGHTNING_TRANSPARENCY, false, true, VertexFormat.Mode.QUADS, true, true);
 
     private static final RenderType LEGACY_TRANSLUCENT_NO_CULL = RenderType.create(
             "hbm_legacy_translucent_no_cull",
@@ -121,6 +130,10 @@ public final class LegacyUntexturedQuadRenderer {
                     .setCullState(new RenderStateShard.CullStateShard(true))
                     .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
                     .createCompositeState(false));
+    private static final RenderType LEGACY_TRANSLUCENT_DEPTH_WRITE_REVERSED_CULL = createType(
+            "hbm_legacy_translucent_depth_write_reversed_cull",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
+            NORMAL_ALPHA_TRANSPARENCY, true, true, VertexFormat.Mode.QUADS, true, true);
 
     private static final RenderType LEGACY_SOLID_NO_CULL = RenderType.create(
             "hbm_legacy_solid_no_cull",
@@ -147,6 +160,10 @@ public final class LegacyUntexturedQuadRenderer {
                     .setCullState(new RenderStateShard.CullStateShard(true))
                     .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, true))
                     .createCompositeState(false));
+    private static final RenderType LEGACY_SOLID_REVERSED_CULL = createType(
+            "hbm_legacy_solid_reversed_cull",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
+            null, true, false, VertexFormat.Mode.QUADS, true, true);
 
     private static final RenderType LEGACY_ADDITIVE_NO_CULL_TRIANGLES = createType(
             "hbm_legacy_additive_no_cull_triangles",
@@ -170,6 +187,10 @@ public final class LegacyUntexturedQuadRenderer {
             true,
             VertexFormat.Mode.TRIANGLES,
             true);
+    private static final RenderType LEGACY_ADDITIVE_REVERSED_CULL_TRIANGLES = createType(
+            "hbm_legacy_additive_reversed_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeLightningShader),
+            LIGHTNING_TRANSPARENCY, false, true, VertexFormat.Mode.TRIANGLES, true, true);
     private static final RenderType LEGACY_TRANSLUCENT_NO_CULL_TRIANGLES = createType(
             "hbm_legacy_translucent_no_cull_triangles",
             new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
@@ -192,6 +213,10 @@ public final class LegacyUntexturedQuadRenderer {
             true,
             VertexFormat.Mode.TRIANGLES,
             true);
+    private static final RenderType LEGACY_TRANSLUCENT_DEPTH_WRITE_REVERSED_CULL_TRIANGLES = createType(
+            "hbm_legacy_translucent_depth_write_reversed_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
+            NORMAL_ALPHA_TRANSPARENCY, true, true, VertexFormat.Mode.TRIANGLES, true, true);
     private static final RenderType LEGACY_SOLID_NO_CULL_TRIANGLES = createType(
             "hbm_legacy_solid_no_cull_triangles",
             new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
@@ -207,6 +232,10 @@ public final class LegacyUntexturedQuadRenderer {
             false,
             VertexFormat.Mode.TRIANGLES,
             true);
+    private static final RenderType LEGACY_SOLID_REVERSED_CULL_TRIANGLES = createType(
+            "hbm_legacy_solid_reversed_cull_triangles",
+            new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader),
+            null, true, false, VertexFormat.Mode.TRIANGLES, true, true);
 
     public static VertexConsumer lightning(MultiBufferSource buffer) {
         return buffer.getBuffer(LEGACY_ADDITIVE_NO_CULL);
@@ -273,13 +302,21 @@ public final class LegacyUntexturedQuadRenderer {
         return switch (renderMode.withAlpha(alpha)) {
             case ADDITIVE_DEPTH_WRITE -> triangles ? LEGACY_ADDITIVE_DEPTH_WRITE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_DEPTH_WRITE_NO_CULL;
             case ADDITIVE_CULL_NO_DEPTH_WRITE -> triangles ? LEGACY_ADDITIVE_CULL_TRIANGLES : LEGACY_ADDITIVE_CULL;
+            case ADDITIVE_REVERSED_CULL_NO_DEPTH_WRITE -> triangles
+                    ? LEGACY_ADDITIVE_REVERSED_CULL_TRIANGLES : LEGACY_ADDITIVE_REVERSED_CULL;
             case ADDITIVE_NO_DEPTH_WRITE -> triangles ? LEGACY_ADDITIVE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_NO_CULL;
             case TRANSLUCENT_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL_TRIANGLES : LEGACY_TRANSLUCENT_DEPTH_WRITE_NO_CULL;
             case TRANSLUCENT_CULL_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_DEPTH_WRITE_CULL_TRIANGLES : LEGACY_TRANSLUCENT_DEPTH_WRITE_CULL;
+            case TRANSLUCENT_REVERSED_CULL_DEPTH_WRITE -> triangles
+                    ? LEGACY_TRANSLUCENT_DEPTH_WRITE_REVERSED_CULL_TRIANGLES
+                    : LEGACY_TRANSLUCENT_DEPTH_WRITE_REVERSED_CULL;
             case TRANSLUCENT, TRANSLUCENT_NO_DEPTH_WRITE -> triangles ? LEGACY_TRANSLUCENT_NO_CULL_TRIANGLES : LEGACY_TRANSLUCENT_NO_CULL;
-            case CUTOUT_REVERSED_CULL, CUTOUT_CULL, RAW_LIGHTMAP_CUTOUT_CULL ->
+            case CUTOUT_CULL, RAW_LIGHTMAP_CUTOUT_CULL ->
                     triangles ? LEGACY_SOLID_CULL_TRIANGLES : LEGACY_SOLID_CULL;
-            case CUTOUT_NO_CULL, CUTOUT_DOUBLE_SIDED -> triangles ? LEGACY_SOLID_NO_CULL_TRIANGLES : LEGACY_SOLID_NO_CULL;
+            case CUTOUT_REVERSED_CULL, RAW_LIGHTMAP_CUTOUT_REVERSED_CULL ->
+                    triangles ? LEGACY_SOLID_REVERSED_CULL_TRIANGLES : LEGACY_SOLID_REVERSED_CULL;
+            case CUTOUT_NO_CULL, CUTOUT_DOUBLE_SIDED, LIGHTMAP_ONLY_CUTOUT_NO_CULL ->
+                    triangles ? LEGACY_SOLID_NO_CULL_TRIANGLES : LEGACY_SOLID_NO_CULL;
             case GLINT_NO_DEPTH_WRITE, GLINT_EQUAL_DEPTH -> triangles ? LEGACY_ADDITIVE_NO_CULL_TRIANGLES : LEGACY_ADDITIVE_NO_CULL;
         };
     }
@@ -293,12 +330,21 @@ public final class LegacyUntexturedQuadRenderer {
     private static RenderType createType(String name, RenderStateShard.ShaderStateShard shader,
             RenderStateShard.TransparencyStateShard transparency, boolean depthWrite, boolean sortOnUpload,
             VertexFormat.Mode drawMode, boolean cull) {
+        return createType(name, shader, transparency, depthWrite, sortOnUpload, drawMode, cull, false);
+    }
+
+    private static RenderType createType(String name, RenderStateShard.ShaderStateShard shader,
+            RenderStateShard.TransparencyStateShard transparency, boolean depthWrite, boolean sortOnUpload,
+            VertexFormat.Mode drawMode, boolean cull, boolean reversedFrontFace) {
         RenderType.CompositeState.CompositeStateBuilder builder = RenderType.CompositeState.builder()
                 .setShaderState(shader)
                 .setCullState(new RenderStateShard.CullStateShard(cull))
                 .setWriteMaskState(new RenderStateShard.WriteMaskStateShard(true, depthWrite));
         if (transparency != null) {
             builder.setTransparencyState(transparency);
+        }
+        if (reversedFrontFace) {
+            builder.setTexturingState(FRONT_FACE_CW);
         }
         return RenderType.create(name, DefaultVertexFormat.POSITION_COLOR, drawMode, LEGACY_EFFECT_BUFFER_SIZE, false, sortOnUpload,
                 builder.createCompositeState(false));

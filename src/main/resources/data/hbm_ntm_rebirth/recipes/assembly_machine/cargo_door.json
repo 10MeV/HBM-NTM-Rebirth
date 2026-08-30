@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {"count": 32, "ingredient": {"item": "hbm_ntm_rebirth:steel_beam"}},
+    {"count": 4, "ingredient": {"tag": "forge:plates/steel"}, "legacy_ore": "plateSteel"},
+    {"count": 4, "ingredient": {"tag": "forge:bolts/dura_steel"}, "legacy_ore": "boltDuraSteel"},
+    {"count": 2, "ingredient": {"item": "hbm_ntm_rebirth:motor"}},
+    {"count": 1, "ingredient": {"tag": "forge:dyes/gray"}, "legacy_ore": "dyeGray"}
+  ],
+  "internal_name": "ass.cargodoor",
+  "output_fluids": [],
+  "output_items": [{"item": "hbm_ntm_rebirth:cargo_door"}],
+  "pools": [],
+  "power": 100,
+  "source_order": 70
+}

@@ -30,30 +30,25 @@ public class CableDiodeScreen extends AbstractContainerScreen<CableDiodeMenu> {
     protected void init() {
         super.init();
         priorityOrdinal = menu.getPriorityOrdinal();
-        throughputField = addRenderableWidget(LegacyGuiElements.createLegacyTextField(font, leftPos + 18, topPos + 53,
-                120, 20, 11, Long.toString(menu.getThroughputLimit()), 0xFFFFFF, 0xAAAAAA));
+        throughputField = addRenderableWidget(LegacyGuiElements.createLegacyTextField(font, width / 2 - 150, 100,
+                90, 20, 11, Long.toString(menu.getThroughputLimit()), 0xFFFFFF, 0xAAAAAA));
         throughputField.setBordered(true);
         priorityButton = addRenderableWidget(Button.builder(priorityLabel(), button -> cyclePriority())
-                .bounds(leftPos + 18, topPos + 90, 120, 20)
-                .build());
-        addRenderableWidget(Button.builder(Component.literal("Apply"), button -> sendConfiguration())
-                .bounds(leftPos + 146, topPos + 90, 56, 20)
+                .bounds(width / 2 + 20, 100, 90, 20)
                 .build());
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xEE202020);
-        graphics.fill(leftPos + 1, topPos + 1, leftPos + imageWidth - 1, topPos + imageHeight - 1, 0xEE363636);
+        // Legacy GUIDiode has no panel texture; drawDefaultBackground is supplied by renderBackground().
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        String name = title.getString();
-        graphics.drawString(font, name, imageWidth / 2 - font.width(name) / 2, titleLabelY, 0xFFFFFF, false);
-        graphics.drawString(font, "Throughput:", 18, 34, 0xE0E0E0, false);
-        graphics.drawString(font, "(max. 10,000,000,000 HE)", 18, 44, 0xA0A0A0, false);
-        graphics.drawString(font, "Priority:", 18, 74, 0xE0E0E0, false);
+        graphics.drawString(font, "Throughput:", width / 2 - 150 - leftPos, 80 - topPos, 0xA0A0A0, false);
+        graphics.drawString(font, "(max. 10,000,000,000 HE)", width / 2 - 150 - leftPos, 90 - topPos,
+                0xA0A0A0, false);
+        graphics.drawString(font, "Priority:", width / 2 + 20 - leftPos, 80 - topPos, 0xA0A0A0, false);
     }
 
     @Override

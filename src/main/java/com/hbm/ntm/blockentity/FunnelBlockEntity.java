@@ -2,6 +2,7 @@ package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.menu.FunnelMenu;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
+import com.hbm.ntm.network.HbmTileSyncable;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmInventoryUtil;
@@ -34,7 +35,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyButtonReceiver {
+public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmLegacyButtonReceiver, HbmTileSyncable {
     public static final int SLOT_INPUT_START = 0;
     public static final int SLOT_INPUT_END = 8;
     public static final int SLOT_OUTPUT_START = 9;
@@ -184,8 +185,22 @@ public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmL
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
+        return getClientSyncTag();
 }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        // TileEntityMachineFunnel#serialize contains only this runtime mode;
+        // inventories continue to use the menu slot synchronization path.
+        tag.putInt("mode", mode);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        readClientSyncTag(tag);
+    }
 
     @Nullable
     @Override
@@ -195,12 +210,21 @@ public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmL
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncTag(tag);
+        }
     }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        readClientSyncTag(tag);
+    }
+
+    private void readClientSyncTag(CompoundTag tag) {
+        if (tag.contains("mode")) {
+            mode = Math.floorMod(tag.getInt("mode"), 3);
+        }
     }
 
     @Override

@@ -1,0 +1,1 @@
+{"type":"minecraft:crafting_shaped","category":"building","pattern":["II","SS","II"],"key":{"I":{"item":"hbm_ntm_rebirth:plate_steel"},"S":{"item":"hbm_ntm_rebirth:plate_lead"}},"result":{"item":"hbm_ntm_rebirth:door_bunker"},"show_notification":true}

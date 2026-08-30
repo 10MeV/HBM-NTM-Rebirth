@@ -23,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -73,7 +74,18 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
 
     private final Kind kind;
     private final ItemStackHandler items;
+    /**
+     * Full internal inventory surface used by the menu and the crane's own
+     * logistics code.  This intentionally remains unrestricted: the legacy
+     * menu was backed by the complete IInventory, not its ISidedInventory
+     * view.
+     */
     private final LazyOptional<IItemHandler> itemCapability;
+    /**
+     * Physical automation surface.  Unlike the menu surface, this is the
+     * exact modern equivalent of each legacy crane's ISidedInventory contract.
+     */
+    private final LazyOptional<IItemHandler> sidedItemCapability;
     private Direction inputSide;
     private Direction outputOverride;
     private boolean destroyer = true;
@@ -104,6 +116,7 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
             }
         };
         this.itemCapability = LazyOptional.of(() -> items);
+        this.sidedItemCapability = LazyOptional.of(CraneSidedItemHandler::new);
         this.inputSide = defaultInput(state);
         this.outputOverride = null;
         this.patternMatcher = new LegacyPatternMatcher(kind.filterSlots);
@@ -1181,12 +1194,57 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // A new chunk watcher does not necessarily receive the short-range
+        // legacy binary packet.  Preserve the visual directions and every
+        // control value read directly by the client screen, while keeping
+        // inventories and filter persistence out of the chunk snapshot.
+        CompoundTag tag = new CompoundTag();
+        tag.putByte(TAG_INPUT_SIDE, (byte) getInputSide().get3DDataValue());
+        tag.putByte(TAG_OUTPUT_OVERRIDE, (byte) getOutputOverrideOrdinal());
+        tag.putBoolean(TAG_DESTROYER, destroyer);
+        tag.putBoolean(TAG_WHITELIST, whitelist);
+        tag.putBoolean(TAG_MAX_EJECT, maxEject);
+        tag.putByte(TAG_MODE, mode);
+        tag.putIntArray(TAG_ROUTER_MODES, routerModes);
+        return tag;
+    }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleUpdateTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        inputSide = Direction.from3DDataValue(tag.getByte(TAG_INPUT_SIDE));
+        int output = tag.getByte(TAG_OUTPUT_OVERRIDE);
+        outputOverride = output == NO_OVERRIDE ? null : Direction.from3DDataValue(output);
+        if (tag.contains(TAG_DESTROYER, Tag.TAG_BYTE)) {
+            destroyer = tag.getBoolean(TAG_DESTROYER);
+        }
+        if (tag.contains(TAG_WHITELIST, Tag.TAG_BYTE)) {
+            whitelist = tag.getBoolean(TAG_WHITELIST);
+        }
+        if (tag.contains(TAG_MAX_EJECT, Tag.TAG_BYTE)) {
+            maxEject = tag.getBoolean(TAG_MAX_EJECT);
+        }
+        if (tag.contains(TAG_MODE, Tag.TAG_BYTE)) {
+            mode = tag.getByte(TAG_MODE);
+        }
+        if (tag.contains(TAG_ROUTER_MODES, Tag.TAG_INT_ARRAY)) {
+            int[] syncedModes = tag.getIntArray(TAG_ROUTER_MODES);
+            Arrays.fill(routerModes, 0);
+            System.arraycopy(syncedModes, 0, routerModes, 0, Math.min(syncedModes.length, routerModes.length));
+        }
+        refreshCraneModelData();
     }
 
     @Override
@@ -1211,15 +1269,118 @@ public class CraneLogisticsBlockEntity extends BlockEntity implements MenuProvid
     public void invalidateCaps() {
         super.invalidateCaps();
         itemCapability.invalidate();
+        sidedItemCapability.invalidate();
     }
 
     @Override
     public <T> LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemCapability.cast();
+            // TileEntityMachineBase supplies an empty ISidedInventory view to
+            // cranes which do not override it (grabber/router).  Forge callers
+            // use a null side for menus/internal code, and a non-null side for
+            // physical automation, so preserve both legacy surfaces instead of
+            // leaking the raw ItemStackHandler to every pipe.
+            if (side != null && !hasSidedItemAccess()) {
+                return LazyOptional.empty();
+            }
+            return (side == null ? itemCapability : sidedItemCapability).cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    private boolean hasSidedItemAccess() {
+        return kind != Kind.GRABBER && kind != Kind.ROUTER;
+    }
+
+    /**
+     * Adapter for the legacy ISidedInventory surface.  Its indexes are packed
+     * because Forge's IItemHandler cannot expose sparse physical slot numbers.
+     * The selected internal indexes, insertion predicate and extraction gate
+     * mirror the source classes exactly and deliberately do not depend on the
+     * queried face: none of these legacy implementations did.
+     */
+    private final class CraneSidedItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return sidedSlotCount();
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            int internalSlot = sidedInternalSlot(slot);
+            return internalSlot < 0 ? ItemStack.EMPTY : items.getStackInSlot(internalSlot);
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            int internalSlot = sidedInternalSlot(slot);
+            // Legacy TileEntityMachineBase#canInsertItem delegated to the
+            // machine's isItemValidForSlot.  ItemStackHandler already routes
+            // through that same predicate, after this adapter's slot gate.
+            return internalSlot < 0 ? stack : items.insertItem(internalSlot, stack, simulate);
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            int internalSlot = sidedInternalSlot(slot);
+            return internalSlot < 0 || !canExtractFromSidedSlot(internalSlot)
+                    ? ItemStack.EMPTY
+                    : items.extractItem(internalSlot, amount, simulate);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            int internalSlot = sidedInternalSlot(slot);
+            return internalSlot < 0 ? 0 : items.getSlotLimit(internalSlot);
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            int internalSlot = sidedInternalSlot(slot);
+            return internalSlot >= 0 && items.isItemValid(internalSlot, stack);
+        }
+    }
+
+    private int sidedSlotCount() {
+        return switch (kind) {
+            // TileEntityCraneExtractor#getAccessibleSlotsFromSide: 9..17.
+            case EXTRACTOR -> 9;
+            // TileEntityCraneInserter/Boxer/Unboxer expose their 21 work slots.
+            case INSERTER, BOXER, UNBOXER -> 21;
+            // CranePartitioner exposes both its input and declog halves.
+            case PARTITIONER -> 90;
+            // Grabber and router inherit TileEntityMachineBase's empty array;
+            // getCapability therefore returns LazyOptional.empty() above.
+            case GRABBER, ROUTER -> 0;
+        };
+    }
+
+    private int sidedInternalSlot(int exposedSlot) {
+        if (exposedSlot < 0 || exposedSlot >= sidedSlotCount()) {
+            return -1;
+        }
+        return switch (kind) {
+            case EXTRACTOR -> exposedSlot + 9;
+            case INSERTER, BOXER, UNBOXER, PARTITIONER -> exposedSlot;
+            case GRABBER, ROUTER -> -1;
+        };
+    }
+
+    private boolean canExtractFromSidedSlot(int internalSlot) {
+        return switch (kind) {
+            // TileEntityCraneExtractor overrides canExtractItem for its buffer.
+            case EXTRACTOR -> internalSlot >= 9 && internalSlot < 18;
+            // TileEntityCraneInserter and TileEntityCraneUnboxer explicitly
+            // allow extraction from their accessible work slots.
+            case INSERTER, UNBOXER -> internalSlot >= 0 && internalSlot < 21;
+            // TileEntityCraneBoxer inherits TileEntityMachineBase=false.
+            case BOXER -> false;
+            // CranePartitioner exposes all 90 slots but only its declog half
+            // (45..89) overrides TileEntityMachineBase's false extraction gate.
+            case PARTITIONER -> internalSlot >= 45 && internalSlot < 90;
+            case GRABBER, ROUTER -> false;
+        };
     }
 
     private static Direction defaultInput(BlockState state) {

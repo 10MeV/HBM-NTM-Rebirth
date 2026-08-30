@@ -32,6 +32,7 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.NotNull;
@@ -93,8 +94,10 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
                 && HbmInventoryUtil.doesHandlerHaveSpaceUnchecked(microwave.items, SLOT_OUTPUT, SLOT_OUTPUT, output);
         if (canProcess && microwave.speed > 0 && microwave.energy.getPower() >= CONSUMPTION) {
             if (microwave.speed >= 5) {
-                microwave.items.setStackInSlot(SLOT_INPUT, ItemStack.EMPTY);
-                microwave.energy.setPower(0L);
+                // TileEntityMicrowave calls World#func_147480_a directly.
+                // BlockMachineBase#breakBlock then drops the complete legacy
+                // inventory before the explosion; it does not silently burn
+                // the input stack or clear the battery first.
                 level.removeBlock(pos, false);
                 level.explode(null, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 5.0F,
                         Level.ExplosionInteraction.BLOCK);
@@ -110,7 +113,7 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
                         output);
             }
             if (!canProcess) {
-                microwave.networkPackNT(20);
+                microwave.networkPackNT(50);
                 microwave.setChanged();
                 level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
                 return;
@@ -119,7 +122,8 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
             microwave.time += microwave.speed * 2;
         }
 
-        microwave.networkPackNT(20);
+        // TileEntityMicrowave broadcasts its renderer state to a 50-block legacy range.
+        microwave.networkPackNT(50);
         if (oldTime != microwave.time || oldSpeed != microwave.speed || oldPower != microwave.energy.getPower()) {
             microwave.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
@@ -248,7 +252,12 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = new CompoundTag();
+        // TileEntityMicrowave#serialize sends power, time and speed.  The first
+        // vanilla chunk snapshot must carry the same renderer-facing state: the
+        // microwave plate uses both time and speed before the next NT packet.
+        tag.putLong("power", energy.getPower());
         tag.putInt("cookTime", time);
+        tag.putInt("speed", speed);
         return tag;
     }
 
@@ -352,7 +361,7 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
         }
     }
 
-    private final class MenuItemHandler implements IItemHandler {
+    private final class MenuItemHandler implements IItemHandlerModifiable {
         @Override
         public int getSlots() {
             return SLOT_COUNT;
@@ -361,6 +370,16 @@ public class MicrowaveBlockEntity extends HbmEnergyBlockEntity implements MenuPr
         @Override
         public @NotNull ItemStack getStackInSlot(int slot) {
             return slot >= 0 && slot < SLOT_COUNT ? items.getStackInSlot(slot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+            if (slot >= 0 && slot < SLOT_COUNT) {
+                // SlotItemHandler#set uses this path for the initial and live
+                // container sync. Legacy Slot#putStack likewise wrote directly
+                // through TileEntityMachineBase#setInventorySlotContents.
+                items.setStackInSlot(slot, stack);
+            }
         }
 
         @Override

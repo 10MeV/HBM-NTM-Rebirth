@@ -47,8 +47,6 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
         float yRotation = 270.0F - facing.toYRot();
-        int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
-
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 double progress = normalizedPress(blockEntity.getInterpolatedPress(partialTick),
@@ -59,7 +57,7 @@ public class ElectricPressRenderer implements BlockEntityRenderer<ElectricPressB
                 poseStack.translate(0.5D, headTranslateY, 0.5D);
                 LegacyPoseRotations.rotateYDegrees(poseStack, yRotation);
                 ObjMachineModels.EPRESS_HEAD.renderAll(ObjMachineModels.EPRESS_HEAD_TEXTURE,
-                        poseStack, buffer, modelLight, packedOverlay);
+                        poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
             }
         }

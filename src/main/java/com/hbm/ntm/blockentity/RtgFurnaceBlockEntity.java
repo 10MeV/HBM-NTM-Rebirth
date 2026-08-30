@@ -53,6 +53,7 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
     };
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
     private final Map<Direction, LazyOptional<IItemHandler>> sidedItemHandlers = new EnumMap<>(Direction.class);
+    private String customName;
     private int cookTime;
     private int heat;
 
@@ -131,9 +132,16 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
         return HbmInventoryMenuHelper.clearToDrops(items);
     }
 
+    public void setCustomName(String customName) {
+        this.customName = customName;
+        setChanged();
+    }
+
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.rtgFurnace", "RTG Furnace");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.rtgFurnace", "RTG Furnace");
     }
 
     @Nullable
@@ -147,6 +155,9 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsCompoundToTag(tag, TAG_ITEMS, items);
         tag.putShort("cookTime", (short) cookTime);
+        if (customName != null && !customName.isBlank()) {
+            tag.putString("name", customName);
+        }
     }
 
     @Override
@@ -154,6 +165,7 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
         super.load(tag);
         HbmInventoryMenuHelper.loadLegacyOrForgeItemsCompound(tag, TAG_ITEMS, items);
         cookTime = tag.contains("CookTime") ? tag.getShort("CookTime") : tag.getShort("cookTime");
+        customName = tag.contains("name") ? tag.getString("name") : null;
     }
 
     @Override
@@ -170,14 +182,20 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
         CompoundTag tag = packet.getTag();
-        if (tag != null) {
+        // This block intentionally has no world-BE state packet: legacy GUI
+        // inventory slots and progress were container-synced.  Loading its empty
+        // update tag would clear the client ItemStackHandler through the normal
+        // persistent-NBT path while a menu is open.
+        if (tag != null && !tag.isEmpty()) {
             load(tag);
         }
     }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        if (tag != null && !tag.isEmpty()) {
+            load(tag);
+        }
     }
 
     @Override

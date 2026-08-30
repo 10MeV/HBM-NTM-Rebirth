@@ -67,13 +67,20 @@ public class PoweredRedCableBlock extends HbmEnergyNodeBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (kind != Kind.SWITCH || player.isShiftKeyDown()) {
-            return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        // CableDetector inherits BlockContainer's non-consuming interaction.
+        if (kind != Kind.SWITCH) {
+            return InteractionResult.PASS;
         }
-        if (!level.isClientSide) {
-            setActive(level, pos, state, !state.getValue(ACTIVE), true);
+        // CableSwitch#onBlockActivated consumes every client click before its
+        // server-side sneak check. This legacy asymmetry is intentional.
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
+        setActive(level, pos, state, !state.getValue(ACTIVE), true);
+        return InteractionResult.SUCCESS;
     }
 
     @Override

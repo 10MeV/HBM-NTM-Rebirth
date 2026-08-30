@@ -46,12 +46,6 @@ public final class RadarScreenActionProfile {
                 RadarGuiLayout.SLOT_TOGGLE_VIEW_SIZE, mouseX, mouseY)) {
             return Action.view(RadarScreenViewProfile.MAIN);
         }
-        for (RadarControlPanel.Button button : RadarControlPanel.buttons()) {
-            if (RadarGuiHitProfile.hitsArea(leftPos, topPos, button.slotX(), button.slotY(),
-                    RadarControlPanel.BUTTON_SIZE, RadarControlPanel.BUTTON_SIZE, mouseX, mouseY)) {
-                return Action.control(button.control());
-            }
-        }
         return Action.none();
     }
 

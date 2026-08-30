@@ -96,8 +96,8 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 ModBlocks.FUSION_COMPONENT_MOTOR.get());
         ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.CAP_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
-        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.BLOCK_SLAG_BROKEN.get());
-        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.BLOCK_SLAG_BROKEN.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(
+                ModBlocks.legacyBlock("block_slag").get(), ModBlocks.BLOCK_SLAG_BROKEN.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.BLOCK_COKE.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.BLOCK_COKE.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.PRIBRIS.get(), ModBlocks.PRIBRIS_BURNING.get(),
@@ -213,6 +213,8 @@ public class HbmBlockTagsProvider extends BlockTagsProvider {
                 ModBlocks.BLOCK_GRAPHITE.get());
         tag(BlockTags.NEEDS_IRON_TOOL).add(
                 ModBlocks.BLOCK_GRAPHITE.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DECO_RBMK.get(), ModBlocks.DECO_RBMK_SMOOTH.get());
+        tag(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.DECO_RBMK.get(), ModBlocks.DECO_RBMK_SMOOTH.get());
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.MINEABLE_WITH_PICKAXE).add(block.get()));
         ModBlocks.NUKE_TAB_BLOCKS.forEach(block -> tag(BlockTags.NEEDS_IRON_TOOL).add(block.get()));
         tag(forgeBlockTag("glass")).add(Blocks.GLASS, Blocks.WHITE_STAINED_GLASS,

@@ -1,8 +1,10 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.blockentity.TrinketBlockEntity;
+import com.hbm.ntm.client.TrinketInfoScreenBridge;
 import com.hbm.ntm.item.TrinketBlockItem;
 import com.hbm.ntm.registry.ModBlockEntities;
+import com.hbm.ntm.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -20,11 +22,14 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 
 @SuppressWarnings("deprecation")
 public class TrinketBlock extends BaseEntityBlock {
@@ -114,8 +119,26 @@ public class TrinketBlock extends BaseEntityBlock {
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (kind == TrinketVariant.Kind.PLUSHIE && level.getBlockEntity(pos) instanceof TrinketBlockEntity blockEntity) {
-            blockEntity.startSquish();
+        if (!(level.getBlockEntity(pos) instanceof TrinketBlockEntity blockEntity)) {
+            return InteractionResult.PASS;
+        }
+        if (kind == TrinketVariant.Kind.PLUSHIE) {
+            if (level.isClientSide) {
+                blockEntity.startSquish();
+            } else {
+                level.playSound(null, pos,
+                        blockEntity.variant() == 3 ? ModSounds.BLOCK_HUNDUNS_MAGNIFICENT_HOWL.get()
+                                : ModSounds.BLOCK_SQUEAKY_TOY.get(),
+                        SoundSource.BLOCKS, blockEntity.variant() == 3 ? 100.0F : 0.25F, 1.0F);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (kind == TrinketVariant.Kind.BOBBLEHEAD || kind == TrinketVariant.Kind.SNOWGLOBE) {
+            if (level.isClientSide) {
+                int variant = blockEntity.variant();
+                DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                        () -> () -> TrinketInfoScreenBridge.open(kind, variant));
+            }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         return InteractionResult.PASS;

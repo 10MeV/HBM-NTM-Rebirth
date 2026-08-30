@@ -105,8 +105,18 @@ public class RadioTorchLogicBlockEntity extends RadioTorchBlockEntity implements
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // The old runtime packet contains the configuration plus polling.
+        // lastUpdate is only server-side receive de-duplication bookkeeping.
+        CompoundTag tag = new CompoundTag();
+        radio.save(tag);
+        tag.remove("u");
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        radio.load(tag);
+    }
 
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {

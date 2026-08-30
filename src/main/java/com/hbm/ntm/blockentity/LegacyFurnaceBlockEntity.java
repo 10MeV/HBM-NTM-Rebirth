@@ -398,6 +398,10 @@ public class LegacyFurnaceBlockEntity extends BlockEntity implements MenuProvide
         return wasOn;
     }
 
+    public List<String> getBurnTimeDescription() {
+        return burnModule.getTimeDescription();
+    }
+
     public int getHeat() {
         return heat;
     }

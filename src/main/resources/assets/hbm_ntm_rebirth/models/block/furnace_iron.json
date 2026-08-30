@@ -1,9 +1,12 @@
 {
-  "loader": "forge:obj",
+  "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+  "shade_quads": false,
+  "emissive_ambient": false,
+  "legacy_normal_mode": "face",
   "model": "hbm_ntm_rebirth:models/block/machines/furnace_iron.obj",
   "flip_v": true,
   "automatic_culling": false,
-  "render_type": "minecraft:cutout",
+  "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
   "transform": {
     "translation": [0.0, 0.0, 0.0],
     "rotation": [0, 0, 0],

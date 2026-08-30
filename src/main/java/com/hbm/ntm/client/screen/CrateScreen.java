@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.StorageCrateBlockEntity;
 import com.hbm.ntm.menu.CrateMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -10,12 +11,18 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class CrateScreen extends AbstractContainerScreen<CrateMenu> {
     private final ResourceLocation texture;
+    private final int labelColor;
 
     public CrateScreen(CrateMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         this.imageWidth = menu.getBlockEntity().kind().imageWidth();
         this.imageHeight = menu.getBlockEntity().kind().imageHeight();
-        this.inventoryLabelY = imageHeight - 94;
+        this.inventoryLabelX = menu.getBlockEntity().kind().playerInventoryX();
+        this.inventoryLabelY = imageHeight - 94
+                + (menu.getBlockEntity().kind() == StorageCrateBlockEntity.Kind.DESH ? 1 : 0);
+        this.labelColor = menu.getBlockEntity().kind() == StorageCrateBlockEntity.Kind.TUNGSTEN
+                ? 0xFFFFFF
+                : 0x404040;
         this.texture = texture(menu);
     }
 
@@ -26,8 +33,8 @@ public class CrateScreen extends AbstractContainerScreen<CrateMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
-        graphics.drawString(font, playerInventoryTitle, 8, inventoryLabelY, 0x404040, false);
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, labelColor, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, labelColor, false);
     }
 
     @Override

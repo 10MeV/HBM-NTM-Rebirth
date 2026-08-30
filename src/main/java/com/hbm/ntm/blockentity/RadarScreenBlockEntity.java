@@ -109,7 +109,13 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return getUpdateTag();
+        // The legacy loaded-tile fields and the transient radar payload share
+        // the same chunk/update boundary.  Do not delegate to getUpdateTag:
+        // both methods are called by vanilla at different lifecycle points.
+        CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
+        tag.merge(snapshot.toTag(true));
+        return tag;
     }
 
     @Override
@@ -130,7 +136,7 @@ public class RadarScreenBlockEntity extends BlockEntity implements RadarScanProv
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-}
+    }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

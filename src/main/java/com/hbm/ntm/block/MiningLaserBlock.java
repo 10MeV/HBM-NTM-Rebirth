@@ -8,6 +8,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -18,6 +21,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class MiningLaserBlock extends LegacyVisibleMultiblockMachineBlock {
@@ -44,6 +49,16 @@ public class MiningLaserBlock extends LegacyVisibleMultiblockMachineBlock {
             NetworkHooks.openScreen(serverPlayer, laser, laser.getBlockPos());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        // MachineMiningLaser#addInformation: this is the complete legacy
+        // ITooltipProvider contract; the block itself has no look overlay.
+        tooltip.add(Component.literal("3x3x3 Multiblock"));
+        tooltip.add(Component.literal("Only placeable on a ceiling."));
     }
 
     @Nullable

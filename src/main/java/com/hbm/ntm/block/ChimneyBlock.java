@@ -18,7 +18,10 @@ public class ChimneyBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        // Both 1.7.10 chimney renderers are smooth, no-cull TESRs.  Their 14/24
+        // block towers cannot use a core-chunk baked light field without losing
+        // that contract, so only these two machines stay on the prepared BER.
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Nullable

@@ -69,12 +69,12 @@ public class LegacyPedestalBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        readClientSyncTag(tag);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class LegacyPedestalBlockEntity extends BlockEntity {
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        readClientSyncTag(packet.getTag());
     }
 
     public void setChangedAndSync() {
@@ -92,5 +92,18 @@ public class LegacyPedestalBlockEntity extends BlockEntity {
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
+    }
+
+    private CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        if (!item.isEmpty()) {
+            tag.put(TAG_ITEM, item.save(new CompoundTag()));
+        }
+        return tag;
+    }
+
+    private void readClientSyncTag(CompoundTag tag) {
+        item = tag != null && tag.contains(TAG_ITEM, Tag.TAG_COMPOUND)
+                ? ItemStack.of(tag.getCompound(TAG_ITEM)) : ItemStack.EMPTY;
     }
 }

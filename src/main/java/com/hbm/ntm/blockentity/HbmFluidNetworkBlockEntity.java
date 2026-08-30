@@ -15,11 +15,13 @@ import com.hbm.ntm.fluid.HbmFluidUtil;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.util.HbmMachinePerformanceCounters;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -32,6 +34,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
 
     private final Set<FluidType> networkProviderSubscriptions = new HashSet<>();
     private final Set<FluidType> networkReceiverSubscriptions = new HashSet<>();
+    private final Map<FluidType, List<FluidPort>> networkProviderPorts = new HashMap<>();
+    private final Map<FluidType, List<FluidPort>> networkReceiverPorts = new HashMap<>();
     private boolean fluidNodeStateDirty = true;
     private boolean fluidSubscriptionDirty = true;
     private int lastFluidNodeTypesSignature = Integer.MIN_VALUE;
@@ -243,20 +247,26 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             HbmFluidNet fluidNet = getFluidNet(type);
             boolean hasLocalNet = fluidNet != null && fluidNet.isValid();
             if (shouldSubscribeAsFluidProvider(type)) {
+                List<FluidPort> ports = snapshotNetworkFluidPorts(type);
+                detachRemovedNetworkProviderPortsNoReport(type, ports, provider);
                 if (hasLocalNet && provider != null) {
                     fluidNet.addProvider(provider);
                 }
                 HbmFluidUtil.subscribeProviderToPorts(
-                        level, worldPosition, getNetworkFluidPorts(type), type, provider);
+                        level, worldPosition, ports, type, provider);
                 networkProviderSubscriptions.add(type);
+                networkProviderPorts.put(type, ports);
             }
             if (shouldSubscribeAsFluidReceiver(type)) {
+                List<FluidPort> ports = snapshotNetworkFluidPorts(type);
+                detachRemovedNetworkReceiverPortsNoReport(type, ports, receiver);
                 if (hasLocalNet && receiver != null) {
                     fluidNet.addReceiver(receiver);
                 }
                 HbmFluidUtil.subscribeReceiverToPorts(
-                        level, worldPosition, getNetworkFluidPorts(type), type, receiver);
+                        level, worldPosition, ports, type, receiver);
                 networkReceiverSubscriptions.add(type);
+                networkReceiverPorts.put(type, ports);
             }
         }
 
@@ -295,20 +305,28 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             HbmFluidNet fluidNet = getFluidNet(type);
             boolean hasLocalNet = fluidNet != null && fluidNet.isValid();
             if (activeProviderTypes.contains(type)) {
+                List<FluidPort> ports = snapshotNetworkFluidPorts(type);
+                providerDetach = mergeDetachReports(
+                        providerDetach, detachRemovedNetworkProviderPorts(type, ports, provider));
                 if (hasLocalNet && provider != null) {
                     fluidNet.addProvider(provider);
                     localProviderSubscriptions++;
                 }
                 remoteProviderPorts += HbmFluidUtil.subscribeProviderToPorts(
-                        level, worldPosition, getNetworkFluidPorts(type), type, provider);
+                        level, worldPosition, ports, type, provider);
+                networkProviderPorts.put(type, ports);
             }
             if (activeReceiverTypes.contains(type)) {
+                List<FluidPort> ports = snapshotNetworkFluidPorts(type);
+                receiverDetach = mergeDetachReports(
+                        receiverDetach, detachRemovedNetworkReceiverPorts(type, ports, receiver));
                 if (hasLocalNet && receiver != null) {
                     fluidNet.addReceiver(receiver);
                     localReceiverSubscriptions++;
                 }
                 remoteReceiverPorts += HbmFluidUtil.subscribeReceiverToPorts(
-                        level, worldPosition, getNetworkFluidPorts(type), type, receiver);
+                        level, worldPosition, ports, type, receiver);
+                networkReceiverPorts.put(type, ports);
             }
         }
 
@@ -364,6 +382,9 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             HbmFluidNet fluidNet = getFluidNet(type);
             boolean hasLocalNet = fluidNet != null && fluidNet.isValid();
             if (activeProviderTypes.contains(type)) {
+                List<FluidPort> ports = snapshotNetworkFluidPorts(type);
+                providerDetach = mergeDetachDetailReports(
+                        providerDetach, detachRemovedNetworkProviderPortsDetailed(type, ports, provider));
                 boolean localSubscribed = false;
                 if (hasLocalNet && provider != null) {
                     fluidNet.addProvider(provider);
@@ -372,12 +393,16 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                 }
                 HbmFluidUtil.PortSubscribeDetailReport remote =
                         HbmFluidUtil.subscribeProviderToPortsDetailedReport(
-                                level, worldPosition, getNetworkFluidPorts(type), type, provider);
+                                level, worldPosition, ports, type, provider);
                 remoteProviderPorts += remote.subscribedPorts();
+                networkProviderPorts.put(type, ports);
                 providerDetails.add(new NetworkProviderSubscriptionDetail(
                         type, hasLocalNet, provider != null, localSubscribed, remote));
             }
             if (activeReceiverTypes.contains(type)) {
+                List<FluidPort> ports = snapshotNetworkFluidPorts(type);
+                receiverDetach = mergeDetachDetailReports(
+                        receiverDetach, detachRemovedNetworkReceiverPortsDetailed(type, ports, receiver));
                 boolean localSubscribed = false;
                 if (hasLocalNet && receiver != null) {
                     fluidNet.addReceiver(receiver);
@@ -386,8 +411,9 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                 }
                 HbmFluidUtil.PortSubscribeDetailReport remote =
                         HbmFluidUtil.subscribeReceiverToPortsDetailedReport(
-                                level, worldPosition, getNetworkFluidPorts(type), type, receiver);
+                                level, worldPosition, ports, type, receiver);
                 remoteReceiverPorts += remote.subscribedPorts();
+                networkReceiverPorts.put(type, ports);
                 receiverDetails.add(new NetworkReceiverSubscriptionDetail(
                         type, hasLocalNet, receiver != null, localSubscribed, remote));
             }
@@ -606,6 +632,119 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         return false;
     }
 
+    private List<FluidPort> snapshotNetworkFluidPorts(FluidType type) {
+        Iterable<FluidPort> current = getNetworkFluidPorts(type);
+        if (current == null) {
+            return List.of();
+        }
+        List<FluidPort> snapshot = new ArrayList<>();
+        for (FluidPort port : current) {
+            if (port == null) {
+                continue;
+            }
+            BlockPos offset = port.offset();
+            BlockPos immutableOffset = offset.immutable();
+            snapshot.add(immutableOffset == offset
+                    ? port
+                    : new FluidPort(immutableOffset, port.direction()));
+        }
+        return List.copyOf(snapshot);
+    }
+
+    private static List<FluidPort> trackedNetworkPorts(
+            Map<FluidType, List<FluidPort>> portsByType, FluidType type) {
+        List<FluidPort> ports = portsByType.get(type);
+        return ports == null ? List.of() : ports;
+    }
+
+    private static List<FluidPort> removedNetworkPorts(
+            Map<FluidType, List<FluidPort>> portsByType, FluidType type, List<FluidPort> currentPorts) {
+        List<FluidPort> removed = new ArrayList<>(trackedNetworkPorts(portsByType, type));
+        for (FluidPort port : currentPorts) {
+            removed.remove(port);
+        }
+        return removed;
+    }
+
+    private void detachRemovedNetworkProviderPortsNoReport(
+            FluidType type, List<FluidPort> currentPorts, HbmFluidProvider provider) {
+        List<FluidPort> removed = removedNetworkPorts(networkProviderPorts, type, currentPorts);
+        if (!removed.isEmpty()) {
+            HbmFluidUtil.unsubscribeProviderFromPorts(level, worldPosition, removed, type, provider);
+        }
+    }
+
+    private void detachRemovedNetworkReceiverPortsNoReport(
+            FluidType type, List<FluidPort> currentPorts, HbmFluidReceiver receiver) {
+        List<FluidPort> removed = removedNetworkPorts(networkReceiverPorts, type, currentPorts);
+        if (!removed.isEmpty()) {
+            HbmFluidUtil.unsubscribeReceiverFromPorts(level, worldPosition, removed, type, receiver);
+        }
+    }
+
+    private NetworkFluidSubscriptionDetachReport detachRemovedNetworkProviderPorts(
+            FluidType type, List<FluidPort> currentPorts, HbmFluidProvider provider) {
+        List<FluidPort> removed = removedNetworkPorts(networkProviderPorts, type, currentPorts);
+        int detached = removed.isEmpty() ? 0 : HbmFluidUtil.unsubscribeProviderFromPorts(
+                level, worldPosition, removed, type, provider);
+        return new NetworkFluidSubscriptionDetachReport(0, 0, detached);
+    }
+
+    private NetworkFluidSubscriptionDetachReport detachRemovedNetworkReceiverPorts(
+            FluidType type, List<FluidPort> currentPorts, HbmFluidReceiver receiver) {
+        List<FluidPort> removed = removedNetworkPorts(networkReceiverPorts, type, currentPorts);
+        int detached = removed.isEmpty() ? 0 : HbmFluidUtil.unsubscribeReceiverFromPorts(
+                level, worldPosition, removed, type, receiver);
+        return new NetworkFluidSubscriptionDetachReport(0, 0, detached);
+    }
+
+    private NetworkFluidSubscriptionDetachDetailReport detachRemovedNetworkProviderPortsDetailed(
+            FluidType type, List<FluidPort> currentPorts, HbmFluidProvider provider) {
+        List<FluidPort> removed = removedNetworkPorts(networkProviderPorts, type, currentPorts);
+        if (removed.isEmpty()) {
+            return NetworkFluidSubscriptionDetachDetailReport.empty();
+        }
+        HbmFluidUtil.PortDetachDetailReport remote = HbmFluidUtil.unsubscribeProviderFromPortsDetailedReport(
+                level, worldPosition, removed, type, provider);
+        return new NetworkFluidSubscriptionDetachDetailReport(
+                new NetworkFluidSubscriptionDetachReport(0, 0, remote.unsubscribedPorts()),
+                List.of(new NetworkProviderDetachDetail(type, false, remote)),
+                List.of());
+    }
+
+    private NetworkFluidSubscriptionDetachDetailReport detachRemovedNetworkReceiverPortsDetailed(
+            FluidType type, List<FluidPort> currentPorts, HbmFluidReceiver receiver) {
+        List<FluidPort> removed = removedNetworkPorts(networkReceiverPorts, type, currentPorts);
+        if (removed.isEmpty()) {
+            return NetworkFluidSubscriptionDetachDetailReport.empty();
+        }
+        HbmFluidUtil.PortDetachDetailReport remote = HbmFluidUtil.unsubscribeReceiverFromPortsDetailedReport(
+                level, worldPosition, removed, type, receiver);
+        return new NetworkFluidSubscriptionDetachDetailReport(
+                new NetworkFluidSubscriptionDetachReport(0, 0, remote.unsubscribedPorts()),
+                List.of(),
+                List.of(new NetworkReceiverDetachDetail(type, false, remote)));
+    }
+
+    private static NetworkFluidSubscriptionDetachReport mergeDetachReports(
+            NetworkFluidSubscriptionDetachReport first, NetworkFluidSubscriptionDetachReport second) {
+        return new NetworkFluidSubscriptionDetachReport(
+                first.staleTypes() + second.staleTypes(),
+                first.types() + second.types(),
+                first.ports() + second.ports());
+    }
+
+    private static NetworkFluidSubscriptionDetachDetailReport mergeDetachDetailReports(
+            NetworkFluidSubscriptionDetachDetailReport first,
+            NetworkFluidSubscriptionDetachDetailReport second) {
+        List<NetworkProviderDetachDetail> providers = new ArrayList<>(first.providerDetails());
+        providers.addAll(second.providerDetails());
+        List<NetworkReceiverDetachDetail> receivers = new ArrayList<>(first.receiverDetails());
+        receivers.addAll(second.receiverDetails());
+        return new NetworkFluidSubscriptionDetachDetailReport(
+                mergeDetachReports(first.summary(), second.summary()), providers, receivers);
+    }
+
     private void detachObsoleteNetworkProviderSubscriptionsNoReport(
             HbmFluidProvider provider, List<HbmFluidTank> tanks) {
         if (networkProviderSubscriptions.isEmpty()) {
@@ -622,7 +761,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                 fluidNet.removeProvider(provider);
             }
             HbmFluidUtil.unsubscribeProviderFromPorts(
-                    level, worldPosition, getNetworkFluidPorts(type), type, provider);
+                    level, worldPosition, trackedNetworkPorts(networkProviderPorts, type), type, provider);
+            networkProviderPorts.remove(type);
             iterator.remove();
         }
     }
@@ -643,7 +783,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                 fluidNet.removeReceiver(receiver);
             }
             HbmFluidUtil.unsubscribeReceiverFromPorts(
-                    level, worldPosition, getNetworkFluidPorts(type), type, receiver);
+                    level, worldPosition, trackedNetworkPorts(networkReceiverPorts, type), type, receiver);
+            networkReceiverPorts.remove(type);
             iterator.remove();
         }
     }
@@ -666,7 +807,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                 fluidNet.removeProvider(provider);
             }
             detachedPorts += HbmFluidUtil.unsubscribeProviderFromPorts(
-                    level, worldPosition, getNetworkFluidPorts(type), type, provider);
+                    level, worldPosition, trackedNetworkPorts(networkProviderPorts, type), type, provider);
+            networkProviderPorts.remove(type);
         }
         return new NetworkFluidSubscriptionDetachReport(staleTypes.size(), detachedTypes, detachedPorts);
     }
@@ -689,8 +831,9 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             }
             HbmFluidUtil.PortDetachDetailReport remote =
                     HbmFluidUtil.unsubscribeProviderFromPortsDetailedReport(
-                            level, worldPosition, getNetworkFluidPorts(type), type, provider);
+                            level, worldPosition, trackedNetworkPorts(networkProviderPorts, type), type, provider);
             detachedPorts += remote.unsubscribedPorts();
+            networkProviderPorts.remove(type);
             details.add(new NetworkProviderDetachDetail(type, localPresent, remote));
         }
         return new NetworkFluidSubscriptionDetachDetailReport(
@@ -717,7 +860,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
                 fluidNet.removeReceiver(receiver);
             }
             detachedPorts += HbmFluidUtil.unsubscribeReceiverFromPorts(
-                    level, worldPosition, getNetworkFluidPorts(type), type, receiver);
+                    level, worldPosition, trackedNetworkPorts(networkReceiverPorts, type), type, receiver);
+            networkReceiverPorts.remove(type);
         }
         return new NetworkFluidSubscriptionDetachReport(staleTypes.size(), detachedTypes, detachedPorts);
     }
@@ -740,8 +884,9 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
             }
             HbmFluidUtil.PortDetachDetailReport remote =
                     HbmFluidUtil.unsubscribeReceiverFromPortsDetailedReport(
-                            level, worldPosition, getNetworkFluidPorts(type), type, receiver);
+                            level, worldPosition, trackedNetworkPorts(networkReceiverPorts, type), type, receiver);
             detachedPorts += remote.unsubscribedPorts();
+            networkReceiverPorts.remove(type);
             details.add(new NetworkReceiverDetachDetail(type, localPresent, remote));
         }
         return new NetworkFluidSubscriptionDetachDetailReport(
@@ -755,6 +900,8 @@ public abstract class HbmFluidNetworkBlockEntity extends HbmFluidBlockEntity imp
         detachObsoleteNetworkReceiverSubscriptions(Set.of(), getNetworkFluidReceiver());
         networkProviderSubscriptions.clear();
         networkReceiverSubscriptions.clear();
+        networkProviderPorts.clear();
+        networkReceiverPorts.clear();
         markFluidSubscriptionDirty();
     }
 

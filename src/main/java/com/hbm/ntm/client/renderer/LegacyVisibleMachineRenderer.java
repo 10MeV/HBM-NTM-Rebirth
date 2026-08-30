@@ -2,12 +2,13 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.config.ClientConfig;
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.client.audit.HeatBoilerRenderAuditEvidence;
+import com.hbm.ntm.block.BlastFurnaceBlock;
 import com.hbm.ntm.block.ChimneyBlock;
 import com.hbm.ntm.block.CoolingTowerBlock;
 import com.hbm.ntm.block.DeuteriumTowerBlock;
 import com.hbm.ntm.block.DrainBlock;
 import com.hbm.ntm.block.ElectricHeaterBlock;
-import com.hbm.ntm.block.ElectrolyserBlock;
 import com.hbm.ntm.block.FelBlock;
 import com.hbm.ntm.block.FractionSpacerBlock;
 import com.hbm.ntm.block.GasCentBlock;
@@ -126,6 +127,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     private static final int RADGEN_GLASS_GREEN = 191;
     private static final int RADGEN_GLASS_BLUE = 255;
     private static final int RADGEN_GLASS_ALPHA = 76;
+    private static final ResourceLocation WHITE_TEXTURE =
+            new ResourceLocation("minecraft", "textures/misc/white.png");
     private static final double LEGACY_TILTED_TRANSLATE_Y = -0.25D;
     private static final float LEGACY_TILTED_ROTATION_Z = 10.0F;
     private static final float LEGACY_TILTED_ROTATION_Y = 5.0F;
@@ -354,7 +357,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
         int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
-                key -> new LegacyWavefrontModel(key.modelLocation(), key.textureLocation()).asVBO());
+                LegacyVisibleMachineRenderer::createModel);
 
         try (HbmRenderFrameCulling.MachineRendererSubmissionScope cullingScope =
                         HbmRenderFrameCulling.pushMachineRendererSubmissionScope(blockEntity);
@@ -400,7 +403,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             } else {
                 if (definition.renderAll()) {
                     boolean direct = renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
-                            modelLight, packedOverlay, renderMode);
+                            modelLight, packedLight, packedOverlay, renderMode);
                     if (!direct) {
                         HbmRenderFrameCulling.recordMachineRendererSubmission(blockEntity, 0,
                                 MachineRenderRoute.PROFILE_FALLBACK_RENDER_ALL, 0);
@@ -414,7 +417,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                     }
                 } else {
                     boolean direct = renderProfileDirect(blockEntity, partialTick, definition, model, poseStack, buffer,
-                            modelLight, packedOverlay, renderMode);
+                            modelLight, packedLight, packedOverlay, renderMode);
                     if (!direct) {
                         LegacyMachinePartRenderSelection.Selection selection =
                                 LegacyMachinePartRenderSelection.world(definition);
@@ -644,6 +647,19 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         };
     }
 
+    private static LegacyWavefrontModel createModel(LegacyMachineDefinition definition) {
+        if (definition.renderProfile() == LegacyMachineRenderProfile.CRUCIBLE_MOLTEN) {
+            // AdvancedModelLoader's WavefrontObject path in 1.7.10 derives face normals for the crucible shell.
+            return ObjMachineModels.CRUCIBLE_LEGACY;
+        }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.BLAST_FURNACE_TILTED_STATE) {
+            // ResourceManager.blast_furnace is explicitly noSmooth() in 1.7.10. Reusing the prepared
+            // source-equivalent model keeps both normal and tilted world states on face normals.
+            return ObjMachineModels.BLAST_FURNACE_LEGACY;
+        }
+        return new LegacyWavefrontModel(definition.modelLocation(), definition.textureLocation()).asVBO();
+    }
+
     private static void renderParts(List<LegacyMachinePartRenderSelection.Run> parts, LegacyWavefrontModel model,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode defaultRenderMode) {
@@ -668,20 +684,21 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private static boolean renderProfileDirect(BlockEntity blockEntity, float partialTick,
             LegacyMachineDefinition definition, LegacyWavefrontModel model, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode) {
+            MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
         switch (definition.renderProfile()) {
             case ANNIHILATOR_UV_SCROLL -> {
-                renderAnnihilatorDirect(definition, model, poseStack, buffer, packedLight, packedOverlay,
+                renderAnnihilatorDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay,
                         renderMode, blockEntity);
                 return true;
             }
             case RADGEN_STATIC_SPECIAL -> {
-                renderRadGenDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderRadGenDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity);
                 return true;
             }
             case BATTERY_REDD_STATIC_SPECIAL -> {
-                renderBatteryReddDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderBatteryReddDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity, partialTick);
                 return true;
             }
@@ -691,7 +708,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 return true;
             }
             case CRYSTALLIZER_RUNNING_PARTS -> {
-                renderCrystallizerDirect(definition, model, poseStack, buffer, packedLight, packedOverlay,
+                renderCrystallizerDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay,
                         renderMode, blockEntity, partialTick);
                 return true;
             }
@@ -712,38 +729,38 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 float fan = blockEntity instanceof CompressorBlockEntity compressor
                         ? compressor.getFanSpin(partialTick)
                         : 0.0F;
-                renderCompressorDirect(definition, model, lift, fan, poseStack, buffer, packedLight,
+                renderCompressorDirect(definition, model, lift, fan, poseStack, buffer, packedLight, activityLight,
                         packedOverlay, renderMode, blockEntity,
-                        renderChunkBakedStaticsInBer());
+                        true);
                 return true;
             }
             case COMPRESSOR_COMPACT_RUNNING_FANS -> {
                 float fan = blockEntity instanceof CompressorBlockEntity compressor
                         ? compressor.getFanSpin(partialTick)
                         : 0.0F;
-                renderCompressorCompactDirect(definition, model, fan, poseStack, buffer, packedLight,
+                renderCompressorCompactDirect(definition, model, fan, poseStack, buffer, packedLight, activityLight,
                         packedOverlay, renderMode, blockEntity,
-                        renderChunkBakedStaticsInBer());
+                        true);
                 return true;
             }
             case POWERED_CONDENSER_FANS -> {
                 float fan = blockEntity instanceof PoweredCondenserBlockEntity condenser
                         ? condenser.getFanSpin(partialTick)
                         : 0.0F;
-                renderCompressorCompactDirect(definition, model, fan, poseStack, buffer, packedLight,
+                renderCompressorCompactDirect(definition, model, fan, poseStack, buffer, packedLight, activityLight,
                         packedOverlay, renderMode, blockEntity,
-                        renderChunkBakedStaticsInBer());
+                        true);
                 return true;
             }
             case PUMP_RUNNING_PARTS -> {
                 double rotor = blockEntity instanceof WaterPumpBlockEntity pump ? pump.getRotor(partialTick) : 0.0D;
-                renderPumpDirect(definition, model, rotor, poseStack, buffer, packedLight, packedOverlay,
+                renderPumpDirect(definition, model, rotor, poseStack, buffer, packedLight, activityLight, packedOverlay,
                         renderMode, blockEntity,
-                        renderChunkBakedStaticsInBer());
+                        true);
                 return true;
             }
             case DIESEL_GENERATOR_RUNNING_PARTS -> {
-                renderDieselGeneratorDirect(definition, model, poseStack, buffer, packedLight, packedOverlay,
+                renderDieselGeneratorDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay,
                         renderMode, blockEntity);
                 return true;
             }
@@ -753,48 +770,48 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 return true;
             }
             case AMMO_PRESS_RUNNING_PARTS -> {
-                renderAmmoPressDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderAmmoPressDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity, partialTick);
                 return true;
             }
             case ROTARY_FURNACE_PISTON -> {
-                renderRotaryFurnaceDirect(definition, model, poseStack, buffer, packedLight, packedOverlay,
+                renderRotaryFurnaceDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay,
                         renderMode, blockEntity, partialTick);
                 return true;
             }
             case RTG_CONNECTORS -> {
-                renderRtgDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
-                        blockEntity);
+                renderRtgDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay,
+                        renderMode, blockEntity);
                 return true;
             }
             case INTAKE_FAN -> {
-                renderIntakeDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderIntakeDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity, partialTick);
                 return true;
             }
             case STIRLING_RUNNING_PARTS -> {
-                renderStirlingDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderStirlingDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity, partialTick);
                 return true;
             }
             case SAWMILL_RUNNING_PARTS -> {
-                renderSawmillDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderSawmillDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity, partialTick);
                 return true;
             }
             case COMBUSTION_ENGINE_DOOR_CANISTER -> {
-                renderCombustionEngineDirect(definition, model, poseStack, buffer, packedLight, packedOverlay,
+                renderCombustionEngineDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay,
                         renderMode, blockEntity, partialTick);
                 return true;
             }
             case ASHPIT_DOOR_INNER -> {
-                renderAshpitDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderAshpitDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity, partialTick);
                 return true;
             }
             case ARC_WELDER_DISPLAY_OUTPUT -> {
-                renderArcWelderDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
-                        blockEntity);
+                renderArcWelderDirect(definition, model, poseStack, buffer, packedLight, activityLight,
+                        packedOverlay, renderMode, blockEntity);
                 return true;
             }
             case FURNACE_STEEL_FIRE -> {
@@ -808,13 +825,13 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 return true;
             }
             case MIXER_RUNNING_PARTS -> {
-                renderMixerDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderMixerDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity, partialTick);
                 return true;
             }
             case STRAND_CASTER_MOLTEN -> {
-                renderStrandCasterDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
-                        blockEntity);
+                renderStrandCasterDirect(definition, model, poseStack, buffer, packedLight, activityLight,
+                        packedOverlay, renderMode, blockEntity);
                 return true;
             }
             case CRUCIBLE_MOLTEN -> {
@@ -823,17 +840,17 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 return true;
             }
             case FIREBOX_HEATER -> {
-                renderFireboxHeaterDirect(definition, model, poseStack, buffer, packedLight, packedOverlay,
+                renderFireboxHeaterDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay,
                         renderMode, blockEntity, partialTick);
                 return true;
             }
             case PRECASS_RUNNING_PARTS -> {
-                renderPrecassDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderPrecassDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity, partialTick);
                 return true;
             }
             case PUREX_RUNNING_PARTS -> {
-                renderPurexDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderPurexDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay, renderMode,
                         blockEntity, partialTick);
                 return true;
             }
@@ -843,7 +860,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 return true;
             }
             case HEPHAESTUS_RUNNING_CORE -> {
-                renderHephaestusDirect(definition, model, poseStack, buffer, packedLight, packedOverlay,
+                renderHephaestusDirect(definition, model, poseStack, buffer, packedLight, activityLight, packedOverlay,
                         renderMode, blockEntity, partialTick);
                 return true;
             }
@@ -886,6 +903,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         if (renderChunkBakedStaticsInBer()) {
             return false;
         }
+        if (state.getBlock() instanceof BlastFurnaceBlock
+                && state.hasProperty(BlastFurnaceBlock.TILTED)
+                && !state.getValue(BlastFurnaceBlock.TILTED)) {
+            return true;
+        }
         if (state.getBlock() instanceof GasFlareBlock
                 && state.hasProperty(GasFlareBlock.TILTED)
                 && !state.getValue(GasFlareBlock.TILTED)) {
@@ -909,7 +931,6 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 || state.getBlock() instanceof DrainBlock
                 || state.getBlock() instanceof RadiolysisBlock
                 || state.getBlock() instanceof GasCentBlock
-                || state.getBlock() instanceof ElectrolyserBlock
                 || state.getBlock() instanceof SilexBlock
                 || state.getBlock() instanceof DeuteriumTowerBlock
                 || (state.getBlock() instanceof RemoteFluidMachineBlock machine
@@ -967,14 +988,17 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             return !hasVisibleFelBeam(fel);
         }
         return switch (definition.renderProfile()) {
-            case RTG_CONNECTORS -> !hasVisibleRtgConnector(blockEntity);
-            case FURNACE_STEEL_FIRE -> blockEntity instanceof LegacyFurnaceBlockEntity furnace && !furnace.wasOn();
-            case COMBINATION_OVEN_FIRE -> blockEntity instanceof CombinationOvenBlockEntity oven && !oven.wasOn();
-            case ARC_WELDER_DISPLAY_OUTPUT -> blockEntity instanceof ArcWelderBlockEntity welder
+            case RTG_CONNECTORS -> false;
+            case FURNACE_STEEL_FIRE -> !renderChunkBakedStaticsInBer()
+                    && blockEntity instanceof LegacyFurnaceBlockEntity furnace && !furnace.wasOn();
+            case COMBINATION_OVEN_FIRE -> !renderChunkBakedStaticsInBer()
+                    && blockEntity instanceof CombinationOvenBlockEntity oven && !oven.wasOn();
+            case ARC_WELDER_DISPLAY_OUTPUT -> !renderChunkBakedStaticsInBer()
+                    && blockEntity instanceof ArcWelderBlockEntity welder
                     && welder.getDisplayOutput().isEmpty();
-            case STRAND_CASTER_MOLTEN -> blockEntity instanceof StrandCasterBlockEntity caster
-                    && (caster.getInstalledMold() == null || caster.getMoltenAmount() <= 0);
-            case CRUCIBLE_MOLTEN -> blockEntity instanceof CrucibleBlockEntity crucible
+            case STRAND_CASTER_MOLTEN -> false;
+            case CRUCIBLE_MOLTEN -> !renderChunkBakedStaticsInBer()
+                    && blockEntity instanceof CrucibleBlockEntity crucible
                     && crucible.getTotalMaterialAmount() <= 0;
             default -> false;
         };
@@ -1000,18 +1024,20 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderRtgDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+        renderRtgPart(model, "Gen", definition.textureLocation(), poseStack, buffer, packedLight,
+                packedOverlay, renderMode);
         if (!(blockEntity instanceof HbmEnergyConnector connector) || blockEntity.getLevel() == null) {
             return;
         }
-        renderRtgConnectorDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+        renderRtgConnectorDirect(definition, model, poseStack, buffer, activityLight, packedOverlay, renderMode,
                 blockEntity, connector, Direction.EAST, 0.0F);
-        renderRtgConnectorDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+        renderRtgConnectorDirect(definition, model, poseStack, buffer, activityLight, packedOverlay, renderMode,
                 blockEntity, connector, Direction.WEST, 180.0F);
-        renderRtgConnectorDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+        renderRtgConnectorDirect(definition, model, poseStack, buffer, activityLight, packedOverlay, renderMode,
                 blockEntity, connector, Direction.NORTH, 90.0F);
-        renderRtgConnectorDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+        renderRtgConnectorDirect(definition, model, poseStack, buffer, activityLight, packedOverlay, renderMode,
                 blockEntity, connector, Direction.SOUTH, -90.0F);
     }
 
@@ -1083,6 +1109,12 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     private static void renderCyclotronDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+        // RenderCyclotron emits Body before its stateful plugs.  The normal path owns Body in the
+        // chunk-baked model; when baked statics are disabled the BER must restore that shell.
+        if (renderChunkBakedStaticsInBer()) {
+            renderCyclotronPart(model, "Body", definition.textureLocation(), poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+        }
         boolean plugged = true;
         for (int index = 0; index < 4; index++) {
             boolean filled = blockEntity instanceof CyclotronBlockEntity cyclotron && cyclotron.getPlug(index);
@@ -1164,8 +1196,10 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderStrandCasterDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+        ObjMachineModels.STRAND_CASTER.renderOnlyInCallOrder(definition.textureLocation(), poseStack, buffer,
+                packedLight, packedOverlay, STRAND_CASTER_CASTER, renderMode);
         if (!(blockEntity instanceof StrandCasterBlockEntity caster)) {
             return;
         }
@@ -1189,7 +1223,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, plateZ);
         model.renderPartClipped("plate", definition.textureLocation(), poseStack, buffer,
-                packedLight, packedOverlay, red, green, blue, 255, false, renderMode,
+                activityLight, packedOverlay, red, green, blue, 255, false,
+                LegacyTexturedRenderMode.LIGHTMAP_ONLY_CUTOUT_NO_CULL,
                 LegacyWavefrontModel.UvTransform.DEFAULT, 0.0D, 0.0D, -1.0D, 0.5D - plateZ);
         poseStack.popPose();
 
@@ -1233,14 +1268,21 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderRotaryFurnaceDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        // RotaryFurnaceBlock intentionally stays ENTITYBLOCK_ANIMATED: its source-sized OBJ spans
+        // well beyond the core block and chunk baking writes invalid zero light into distant faces.
+        // Consequently no chunk copy exists even when the global static-bake option is enabled.
+        // Submit the fixed body exactly once through the prepared/VBO BER path with modelLight;
+        // the moving piston below keeps the core's ordinary packed world light.
+        renderRotaryFurnacePart(model, "Furnace", definition.textureLocation(), poseStack, buffer,
+                packedLight, packedOverlay, renderMode);
         float offset = blockEntity instanceof RotaryFurnaceBlockEntity furnace
                 ? furnace.getPistonOffset(partialTick)
                 : 0.0F;
         withAnimatedModelFade(blockEntity, () -> renderRotaryFurnaceTranslatedPart(model, "Piston",
                 true, 0.0D, offset, 0.0D, definition.textureLocation(), poseStack, buffer,
-                packedLight, packedOverlay, renderMode));
+                activityLight, packedOverlay, renderMode));
     }
 
     private static void renderRotaryFurnaceTranslatedPart(LegacyWavefrontModel model, String partName,
@@ -1283,6 +1325,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     private static void renderCrucibleDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+        // RenderCrucible always submits crucible_heat.renderAll() before the optional molten top. The chunk
+        // model owns that body normally; the BER-static fallback must restore it even when the crucible is empty.
+        if (renderChunkBakedStaticsInBer()) {
+            model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+        }
         if (!(blockEntity instanceof CrucibleBlockEntity crucible) || crucible.getTotalMaterialAmount() <= 0) {
             return;
         }
@@ -1330,8 +1377,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private static void renderCompressorDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             double piston, double fanDegrees, PoseStack poseStack, MultiBufferSource buffer,
-            int packedLight, int packedOverlay, LegacyTexturedRenderMode renderMode, BlockEntity blockEntity,
-            boolean renderBody) {
+            int packedLight, int activityLight, int packedOverlay, LegacyTexturedRenderMode renderMode,
+            BlockEntity blockEntity, boolean renderBody) {
         if (renderBody) {
             renderCompressorPart(model, "Compressor", definition.textureLocation(), poseStack, buffer,
                     packedLight, packedOverlay, renderMode);
@@ -1340,16 +1387,16 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             renderCompressorTranslatedPart(model, "Pump", 0.0D,
                     piston * LegacyTileRenderPlans.COMPRESSOR_PUMP_TRAVEL
                             + LegacyTileRenderPlans.COMPRESSOR_PUMP_BASE_Y,
-                    0.0D, definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+                    0.0D, definition.textureLocation(), poseStack, buffer, activityLight, packedOverlay, renderMode);
             renderCompressorRotatingPart(model, "Fan", 0.0D, LegacyTileRenderPlans.COMPRESSOR_FAN_PIVOT_Y,
                     0.0D, 1.0F, 0.0F, 0.0F, fanDegrees, definition.textureLocation(), poseStack, buffer,
-                    packedLight, packedOverlay, renderMode);
+                    activityLight, packedOverlay, renderMode);
         });
     }
 
     private static void renderCompressorCompactDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            double fanDegrees, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
-            LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, boolean renderBody) {
+            double fanDegrees, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight,
+            int packedOverlay, LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, boolean renderBody) {
         if (renderBody) {
             renderCompressorPart(model, "Condenser", definition.textureLocation(), poseStack, buffer,
                     packedLight, packedOverlay, renderMode);
@@ -1357,10 +1404,10 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         withAnimatedModelFade(blockEntity, () -> {
             renderCompressorRotatingPart(model, "Fan1", 0.0D, LegacyTileRenderPlans.COMPRESSOR_FAN_PIVOT_Y,
                     0.0D, 1.0F, 0.0F, 0.0F, fanDegrees, definition.textureLocation(), poseStack, buffer,
-                    packedLight, packedOverlay, renderMode);
+                    activityLight, packedOverlay, renderMode);
             renderCompressorRotatingPart(model, "Fan2", 0.0D, LegacyTileRenderPlans.COMPRESSOR_FAN_PIVOT_Y,
                     0.0D, -1.0F, 0.0F, 0.0F, fanDegrees, definition.textureLocation(), poseStack, buffer,
-                    packedLight, packedOverlay, renderMode);
+                    activityLight, packedOverlay, renderMode);
         });
     }
 
@@ -1441,17 +1488,21 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderAnnihilatorDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
         long currentMillis = System.currentTimeMillis();
+        if (renderChunkBakedStaticsInBer()) {
+            renderAnnihilatorPart(model, "Annihilator", definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay, renderMode);
+        }
         withAnimatedModelFade(blockEntity, () -> {
             renderAnnihilatorRotatingPart(model, "Roller", 0.0D,
                     LegacyTileRenderPlans.ANNIHILATOR_ROLLER_PIVOT_Y, 0.0D, 0.0F, 0.0F, -1.0F,
                     currentMillis * LegacyTileRenderPlans.ANNIHILATOR_ROLLER_ROTATION_SPEED % 360.0D,
-                    definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+                    definition.textureLocation(), poseStack, buffer, activityLight, packedOverlay, renderMode);
             renderAnnihilatorPart(model, "Belt",
                     definition.partTextures().getOrDefault("Belt", definition.textureLocation()),
-                    poseStack, buffer, packedLight, packedOverlay, renderMode,
+                    poseStack, buffer, activityLight, packedOverlay, renderMode,
                     legacyTextureMatrixUvTransform(1.0F, 1.0F,
                             (float) LegacyUvAnimation.annihilatorBeltU(currentMillis), 0.0F));
         });
@@ -1510,13 +1561,17 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderRadGenDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+        if (renderChunkBakedStaticsInBer()) {
+            renderRadGenPart(model, "Base", definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay, renderMode);
+        }
         boolean on = blockEntity instanceof RadGenBlockEntity radGen && radGen.isOn();
         double rotorAngle = on ? (System.currentTimeMillis() % 3600L) * -0.1D : 0.0D;
         renderRadGenRotatingPart(model, "Rotor", 0.0D, 1.5D, 0.0D,
                 1.0F, 0.0F, 0.0F, rotorAngle, definition.textureLocation(), poseStack,
-                buffer, packedLight, packedOverlay, renderMode);
+                buffer, activityLight, packedOverlay, renderMode);
         renderRadGenPart(model, "Glass", definition.textureLocation(), poseStack, buffer, packedLight,
                 packedOverlay, renderMode);
         if (on) {
@@ -1526,8 +1581,9 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             renderRadGenUntexturedPart(model, "Light", poseStack, buffer, RADGEN_LIGHT_OFF_RED,
                     RADGEN_LIGHT_OFF_GREEN, RADGEN_LIGHT_OFF_BLUE, 255, renderMode);
         }
-        renderRadGenUntexturedPart(model, "Glass", poseStack, buffer, RADGEN_GLASS_RED, RADGEN_GLASS_GREEN,
-                RADGEN_GLASS_BLUE, RADGEN_GLASS_ALPHA, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
+        renderRadGenTintedPart(model, "Glass", WHITE_TEXTURE, poseStack, buffer, packedLight, packedOverlay,
+                RADGEN_GLASS_RED, RADGEN_GLASS_GREEN, RADGEN_GLASS_BLUE, RADGEN_GLASS_ALPHA,
+                LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE);
     }
 
     private static void renderRadGenRotatingPart(LegacyWavefrontModel model,
@@ -1575,6 +1631,21 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         model.renderPartUntextured(partName, poseStack, buffer, red, green, blue, alpha, renderMode);
     }
 
+    private static void renderRadGenTintedPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            int red, int green, int blue, int alpha, LegacyTexturedRenderMode renderMode) {
+        LegacyWavefrontModel.SelectionHandle handle =
+                sameModel(model, ObjMachineModels.RADGEN) ? radGenHandle(partName) : null;
+        if (handle != null) {
+            ObjMachineModels.RADGEN.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight,
+                    packedOverlay, red, green, blue, alpha, false, renderMode,
+                    LegacyWavefrontModel.UvTransform.DEFAULT, handle);
+            return;
+        }
+        model.renderPart(partName, texture, poseStack, buffer, packedLight, packedOverlay,
+                red, green, blue, alpha, false, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
+    }
+
     private static LegacyWavefrontModel.SelectionHandle radGenHandle(String partName) {
         if (partName == null) {
             return null;
@@ -1589,8 +1660,12 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderBatteryReddDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        if (renderChunkBakedStaticsInBer()) {
+            renderBatteryReddPart(model, "Base", definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay, 255, 255, 255, 255, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
+        }
         BatteryReddBlockEntity battery = blockEntity instanceof BatteryReddBlockEntity redd ? redd : null;
         float rotation = battery != null ? battery.getInterpolatedRotation(partialTick) : 0.0F;
         float speed = battery != null ? battery.getSpeed() : 0.0F;
@@ -1598,7 +1673,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         poseStack.translate(0.0D, 5.5D, 0.0D);
         LegacyPoseRotations.rotateXDegrees(poseStack, rotation);
         poseStack.translate(0.0D, -5.5D, 0.0D);
-        renderBatteryReddPart(model, "Wheel", definition.textureLocation(), poseStack, buffer, packedLight,
+        renderBatteryReddPart(model, "Wheel", definition.textureLocation(), poseStack, buffer, activityLight,
                 packedOverlay, 255, 255, 255, 255, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
         renderBatteryReddPart(model, "Lights", definition.textureLocation(), poseStack, buffer,
                 LightTexture.FULL_BRIGHT, packedOverlay, 255, 255, 255, 255, renderMode,
@@ -1810,7 +1885,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     private static void renderPumpDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             double rotorDegrees, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            int packedOverlay, LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, boolean renderBase) {
+            int activityLight, int packedOverlay, LegacyTexturedRenderMode renderMode, BlockEntity blockEntity,
+            boolean renderBase) {
         if (renderBase) {
             renderPumpPart(model, "Base", definition.textureLocation(), poseStack, buffer, packedLight,
                     packedOverlay, renderMode);
@@ -1826,12 +1902,12 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         withAnimatedModelFade(blockEntity, () -> {
             renderPumpRotatingPart(model, "Rotor", 0.0D, LegacyTileRenderPlans.PUMP_ROTOR_PIVOT_Y, 0.0D,
                     0.0F, 0.0F, 1.0F, rotorDegrees - 90.0D, definition.textureLocation(), poseStack, buffer,
-                    packedLight, packedOverlay, renderMode);
+                    activityLight, packedOverlay, renderMode);
             renderPumpPivotedPart(model, "Arms", 0.0D, vertical, 0.0D, 0.0D,
                     LegacyTileRenderPlans.PUMP_ARM_PIVOT_Y, 0.0D, 0.0F, 0.0F, -1.0F, armAngle,
-                    definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+                    definition.textureLocation(), poseStack, buffer, activityLight, packedOverlay, renderMode);
             renderPumpTranslatedPart(model, "Piston", 0.0D, vertical, 0.0D, definition.textureLocation(),
-                    poseStack, buffer, packedLight, packedOverlay, renderMode);
+                    poseStack, buffer, activityLight, packedOverlay, renderMode);
         });
     }
 
@@ -1924,20 +2000,27 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderCombustionEngineDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        // The Forge OBJ block model owns Engine while chunk-baked statics are enabled.  Re-submitting it here
+        // puts identical coplanar faces in the world mesh and BER, which presents as large z-fighting cracks.
+        // The direct-render fallback has no baked body, so it must retain the original all-parts sequence.
+        if (renderChunkBakedStaticsInBer()) {
+            renderCombustionEnginePart(model, "Engine", definition.textureLocation(), poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+        }
         int canisterColor = blockEntity instanceof CombustionEngineBlockEntity engine
                 ? engine.getCanisterColor()
                 : 0xFFFFFF;
         renderCombustionEnginePart(model, "Canister", definition.textureLocation(), poseStack, buffer,
-                packedLight, packedOverlay, renderMode, canisterColor >>> 16 & 255,
+                activityLight, packedOverlay, renderMode, canisterColor >>> 16 & 255,
                 canisterColor >>> 8 & 255, canisterColor & 255, 255);
         float doorAngle = blockEntity instanceof CombustionEngineBlockEntity engine
                 ? engine.getDoorAngle(partialTick)
                 : 0.0F;
         renderCombustionEngineRotatingPart(model, "Hatch", 1.0D, 0.0D, -2.6875D,
                 0.0F, -1.0F, 0.0F, doorAngle, definition.textureLocation(), poseStack, buffer,
-                packedLight, packedOverlay, renderMode);
+                activityLight, packedOverlay, renderMode);
     }
 
     private static void renderCombustionEngineRotatingPart(LegacyWavefrontModel model,
@@ -1995,21 +2078,30 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderDieselGeneratorDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
-        if (blockEntity instanceof DieselGeneratorBlockEntity diesel && diesel.isBurning()) {
+        // RenderDieselGen submits Generator before its optionally vibrating Engine.  Generator is static baked
+        // in the normal path and must be restored by this renderer only when static baking falls back to BER.
+        if (renderChunkBakedStaticsInBer()) {
+            renderDieselGeneratorPart(model, "Generator", definition.textureLocation(), poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+        }
+        // RenderDieselGen gates the Engine vibration on acceptable fuel plus a non-empty tank.  It does not
+        // consult isOn/wasOn; those fields only gate generation, the GUI flame and the engine loop.
+        if (blockEntity instanceof DieselGeneratorBlockEntity diesel
+                && diesel.hasAcceptableFuel() && diesel.getTank().getFill() > 0) {
             long currentMillis = System.currentTimeMillis();
             double swingSide = Math.sin(currentMillis / 50.0D) * 0.005D;
             double swingFront = Math.sin(currentMillis / 25.0D) * 0.005D;
             poseStack.pushPose();
             poseStack.translate(swingFront, 0.0D, swingSide);
             renderDieselGeneratorPart(model, "Engine", definition.textureLocation(), poseStack, buffer,
-                    packedLight, packedOverlay, renderMode);
+                    activityLight, packedOverlay, renderMode);
             poseStack.popPose();
             return;
         }
         renderDieselGeneratorPart(model, "Engine", definition.textureLocation(), poseStack, buffer,
-                packedLight, packedOverlay, renderMode);
+                activityLight, packedOverlay, renderMode);
     }
 
     static void renderDieselGeneratorPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
@@ -2043,34 +2135,51 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         if (rendersChunkBakedHeatBoilerNormal(blockEntity.getBlockState())) {
             return;
         }
-        boolean exploded = blockEntity instanceof BoilerBlockEntity boiler && boiler.hasExploded();
+        boolean hasExploded = blockEntity instanceof BoilerBlockEntity boiler && boiler.hasExploded();
         int steamFill = blockEntity instanceof BoilerBlockEntity boiler ? boiler.getSteamFill() : 0;
         int steamMaxFill = blockEntity instanceof BoilerBlockEntity boiler ? boiler.getSteamMaxFill() : 0;
-        boolean overpressure = !exploded && steamMaxFill > 0 && steamFill > steamMaxFill * 0.9D;
+        LegacyTileRenderPlans.BoilerPlan plan = LegacyTileRenderPlans.boilerPlan(
+                hasExploded, steamFill, steamMaxFill, System.currentTimeMillis());
         poseStack.pushPose();
-        if (overpressure) {
-            double sine = Math.sin((System.currentTimeMillis() / 50.0D) % (Math.PI * 2.0D)) * 0.01D;
-            poseStack.scale((float) (1.0D - sine), (float) (1.0D + sine), (float) (1.0D - sine));
+        if (plan.overpressure()) {
+            poseStack.scale((float) plan.scaleX(), (float) plan.scaleY(), (float) plan.scaleZ());
         }
-        LegacyWavefrontModel selected = exploded
+        LegacyWavefrontModel selected = plan.exploded()
                 ? EXTRA_MODELS.computeIfAbsent(BOILER_BURST_MODEL,
                         key -> new LegacyWavefrontModel(key, definition.textureLocation()).asVBO())
                 : model;
+        LegacyTexturedRenderMode boilerRenderMode = plan.cullEnabled()
+                ? LegacyTexturedRenderMode.CUTOUT_CULL
+                : LegacyTexturedRenderMode.CUTOUT_NO_CULL;
         renderTexturedAll(selected, definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
-                renderMode);
+                boilerRenderMode);
+        if (HeatBoilerRenderAuditEvidence.enabled()
+                && blockEntity.getBlockState().hasProperty(HeatBoilerBlock.VISUAL)) {
+            HeatBoilerRenderAuditEvidence.record(
+                    blockEntity.getBlockPos(),
+                    blockEntity.getBlockState().getValue(HeatBoilerBlock.VISUAL).getSerializedName(),
+                    plan.exploded() ? BOILER_BURST_MODEL : definition.modelLocation(),
+                    packedLight,
+                    false,
+                    plan.cullEnabled());
+        }
         poseStack.popPose();
     }
 
     private static void renderHephaestusDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        if (renderChunkBakedStaticsInBer()) {
+            renderHephaestusPart(model, "Main", definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay, 255, 255, 255, 255, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
+        }
         float rotor = blockEntity instanceof HephaestusBlockEntity hephaestus ? hephaestus.getRotor(partialTick) : 0.0F;
         boolean active = blockEntity instanceof HephaestusBlockEntity hephaestus && hephaestus.isActive();
         withAnimatedModelFade(blockEntity, () -> {
             poseStack.pushPose();
             LegacyPoseRotations.rotateYDegrees(poseStack, rotor);
             for (int i = 0; i < 3; i++) {
-                renderHephaestusPart(model, "Rotor", definition.textureLocation(), poseStack, buffer, packedLight,
+                renderHephaestusPart(model, "Rotor", definition.textureLocation(), poseStack, buffer, activityLight,
                         packedOverlay, 255, 255, 255, 255, renderMode, LegacyWavefrontModel.UvTransform.DEFAULT);
                 LegacyPoseRotations.rotateYDegrees(poseStack, 120.0F);
             }
@@ -2160,12 +2269,18 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderIntakeDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        // RenderIntake draws its static Base before the fan.  Base is normally baked with the block model and
+        // has to be submitted by this renderer only in the BER-static fallback.
+        if (renderChunkBakedStaticsInBer()) {
+            renderIntakePart(model, "Base", definition.textureLocation(), poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+        }
         float fan = blockEntity instanceof IntakeBlockEntity intake ? intake.getFanSpin(partialTick) : 0.0F;
         withAnimatedModelFade(blockEntity, () -> renderIntakeRotatingPart(model, "Fan",
                 0.0D, 0.0D, 0.0D, 0.0F, -1.0F, 0.0F, fan, definition.textureLocation(),
-                poseStack, buffer, packedLight, packedOverlay, renderMode));
+                poseStack, buffer, activityLight, packedOverlay, renderMode));
     }
 
     private static void renderIntakeRotatingPart(LegacyWavefrontModel model,
@@ -2212,15 +2327,19 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderCrystallizerDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        if (renderChunkBakedStaticsInBer()) {
+            renderCrystallizerPart(model, "Body", definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay, renderMode);
+        }
         boolean on = blockEntity instanceof ProcessingMachineBlockEntity processing && processing.isOn();
         float angle = blockEntity instanceof ProcessingMachineBlockEntity processing
                 ? processing.getAngle(partialTick)
                 : 0.0F;
         withAnimatedModelFade(blockEntity, () -> renderCrystallizerRotatingPart(model, "Spinner",
                 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, 0.0F, angle, definition.textureLocation(),
-                poseStack, buffer, packedLight, packedOverlay, renderMode));
+                poseStack, buffer, activityLight, packedOverlay, renderMode));
         ResourceLocation fluidTexture = blockEntity instanceof ProcessingMachineBlockEntity processing
                 ? processing.getCrystallizerTank().getTankType().getTexture()
                 : definition.textureLocation();
@@ -2295,22 +2414,33 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderAshpitDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        // RenderAshpit always draws Main before its moving door and state-selected inner.  With the default
+        // chunk-baked static model Main is already present; the BER fallback owns that static part itself.
+        if (renderChunkBakedStaticsInBer()) {
+            renderFireboxHeaterPart(model, "Main", definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay, renderMode);
+        }
         float door = blockEntity instanceof AshpitBlockEntity ashpit ? ashpit.getDoorAngle(partialTick) : 0.0F;
         boolean full = blockEntity instanceof AshpitBlockEntity ashpit && ashpit.isFull();
         poseStack.pushPose();
         poseStack.translate(0.0D, 0.0D, door * 0.75D / 135.0D);
-        renderFireboxHeaterPart(model, "Door", definition.textureLocation(), poseStack, buffer, packedLight,
+        renderFireboxHeaterPart(model, "Door", definition.textureLocation(), poseStack, buffer, activityLight,
                 packedOverlay, renderMode);
         poseStack.popPose();
         renderFireboxHeaterPart(model, full ? "InnerBurning" : "Inner", definition.textureLocation(),
-                poseStack, buffer, packedLight, packedOverlay, renderMode);
+                poseStack, buffer, activityLight, packedOverlay, renderMode);
     }
 
     private static void renderArcWelderDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
-            LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight,
+            int packedOverlay, LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+        // RenderArcWelder always submits its complete OBJ before the optional display item.  The chunk model
+        // owns that body normally; the prepared BER model restores it only while baked statics are disabled.
+        if (renderChunkBakedStaticsInBer()) {
+            model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+        }
         if (!(blockEntity instanceof ArcWelderBlockEntity welder)) {
             return;
         }
@@ -2326,23 +2456,29 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         LegacyPoseRotations.rotateXDegrees(poseStack, -90.0F);
         poseStack.scale(1.5F, 1.5F, 1.5F);
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED,
-                packedLight, OverlayTexture.NO_OVERLAY, poseStack, buffer, blockEntity.getLevel(), 0);
+                activityLight, OverlayTexture.NO_OVERLAY, poseStack, buffer, blockEntity.getLevel(), 0);
         poseStack.popPose();
     }
 
     private static void renderAmmoPressDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        // RenderAmmoPress submits its static Frame before the translated press, shells, and bullets.  Frame is
+        // normally baked into the block model and belongs to this renderer only in the BER-static fallback.
+        if (renderChunkBakedStaticsInBer()) {
+            renderAmmoPressPart(model, "Frame", definition.textureLocation(), poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+        }
         float press = blockEntity instanceof AmmoPressBlockEntity ammoPress ? ammoPress.getPress(partialTick) : 0.0F;
         float lift = blockEntity instanceof AmmoPressBlockEntity ammoPress ? ammoPress.getLift(partialTick) : 0.0F;
         boolean bullets = blockEntity instanceof AmmoPressBlockEntity ammoPress && ammoPress.shouldRenderBullets();
 
         renderAmmoPressTranslatedPart(model, "Press", true, 0.0D, -press * 0.25D, 0.0D,
-                definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+                definition.textureLocation(), poseStack, buffer, activityLight, packedOverlay, renderMode);
         renderAmmoPressTranslatedPart(model, "Shells", true, 0.0D, lift * 0.5D - 0.5D, 0.0D,
-                definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+                definition.textureLocation(), poseStack, buffer, activityLight, packedOverlay, renderMode);
         renderAmmoPressTranslatedPart(model, "Bullets", bullets, 0.0D, lift * 0.5D - 0.5D, 0.0D,
-                definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+                definition.textureLocation(), poseStack, buffer, activityLight, packedOverlay, renderMode);
     }
 
     private static void renderAmmoPressTranslatedPart(LegacyWavefrontModel model, String partName,
@@ -2385,12 +2521,18 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderMixerDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        // RenderMixer submits Main before the rotating mixer and optional translucent fluid.  Main remains baked
+        // during normal rendering and is owned here only when static rendering falls back to the BER.
+        if (renderChunkBakedStaticsInBer()) {
+            renderMixerPart(model, "Main", definition.textureLocation(), poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+        }
         float rotation = blockEntity instanceof MixerBlockEntity mixer ? mixer.getRotation(partialTick) : 0.0F;
         withAnimatedModelFade(blockEntity, () -> renderMixerRotatingPart(model, "Mixer",
                 0.0D, 0.0D, 0.0D, 0.0F, -1.0F, 0.0F, rotation, definition.textureLocation(),
-                poseStack, buffer, packedLight, packedOverlay, renderMode));
+                poseStack, buffer, activityLight, packedOverlay, renderMode));
 
         if (!(blockEntity instanceof MixerBlockEntity mixer) || mixer.getTotalFluidFill() <= 0
                 || mixer.getTotalFluidCapacity() <= 0) {
@@ -2402,10 +2544,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         poseStack.translate(0.0D, 1.0D, 0.0D);
         poseStack.scale(1.0F, (float) scale, 1.0F);
         poseStack.translate(0.0D, -1.0D, 0.0D);
-        LegacyMachineEffectPresenter.enqueueUntexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
-                poseStack, buffer, parts -> parts.add(ObjMachineModels.MIXER, MIXER_FLUID,
-                        color >>> 16 & 255, color >>> 8 & 255, color & 255, 191,
-                        LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE));
+        LegacyMachineEffectPresenter.enqueueTexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                poseStack, buffer, parts -> parts.add(ObjMachineModels.MIXER, MIXER_FLUID, WHITE_TEXTURE,
+                        packedLight, packedOverlay, color >>> 16 & 255, color >>> 8 & 255, color & 255, 191,
+                        false, LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
+                        LegacyWavefrontModel.UvTransform.DEFAULT));
         poseStack.popPose();
     }
 
@@ -2456,6 +2599,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     private static void renderCombinationOvenDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+        // RenderFurnaceCombination always submits the complete static oven before the optional fire billboard.
+        // The chunk model owns that body normally; the BER-static fallback must restore it even while idle.
+        if (renderChunkBakedStaticsInBer()) {
+            model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+        }
         if (!(blockEntity instanceof CombinationOvenBlockEntity oven) || !oven.wasOn()) {
             return;
         }
@@ -2483,6 +2631,12 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     private static void renderFurnaceIronDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+        // RenderFurnaceIron submits the static shell before its mutually-exclusive On/Off indicator.
+        // MODEL rendering owns Main normally; the BER-static fallback must restore the legacy sequence itself.
+        if (renderChunkBakedStaticsInBer()) {
+            renderFurnaceIronPart(model, "Main", definition.textureLocation(), poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+        }
         if (blockEntity instanceof LegacyFurnaceBlockEntity furnace && furnace.wasOn()) {
             renderFurnaceIronPart(model, "On", definition.textureLocation(), poseStack, buffer,
                     LightTexture.FULL_BRIGHT, packedOverlay, renderMode);
@@ -2520,6 +2674,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     private static void renderFurnaceSteelDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
             PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity) {
+        // RenderFurnaceSteel always submits its complete static shell before the optional additive fire glow.
+        // Keep the shell baked normally and restore it from the prepared BER model only in fallback mode.
+        if (renderChunkBakedStaticsInBer()) {
+            model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+        }
         if (!(blockEntity instanceof LegacyFurnaceBlockEntity furnace) || !furnace.wasOn()) {
             return;
         }
@@ -2543,8 +2702,14 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderSawmillDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        // RenderSawmill submits Main before its blade and gear rotations.  Keep Main with the baked OBJ normally,
+        // but restore it when the client uses the BER-static fallback.
+        if (renderChunkBakedStaticsInBer()) {
+            renderSawmillPart(model, "Main", definition.textureLocation(), poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+        }
         float rot = blockEntity instanceof SawmillBlockEntity sawmill ? sawmill.getSpin(partialTick) : 0.0F;
         boolean hasBlade = !(blockEntity instanceof SawmillBlockEntity sawmill) || sawmill.hasBlade();
 
@@ -2552,14 +2717,14 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             if (hasBlade) {
                 renderSawmillRotatingPart(model, "Blade", 0.0D, 1.375D, 0.0D,
                         0.0F, 0.0F, 1.0F, -rot * 2.0F, definition.textureLocation(), poseStack,
-                        buffer, packedLight, packedOverlay, renderMode);
+                        buffer, activityLight, packedOverlay, renderMode);
             }
             renderSawmillRotatingPart(model, "GearLeft", 0.5625D, 1.375D, 0.0D,
                     0.0F, 0.0F, 1.0F, rot, definition.textureLocation(), poseStack, buffer,
-                    packedLight, packedOverlay, renderMode);
+                    activityLight, packedOverlay, renderMode);
             renderSawmillRotatingPart(model, "GearRight", -0.5625D, 1.375D, 0.0D,
                     0.0F, 0.0F, 1.0F, -rot, definition.textureLocation(), poseStack, buffer,
-                    packedLight, packedOverlay, renderMode);
+                    activityLight, packedOverlay, renderMode);
         });
     }
 
@@ -2583,8 +2748,14 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderStirlingDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        // RenderStirling always renders its static Base before cog and piston motion.  Base normally belongs to
+        // the baked OBJ; restore it here only when the client selects the BER-static fallback.
+        if (renderChunkBakedStaticsInBer()) {
+            renderStirlingPart(model, "Base", definition.textureLocation(), poseStack, buffer,
+                    packedLight, packedOverlay, renderMode);
+        }
         float rot = blockEntity instanceof StirlingBlockEntity stirling ? stirling.getSpin(partialTick) : 0.0F;
         boolean hasCog = !(blockEntity instanceof StirlingBlockEntity stirling) || stirling.hasCog();
 
@@ -2592,14 +2763,14 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             if (hasCog) {
                 renderStirlingRotatingPart(model, "Cog", 0.0D, 1.375D, 0.0D,
                         0.0F, 0.0F, -1.0F, rot, definition.textureLocation(), poseStack, buffer,
-                        packedLight, packedOverlay, renderMode);
+                        activityLight, packedOverlay, renderMode);
             }
             renderStirlingRotatingPart(model, "CogSmall", 0.0D, 1.375D, 0.25D,
                     1.0F, 0.0F, 0.0F, rot * 2.0F + 3.0F, definition.textureLocation(), poseStack,
-                    buffer, packedLight, packedOverlay, renderMode);
+                    buffer, activityLight, packedOverlay, renderMode);
             renderStirlingTranslatedPart(model, "Piston", true,
                     Math.sin(rot * Math.PI / 90.0D) * 0.25D + 0.125D, 0.0D, 0.0D,
-                    definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
+                    definition.textureLocation(), poseStack, buffer, activityLight, packedOverlay, renderMode);
         });
     }
 
@@ -2688,7 +2859,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderPrecassDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
         boolean frame = blockEntity instanceof LegacyGenericSelectorMachineBlockEntity machine
                 && machine.shouldRenderFrame();
@@ -2699,6 +2870,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 ? machine.getPrecassArm(partialTick)
                 : new double[] { 45.0D, -30.0D, 45.0D };
 
+        AssemblyMachineRenderer.renderModelPart(model, "Base", definition.textureLocation(), poseStack,
+                buffer, packedLight, packedOverlay, renderMode);
         if (frame) {
             AssemblyMachineRenderer.renderModelPart(model, "Frame", definition.textureLocation(), poseStack,
                     buffer, packedLight, packedOverlay, renderMode);
@@ -2708,14 +2881,14 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             poseStack.pushPose();
             LegacyPoseRotations.rotateYDegrees(poseStack, (float) ring);
             AssemblyMachineRenderer.renderModelPart(model, "Ring", definition.textureLocation(), poseStack, buffer,
-                    packedLight, packedOverlay, renderMode);
+                    activityLight, packedOverlay, renderMode);
             AssemblyMachineRenderer.renderModelPart(model, "Ring2", definition.textureLocation(), poseStack, buffer,
-                    packedLight, packedOverlay, renderMode);
+                    activityLight, packedOverlay, renderMode);
             for (int i = 0; i < 4; i++) {
                 double striker = blockEntity instanceof LegacyGenericSelectorMachineBlockEntity machine
                         ? machine.getPrecassStriker(i, partialTick)
                         : 0.0D;
-                renderPrecassArmDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode,
+                renderPrecassArmDirect(definition, model, poseStack, buffer, activityLight, packedOverlay, renderMode,
                         arm, striker);
                 LegacyPoseRotations.rotateYDegrees(poseStack, -90.0F);
             }
@@ -2726,7 +2899,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             double iconDistanceSq = LegacyRecipeIconRenderer.playerDistanceSq(machine);
             if (LegacyRecipeIconRenderer.shouldRenderAtDistance(iconDistanceSq)) {
                 LegacyRecipeIconRenderer.renderInLegacyMachineSpace(machine.getSelectedRecipeDefinition(),
-                        machine.getLevel(), poseStack, buffer, packedLight);
+                        machine.getLevel(), poseStack, buffer, activityLight);
             }
         }
     }
@@ -2759,7 +2932,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderPurexDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
         boolean frame = blockEntity instanceof LegacyGenericSelectorMachineBlockEntity machine
                 && machine.shouldRenderFrame();
@@ -2767,6 +2940,8 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                 ? machine.getPurexAnim(partialTick)
                 : 0.0F;
 
+        renderPurexPart(model, "Base", definition.textureLocation(), poseStack, buffer,
+                packedLight, packedOverlay, renderMode);
         if (frame) {
             renderPurexPart(model, "Frame", definition.textureLocation(), poseStack, buffer,
                     packedLight, packedOverlay, renderMode);
@@ -2774,9 +2949,9 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         withAnimatedModelFade(blockEntity, () -> {
             renderPurexRotatingPart(model, "Fan", 1.5D, 1.25D, 0.0D,
                     0.0F, 0.0F, 1.0F, anim * 45.0F, definition.textureLocation(), poseStack,
-                    buffer, packedLight, packedOverlay, renderMode);
+                    buffer, activityLight, packedOverlay, renderMode);
             renderPurexTranslatedPart(model, "Pump", true, BobMathUtil.sps(anim * 0.25D) * 0.5D,
-                    0.0D, 0.0D, definition.textureLocation(), poseStack, buffer, packedLight,
+                    0.0D, 0.0D, definition.textureLocation(), poseStack, buffer, activityLight,
                     packedOverlay, renderMode);
         });
     }
@@ -2841,8 +3016,14 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
     }
 
     private static void renderFireboxHeaterDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int activityLight, int packedOverlay,
             LegacyTexturedRenderMode renderMode, BlockEntity blockEntity, float partialTick) {
+        // Both legacy RenderFirebox and RenderAshpit-style oven rendering submit Main before dynamic parts.
+        // Main comes from the chunk-baked OBJ normally, but belongs to this renderer in the BER fallback.
+        if (renderChunkBakedStaticsInBer()) {
+            renderFireboxHeaterPart(model, "Main", definition.textureLocation(), poseStack, buffer, packedLight,
+                    packedOverlay, renderMode);
+        }
         FireboxHeaterBlockEntity.Kind kind = blockEntity instanceof FireboxHeaterBlockEntity firebox
                 ? firebox.kind()
                 : FireboxHeaterBlockEntity.Kind.FIREBOX;
@@ -2855,11 +3036,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             poseStack.pushPose();
             poseStack.translate(0.0D, 0.0D, door * 0.75D / 135.0D);
             renderFireboxHeaterPart(model, "Door", definition.textureLocation(), poseStack, buffer,
-                    packedOverlay, partRenderState(definition, "Door", packedLight, renderMode, false));
+                    packedOverlay, partRenderState(definition, "Door", activityLight, renderMode, false));
             poseStack.popPose();
             String innerPart = burning ? "InnerBurning" : "Inner";
             renderFireboxHeaterPart(model, innerPart, definition.textureLocation(), poseStack, buffer,
-                    packedOverlay, partRenderState(definition, innerPart, packedLight, renderMode, burning));
+                    packedOverlay, partRenderState(definition, innerPart, activityLight, renderMode, burning));
             return;
         }
 
@@ -2868,11 +3049,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         LegacyPoseRotations.rotateYDegrees(poseStack, -(door));
         poseStack.translate(-1.375D, 0.0D, -0.375D);
         renderFireboxHeaterPart(model, "Door", definition.textureLocation(), poseStack, buffer,
-                packedOverlay, partRenderState(definition, "Door", packedLight, renderMode, false));
+                packedOverlay, partRenderState(definition, "Door", activityLight, renderMode, false));
         poseStack.popPose();
         String innerPart = burning ? "InnerBurning" : "InnerEmpty";
         renderFireboxHeaterPart(model, innerPart, definition.textureLocation(), poseStack, buffer,
-                packedOverlay, partRenderState(definition, innerPart, packedLight, renderMode, burning));
+                packedOverlay, partRenderState(definition, innerPart, activityLight, renderMode, burning));
     }
 
     private static void renderFireboxHeaterPart(LegacyWavefrontModel model, String partName, ResourceLocation texture,
@@ -3044,6 +3225,10 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             if (handle != null) {
                 if (plan.textured()) {
                     ObjMachineModels.RADGEN.renderOnlyInCallOrder(texture, poseStack, buffer,
+                            packedLight, packedOverlay, red, green, blue, alpha, false, renderMode,
+                            LegacyWavefrontModel.UvTransform.DEFAULT, handle);
+                } else if ("Glass".equals(plan.partName())) {
+                    ObjMachineModels.RADGEN.renderOnlyInCallOrder(WHITE_TEXTURE, poseStack, buffer,
                             packedLight, packedOverlay, red, green, blue, alpha, false, renderMode,
                             LegacyWavefrontModel.UvTransform.DEFAULT, handle);
                 } else {

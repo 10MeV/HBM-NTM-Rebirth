@@ -147,7 +147,7 @@ public final class HbmBakedObjModelDiagnostics {
     private static void collectReachableForgeObjModels(JsonObject json, String modelKey, Set<String> blocks,
             Map<ResourceLocation, Resource> modelResources, Set<ResourceLocation> visited,
             Map<String, ReferencedForgeObjModel> forgeModels, List<String> failures) {
-        if ("forge:obj".equals(stringValue(json, "loader"))) {
+        if (isObjLoader(stringValue(json, "loader"))) {
             forgeModels.computeIfAbsent(modelKey, key -> new ReferencedForgeObjModel(key, json.deepCopy()))
                     .addBlocks(blocks);
             return;
@@ -181,7 +181,7 @@ public final class HbmBakedObjModelDiagnostics {
         }
         JsonObject object = element.getAsJsonObject();
         String model = stringValue(object, "model");
-        if ("forge:obj".equals(stringValue(object, "loader"))) {
+        if (isObjLoader(stringValue(object, "loader"))) {
             collectReachableForgeObjModels(object, modelKey, blocks, modelResources, visited, forgeModels, failures);
             return;
         }
@@ -193,6 +193,11 @@ public final class HbmBakedObjModelDiagnostics {
             collectNestedForgeObjModels(child.getValue(), modelKey + "." + child.getKey(), blocks, modelResources,
                     visited, forgeModels, failures);
         }
+    }
+
+    private static boolean isObjLoader(String loader) {
+        return "forge:obj".equals(loader)
+                || (HbmNtm.MOD_ID + ":legacy_lit_obj").equals(loader);
     }
 
     private static Map<ResourceLocation, Set<String>> collectBlockstateModelReferences(ResourceManager resourceManager) {

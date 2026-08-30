@@ -39,6 +39,11 @@ public class ExposureChamberBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // MachineExposureChamber delegates to BlockDummyable#standardOpenBehavior,
+        // whose sneaking branch consumes the interaction without opening the GUI.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof ExposureChamberBlockEntity chamber) {
             NetworkHooks.openScreen(serverPlayer, chamber, chamber.getBlockPos());

@@ -31,7 +31,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
@@ -602,6 +604,40 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         if (tag.contains(TAG_PRIORITY)) {
             socketEnergy.setPriority(readLegacyPriority(tag));
         }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityBatterySocket#serialize: the runtime packet deliberately carries only
+        // the display battery identity/damage, never its complete persistent NBT.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(delta);
+        data.writeLong(getPower());
+        data.writeLong(getMaxPower());
+        ItemStack stack = getBatteryStack();
+        if (stack.isEmpty()) {
+            data.writeInt(-1);
+        } else {
+            data.writeInt(BuiltInRegistries.ITEM.getId(stack.getItem()));
+            data.writeShort(stack.getDamageValue());
+        }
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        delta = data.readLong();
+        long power = data.readLong();
+        data.readLong(); // Legacy maxPower field; modern capacity is derived from the synced item type.
+        int itemId = data.readInt();
+        if (itemId < 0) {
+            items.setStackInSlot(SLOT_BATTERY, ItemStack.EMPTY);
+            return;
+        }
+        ItemStack stack = new ItemStack(BuiltInRegistries.ITEM.byId(itemId));
+        stack.setDamageValue(data.readUnsignedShort());
+        items.setStackInSlot(SLOT_BATTERY, stack);
+        socketEnergy.setPower(power);
     }
 
     @Override

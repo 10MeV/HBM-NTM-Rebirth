@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "hbm_ntm_rebirth:plate_cast_steel",
+    "hbm_ntm_rebirth:plate_cast_gold",
     "hbm_ntm_rebirth:plate_cast_lead",
     "hbm_ntm_rebirth:plate_cast_copper",
     "hbm_ntm_rebirth:plate_cast_titanium",
@@ -13,6 +14,8 @@
     "hbm_ntm_rebirth:plate_cast_ferrouranium",
     "hbm_ntm_rebirth:plate_cast_tungsten",
     "hbm_ntm_rebirth:plate_cast_starmetal",
-    "hbm_ntm_rebirth:plate_cast_schrabidium"
+    "hbm_ntm_rebirth:plate_cast_schrabidium",
+    "hbm_ntm_rebirth:plate_cast_schrabidate",
+    "hbm_ntm_rebirth:plate_cast_bismuth"
   ]
 }

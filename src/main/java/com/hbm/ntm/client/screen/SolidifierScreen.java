@@ -38,7 +38,7 @@ public class SolidifierScreen extends AbstractContainerScreen<SolidifierMenu> {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        LegacyGuiText.drawCenteredLabel(graphics, font, title.getString(), titleLabelX, titleLabelY, 124, 0xC7C1A3);
+        graphics.drawString(font, title, titleLabelX - font.width(title) / 2, titleLabelY, 0xC7C1A3, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -46,15 +46,17 @@ public class SolidifierScreen extends AbstractContainerScreen<SolidifierMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(35, 36, 16, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(35, 36, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
                     menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(134, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(134, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 134, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(98, 36, 18, 36, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getUsage() + " HE/t"), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

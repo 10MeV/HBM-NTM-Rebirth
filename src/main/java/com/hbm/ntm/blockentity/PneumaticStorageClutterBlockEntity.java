@@ -4,15 +4,19 @@ import com.hbm.ntm.api.ntl.PneumaticConnector;
 import com.hbm.ntm.api.ntl.ISlotMonitorProvider;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
 import com.hbm.ntm.menu.PneumaticStorageClutterMenu;
+import com.hbm.ntm.network.HbmGuiControlSecurity;
+import com.hbm.ntm.network.HbmLegacyControlReceiver;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNetwork;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNode;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticNodespace;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticSlotMonitor;
 import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticStackCache;
+import com.hbm.ntm.uninos.networkproviders.pneumatic.PneumaticUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -37,9 +41,10 @@ import java.util.List;
 import java.util.Set;
 
 public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEntity implements MenuProvider,
-        PneumaticConnector, ISlotMonitorProvider, HbmStandardFluidReceiver {
+        PneumaticConnector, ISlotMonitorProvider, HbmStandardFluidReceiver, HbmLegacyControlReceiver {
     public static final int SLOT_COUNT = 54;
     private static final String TAG_ITEMS = "Items";
+    private static final String TAG_CUSTOM_NAME = "name";
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -51,6 +56,8 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
     private final PneumaticSlotMonitor[] monitors = new PneumaticSlotMonitor[SLOT_COUNT];
     private PneumaticNode node;
     private boolean wasAvailable;
+    @Nullable
+    private String customName;
 
     public PneumaticStorageClutterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.PNEUMATIC_STORAGE_CLUTTER.get(), pos, state,
@@ -74,6 +81,7 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
         if (network != null) {
             network.addStorage(storage);
         }
+        storage.consumeLegacyIdleAir();
         storage.updateMonitors();
         storage.networkPackNT(15);
     }
@@ -82,12 +90,54 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
         return items;
     }
 
+    /**
+     * Uses the same direct {@code slot0..slot53} block-item layout as the
+     * legacy PneumoStorageClutter and the existing crate persistence path.
+     */
+    public ItemStack createDroppedStack(net.minecraft.world.item.Item item) {
+        ItemStack stack = new ItemStack(item);
+        CompoundTag tag = new CompoundTag();
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            ItemStack content = items.getStackInSlot(slot);
+            if (!content.isEmpty()) {
+                tag.put("slot" + slot, content.save(new CompoundTag()));
+            }
+        }
+        if (!tag.isEmpty()) {
+            stack.setTag(tag);
+        }
+        if (customName != null && !customName.isBlank()) {
+            stack.setHoverName(Component.literal(customName));
+        }
+        return stack;
+    }
+
+    /** Restores the old populated block-item form on placement. */
+    public void loadFromPlacedStack(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            items.setStackInSlot(slot, tag != null && tag.contains("slot" + slot, net.minecraft.nbt.Tag.TAG_COMPOUND)
+                    ? ItemStack.of(tag.getCompound("slot" + slot))
+                    : ItemStack.EMPTY);
+        }
+        customName = stack.hasCustomHoverName() ? stack.getHoverName().getString() : null;
+        setChanged();
+    }
+
+    /** Prevents onRemove from duplicating the populated block item or spilling it after player harvest. */
+    public void clearForRemoval() {
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            items.setStackInSlot(slot, ItemStack.EMPTY);
+        }
+        setChanged();
+    }
+
     public HbmFluidTank compair() {
         return getAllTanks().get(0);
     }
 
     public boolean isAvailable() {
-        return !isRemoved() && level != null;
+        return !isRemoved() && level != null && compair().getFill() > 0;
     }
 
     @Override
@@ -107,12 +157,31 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
 
     @Override
     protected boolean shouldSubscribeAsFluidReceiver(FluidType type) {
-        return false;
+        return type == HbmFluids.AIR;
     }
 
     @Override
     protected boolean shouldCreateFluidNode() {
         return false;
+    }
+
+    @Override
+    protected Iterable<FluidPort> getNetworkFluidPorts(FluidType type) {
+        if (type != HbmFluids.AIR) {
+            return List.of();
+        }
+        List<FluidPort> ports = new java.util.ArrayList<>();
+        for (Direction side : Direction.values()) {
+            ports.add(FluidPort.of(side.getStepX(), side.getStepY(), side.getStepZ(), side));
+        }
+        return ports;
+    }
+
+    @Override
+    protected boolean shouldRefreshFluidNetworkSubscriptionsNow() {
+        // TileEntityPneumaticStorageBase called trySubscribe exactly on the
+        // world-time % 10 pass, rather than using the generic dirty cadence.
+        return level != null && level.getGameTime() % 10L == 0L;
     }
 
     @Override
@@ -175,7 +244,15 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
 
     @Override
     public boolean isAvailableToCache(PneumaticStackCache cache) {
-        return isAvailable();
+        if (!isAvailable() || cache == null) {
+            return false;
+        }
+        BlockPos cachePos = cache.getPos();
+        long dx = worldPosition.getX() - cachePos.getX();
+        long dy = worldPosition.getY() - cachePos.getY();
+        long dz = worldPosition.getZ() - cachePos.getZ();
+        int range = PneumaticUtil.rangeForPressure(compair().getPressure());
+        return dx * dx + dy * dy + dz * dz <= (long) range * range;
     }
 
     @Override
@@ -190,7 +267,9 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
 
     @Override
     public Component getDisplayName() {
-        return Component.translatableWithFallback("container.pneumoStorageClutter", "Pneumatic Storage Clutter");
+        return customName != null && !customName.isBlank()
+                ? Component.literal(customName)
+                : Component.translatableWithFallback("container.pneumoStorageClutter", "Pneumatic Storage Clutter");
     }
 
     @Nullable
@@ -200,9 +279,33 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
     }
 
     @Override
+    public boolean hasPermission(net.minecraft.server.level.ServerPlayer player) {
+        return HbmGuiControlSecurity.hasLegacyMachineUsePermission(player, this);
+    }
+
+    @Override
+    public void receiveControl(net.minecraft.server.level.ServerPlayer player, CompoundTag data) {
+        if (!data.contains("pressure")) {
+            return;
+        }
+        int pressure = compair().getPressure() + 1;
+        if (pressure > HbmFluidTank.HIGHEST_VALID_PRESSURE) {
+            pressure = 1;
+        }
+        compair().setTankType(HbmFluids.AIR);
+        compair().withPressure(pressure);
+        for (PneumaticSlotMonitor monitor : monitors) {
+            monitor.availabilityHasChanged();
+        }
+    }
+
+    @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.put(TAG_ITEMS, items.serializeNBT());
+        if (customName != null && !customName.isBlank()) {
+            tag.putString(TAG_CUSTOM_NAME, customName);
+        }
     }
 
     @Override
@@ -211,12 +314,13 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
         if (tag.contains(TAG_ITEMS)) {
             items.deserializeNBT(tag.getCompound(TAG_ITEMS));
         }
+        customName = tag.contains(TAG_CUSTOM_NAME) ? tag.getString(TAG_CUSTOM_NAME) : null;
     }
 
     @Override
     public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
-            return itemCapability.cast();
+            return side == null ? itemCapability.cast() : LazyOptional.empty();
         }
         return super.getCapability(cap, side);
     }
@@ -264,5 +368,14 @@ public class PneumaticStorageClutterBlockEntity extends HbmFluidNetworkBlockEnti
         if (network != null) {
             network.removeStorage(this);
         }
+    }
+
+    private void consumeLegacyIdleAir() {
+        int fill = compair().getFill();
+        if (fill <= 0) {
+            return;
+        }
+        int consumption = (int) Math.ceil((double) fill * 9.0D / compair().getMaxFill()) + 1;
+        compair().setFill(Math.max(fill - consumption, 0));
     }
 }

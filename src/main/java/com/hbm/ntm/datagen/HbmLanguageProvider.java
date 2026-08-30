@@ -180,6 +180,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.plate_copper", "Copper Plate");
         add("item.hbm_ntm_rebirth.plate_lead", "Lead Plate");
         add("item.hbm_ntm_rebirth.plate_cast_iron", "Cast Iron Plate");
+        add("item.hbm_ntm_rebirth.plate_cast_gold", "Cast Gold Plate");
         add("item.hbm_ntm_rebirth.plate_cast_steel", "Cast Steel Plate");
         add("item.hbm_ntm_rebirth.plate_cast_lead", "Cast Lead Plate");
         add("item.hbm_ntm_rebirth.plate_cast_copper", "Cast Copper Plate");
@@ -196,6 +197,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.plate_cast_starmetal", "Cast Starmetal Plate");
         add("item.hbm_ntm_rebirth.plate_cast_osmiridium", "Cast Osmiridium Plate");
         add("item.hbm_ntm_rebirth.plate_cast_schrabidium", "Cast Schrabidium Plate");
+        add("item.hbm_ntm_rebirth.plate_cast_schrabidate", "Cast Ferric Schrabidate Plate");
+        add("item.hbm_ntm_rebirth.plate_cast_bismuth", "Cast Bismuth Plate");
         add("item.hbm_ntm_rebirth.plate_aluminium", "Aluminium Plate");
         add("item.hbm_ntm_rebirth.powder_uranium", "Uranium Powder");
         add("item.hbm_ntm_rebirth.powder_plutonium", "Plutonium Powder");
@@ -1739,6 +1742,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.press_preheater", "Burner Press Preheater");
         add("block.hbm_ntm_rebirth.machine_epress", "Electric Press");
         add("block.hbm_ntm_rebirth.piston_inserter", "Inserter");
+        add("block.hbm_ntm_rebirth.piston_inserter.desc", "Can receive one item using automation$Using redstone, it will insert the item into drilled graphite$All drilled graphite in the chain will have their items pushed by one block$Needs one block of air between the graphite");
         add("block.hbm_ntm_rebirth.machine_conveyor_press", "Conveyor Press");
         add("block.hbm_ntm_rebirth.seal_frame", "Silo Hatch Frame");
         add("block.hbm_ntm_rebirth.seal_controller", "Silo Hatch Opener");
@@ -2011,6 +2015,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.rbmk_tool.linked", "Position set!");
         add("item.rbmk_tool.set", "RBMK linked!");
         add("block.hbm_ntm_rebirth.rbmk_blank", "RBMK Structural Column");
+        add("block.hbm_ntm_rebirth.deco_rbmk", "RBMK Deco Block");
+        add("block.hbm_ntm_rebirth.deco_rbmk_smooth", "Smooth RBMK Deco Block");
         add("block.hbm_ntm_rebirth.rbmk_moderator", "RBMK Graphite Moderator");
         add("block.hbm_ntm_rebirth.rbmk_reflector", "RBMK Tungsten Carbide Neutron Reflector");
         add("block.hbm_ntm_rebirth.rbmk_absorber", "RBMK Boron Neutron Absorber");
@@ -2042,6 +2048,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.rbmkNumitron", "Redstone-over-Radio Numeric Display");
         add("container.rbmkReaSim", "RBMK Fuel Rod (ReaSim)");
         add("container.rbmkConsole", "RBMK Console");
+        add("container.rbmkOutgasser", "RBMK Irradiation Channel");
         add("container.rbmkStorage", "RBMK Storage Column");
         add("container.rbmkAutoloader", "RBMK Autoloader");
         add("block.hbm_ntm_rebirth.cable_diode.desc1", "Limits throughput and restricts flow direction");
@@ -2065,11 +2072,25 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.fluid_counter_valve.desc", "Beware of loops in your fluid network...");
         add("block.hbm_ntm_rebirth.fluid_pump", "Flow Control Pump");
         add("block.hbm_ntm_rebirth.conveyor", "Conveyor Belt");
+        add("block.hbm_ntm_rebirth.conveyor.desc", "Moves items dropped on it$Can be rotated clockwise with a screwdriver$Shift-click with screwdriver to bend");
         add("block.hbm_ntm_rebirth.conveyor_express", "Express Conveyor Belt");
+        add("block.hbm_ntm_rebirth.conveyor_express.desc", "Moves items dropped on it very fast$Can be rotated clockwise with a screwdriver$Shift-click with screwdriver to bend");
         add("block.hbm_ntm_rebirth.conveyor_double", "Double-Lane Conveyor Belt");
+        add("block.hbm_ntm_rebirth.conveyor_double.desc", "Moves items dropped on it$Can be rotated clockwise with a screwdriver$Shift-click with screwdriver to bend");
         add("block.hbm_ntm_rebirth.conveyor_triple", "Triple-Lane Conveyor Belt");
+        add("block.hbm_ntm_rebirth.conveyor_triple.desc", "Moves items dropped on it$Can be rotated clockwise with a screwdriver$Shift-click with screwdriver to bend");
         add("block.hbm_ntm_rebirth.conveyor_lift", "Conveyor Chain Lift");
+        add("block.hbm_ntm_rebirth.conveyor_lift.desc", "Moves items up$Requires at least two blocks on top of each other to work properly");
         add("block.hbm_ntm_rebirth.conveyor_chute", "Conveyor Chute");
+        add("block.hbm_ntm_rebirth.conveyor_chute.desc", "Moves items down$The bottom-most chute will act like a regular conveyor belt");
+        add("block.hbm_ntm_rebirth.crane_boxer.desc", "Loads a configurable amount of stacks into boxes which move along conveyor belts$Right-click with screwdriver to set input side$Shift-click with screwdriver to set the output side$Click twice to set the opposite side");
+        add("block.hbm_ntm_rebirth.crane_extractor.desc", "Takes items from inventories and places them on conveyor belts$Has up to 9 filter slots with black and whitelist$Right-click with screwdriver to set output side$Shift-click with screwdriver to set the input side$Click twice to set the opposite side");
+        add("block.hbm_ntm_rebirth.crane_grabber.desc", "Takes items from passing conveyors and places them into containers$Will only take items from the closest lane$Has up to 9 filter slots with black and whitelist$Right-click with screwdriver to set input side$Shift-click with screwdriver to set the output side$Click twice to set the opposite side");
+        add("block.hbm_ntm_rebirth.crane_inserter.desc", "Accepts items from conveyors and places them into containers$Right-click with screwdriver to set input side$Shift-click with screwdriver to set the output side$Click twice to set the opposite side");
+        add("block.hbm_ntm_rebirth.crane_partitioner.desc", "Receives and stores up to nine Ore Acidizer inputs$and releases them if they match the required input size.$Invalid items are also saved, and need to be extracted from the side.");
+        add("block.hbm_ntm_rebirth.crane_router.desc", "Sorts item based on defined criteria$Sides can be defined as blacklist, whitelist or wildcard$Wildcard sides are only chosen if no other filter matches");
+        add("block.hbm_ntm_rebirth.crane_splitter.desc", "Splits items and stacks evenly onto two conveyor belts$Is a conveyor belt itself, so it can directly input into an inserter or sorter$Ratio can be configured with a screwdriver");
+        add("block.hbm_ntm_rebirth.crane_unboxer.desc", "Receives boxes and extracts their contents$Right-click with screwdriver to set output side$Shift-click with screwdriver to set the input side$Click twice to set the opposite side");
         add("block.hbm_ntm_rebirth.machine_battery", "Energy Storage Block (LEGACY)");
         add("block.hbm_ntm_rebirth.machine_battery_potato", "Potato Battery Block (LEGACY)");
         add("block.hbm_ntm_rebirth.machine_lithium_battery", "Li-Ion Energy Storage Block (LEGACY)");
@@ -2136,12 +2157,14 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_fraction_tower", "Fractioning Tower");
         add("block.hbm_ntm_rebirth.machine_hydrotreater", "Hydrotreater");
         add("block.hbm_ntm_rebirth.machine_coker", "Coker Unit");
+        add("block.hbm_ntm_rebirth.machine_coker.desc", "Cokes oil, creating fluid byproducts.$Requires external heat source.$Heat transfer rate: ΔT*0.25 TU/t");
         add("container.catalyticReformer", "Catalytic Reformer");
         add("container.vacuumDistill", "Vacuum Refinery");
         add("container.hydrotreater", "Hydrotreater");
         add("container.machineCoker", "Coker Unit");
         add("block.hbm_ntm_rebirth.machine_pyrooven", "Pyrolysis Oven");
         add("block.hbm_ntm_rebirth.machine_solidifier", "Industrial Solidification Machine");
+        add("block.hbm_ntm_rebirth.machine_solidifier.desc", "A universal machine fitted with cooling systems and other$versatile tools for turning fluids solid using various$processes such as freezing and petrochemical polymerization.");
         add("block.hbm_ntm_rebirth.machine_compressor", "Compressor");
         add("block.hbm_ntm_rebirth.machine_bat9000", "Big-Ass Tank 9000 (LEGACY)");
         add("block.hbm_ntm_rebirth.machine_bigasstank", "Big-Ass Tank");
@@ -2202,6 +2225,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.gasCentrifuge", "Gas Centrifuge");
         add("desc.gui.gasCent.enrichment", "\u00a72Enrichment\u00a7r$Uranium enrichment requires cascades.$Two-centrifuge cascades will give$uranium fuel, four-centrifuge cascades$will give total separation.");
         add("desc.gui.gasCent.output", "\u00a76Fluid Transfer\u00a7r$Fluid can be transferred to another centrifuge$via the output port for further processing.");
+        add("desc.gui.turbinegas.automode", "\u00a72Automatic turbine throttling mode\u00a7r$By clicking the \"AUTO\" button, the turbine$will automatically adjust the throttle position$based on the power required from the network$and the fuel level in the internal tank");
+        add("desc.gui.turbinegas.fuels", "\u00a76Accepted fuels:\u00a7r");
+        add("desc.gui.turbinegas.warning", "\u00a7cFuel or lubricant level low!\u00a7r");
         add("hbmpseudofluid.none", "Empty");
         add("hbmpseudofluid.heuf6", "Highly Enriched UF6");
         add("hbmpseudofluid.meuf6", "Medium Enriched UF6");
@@ -2254,6 +2280,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.bedrock_ore.type.nonmetal.name", "Non-Metal");
         add("item.hbm_ntm_rebirth.bedrock_ore.type.rare.name", "Rare Earth");
         add("block.hbm_ntm_rebirth.machine_sawmill", "Stirling Sawmill");
+        add("block.hbm_ntm_rebirth.machine_sawmill.desc", "Requires external heat source.$Heat transfer rate: T*0.1 TU/t$Min intake: 100 TU/t, Max intake: 300 TU/t");
         add("block.hbm_ntm_rebirth.machine_crucible", "Crucible");
         add("block.hbm_ntm_rebirth.machine_flare", "Flare Stack");
         add("block.hbm_ntm_rebirth.chimney_brick", "Smokestack");
@@ -2264,18 +2291,25 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_chungus.desc", "Efficiency: 85%%");
         add("block.hbm_ntm_rebirth.machine_hephaestus", "Geothermal Heat Exchanger");
         add("block.hbm_ntm_rebirth.machine_boiler", "Boiler");
+        add("block.hbm_ntm_rebirth.machine_boiler.desc", "Large boiler that can boil water or heat up oil.$Requires external heat source.$Heat transfer rate: ΔT*0.1 TU/t");
         add("block.hbm_ntm_rebirth.machine_industrial_boiler", "Industrial Boiler");
+        add("block.hbm_ntm_rebirth.machine_industrial_boiler.desc", "Large boiler that can boil water or heat up oil.$Requires external heat source.$Heat transfer rate: ΔT*0.1 TU/t$Cannot explode");
         add("block.hbm_ntm_rebirth.machine_combustion_engine", "Industrial Combustion Engine");
-        add("block.hbm_ntm_rebirth.machine_diesel", "Diesel Generator");
+          add("block.hbm_ntm_rebirth.machine_diesel", "Diesel Generator");
+          add("block.hbm_ntm_rebirth.machine_industrial_generator", "Industrial Generator");
         add("container.machineDiesel", "Diesel Generator");
         add("block.hbm_ntm_rebirth.pump_steam", "Steam-Powered Groundwater Pump");
         add("block.hbm_ntm_rebirth.pump_electric", "Electric Groundwater Pump");
         add("block.hbm_ntm_rebirth.heater_heatex", "Heat Exchanging Heater");
+        add("block.hbm_ntm_rebirth.heater_heatex.desc", "Produces heat from hot fluids.");
         add("block.hbm_ntm_rebirth.heater_firebox", "Firebox");
+        add("block.hbm_ntm_rebirth.heater_firebox.desc", "Burns solid fuel to produce heat.");
         add("block.hbm_ntm_rebirth.heater_oven", "Heating Oven");
+        add("block.hbm_ntm_rebirth.heater_oven.desc", "Burns solid fuel to produce heat.$Accepts heat from the bottom with 50%% efficiency.");
         add("block.hbm_ntm_rebirth.machine_ashpit", "Ashpit");
         add("block.hbm_ntm_rebirth.heater_oilburner", "Fluid Burner");
         add("block.hbm_ntm_rebirth.heater_electric", "Electric Heater");
+        add("block.hbm_ntm_rebirth.heater_electric.desc", "Uses energy to produce heat.$Accepts heat from the bottom with 85%% efficiency.$Can be configured with a screwdriver.");
         add("block.hbm_ntm_rebirth.machine_condenser", "Steam Condenser");
         add("block.hbm_ntm_rebirth.machine_condenser_powered", "High-Power Steam Condenser");
         add("block.hbm_ntm_rebirth.machine_compressor_compact", "Compact Compressor");
@@ -2317,11 +2351,23 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("container.reactorBreeding", "Breeding Reactor");
         add("container.zirnox", "ZIRNOX Nuclear Reactor");
         add("block.hbm_ntm_rebirth.machine_assembly_factory", "Assembly Factory");
+        add("block.hbm_ntm_rebirth.machine_assembly_factory.desc", "Quadruple assembly machine.$Recipes process twice as fast,$but need twice as much power.$Needs to be cooled with water,$produces low-pressure steam.");
         add("block.hbm_ntm_rebirth.machine_purex", "PUREX");
+        add("block.hbm_ntm_rebirth.machine_purex.desc", "Reprocessing machine for many nuclear fuels.$Most recipes require kerosene and nitric acid.");
         add("block.hbm_ntm_rebirth.machine_silex", "Laser Isotope Separation Chamber (SILEX)");
         add("block.hbm_ntm_rebirth.machine_crystallizer", "Ore Acidizer");
         add("block.hbm_ntm_rebirth.machine_electrolyser", "Electrolysis Machine");
         add("block.hbm_ntm_rebirth.machine_exposure_chamber", "Exposure Chamber");
+        add("block.hbm_ntm_rebirth.hadron_coil_alloy", "Dense Superconducting Coil");
+        add("block.hbm_ntm_rebirth.hadron_coil_gold", "Dense Gold Coil");
+        add("block.hbm_ntm_rebirth.hadron_coil_neodymium", "Dense Neodymium Coil");
+        add("block.hbm_ntm_rebirth.hadron_coil_magtung", "Dense 4000K Superconductor Coil");
+        add("block.hbm_ntm_rebirth.hadron_coil_schrabidium", "Dense Schrabidic Coil");
+        add("block.hbm_ntm_rebirth.hadron_coil_schrabidate", "Dense Schrabidate Coil");
+        add("block.hbm_ntm_rebirth.hadron_coil_starmetal", "Dense Starmetal Coil");
+        add("block.hbm_ntm_rebirth.hadron_coil_chlorophyte", "Dense Chlorophyte Coil");
+        add("block.hbm_ntm_rebirth.hadron_coil_mese", "Dense Mese Coil");
+        add("info.hbm_ntm_rebirth.coil", "Coil Strength");
         add("block.hbm_ntm_rebirth.machine_cyclotron", "Cyclotron");
         add("container.cyclotron", "Cyclotron");
         add("desc.gui.upgrade", "§lAcceptable Upgrades:§r");
@@ -2347,6 +2393,12 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.mirror_tool.angle", "Mirror angle too shallow! (min 45°)");
         add("block.hbm_ntm_rebirth.machine_tower_small", "Auxiliary Cooling Tower");
         add("block.hbm_ntm_rebirth.machine_tower_large", "Cooling Tower");
+        add("block.hbm_ntm_rebirth.fan", "Fan");
+        add("block.hbm_ntm_rebirth.fan.desc", "Activates using redstone$Will push entities up to 10 blocks$Right-click with screwdriver to flip$Right-click with hand drill to switch mode");
+        add("block.hbm_ntm_rebirth.fan.falloffOn", "Fan power decreases with distance");
+        add("block.hbm_ntm_rebirth.fan.falloffOff", "Consistent fan power");
+        add("block.hbm_ntm_rebirth.fan.suckOn", "Fan is now sucking");
+        add("block.hbm_ntm_rebirth.fan.suckOff", "Fan is now blowing");
         add("block.hbm_ntm_rebirth.machine_turbofan", "Turbofan");
         add("block.hbm_ntm_rebirth.machine_turbinegas", "Combined Cycle Gas Turbine");
         add("block.hbm_ntm_rebirth.machine_ammo_press", "Ammo Press");
@@ -2357,6 +2409,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.furnace_iron", "Iron Furnace");
         add("block.hbm_ntm_rebirth.furnace_steel", "Steel Furnace");
         add("block.hbm_ntm_rebirth.furnace_combination", "Combination Oven");
+        add("block.hbm_ntm_rebirth.furnace_combination.desc", "A large furnace that can produce charcoal and coal coke.$Produces fluid byproducts.$Heat transfer rate: ΔT*0.25 TU/t");
         add("block.hbm_ntm_rebirth.machine_blast_furnace", "Blast Furnace");
         add("block.hbm_ntm_rebirth.machine_arc_furnace", "Electric Arc Furnace");
         add("block.hbm_ntm_rebirth.machine_annihilator", "Annihilator");
@@ -2568,6 +2621,7 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.sellafield.5", "Sellafite-Corium");
         add("block.hbm_ntm_rebirth.sellafield_slaked", "Slaked Sellafite");
         add("block.hbm_ntm_rebirth.sellafield_bedrock", "Bedrock Sellafite");
+        add("block.hbm_ntm_rebirth.ore_bedrock_oil", "Bedrock Oil Deposit");
         add("block.hbm_ntm_rebirth.ore_sellafield_diamond", "Sellafite Diamond Ore");
         add("block.hbm_ntm_rebirth.ore_sellafield_emerald", "Sellafite Emerald Ore");
         add("block.hbm_ntm_rebirth.ore_sellafield_radgem", "Sellafite Radioactive Gem Ore");
@@ -2893,6 +2947,9 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.wire_dense_copper", "Dense Copper Wire");
         add("item.hbm_ntm_rebirth.wire_dense_titanium", "Dense Titanium Wire");
         add("item.hbm_ntm_rebirth.wire_dense_neodymium", "Dense Neodymium Wire");
+        add("item.hbm_ntm_rebirth.wire_dense_schrabidium", "Dense Schrabidium Wire");
+        add("item.hbm_ntm_rebirth.wire_dense_schrabidate", "Dense Ferric Schrabidate Wire");
+        add("item.hbm_ntm_rebirth.wire_dense_tungsten", "Dense Tungsten Wire");
         add("item.hbm_ntm_rebirth.wire_dense_dineutronium", "Dense Dineutronium Wire");
         add("item.hbm_ntm_rebirth.wire_dense_magnetized_tungsten", "Dense 4000K High Temperature Super Conductor Wire");
         add("item.hbm_ntm_rebirth.wire_dense_starmetal", "Dense Starmetal Wire");
@@ -4286,6 +4343,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.pellet_rtg_weak.desc", "Cheaper and weaker pellet, now with more U238!");
         add("item.hbm_ntm_rebirth.photo_panel", "Photovoltaic Panel");
         add("item.hbm_ntm_rebirth.pipes_copper", "Copper Pipes");
+        add("item.hbm_ntm_rebirth.pipes_aluminium", "Aluminium Pipe");
+        add("item.hbm_ntm_rebirth.pipes_iron", "Iron Pipe");
         add("item.hbm_ntm_rebirth.pipes_dura_steel", "High-Speed Steel Pipes");
         add("item.hbm_ntm_rebirth.pipes_lead", "Lead Pipe");
         add("item.hbm_ntm_rebirth.pipes_rubber", "Rubber Pipes");
@@ -4456,6 +4515,10 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("hbmmat.polonium210", "Polonium-210");
         add("hbmmat.radium226", "Radium-226");
         add("hbmmat.schrabidium", "Schrabidium");
+        // MAT_ALUMINIUM uses its primary modern material name for runtime lookups.
+        // The legacy key was misspelled as "aluminum", so retain its exact text
+        // under the code-facing `aluminium` key rather than exposing a raw key.
+        add("hbmmat.aluminium", "Aluminium");
 
         add(ModBlocks.CONCRETE_SMOOTH_STAIRS.get(), "Concrete Stairs");
         add(ModBlocks.CONCRETE_STAIRS.get(), "Concrete Tile Stairs");

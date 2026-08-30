@@ -32,7 +32,7 @@ public class DfcCoreMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 62, 53));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 80, 53));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 2, 98, 53));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 166);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 142);
         fuel1 = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getFuel1());
         fuel2 = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getFuel2());
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getField, value -> field = value);

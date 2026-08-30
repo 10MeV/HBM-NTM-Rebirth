@@ -213,7 +213,7 @@ public class ChemicalPlantRecipeSelectorScreen extends Screen {
     }
 
     private List<Component> recipeTooltip(GenericMachineRecipe recipe) {
-        return recipe.getDisplayLines();
+        return recipe.getDisplayLines(hasShiftDown());
     }
 
     private static List<FormattedCharSequence> splitTooltip(List<Component> tooltip) {

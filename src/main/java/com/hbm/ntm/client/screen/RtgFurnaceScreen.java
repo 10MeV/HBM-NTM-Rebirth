@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.ntm.blockentity.RtgFurnaceBlockEntity;
 import com.hbm.ntm.menu.RtgFurnaceMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -26,22 +25,19 @@ public class RtgFurnaceScreen extends AbstractContainerScreen<RtgFurnaceMenu> {
             graphics.blit(TEXTURE, leftPos + 55, topPos + 35, 176, 0, 18, 16);
         }
         int progress = menu.getProgressWidth(24);
-        if (progress > 0) {
-            graphics.blit(TEXTURE, leftPos + 79, topPos + 34, 176, 16, progress + 1, 17);
-        }
+        graphics.blit(TEXTURE, leftPos + 79, topPos + 34, 176, 16, progress + 1, 17);
+    }
+
+    @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(79, 34, 24, 17, mouseX, mouseY)) {
-            graphics.renderTooltip(font,
-                    Component.literal(menu.getCookTime() + " / " + RtgFurnaceBlockEntity.PROCESS_TIME),
-                    mouseX, mouseY);
-        } else if (isHovering(55, 35, 18, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, Component.literal(menu.getHeat() + " heat/t"), mouseX, mouseY);
-        }
         renderTooltip(graphics, mouseX, mouseY);
     }
 }

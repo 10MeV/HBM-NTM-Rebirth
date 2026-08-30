@@ -41,7 +41,6 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
@@ -51,7 +50,7 @@ public class SolarMirrorRenderer implements BlockEntityRenderer<SolarMirrorBlock
                     BlockPos origin = blockEntity.getBlockPos();
                     aimAt(target.getX() - origin.getX(), target.getY() - origin.getY(), target.getZ() - origin.getZ(), poseStack);
                 }
-                SOLAR_MIRROR.renderOnlyInCallOrder(poseStack, buffer, modelLight, packedOverlay, MIRROR);
+                SOLAR_MIRROR.renderOnlyInCallOrder(poseStack, buffer, packedLight, packedOverlay, MIRROR);
             }
         }
         poseStack.popPose();

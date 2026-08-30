@@ -58,33 +58,17 @@ public class BatteryReddScreen extends AbstractContainerScreen<BatteryReddMenu> 
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
-        super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(133, 16, 18, 18, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, modeTooltip("container.hbm_ntm_rebirth.battery.red_low",
-                    menu.getRedLow()), mouseX, mouseY);
-        } else if (isHovering(133, 52, 18, 18, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, modeTooltip("container.hbm_ntm_rebirth.battery.red_high",
-                    menu.getRedHigh()), mouseX, mouseY);
-        } else if (isHovering(152, 35, 16, 16, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, priorityTooltip(), mouseX, mouseY);
-        }
-        renderTooltip(graphics, mouseX, mouseY);
-    }
-
-    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean handled = super.mouseClicked(mouseX, mouseY, button);
-        if (isHovering(133, 16, 18, 18, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 133, 16, 18, 18)) {
             sendButton(BatteryReddBlockEntity.CONTROL_RED_LOW);
             return true;
         }
-        if (isHovering(133, 52, 18, 18, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 133, 52, 18, 18)) {
             sendButton(BatteryReddBlockEntity.CONTROL_RED_HIGH);
             return true;
         }
-        if (isHovering(152, 35, 16, 16, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 152, 35, 16, 16)) {
             sendButton(BatteryReddBlockEntity.CONTROL_PRIORITY);
             return true;
         }
@@ -92,35 +76,9 @@ public class BatteryReddScreen extends AbstractContainerScreen<BatteryReddMenu> 
     }
 
     private void sendButton(int button) {
+        LegacyGuiElements.playClickSound();
         ModMessages.sendToServer(new TileControlPacket(menu.getBlockEntity().getBlockPos(),
                 BatteryReddBlockEntity.controlTag(button)));
-    }
-
-    private static java.util.List<Component> modeTooltip(String labelKey, int mode) {
-        return java.util.List.of(
-                Component.translatable(labelKey),
-                Component.translatable("container.hbm_ntm_rebirth.battery.mode." + modeName(mode))
-                        .withStyle(ChatFormatting.YELLOW));
-    }
-
-    private static java.util.List<Component> priorityTooltip() {
-        return java.util.List.of(
-                Component.translatable("container.hbm_ntm_rebirth.battery.priority"),
-                Component.translatable("container.hbm_ntm_rebirth.battery.priority.low")
-                        .withStyle(ChatFormatting.GRAY),
-                Component.translatable("container.hbm_ntm_rebirth.battery.priority.normal")
-                        .withStyle(ChatFormatting.GRAY),
-                Component.translatable("container.hbm_ntm_rebirth.battery.priority.high")
-                        .withStyle(ChatFormatting.GRAY));
-    }
-
-    private static String modeName(int mode) {
-        return switch (mode) {
-            case BatteryReddBlockEntity.MODE_BUFFER -> "buffer";
-            case BatteryReddBlockEntity.MODE_OUTPUT -> "output";
-            case BatteryReddBlockEntity.MODE_NONE -> "none";
-            default -> "input";
-        };
     }
 
     private static int priorityTextureIndex(HbmEnergyReceiver.ConnectionPriority priority) {

@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.blockentity.BlastFurnaceBlockEntity;
 import com.hbm.ntm.menu.BlastFurnaceMenu;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -55,14 +56,22 @@ public class BlastFurnaceScreen extends AbstractContainerScreen<BlastFurnaceMenu
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(79, 62, 18, 18, mouseX, mouseY)) {
+        if (menu.getCarried().isEmpty() && !menu.getSlot(0).hasItem()
+                && isHovering(80, 81, 16, 16, mouseX, mouseY)) {
+            List<Component> bonuses = BlastFurnaceBlockEntity.burnModule().getHeatDescription().stream()
+                    .map(text -> (Component) Component.literal(text))
+                    .toList();
+            if (!bonuses.isEmpty()) {
+                graphics.renderComponentTooltip(font, bonuses, mouseX, mouseY);
+            }
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 79, 62, 18, 18)) {
             graphics.renderTooltip(font, List.of(
                     Component.literal("Speed: " + menu.getSpeedPercent() + "%").getVisualOrderText()),
                     mouseX, mouseY);
-        } else if (isHovering(25, 71, 18, 18, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 25, 71, 18, 18)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getAirblastTank(),
                     menu.getAirblastTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(25, 17, 18, 18, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 25, 17, 18, 18)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getFlueTank(),
                     menu.getFlueTooltip(hasShiftDown()), mouseX, mouseY);
         }

@@ -30,7 +30,7 @@ public class CrucibleBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
     @Nullable
@@ -42,7 +42,7 @@ public class CrucibleBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!level.isClientSide
+        if (!level.isClientSide && !player.isShiftKeyDown()
                 && MultiblockHelper.resolveCoreBlockEntity(level, pos) instanceof CrucibleBlockEntity crucible) {
             ItemStack held = player.getItemInHand(hand);
             if (held.getItem() instanceof ShovelItem && crucible.getTotalMaterialAmount() > 0) {

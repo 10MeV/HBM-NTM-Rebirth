@@ -2,6 +2,7 @@ package com.hbm.ntm.menu;
 
 import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.blockentity.ElectricPressBlockEntity;
+import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.item.ItemPressStamp;
 import com.hbm.ntm.multiblock.MultiblockHelper;
@@ -39,16 +40,16 @@ public class ElectricPressMenu extends AbstractContainerMenu implements LegacyUp
         this.blockEntity = blockEntity;
 
         addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
-                ElectricPressBlockEntity.SLOT_BATTERY, 44, 53));
+                ElectricPressBlockEntity.SLOT_BATTERY, 152, 54));
         addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
-                ElectricPressBlockEntity.SLOT_STAMP, 80, 17));
+                ElectricPressBlockEntity.SLOT_STAMP, 19, 15));
         addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
-                ElectricPressBlockEntity.SLOT_INPUT, 80, 53));
+                ElectricPressBlockEntity.SLOT_INPUT, 19, 51));
         addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(),
-                ElectricPressBlockEntity.SLOT_OUTPUT, 140, 35));
-        addSlot(HbmInventoryMenuHelper.plainMachineSlot(blockEntity.getItems(),
-                ElectricPressBlockEntity.SLOT_UPGRADE, 44, 21));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 84, 142);
+                ElectricPressBlockEntity.SLOT_OUTPUT, 79, 33));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(),
+                ElectricPressBlockEntity.SLOT_UPGRADE, 111, 32));
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
         addDataSlots();
     }
 
@@ -103,7 +104,7 @@ public class ElectricPressMenu extends AbstractContainerMenu implements LegacyUp
                         ElectricPressBlockEntity.SLOT_STAMP + 1, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (isSpeedUpgrade(stack)) {
+            } else if (stack.getItem() instanceof ItemMachineUpgrade) {
                 if (!moveItemStackTo(stack, ElectricPressBlockEntity.SLOT_UPGRADE,
                         ElectricPressBlockEntity.SLOT_UPGRADE + 1, false)) {
                     return ItemStack.EMPTY;
@@ -130,11 +131,6 @@ public class ElectricPressMenu extends AbstractContainerMenu implements LegacyUp
     private void addDataSlots() {
         HbmMenuDataSlots.addLong(this::addDataSlot, blockEntity::getPower, () -> power, value -> power = value);
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getPress, value -> press = value);
-    }
-
-    private static boolean isSpeedUpgrade(ItemStack stack) {
-        return stack.getItem() instanceof com.hbm.ntm.item.ItemMachineUpgrade upgrade
-                && upgrade.getUpgradeType() == UpgradeType.SPEED;
     }
 
     private static ElectricPressBlockEntity getBlockEntity(Inventory inventory, BlockPos pos) {

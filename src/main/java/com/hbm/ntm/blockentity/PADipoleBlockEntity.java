@@ -152,6 +152,27 @@ public class PADipoleBlockEntity extends PABlockEntity implements PAParticleUser
     }
 
     @Override
+    protected void writePaClientSync(CompoundTag tag) {
+        savePa(tag);
+    }
+
+    @Override
+    protected void readPaClientSync(CompoundTag tag) {
+        if (tag.contains(TAG_DIR_LOWER)) {
+            dirLower = tag.getInt(TAG_DIR_LOWER);
+        }
+        if (tag.contains(TAG_DIR_UPPER)) {
+            dirUpper = tag.getInt(TAG_DIR_UPPER);
+        }
+        if (tag.contains(TAG_DIR_REDSTONE)) {
+            dirRedstone = tag.getInt(TAG_DIR_REDSTONE);
+        }
+        if (tag.contains(TAG_THRESHOLD)) {
+            threshold = tag.getInt(TAG_THRESHOLD);
+        }
+    }
+
+    @Override
     public void handleClientControl(ServerPlayer player, CompoundTag tag) {
         if (tag.contains("lower")) {
             dirLower = (dirLower + 1) & 3;

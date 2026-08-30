@@ -1,0 +1,34 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "tag": "minecraft:planks" },
+      "count": 16,
+      "legacy_ore": "plankWood"
+    },
+    {
+      "ingredient": { "tag": "forge:plates/steel" },
+      "count": 6,
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/copper" },
+      "count": 8,
+      "legacy_ore": "ingotCopper"
+    },
+    {
+      "ingredient": { "tag": "forge:ingots/iron" },
+      "count": 4,
+      "legacy_ore": "ingotIron"
+    },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:sawblade" },
+      "count": 1
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:machine_sawmill"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

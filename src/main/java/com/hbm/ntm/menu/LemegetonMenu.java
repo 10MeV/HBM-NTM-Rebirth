@@ -14,8 +14,8 @@ import net.minecraft.world.item.ItemStack;
 
 /** One-input portable processor matching the old ContainerLemegeton contract. */
 public class LemegetonMenu extends AbstractContainerMenu {
-    private static final int INPUT_SLOT = 0;
-    private static final int RESULT_SLOT = 1;
+    private static final int RESULT_SLOT = 0;
+    private static final int INPUT_SLOT = 1;
     private static final int PLAYER_SLOT_START = 2;
 
     private final Player player;
@@ -30,13 +30,13 @@ public class LemegetonMenu extends AbstractContainerMenu {
         super(ModMenuTypes.LEMEGETON.get(), containerId);
         this.player = inventory.player;
         input.addListener(container -> refreshResult());
-        addSlot(new Slot(input, 0, 49, 35));
         addSlot(new Slot(result, 0, 107, 35) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
             }
         });
+        addSlot(new Slot(input, 0, 49, 35));
         addPlayerInventory(inventory);
         refreshResult();
     }
@@ -51,7 +51,12 @@ public class LemegetonMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return player.getInventory().contains(new ItemStack(ModItems.BOOK_LEMEGETON.get()));
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            if (player.getInventory().getItem(slot).is(ModItems.BOOK_LEMEGETON.get())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -74,7 +79,7 @@ public class LemegetonMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, PLAYER_SLOT_START, slots.size(), true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (!moveItemStackTo(stack, INPUT_SLOT, RESULT_SLOT, false)) {
+        } else if (!moveItemStackTo(stack, INPUT_SLOT, INPUT_SLOT + 1, false)) {
             return ItemStack.EMPTY;
         }
         if (stack.isEmpty()) {

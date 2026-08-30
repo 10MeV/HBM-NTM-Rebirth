@@ -19,6 +19,7 @@ import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.item.missile.MissileItem;
 import com.hbm.ntm.menu.LaunchPadMenu;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModEntityTypes;
@@ -29,8 +30,12 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.MenuProvider;
@@ -48,6 +53,7 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +81,7 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
     private static final String TAG_REDSTONE = "redstonePower";
     private static final String TAG_PREV_REDSTONE = "prevRedstonePower";
     private static final String TAG_DELAY = "delay";
+    private static final String TAG_RENDER_MISSILE = "renderMissile";
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -107,6 +114,8 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
      */
     protected int delay;
     protected int state = STATE_MISSING;
+    /** Renderer-only copy of the legacy binary packet's item id/damage pair. */
+    private ItemStack clientRenderMissile = ItemStack.EMPTY;
     protected List<FluidPort> networkFluidPorts;
     protected List<EnergyPort> energyPorts;
 
@@ -500,6 +509,10 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
         return items;
     }
 
+    public ItemStack getRenderMissile() {
+        return level != null && level.isClientSide ? clientRenderMissile : items.getStackInSlot(SLOT_MISSILE);
+    }
+
     public HbmFluidTank fuelTank() {
         return getAllTanks().get(0);
     }
@@ -671,13 +684,101 @@ public class LaunchPadBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        writeClientRuntimeSnapshot(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readClientRuntimeSnapshot(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet) {
+        if (packet.getTag() != null) {
+            handleClientSyncTag(packet.getTag());
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityLaunchPadBase#serialize: loaded-tile flags, power, state,
+        // both tanks and only the renderer's singular missile identity.
+        writeLegacyLoadedTileBinary(data);
+        data.writeLong(energy.getPower());
+        data.writeInt(state);
+        LegacyFluidTankPacket.write(data, fuelTank());
+        LegacyFluidTankPacket.write(data, oxidizerTank());
+        writeRenderMissileBinary(data, items.getStackInSlot(SLOT_MISSILE));
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        energy.setPower(data.readLong());
+        state = data.readInt();
+        LegacyFluidTankPacket.read(data, fuelTank());
+        LegacyFluidTankPacket.read(data, oxidizerTank());
+        clientRenderMissile = readRenderMissileBinary(data);
+    }
+
+    protected void writeClientRuntimeSnapshot(CompoundTag tag) {
+        tag.putInt(TAG_STATE, state);
+        writeRenderMissileTag(tag, items.getStackInSlot(SLOT_MISSILE));
+    }
+
+    protected void readClientRuntimeSnapshot(CompoundTag tag) {
+        if (tag.contains(TAG_STATE)) {
+            state = tag.getInt(TAG_STATE);
+        }
+        clientRenderMissile = readRenderMissileTag(tag);
+    }
+
+    private static void writeRenderMissileTag(CompoundTag tag, ItemStack stack) {
+        ResourceLocation id = stack.isEmpty() ? null : ForgeRegistries.ITEMS.getKey(stack.getItem());
+        if (id != null) {
+            tag.putString(TAG_RENDER_MISSILE, id.toString());
+        }
+    }
+
+    private static ItemStack readRenderMissileTag(CompoundTag tag) {
+        return tag.contains(TAG_RENDER_MISSILE) ? stackForId(ResourceLocation.tryParse(tag.getString(TAG_RENDER_MISSILE)))
+                : ItemStack.EMPTY;
+    }
+
+    private static void writeRenderMissileBinary(FriendlyByteBuf data, ItemStack stack) {
+        ResourceLocation id = stack.isEmpty() ? null : ForgeRegistries.ITEMS.getKey(stack.getItem());
+        data.writeBoolean(id != null);
+        if (id != null) {
+            data.writeResourceLocation(id);
+        }
+    }
+
+    private static ItemStack readRenderMissileBinary(FriendlyByteBuf data) {
+        return data.readBoolean() ? stackForId(data.readResourceLocation()) : ItemStack.EMPTY;
+    }
+
+    private static ItemStack stackForId(@Nullable ResourceLocation id) {
+        return id == null || ForgeRegistries.ITEMS.getValue(id) == null
+                ? ItemStack.EMPTY : new ItemStack(ForgeRegistries.ITEMS.getValue(id));
     }
 
     @Override

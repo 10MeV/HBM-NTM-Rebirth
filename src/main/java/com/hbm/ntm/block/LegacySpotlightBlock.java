@@ -12,8 +12,20 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.phys.BlockHitResult;
 
 public class LegacySpotlightBlock extends LegacyDirectionalShapeBlock {
+    /**
+     * The low metadata bit of the 1.7.10 {@code Spotlight} block.  It is not
+     * merely visual: a generated broken lamp ignores its inverted-redstone
+     * state machine until the player repairs it with a click.
+     */
+    public static final BooleanProperty BROKEN = BooleanProperty.create("broken");
     private final int beamLength;
     private final boolean active;
     private final String onBlockName;
@@ -26,10 +38,15 @@ public class LegacySpotlightBlock extends LegacyDirectionalShapeBlock {
         this.active = active;
         this.onBlockName = onBlockName;
         this.offBlockName = offBlockName;
+        registerDefaultState(defaultBlockState().setValue(BROKEN, false));
     }
 
     public boolean isActive() {
         return active;
+    }
+
+    public static boolean isBroken(BlockState state) {
+        return state.hasProperty(BROKEN) && state.getValue(BROKEN);
     }
 
     public static Block incandescent(BlockBehaviour.Properties properties, boolean active) {
@@ -74,6 +91,21 @@ public class LegacySpotlightBlock extends LegacyDirectionalShapeBlock {
     }
 
     @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
+            BlockHitResult hit) {
+        // Spotlight#onBlockActivated repairs the low-meta-bit failure state
+        // without consuming an item or requiring a particular tool.  It also
+        // recursively repairs adjoining lamps of the same old block variant.
+        if (!isBroken(state)) {
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide) {
+            repair(level, pos);
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (active && level.hasNeighborSignal(pos)) {
             level.setBlock(pos, copyDirectionalState(state, offBlock().defaultBlockState()), Block.UPDATE_ALL);
@@ -96,6 +128,9 @@ public class LegacySpotlightBlock extends LegacyDirectionalShapeBlock {
     }
 
     private boolean updatePower(Level level, BlockPos pos, BlockState state) {
+        if (isBroken(state)) {
+            return false;
+        }
         boolean powered = level.hasNeighborSignal(pos);
         if (active && powered) {
             level.scheduleTick(pos, this, 4);
@@ -123,8 +158,28 @@ public class LegacySpotlightBlock extends LegacyDirectionalShapeBlock {
     }
 
     private static BlockState copyDirectionalState(BlockState source, BlockState target) {
-        return target.setValue(FACE, source.getValue(FACE))
+        BlockState result = target.setValue(FACE, source.getValue(FACE))
                 .setValue(TOP_BOTTOM_ROTATED, source.getValue(TOP_BOTTOM_ROTATED));
+        return result.setValue(BROKEN, isBroken(source));
+    }
+
+    private void repair(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.getBlock() != this || !isBroken(state)) {
+            return;
+        }
+
+        BlockState repaired = copyDirectionalState(state, onBlock().defaultBlockState()).setValue(BROKEN, false);
+        level.setBlock(pos, repaired, Block.UPDATE_ALL);
+        for (Direction direction : Direction.values()) {
+            repair(level, pos.relative(direction));
+        }
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(BROKEN);
     }
 
     public static void propagateBeam(Level level, BlockPos source, Direction direction, int distance) {

@@ -1,8 +1,11 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.HbmNtm;
+import com.hbm.ntm.block.HorizontalMachineBlock;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
+import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.ExcavatorBlockEntity;
+import com.hbm.ntm.client.audit.ExcavatorRenderAuditEvidence;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -52,20 +55,34 @@ public class ExcavatorRenderer implements BlockEntityRenderer<ExcavatorBlockEnti
             return;
         }
         BlockState state = excavator.getBlockState();
-        int light = LegacyRenderLighting.resolveBoundsLight(excavator, excavator.getRenderBoundingBox(), packedLight);
+        LegacyVisibleMultiblockMachineBlock machineBlock =
+                state.getBlock() instanceof LegacyVisibleMultiblockMachineBlock block ? block : null;
+        int light = machineBlock != null
+                ? LegacyRenderLighting.resolveMachineLight(excavator, state, machineBlock.definition(), packedLight)
+                : packedLight;
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
-        LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F + state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING).toYRot());
+        float rotation = machineBlock != null
+                ? machineBlock.definition().yRotation(state)
+                : (360.0F - state.getValue(HorizontalMachineBlock.FACING).toYRot()) % 360.0F;
+        LegacyPoseRotations.rotateYDegrees(poseStack, rotation);
         poseStack.translate(0.0D, -3.0D, 0.0D);
 
+        boolean mainInBer = LegacyMachineRenderShapes.renderChunkBakedStaticsInBer();
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(excavator)) {
-            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+            if (mainInBer) {
                 MODEL.renderOnlyInCallOrder(TEXTURE, poseStack, buffer, light, packedOverlay, MAIN);
             }
             renderCrusher(excavator, partialTick, poseStack, buffer, light, packedOverlay);
             renderDrill(excavator, partialTick, poseStack, buffer, light, packedOverlay);
         }
         renderChute(excavator, poseStack, buffer, light, packedOverlay);
+        if (ExcavatorRenderAuditEvidence.enabled()) {
+            float extension = excavator.getDrillExtension(partialTick);
+            int shaftSegments = extension < -1.5F ? 0 : (int) Math.floor((extension + 1.5F) / 2.0F) + 1;
+            ExcavatorRenderAuditEvidence.record(excavator.getBlockPos(), mainInBer, shaftSegments,
+                    excavator.getChuteTimer() > 0);
+        }
         poseStack.popPose();
     }
 

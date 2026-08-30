@@ -24,13 +24,13 @@ public class DfcInjectorScreen extends AbstractContainerScreen<DfcInjectorMenu> 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 44, topPos + 17, 16, 52, menu.getFuel1());
-        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 116, topPos + 17, 16, 52, menu.getFuel2());
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 44, topPos + 69, 16, 52, menu.getFuel1());
+        LegacyFluidGuiRenderer.renderVerticalTank(graphics, leftPos + 116, topPos + 69, 16, 52, menu.getFuel2());
     }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        LegacyGuiElements.drawCenteredLabel(graphics, font, title, 0, 6, imageWidth, 0x404040);
+        LegacyGuiElements.drawCenteredLabel(graphics, font, title, imageWidth / 2, 6, imageWidth, 0x404040);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -39,11 +39,11 @@ public class DfcInjectorScreen extends AbstractContainerScreen<DfcInjectorMenu> 
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (isHovering(44, 17, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getFuel1().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getFuel1(),
+                    menu.getFuel1().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         } else if (isHovering(116, 17, 16, 52, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, menu.getFuel2().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()),
-                    mouseX, mouseY);
+            LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getFuel2(),
+                    menu.getFuel2().tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

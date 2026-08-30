@@ -19,12 +19,18 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
+import net.minecraftforge.client.model.IQuadTransformer;
 import net.minecraftforge.client.model.data.ModelData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FluidPipeBakedModel implements BakedModel {
     public static final int FLUID_TINT_INDEX = 1;
+    private static final float LEGACY_WORLD_AMBIENT = 0.7F;
+    private static final float LEGACY_WORLD_UP_WEIGHT = 0.3F;
+    private static final float LEGACY_WORLD_X_PENALTY = 0.1F;
+    private static final float LEGACY_WORLD_Z_BONUS = 0.1F;
+    private static final float LEGACY_WORLD_MIN_LIGHT = 0.45F;
 
     private static final int ITEM_KEY = HbmFluidDuctVariants.STANDARD_STYLE_COUNT * 64;
     private static final String[] ITEM_PARTS = {"pX", "nX", "pZ", "nZ"};
@@ -74,14 +80,16 @@ public class FluidPipeBakedModel implements BakedModel {
         String[] parts = key == ITEM_KEY ? ITEM_PARTS : partsForMask(key & 63);
         LayerModels layer = styles[FluidPipeBlock.clampLegacyStyle(style)];
         List<BakedQuad> quads = new ArrayList<>(parts.length * 64);
+        boolean world = key != ITEM_KEY;
         for (String part : parts) {
-            addPartQuads(quads, layer.base(part), false);
-            addPartQuads(quads, layer.overlay(part), true);
+            addPartQuads(quads, layer.base(part), false, world);
+            addPartQuads(quads, layer.overlay(part), true, world);
         }
         return List.copyOf(quads);
     }
 
-    private static void addPartQuads(List<BakedQuad> quads, @Nullable BakedModel model, boolean tint) {
+    private static void addPartQuads(List<BakedQuad> quads, @Nullable BakedModel model, boolean tint,
+            boolean world) {
         if (model == null) {
             return;
         }
@@ -91,14 +99,73 @@ public class FluidPipeBakedModel implements BakedModel {
             random = BakedModelQuadRandom.seeded();
             partQuads = model.getQuads(null, null, random, ModelData.EMPTY, null);
         }
-        if (!tint) {
-            quads.addAll(partQuads);
-            return;
-        }
         for (BakedQuad quad : partQuads) {
-            quads.add(new BakedQuad(quad.getVertices().clone(), FLUID_TINT_INDEX, quad.getDirection(),
-                    quad.getSprite(), quad.isShade()));
+            int[] vertices = quad.getVertices().clone();
+            if (world) {
+                float light = legacyWorldFaceLight(vertices);
+                for (int vertex = 0; vertex < 4; vertex++) {
+                    int colorIndex = vertex * IQuadTransformer.STRIDE + IQuadTransformer.COLOR;
+                    vertices[colorIndex] = multiplyAbgr(vertices[colorIndex], light);
+                }
+            }
+            quads.add(new BakedQuad(vertices, tint ? FLUID_TINT_INDEX : quad.getTintIndex(),
+                    quad.getDirection(), quad.getSprite(), false, false));
         }
+    }
+
+    /**
+     * Matches 1.7.10 RenderTestPipe/ObjUtil world shading. That path used one
+     * geometric face normal and baked its result into Tessellator color; it did
+     * not use HFR's smooth corner normals or standard item-lighting formula.
+     */
+    private static float legacyWorldFaceLight(int[] vertices) {
+        int stride = IQuadTransformer.STRIDE;
+        int position = IQuadTransformer.POSITION;
+        float ax = Float.intBitsToFloat(vertices[position]);
+        float ay = Float.intBitsToFloat(vertices[position + 1]);
+        float az = Float.intBitsToFloat(vertices[position + 2]);
+        float bx = Float.intBitsToFloat(vertices[stride + position]);
+        float by = Float.intBitsToFloat(vertices[stride + position + 1]);
+        float bz = Float.intBitsToFloat(vertices[stride + position + 2]);
+        float cx = Float.intBitsToFloat(vertices[2 * stride + position]);
+        float cy = Float.intBitsToFloat(vertices[2 * stride + position + 1]);
+        float cz = Float.intBitsToFloat(vertices[2 * stride + position + 2]);
+
+        float abx = bx - ax;
+        float aby = by - ay;
+        float abz = bz - az;
+        float acx = cx - ax;
+        float acy = cy - ay;
+        float acz = cz - az;
+        float nx = aby * acz - abz * acy;
+        float ny = abz * acx - abx * acz;
+        float nz = abx * acy - aby * acx;
+        float lengthSquared = nx * nx + ny * ny + nz * nz;
+        if (lengthSquared > 1.0E-10F && Float.isFinite(lengthSquared)) {
+            float inverseLength = (float) (1.0D / Math.sqrt(lengthSquared));
+            nx *= inverseLength;
+            ny *= inverseLength;
+            nz *= inverseLength;
+        } else {
+            nx = 0.0F;
+            ny = 0.0F;
+            nz = 0.0F;
+        }
+
+        float light = ny * LEGACY_WORLD_UP_WEIGHT + LEGACY_WORLD_AMBIENT
+                - Math.abs(nx) * LEGACY_WORLD_X_PENALTY
+                + Math.abs(nz) * LEGACY_WORLD_Z_BONUS;
+        return Math.max(LEGACY_WORLD_MIN_LIGHT, Math.min(1.0F, light));
+    }
+
+    private static int multiplyAbgr(int abgr, float light) {
+        int red = Math.round((abgr & 0xFF) * light);
+        int green = Math.round(((abgr >>> 8) & 0xFF) * light);
+        int blue = Math.round(((abgr >>> 16) & 0xFF) * light);
+        return (abgr & 0xFF000000)
+                | (Math.max(0, Math.min(255, blue)) << 16)
+                | (Math.max(0, Math.min(255, green)) << 8)
+                | Math.max(0, Math.min(255, red));
     }
 
     private static String[] partsForMask(int mask) {
@@ -143,7 +210,17 @@ public class FluidPipeBakedModel implements BakedModel {
 
     @Override
     public boolean useAmbientOcclusion() {
-        return true;
+        return false;
+    }
+
+    @Override
+    public boolean useAmbientOcclusion(BlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean useAmbientOcclusion(BlockState state, RenderType renderType) {
+        return false;
     }
 
     @Override

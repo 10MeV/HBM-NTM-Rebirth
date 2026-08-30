@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:reinforced_stone" }, "count": 16 },
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 12, "legacy_ore": "plateSteel" },
+    { "ingredient": { "tag": "forge:shells/steel" }, "count": 2, "legacy_ore": "shellSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:coil_copper" }, "count": 4 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:gear_large" }, "count": 1, "legacy_id": "hbm:gear_large", "legacy_meta": 0 }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:machine_steam_engine" },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

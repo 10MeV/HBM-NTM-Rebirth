@@ -83,7 +83,11 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    private final LazyOptional<IItemHandler> menuItemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> batteryItemHandler =
+            LazyOptional.of(() -> new AccessibleItemHandler(SLOT_BATTERY, true));
+    private final LazyOptional<IItemHandler> bottomItemHandler =
+            LazyOptional.of(() -> new AccessibleItemHandler(SLOT_OUTPUT_CONTAINER_OUTPUT, false));
     private int age;
     private int lastInputUsed;
     private int lastOutputProduced;
@@ -361,13 +365,18 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        menuItemHandler.invalidate();
+        batteryItemHandler.invalidate();
+        bottomItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            if (side == null) {
+                return menuItemHandler.cast();
+            }
+            return side == Direction.DOWN ? bottomItemHandler.cast() : batteryItemHandler.cast();
         }
         return super.getCapability(capability, side);
     }
@@ -393,20 +402,28 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private final class AccessibleItemHandler implements IItemHandler {
+        private final int mappedSlot;
+        private final boolean allowsBatteryInsertion;
+
+        private AccessibleItemHandler(int mappedSlot, boolean allowsBatteryInsertion) {
+            this.mappedSlot = mappedSlot;
+            this.allowsBatteryInsertion = allowsBatteryInsertion;
+        }
+
         @Override
         public int getSlots() {
-            return SLOT_COUNT;
+            return 1;
         }
 
         @Override
         public @NotNull ItemStack getStackInSlot(int slot) {
-            return slot >= 0 && slot < SLOT_COUNT ? items.getStackInSlot(slot) : ItemStack.EMPTY;
+            return slot == 0 ? items.getStackInSlot(mappedSlot) : ItemStack.EMPTY;
         }
 
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return slot == SLOT_BATTERY && HbmInventoryMenuHelper.isLegacyBatteryItem(stack)
-                    ? items.insertItem(slot, stack, simulate)
+            return slot == 0 && allowsBatteryInsertion && HbmInventoryMenuHelper.isLegacyBatteryItem(stack)
+                    ? items.insertItem(mappedSlot, stack, simulate)
                     : stack;
         }
 
@@ -417,12 +434,12 @@ public class SteamTurbineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public int getSlotLimit(int slot) {
-            return slot >= 0 && slot < SLOT_COUNT ? items.getSlotLimit(slot) : 0;
+            return slot == 0 ? items.getSlotLimit(mappedSlot) : 0;
         }
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot == SLOT_BATTERY && HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
+            return slot == 0 && allowsBatteryInsertion && HbmInventoryMenuHelper.isLegacyBatteryItem(stack);
         }
     }
 }

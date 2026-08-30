@@ -108,8 +108,17 @@ public class CraneSplitterBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        CompoundTag tag = new CompoundTag();
+        tag.putByte(TAG_LEFT, leftRatio);
+        tag.putByte(TAG_RIGHT, rightRatio);
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        leftRatio = clampRatio(tag.getByte(TAG_LEFT));
+        rightRatio = clampRatio(tag.getByte(TAG_RIGHT));
+    }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

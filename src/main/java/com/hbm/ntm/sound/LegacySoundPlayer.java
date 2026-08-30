@@ -390,6 +390,12 @@ public final class LegacySoundPlayer {
                         source == null ? SoundSource.BLOCKS : source, volume, pitch));
     }
 
+    /** Plays a non-positional client UI sound without exposing client classes to common gameplay code. */
+    public static void playUiClient(String sound, float pitch) {
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                com.hbm.ntm.client.sound.LegacyClientSoundPlayer.playUi(sound, pitch));
+    }
+
     public static void playSoundClientRandomPitch(Level level, double x, double y, double z, String sound,
             SoundSource source, float volume, float basePitch, float randomPitch) {
         playSoundClient(x, y, z, sound, source, volume, randomPitch(level, basePitch, randomPitch));

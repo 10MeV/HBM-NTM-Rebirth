@@ -69,9 +69,11 @@ public class RtgBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
         long oldPower = rtg.getPower();
         int oldHeat = rtg.heat;
 
-        if (rtg.getPower() > 0L) {
-            HbmEnergyUtil.tryProvideToAllNeighbors(level, pos, rtg.energy);
-        }
+        // Legacy TileEntityMachineRTG probes every side before it generates this tick's
+        // heat-derived power.  Keep the zero-power probe too: it preserves provider
+        // subscriptions for newly placed and fully drained RTGs; the transfer itself
+        // remains zero while the buffer is empty.
+        HbmEnergyUtil.tryProvideToAllNeighbors(level, pos, rtg.energy);
         rtg.heat = Math.min(rtg.calculateHeat(), RtgPelletRuntime.heatMax());
         rtg.setPower(rtg.getPower() + rtg.heat * 5L);
 

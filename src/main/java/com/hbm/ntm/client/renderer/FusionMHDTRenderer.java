@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.render.LegacyPoseRotations;
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.FusionMHDTBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
@@ -45,10 +44,8 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, FusionBreederRenderer.rotation(state));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-                ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
-                        poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Turbine");
-            }
+            ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
+                    poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Turbine");
 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 poseStack.pushPose();
@@ -57,7 +54,7 @@ public class FusionMHDTRenderer implements BlockEntityRenderer<FusionMHDTBlockEn
                 LegacyPoseRotations.rotateXDegrees(poseStack, rotor);
                 poseStack.translate(0.0D, -1.5D, 0.0D);
                 ObjFusionModels.renderMhdtPart(ObjFusionModels.MHDT_LEGACY, ObjFusionModels.MHDT_TEXTURE,
-                        poseStack, buffer, light, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Coils");
+                        poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL, "Coils");
                 poseStack.popPose();
             }
         }

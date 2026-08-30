@@ -51,15 +51,15 @@ public class ProcessingMachineMenu extends AbstractContainerMenu {
     }
 
     private void addCentrifugeSlots(Inventory playerInventory) {
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 36, 50));
-        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 9, 50));
-        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 2, 63, 50));
-        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 3, 83, 50));
-        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 4, 103, 50));
-        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 5, 123, 50));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 6, 149, 22));
-        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 7, 149, 40));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 8, 104, 162);
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 0, 44, 57));
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 1, 8, 57));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 2, 70, 57));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 3, 90, 57));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 4, 110, 57));
+        addSlot(HbmInventoryMenuHelper.craftingOutputSlot(playerInventory.player, blockEntity.getItems(), 5, 130, 57));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 6, 156, 31));
+        addSlot(HbmInventoryMenuHelper.upgradeSlot(blockEntity.getItems(), 7, 156, 49));
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 11, 107, 165);
     }
 
     private void addCrystallizerSlots(Inventory playerInventory) {

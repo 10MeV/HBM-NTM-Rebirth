@@ -34,7 +34,11 @@ public class SoyuzLauncherBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        // 1.7.10 RenderSoyuzLauncher/SoyuzLauncherPronter submit all six launcher
+        // pieces in one no-cull TESR pass.  The four nominally fixed pieces are
+        // far larger than the core chunk and cannot inherit a correct per-vertex
+        // light field or culling contract from a core-owned baked model.
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
@@ -48,7 +52,9 @@ public class SoyuzLauncherBlock extends LegacyVisibleMultiblockMachineBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
         if (player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
+            // SoyuzLauncher returns true on the client before its server-side
+            // sneaking branch avoids opening the launcher menu.
+            return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof SoyuzLauncherBlockEntity launcher) {

@@ -31,7 +31,7 @@ public class DfcInjectorMenu extends AbstractContainerMenu {
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 1, 26, 53));
         addSlot(HbmInventoryMenuHelper.legacyMachineSlot(blockEntity.getItems(), 2, 134, 17));
         addSlot(HbmInventoryMenuHelper.outputSlot(blockEntity.getItems(), 3, 134, 53));
-        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 166);
+        HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, inventory, 8, 84, 142);
         fuel1 = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getFuel1());
         fuel2 = HbmFluidGuiHelper.watchTank(this::addDataSlot, blockEntity.getFuel2());
         HbmMenuDataSlots.addInt(this::addDataSlot, blockEntity::getBeam, value -> beam = value);

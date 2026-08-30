@@ -6,8 +6,10 @@ import com.hbm.ntm.api.redstoneoverradio.RORDispatcher;
 import com.hbm.ntm.api.redstoneoverradio.RORValueProvider;
 import com.hbm.ntm.config.SteamTurbineConfig;
 import com.hbm.ntm.compat.CompatEnergyControl;
+import com.hbm.ntm.energy.HbmEnergySideMode;
 import com.hbm.ntm.energy.HbmEnergyUtil.EnergyPort;
 import com.hbm.ntm.fluid.FluidType;
+import com.hbm.ntm.fluid.HbmFluidSideMode;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.LegacyFluidTankPacket;
@@ -24,6 +26,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEntity implements RORValueProvider {
     private static final String[] SPIN_BLOCKS = new String[] {"▖ ", "▘ ", " ▘", " ▖"};
@@ -250,6 +253,21 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
     protected Iterable<EnergyPort> getEnergyPorts() {
         Direction facing = facing();
         return List.of(energyPort(facing.getOpposite(), -facing.getStepX() * 4, 1, -facing.getStepZ() * 4));
+    }
+
+    @Override
+    protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
+        // TileEntityMachineIndustrialTurbine#canConnect only accepts the
+        // machine's back side for direct HE connectivity.
+        return side == null || side == facing().getOpposite()
+                ? HbmEnergySideMode.OUTPUT : HbmEnergySideMode.NONE;
+    }
+
+    @Override
+    protected HbmFluidSideMode getFluidSideMode(@Nullable Direction side) {
+        // The legacy fluid connector rejected only the front and back faces.
+        return side == null || side != facing() && side != facing().getOpposite()
+                ? HbmFluidSideMode.BOTH : HbmFluidSideMode.NONE;
     }
 
     @Override

@@ -48,7 +48,10 @@ public record LegacyMachineDefinition(
         LegacyMachineRenderProfile renderProfile) {
 
     public LegacyMultiblockLayout layout(BlockState state) {
-        return layoutFactory.apply(state.getValue(HorizontalMachineBlock.FACING));
+        Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
+                ? state.getValue(HorizontalMachineBlock.FACING)
+                : Direction.SOUTH;
+        return layoutFactory.apply(facing);
     }
 
     public Direction placementFacing(Direction facing) {

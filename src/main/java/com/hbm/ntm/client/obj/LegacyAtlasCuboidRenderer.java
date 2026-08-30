@@ -235,6 +235,39 @@ public final class LegacyAtlasCuboidRenderer {
                 color, alpha, minX, minY, minZ, maxX, maxY, maxZ);
     }
 
+    /**
+     * Renders the top and four vertical faces of a cropped cuboid, intentionally
+     * omitting the bottom face.  Legacy RenderBlocks used this effective face set
+     * for raised parts resting on an opaque block: the neighbour below suppressed
+     * the bottom face while the top and sides remained visible.
+     */
+    public static void croppedTopAndSides(TextureAtlasSprite top,
+            TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, int color, int alpha,
+            LegacyTexturedRenderMode renderMode, double minX, double minY, double minZ, double maxX, double maxY,
+            double maxZ) {
+        LegacyTexturedQuadRenderer.SpriteQuadBatch batch =
+                LegacyTexturedQuadRenderer.spriteQuadBatch(poseStack, buffer, renderMode, alpha);
+        croppedTopAndSides(top, north, south, east, west, batch, packedLight, packedOverlay, color, alpha,
+                minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    public static void croppedTopAndSides(TextureAtlasSprite top,
+            TextureAtlasSprite north, TextureAtlasSprite south, TextureAtlasSprite east, TextureAtlasSprite west,
+            LegacyTexturedQuadRenderer.SpriteQuadBatch batch, int packedLight, int packedOverlay, int color, int alpha,
+            double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        croppedSouthFace(south, batch, packedLight, packedOverlay, color, alpha,
+                minX, minY, maxZ, maxX, maxY);
+        croppedEastFace(east, batch, packedLight, packedOverlay, color, alpha,
+                maxX, minY, minZ, maxY, maxZ);
+        croppedNorthFace(north, batch, packedLight, packedOverlay, color, alpha,
+                minX, minY, minZ, maxX, maxY);
+        croppedWestFace(west, batch, packedLight, packedOverlay, color, alpha,
+                minX, minY, minZ, maxY, maxZ);
+        croppedTopFace(top, batch, packedLight, packedOverlay, color, alpha,
+                minX, minZ, maxX, maxY, maxZ);
+    }
+
     public static void croppedCuboid(TextureAtlasSprite sprite, PoseStack poseStack, MultiBufferSource buffer,
             int packedLight, int packedOverlay, CuboidBounds bounds) {
         if (bounds == null) {

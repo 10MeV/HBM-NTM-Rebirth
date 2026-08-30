@@ -44,7 +44,7 @@ public class CombustionEngineScreen extends AbstractContainerScreen<CombustionEn
         if (menu.isOn()) {
             graphics.blit(TEXTURE, leftPos + 79, topPos + 13, 192, 0, 35, 15);
         }
-        int power = menu.getPowerBarHeight(52);
+        int power = menu.getPowerBarHeight(53);
         if (power > 0) {
             graphics.blit(TEXTURE, leftPos + 143, topPos + 69 - power, 176, 52 - power, 16, power);
         }
@@ -61,22 +61,22 @@ public class CombustionEngineScreen extends AbstractContainerScreen<CombustionEn
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (!draggingThrottle && isHovering(143, 17, 16, 52, mouseX, mouseY)) {
+        if (!draggingThrottle && isLegacyHovering(143, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 143, topPos + 17, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (!draggingThrottle && isHovering(35, 17, 16, 52, mouseX, mouseY)) {
+        } else if (!draggingThrottle && isLegacyHovering(35, 17, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getTankData(),
                     menu.getTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (draggingThrottle || isHovering(80, 39, 34, 8, mouseX, mouseY)) {
+        } else if (draggingThrottle || isLegacyHovering(80, 38, 34, 8, mouseX, mouseY)) {
             graphics.renderTooltip(font, split(List.of(
                     Component.literal(String.format(Locale.US, "%.1f mB/t", localThrottle * 0.2D)))),
                     Mth.clamp(mouseX, leftPos + 80, leftPos + 114),
                     Mth.clamp(mouseY, topPos + 38, topPos + 46));
-        } else if (isHovering(79, 50, 35, 14, mouseX, mouseY)) {
+        } else if (isLegacyHovering(79, 50, 35, 14, mouseX, mouseY)) {
             graphics.renderTooltip(font, split(List.of(
                     Component.literal(menu.getLastPowerProduced() + " HE/t"),
                     Component.literal((menu.getLastPowerProduced() * 20L) + " HE/s"))), mouseX, mouseY);
-        } else if (isHovering(79, 13, 35, 15, mouseX, mouseY)) {
+        } else if (isLegacyHovering(79, 13, 35, 15, mouseX, mouseY)) {
             graphics.renderTooltip(font, split(List.of(Component.literal("Ignition"))), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
@@ -84,12 +84,12 @@ public class CombustionEngineScreen extends AbstractContainerScreen<CombustionEn
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(89, 14, 16, 14, mouseX, mouseY)) {
+        if (isLegacyHovering(89, 13, 16, 14, mouseX, mouseY)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0,
                     CombustionEngineBlockEntity.CONTROL_TOGGLE);
             return true;
         }
-        if (isHovering(79, 39, 36, 8, mouseX, mouseY)) {
+        if (isLegacyHovering(79, 38, 36, 8, mouseX, mouseY)) {
             draggingThrottle = true;
             updateThrottle(mouseX);
             return true;
@@ -123,6 +123,10 @@ public class CombustionEngineScreen extends AbstractContainerScreen<CombustionEn
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), next,
                     CombustionEngineBlockEntity.CONTROL_THROTTLE);
         }
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private static int pistonIndex(ItemStack stack) {

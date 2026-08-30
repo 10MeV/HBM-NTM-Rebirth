@@ -69,8 +69,6 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
         }
 
         LegacyMachineDefinition definition = block.definition();
-        int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
-
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
@@ -78,19 +76,19 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
         poseStack.translate(translation.x, translation.y, translation.z);
         LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
 
-        LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
+        LegacyTexturedRenderMode renderMode = LegacyTexturedRenderMode.CUTOUT_CULL;
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 0.0D, blockEntity.getSlider(partialTick) * -3.0D);
-                renderPart(SLIDER, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                renderPart(SLIDER, definition, poseStack, buffer, packedLight, packedOverlay, renderMode);
 
                 poseStack.pushPose();
                 double extend = blockEntity.getBucket(partialTick) * 1.5D;
                 poseStack.translate(0.0D, -Mth.clamp(extend - 0.25D, 0.0D, 1.25D), 0.0D);
-                renderPart(HYDRAULICS, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                renderPart(HYDRAULICS, definition, poseStack, buffer, packedLight, packedOverlay, renderMode);
                 poseStack.translate(0.0D, -Mth.clamp(extend, 0.0D, 1.25D), 0.0D);
-                renderPart(BUCKET, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                renderPart(BUCKET, definition, poseStack, buffer, packedLight, packedOverlay, renderMode);
                 if (blockEntity.getAnimation() == SlopperAnimation.LIFTING) {
                     renderBucketOre(blockEntity, poseStack, buffer, packedLight);
                 }
@@ -102,21 +100,21 @@ public class OreSlopperRenderer implements BlockEntityRenderer<OreSlopperBlockEn
                 poseStack.translate(0.375D, 2.75D, 0.0D);
                 LegacyPoseRotations.rotateZDegrees(poseStack, (float) blades);
                 poseStack.translate(-0.375D, -2.75D, 0.0D);
-                renderPart(BLADES_LEFT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                renderPart(BLADES_LEFT, definition, poseStack, buffer, packedLight, packedOverlay, renderMode);
                 poseStack.popPose();
 
                 poseStack.pushPose();
                 poseStack.translate(-0.375D, 2.75D, 0.0D);
                 LegacyPoseRotations.rotateZDegrees(poseStack, (float) -blades);
                 poseStack.translate(0.375D, -2.75D, 0.0D);
-                renderPart(BLADES_RIGHT, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                renderPart(BLADES_RIGHT, definition, poseStack, buffer, packedLight, packedOverlay, renderMode);
                 poseStack.popPose();
 
                 poseStack.pushPose();
                 poseStack.translate(0.0D, 1.875D, -1.0D);
                 LegacyPoseRotations.rotateXDegrees(poseStack, (float) -blockEntity.getFan(partialTick));
                 poseStack.translate(0.0D, -1.875D, 1.0D);
-                renderPart(FAN, definition, poseStack, buffer, modelLight, packedOverlay, renderMode);
+                renderPart(FAN, definition, poseStack, buffer, packedLight, packedOverlay, renderMode);
                 poseStack.popPose();
             }
         }

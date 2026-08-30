@@ -2,7 +2,7 @@
   "variants": {
     "facing=east": {
       "model": "hbm_ntm_rebirth:block/machine_fluidtank",
-      "y": 270
+      "y": 90
     },
     "facing=north": {
       "model": "hbm_ntm_rebirth:block/machine_fluidtank",
@@ -13,7 +13,7 @@
     },
     "facing=west": {
       "model": "hbm_ntm_rebirth:block/machine_fluidtank",
-      "y": 90
+      "y": 270
     }
   }
 }

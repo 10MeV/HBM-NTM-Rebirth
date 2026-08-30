@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.LegacyMachineRenderShapes;
+import com.hbm.ntm.block.SoyuzCapsuleBlock;
 import com.hbm.ntm.blockentity.SoyuzCapsuleBlockEntity;
 import com.hbm.ntm.client.obj.ObjSoyuzModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -42,7 +43,8 @@ public class SoyuzCapsuleBlockEntityRenderer implements BlockEntityRenderer<Soyu
         LegacyPoseRotations.rotateYDegrees(poseStack, -25.0F);
         LegacyPoseRotations.rotateZDegrees(poseStack, 15.0F);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            ObjSoyuzModels.renderLanderCapsule(false, poseStack, buffer, modelLight, OverlayTexture.NO_OVERLAY);
+            ObjSoyuzModels.renderLanderCapsule(SoyuzCapsuleBlock.isRusted(blockEntity.getBlockState()),
+                    poseStack, buffer, modelLight, OverlayTexture.NO_OVERLAY);
         }
         poseStack.popPose();
     }

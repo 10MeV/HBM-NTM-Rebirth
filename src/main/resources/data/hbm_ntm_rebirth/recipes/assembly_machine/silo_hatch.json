@@ -1,0 +1,18 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 200,
+  "input_fluids": [],
+  "input_items": [
+    {"count": 4, "ingredient": {"tag": "forge:welded_plates/steel"}, "legacy_ore": "plateWeldedSteel"},
+    {"count": 4, "ingredient": {"item": "hbm_ntm_rebirth:plate_polymer"}},
+    {"count": 2, "ingredient": {"item": "hbm_ntm_rebirth:motor"}},
+    {"count": 16, "ingredient": {"tag": "forge:bolts/steel"}, "legacy_ore": "boltSteel"},
+    {"count": 4, "ingredient": {"tag": "forge:dyes/green"}, "legacy_ore": "dyeGreen"}
+  ],
+  "internal_name": "ass.silohatch",
+  "output_fluids": [],
+  "output_items": [{"item": "hbm_ntm_rebirth:silo_hatch"}],
+  "pools": [],
+  "power": 100,
+  "source_order": 68
+}

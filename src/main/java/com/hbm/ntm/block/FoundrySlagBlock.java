@@ -4,6 +4,7 @@ import com.hbm.ntm.blockentity.FoundrySlagBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -20,6 +21,13 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class FoundrySlagBlock extends Block implements EntityBlock {
+    /**
+     * Legacy {@code BlockDynamicSlag#onBlockHarvested} only emitted its material
+     * scraps for non-creative harvests. {@link #onRemove} has no player context,
+     * so retain that context for the immediately following removal.
+     */
+    private final ThreadLocal<Boolean> suppressCreativeHarvestDrops = ThreadLocal.withInitial(() -> false);
+
     public FoundrySlagBlock(Properties properties) {
         super(properties);
     }
@@ -39,7 +47,7 @@ public class FoundrySlagBlock extends Block implements EntityBlock {
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         if (level.getBlockEntity(pos) instanceof FoundrySlagBlockEntity slag) {
-            return box(0, 0, 0, 16, Math.max(1.0D, slag.getFillLevel() * 16.0D), 16);
+            return box(0, 0, 0, 16, slag.getFillLevel() * 16.0D, 16);
         }
         return super.getShape(state, level, pos, context);
     }
@@ -62,6 +70,7 @@ public class FoundrySlagBlock extends Block implements EntityBlock {
             if (level.getBlockEntity(below) instanceof FoundrySlagBlockEntity moved) {
                 moved.addMaterial(self.getMaterialType(), self.getAmount());
             }
+            self.consume(self.getAmount());
             level.removeBlock(pos, false);
             return;
         }
@@ -76,19 +85,73 @@ public class FoundrySlagBlock extends Block implements EntityBlock {
                 level.removeBlock(pos, false);
             }
             level.scheduleTick(below, this, 1);
+            return;
         }
+        spreadSideways(level, pos, state, self);
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && !level.isClientSide
-                && level.getBlockEntity(pos) instanceof FoundrySlagBlockEntity slag) {
-            ItemStack scrap = slag.asScrap();
-            if (!scrap.isEmpty()) {
-                Block.popResource(level, pos, scrap);
+        boolean suppressDrops = suppressCreativeHarvestDrops.get();
+        try {
+            if (!state.is(newState.getBlock()) && !level.isClientSide && !suppressDrops
+                    && level.getBlockEntity(pos) instanceof FoundrySlagBlockEntity slag) {
+                ItemStack scrap = slag.asScrap();
+                if (!scrap.isEmpty()) {
+                    Block.popResource(level, pos, scrap);
+                }
+            }
+        } finally {
+            if (!level.isClientSide) {
+                suppressCreativeHarvestDrops.remove();
             }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide) {
+            suppressCreativeHarvestDrops.set(player.getAbilities().instabuild);
+        }
+        super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
+    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+        return level.getBlockEntity(pos) instanceof FoundrySlagBlockEntity slag
+                ? slag.asScrap()
+                : ItemStack.EMPTY;
+    }
+
+    private void spreadSideways(ServerLevel level, BlockPos pos, BlockState state, FoundrySlagBlockEntity self) {
+        int availableSides = 0;
+        for (Direction side : Direction.Plane.HORIZONTAL) {
+            if (level.getBlockState(pos.relative(side)).canBeReplaced()) {
+                availableSides++;
+            }
+        }
+        if (self.getAmount() < FoundrySlagBlockEntity.MAX_AMOUNT / 5 || availableSides == 0) {
+            return;
+        }
+
+        int perSide = Math.max(self.getAmount() / (availableSides * 2), 1);
+        int transferred = 0;
+        for (Direction side : Direction.Plane.HORIZONTAL) {
+            BlockPos targetPos = pos.relative(side);
+            if (!level.getBlockState(targetPos).canBeReplaced()) {
+                continue;
+            }
+            level.setBlock(targetPos, state, Block.UPDATE_ALL);
+            if (level.getBlockEntity(targetPos) instanceof FoundrySlagBlockEntity target) {
+                target.addMaterial(self.getMaterialType(), perSide);
+                transferred += perSide;
+                level.scheduleTick(targetPos, this, 1);
+            }
+        }
+        if (transferred > 0) {
+            self.consume(transferred);
+        }
     }
 
     @Override

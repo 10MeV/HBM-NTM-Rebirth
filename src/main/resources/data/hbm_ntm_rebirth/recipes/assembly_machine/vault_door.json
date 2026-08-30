@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 600,
+  "input_fluids": [],
+  "input_items": [
+    {"count": 32, "ingredient": {"tag": "forge:ingots/steel"}, "legacy_ore": "ingotSteel"},
+    {"count": 32, "ingredient": {"tag": "forge:ingots/dura_steel"}, "legacy_ore": "ingotDuraSteel"},
+    {"count": 8, "ingredient": {"tag": "forge:cast_plates/lead"}, "legacy_ore": "plateCastLead"},
+    {"count": 12, "ingredient": {"tag": "forge:ingots/any_rubber"}, "legacy_ore": "ingotAnyRubber"},
+    {"count": 32, "ingredient": {"tag": "forge:bolts/dura_steel"}, "legacy_ore": "boltDuraSteel"},
+    {"count": 3, "ingredient": {"item": "hbm_ntm_rebirth:motor"}}
+  ],
+  "internal_name": "ass.vaultdoor",
+  "output_fluids": [],
+  "output_items": [{"item": "hbm_ntm_rebirth:vault_door"}],
+  "pools": [],
+  "power": 100,
+  "source_order": 56
+}

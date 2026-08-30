@@ -24,8 +24,8 @@ import net.minecraft.world.phys.Vec3;
 public final class NTMAnvilItemRenderer extends BlockEntityWithoutLevelRenderer {
     // The source OBJ is already in block units. The requested inventory presentation is 80% larger.
     private static final float GUI_FIT_SCALE = 0.576F;
-    // The standard centered item anchor is 0.375; move the preview upward by two GUI pixels (2 / 16).
-    private static final double GUI_CENTER_Y = 0.25D;
+    // GUI-space Y is inverted after the display rotations; subtract 2 / 16 to move the preview downward by two pixels.
+    private static final double GUI_CENTER_Y = 0.5625D;
     private static final AABB LEGACY_INVENTORY_BOUNDS = legacyInventoryBounds(ObjBlockModels.ANVIL.boundsAll());
 
     public static final NTMAnvilItemRenderer INSTANCE = new NTMAnvilItemRenderer(

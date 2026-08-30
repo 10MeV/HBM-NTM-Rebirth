@@ -1,5 +1,6 @@
 {
   "variants": {
-    "": { "model": "hbm_ntm_rebirth:block/soyuz_capsule" }
+    "rusted=false": { "model": "hbm_ntm_rebirth:block/soyuz_capsule" },
+    "rusted=true": { "model": "hbm_ntm_rebirth:block/soyuz_capsule_rusted" }
   }
 }

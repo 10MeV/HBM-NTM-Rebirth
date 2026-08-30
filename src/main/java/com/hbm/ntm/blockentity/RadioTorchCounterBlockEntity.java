@@ -150,12 +150,18 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity implemen
         BlockEntity attached = torch.attachedBlockEntity(level);
         if (attached != null) {
             attached.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
-                int[] counts = new int[RTTYCounterState.SLOT_COUNT];
-                for (int i = 0; i < counts.length; i++) {
+                boolean broadcast = false;
+                for (int i = 0; i < RTTYCounterState.SLOT_COUNT; i++) {
                     ItemStack pattern = torch.filterItems.getStackInSlot(i);
-                    counts[i] = pattern.isEmpty() ? 0 : countItems(handler, pattern, i, torch.matcher);
+                    // TileEntityRadioTorchCounter skips an unconfigured filter
+                    // slot altogether.  In particular, it neither overwrites
+                    // the remembered count nor emits a synthetic zero signal.
+                    if (!pattern.isEmpty()) {
+                        broadcast |= torch.radio.broadcastCount(level, i,
+                                countItems(handler, pattern, i, torch.matcher));
+                    }
                 }
-                if (torch.radio.broadcastCounts(level, counts) > 0) {
+                if (broadcast) {
                     torch.setChangedAndSync(false);
                 }
             });
@@ -219,8 +225,18 @@ public class RadioTorchCounterBlockEntity extends RadioTorchBlockEntity implemen
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // TileEntityRadioTorchCounter's network segment exposes polling,
+        // channels and last counts.  Filter stacks and matcher modes are menu
+        // state, not look-overlay state, so they stay out of chunk snapshots.
+        CompoundTag tag = new CompoundTag();
+        radio.save(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        radio.load(tag);
+    }
 
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {

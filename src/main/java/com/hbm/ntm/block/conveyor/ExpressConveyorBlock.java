@@ -18,6 +18,11 @@ public class ExpressConveyorBlock extends ConveyorBlock {
     }
 
     @Override
+    protected String tooltipId() {
+        return "conveyor_express";
+    }
+
+    @Override
     protected BlockState nextScrewdriverState(BlockState state, int metadata, int baseMetadata,
             ConveyorPathType path, boolean sneaking) {
         return stateFromLegacyMetadata(nextBendableMetadata(metadata, baseMetadata, path, sneaking));

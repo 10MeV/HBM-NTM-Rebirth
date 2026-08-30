@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "BB",
+    "BB"
+  ],
+  "key": {
+    "B": {
+      "item": "hbm_ntm_rebirth:ingot_firebrick"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:brick_fire"
+  }
+}

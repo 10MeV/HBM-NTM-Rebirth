@@ -45,6 +45,12 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     private int turnProgress;
     private float acceleration;
     private long lastPowerProduced;
+    // TileEntitySteamEngine's temporary packet buffer was completed before
+    // remote energy/fluid output, not from the end-of-tick runtime state.
+    private HbmFluidTank legacyPacketSteamTank;
+    private HbmFluidTank legacyPacketSpentSteamTank;
+    private long legacyPacketPower;
+    private float legacyPacketRotor;
 
     public SteamEngineBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmEnergyStorage(MAX_POWER, 0L, MAX_POWER),
@@ -57,6 +63,8 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         super(ModBlockEntities.STEAM_ENGINE.get(), pos, state, energy, List.of(steamTank, spentSteamTank));
         this.steamTank = steamTank;
         this.spentSteamTank = spentSteamTank;
+        legacyPacketSteamTank = copyPacketTank(steamTank);
+        legacyPacketSpentSteamTank = copyPacketTank(spentSteamTank);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, SteamEngineBlockEntity engine) {
@@ -69,6 +77,7 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         engine.normalizeConfigCapacity();
         engine.energy.setPower(0L);
 
+        engine.legacyPacketSteamTank = copyPacketTank(engine.steamTank);
         TurbineResult result = engine.runConversion();
         engine.lastPowerProduced = result.powerProduced();
         engine.energy.setMaxPower(Math.max(MAX_POWER, result.powerProduced()));
@@ -85,6 +94,9 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
                     "hbm:block.steamEngineOperate", SoundSource.BLOCKS, engine.getVolume(1.0F),
                     0.5F + engine.acceleration / 80.0F);
         }
+        engine.legacyPacketPower = engine.energy.getPower();
+        engine.legacyPacketRotor = engine.rotor;
+        engine.legacyPacketSpentSteamTank = copyPacketTank(engine.spentSteamTank);
 
         if (engine.energy.getPower() > 0L) {
             engine.tryProvideEnergyToPorts();
@@ -93,11 +105,16 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
             engine.tryProvideFluidToPorts(engine.spentSteamTank.getTankType(), engine.spentSteamTank.getPressure(), engine);
         }
 
-        engine.networkPackNT(150);
         if (result.converted()) {
             engine.setChanged();
             level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
+        // TileEntitySteamEngine's binary packet is the client-side visual
+        // snapshot for this tick. Keep it after the modern update-tag path so
+        // the pre-output STEAM/power/rotor/SPENTSTEAM sample remains the final
+        // authority even when the real spent-steam tank was drained into a
+        // receiver before the update tag was built.
+        engine.networkPackNT(150);
     }
 
     private TurbineResult runConversion() {
@@ -264,7 +281,10 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     protected HbmEnergySideMode getEnergySideMode(@Nullable Direction side) {
-        return HbmEnergySideMode.OUTPUT;
+        // TileEntitySteamEngine#canConnect rejects ForgeDirection.UP/DOWN;
+        // its actual HBM output remains the three horizontal remote ports.
+        return side == Direction.UP || side == Direction.DOWN
+                ? HbmEnergySideMode.NONE : HbmEnergySideMode.OUTPUT;
     }
 
     @Override
@@ -340,10 +360,10 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         // 1.7.10 TileEntitySteamEngine writes these runtime fields directly, without a loaded-tile prefix.
-        LegacyFluidTankPacket.write(data, steamTank);
-        data.writeLong(energy.getPower());
-        data.writeFloat(rotor);
-        LegacyFluidTankPacket.write(data, spentSteamTank);
+        LegacyFluidTankPacket.write(data, legacyPacketSteamTank);
+        data.writeLong(legacyPacketPower);
+        data.writeFloat(legacyPacketRotor);
+        LegacyFluidTankPacket.write(data, legacyPacketSpentSteamTank);
     }
 
     @Override
@@ -371,5 +391,12 @@ public class SteamEngineBlockEntity extends HbmEnergyAndFluidBlockEntity
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private static HbmFluidTank copyPacketTank(HbmFluidTank source) {
+        HbmFluidTank copy = new HbmFluidTank(source.getTankType(), source.getMaxFill());
+        copy.withPressure(source.getPressure());
+        copy.setFill(source.getFill());
+        return copy;
     }
 }

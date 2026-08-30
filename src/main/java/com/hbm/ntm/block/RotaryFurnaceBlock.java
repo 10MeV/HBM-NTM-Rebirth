@@ -27,7 +27,11 @@ public class RotaryFurnaceBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        // The legacy model spans the complete multiblock. Vanilla chunk baking can only sample
+        // the core and its six immediate neighbours, so a cold high-altitude section writes
+        // lightmap zero into most of this oversized OBJ. Keep the source-shaped TESR route via
+        // the modern cached/GPU BER backend instead of accepting placement-order-dependent light.
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Nullable
@@ -39,6 +43,9 @@ public class RotaryFurnaceBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof RotaryFurnaceBlockEntity furnace) {
             NetworkHooks.openScreen(serverPlayer, furnace, furnace.getBlockPos());

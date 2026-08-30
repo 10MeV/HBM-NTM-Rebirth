@@ -69,8 +69,8 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(charger)) {
                 poseStack.pushPose();
                 applySlideFrame(poseStack, extend);
-                renderArm(poseStack, buffer, modelLight, packedOverlay, LEFT, 30.0D * swivel);
-                renderArm(poseStack, buffer, modelLight, packedOverlay, RIGHT, -30.0D * swivel);
+                renderArm(poseStack, buffer, packedLight, packedOverlay, LEFT, 30.0D * swivel);
+                renderArm(poseStack, buffer, packedLight, packedOverlay, RIGHT, -30.0D * swivel);
                 poseStack.popPose();
             }
 
@@ -79,7 +79,7 @@ public class ChargerRenderer implements BlockEntityRenderer<ChargerBlockEntity> 
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(charger)) {
                 poseStack.pushPose();
                 applySlideFrame(poseStack, extend);
-                renderPart(SLIDE, poseStack, buffer, modelLight, packedOverlay);
+                renderPart(SLIDE, poseStack, buffer, packedLight, packedOverlay);
                 poseStack.popPose();
             }
             poseStack.popPose();

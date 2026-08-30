@@ -74,15 +74,15 @@ public final class BlockMigrationHelper {
     }
 
     public static void doMigration(ChunkAccess chunk, CompoundTag tag, int previousBuild, int currentBuild) {
-        if (tag != null) {
-            LegacyItemStackMigration.Result result = LegacyItemStackMigration.migrateAll(tag, legacyItemIds);
-            MIGRATED_ITEM_STACKS.addAndGet(result.migrated());
-            NUMERIC_ITEM_STACKS_WITHOUT_MAP.addAndGet(result.numericItemStacksWithoutMap());
-            UNKNOWN_NUMERIC_ITEM_STACKS.addAndGet(result.unknownNumericItemStacks());
-            UNKNOWN_LEGACY_BATTERY_METAS.addAndGet(result.unknownLegacyBatteryMetas());
-        }
+        // The marker only records builds of this 1.20.1 port.  Direct 1.7.10
+        // numeric-ID/FML and chunk-NBT conversion is deliberately unsupported.
     }
 
+    /**
+     * Historical diagnostic hook retained for isolated GameTest evidence only.
+     * Production lifecycle code must never call it.
+     */
+    @Deprecated(forRemoval = true)
     public static LegacyWorldItemIdMap.LoadResult loadLegacyItemIds(Path worldRoot) {
         LegacyWorldItemIdMap.LoadResult result = LegacyWorldItemIdMap.loadFromWorldRoot(worldRoot);
         legacyItemIds = result.map();

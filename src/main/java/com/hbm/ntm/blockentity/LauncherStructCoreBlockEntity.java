@@ -30,8 +30,10 @@ public class LauncherStructCoreBlockEntity extends BlockEntity {
 
     public static void serverTick(Level level, BlockPos pos, BlockState state,
             LauncherStructCoreBlockEntity blockEntity) {
-        if (level.getGameTime() % 20L != 0L
-                || !(state.getBlock() instanceof LauncherStructCoreBlock coreBlock)) {
+        // TileEntityMultiblock#updateEntity checked both launcher structures on
+        // every server tick.  Do not add a periodic delay here: completing a
+        // valid structure must convert it on the next normal block-entity tick.
+        if (!(state.getBlock() instanceof LauncherStructCoreBlock coreBlock)) {
             return;
         }
         if (coreBlock.kind() == LauncherStructCoreBlock.Kind.COMPACT) {

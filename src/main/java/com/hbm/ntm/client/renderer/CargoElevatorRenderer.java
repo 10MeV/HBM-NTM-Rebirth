@@ -63,12 +63,12 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
                             LegacyTexturedRenderMode.CUTOUT_CULL);
                 }
                 try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(elevator)) {
-                    renderTranslatedPart(PLATFORM, 0.0D, extension, 0.0D, poseStack, buffer, modelLight,
+                    renderTranslatedPart(PLATFORM, 0.0D, extension, 0.0D, poseStack, buffer, packedLight,
                             packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
                     for (int i = 0; i < extension + 1.0D; i++) {
                         renderTranslatedPart(PISTON, 0.0D,
                                 extension + LegacyTileRenderPlans.CARGO_ELEVATOR_PISTON_STEP_Y * i, 0.0D,
-                                poseStack, buffer, modelLight, packedOverlay,
+                                poseStack, buffer, packedLight, packedOverlay,
                                 LegacyTexturedRenderMode.CUTOUT_CULL);
                     }
                 }
@@ -77,7 +77,7 @@ public class CargoElevatorRenderer implements BlockEntityRenderer<CargoElevatorB
             try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(elevator)) {
                 for (int i = 0; i <= Math.max(0, elevator.getHeight()); i++) {
                     renderTranslatedPart(GUIDES, 0.0D, LegacyTileRenderPlans.CARGO_ELEVATOR_GUIDE_STEP_Y * i,
-                            0.0D, poseStack, buffer, modelLight, packedOverlay,
+                            0.0D, poseStack, buffer, packedLight, packedOverlay,
                             LegacyTexturedRenderMode.CUTOUT_CULL);
                 }
             }

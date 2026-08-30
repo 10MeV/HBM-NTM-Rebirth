@@ -39,6 +39,11 @@ public class RadiolysisBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // MachineRadiolysis explicitly returns false for a sneaking player;
+        // keep that distinct from standardOpenBehavior's consumed-click contract.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof RadiolysisBlockEntity radiolysis) {
             NetworkHooks.openScreen(serverPlayer, radiolysis, radiolysis.getBlockPos());

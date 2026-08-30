@@ -36,6 +36,12 @@ public class ICFPressScreen extends AbstractContainerScreen<ICFPressMenu> {
     }
 
     @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
+    }
+
+    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
@@ -51,7 +57,8 @@ public class ICFPressScreen extends AbstractContainerScreen<ICFPressMenu> {
         if (!isHovering(x, y, width, height, mouseX, mouseY)) {
             return false;
         }
-        graphics.renderComponentTooltip(font, tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
+        LegacyGuiElements.renderFluidTooltip(graphics, font, tank,
+                tank.tooltip(HbmFluidGuiHelper.showHiddenFluidInfo()), mouseX, mouseY);
         return true;
     }
 

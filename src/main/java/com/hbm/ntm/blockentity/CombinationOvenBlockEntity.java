@@ -216,10 +216,25 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
     public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
         // The fire billboard and top lava particle are driven by this old server-side wasOn snapshot.
         readLegacyLoadedTileBinary(data);
-        wasOn = data.readBoolean();
-        heat = data.readInt();
-        progress = data.readInt();
+        readClientRuntimeSnapshot(data.readBoolean(), data.readInt(), data.readInt());
         LegacyFluidTankPacket.read(data, tank);
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean(TAG_WAS_ON, wasOn);
+        tag.putInt(TAG_HEAT, heat);
+        tag.putInt(TAG_PROGRESS, progress);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_WAS_ON) && tag.contains(TAG_HEAT) && tag.contains(TAG_PROGRESS)) {
+            readClientRuntimeSnapshot(tag.getBoolean(TAG_WAS_ON), tag.getInt(TAG_HEAT), tag.getInt(TAG_PROGRESS));
+        }
     }
 
     @Override
@@ -244,6 +259,12 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
         wasOn = tag.getBoolean(TAG_WAS_ON);
         progress = tag.getInt(TAG_PROGRESS);
         heat = tag.getInt(TAG_HEAT);
+    }
+
+    private void readClientRuntimeSnapshot(boolean wasOn, int heat, int progress) {
+        this.wasOn = wasOn;
+        this.heat = Math.max(0, heat);
+        this.progress = Math.max(0, progress);
     }
 
     @Override
@@ -344,8 +365,8 @@ public class CombinationOvenBlockEntity extends HbmFluidBlockEntity
                 sendAtPort(level, pos.offset(x, 2, z), Direction.UP);
             }
         }
+        refreshTrackedProviderFluidPorts(tank, this);
         if (tank.getFill() > 0) {
-            refreshTrackedProviderFluidPorts(tank, this);
             tryProvideFluidToPorts(tank.getTankType(), tank.getPressure(), this);
         }
     }

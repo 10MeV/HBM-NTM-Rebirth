@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 1200,
+  "input_fluids": [],
+  "input_items": [
+    {"count": 16, "ingredient": {"item": "hbm_ntm_rebirth:cmb_brick_reinforced"}},
+    {"count": 64, "ingredient": {"tag": "forge:plates/steel"}, "legacy_ore": "plateSteel"},
+    {"count": 36, "ingredient": {"tag": "forge:ingots/any_rubber"}, "legacy_ore": "ingotAnyRubber"},
+    {"count": 32, "ingredient": {"item": "hbm_ntm_rebirth:block_steel"}},
+    {"count": 16, "ingredient": {"item": "hbm_ntm_rebirth:motor_desh"}},
+    {"count": 4, "ingredient": {"tag": "forge:dyes/yellow"}, "legacy_ore": "dyeYellow"}
+  ],
+  "internal_name": "ass.seal",
+  "output_fluids": [],
+  "output_items": [{"item": "hbm_ntm_rebirth:transition_seal"}],
+  "pools": [],
+  "power": 100,
+  "source_order": 59
+}

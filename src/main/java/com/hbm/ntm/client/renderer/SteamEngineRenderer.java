@@ -57,7 +57,6 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
         }
 
         LegacyMachineDefinition definition = block.definition();
-        int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
         float rotor = blockEntity.getRotor();
         float previousRotor = blockEntity.getLastRotor();
         double rotorDegrees = previousRotor + (rotor - previousRotor) * partialTick;
@@ -74,11 +73,11 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
                 renderRotatingPart(MODEL, FLYWHEEL,
                         LegacyTileRenderPlans.STEAM_ENGINE_FLYWHEEL_PIVOT_X,
                         LegacyTileRenderPlans.STEAM_ENGINE_FLYWHEEL_PIVOT_Y, 0.0D,
-                        0.0F, 0.0F, -1.0F, rotorDegrees, poseStack, buffer, modelLight, packedOverlay);
+                        0.0F, 0.0F, -1.0F, rotorDegrees, poseStack, buffer, packedLight, packedOverlay);
                 renderRotatingPart(MODEL, SHAFT,
                         0.0D, LegacyTileRenderPlans.STEAM_ENGINE_SHAFT_PIVOT_Y,
                         LegacyTileRenderPlans.STEAM_ENGINE_SHAFT_PIVOT_Z,
-                        1.0F, 0.0F, 0.0F, rotorDegrees * 2.0D, poseStack, buffer, modelLight,
+                        1.0F, 0.0F, 0.0F, rotorDegrees * 2.0D, poseStack, buffer, packedLight,
                         packedOverlay);
 
                 double radians = rotorDegrees * LegacyTileRenderPlans.DEG_TO_RAD;
@@ -87,12 +86,12 @@ public class SteamEngineRenderer implements BlockEntityRenderer<SteamEngineBlock
                 double cos = Math.cos(radians) * LegacyTileRenderPlans.STEAM_ENGINE_CRANK_RADIUS;
                 double transmissionAngle = Math.acos(cos / LegacyTileRenderPlans.STEAM_ENGINE_ROD_LENGTH)
                         * LegacyTileRenderPlans.RAD_TO_DEG - 90.0D;
-                renderTransmission(MODEL, sin, cos, transmissionAngle, poseStack, buffer, modelLight, packedOverlay);
+                renderTransmission(MODEL, sin, cos, transmissionAngle, poseStack, buffer, packedLight, packedOverlay);
 
                 double cath = Math.sqrt(LegacyTileRenderPlans.STEAM_ENGINE_PISTON_CATH_SQUARED
                         - (cos * cos) / 2.0D);
                 renderTranslatedPart(MODEL, LegacyTileRenderPlans.STEAM_ENGINE_ROD_LENGTH - cath + sin,
-                        0.0D, 0.0D, PISTON, poseStack, buffer, modelLight, packedOverlay);
+                        0.0D, 0.0D, PISTON, poseStack, buffer, packedLight, packedOverlay);
             }
         }
 

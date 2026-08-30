@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "tag": "forge:cobblestone" }, "count": 8, "legacy_ore": "cobblestone" },
+    { "ingredient": { "tag": "minecraft:planks" }, "count": 16, "legacy_ore": "plankWood" },
+    { "ingredient": { "tag": "forge:plates/copper" }, "count": 8, "legacy_ore": "plateCopper" },
+    { "ingredient": { "tag": "forge:pipes/lead" }, "count": 2, "legacy_ore": "pipeLead" }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:pump_steam" },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

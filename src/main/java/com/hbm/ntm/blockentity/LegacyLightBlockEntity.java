@@ -170,7 +170,10 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
         }
 
         BlockState state = level.getBlockState(newPos);
-        if (state.isAir() || state.canBeReplaced()) {
+        // TileEntityFloodlight#castLight only replaced vanilla air.  A
+        // replaceable non-air state is still an occupied legacy endpoint and
+        // must neither be consumed nor become a temporary beam carrier.
+        if (state.isAir()) {
             level.setBlock(newPos, ModBlocks.FLOODLIGHT_BEAM.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             if (level.getBlockEntity(newPos) instanceof FloodlightBeamBlockEntity beam) {
                 beam.setSource(this, index);
@@ -333,8 +336,13 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncTag(tag);
+    }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
@@ -343,7 +351,7 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        readClientSyncTag(packet.getTag());
     }
 
     private void setChangedAndSync() {
@@ -351,5 +359,24 @@ public class LegacyLightBlockEntity extends BlockEntity implements HbmEnergyRece
         if (level != null) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         }
+    }
+
+    private CompoundTag getClientSyncTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putFloat("rotation", rotation);
+        tag.putLong("power", power);
+        tag.putInt("delay", delay);
+        tag.putBoolean("isOn", on);
+        return tag;
+    }
+
+    private void readClientSyncTag(CompoundTag tag) {
+        if (tag == null) {
+            return;
+        }
+        rotation = tag.getFloat("rotation");
+        power = tag.getLong("power");
+        delay = Math.max(0, tag.getInt("delay"));
+        on = tag.getBoolean("isOn");
     }
 }

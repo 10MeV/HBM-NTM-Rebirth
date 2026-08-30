@@ -1,0 +1,24 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": { "tag": "forge:ingots/steel" },
+      "count": 4,
+      "legacy_ore": "ingotSteel"
+    },
+    {
+      "ingredient": { "tag": "forge:plates/copper" },
+      "count": 16,
+      "legacy_ore": "plateCopper"
+    },
+    {
+      "ingredient": { "item": "hbm_ntm_rebirth:plate_polymer" },
+      "count": 8
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:machine_boiler"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

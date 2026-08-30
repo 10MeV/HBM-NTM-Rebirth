@@ -52,38 +52,39 @@ public class MiningLaserScreen extends AbstractContainerScreen<MiningLaserMenu> 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(8, 18, 16, 88, mouseX, mouseY)) {
+        if (isLegacyHovering(8, 18, 16, 88, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 8, topPos + 18, 16, 88, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(35, 72, 7, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(35, 72, 7, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOilTank(),
                     menu.oilTooltip(false), mouseX, mouseY);
-        } else if (isHovering(87, 31, 8, 8, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(
+        } else if (isLegacyHovering(87, 31, 8, 8, mouseX, mouseY)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos + 87, topPos + 31, 8, 8, leftPos + 141, topPos + 55, List.of(
                     Component.literal("Acceptable upgrades:"),
                     Component.literal(" -Speed (stacks to level 12)"),
                     Component.literal(" -Effectiveness (stacks to level 12)"),
-                    Component.literal(" -Overdrive (stacks to level 9)"),
-                    Component.literal(" -Power (stacks to level 12)"),
+                    Component.literal(" -Overdrive (stacks to level 3)"),
                     Component.literal(" -Fortune (stacks to level 3)"),
-                    Component.literal(" -Smelter"),
-                    Component.literal(" -Nullifier"),
-                    Component.literal(" -Screaming Scientist")), mouseX, mouseY);
-        } else if (isHovering(61, 17, 18, 18, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(
-                    Component.literal(menu.isOn() ? "On" : "Off"),
-                    Component.literal("Consumption: " + menu.getConsumption() + " HE/t"),
-                    Component.literal(menu.isRedstonePowered() ? "Redstone stopped" : "Redstone clear")), mouseX, mouseY);
+                    Component.literal(" -Smelter (exclusive)"),
+                    Component.literal(" -Shredder (exclusive)"),
+                    Component.literal(" -Centrifuge (exclusive)"),
+                    Component.literal(" -Crystallizer (exclusive)"),
+                    Component.literal(" -Nullifier")));
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && isHovering(61, 17, 18, 18, mouseX, mouseY)) {
+        if (button == 0 && isLegacyHovering(61, 17, 18, 18, mouseX, mouseY)) {
             ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), 0, 0);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

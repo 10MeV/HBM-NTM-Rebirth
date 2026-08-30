@@ -49,11 +49,11 @@ public class RadGenScreen extends AbstractContainerScreen<RadGenMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(64, 83, 48, 4, mouseX, mouseY)) {
+        if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 64, topPos + 83, 48, 4)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 64, topPos + 83, 48, 4, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(65, 18, 46, 60, mouseX, mouseY)) {
-            int lane = (mouseY - topPos - 18) / 5;
+        } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos + 65, topPos + 18, 46, 60)) {
+            int lane = (mouseY - topPos - 19) / 5;
             if (lane >= 0 && lane < 12 && menu.hasLaneProgress(lane)) {
                 graphics.renderTooltip(font, List.of(
                         Component.literal("Slot " + (lane + 1) + ":").getVisualOrderText(),
@@ -61,10 +61,6 @@ public class RadGenScreen extends AbstractContainerScreen<RadGenMenu> {
                         Component.literal(menu.getRemainingTicks(lane) + " ticks ("
                                 + menu.getRemainingPercent(lane) + "%)").getVisualOrderText()), mouseX, mouseY);
             }
-        } else if (isHovering(64, 78, 48, 5, mouseX, mouseY)) {
-            graphics.renderTooltip(font, List.of(
-                    Component.literal(menu.getOutput() + " HE/t").getVisualOrderText(),
-                    Component.literal((menu.getOutput() * 20L) + " HE/s").getVisualOrderText()), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

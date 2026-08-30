@@ -4006,11 +4006,43 @@ public final class HbmRecipeProvider extends RecipeProvider {
     private static void anvilSmithingRecipes(Consumer<FinishedRecipe> consumer) {
         anvilUpgradeRecipes(consumer, "iron", ModBlocks.ANVIL_IRON.get(), 0);
         anvilUpgradeRecipes(consumer, "lead", ModBlocks.ANVIL_LEAD.get(), 9);
+        foundryMoldConstructionRecipes(consumer);
         anvilConstructionRecipe(consumer, id("anvil_construction/machine_bat9000_recycling"), 3,
                 List.of(HbmItemOutput.of(new ItemStack(item("plate_welded_tcalloy"), 4)),
                         HbmItemOutput.of(new ItemStack(item("plate_steel"), 16))),
                 "recycling", HbmIngredient.of(ModBlocks.MACHINE_BAT9000.get(), 1));
         legacyAnvilSmithingRecipes(consumer);
+    }
+
+    /**
+     * {@code AnvilRecipes#registerConstructionAmmo} registered these separately
+     * from the smithing molds.  They are still valid foundry mold variants in
+     * {@link FoundryMoldItem}; without their construction recipes they could
+     * only be obtained from the creative inventory.
+     */
+    private static void foundryMoldConstructionRecipes(Consumer<FinishedRecipe> consumer) {
+        HbmIngredient moldBase = HbmIngredient.of(ModItems.MOLD_BASE.get(), 1);
+        HbmIngredient iron = HbmIngredient.legacyOre("ingotIron", 2);
+        anvilConstructionRecipe(consumer, id("anvil_construction/mold_c9"), 1,
+                FoundryMoldItem.stackForId(16), moldBase, iron);
+        anvilConstructionRecipe(consumer, id("anvil_construction/mold_c50"), 1,
+                FoundryMoldItem.stackForId(17), moldBase, iron);
+
+        HbmIngredient steel = HbmIngredient.legacyOre("ingotSteel", 4);
+        anvilConstructionRecipe(consumer, id("anvil_construction/mold_barrel_light"), 2,
+                FoundryMoldItem.stackForId(22), moldBase, steel);
+        anvilConstructionRecipe(consumer, id("anvil_construction/mold_barrel_heavy"), 2,
+                FoundryMoldItem.stackForId(23), moldBase, steel);
+        anvilConstructionRecipe(consumer, id("anvil_construction/mold_receiver_light"), 2,
+                FoundryMoldItem.stackForId(24), moldBase, steel);
+        anvilConstructionRecipe(consumer, id("anvil_construction/mold_receiver_heavy"), 2,
+                FoundryMoldItem.stackForId(25), moldBase, steel);
+        anvilConstructionRecipe(consumer, id("anvil_construction/mold_mechanism"), 2,
+                FoundryMoldItem.stackForId(26), moldBase, steel);
+        anvilConstructionRecipe(consumer, id("anvil_construction/mold_stock"), 2,
+                FoundryMoldItem.stackForId(27), moldBase, steel);
+        anvilConstructionRecipe(consumer, id("anvil_construction/mold_grip"), 2,
+                FoundryMoldItem.stackForId(28), moldBase, steel);
     }
 
     private static void legacyAnvilSmithingRecipes(Consumer<FinishedRecipe> consumer) {
@@ -4316,6 +4348,16 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('I', item("ingot_red_copper"))
                 .unlockedBy("has_red_copper", has(item("ingot_red_copper")))
                 .save(consumer, id("energy/red_cable_paintable"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RED_WIRE_COATED.get(), 16)
+                .pattern("WRW")
+                .pattern("RIR")
+                .pattern("WRW")
+                .define('W', item("plate_polymer"))
+                .define('R', item("wire_fine_mingrade"))
+                .define('I', forgeTag("ingots/mingrade"))
+                .unlockedBy("has_mingrade", has(forgeTag("ingots/mingrade")))
+                .save(consumer, id("energy/red_wire_coated"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RED_CONNECTOR_SUPER.get(), 2)
                 .pattern("CCC")
@@ -9114,6 +9156,17 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_steel_bolt", has(forgeTag("bolts/steel")))
                 .save(consumer, id("parts/bolt_spike"));
 
+        // 1.7.10 CraftingManager: ModBlocks.fan, BPB / PRP / BPB.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.FAN.get())
+                .pattern("BPB")
+                .pattern("PRP")
+                .pattern("BPB")
+                .define('B', forgeTag("bolts/steel"))
+                .define('P', forgeTag("plates/iron"))
+                .define('R', Items.REDSTONE)
+                .unlockedBy("has_steel_bolt", has(forgeTag("bolts/steel")))
+                .save(consumer, id("machines/fan"));
+
         JsonObject scrapsSplit = new JsonObject();
         scrapsSplit.addProperty("type", id("scraps_split").toString());
         scrapsSplit.addProperty("category", "misc");
@@ -10301,46 +10354,56 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .sourceOrder(69)
                 .save(consumer, id("assembly_machine/silo_hatch_large"));
 
+        GenericMachineRecipeBuilder.assembly("ass.cargodoor", 200, 100)
+                .inputItem(block("steel_beam"), 32)
+                .inputLegacyOre("plateSteel", 4)
+                .inputLegacyOre("boltDuraSteel", 4)
+                .inputItem(item("motor"), 2)
+                .inputLegacyOre("dyeGray", 1)
+                .outputItem(ModBlocks.CARGO_DOOR.get())
+                .sourceOrder(70)
+                .save(consumer, id("assembly_machine/cargo_door"));
+
         GenericMachineRecipeBuilder.assembly("ass.capnuka", 10, 100)
                 .inputItem(ModItems.CAP_NUKA.get(), 64)
                 .inputItem(ModItems.CAP_NUKA.get(), 64)
                 .outputItem(ModBlocks.BLOCK_CAP_NUKA.get())
-                .sourceOrder(70)
+                .sourceOrder(71)
                 .save(consumer, id("assembly_machine/cap_nuka"));
 
         GenericMachineRecipeBuilder.assembly("ass.capquantum", 10, 100)
                 .inputItem(ModItems.CAP_QUANTUM.get(), 64)
                 .inputItem(ModItems.CAP_QUANTUM.get(), 64)
                 .outputItem(ModBlocks.BLOCK_CAP_QUANTUM.get())
-                .sourceOrder(71)
+                .sourceOrder(72)
                 .save(consumer, id("assembly_machine/cap_quantum"));
 
         GenericMachineRecipeBuilder.assembly("ass.capsparkle", 10, 100)
                 .inputItem(ModItems.CAP_SPARKLE.get(), 64)
                 .inputItem(ModItems.CAP_SPARKLE.get(), 64)
                 .outputItem(ModBlocks.BLOCK_CAP_SPARKLE.get())
-                .sourceOrder(72)
+                .sourceOrder(73)
                 .save(consumer, id("assembly_machine/cap_sparkle"));
 
         GenericMachineRecipeBuilder.assembly("ass.caprad", 10, 100)
                 .inputItem(ModItems.CAP_RAD.get(), 64)
                 .inputItem(ModItems.CAP_RAD.get(), 64)
                 .outputItem(ModBlocks.BLOCK_CAP_RAD.get())
-                .sourceOrder(73)
+                .sourceOrder(74)
                 .save(consumer, id("assembly_machine/cap_rad"));
 
         GenericMachineRecipeBuilder.assembly("ass.capfritz", 10, 100)
                 .inputItem(ModItems.CAP_FRITZ.get(), 64)
                 .inputItem(ModItems.CAP_FRITZ.get(), 64)
                 .outputItem(ModBlocks.BLOCK_CAP_FRITZ.get())
-                .sourceOrder(74)
+                .sourceOrder(75)
                 .save(consumer, id("assembly_machine/cap_fritz"));
 
         GenericMachineRecipeBuilder.assembly("ass.capkorl", 10, 100)
                 .inputItem(ModItems.CAP_KORL.get(), 64)
                 .inputItem(ModItems.CAP_KORL.get(), 64)
                 .outputItem(ModBlocks.BLOCK_CAP_KORL.get())
-                .sourceOrder(75)
+                .sourceOrder(76)
                 .save(consumer, id("assembly_machine/cap_korl"));
 
         GenericMachineRecipeBuilder.assembly("ass.capacitorgold", 100, 100)
@@ -13461,6 +13524,45 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('W', net.minecraft.world.level.block.Blocks.CRAFTING_TABLE)
                 .unlockedBy("has_vacuum_tube", has(forgeTag("circuits/vacuum_tube")))
                 .save(consumer, id("machines/autocrafter"));
+
+        // CraftingManager.java:713-716.  The corroded barrel has no recipe:
+        // it is the hidden degradation state created by the fluid-barrel
+        // runtime, not a player acquisition path.
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.BARREL_PLASTIC.get())
+                .pattern("IPI")
+                .pattern("I I")
+                .pattern("IPI")
+                .define('I', item("plate_polymer"))
+                .define('P', forgeTag("plates/aluminium"))
+                .unlockedBy("has_plate_polymer", has(item("plate_polymer")))
+                .save(consumer, id("machines/barrel_plastic"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.BARREL_STEEL.get())
+                .pattern("IPI")
+                .pattern("I I")
+                .pattern("IPI")
+                .define('I', forgeTag("plates/steel"))
+                .define('P', forgeTag("ingots/steel"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("machines/barrel_steel"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.BARREL_TCALLOY.get())
+                .pattern("IPI")
+                .pattern("I I")
+                .pattern("IPI")
+                .define('I', forgeTag("ingots/tc_alloy"))
+                .define('P', forgeTag("plates/titanium"))
+                .unlockedBy("has_tc_alloy_ingot", has(forgeTag("ingots/tc_alloy")))
+                .save(consumer, id("machines/barrel_tcalloy"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.BARREL_ANTIMATTER.get())
+                .pattern("IPI")
+                .pattern("I I")
+                .pattern("IPI")
+                .define('I', forgeTag("plates/saturnite"))
+                .define('P', forgeTag("dense_wires/bscco"))
+                .unlockedBy("has_saturnite_plate", has(forgeTag("plates/saturnite")))
+                .save(consumer, id("machines/barrel_antimatter"));
 
         GenericMachineRecipeBuilder.assembly("ass.precass", 1_200, 100)
                 .inputLegacyOre("plateCastSteel", 8)

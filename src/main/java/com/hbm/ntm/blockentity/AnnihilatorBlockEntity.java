@@ -418,6 +418,10 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
+        // TileEntityMachineAnnihilator#serialize sends the selected pool before
+        // the monitor value.  The pool is also the GUI text field's source of
+        // truth, so it must exist in the first chunk/update tag.
+        tag.putString(TAG_POOL, pool);
         tag.putString(TAG_MONITOR, monitorBigInt.toString());
         return tag;
     }
@@ -425,6 +429,9 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_POOL)) {
+            pool = tag.getString(TAG_POOL);
+        }
         monitorBigInt = parseBigInteger(tag.getString(TAG_MONITOR));
     }
 

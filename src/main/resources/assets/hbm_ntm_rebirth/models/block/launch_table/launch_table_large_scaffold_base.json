@@ -1,8 +1,11 @@
 {
-  "loader": "forge:obj",
+  "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+  "shade_quads": false,
+  "emissive_ambient": false,
+  "legacy_normal_mode": "face",
   "model": "hbm_ntm_rebirth:models/block/launch_table/launch_table_large_scaffold_base.obj",
   "flip_v": true,
   "automatic_culling": false,
-  "render_type": "minecraft:cutout",
+  "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
   "textures": { "particle": "hbm_ntm_rebirth:block/launch_table/launch_table_large_scaffold_base", "default": "hbm_ntm_rebirth:block/launch_table/launch_table_large_scaffold_base" }
 }

@@ -76,8 +76,21 @@ public abstract class RadioTorchDeviceBlockEntity extends RadioTorchBlockEntity 
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // TileEntityRadioTorchBase#serialize carries the radio configuration.
+        // lastUpdate is server-only receive bookkeeping and is deliberately
+        // omitted from the initial client snapshot.
+        CompoundTag tag = new CompoundTag();
+        radio.save(tag);
+        tag.remove("u");
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        // Do not invoke RadioTorchBlockEntity#load: this compact packet is not
+        // a persisted block-entity tag and must not reset loaded-base state.
+        radio.load(tag);
+    }
 
     @Override
     public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {

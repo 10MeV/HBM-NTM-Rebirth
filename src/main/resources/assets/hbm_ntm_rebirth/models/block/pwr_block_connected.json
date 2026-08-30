@@ -1,0 +1,10 @@
+{
+  "loader": "hbm_ntm_rebirth:pwr_connected_texture_loader",
+  "block": "hbm_ntm_rebirth:block/pwr_block",
+  "block_ct": "hbm_ntm_rebirth:block/pwr_block_ct",
+  "port": "hbm_ntm_rebirth:block/pwr_casing_port",
+  "port_ct": "hbm_ntm_rebirth:block/pwr_casing_port_ct",
+  "textures": {
+    "particle": "hbm_ntm_rebirth:block/pwr_block"
+  }
+}

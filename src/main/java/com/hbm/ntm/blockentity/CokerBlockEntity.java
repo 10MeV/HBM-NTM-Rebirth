@@ -21,12 +21,14 @@ import com.hbm.ntm.util.HbmItemStackUtil;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -187,6 +189,12 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
     public CompoundTag getClientSyncTag() {
         CompoundTag tag = super.getClientSyncTag();
         tag.putBoolean(TAG_WAS_ON, wasOn);
+        // TileEntityMachineCoker#serialize also sent both process bars.  The
+        // parent contributes the two tanks and HE store; keep the remaining
+        // runtime fields in the chunk/update snapshot without serializing the
+        // menu inventory.
+        tag.putInt(TAG_HEAT, heat);
+        tag.putInt(TAG_PROGRESS, progress);
         return tag;
     }
 
@@ -194,6 +202,12 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
     public void handleClientSyncTag(CompoundTag tag) {
         super.handleClientSyncTag(tag);
         wasOn = tag.getBoolean(TAG_WAS_ON);
+        if (tag.contains(TAG_HEAT, Tag.TAG_INT)) {
+            heat = Math.max(0, tag.getInt(TAG_HEAT));
+        }
+        if (tag.contains(TAG_PROGRESS, Tag.TAG_INT)) {
+            progress = Math.max(0, tag.getInt(TAG_PROGRESS));
+        }
     }
 
     @Override
@@ -401,5 +415,10 @@ public class CokerBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
 
     private static boolean hasTankTag(CompoundTag tag, String key) {
         return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        return LegacyMachineRenderBounds.visibleMultiblockOr(this, super.getRenderBoundingBox());
     }
 }

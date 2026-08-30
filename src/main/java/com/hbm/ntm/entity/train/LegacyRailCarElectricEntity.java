@@ -2,6 +2,7 @@ package com.hbm.ntm.entity.train;
 
 import com.hbm.ntm.energy.HbmChargeableItem;
 import com.hbm.ntm.registry.ModItems;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -36,6 +37,20 @@ public abstract class LegacyRailCarElectricEntity extends LegacyRailCarRidableEn
 
     public void setPower(int power) {
         entityData.set(POWER, Mth.clamp(power, 0, getMaxPower()));
+    }
+
+    @Override
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("power", getPower());
+    }
+
+    @Override
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("power")) {
+            setPower(tag.getInt("power"));
+        }
     }
 
     @Override

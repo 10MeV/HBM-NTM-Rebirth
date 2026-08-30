@@ -443,14 +443,14 @@ public abstract class HbmFluidBlockEntity extends BlockEntity implements HbmFlui
             com.hbm.ntm.fluid.HbmFluidReceiver receiver, com.hbm.ntm.fluid.HbmFluidProvider provider) {
         return level == null || level.isClientSide
                 ? HbmFluidPortMachine.PortMachineDetachReport.empty()
-                : fluidPortSubscriptions.detachAll(level, worldPosition, getFluidPorts(), receiver, provider);
+                : fluidPortSubscriptions.detachAllTracked(level, worldPosition, receiver, provider);
     }
 
     protected HbmFluidPortMachine.PortMachineDetachDetailReport detachTrackedFluidPortsDetailedReport(
             com.hbm.ntm.fluid.HbmFluidReceiver receiver, com.hbm.ntm.fluid.HbmFluidProvider provider) {
         return level == null || level.isClientSide
                 ? HbmFluidPortMachine.PortMachineDetachDetailReport.empty()
-                : fluidPortSubscriptions.detachAllDetailed(level, worldPosition, getFluidPorts(), receiver, provider);
+                : fluidPortSubscriptions.detachAllTrackedDetailed(level, worldPosition, receiver, provider);
     }
 
     protected HbmFluidPortMachine.PortMachineDetachReport detachTrackedTransceiverFluidPortsReport(

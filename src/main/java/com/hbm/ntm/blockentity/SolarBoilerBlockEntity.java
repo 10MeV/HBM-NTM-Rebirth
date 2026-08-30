@@ -141,6 +141,24 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
         return LegacyLookOverlay.forBlock(this, lines);
     }
 
+    /**
+     * TileEntitySolarBoiler#serialize sends display together with its tanks.
+     * The compact display value is the sole non-tank field consumed by the
+     * legacy look overlay, so include it in the first client chunk snapshot.
+     */
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt("display", display);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        display = Math.max(0, tag.getInt("display"));
+    }
+
     public void addHeat(int heat) {
         this.heat = Math.max(0, this.heat + Math.max(0, heat));
     }
@@ -215,14 +233,14 @@ public class SolarBoilerBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt("display", display);
-        tag.putInt("heat", heat);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        display = Math.max(0, tag.getInt("display"));
-        heat = Math.max(0, tag.getInt("heat"));
+        // TileEntitySolarBoiler only persisted its two tanks. Heat and display
+        // are tick-local values, so a reload starts their next conversion fresh.
+        display = 0;
+        heat = 0;
     }
 }

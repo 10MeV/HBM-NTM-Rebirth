@@ -1,6 +1,6 @@
 {
   "variants": {
-    "port=false": { "model": "hbm_ntm_rebirth:block/pwr_block" },
-    "port=true": { "model": "hbm_ntm_rebirth:block/pwr_assembled_port" }
+    "port=false": { "model": "hbm_ntm_rebirth:block/pwr_block_connected" },
+    "port=true": { "model": "hbm_ntm_rebirth:block/pwr_block_connected" }
   }
 }

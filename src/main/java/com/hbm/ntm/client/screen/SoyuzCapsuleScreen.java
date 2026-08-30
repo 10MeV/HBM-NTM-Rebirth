@@ -14,7 +14,7 @@ public class SoyuzCapsuleScreen extends AbstractContainerScreen<SoyuzCapsuleMenu
     public SoyuzCapsuleScreen(SoyuzCapsuleMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = 176;
-        imageHeight = 168;
+        imageHeight = 186;
         inventoryLabelY = imageHeight - 96 + 2;
     }
 
@@ -25,7 +25,7 @@ public class SoyuzCapsuleScreen extends AbstractContainerScreen<SoyuzCapsuleMenu
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, 6, 0x404040, false);
+        graphics.drawString(font, title, 115 - font.width(title) / 2, 6, 0x7DAF71, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 

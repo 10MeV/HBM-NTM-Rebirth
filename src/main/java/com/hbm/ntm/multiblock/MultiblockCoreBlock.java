@@ -93,7 +93,13 @@ public interface MultiblockCoreBlock {
         return MultiblockHelper.steelParticleState();
     }
 
-    default void beforeMultiblockDummyDestroysCore(Level level, BlockPos corePos, BlockState coreState,
+    /**
+     * Invoked immediately before a destroyed dummy removes its core.  Return
+     * {@code true} when the hook has deliberately replaced the core and the
+     * generic dummy path must leave that replacement intact.
+     */
+    default boolean beforeMultiblockDummyDestroysCore(Level level, BlockPos corePos, BlockState coreState,
             BlockPos dummyPos, boolean drop) {
+        return false;
     }
 }

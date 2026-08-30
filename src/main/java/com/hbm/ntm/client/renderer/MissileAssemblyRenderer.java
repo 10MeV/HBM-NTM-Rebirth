@@ -47,7 +47,6 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
         Direction facing = state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
-        int modelLight = LegacyRenderLighting.resolveBlockEntityLight(blockEntity, packedLight);
         CustomMissilePartProfile.Assembly assembly = blockEntity.assemblyForPreview();
         if (assembly == null) {
             return;
@@ -57,7 +56,7 @@ public class MissileAssemblyRenderer implements BlockEntityRenderer<MissileAssem
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, legacyRotation(facing));
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            renderPreviewMissile(assembly, poseStack, buffer, modelLight);
+            renderPreviewMissile(assembly, poseStack, buffer, packedLight);
         }
         poseStack.popPose();
     }

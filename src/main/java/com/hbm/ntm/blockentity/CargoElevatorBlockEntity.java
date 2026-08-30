@@ -7,6 +7,7 @@ import com.hbm.ntm.network.HbmLegacyLoadedTileState;
 import com.hbm.ntm.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -217,17 +218,30 @@ public class CargoElevatorBlockEntity extends BlockEntity implements HbmLegacyLo
 
     @Override
     public CompoundTag getUpdateTag() {
-        return getClientSyncTag();
-}
+        return runtimeClientTag();
+    }
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        return runtimeClientTag();
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        applyRuntimeClientTag(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        applyRuntimeClientTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            applyRuntimeClientTag(tag);
+        }
     }
 
     @Override
@@ -261,6 +275,35 @@ public class CargoElevatorBlockEntity extends BlockEntity implements HbmLegacyLo
         int h = 1 + height;
         return new AABB(pos.getX() - 1, pos.getY(), pos.getZ() - 1,
                 pos.getX() + 2, pos.getY() + h, pos.getZ() + 2);
+    }
+
+    /**
+     * The legacy periodic packet contained the loaded-tile flags followed by
+     * renderPlatform, height and extension.  A vanilla chunk update needs the
+     * same runtime snapshot, but must not deserialize persistence-only state.
+     */
+    private CompoundTag runtimeClientTag() {
+        CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
+        tag.putDouble(TAG_EXTENSION, extension);
+        tag.putBoolean(TAG_IS_EXTENDING, extending);
+        tag.putInt(TAG_HEIGHT, height);
+        tag.putBoolean(TAG_RENDER_PLATFORM, renderPlatform);
+        return tag;
+    }
+
+    private void applyRuntimeClientTag(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
+        renderPlatform = tag.getBoolean(TAG_RENDER_PLATFORM);
+        extending = tag.getBoolean(TAG_IS_EXTENDING);
+        height = Math.max(0, tag.getInt(TAG_HEIGHT));
+        syncExtension = clamp(tag.getDouble(TAG_EXTENSION), 0.0D, height);
+        if (syncExtension > 0.0D && syncExtension < height) {
+            syncTicks = 3;
+        } else {
+            extension = syncExtension;
+            syncTicks = 0;
+        }
     }
 
     private static double clamp(double value, double min, double max) {

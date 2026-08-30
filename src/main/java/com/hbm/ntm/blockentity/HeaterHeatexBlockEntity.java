@@ -77,6 +77,10 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
     private int heatEnergy;
     private int lastInputUsed;
     private int lastOutputProduced;
+    // The legacy temporary packet buffer sampled input before conversion and
+    // output immediately after conversion, before remote ports sent it away.
+    private HbmFluidTank legacyPacketInputTank;
+    private HbmFluidTank legacyPacketOutputTank;
 
     public HeaterHeatexBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.COOLANT_HOT, TANK_CAPACITY),
@@ -88,6 +92,8 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
         super(ModBlockEntities.HEATER_HEATEX.get(), pos, state, List.of(inputTank, outputTank));
         this.inputTank = inputTank;
         this.outputTank = outputTank;
+        legacyPacketInputTank = copyPacketTank(inputTank);
+        legacyPacketOutputTank = copyPacketTank(outputTank);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, HeaterHeatexBlockEntity heatex) {
@@ -107,7 +113,9 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
         boolean changed = heatex.setFluidTankTypeFromIdentifierSlot(heatex.items, SLOT_IDENTIFIER, heatex.inputTank);
         changed |= heatex.setupTanks();
         heatex.heatEnergy = Math.max(0, (int) (heatex.heatEnergy * 0.999D));
+        heatex.legacyPacketInputTank = copyPacketTank(heatex.inputTank);
         changed |= heatex.tryConvert(level);
+        heatex.legacyPacketOutputTank = copyPacketTank(heatex.outputTank);
 
         if (heatex.outputTank.getFill() > 0) {
             heatex.tryProvideFluidToPorts(heatex.outputTank.getTankType(), heatex.outputTank.getPressure(), heatex);
@@ -450,8 +458,8 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         // 1.7.10 TileEntityHeaterHeatex#serialize: its temporary server buffer contains only the two tanks.
-        LegacyFluidTankPacket.write(data, inputTank);
-        LegacyFluidTankPacket.write(data, outputTank);
+        LegacyFluidTankPacket.write(data, legacyPacketInputTank);
+        LegacyFluidTankPacket.write(data, legacyPacketOutputTank);
         data.writeInt(heatEnergy);
         data.writeInt(amountToCool);
         data.writeInt(tickDelay);
@@ -475,7 +483,7 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }
@@ -493,6 +501,13 @@ public class HeaterHeatexBlockEntity extends HbmFluidNetworkBlockEntity
         return state.hasProperty(HorizontalMachineBlock.FACING)
                 ? state.getValue(HorizontalMachineBlock.FACING)
                 : Direction.SOUTH;
+    }
+
+    private static HbmFluidTank copyPacketTank(HbmFluidTank source) {
+        HbmFluidTank copy = new HbmFluidTank(source.getTankType(), source.getMaxFill());
+        copy.withPressure(source.getPressure());
+        copy.setFill(source.getFill());
+        return copy;
     }
 
     private void loadItems(CompoundTag tag) {

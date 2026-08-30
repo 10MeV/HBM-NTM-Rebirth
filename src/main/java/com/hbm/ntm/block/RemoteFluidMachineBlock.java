@@ -103,11 +103,20 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
                 }
                 return InteractionResult.sidedSuccess(level.isClientSide);
             }
+            if (player.isShiftKeyDown()) {
+                return InteractionResult.sidedSuccess(level.isClientSide);
+            }
             if (machine.hasLegacyGui()) {
                 if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
                     NetworkHooks.openScreen(serverPlayer, machine, machine.getBlockPos());
                 }
                 return InteractionResult.sidedSuccess(level.isClientSide);
+            }
+            // The two no-GUI identifier machines had an intentionally asymmetric legacy interaction:
+            // the client consumed an ordinary non-sneaking click while the server returned false.
+            // Preserve that boundary so a held item's client use does not bleed through the machine.
+            if (machine.canSetInputTypeWithIdentifier()) {
+                return level.isClientSide ? InteractionResult.SUCCESS : InteractionResult.PASS;
             }
         }
         return InteractionResult.PASS;
@@ -187,6 +196,10 @@ public class RemoteFluidMachineBlock extends LegacyVisibleMultiblockMachineBlock
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<net.minecraft.network.chat.Component> tooltip,
             TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
+        // MachineCoker#addInformation delegates to BlockDummyable's standard info tooltip.
+        if (kind == Kind.COKER) {
+            LegacyStandardInfoTooltip.append(tooltip, "machine_coker");
+        }
         if (!kind.hasPersistentTooltip()) {
             return;
         }

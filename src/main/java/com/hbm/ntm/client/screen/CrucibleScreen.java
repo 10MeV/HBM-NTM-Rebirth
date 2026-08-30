@@ -1,6 +1,7 @@
 package com.hbm.ntm.client.screen;
 
 import com.hbm.inventory.material.Mats.MaterialStack;
+import com.hbm.inventory.material.NTMMaterial.SmeltingBehavior;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.CrucibleMenu;
 import com.hbm.ntm.recipe.CrucibleRecipeRuntime;
@@ -53,15 +54,15 @@ public class CrucibleScreen extends AbstractContainerScreen<CrucibleMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(16, 17, 36, 81, mouseX, mouseY)) {
+        if (isLegacyHovering(16, 17, 36, 81, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, menu.getWasteTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(61, 17, 36, 81, mouseX, mouseY)) {
+        } else if (isLegacyHovering(61, 17, 36, 81, mouseX, mouseY)) {
             graphics.renderComponentTooltip(font, menu.getRecipeTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(125, 81, 34, 7, mouseX, mouseY)) {
+        } else if (isLegacyHovering(125, 81, 34, 7, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getProgressText()), mouseX, mouseY);
-        } else if (isHovering(125, 90, 34, 7, mouseX, mouseY)) {
+        } else if (isLegacyHovering(125, 90, 34, 7, mouseX, mouseY)) {
             graphics.renderTooltip(font, Component.literal(menu.getHeatText()), mouseX, mouseY);
-        } else if (isHovering(106, 80, 18, 18, mouseX, mouseY)) {
+        } else if (isLegacyHovering(106, 80, 18, 18, mouseX, mouseY)) {
             LegacyGuiElements.renderRecipeTooltip(graphics, font, recipeTooltip(), mouseX, mouseY);
         }
         renderTooltip(graphics, mouseX, mouseY);
@@ -69,11 +70,15 @@ public class CrucibleScreen extends AbstractContainerScreen<CrucibleMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (isHovering(106, 80, 18, 18, mouseX, mouseY)) {
+        if (isLegacyHovering(106, 80, 18, 18, mouseX, mouseY)) {
             minecraft.setScreen(new CrucibleRecipeSelectorScreen(this));
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 
     private void renderMaterialStack(GuiGraphics graphics, List<MaterialStack> stacks, int capacity, int x, int y) {
@@ -92,8 +97,12 @@ public class CrucibleScreen extends AbstractContainerScreen<CrucibleMenu> {
             graphics.setColor(((color >> 16) & 255) / 255.0F,
                     ((color >> 8) & 255) / 255.0F,
                     (color & 255) / 255.0F, 1.0F);
+            int textureU = stack.material.smeltable == SmeltingBehavior.ADDITIVE ? 210 : 176;
             graphics.blit(TEXTURE, leftPos + x, topPos + y - targetHeight,
-                    176, 89 - targetHeight, 34, targetHeight - lastHeight);
+                    textureU, 89 - targetHeight, 34, targetHeight - lastHeight);
+            graphics.setColor(1.0F, 1.0F, 1.0F, 0.3F);
+            graphics.blit(TEXTURE, leftPos + x, topPos + y - targetHeight,
+                    textureU, 89 - targetHeight, 34, targetHeight - lastHeight);
             graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             previous += stack.amount;
             lastHeight = targetHeight;

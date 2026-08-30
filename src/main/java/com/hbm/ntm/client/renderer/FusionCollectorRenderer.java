@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.blockentity.FusionCollectorBlockEntity;
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjFusionModels;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -23,8 +22,7 @@ public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollec
 
     @Override
     public boolean shouldRender(FusionCollectorBlockEntity blockEntity, Vec3 cameraPos) {
-        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
-                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
                 && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
@@ -36,9 +34,6 @@ public class FusionCollectorRenderer implements BlockEntityRenderer<FusionCollec
     @Override
     public void render(FusionCollectorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-            return;
-        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }

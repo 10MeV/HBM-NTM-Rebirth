@@ -72,7 +72,7 @@ public abstract class LegacyItemBagMenu extends AbstractContainerMenu {
         }
     }
 
-    private Slot createBagSlot(int slot, int x, int y) {
+    protected Slot createBagSlot(int slot, int x, int y) {
         if (slotStackLimit >= DEFAULT_SLOT_STACK_LIMIT) {
             return HbmInventoryMenuHelper.legacyContainerSlot(bagInventory, slot, x, y);
         }

@@ -72,7 +72,7 @@ public class FelMenu extends AbstractContainerMenu {
     }
 
     public boolean isBeamActive() {
-        return isOn() && mode > 0 && power > FelBlockEntity.visualBeamPowerRequest(mode) && distance > 3;
+        return isOn() && mode > 0 && power > FelBlockEntity.visualBeamPowerRequest(mode) && distance > 0;
     }
 
     public FelBlockEntity getBlockEntity() {

@@ -62,9 +62,9 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             if (state.getBlock() instanceof CustomMissileLauncherBlock launcher
                     && launcher.kind() == CustomMissileLauncherBlock.Kind.LAUNCH_TABLE) {
-                renderLaunchTable(blockEntity, poseStack, buffer, modelLight);
+                renderLaunchTable(blockEntity, poseStack, buffer, modelLight, packedLight);
             } else {
-                renderCompactLauncher(blockEntity, poseStack, buffer, modelLight);
+                renderCompactLauncher(blockEntity, poseStack, buffer, modelLight, packedLight);
             }
         }
         poseStack.popPose();
@@ -92,29 +92,29 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
     }
 
     private static void renderCompactLauncher(CustomMissileLauncherBlockEntity blockEntity, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight) {
+            MultiBufferSource buffer, int fixedLight, int movingLight) {
         ObjLaunchModels.COMPACT_LAUNCHER.renderAll(ObjLaunchModels.COMPACT_LAUNCHER_TEXTURE,
-                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+                poseStack, buffer, fixedLight, OverlayTexture.NO_OVERLAY);
         CustomMissilePartProfile.Assembly assembly = blockEntity.assemblyForPreview();
         if (isValidForPad(assembly, PartSize.SIZE_10)) {
             poseStack.pushPose();
             poseStack.translate(0.0D, 1.0625D, 0.0D);
-            renderMissile(assembly, poseStack, buffer, packedLight);
+            renderMissile(assembly, poseStack, buffer, movingLight);
             poseStack.popPose();
         }
     }
 
     private static void renderLaunchTable(CustomMissileLauncherBlockEntity blockEntity, PoseStack poseStack,
-            MultiBufferSource buffer, int packedLight) {
+            MultiBufferSource buffer, int fixedLight, int movingLight) {
         ObjLaunchModels.LAUNCH_TABLE_BASE_LEGACY.renderAll(ObjLaunchModels.LAUNCH_TABLE_BASE_TEXTURE,
-                poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
+                poseStack, buffer, fixedLight, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
         PartSize padSize = blockEntity.getPadSize();
         if (padSize == PartSize.SIZE_20) {
             ObjLaunchModels.LAUNCH_TABLE_LARGE_PAD_LEGACY.renderAll(ObjLaunchModels.LAUNCH_TABLE_LARGE_PAD_TEXTURE,
-                    poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
+                    poseStack, buffer, fixedLight, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
         } else {
             ObjLaunchModels.LAUNCH_TABLE_SMALL_PAD_LEGACY.renderAll(ObjLaunchModels.LAUNCH_TABLE_SMALL_PAD_TEXTURE,
-                    poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
+                    poseStack, buffer, fixedLight, OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
         }
 
         CustomMissilePartProfile.Assembly assembly = blockEntity.assemblyForPreview();
@@ -129,13 +129,13 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
         poseStack.translate(0.0D, 1.0D, 3.5D);
         for (int i = 0; i < missileHeight + 1; i++) {
             if (i == connectorHeight && isValidForPad(assembly, padSize)) {
-                scaffold.connector().renderAll(scaffold.connectorTexture(), poseStack, buffer, packedLight,
+                scaffold.connector().renderAll(scaffold.connectorTexture(), poseStack, buffer, fixedLight,
                         OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
             } else if (i > connectorHeight) {
-                scaffold.empty().renderAll(scaffold.baseTexture(), poseStack, buffer, packedLight,
+                scaffold.empty().renderAll(scaffold.baseTexture(), poseStack, buffer, fixedLight,
                         OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
             } else {
-                scaffold.base().renderAll(scaffold.baseTexture(), poseStack, buffer, packedLight,
+                scaffold.base().renderAll(scaffold.baseTexture(), poseStack, buffer, fixedLight,
                         OverlayTexture.NO_OVERLAY, LegacyTexturedRenderMode.CUTOUT_CULL);
             }
             poseStack.translate(0.0D, 1.0D, 0.0D);
@@ -145,7 +145,7 @@ public class CustomMissileLauncherRenderer implements BlockEntityRenderer<Custom
         if (isValidForPad(assembly, padSize)) {
             poseStack.pushPose();
             poseStack.translate(0.0D, 2.0625D, 0.0D);
-            renderMissile(assembly, poseStack, buffer, packedLight);
+            renderMissile(assembly, poseStack, buffer, movingLight);
             poseStack.popPose();
         }
     }

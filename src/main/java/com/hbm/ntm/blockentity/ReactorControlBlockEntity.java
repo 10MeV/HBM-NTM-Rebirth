@@ -11,6 +11,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -284,18 +285,33 @@ public class ReactorControlBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        CompoundTag tag = new CompoundTag();
+        writeClientSyncFields(tag);
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientSyncFields(tag);
     }
 
     @Nullable
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            readClientSyncFields(tag);
+        }
     }
 
     @Override
@@ -327,6 +343,35 @@ public class ReactorControlBlockEntity extends BlockEntity
         function = RodFunction.values()[ordinal];
     }
 
+    private void writeClientSyncFields(CompoundTag tag) {
+        writeLegacyLoadedTileClientTag(tag);
+        tag.putBoolean(TAG_LINKED, linked);
+        tag.putInt("flux", flux);
+        tag.putDouble("level", reactorLevel);
+        tag.putInt("heat", heat);
+        tag.putDouble(TAG_LEVEL_LOWER, levelLower);
+        tag.putDouble(TAG_LEVEL_UPPER, levelUpper);
+        tag.putDouble(TAG_HEAT_LOWER, heatLower);
+        tag.putDouble(TAG_HEAT_UPPER, heatUpper);
+        tag.putInt(TAG_FUNCTION, function.ordinal());
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_LINKED)) linked = tag.getBoolean(TAG_LINKED);
+        if (tag.contains("flux")) flux = tag.getInt("flux");
+        if (tag.contains("level")) reactorLevel = tag.getDouble("level");
+        if (tag.contains("heat")) heat = tag.getInt("heat");
+        if (tag.contains(TAG_LEVEL_LOWER)) levelLower = tag.getDouble(TAG_LEVEL_LOWER);
+        if (tag.contains(TAG_LEVEL_UPPER)) levelUpper = tag.getDouble(TAG_LEVEL_UPPER);
+        if (tag.contains(TAG_HEAT_LOWER)) heatLower = tag.getDouble(TAG_HEAT_LOWER);
+        if (tag.contains(TAG_HEAT_UPPER)) heatUpper = tag.getDouble(TAG_HEAT_UPPER);
+        if (tag.contains(TAG_FUNCTION)) {
+            int ordinal = Mth.clamp(tag.getInt(TAG_FUNCTION), 0, RodFunction.values().length - 1);
+            function = RodFunction.values()[ordinal];
+        }
+    }
+
     @Override
     public Component getDisplayName() {
         return Component.translatableWithFallback("container.reactorControl", "Reactor Remote Control Block");
@@ -347,7 +392,7 @@ public class ReactorControlBlockEntity extends BlockEntity
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable net.minecraft.core.Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }

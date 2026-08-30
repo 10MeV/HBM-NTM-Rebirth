@@ -4,9 +4,16 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.menu.ReactorControlMenu;
 import com.hbm.ntm.network.ModMessages;
 import com.hbm.ntm.network.packet.TileControlPacket;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -14,10 +21,16 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import org.joml.Matrix4f;
 
 public class ReactorControlScreen extends AbstractContainerScreen<ReactorControlMenu> {
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(HbmNtm.MOD_ID, "textures/gui/gui_reactor_control.png");
+    private final LegacyNumberDisplay[] displays = {
+            new LegacyNumberDisplay(6, 20, 0x08FF00).setDigitLength(3),
+            new LegacyNumberDisplay(66, 20, 0x08FF00).setDigitLength(4),
+            new LegacyNumberDisplay(126, 20, 0x08FF00).setDigitLength(3)
+    };
     private final EditBox[] fields = new EditBox[4];
 
     public ReactorControlScreen(ReactorControlMenu menu, Inventory inventory, Component title) {
@@ -31,9 +44,9 @@ public class ReactorControlScreen extends AbstractContainerScreen<ReactorControl
     protected void init() {
         super.init();
         for (int i = 0; i < 2; i++) {
-            fields[i] = field(leftPos + 35 + 30 * i, topPos + 38, 26, 9, 3);
+            fields[i] = field(leftPos + 35 + 30 * i, topPos + 38, 26, 7, 3);
             addRenderableWidget(fields[i]);
-            fields[i + 2] = field(leftPos + 35 + 30 * i, topPos + 49, 26, 9, 4);
+            fields[i + 2] = field(leftPos + 35 + 30 * i, topPos + 49, 26, 7, 4);
             addRenderableWidget(fields[i + 2]);
         }
         fields[0].setValue(Integer.toString(menu.getLevelUpper()));
@@ -54,9 +67,9 @@ public class ReactorControlScreen extends AbstractContainerScreen<ReactorControl
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
         drawCurve(graphics);
-        drawDisplay(graphics, 6, 20, menu.isLinked() ? menu.getLevelPercent() : 0, 3);
-        drawDisplay(graphics, 66, 20, menu.isLinked() ? menu.getFlux() : 0, 4);
-        drawDisplay(graphics, 126, 20, menu.isLinked() ? menu.getTemperature() : 0, 3);
+        displays[0].drawNumber(graphics, leftPos, topPos, menu.isLinked() ? menu.getLevelPercent() : 0);
+        displays[1].drawNumber(graphics, leftPos, topPos, menu.isLinked() ? menu.getFlux() : 0);
+        displays[2].drawNumber(graphics, leftPos, topPos, menu.isLinked() ? menu.getTemperature() : 0);
     }
 
     @Override
@@ -74,6 +87,10 @@ public class ReactorControlScreen extends AbstractContainerScreen<ReactorControl
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        boolean handled = super.mouseClicked(mouseX, mouseY, button);
+        for (EditBox field : fields) {
+            field.setFocused(field.isMouseOver(mouseX, mouseY));
+        }
         if (leftPos + 33 <= mouseX && mouseX < leftPos + 91 && topPos + 59 < mouseY && mouseY <= topPos + 69) {
             sendBounds();
             return true;
@@ -86,7 +103,7 @@ public class ReactorControlScreen extends AbstractContainerScreen<ReactorControl
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return handled;
     }
 
     @Override
@@ -101,11 +118,9 @@ public class ReactorControlScreen extends AbstractContainerScreen<ReactorControl
 
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        if (Character.isDigit(codePoint)) {
-            for (EditBox field : fields) {
-                if (field.charTyped(codePoint, modifiers)) {
-                    return true;
-                }
+        for (EditBox field : fields) {
+            if (field.charTyped(codePoint, modifiers)) {
+                return true;
             }
         }
         return super.charTyped(codePoint, modifiers);
@@ -138,32 +153,51 @@ public class ReactorControlScreen extends AbstractContainerScreen<ReactorControl
     }
 
     private int clampField(int index, int max) {
+        String value = fields[index].getValue();
+        if (!isDigits(value)) {
+            return 0;
+        }
         try {
-            return Mth.clamp(Integer.parseInt(fields[index].getValue()), 0, max);
+            return Mth.clamp(Integer.parseInt(value), 0, max);
         } catch (NumberFormatException ignored) {
             return 0;
         }
     }
 
-    private void drawCurve(GuiGraphics graphics) {
-        int previousX = leftPos + 128;
-        int previousY = curveY(0);
-        for (int i = 1; i < 40; i++) {
-            int x = leftPos + 128 + i;
-            int y = curveY(i * 1250);
-            drawSegment(graphics, previousX, previousY, x, y);
-            previousX = x;
-            previousY = y;
+    private static boolean isDigits(String value) {
+        if (value.isEmpty()) {
+            return false;
         }
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isDigit(value.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    private int curveY(int heat) {
+    private void drawCurve(GuiGraphics graphics) {
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.lineWidth(3.0F);
+        Matrix4f matrix = graphics.pose().last().pose();
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+        buffer.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+        for (int i = 0; i < 40; i++) {
+            buffer.vertex(matrix, leftPos + 128.0F + i, curveY(i * 1250), 0.0F)
+                    .color(8, 255, 0, 255)
+                    .endVertex();
+        }
+        BufferUploader.drawWithShader(buffer.end());
+        RenderSystem.lineWidth(1.0F);
+    }
+
+    private float curveY(int heat) {
         double value = switch (menu.getFunction()) {
             case 1 -> curveQuad(heat);
             case 2 -> curveLog(heat);
             default -> curveLinear(heat);
         };
-        return topPos + 39 + Mth.clamp((int) (value * 0.01D * 28.0D), 0, 28);
+        return topPos + 39.0F + (float) Mth.clamp(value * 0.01D * 28.0D, 0.0D, 28.0D);
     }
 
     private double curveLinear(int heat) {
@@ -196,24 +230,6 @@ public class ReactorControlScreen extends AbstractContainerScreen<ReactorControl
 
     private double heatRange() {
         return (menu.getHeatUpper() - menu.getHeatLower()) * 50.0D;
-    }
-
-    private void drawSegment(GuiGraphics graphics, int x1, int y1, int x2, int y2) {
-        int steps = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
-        for (int i = 0; i <= steps; i++) {
-            double t = steps == 0 ? 0.0D : i / (double) steps;
-            int x = (int) Math.round(Mth.lerp(t, x1, x2));
-            int y = (int) Math.round(Mth.lerp(t, y1, y2));
-            graphics.fill(x, y, x + 2, y + 2, 0xFF08FF00);
-        }
-    }
-
-    private void drawDisplay(GuiGraphics graphics, int x, int y, int value, int digits) {
-        String text = Integer.toString(Math.max(0, value));
-        if (text.length() > digits) {
-            text = text.substring(text.length() - digits);
-        }
-        graphics.drawString(font, text, leftPos + x, topPos + y, 0x08FF00, false);
     }
 
     private void playClick() {

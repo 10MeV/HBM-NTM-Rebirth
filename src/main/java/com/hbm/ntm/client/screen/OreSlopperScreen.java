@@ -58,19 +58,20 @@ public class OreSlopperScreen extends AbstractContainerScreen<OreSlopperMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(26, 18, 34, 52, mouseX, mouseY)) {
+        if (isLegacyHovering(26, 18, 34, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getWaterTank(),
                     menu.waterTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(116, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(116, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getSlopTank(),
                     menu.slopTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(8, 18, 16, 52, mouseX, mouseY)) {
+        } else if (isLegacyHovering(8, 18, 16, 52, mouseX, mouseY)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 8, topPos + 18, 16, 52, menu.getPower(), menu.getMaxPower());
-        } else if (isHovering(62, 72, 36, 16, mouseX, mouseY)) {
-            LegacyGuiElements.renderUpgradeInfoTooltip(graphics, font, mouseX, mouseY,
-                    leftPos + 62, topPos + 72, 36, 16, menu.getBlockEntity());
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

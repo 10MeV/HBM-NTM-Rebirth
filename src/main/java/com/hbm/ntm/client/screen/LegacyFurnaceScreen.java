@@ -3,6 +3,8 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.blockentity.LegacyFurnaceBlockEntity;
 import com.hbm.ntm.menu.LegacyFurnaceMenu;
+import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -71,7 +73,7 @@ public class LegacyFurnaceScreen extends AbstractContainerScreen<LegacyFurnaceMe
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, titleLabelX, titleLabelY, 0x404040, false);
+        graphics.drawString(font, title, imageWidth / 2 - font.width(title) / 2, titleLabelY, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
     }
 
@@ -79,6 +81,63 @@ public class LegacyFurnaceScreen extends AbstractContainerScreen<LegacyFurnaceMe
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
+        if (menu.getBlockEntity().kind() == LegacyFurnaceBlockEntity.Kind.IRON) {
+            renderIronTooltips(graphics, mouseX, mouseY);
+        } else {
+            renderSteelTooltips(graphics, mouseX, mouseY);
+        }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private void renderIronTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (menu.getCarried().isEmpty() && renderEmptyIronFuelSlotTooltip(graphics, mouseX, mouseY)) {
+            return;
+        }
+        if (isLegacyHovering(52, 35, 71, 7, mouseX, mouseY)) {
+            int percent = menu.getIronProgress() * 100 / Math.max(menu.getIronProcessingTime(), 1);
+            graphics.renderComponentTooltip(font, List.of(Component.literal(percent + "%")), mouseX, mouseY);
+        } else if (isLegacyHovering(52, 44, 71, 7, mouseX, mouseY)) {
+            graphics.renderComponentTooltip(font, List.of(Component.literal((menu.getBurnTime() / 20) + "s")),
+                    mouseX, mouseY);
+        }
+    }
+
+    private boolean renderEmptyIronFuelSlotTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        for (int slot = 1; slot < 3; slot++) {
+            if (!isHovering(menu.getSlot(slot).x, menu.getSlot(slot).y, 16, 16, mouseX, mouseY)
+                    || menu.getSlot(slot).hasItem()) {
+                continue;
+            }
+            List<Component> description = menu.getBlockEntity().getBurnTimeDescription().stream()
+                    .map(text -> (Component) Component.literal(text)).toList();
+            if (!description.isEmpty()) {
+                graphics.renderComponentTooltip(font, description, mouseX, mouseY);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void renderSteelTooltips(GuiGraphics graphics, int mouseX, int mouseY) {
+        for (int lane = 0; lane < 3; lane++) {
+            if (isLegacyHovering(53, 17 + 18 * lane, 70, 7, mouseX, mouseY)) {
+                graphics.renderComponentTooltip(font, List.of(Component.literal(String.format(Locale.US, "%,d / %,dTU",
+                        menu.getSteelProgress(lane), menu.getSteelProcessTime()))), mouseX, mouseY);
+                return;
+            }
+            if (isLegacyHovering(53, 26 + 18 * lane, 70, 7, mouseX, mouseY)) {
+                graphics.renderComponentTooltip(font, List.of(Component.literal("Bonus: " + menu.getSteelBonus(lane)
+                        + "%")), mouseX, mouseY);
+                return;
+            }
+        }
+        if (isLegacyHovering(151, 18, 9, 50, mouseX, mouseY)) {
+            graphics.renderComponentTooltip(font, List.of(Component.literal(String.format(Locale.US, "%,d / %,dTU",
+                    menu.getHeat(), menu.getSteelMaxHeat()))), mouseX, mouseY);
+        }
+    }
+
+    private boolean isLegacyHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, x, y, width, height);
     }
 }

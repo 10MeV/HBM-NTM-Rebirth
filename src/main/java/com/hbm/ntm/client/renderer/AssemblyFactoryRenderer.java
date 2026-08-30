@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyMachineDefinition;
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.AssemblyFactoryBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
@@ -123,17 +122,17 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
                         modelLight, packedOverlay);
 
                 try (var animatedFadeScope = LegacyBlockEntityRenderCulling.animatedModelFadeScope(blockEntity)) {
-                    renderAssemblyFactoryArm(poseStack, texture, buffer, modelLight, packedOverlay,
+                    renderAssemblyFactoryArm(poseStack, texture, buffer, packedLight, packedOverlay,
                             1, LegacyTileRenderPlans.ASSEMBLY_SLIDER_OFFSET - slide1,
                             -1.0D, -1.0D, arm1, false, 0.0D, 0.0D);
-                    renderAssemblyFactoryArm(poseStack, texture, buffer, modelLight, packedOverlay,
+                    renderAssemblyFactoryArm(poseStack, texture, buffer, packedLight, packedOverlay,
                             2, -LegacyTileRenderPlans.ASSEMBLY_SLIDER_OFFSET + slide1,
                             1.0D, 1.0D, arm2, true,
                             LegacyTileRenderPlans.ASSEMBLY_FACTORY_BLADE_PIVOT_Z, -1.0D);
-                    renderAssemblyFactoryArm(poseStack, texture, buffer, modelLight, packedOverlay,
+                    renderAssemblyFactoryArm(poseStack, texture, buffer, packedLight, packedOverlay,
                             3, -LegacyTileRenderPlans.ASSEMBLY_SLIDER_OFFSET + slide2,
                             1.0D, 1.0D, arm3, false, 0.0D, 0.0D);
-                    renderAssemblyFactoryArm(poseStack, texture, buffer, modelLight, packedOverlay,
+                    renderAssemblyFactoryArm(poseStack, texture, buffer, packedLight, packedOverlay,
                             4, LegacyTileRenderPlans.ASSEMBLY_SLIDER_OFFSET - slide2,
                             -1.0D, -1.0D, arm4, true,
                             -LegacyTileRenderPlans.ASSEMBLY_FACTORY_BLADE_PIVOT_Z, 1.0D);
@@ -216,9 +215,6 @@ public class AssemblyFactoryRenderer implements BlockEntityRenderer<AssemblyFact
 
     private static void renderStaticBaseFrame(boolean frameVisible, ResourceLocation texture, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-            return;
-        }
         MODEL.renderOnlyInCallOrder(texture, poseStack, buffer, packedLight, packedOverlay,
                 frameVisible ? BASE_FRAME : BASE);
     }

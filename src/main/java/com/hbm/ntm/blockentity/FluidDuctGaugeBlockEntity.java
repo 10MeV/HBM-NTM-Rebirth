@@ -44,16 +44,20 @@ public class FluidDuctGaugeBlockEntity extends FluidPipeBlockEntity implements R
         FluidPipeBlockEntity.serverTick(level, pos, state, gauge);
         if (gauge.getFluidType() != HbmFluids.NONE) {
             HbmFluidNet net = gauge.getFluidNet();
-            gauge.deltaTick = net == null ? 0L : Math.max(0L, net.getFluidTracker());
-            gauge.deltaSecond += gauge.deltaTick;
-        } else {
-            gauge.deltaTick = 0L;
-        }
-
-        if (level.getGameTime() % 20L == 0L) {
-            gauge.deltaLastSecond = gauge.deltaSecond;
-            gauge.deltaSecond = 0L;
-            gauge.setChanged();
+            if (net != null) {
+                // TileEntityPipeGauge only refreshes its displayed rates while
+                // attached to a live, non-empty fluid network. In particular,
+                // a disconnected gauge keeps its last displayed reading rather
+                // than clearing it. The old tick also closes the previous
+                // twenty-tick window before adding this tick's transfer.
+                gauge.deltaTick = Math.max(0L, net.getFluidTracker());
+                if (level.getGameTime() % 20L == 0L) {
+                    gauge.deltaLastSecond = gauge.deltaSecond;
+                    gauge.deltaSecond = 0L;
+                    gauge.setChanged();
+                }
+                gauge.deltaSecond += gauge.deltaTick;
+            }
         }
         gauge.networkPackNT(25);
     }
@@ -92,8 +96,13 @@ public class FluidDuctGaugeBlockEntity extends FluidPipeBlockEntity implements R
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        // The legacy runtime packet contains the two displayed rates while
+        // FluidPipeBlockEntity owns the displayed fluid type.
+        CompoundTag tag = super.getUpdateTag();
+        tag.putLong(TAG_DELTA_TICK, deltaTick);
+        tag.putLong(TAG_DELTA_LAST_SECOND, deltaLastSecond);
+        return tag;
+    }
 
     @Nullable
     @Override

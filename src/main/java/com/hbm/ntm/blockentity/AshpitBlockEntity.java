@@ -128,6 +128,10 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
         return isFull;
     }
 
+    public int getPlayersUsing() {
+        return playersUsing;
+    }
+
     public void closeMenu(Player player) {
         playersUsing = Math.max(0, playersUsing - 1);
         syncToClient();

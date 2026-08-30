@@ -67,6 +67,11 @@ public class ChuteConveyorBlock extends ConveyorBlock {
     }
 
     @Override
+    protected String tooltipId() {
+        return "conveyor_chute";
+    }
+
+    @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return FULL_SHAPE;
     }

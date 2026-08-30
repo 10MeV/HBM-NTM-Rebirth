@@ -14,6 +14,8 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.chat.Component;
@@ -51,6 +53,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     private static final String TAG_PRESS = "Press";
     private static final String TAG_RETRACTING = "Retracting";
     private static final String TAG_DELAY = "Delay";
+    private static final String TAG_SYNC_RENDER_INPUT = "renderInput";
 
     public static final int MAX_SPEED = 400;
     public static final int PROGRESS_AT_MAX = 25;
@@ -306,12 +309,57 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        // TileEntityMachinePress#serialize carries LoadedBase, speed, stored
+        // burn time, press extension and the rendered input stack.  The
+        // vanilla initial BE packet has to carry the same runtime surface;
+        // inventories remain menu/persistence data.
+        CompoundTag tag = new CompoundTag();
+        writeLegacyLoadedTileClientTag(tag);
+        tag.putInt(TAG_SPEED, speed);
+        tag.putInt(TAG_BURN_TIME, burnTime);
+        tag.putInt(TAG_PRESS, press);
+        ItemStack input = items.getStackInSlot(SLOT_INPUT);
+        if (!input.isEmpty()) {
+            tag.put(TAG_SYNC_RENDER_INPUT, input.save(new CompoundTag()));
+        }
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        if (!tag.contains(TAG_PRESS)) {
+            return;
+        }
+        readLegacyLoadedTileClientTag(tag);
+        speed = tag.getInt(TAG_SPEED);
+        burnTime = tag.getInt(TAG_BURN_TIME);
+        press = tag.getInt(TAG_PRESS);
+        syncStack = tag.contains(TAG_SYNC_RENDER_INPUT, Tag.TAG_COMPOUND)
+                ? ItemStack.of(tag.getCompound(TAG_SYNC_RENDER_INPUT))
+                : ItemStack.EMPTY;
+        boolean targetChanged = press != syncPress;
+        syncPress = press;
+        if (!clientRenderInitialized) {
+            renderPress = press;
+            lastPress = press;
+            clientRenderInitialized = true;
+            turnProgress = 0;
+        } else if (targetChanged) {
+            turnProgress = 2;
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override

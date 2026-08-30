@@ -1,6 +1,7 @@
 package com.hbm.ntm.block;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -21,6 +22,16 @@ public abstract class RadioTorchCounterBlock extends RadioTorchBlock {
 
     @Override
     public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return super.canSurvive(state, level, pos) || hasAttachedItemHandler(level, pos, state.getValue(FACING));
+        Direction facing = state.getValue(FACING);
+        BlockPos supportPos = pos.relative(facing.getOpposite());
+        BlockState support = level.getBlockState(supportPos);
+        // Unlike RadioTorchBase, RadioTorchCounter#canBlockStay did not
+        // accept every comparator/power source as a support.  Its exact
+        // legacy branches are a sturdy support face, a normal-render block,
+        // or an adjacent inventory; Forge's item handler is the modern
+        // equivalent of that last branch.
+        return support.isFaceSturdy(level, supportPos, facing)
+                || support.isSolidRender(level, supportPos)
+                || hasAttachedItemHandler(level, pos, facing);
     }
 }

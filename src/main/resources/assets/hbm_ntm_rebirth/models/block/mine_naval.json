@@ -1,9 +1,16 @@
 {
-  "loader": "forge:obj",
+  "loader": "hbm_ntm_rebirth:legacy_lit_obj",
+  "shade_quads": false,
+  "emissive_ambient": false,
   "model": "hbm_ntm_rebirth:models/block/bombs/naval_mine.obj",
   "flip_v": true,
   "automatic_culling": false,
-  "render_type": "minecraft:solid",
+  "render_type": "hbm_ntm_rebirth:legacy_lit_solid",
+  "transform": {
+    "translation": [0.5, 0.5, 0.5],
+    "rotation": [0, 180, 0],
+    "scale": 1.0
+  },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/bombs/naval_mine",
     "default": "hbm_ntm_rebirth:block/bombs/naval_mine",

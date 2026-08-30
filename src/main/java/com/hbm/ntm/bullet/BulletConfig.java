@@ -52,7 +52,6 @@ public record BulletConfig(
         boolean blockDamage,
         float explosive,
         double jolt,
-        int rainbow,
         int nuke,
         int shrapnel,
         int chlorine,
@@ -169,7 +168,6 @@ public record BulletConfig(
         private boolean blockDamage = true;
         private float explosive;
         private double jolt;
-        private int rainbow;
         private int nuke;
         private int shrapnel;
         private int chlorine;
@@ -239,7 +237,6 @@ public record BulletConfig(
             this.blockDamage = config.blockDamage;
             this.explosive = config.explosive;
             this.jolt = config.jolt;
-            this.rainbow = config.rainbow;
             this.nuke = config.nuke;
             this.shrapnel = config.shrapnel;
             this.chlorine = config.chlorine;
@@ -400,11 +397,6 @@ public record BulletConfig(
             return this;
         }
 
-        public Builder rainbow(int rainbow) {
-            this.rainbow = rainbow;
-            return this;
-        }
-
         public Builder nuke(int nuke) {
             this.nuke = nuke;
             return this;
@@ -517,7 +509,7 @@ public record BulletConfig(
                     ricochets, ricochetAngle,
                     maxRicochetCount, lowerBoundRicochetChance, higherBoundRicochetChance, bounceModifier, selfDamageDelay,
                     penetrates, spectral, breaksGlass, liveAfterImpact, blackPowder, incendiaryTicks, emp,
-                    blockDamage, explosive, jolt, rainbow, nuke, shrapnel, chlorine, leadChance, caustic,
+                    blockDamage, explosive, jolt, nuke, shrapnel, chlorine, leadChance, caustic,
                     copyEffects(effects),
                     destroysBlocks, instakill, style, trail, plink, vanillaParticle, renderRotations, spentCasingName,
                     casingItemName, casingItemStackSize, casingItemAmount,

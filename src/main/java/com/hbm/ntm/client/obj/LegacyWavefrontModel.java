@@ -469,7 +469,8 @@ public final class LegacyWavefrontModel {
                 vertexColor(x1, y1, z1, color1, alpha1),
                 vertexColor(x2, y2, z2, color2, alpha2),
                 vertexColor(x3, y3, z3, color3, alpha3));
-        RENDER_BACKEND.renderUntexturedVertexColorTransient(quad, poseStack, buffer, renderMode,
+        LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().pose());
+        RENDER_BACKEND.renderUntexturedVertexColorTransient(quad, poseStack, buffer, resolvedRenderMode,
                 RenderBackendFallbackReason.UNTEXTURED_DIRECT_VERTEX_COLOR_QUAD);
         return true;
     }
@@ -483,7 +484,8 @@ public final class LegacyWavefrontModel {
                 vertexColor(x0, y0, z0, color0, alpha0),
                 vertexColor(x1, y1, z1, color1, alpha1),
                 vertexColor(x2, y2, z2, color2, alpha2));
-        RENDER_BACKEND.renderUntexturedVertexColorTransientTriangle(triangle, poseStack, buffer, renderMode,
+        LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().pose());
+        RENDER_BACKEND.renderUntexturedVertexColorTransientTriangle(triangle, poseStack, buffer, resolvedRenderMode,
                 RenderBackendFallbackReason.UNTEXTURED_DIRECT_VERTEX_COLOR_TRIANGLE);
         return true;
     }
@@ -504,7 +506,9 @@ public final class LegacyWavefrontModel {
         if (triangles == null || triangles.isEmpty()) {
             return false;
         }
-        RENDER_BACKEND.renderUntexturedVertexColorTransientTriangles(triangles, poseStack, buffer, renderMode,
+        LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().pose());
+        RENDER_BACKEND.renderUntexturedVertexColorTransientTriangles(triangles, poseStack, buffer,
+                resolvedRenderMode,
                 RenderBackendFallbackReason.UNTEXTURED_DIRECT_VERTEX_COLOR_TRIANGLE);
         return true;
     }
@@ -523,7 +527,8 @@ public final class LegacyWavefrontModel {
         if (lines == null || lines.isEmpty()) {
             return false;
         }
-        RENDER_BACKEND.renderUntexturedLineTransient(lines, poseStack, buffer, renderMode, lineWidth,
+        LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().pose());
+        RENDER_BACKEND.renderUntexturedLineTransient(lines, poseStack, buffer, resolvedRenderMode, lineWidth,
                 RenderBackendFallbackReason.UNTEXTURED_DIRECT_LINES);
         return true;
     }
@@ -534,17 +539,18 @@ public final class LegacyWavefrontModel {
             double x1, double y1, double z1, int color1, int alpha1,
             double x2, double y2, double z2, int color2, int alpha2,
             double x3, double y3, double z3, int color3, int alpha3) {
+        LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().pose());
         RENDER_BACKEND.renderUntexturedVertexColorTransient(new UntexturedVertexColorTransientQuad(
                 vertexColor(x0, y0, z0, color0, alpha0),
                 vertexColor(x1, y1, z1, color1, alpha1),
                 vertexColor(x2, y2, z2, color2, alpha2),
-                vertexColor(x3, y3, z3, color3, alpha3)), poseStack, buffer, renderMode,
+                vertexColor(x3, y3, z3, color3, alpha3)), poseStack, buffer, resolvedRenderMode,
                 RenderBackendFallbackReason.UNTEXTURED_DIRECT_VERTEX_COLOR_QUAD);
         RENDER_BACKEND.renderUntexturedVertexColorTransient(new UntexturedVertexColorTransientQuad(
                 vertexColor(x3, y3, z3, color3, alpha3),
                 vertexColor(x2, y2, z2, color2, alpha2),
                 vertexColor(x1, y1, z1, color1, alpha1),
-                vertexColor(x0, y0, z0, color0, alpha0)), poseStack, buffer, renderMode,
+                vertexColor(x0, y0, z0, color0, alpha0)), poseStack, buffer, resolvedRenderMode,
                 RenderBackendFallbackReason.UNTEXTURED_DIRECT_VERTEX_COLOR_QUAD);
         return true;
     }
@@ -1221,7 +1227,7 @@ public final class LegacyWavefrontModel {
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
         Matrix3f normal = pose.normal();
-        LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, normal).withAlpha(alpha);
+        LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, position).withAlpha(alpha);
         for (Face face : group.faces()) {
             Face clipped = clipFace(face, clipX, clipY, clipZ, clipD);
             if (clipped != null) {
@@ -1269,7 +1275,7 @@ public final class LegacyWavefrontModel {
         VertexConsumer triangleConsumer = null;
         PoseStack.Pose pose = poseStack.last();
         Matrix4f position = pose.pose();
-        LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, pose.normal());
+        LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, position);
         for (Face face : group.faces()) {
             Face clipped = clipFace(face, clipX, clipY, clipZ, clipD);
             if (clipped == null) {
@@ -1720,7 +1726,7 @@ public final class LegacyWavefrontModel {
         return new ClippedVertex(
                 interpolate(start.vertex(), end.vertex(), clamped),
                 interpolate(start.uv(), end.uv(), clamped),
-                normalizeOrDefault(interpolate(start.normal(), end.normal(), clamped), start.normal()));
+                normalizeOrZero(interpolate(start.normal(), end.normal(), clamped)));
     }
 
     private static Vector3f interpolate(Vector3f start, Vector3f end, float t) {
@@ -1735,8 +1741,14 @@ public final class LegacyWavefrontModel {
                 start.v() + (end.v() - start.v()) * t);
     }
 
-    private static Vector3f normalizeOrDefault(Vector3f value, Vector3f fallback) {
-        return value.lengthSquared() < 1.0E-6F ? new Vector3f(fallback) : value.normalize();
+    private static Vector3f normalizeOrZero(Vector3f value) {
+        float lengthSquared = value.lengthSquared();
+        if (!(lengthSquared >= 1.0E-8F) || !Float.isFinite(lengthSquared)) {
+            // 1.7.10 Vec3#normalize keeps a degenerate normal directionless. The
+            // legacy lighting shaders deliberately map zero to ambient 0.40.
+            return new Vector3f();
+        }
+        return value.normalize();
     }
 
     private static int parseObjIndex(String value, int size) {
@@ -1748,8 +1760,11 @@ public final class LegacyWavefrontModel {
         Vector3f edgeA = new Vector3f(vertices.get(1)).sub(vertices.get(0));
         Vector3f edgeB = new Vector3f(vertices.get(2)).sub(vertices.get(0));
         Vector3f calculated = edgeA.cross(edgeB);
-        if (calculated.lengthSquared() < 1.0E-6F) {
-            return new Vector3f(0.0F, 1.0F, 0.0F);
+        float lengthSquared = calculated.lengthSquared();
+        if (!(lengthSquared >= 1.0E-8F) || !Float.isFinite(lengthSquared)) {
+            // S_Face#calculateFaceNormal used Vec3#normalize; a degenerate face
+            // therefore supplied zero, not an invented +Y normal.
+            return new Vector3f();
         }
         return calculated.normalize();
     }
@@ -1775,8 +1790,7 @@ public final class LegacyWavefrontModel {
             return PreparedBatch.EMPTY;
         }
         List<PreparedVertex> copied = List.copyOf(vertices);
-        return new PreparedBatch("direct-untextured-quads:" + quads.size(),
-                PreparedBatch.geometryHash(copied, List.of()), copied, List.of());
+        return PreparedBatch.of("direct-untextured-quads:" + quads.size(), copied, List.of());
     }
 
     private static void addUntexturedTransientQuad(List<PreparedVertex> target, UntexturedTransientQuad quad) {
@@ -1808,8 +1822,7 @@ public final class LegacyWavefrontModel {
                         normal, normal, averageUv),
                 new PreparedVertex(new Vector3f((float) x3, (float) y3, (float) z3), new UV(u3, v3),
                         normal, normal, averageUv));
-        return new PreparedBatch("direct-textured-quad", PreparedBatch.geometryHash(vertices, List.of()),
-                vertices, List.of());
+        return PreparedBatch.of("direct-textured-quad", vertices, List.of());
     }
 
     private static UntexturedVertexColor vertexColor(double x, double y, double z, int color, int alpha) {
@@ -2122,16 +2135,27 @@ public final class LegacyWavefrontModel {
         return translucent ? LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE : LegacyTexturedRenderMode.CUTOUT_NO_CULL;
     }
 
-    private static LegacyTexturedRenderMode renderModeForPose(LegacyTexturedRenderMode renderMode, Matrix3f normal) {
-        if (normal.determinant() >= 0.0F) {
+    private static LegacyTexturedRenderMode renderModeForPose(LegacyTexturedRenderMode renderMode,
+            Matrix4f position) {
+        // PoseStack transforms normals with the cofactor matrix for reflected,
+        // non-uniform scales. Its determinant can therefore stay positive for
+        // a one-axis mirror even though the vertex winding is reversed. Culling
+        // must follow the actual position transform instead.
+        float determinant = position.m00() * (position.m11() * position.m22() - position.m12() * position.m21())
+                - position.m01() * (position.m10() * position.m22() - position.m12() * position.m20())
+                + position.m02() * (position.m10() * position.m21() - position.m11() * position.m20());
+        if (determinant >= 0.0F) {
             return renderMode;
         }
         return switch (renderMode) {
             case CUTOUT_CULL -> LegacyTexturedRenderMode.CUTOUT_REVERSED_CULL;
             case CUTOUT_REVERSED_CULL -> LegacyTexturedRenderMode.CUTOUT_CULL;
-            case RAW_LIGHTMAP_CUTOUT_CULL -> LegacyTexturedRenderMode.RAW_LIGHTMAP_CUTOUT_CULL;
-            case ADDITIVE_CULL_NO_DEPTH_WRITE -> LegacyTexturedRenderMode.ADDITIVE_NO_DEPTH_WRITE;
-            case TRANSLUCENT_CULL_DEPTH_WRITE -> LegacyTexturedRenderMode.TRANSLUCENT_DEPTH_WRITE;
+            case RAW_LIGHTMAP_CUTOUT_CULL -> LegacyTexturedRenderMode.RAW_LIGHTMAP_CUTOUT_REVERSED_CULL;
+            case RAW_LIGHTMAP_CUTOUT_REVERSED_CULL -> LegacyTexturedRenderMode.RAW_LIGHTMAP_CUTOUT_CULL;
+            case ADDITIVE_CULL_NO_DEPTH_WRITE -> LegacyTexturedRenderMode.ADDITIVE_REVERSED_CULL_NO_DEPTH_WRITE;
+            case ADDITIVE_REVERSED_CULL_NO_DEPTH_WRITE -> LegacyTexturedRenderMode.ADDITIVE_CULL_NO_DEPTH_WRITE;
+            case TRANSLUCENT_CULL_DEPTH_WRITE -> LegacyTexturedRenderMode.TRANSLUCENT_REVERSED_CULL_DEPTH_WRITE;
+            case TRANSLUCENT_REVERSED_CULL_DEPTH_WRITE -> LegacyTexturedRenderMode.TRANSLUCENT_CULL_DEPTH_WRITE;
             default -> renderMode;
         };
     }
@@ -2806,7 +2830,7 @@ public final class LegacyWavefrontModel {
             PoseStack.Pose pose = poseStack.last();
             Matrix4f position = pose.pose();
             Matrix3f normal = pose.normal();
-            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, normal).withAlpha(alpha);
+            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, position).withAlpha(alpha);
             if (alphaMode != cachedAlphaMode) {
                 cachedAlphaMode = alphaMode;
                 quadConsumer = null;
@@ -3174,7 +3198,7 @@ public final class LegacyWavefrontModel {
         private IrisCompanionQueuedBatch lastPendingIrisCompanionBatch;
         private GpuMeshKind lastPendingIrisCompanionKind;
         private String lastPendingIrisCompanionStablePartKey;
-        private int lastPendingIrisCompanionGeometryHash;
+        private PreparedGeometryKey lastPendingIrisCompanionGeometryKey;
         private TextureAtlasSprite lastPendingIrisCompanionSprite;
         private int lastPendingIrisCompanionSourceVertices;
         private VertexFormat.Mode lastPendingIrisCompanionSourceMode;
@@ -3487,7 +3511,7 @@ public final class LegacyWavefrontModel {
                         red, green, blue, alpha, legacyShadow, smoothing, renderMode, uvTransform);
                 return;
             }
-            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, poseStack.last().normal()).withAlpha(alpha);
+            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, poseStack.last().pose()).withAlpha(alpha);
             boolean instancedOnlyMode = requiresInstancedGpuPath(alphaMode);
             HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
             try {
@@ -3633,7 +3657,7 @@ public final class LegacyWavefrontModel {
                         red, green, blue, alpha, legacyShadow, partBrightness, renderMode, uvTransform);
                 return;
             }
-            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, poseStack.last().normal())
+            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, poseStack.last().pose())
                     .withAlpha(alpha);
             boolean instancedOnlyMode = requiresInstancedGpuPath(alphaMode);
             HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
@@ -3755,7 +3779,7 @@ public final class LegacyWavefrontModel {
             if (batch.empty()) {
                 return;
             }
-            LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().normal());
+            LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().pose());
             RenderBackendFallbackReason fallback = unsupportedUntexturedReason(batch, alpha, resolvedRenderMode);
             if (fallback != RenderBackendFallbackReason.NONE) {
                 renderUntexturedCpuFallback(fallback, batch, poseStack, buffer, red, green, blue, alpha, renderMode);
@@ -3831,7 +3855,7 @@ public final class LegacyWavefrontModel {
                 return;
             }
             RenderBackendFallbackReason unsupported = unsupportedTexturedTransientReason(batch, legacyShadow);
-            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, poseStack.last().normal())
+            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, poseStack.last().pose())
                     .withAlpha(alpha);
             HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
             if (unsupported == RenderBackendFallbackReason.GPU_SHADER_ACTIVE
@@ -3908,7 +3932,7 @@ public final class LegacyWavefrontModel {
                 return;
             }
             RenderBackendFallbackReason unsupported = unsupportedUntexturedTransientReason(batch);
-            LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().normal());
+            LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, poseStack.last().pose());
             HbmRenderFrameFlags.Snapshot flags = HbmRenderFrameFlags.current();
             if (unsupported == RenderBackendFallbackReason.GPU_SHADER_ACTIVE
                     && canUseIrisUntexturedSingleMeshPath(flags, resolvedRenderMode, alpha)) {
@@ -4150,6 +4174,12 @@ public final class LegacyWavefrontModel {
             if (batch.empty()) {
                 return RenderBackendFallbackReason.NONE;
             }
+            // The old fixed-function path could disable directional lights while retaining the world
+            // lightmap.  The optimized OBJ GPU path always applies legacyStandardLight, so this material
+            // must stay on the CPU/static RenderType path backed by the lightmap-only text shader.
+            if (renderMode == LegacyTexturedRenderMode.LIGHTMAP_ONLY_CUTOUT_NO_CULL) {
+                return RenderBackendFallbackReason.GPU_UNSUPPORTED_RENDER_MODE;
+            }
             if (LegacyTexturedRenderMode.rawLightmapCoordinates(renderMode)) {
                 return RenderBackendFallbackReason.GPU_RAW_LIGHTMAP_COORDINATES;
             }
@@ -4306,10 +4336,12 @@ public final class LegacyWavefrontModel {
          */
         private static RenderBackendFallbackReason safeImmediateSingleMeshFallbackReason(
                 HbmRenderFrameFlags.Snapshot flags) {
-            // GUI BEWLRs must submit to the caller-owned MultiBufferSource. A
-            // direct draw here can be cleared or reordered by ItemRenderer's
-            // later buffer flush, making every builtin/entity OBJ disappear.
-            if (LegacyItemRenderContext.isGui()) {
+            // Every BEWLR context must submit to the caller-owned MultiBufferSource. GUI,
+            // dropped-item, item-frame and hand rendering all have an ItemRenderer-managed
+            // buffer lifecycle, and the non-GUI calls can occur outside the block-entity
+            // backend's queued-flush window. A direct/queued GPU draw here can therefore be
+            // cleared, reordered or never presented, making builtin/entity OBJs disappear.
+            if (LegacyItemRenderContext.isActive()) {
                 return RenderBackendFallbackReason.GPU_DISABLED;
             }
             if (flags.frameGeneration() != 0L) {
@@ -5056,14 +5088,14 @@ public final class LegacyWavefrontModel {
             boolean queued = false;
             if (!batch.quadVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.TEXTURED, batch.stableKey(), batch.quadVertices(),
-                        batch.geometryHash(), VertexFormat.Mode.QUADS, null, textureLocation, renderMode,
+                        batch.geometryKey(), VertexFormat.Mode.QUADS, null, textureLocation, renderMode,
                         poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, smoothing,
                         uvTransform, fadeAlpha);
                 queued = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.TEXTURED, batch.stableKey(), batch.triangleVertices(),
-                        batch.geometryHash(), VertexFormat.Mode.TRIANGLES, null, textureLocation, renderMode,
+                        batch.geometryKey(), VertexFormat.Mode.TRIANGLES, null, textureLocation, renderMode,
                         poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, smoothing,
                         uvTransform, fadeAlpha);
                 queued = true;
@@ -5081,14 +5113,14 @@ public final class LegacyWavefrontModel {
             boolean queued = false;
             if (!batch.quadVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.SPRITE, batch.stableKey(), batch.quadVertices(),
-                        batch.geometryHash(), VertexFormat.Mode.QUADS, sprite, InventoryMenu.BLOCK_ATLAS,
+                        batch.geometryKey(), VertexFormat.Mode.QUADS, sprite, InventoryMenu.BLOCK_ATLAS,
                         renderMode, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                         false, uvTransform, fadeAlpha);
                 queued = true;
             }
             if (!batch.triangleVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.SPRITE, batch.stableKey(), batch.triangleVertices(),
-                        batch.geometryHash(), VertexFormat.Mode.TRIANGLES, sprite, InventoryMenu.BLOCK_ATLAS,
+                        batch.geometryKey(), VertexFormat.Mode.TRIANGLES, sprite, InventoryMenu.BLOCK_ATLAS,
                         renderMode, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha,
                         false, uvTransform, fadeAlpha);
                 queued = true;
@@ -5107,7 +5139,7 @@ public final class LegacyWavefrontModel {
             boolean queued = false;
             if (!batch.quadVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.UNTEXTURED, batch.stableKey(), batch.quadVertices(),
-                        batch.geometryHash(), VertexFormat.Mode.QUADS, null, textureLocation, renderMode,
+                        batch.geometryKey(), VertexFormat.Mode.QUADS, null, textureLocation, renderMode,
                         poseStack, buffer,
                         LightTexture.FULL_BRIGHT, 0, red, green, blue, alpha, false, UvTransform.DEFAULT,
                         fadeAlpha);
@@ -5115,7 +5147,7 @@ public final class LegacyWavefrontModel {
             }
             if (!batch.triangleVertices().isEmpty()) {
                 queueIrisCompanionPart(GpuMeshKind.UNTEXTURED, batch.stableKey(), batch.triangleVertices(),
-                        batch.geometryHash(), VertexFormat.Mode.TRIANGLES, null, textureLocation, renderMode,
+                        batch.geometryKey(), VertexFormat.Mode.TRIANGLES, null, textureLocation, renderMode,
                         poseStack, buffer,
                         LightTexture.FULL_BRIGHT, 0, red, green, blue, alpha, false, UvTransform.DEFAULT,
                         fadeAlpha);
@@ -5125,7 +5157,7 @@ public final class LegacyWavefrontModel {
         }
 
         private void queueIrisCompanionPart(GpuMeshKind kind, String stablePartKey, List<PreparedVertex> vertices,
-                int geometryHash, VertexFormat.Mode sourceMode, TextureAtlasSprite sprite,
+                PreparedGeometryKey geometryKey, VertexFormat.Mode sourceMode, TextureAtlasSprite sprite,
                 ResourceLocation textureLocation, LegacyTexturedRenderMode renderMode, PoseStack poseStack,
                 MultiBufferSource buffer, int packedLight, int packedOverlay, int red, int green, int blue,
                 int alpha, boolean smoothing, UvTransform uvTransform, float fadeAlpha) {
@@ -5134,7 +5166,7 @@ public final class LegacyWavefrontModel {
             }
             boolean faded = fadeAlpha < 0.999F;
             LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, faded);
-            IrisCompanionQueuedBatch batch = pendingIrisCompanionBatch(kind, stablePartKey, geometryHash, sprite,
+            IrisCompanionQueuedBatch batch = pendingIrisCompanionBatch(kind, stablePartKey, geometryKey, sprite,
                     vertices.size(), sourceMode, smoothing, uvTransform, textureLocation, effectiveRenderMode,
                     vertices);
             boolean newBatch = batch.instances().isEmpty();
@@ -5161,7 +5193,7 @@ public final class LegacyWavefrontModel {
             if (cached != null) {
                 return cached;
             }
-            InstancedMeshKey key = new InstancedMeshKey(kind, batch.stableKey(), batch.geometryHash(), sprite,
+            InstancedMeshKey key = new InstancedMeshKey(kind, batch.stableKey(), batch.geometryKey(), sprite,
                     vertices.size(), sourceMode, smoothing);
             if (failedInstancedKeys.contains(key)) {
                 throw new IllegalStateException("Instanced mesh upload previously failed for " + key);
@@ -5257,13 +5289,14 @@ public final class LegacyWavefrontModel {
         }
 
         private IrisCompanionQueuedBatch pendingIrisCompanionBatch(GpuMeshKind kind, String stablePartKey,
-                int geometryHash, TextureAtlasSprite sprite, int sourceVertices, VertexFormat.Mode sourceMode,
+                PreparedGeometryKey geometryKey, TextureAtlasSprite sprite, int sourceVertices,
+                VertexFormat.Mode sourceMode,
                 boolean smoothing, UvTransform uvTransform, ResourceLocation textureLocation,
                 LegacyTexturedRenderMode renderMode, List<PreparedVertex> vertices) {
             IrisCompanionQueuedBatch cached = lastPendingIrisCompanionBatch;
             if (cached != null
                     && lastPendingIrisCompanionKind == kind
-                    && lastPendingIrisCompanionGeometryHash == geometryHash
+                    && sameNullable(lastPendingIrisCompanionGeometryKey, geometryKey)
                     && lastPendingIrisCompanionSprite == sprite
                     && lastPendingIrisCompanionSourceVertices == sourceVertices
                     && lastPendingIrisCompanionSourceMode == sourceMode
@@ -5274,7 +5307,7 @@ public final class LegacyWavefrontModel {
                     && lastPendingIrisCompanionRenderMode == renderMode) {
                 return cached;
             }
-            IrisCompanionQueueKey key = new IrisCompanionQueueKey(kind, stablePartKey, geometryHash, sprite,
+            IrisCompanionQueueKey key = new IrisCompanionQueueKey(kind, stablePartKey, geometryKey, sprite,
                     sourceVertices, sourceMode, smoothing, uvTransform, textureLocation, renderMode);
             IrisCompanionQueuedBatch batch = pendingIrisCompanionBatches.get(key);
             if (batch == null) {
@@ -5284,7 +5317,7 @@ public final class LegacyWavefrontModel {
             lastPendingIrisCompanionBatch = batch;
             lastPendingIrisCompanionKind = kind;
             lastPendingIrisCompanionStablePartKey = stablePartKey;
-            lastPendingIrisCompanionGeometryHash = geometryHash;
+            lastPendingIrisCompanionGeometryKey = geometryKey;
             lastPendingIrisCompanionSprite = sprite;
             lastPendingIrisCompanionSourceVertices = sourceVertices;
             lastPendingIrisCompanionSourceMode = sourceMode;
@@ -5304,7 +5337,7 @@ public final class LegacyWavefrontModel {
             lastPendingIrisCompanionBatch = null;
             lastPendingIrisCompanionKind = null;
             lastPendingIrisCompanionStablePartKey = null;
-            lastPendingIrisCompanionGeometryHash = 0;
+            lastPendingIrisCompanionGeometryKey = null;
             lastPendingIrisCompanionSprite = null;
             lastPendingIrisCompanionSourceVertices = 0;
             lastPendingIrisCompanionSourceMode = null;
@@ -5492,8 +5525,11 @@ public final class LegacyWavefrontModel {
         private GpuMesh meshFor(PreparedBatch batch, VertexFormat.Mode drawMode, int packedLight, int packedOverlay,
                 int red, int green, int blue, int alpha, boolean smoothing, UvTransform uvTransform,
                 List<PreparedVertex> vertices) {
-            GpuMeshKey key = new GpuMeshKey(GpuMeshKind.TEXTURED, System.identityHashCode(batch), null,
-                    batch.vertexCount(), drawMode, packedLight, packedOverlay, red, green, blue, alpha,
+            // Selection batches are evictable.  An identity hash does not retain the batch and may be reused for a
+            // different selection later, which would make this cache return an unrelated VBO with valid-looking
+            // counts.  Keep the ordinary GPU path on the same stable geometry identity used by instancing/MDI.
+            GpuMeshKey key = new GpuMeshKey(GpuMeshKind.TEXTURED, batch.stableKey(), batch.geometryKey(), null,
+                    vertices.size(), drawMode, packedLight, packedOverlay, red, green, blue, alpha,
                     uvTransform, smoothing);
             if (failedKeys.contains(key)) {
                 throw new IllegalStateException("GPU mesh upload previously failed for " + key);
@@ -5523,8 +5559,8 @@ public final class LegacyWavefrontModel {
         private GpuMesh meshForAtlasSprite(PreparedBatch batch, VertexFormat.Mode drawMode, TextureAtlasSprite sprite,
                 int packedLight, int packedOverlay, int red, int green, int blue, int alpha,
                 UvTransform uvTransform, List<PreparedVertex> vertices) {
-            GpuMeshKey key = new GpuMeshKey(GpuMeshKind.SPRITE, System.identityHashCode(batch), sprite,
-                    batch.vertexCount(), drawMode, packedLight, packedOverlay, red, green, blue, alpha,
+            GpuMeshKey key = new GpuMeshKey(GpuMeshKind.SPRITE, batch.stableKey(), batch.geometryKey(), sprite,
+                    vertices.size(), drawMode, packedLight, packedOverlay, red, green, blue, alpha,
                     uvTransform, false);
             if (failedKeys.contains(key)) {
                 throw new IllegalStateException("GPU sprite mesh upload previously failed for " + key);
@@ -5553,8 +5589,8 @@ public final class LegacyWavefrontModel {
 
         private GpuMesh meshForUntextured(PreparedBatch batch, VertexFormat.Mode drawMode, int red, int green,
                 int blue, int alpha, List<PreparedVertex> vertices) {
-            GpuMeshKey key = new GpuMeshKey(GpuMeshKind.UNTEXTURED, System.identityHashCode(batch), null,
-                    batch.vertexCount(), drawMode, 0, 0, red, green, blue, alpha, UvTransform.DEFAULT, false);
+            GpuMeshKey key = new GpuMeshKey(GpuMeshKind.UNTEXTURED, batch.stableKey(), batch.geometryKey(), null,
+                    vertices.size(), drawMode, 0, 0, red, green, blue, alpha, UvTransform.DEFAULT, false);
             if (failedKeys.contains(key)) {
                 throw new IllegalStateException("GPU untextured mesh upload previously failed for " + key);
             }
@@ -6006,7 +6042,7 @@ public final class LegacyWavefrontModel {
                 boolean shadowPass, float fadeAlpha, List<PreparedVertex> vertices) {
             LegacyTexturedRenderMode effectiveRenderMode = fadeRenderMode(renderMode, fadeAlpha < 0.999F);
             IrisCompanionMeshKey key = new IrisCompanionMeshKey(kind, "transient:" + batch.stableKey(),
-                    batch.geometryHash(), sprite, vertices.size(), sourceMode, smoothing, uvTransform);
+                    batch.geometryKey(), sprite, vertices.size(), sourceMode, smoothing, uvTransform);
             irisUploadAttempts.incrementAndGet();
             IrisCompanionMesh mesh;
             try {
@@ -6031,7 +6067,7 @@ public final class LegacyWavefrontModel {
         private IrisCompanionMesh irisCompanionMeshFor(PreparedBatch batch, VertexFormat.Mode sourceMode,
                 GpuMeshKind kind, TextureAtlasSprite sprite, int packedLight, int packedOverlay, int red, int green,
                 int blue, int alpha, boolean smoothing, UvTransform uvTransform, List<PreparedVertex> vertices) {
-            IrisCompanionMeshKey key = new IrisCompanionMeshKey(kind, batch.stableKey(), batch.geometryHash(), sprite,
+            IrisCompanionMeshKey key = new IrisCompanionMeshKey(kind, batch.stableKey(), batch.geometryKey(), sprite,
                     vertices.size(), sourceMode, smoothing, uvTransform);
             return irisCompanionMeshFor(key, sourceMode, packedLight, packedOverlay, red, green, blue, alpha,
                     smoothing, vertices);
@@ -6040,7 +6076,7 @@ public final class LegacyWavefrontModel {
         private IrisCompanionMesh irisCompanionMeshFor(IrisCompanionQueueKey queueKey,
                 IrisCompanionQueuedInstance instance, List<PreparedVertex> vertices) {
             IrisCompanionMeshKey key = new IrisCompanionMeshKey(queueKey.kind(), queueKey.stablePartKey(),
-                    queueKey.geometryHash(), queueKey.sprite(), queueKey.sourceVertices(), queueKey.sourceMode(),
+                    queueKey.geometryKey(), queueKey.sprite(), queueKey.sourceVertices(), queueKey.sourceMode(),
                     queueKey.smoothing(), queueKey.uvTransform());
             return irisCompanionMeshFor(key, queueKey.sourceMode(), instance.packedLight(), instance.packedOverlay(),
                     instance.red(), instance.green(), instance.blue(), instance.alpha(), queueKey.smoothing(),
@@ -6086,7 +6122,7 @@ public final class LegacyWavefrontModel {
                         "Iris companion upload unavailable in the current render context");
             }
             IrisCompanionMeshKey key = new IrisCompanionMeshKey(GpuMeshKind.UNTEXTURED,
-                    "transient-lines", System.identityHashCode(lines), null, lines.size() * 2,
+                    "transient-lines", PreparedGeometryKey.fromLines(lines), null, lines.size() * 2,
                     VertexFormat.Mode.LINES, false, UvTransform.DEFAULT);
             BufferBuilder builder = new BufferBuilder(Math.max(256, lines.size() * 112));
             builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.NEW_ENTITY);
@@ -6113,7 +6149,8 @@ public final class LegacyWavefrontModel {
                 throw new IllegalArgumentException("Vertex-color Iris companion requires complete triangles");
             }
             IrisCompanionMeshKey key = new IrisCompanionMeshKey(GpuMeshKind.UNTEXTURED,
-                    "transient-vertex-color:" + detail, System.identityHashCode(vertices), null, vertices.size(),
+                    "transient-vertex-color:" + detail, PreparedGeometryKey.fromVertexColors(vertices), null,
+                    vertices.size(),
                     VertexFormat.Mode.TRIANGLES, false, UvTransform.DEFAULT);
             BufferBuilder builder = new BufferBuilder(Math.max(256, vertices.size() * 56));
             builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.NEW_ENTITY);
@@ -7176,6 +7213,7 @@ public final class LegacyWavefrontModel {
                 }
                 setupOptimizedInstancedShader(shader, !untextured, projectionMatrix,
                         prepared.key().textureLocation());
+                RenderSystem.setupShaderLights(shader);
                 shader.apply();
                 if (!untextured) {
                     HbmRenderFrameLight.bindBlockLitSamplerTextures(shader, prepared.key().textureLocation());
@@ -7762,6 +7800,7 @@ public final class LegacyWavefrontModel {
                     throw new IllegalStateException("No legacy OBJ instanced shader bound");
                 }
                 setupOptimizedInstancedShader(boundShader, !untextured, projectionMatrix, batch.textureLocation());
+                RenderSystem.setupShaderLights(boundShader);
                 boundShader.apply();
                 if (!untextured) {
                     HbmRenderFrameLight.bindBlockLitSamplerTextures(boundShader, batch.textureLocation());
@@ -10939,7 +10978,7 @@ public final class LegacyWavefrontModel {
             PoseStack.Pose pose = poseStack.last();
             Matrix4f position = pose.pose();
             Matrix3f normal = pose.normal();
-            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, normal).withAlpha(alpha);
+            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, position).withAlpha(alpha);
             recordTextureAndMode(textureLocation, alphaMode);
             List<PreparedVertex> quadVertices = batch.quadVertices();
             if (!quadVertices.isEmpty()) {
@@ -10987,7 +11026,7 @@ public final class LegacyWavefrontModel {
             PoseStack.Pose pose = poseStack.last();
             Matrix4f position = pose.pose();
             Matrix3f normal = pose.normal();
-            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, normal).withAlpha(alpha);
+            LegacyTexturedRenderMode alphaMode = renderModeForPose(renderMode, position).withAlpha(alpha);
             recordSpriteAndMode(sprite, alphaMode);
             List<PreparedVertex> quadVertices = batch.quadVertices();
             if (!quadVertices.isEmpty()) {
@@ -11021,7 +11060,7 @@ public final class LegacyWavefrontModel {
             currentFrameUntexturedVertices += batch.vertexCount();
             PoseStack.Pose pose = poseStack.last();
             Matrix4f position = pose.pose();
-            LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, pose.normal());
+            LegacyTexturedRenderMode resolvedRenderMode = renderModeForPose(renderMode, position);
             recordRenderMode(resolvedRenderMode);
             VertexConsumer quadConsumer = null;
             VertexConsumer triangleConsumer = null;
@@ -11392,9 +11431,18 @@ public final class LegacyWavefrontModel {
                                   UV averageUv) {
     }
 
-    private record PreparedBatch(String stableKey, int geometryHash, List<PreparedVertex> quadVertices,
+    private record PreparedBatch(String stableKey, PreparedGeometryKey geometryKey,
+                                 List<PreparedVertex> quadVertices,
                                  List<PreparedVertex> triangleVertices) {
-        private static final PreparedBatch EMPTY = new PreparedBatch("empty", 0, List.of(), List.of());
+        private static final PreparedBatch EMPTY = of("empty", List.of(), List.of());
+
+        private static PreparedBatch of(String stableKey, List<PreparedVertex> quads,
+                List<PreparedVertex> triangles) {
+            List<PreparedVertex> copiedQuads = List.copyOf(quads);
+            List<PreparedVertex> copiedTriangles = List.copyOf(triangles);
+            return new PreparedBatch(stableKey, new PreparedGeometryKey(copiedQuads, copiedTriangles),
+                    copiedQuads, copiedTriangles);
+        }
 
         private static PreparedBatch from(List<Group> groups, String stableKey) {
             if (groups.isEmpty()) {
@@ -11411,8 +11459,7 @@ public final class LegacyWavefrontModel {
             }
             List<PreparedVertex> copiedQuads = List.copyOf(quads);
             List<PreparedVertex> copiedTriangles = List.copyOf(triangles);
-            return new PreparedBatch(stableKey, geometryHash(copiedQuads, copiedTriangles),
-                    copiedQuads, copiedTriangles);
+            return of(stableKey, copiedQuads, copiedTriangles);
         }
 
         private static PreparedBatch clippedFrom(List<Group> groups, String stableKey,
@@ -11435,8 +11482,7 @@ public final class LegacyWavefrontModel {
             }
             List<PreparedVertex> copiedQuads = List.copyOf(quads);
             List<PreparedVertex> copiedTriangles = List.copyOf(triangles);
-            return new PreparedBatch(stableKey, geometryHash(copiedQuads, copiedTriangles),
-                    copiedQuads, copiedTriangles);
+            return of(stableKey, copiedQuads, copiedTriangles);
         }
 
         private boolean empty() {
@@ -11445,6 +11491,138 @@ public final class LegacyWavefrontModel {
 
         private int vertexCount() {
             return quadVertices.size() + triangleVertices.size();
+        }
+
+        private int geometryHash() {
+            return geometryKey.hashCode();
+        }
+    }
+
+    /**
+     * Exact immutable identity for the emitted OBJ vertex stream.
+     *
+     * <p>The cached 32-bit hash is only a map-bucket accelerator. Equality still compares every emitted corner in
+     * order, including position, UV, smooth normal, face normal and average UV using the exact float bit pattern.
+     * This prevents two clipped/selected batches with the same stable route and a Java hash collision from reusing
+     * one another's VBO. The key retains the immutable prepared lists until the bounded GPU cache evicts the entry;
+     * render-backend clear/reload then releases the key together with its mesh.</p>
+     */
+    private static final class PreparedGeometryKey {
+        private final List<PreparedVertex> quads;
+        private final List<PreparedVertex> triangles;
+        private final long[] transientPayload;
+        private final int hashCode;
+        private final long lightSampleHash;
+
+        private PreparedGeometryKey(List<PreparedVertex> quads, List<PreparedVertex> triangles) {
+            this.quads = quads;
+            this.triangles = triangles;
+            this.transientPayload = null;
+            this.hashCode = geometryHash(quads, triangles);
+            this.lightSampleHash = geometryLightSampleHash(quads, triangles);
+        }
+
+        private PreparedGeometryKey(long[] transientPayload) {
+            this.quads = List.of();
+            this.triangles = List.of();
+            this.transientPayload = transientPayload.clone();
+            this.hashCode = Arrays.hashCode(this.transientPayload);
+            this.lightSampleHash = transientLightSampleHash(this.transientPayload);
+        }
+
+        private static PreparedGeometryKey fromLines(List<UntexturedLineTransient> lines) {
+            long[] payload = new long[1 + lines.size() * 11];
+            payload[0] = 0x4C494E45534CL;
+            int index = 1;
+            for (UntexturedLineTransient line : lines) {
+                payload[index++] = Double.doubleToRawLongBits(line.x0());
+                payload[index++] = Double.doubleToRawLongBits(line.y0());
+                payload[index++] = Double.doubleToRawLongBits(line.z0());
+                payload[index++] = Double.doubleToRawLongBits(line.x1());
+                payload[index++] = Double.doubleToRawLongBits(line.y1());
+                payload[index++] = Double.doubleToRawLongBits(line.z1());
+                payload[index++] = line.color() & 0xFFFFFFFFL;
+                payload[index++] = line.alpha() & 0xFFFFFFFFL;
+                payload[index++] = Float.floatToRawIntBits(line.normalX()) & 0xFFFFFFFFL;
+                payload[index++] = Float.floatToRawIntBits(line.normalY()) & 0xFFFFFFFFL;
+                payload[index++] = Float.floatToRawIntBits(line.normalZ()) & 0xFFFFFFFFL;
+            }
+            return new PreparedGeometryKey(payload);
+        }
+
+        private static PreparedGeometryKey fromVertexColors(List<UntexturedVertexColor> vertices) {
+            long[] payload = new long[1 + vertices.size() * 7];
+            payload[0] = 0x56455254455843L;
+            int index = 1;
+            for (UntexturedVertexColor vertex : vertices) {
+                payload[index++] = Double.doubleToRawLongBits(vertex.x());
+                payload[index++] = Double.doubleToRawLongBits(vertex.y());
+                payload[index++] = Double.doubleToRawLongBits(vertex.z());
+                payload[index++] = vertex.red() & 0xFFFFFFFFL;
+                payload[index++] = vertex.green() & 0xFFFFFFFFL;
+                payload[index++] = vertex.blue() & 0xFFFFFFFFL;
+                payload[index++] = vertex.alpha() & 0xFFFFFFFFL;
+            }
+            return new PreparedGeometryKey(payload);
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) {
+                return true;
+            }
+            if (!(object instanceof PreparedGeometryKey other) || hashCode != other.hashCode) {
+                return false;
+            }
+            if (transientPayload != null || other.transientPayload != null) {
+                return transientPayload != null && other.transientPayload != null
+                        && Arrays.equals(transientPayload, other.transientPayload);
+            }
+            return sameVertexListBits(quads, other.quads)
+                    && sameVertexListBits(triangles, other.triangles);
+        }
+
+        private long lightSampleHash() {
+            return lightSampleHash;
+        }
+
+        private static boolean sameVertexListBits(List<PreparedVertex> left, List<PreparedVertex> right) {
+            if (left.size() != right.size()) {
+                return false;
+            }
+            for (int index = 0; index < left.size(); index++) {
+                if (!sameVertexBits(left.get(index), right.get(index))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static boolean sameVertexBits(PreparedVertex left, PreparedVertex right) {
+            return sameVectorBits(left.position(), right.position())
+                    && sameUvBits(left.uv(), right.uv())
+                    && sameVectorBits(left.smoothNormal(), right.smoothNormal())
+                    && sameVectorBits(left.faceNormal(), right.faceNormal())
+                    && sameUvBits(left.averageUv(), right.averageUv());
+        }
+
+        private static boolean sameVectorBits(Vector3f left, Vector3f right) {
+            return sameFloatBits(left.x(), right.x())
+                    && sameFloatBits(left.y(), right.y())
+                    && sameFloatBits(left.z(), right.z());
+        }
+
+        private static boolean sameUvBits(UV left, UV right) {
+            return sameFloatBits(left.u(), right.u()) && sameFloatBits(left.v(), right.v());
+        }
+
+        private static boolean sameFloatBits(float left, float right) {
+            return Float.floatToRawIntBits(left) == Float.floatToRawIntBits(right);
         }
 
         private static int geometryHash(List<PreparedVertex> quads, List<PreparedVertex> triangles) {
@@ -11467,14 +11645,62 @@ public final class LegacyWavefrontModel {
         }
 
         private static int mixVectorHash(int hash, Vector3f vector) {
-            hash = 31 * hash + Float.floatToIntBits(vector.x());
-            hash = 31 * hash + Float.floatToIntBits(vector.y());
-            return 31 * hash + Float.floatToIntBits(vector.z());
+            hash = 31 * hash + Float.floatToRawIntBits(vector.x());
+            hash = 31 * hash + Float.floatToRawIntBits(vector.y());
+            return 31 * hash + Float.floatToRawIntBits(vector.z());
         }
 
         private static int mixUvHash(int hash, UV uv) {
-            hash = 31 * hash + Float.floatToIntBits(uv.u());
-            return 31 * hash + Float.floatToIntBits(uv.v());
+            hash = 31 * hash + Float.floatToRawIntBits(uv.u());
+            return 31 * hash + Float.floatToRawIntBits(uv.v());
+        }
+
+        private static long geometryLightSampleHash(List<PreparedVertex> quads,
+                List<PreparedVertex> triangles) {
+            long hash = 0x6A09E667F3BCC909L;
+            hash = mixGeometryLong(hash, 0x5155414453L);
+            hash = mixGeometryVertices(hash, quads);
+            hash = mixGeometryLong(hash, 0x545249414E474C45L);
+            return mixGeometryVertices(hash, triangles);
+        }
+
+        private static long mixGeometryVertices(long hash, List<PreparedVertex> vertices) {
+            hash = mixGeometryLong(hash, vertices.size());
+            for (PreparedVertex vertex : vertices) {
+                hash = mixGeometryVector(hash, vertex.position());
+                hash = mixGeometryUv(hash, vertex.uv());
+                hash = mixGeometryVector(hash, vertex.smoothNormal());
+                hash = mixGeometryVector(hash, vertex.faceNormal());
+                hash = mixGeometryUv(hash, vertex.averageUv());
+            }
+            return hash;
+        }
+
+        private static long mixGeometryVector(long hash, Vector3f vector) {
+            hash = mixGeometryLong(hash, Float.floatToRawIntBits(vector.x()) & 0xFFFFFFFFL);
+            hash = mixGeometryLong(hash, Float.floatToRawIntBits(vector.y()) & 0xFFFFFFFFL);
+            return mixGeometryLong(hash, Float.floatToRawIntBits(vector.z()) & 0xFFFFFFFFL);
+        }
+
+        private static long mixGeometryUv(long hash, UV uv) {
+            hash = mixGeometryLong(hash, Float.floatToRawIntBits(uv.u()) & 0xFFFFFFFFL);
+            return mixGeometryLong(hash, Float.floatToRawIntBits(uv.v()) & 0xFFFFFFFFL);
+        }
+
+        private static long transientLightSampleHash(long[] payload) {
+            long hash = 0xBB67AE8584CAA73BL;
+            for (long word : payload) {
+                hash = mixGeometryLong(hash, word);
+            }
+            return hash;
+        }
+
+        private static long mixGeometryLong(long hash, long value) {
+            hash ^= value + 0x9E3779B97F4A7C15L + (hash << 6) + (hash >>> 2);
+            hash ^= hash >>> 29;
+            hash *= 0xBF58476D1CE4E5B9L;
+            hash ^= hash >>> 32;
+            return hash;
         }
     }
 
@@ -11545,7 +11771,8 @@ public final class LegacyWavefrontModel {
         }
     }
 
-    private record GpuMeshKey(GpuMeshKind kind, int batchIdentity, TextureAtlasSprite sprite, int batchVertices,
+    private record GpuMeshKey(GpuMeshKind kind, String stablePartKey, PreparedGeometryKey geometryKey,
+                              TextureAtlasSprite sprite, int sourceVertices,
                               VertexFormat.Mode drawMode, int packedLight, int packedOverlay, int red, int green,
                               int blue, int alpha, UvTransform uvTransform, boolean smoothing) {
     }
@@ -11573,7 +11800,7 @@ public final class LegacyWavefrontModel {
         long hash = 0xD6E8FEB86659FD93L;
         hash = mixLightSampleKey(hash, key.kind().ordinal());
         hash = mixLightSampleKey(hash, key.stablePartKey() == null ? 0 : key.stablePartKey().hashCode());
-        hash = mixLightSampleKey(hash, key.geometryHash());
+        hash = mixLightSampleKey(hash, key.geometryKey().lightSampleHash());
         hash = mixLightSampleKey(hash, System.identityHashCode(key.sprite()));
         hash = mixLightSampleKey(hash, key.sourceVertices());
         hash = mixLightSampleKey(hash, key.sourceMode().ordinal());
@@ -11585,7 +11812,7 @@ public final class LegacyWavefrontModel {
         long hash = 0xA0761D6478BD642FL;
         hash = mixLightSampleKey(hash, key.kind().ordinal());
         hash = mixLightSampleKey(hash, key.stablePartKey() == null ? 0 : key.stablePartKey().hashCode());
-        hash = mixLightSampleKey(hash, key.geometryHash());
+        hash = mixLightSampleKey(hash, key.geometryKey().lightSampleHash());
         hash = mixLightSampleKey(hash, System.identityHashCode(key.sprite()));
         hash = mixLightSampleKey(hash, key.sourceVertices());
         hash = mixLightSampleKey(hash, key.sourceMode().ordinal());
@@ -11602,7 +11829,7 @@ public final class LegacyWavefrontModel {
         return hash;
     }
 
-    private record IrisCompanionMeshKey(GpuMeshKind kind, String stablePartKey, int geometryHash,
+    private record IrisCompanionMeshKey(GpuMeshKind kind, String stablePartKey, PreparedGeometryKey geometryKey,
                                         TextureAtlasSprite sprite, int sourceVertices,
                                         VertexFormat.Mode sourceMode, boolean smoothing, UvTransform uvTransform) {
     }
@@ -11611,13 +11838,13 @@ public final class LegacyWavefrontModel {
                                       boolean shadowPass, boolean linePrimitive) {
     }
 
-    private record IrisCompanionQueueKey(GpuMeshKind kind, String stablePartKey, int geometryHash,
+    private record IrisCompanionQueueKey(GpuMeshKind kind, String stablePartKey, PreparedGeometryKey geometryKey,
                                          TextureAtlasSprite sprite, int sourceVertices,
                                          VertexFormat.Mode sourceMode, boolean smoothing, UvTransform uvTransform,
                                          ResourceLocation textureLocation, LegacyTexturedRenderMode renderMode) {
     }
 
-    private record InstancedMeshKey(GpuMeshKind kind, String stablePartKey, int geometryHash,
+    private record InstancedMeshKey(GpuMeshKind kind, String stablePartKey, PreparedGeometryKey geometryKey,
                                     TextureAtlasSprite sprite, int sourceVertices, VertexFormat.Mode sourceMode,
                                     boolean smoothing) {
     }

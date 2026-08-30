@@ -87,7 +87,10 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
 
     @Override
     public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
-        if (tool != ToolType.SCREWDRIVER) {
+        boolean physicalControl = panelType == RBMKPanelPlanner.PanelType.KEYPAD
+                || panelType == RBMKPanelPlanner.PanelType.LEVER;
+        if (tool != ToolType.SCREWDRIVER || panelType == RBMKPanelPlanner.PanelType.TERMINAL
+                || (physicalControl && !player.isShiftKeyDown())) {
             return false;
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
@@ -107,11 +110,6 @@ public class RBMKPanelBlock extends BaseEntityBlock implements Toolable {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        ToolType tool = ToolType.getType(player.getItemInHand(hand));
-        if (tool == ToolType.SCREWDRIVER) {
-            return onToolUse(level, player, pos, hit.getDirection(), hit.getLocation(), tool)
-                    ? InteractionResult.sidedSuccess(level.isClientSide) : InteractionResult.PASS;
-        }
         if (panelType != RBMKPanelPlanner.PanelType.TERMINAL
                 && panelType != RBMKPanelPlanner.PanelType.KEYPAD
                 && panelType != RBMKPanelPlanner.PanelType.LEVER) {

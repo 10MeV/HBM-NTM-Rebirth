@@ -44,7 +44,10 @@ public class FoundrySlagBlockEntity extends BlockEntity {
     }
 
     public static float fillLevelForAmount(int amount) {
-        return Math.max(0.0625F, Math.min(1.0F, amount / (float) MAX_AMOUNT));
+        // BlockDynamicSlag#setBlockBoundsBasedOnState used the exact material
+        // ratio.  Even a one-quantum spill must therefore stay thinner than a
+        // pixel instead of being promoted to a 1/16-block layer.
+        return Math.max(0.0F, Math.min(1.0F, amount / (float) MAX_AMOUNT));
     }
 
     public ItemStack asScrap() {
@@ -120,8 +123,8 @@ public class FoundrySlagBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return super.getUpdateTag();
+    }
 
     @Nullable
     @Override

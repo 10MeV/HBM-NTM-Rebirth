@@ -86,7 +86,7 @@ public class MachineFluidTankModelLoader
         private ObjModel loadObj(ResourceLocation location) {
             try {
                 return ObjLoader.INSTANCE.loadModel(
-                        new ObjModel.ModelSettings(location, false, true, flipV, true, null));
+                        new ObjModel.ModelSettings(location, false, false, flipV, false, null));
             } catch (Exception exception) {
                 throw new RuntimeException("Failed to load fluid tank OBJ model: " + location, exception);
             }
@@ -95,8 +95,9 @@ public class MachineFluidTankModelLoader
         private static BakedModel bakePart(ObjModel model, IGeometryBakingContext context, ModelBaker baker,
                 Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides,
                 ResourceLocation modelLocation, String visiblePart, String materialKey) {
-            return model.bake(new PartBakingContext(context, visiblePart, materialKey),
+            BakedModel part = model.bake(new PartBakingContext(context, visiblePart, materialKey),
                     baker, spriteGetter, modelState, overrides, modelLocation);
+            return new LegacyLitObjBakedModel(part);
         }
     }
 

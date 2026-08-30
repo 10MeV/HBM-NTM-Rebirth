@@ -23,7 +23,11 @@ public class RadioTorchSenderBlockEntity extends RadioTorchDeviceBlockEntity {
         if (decision.shouldBroadcast()) {
             RTTYSystem.broadcast(level, decision.channel(), decision.signal());
         }
-        if (decision.stateChanged() || decision.shouldBroadcast()) {
+        // TileEntityRadioTorchSender only marks the tile/block for update when
+        // the attached redstone value changes. Polling broadcasts are carried
+        // by the legacy 50-block runtime packet below and must not force a
+        // block update every tick.
+        if (decision.stateChanged()) {
             torch.setChangedAndSync(false);
         }
         torch.networkPackLegacyRadioTorch();

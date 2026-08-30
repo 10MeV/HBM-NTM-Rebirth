@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.LegacyChargeBlock;
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.LegacyChargeBlockEntity;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
@@ -47,10 +46,12 @@ public class LegacyChargeBlockEntityRenderer implements BlockEntityRenderer<Lega
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.5D, 0.5D);
         applyLegacyRotation(poseStack, state.getValue(LegacyChargeBlock.FACING));
-        if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-            try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-                model(block.kind()).renderAll(texture(block.kind()), poseStack, buffer, modelLight, packedOverlay);
-            }
+        try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
+            // RenderExplosiveCharge's companion RenderBlockRotated path used the
+            // metadata rotation around this centered OBJ origin and ObjUtil's per-face
+            // legacy shadow tint.  Keep both contracts together in the BER.
+            model(block.kind()).renderAll(texture(block.kind()), poseStack, buffer, modelLight, packedOverlay,
+                    255, 255, 255, 255, true);
         }
         renderTimer(blockEntity, poseStack, buffer, modelLight);
         poseStack.popPose();

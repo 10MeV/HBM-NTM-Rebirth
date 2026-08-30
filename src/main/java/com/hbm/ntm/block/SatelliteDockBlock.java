@@ -61,6 +61,9 @@ public class SatelliteDockBlock extends LegacyVisibleMultiblockMachineBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide) {
+            return null;
+        }
         return type == ModBlockEntities.SAT_DOCK.get()
                 ? (tickLevel, tickPos, tickState, blockEntity) ->
                 SatelliteDockBlockEntity.serverTick(tickLevel, tickPos, tickState, (SatelliteDockBlockEntity) blockEntity)

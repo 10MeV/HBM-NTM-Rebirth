@@ -8,6 +8,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -18,6 +21,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @SuppressWarnings("deprecation")
 public class SolidifierBlock extends LegacyVisibleMultiblockMachineBlock {
@@ -30,6 +35,14 @@ public class SolidifierBlock extends LegacyVisibleMultiblockMachineBlock {
         return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
     }
 
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        // 1.7.10 MachineSolidifier#addInformation delegates to the standard info tooltip.
+        LegacyStandardInfoTooltip.append(tooltip, "machine_solidifier");
+    }
+
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
@@ -39,6 +52,11 @@ public class SolidifierBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // 1.7.10 MachineSolidifier delegates to BlockDummyable#standardOpenBehavior:
+        // crouching consumes the click, but must not open the machine menu.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && resolveCoreBlockEntity(level, pos) instanceof SolidifierBlockEntity solidifier) {
             NetworkHooks.openScreen(serverPlayer, solidifier, solidifier.getBlockPos());

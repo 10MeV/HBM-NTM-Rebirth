@@ -157,11 +157,16 @@ public final class RtgPelletRuntime {
     }
 
     public static List<Component> acceptedPelletTooltip() {
+        return acceptedPelletTooltip(5);
+    }
+
+    public static List<Component> acceptedPelletTooltip(int outputMultiplier) {
         List<Component> lines = new ArrayList<>();
         lines.add(Component.translatableWithFallback("desc.gui.rtg.pellets", "Accepted Pellets:"));
         SPECS.forEach((name, spec) -> lines.add(Component.translatableWithFallback(
-                "item." + HbmNtm.MOD_ID + "." + name, name)
-                .append(Component.literal(" (" + spec.baseHeat() * 5 + " HE/t)"))));
+                "desc.gui.rtg.pelletPower", "%s (%s HE/tick)",
+                Component.translatableWithFallback("item." + HbmNtm.MOD_ID + "." + name, name),
+                spec.baseHeat() * outputMultiplier)));
         return lines;
     }
 

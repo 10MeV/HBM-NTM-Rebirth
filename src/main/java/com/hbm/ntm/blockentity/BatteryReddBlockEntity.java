@@ -27,8 +27,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.MenuProvider;
@@ -50,7 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
-        implements MenuProvider, HbmLegacyControlReceiver, HbmPersistentBlockState {
+        implements HbmEnergyProvider, HbmEnergyReceiver, MenuProvider, HbmLegacyControlReceiver, HbmPersistentBlockState {
     public static final int SLOT_DISCHARGE = 0;
     public static final int SLOT_CHARGE = 1;
     public static final int SLOT_COUNT = 2;
@@ -242,7 +244,38 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
 
     @Override
     public void setPower(long power) {
-        this.power = BigInteger.valueOf(Math.max(0L, power));
+        // TileEntityBatteryREDD stores its unbounded charge through transferPower/usePower.
+        // The legacy IEnergyHandlerMK2#setPower hook was intentionally a no-op.
+    }
+
+    @Override
+    public long transferPower(long amount) {
+        return bigEnergy.transferPower(amount);
+    }
+
+    @Override
+    public long usePower(long amount) {
+        return bigEnergy.usePower(amount);
+    }
+
+    @Override
+    public long getReceiverSpeed() {
+        return bigEnergy.getReceiverSpeed();
+    }
+
+    @Override
+    public long getProviderSpeed() {
+        return bigEnergy.getProviderSpeed();
+    }
+
+    @Override
+    public boolean allowDirectProvision() {
+        return false;
+    }
+
+    @Override
+    public HbmEnergyReceiver.ConnectionPriority getPriority() {
+        return priority;
     }
 
     @Override
@@ -486,6 +519,50 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
     }
 
     @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putByteArray(TAG_POWER, power.toByteArray());
+        tag.putByteArray(TAG_DELTA, delta.toByteArray());
+        tag.putShort(TAG_RED_LOW, redLow);
+        tag.putShort(TAG_RED_HIGH, redHigh);
+        tag.putByte(TAG_PRIORITY, (byte) priority.ordinal());
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_POWER, Tag.TAG_BYTE_ARRAY)) {
+            power = readBigInteger(tag, TAG_POWER);
+        }
+        if (tag.contains(TAG_DELTA, Tag.TAG_BYTE_ARRAY)) {
+            delta = readBigInteger(tag, TAG_DELTA);
+        }
+        if (tag.contains(TAG_RED_LOW, Tag.TAG_SHORT)) {
+            redLow = clampMode(tag.getShort(TAG_RED_LOW));
+        }
+        if (tag.contains(TAG_RED_HIGH, Tag.TAG_SHORT)) {
+            redHigh = clampMode(tag.getShort(TAG_RED_HIGH));
+        }
+        if (tag.contains(TAG_PRIORITY)) {
+            priority = readPriority(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         // TileEntityBatteryREDD -> TileEntityBatteryBase -> TileEntityMachineBase.
         writeLegacyLoadedTileBinary(data);
@@ -558,7 +635,7 @@ public class BatteryReddBlockEntity extends HbmEnergyNetworkBlockEntity
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         if (capability == ForgeCapabilities.ENERGY && canAccessEnergy(side)) {
             boolean receive = canReceiveEnergy(side);

@@ -194,22 +194,35 @@ public class FluidPipeAnchorBlockEntity extends FluidPipeBlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt(TAG_CONNECTION_COUNT, remoteConnections.size());
-        int index = 0;
-        ListTag connections = new ListTag();
-        for (BlockPos pos : remoteConnections) {
-            tag.putIntArray(TAG_CONNECTION_PREFIX + index, new int[]{pos.getX(), pos.getY(), pos.getZ()});
-            CompoundTag entry = new CompoundTag();
-            entry.putLong(TAG_CONNECTION_POS, pos.asLong());
-            connections.add(entry);
-            index++;
-        }
-        tag.put(TAG_CONNECTIONS, connections);
+        writeRemoteConnections(tag, true);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
+        readRemoteConnections(tag);
+    }
+
+    /**
+     * The legacy description packet writes the pipeline base state, including
+     * its linked anchors.  Keep that transient client state separate from
+     * world loading: the base pipe's normal update tag deliberately contains
+     * only its fluid type.
+     */
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+        writeRemoteConnections(tag, false);
+        return tag;
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        readClientTypeTag(tag);
+        readRemoteConnections(tag);
+    }
+
+    private void readRemoteConnections(CompoundTag tag) {
         remoteConnections.clear();
         int legacyCount = tag.getInt(TAG_CONNECTION_COUNT);
         for (int i = 0; i < legacyCount; i++) {
@@ -227,6 +240,24 @@ public class FluidPipeAnchorBlockEntity extends FluidPipeBlockEntity {
             }
         }
         remoteConnections.remove(worldPosition);
+    }
+
+    private void writeRemoteConnections(CompoundTag tag, boolean includeLegacyEntries) {
+        if (includeLegacyEntries) {
+            tag.putInt(TAG_CONNECTION_COUNT, remoteConnections.size());
+        }
+        ListTag connections = new ListTag();
+        int index = 0;
+        for (BlockPos pos : remoteConnections) {
+            if (includeLegacyEntries) {
+                tag.putIntArray(TAG_CONNECTION_PREFIX + index, new int[]{pos.getX(), pos.getY(), pos.getZ()});
+            }
+            CompoundTag entry = new CompoundTag();
+            entry.putLong(TAG_CONNECTION_POS, pos.asLong());
+            connections.add(entry);
+            index++;
+        }
+        tag.put(TAG_CONNECTIONS, connections);
     }
 
     private void addRemoteConnection(BlockPos remotePos) {

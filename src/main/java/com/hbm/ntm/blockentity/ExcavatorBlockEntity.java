@@ -17,6 +17,7 @@ import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluidUtil.FluidPort;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.fluid.HbmStandardFluidReceiver;
+import com.hbm.ntm.fluid.LegacyFluidTankPacket;
 import com.hbm.ntm.item.BedrockOreBaseItem;
 import com.hbm.ntm.item.DrillbitItem;
 import com.hbm.ntm.item.ItemMachineUpgrade;
@@ -43,6 +44,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -976,6 +978,80 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
         updateUpgrades();
     }
 
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putBoolean(TAG_DRILL, enableDrill);
+        tag.putBoolean(TAG_CRUSHER, enableCrusher);
+        tag.putBoolean(TAG_WALLING, enableWalling);
+        tag.putBoolean(TAG_VEIN, enableVeinMiner);
+        tag.putBoolean(TAG_SILK, enableSilkTouch);
+        tag.putBoolean(TAG_OPERATIONAL, operational);
+        tag.putInt(TAG_TARGET_DEPTH, targetDepth);
+        tag.putInt(TAG_CHUTE, chuteTimer);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_DRILL, Tag.TAG_BYTE)) {
+            enableDrill = tag.getBoolean(TAG_DRILL);
+        }
+        if (tag.contains(TAG_CRUSHER, Tag.TAG_BYTE)) {
+            enableCrusher = tag.getBoolean(TAG_CRUSHER);
+        }
+        if (tag.contains(TAG_WALLING, Tag.TAG_BYTE)) {
+            enableWalling = tag.getBoolean(TAG_WALLING);
+        }
+        if (tag.contains(TAG_VEIN, Tag.TAG_BYTE)) {
+            enableVeinMiner = tag.getBoolean(TAG_VEIN);
+        }
+        if (tag.contains(TAG_SILK, Tag.TAG_BYTE)) {
+            enableSilkTouch = tag.getBoolean(TAG_SILK);
+        }
+        if (tag.contains(TAG_OPERATIONAL, Tag.TAG_BYTE)) {
+            operational = tag.getBoolean(TAG_OPERATIONAL);
+        }
+        if (tag.contains(TAG_TARGET_DEPTH, Tag.TAG_INT)) {
+            targetDepth = tag.getInt(TAG_TARGET_DEPTH);
+        }
+        if (tag.contains(TAG_CHUTE, Tag.TAG_INT)) {
+            chuteTimer = tag.getInt(TAG_CHUTE);
+        }
+    }
+
+    @Override
+    public void serializeLegacyBufPacket(FriendlyByteBuf data) {
+        // TileEntityMachineExcavator#serialize: only runtime controls, power and coolant reached the client.
+        writeLegacyLoadedTileBinary(data);
+        data.writeBoolean(enableDrill);
+        data.writeBoolean(enableCrusher);
+        data.writeBoolean(enableWalling);
+        data.writeBoolean(enableVeinMiner);
+        data.writeBoolean(enableSilkTouch);
+        data.writeBoolean(operational);
+        data.writeInt(targetDepth);
+        data.writeInt(chuteTimer);
+        data.writeLong(energy.getPower());
+        LegacyFluidTankPacket.write(data, tank);
+    }
+
+    @Override
+    public void deserializeLegacyBufPacket(FriendlyByteBuf data) {
+        readLegacyLoadedTileBinary(data);
+        enableDrill = data.readBoolean();
+        enableCrusher = data.readBoolean();
+        enableWalling = data.readBoolean();
+        enableVeinMiner = data.readBoolean();
+        enableSilkTouch = data.readBoolean();
+        operational = data.readBoolean();
+        targetDepth = data.readInt();
+        chuteTimer = data.readInt();
+        energy.setPower(data.readLong());
+        LegacyFluidTankPacket.read(data, tank);
+    }
+
     private Direction facing() {
         BlockState state = getBlockState();
         return state.hasProperty(HorizontalMachineBlock.FACING)
@@ -1024,7 +1100,8 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
     private final class ExcavatorExternalItemHandler implements IItemHandler {
         @Override
         public int getSlots() {
-            return SLOT_OUTPUT_END - SLOT_OUTPUT_START + 1;
+            // TileEntityMachineExcavator inherits TileEntityMachineBase's empty sided inventory.
+            return 0;
         }
 
         @Override
@@ -1046,7 +1123,7 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
         @Override
         public int getSlotLimit(int slot) {
-            return 64;
+            return 0;
         }
 
         @Override

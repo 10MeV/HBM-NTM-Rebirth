@@ -32,8 +32,10 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -76,6 +78,7 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
     private static final String TAG_IS_PROGRESSING = "isProgressing";
     private static final String TAG_HAS_MATERIAL = "hasMaterial";
     private static final String TAG_LIQUIDS = "liquids";
+    private static final String TAG_SYNC_ELECTRODE_PREFIX = "syncedElectrode";
     private static final int MAX_LIQUID = MaterialShapes.BLOCK.q(128);
     private static final Map<UpgradeType, Integer> VALID_UPGRADES = Map.of(UpgradeType.SPEED, 3);
 
@@ -736,6 +739,80 @@ public class ArcFurnaceBlockEntity extends HbmEnergyBlockEntity
         liquids.clear();
         for (int i = 0; i < materialCount; i++) {
             liquids.add(new MaterialStack(Mats.matById.get(data.readInt()), data.readInt()));
+        }
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        writeClientSyncFields(tag);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        readClientSyncFields(tag);
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    private void writeClientSyncFields(CompoundTag tag) {
+        // TileEntityMachineArcFurnaceLarge#serialize after LoadedBase/power.
+        // Inventory remains menu/persistence state; the renderer only needs
+        // the old electrode state bytes and material queue.
+        tag.putInt(TAG_PROGRESS, progress);
+        tag.putFloat(TAG_LID, lid);
+        tag.putBoolean(TAG_IS_PROGRESSING, progressing);
+        tag.putBoolean(TAG_LIQUID_MODE, liquidMode);
+        tag.putBoolean(TAG_HAS_MATERIAL, hasMaterial);
+        for (int slot = SLOT_ELECTRODE_0; slot <= SLOT_ELECTRODE_2; slot++) {
+            tag.putByte(TAG_SYNC_ELECTRODE_PREFIX + slot, electrodeState(items.getStackInSlot(slot)));
+        }
+        tag.put(TAG_LIQUIDS, Mats.writeList(liquids));
+    }
+
+    private void readClientSyncFields(CompoundTag tag) {
+        if (tag.contains(TAG_PROGRESS)) {
+            progress = Math.max(0, tag.getInt(TAG_PROGRESS));
+        }
+        if (tag.contains(TAG_LID)) {
+            receiveLidSync(tag.getFloat(TAG_LID));
+        }
+        if (tag.contains(TAG_IS_PROGRESSING)) {
+            progressing = tag.getBoolean(TAG_IS_PROGRESSING);
+        }
+        if (tag.contains(TAG_LIQUID_MODE)) {
+            liquidMode = tag.getBoolean(TAG_LIQUID_MODE);
+        }
+        if (tag.contains(TAG_HAS_MATERIAL)) {
+            hasMaterial = tag.getBoolean(TAG_HAS_MATERIAL);
+        }
+        for (int slot = SLOT_ELECTRODE_0; slot <= SLOT_ELECTRODE_2; slot++) {
+            String key = TAG_SYNC_ELECTRODE_PREFIX + slot;
+            if (tag.contains(key)) {
+                syncedElectrodeStates[slot] = tag.getByte(key);
+            }
+        }
+        if (tag.contains(TAG_LIQUIDS)) {
+            liquids.clear();
+            liquids.addAll(Mats.readList(tag.getList(TAG_LIQUIDS, net.minecraft.nbt.Tag.TAG_COMPOUND)));
         }
     }
 

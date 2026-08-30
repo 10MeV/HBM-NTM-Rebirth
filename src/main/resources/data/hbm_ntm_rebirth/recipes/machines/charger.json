@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": { "item": "minecraft:glowstone_dust" },
+    "S": { "item": "hbm_ntm_rebirth:ingot_steel" },
+    "C": { "item": "hbm_ntm_rebirth:coil_copper" }
+  },
+  "pattern": [
+    "G",
+    "S",
+    "C"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:charger"
+  },
+  "show_notification": true
+}

@@ -37,6 +37,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -77,6 +78,8 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     private static final String TAG_PROCESS_TIME = "processTime";
     private static final String TAG_TANK = "t";
     private static final String TAG_DID_PROCESS = "DidProcess";
+    private static final String TAG_SYNC_CONSUMPTION = "syncConsumption";
+    private static final String TAG_SYNC_DISPLAY = "syncDisplay";
     private static final long DEFAULT_MAX_POWER = 2_000L;
     private static final int TANK_CAPACITY = 24_000;
 
@@ -497,16 +500,52 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-}
+    }
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        CompoundTag tag = legacyLoadedTileClientTag();
+        tag.putLong(TAG_LEGACY_POWER, energy.getPower());
+        tag.putLong(TAG_LEGACY_MAX_POWER, energy.getMaxPower());
+        tag.putLong(TAG_SYNC_CONSUMPTION, consumption);
+        tag.putInt(TAG_PROGRESS, progress);
+        tag.putInt(TAG_PROCESS_TIME, processTime);
+        tag.putBoolean(TAG_DID_PROCESS, didProcess);
+        inputTank.writeToNbt(tag, TAG_TANK);
+        ItemStack display = computeDisplayOutput();
+        if (!display.isEmpty()) {
+            tag.put(TAG_SYNC_DISPLAY, display.save(new CompoundTag()));
+        }
+        return tag;
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        readLegacyLoadedTileClientTag(tag);
+        if (tag.contains(TAG_LEGACY_POWER, Tag.TAG_LONG)) {
+            energy.setPower(tag.getLong(TAG_LEGACY_POWER));
+        }
+        if (tag.contains(TAG_LEGACY_MAX_POWER, Tag.TAG_LONG)) {
+            energy.setMaxPower(Math.max(DEFAULT_MAX_POWER, tag.getLong(TAG_LEGACY_MAX_POWER)));
+        }
+        if (tag.contains(TAG_SYNC_CONSUMPTION, Tag.TAG_LONG)) {
+            consumption = tag.getLong(TAG_SYNC_CONSUMPTION);
+        }
+        if (tag.contains(TAG_PROGRESS, Tag.TAG_INT)) {
+            progress = tag.getInt(TAG_PROGRESS);
+        }
+        if (tag.contains(TAG_PROCESS_TIME, Tag.TAG_INT)) {
+            processTime = Math.max(1, tag.getInt(TAG_PROCESS_TIME));
+        }
+        if (tag.contains(TAG_DID_PROCESS, Tag.TAG_BYTE)) {
+            didProcess = tag.getBoolean(TAG_DID_PROCESS);
+        }
+        if (tag.contains(TAG_TANK) || tag.contains(TAG_TANK + "_type") || tag.contains(TAG_TANK + "_type_id")) {
+            inputTank.readFromNbt(tag, TAG_TANK);
+        }
+        displayStack = tag.contains(TAG_SYNC_DISPLAY, Tag.TAG_COMPOUND)
+                ? ItemStack.of(tag.getCompound(TAG_SYNC_DISPLAY))
+                : ItemStack.EMPTY;
     }
 
     @Override
@@ -553,6 +592,19 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     }
 
     @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
+    }
+
+    @Override
     public AABB getRenderBoundingBox() {
         return new AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 3, 2));
     }
@@ -573,13 +625,13 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
 
     @Override
     public void setRemoved() {
-        fluidPortSubscriptions.detachAllDetailed(level, worldPosition, connectionFluidPorts(getBlockState()), this, null);
+        fluidPortSubscriptions.detachAllTrackedDetailed(level, worldPosition, this, null);
         super.setRemoved();
     }
 
     @Override
     public void onChunkUnloaded() {
-        fluidPortSubscriptions.detachAllDetailed(level, worldPosition, connectionFluidPorts(getBlockState()), this, null);
+        fluidPortSubscriptions.detachAllTrackedDetailed(level, worldPosition, this, null);
         super.onChunkUnloaded();
     }
 

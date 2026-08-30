@@ -80,7 +80,9 @@ public class FireboxHeaterBlockEntity extends BlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
+    // The unrestricted handler is retained for the menu and internal machine code.
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> sidedItemHandler = LazyOptional.of(SidedItemHandler::new);
 
     private int maxBurnTime;
     private int burnTime;
@@ -352,14 +354,58 @@ public class FireboxHeaterBlockEntity extends BlockEntity
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        sidedItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? itemHandler : sidedItemHandler).cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    /**
+     * {@code TileEntityFireboxBase} exposed fuel slots 0 and 1 on every old
+     * side.  It inherited {@code TileEntityMachineBase#canExtractItem}, which
+     * always returned false, so physical automation must not take fuel or
+     * container remainders back out.
+     */
+    private final class SidedItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return SLOT_COUNT;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return validSlot(slot) ? items.getStackInSlot(slot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return validSlot(slot) ? items.insertItem(slot, stack, simulate) : stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            // Legacy TileEntityMachineBase#canExtractItem always returned false.
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return validSlot(slot) ? items.getSlotLimit(slot) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return validSlot(slot) && items.isItemValid(slot, stack);
+        }
+
+        private static boolean validSlot(int slot) {
+            return slot >= 0 && slot < SLOT_COUNT;
+        }
     }
 
     @Override

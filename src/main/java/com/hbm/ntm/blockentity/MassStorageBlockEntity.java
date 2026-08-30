@@ -17,7 +17,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.InteractionHand;
@@ -55,6 +57,7 @@ public class MassStorageBlockEntity extends BlockEntity
     public static final String LEGACY_LOCKED_TAG = "isLocked";
     public static final String LEGACY_LOCK_MOD_TAG = "lockMod";
     public static final String LEGACY_CHEESABLE_TAG = "cheesable";
+    private static final String TAG_CLIENT_TYPE = "clientType";
     private static final String TAG_SETTINGS_ITEMS = "items";
     private static final String TAG_SETTINGS_SLOT = "slot";
 
@@ -196,6 +199,15 @@ public class MassStorageBlockEntity extends BlockEntity
         }
 
         ItemStack type = typeStack();
+        // TileEntityMassStorage fills the configured stockpile from the
+        // creative-only infinite barrel before ordinary input processing. The
+        // barrel itself is retained; an empty filter still clears the
+        // stockpile in the following legacy branch.
+        if (!type.isEmpty() && items.getStackInSlot(SLOT_INPUT).is(ModItems.FLUID_BARREL_INFINITE.get())
+                && stockpile != capacity()) {
+            stockpile = capacity();
+            setChangedAndUpdate();
+        }
         if (type.isEmpty()) {
             stockpile = 0;
         }
@@ -630,23 +642,64 @@ public class MassStorageBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return getClientSyncTag();
-}
+        return runtimeClientTag();
+    }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        load(tag);
+        applyRuntimeClientTag(tag);
+    }
+
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            applyRuntimeClientTag(tag);
+        }
     }
 
     @Override
     public CompoundTag getClientSyncTag() {
-        CompoundTag tag = new CompoundTag();
-        return tag;
+        return runtimeClientTag();
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        applyRuntimeClientTag(tag);
+    }
+
+    /**
+     * Mirrors the old description packet's display contract (stockpile,
+     * output flag and filter type) without leaking inventory or lock data into
+     * an ordinary chunk snapshot.
+     */
+    private CompoundTag runtimeClientTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(LEGACY_STACK_TAG, stockpile);
+        tag.putBoolean(LEGACY_OUTPUT_TAG, output);
+        tag.putInt(LEGACY_CAPACITY_TAG, capacity());
+        ItemStack type = typeStack();
+        if (!type.isEmpty()) {
+            tag.put(TAG_CLIENT_TYPE, type.save(new CompoundTag()));
+        }
+        return tag;
+    }
+
+    private void applyRuntimeClientTag(CompoundTag tag) {
+        stockpile = tag.getInt(LEGACY_STACK_TAG);
+        output = tag.getBoolean(LEGACY_OUTPUT_TAG);
+        if (tag.contains(LEGACY_CAPACITY_TAG, Tag.TAG_INT)) {
+            capacity = tag.getInt(LEGACY_CAPACITY_TAG);
+        }
+        items.setStackInSlot(SLOT_FILTER, tag.contains(TAG_CLIENT_TYPE, Tag.TAG_COMPOUND)
+                ? ItemStack.of(tag.getCompound(TAG_CLIENT_TYPE))
+                : ItemStack.EMPTY);
+        invalidateRenderCaches();
     }
 
     @Override

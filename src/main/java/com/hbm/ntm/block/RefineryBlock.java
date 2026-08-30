@@ -1,10 +1,13 @@
 package com.hbm.ntm.block;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
+import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.blockentity.RefineryBlockEntity;
 import com.hbm.ntm.entity.projectile.AirstrikeBombletEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.fluid.HbmFluidTank;
+import com.hbm.ntm.fluid.HbmFluidRepairMaterials;
+import com.hbm.ntm.fluid.HbmFluidRepairable;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.util.AchievementHandler;
@@ -12,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -37,12 +41,13 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
+public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock implements Toolable {
     public static final BooleanProperty EXPLODED = BooleanProperty.create("exploded");
     public static final BooleanProperty TILTED = BooleanProperty.create("tilted");
 
@@ -71,6 +76,11 @@ public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
+        // MachineRefinery consumes sneak-use before it resolves the core or
+        // checks the exploded state; it must not open the normal GUI here.
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (resolveCoreBlockEntity(level, pos) instanceof RefineryBlockEntity refinery) {
             if (refinery.isExploded()) {
                 return InteractionResult.PASS;
@@ -81,6 +91,21 @@ public class RefineryBlock extends LegacyVisibleMultiblockMachineBlock {
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         return InteractionResult.PASS;
+    }
+
+    /** 1.7.10 MachineRefinery#onScrew: TORCH repairs the damaged multiblock core. */
+    @Override
+    public boolean onToolUse(Level level, Player player, BlockPos pos, Direction side, Vec3 hit, ToolType tool) {
+        if (tool != ToolType.TORCH
+                || !(resolveCoreBlockEntity(level, pos) instanceof HbmFluidRepairable repairable)
+                || !repairable.isDamagedForFluidRepair()) {
+            return false;
+        }
+        if (level.isClientSide) {
+            return player.getAbilities().instabuild
+                    || HbmFluidRepairMaterials.hasMaterials(player, repairable.getFluidRepairMaterials());
+        }
+        return HbmFluidRepairMaterials.tryRepair(player, repairable);
     }
 
     @Nullable

@@ -27,6 +27,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -92,6 +93,24 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, MultiblockDummyBlockEntity blockEntity) {
+        // 1.7.10 BlockDummyable#destroyIfOrphan required the complete local
+        // chunk neighborhood before deleting a proxy, and TileEntityProxyBase
+        // never ticked.  A modern FULL chunk can expose blocks and block
+        // entities before it is entity-ticking; that load transition is not
+        // evidence that either end of this ownership link is orphaned.
+        if (level instanceof ServerLevel serverLevel
+                && (!serverLevel.isPositionEntityTicking(pos)
+                || (blockEntity.corePos != null
+                && !serverLevel.isPositionEntityTicking(blockEntity.corePos)))) {
+            return;
+        }
+        // A LevelChunk can stop exposing its block entities before an already
+        // scheduled ticker is retired.  Re-reading this position during that
+        // transition must not turn the stale ticker into a destructive orphan
+        // cleanup; validate again after a stable load instead.
+        if (level.getBlockEntity(pos) != blockEntity) {
+            return;
+        }
         if (blockEntity.corePos == null) {
             level.removeBlock(pos, false);
             return;
@@ -432,10 +451,17 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         dropCoreOnRemoval = false;
         MultiblockHelper.CoreLookup core = validCore();
         if (level != null && core != null && !core.pos().equals(worldPosition)) {
+            boolean coreWasReplaced = false;
             if (core.state().getBlock() instanceof MultiblockCoreBlock coreBlock) {
-                coreBlock.beforeMultiblockDummyDestroysCore(level, core.pos(), core.state(), worldPosition, drop);
+                coreWasReplaced = coreBlock.beforeMultiblockDummyDestroysCore(
+                        level, core.pos(), core.state(), worldPosition, drop);
             }
-            level.destroyBlock(core.pos(), drop);
+            // A source-backed destruction hook may replace a dangerous core
+            // (RBMK fuel failure) with its meltdown result.  Do not erase that
+            // replacement with the ordinary dummy teardown.
+            if (!coreWasReplaced && level.getBlockState(core.pos()).is(core.state().getBlock())) {
+                level.destroyBlock(core.pos(), drop);
+            }
         }
     }
 
@@ -603,8 +629,21 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        CompoundTag tag = new CompoundTag();
+        if (corePos != null) {
+            tag.put(TAG_CORE_POS, NbtUtils.writeBlockPos(corePos));
+        }
+        tag.putBoolean(TAG_PROXY, proxyMode.isProxy());
+        tag.putBoolean(TAG_PROXY_INVENTORY, proxyMode.inventory());
+        tag.putBoolean(TAG_PROXY_POWER, proxyMode.power());
+        tag.putBoolean(TAG_PROXY_CONDUCTOR, proxyMode.conductor());
+        tag.putBoolean(TAG_PROXY_FLUID, proxyMode.fluid());
+        tag.putBoolean(TAG_PROXY_HEAT, proxyMode.heat());
+        tag.putBoolean(TAG_PROXY_MOLTEN_METAL, proxyMode.moltenMetal());
+        tag.putBoolean(TAG_PROXY_ALL, proxyMode.allCapabilities());
+        tag.putBoolean(TAG_LEGACY_EXTRA, legacyExtra);
+        return tag;
+    }
 
     @Override
     public void onLoad() {

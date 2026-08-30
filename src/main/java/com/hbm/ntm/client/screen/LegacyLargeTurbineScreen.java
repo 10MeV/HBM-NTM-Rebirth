@@ -46,19 +46,20 @@ public class LegacyLargeTurbineScreen extends AbstractContainerScreen<LegacyLarg
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(62, 17, 16, 52, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 62, 17, 16, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getInputTank(),
                     menu.getInputTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(134, 17, 16, 52, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 134, 17, 16, 52)) {
             LegacyGuiElements.renderFluidTooltip(graphics, font, menu.getOutputTank(),
                     menu.getOutputTankTooltip(hasShiftDown()), mouseX, mouseY);
-        } else if (isHovering(123, 35, 7, 34, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 123, 35, 7, 34)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 123, topPos + 35, 7, 34, menu.getPower(), menu.getMaxPower());
         } else if (menu.getOutputTank().type() == HbmFluids.NONE
-                && isHovering(-16, 68, 16, 16, mouseX, mouseY)) {
-            graphics.renderTooltip(font, split(List.of(Component.literal("Error: Invalid fluid!"))),
-                    mouseX, mouseY);
+                && LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, -16, 68, 16, 16)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 68, 16, 16, leftPos - 8, topPos + 84,
+                    List.of(Component.literal("Error: Invalid fluid!")));
         }
         renderTooltip(graphics, mouseX, mouseY);
     }
@@ -86,7 +87,4 @@ public class LegacyLargeTurbineScreen extends AbstractContainerScreen<LegacyLarg
         }
     }
 
-    private static List<net.minecraft.util.FormattedCharSequence> split(List<Component> tooltip) {
-        return tooltip.stream().map(Component::getVisualOrderText).toList();
-    }
 }

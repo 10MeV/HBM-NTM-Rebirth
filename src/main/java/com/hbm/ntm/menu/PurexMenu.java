@@ -72,7 +72,7 @@ public class PurexMenu extends AbstractContainerMenu {
     }
 
     public int getProgressWidth(int maxWidth) {
-        return progress * maxWidth / 10_000;
+        return (int) Math.ceil(progress * maxWidth / 10_000.0D);
     }
 
     public int getPowerBarHeight(int maxHeight) {

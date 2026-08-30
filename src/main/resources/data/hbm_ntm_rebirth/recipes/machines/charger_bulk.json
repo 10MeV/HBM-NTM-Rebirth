@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "G": { "item": "minecraft:glowstone" },
+    "S": { "item": "hbm_ntm_rebirth:block_steel" },
+    "C": { "item": "hbm_ntm_rebirth:coil_copper_torus" }
+  },
+  "pattern": [
+    "G",
+    "S",
+    "C"
+  ],
+  "result": {
+    "count": 16,
+    "item": "hbm_ntm_rebirth:charger"
+  },
+  "show_notification": true
+}

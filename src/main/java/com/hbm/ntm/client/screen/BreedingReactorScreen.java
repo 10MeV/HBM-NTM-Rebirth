@@ -40,11 +40,12 @@ public class BreedingReactorScreen extends AbstractContainerScreen<BreedingReact
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(-16, 16, 16, 16, mouseX, mouseY)) {
-            graphics.renderComponentTooltip(font, List.of(
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, -16, 16, 16, 16)) {
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 16, 16, 16, leftPos - 8, topPos + 32, List.of(
                     Component.literal("The reactor has to recieve"),
                     Component.literal("neutron flux from adjacent"),
-                    Component.literal("research reactors to breed.")), mouseX, mouseY);
+                    Component.literal("research reactors to breed.")));
         }
         renderTooltip(graphics, mouseX, mouseY);
     }

@@ -2,6 +2,7 @@ package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.block.LegacyMachineDefinition;
+import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
 import com.hbm.ntm.blockentity.SolidifierBlockEntity;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
@@ -13,15 +14,20 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEntity> {
     private static final LegacyWavefrontModel MODEL = ObjModelLibrary.MACHINE_SOLIDIFIER;
+    private static final LegacyWavefrontModel.SelectionHandle MAIN =
+            MODEL.prepareRenderOnlyInCallOrder("Main");
     private static final LegacyWavefrontModel.SelectionHandle FLUID =
             MODEL.prepareRenderOnlyInCallOrder("Fluid");
     private static final LegacyWavefrontModel.SelectionHandle GLASS =
             MODEL.prepareRenderOnlyInCallOrder("Glass");
+    private static final ResourceLocation WHITE_TEXTURE =
+            new ResourceLocation("minecraft", "textures/misc/white.png");
     private static final int GLASS_RED = 191;
     private static final int GLASS_GREEN = 255;
     private static final int GLASS_BLUE = 255;
@@ -70,14 +76,19 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
         double fluidHeight = fluidHeight(blockEntity.getTank().getFill(), blockEntity.getTank().getMaxFill());
         int fluidColor = blockEntity.getTank().getTankType().getColor();
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
-            enqueueFluid(fluidHeight, fluidColor, poseStack, buffer);
-            enqueueGlass(poseStack, buffer, modelLight, packedOverlay);
+            if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
+                MODEL.renderOnlyInCallOrder(MODEL.textureLocation(), poseStack, buffer, modelLight, packedOverlay,
+                        MAIN, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
+            }
+            enqueueFluid(fluidHeight, fluidColor, poseStack, buffer, packedLight, packedOverlay);
+            enqueueGlass(poseStack, buffer, packedLight, packedOverlay);
         }
 
         poseStack.popPose();
     }
 
-    private static void enqueueFluid(double height, int fluidColor, PoseStack poseStack, MultiBufferSource buffer) {
+    private static void enqueueFluid(double height, int fluidColor, PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
         if (height <= 0.0D) {
             return;
         }
@@ -85,9 +96,11 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
         poseStack.translate(0.0D, LegacyTileRenderPlans.SOLIDIFIER_FLUID_PIVOT_Y, 0.0D);
         poseStack.scale(1.0F, (float) height, 1.0F);
         poseStack.translate(0.0D, -LegacyTileRenderPlans.SOLIDIFIER_FLUID_PIVOT_Y, 0.0D);
-        LegacyMachineEffectPresenter.enqueueUntexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
-                poseStack, buffer, parts -> parts.add(MODEL, FLUID, red(fluidColor), green(fluidColor),
-                        blue(fluidColor), 255, LegacyTexturedRenderMode.CUTOUT_NO_CULL));
+        LegacyMachineEffectPresenter.enqueueTexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
+                poseStack, buffer, parts -> parts.add(MODEL, FLUID, WHITE_TEXTURE, packedLight,
+                        packedOverlay, red(fluidColor), green(fluidColor), blue(fluidColor), 255, false,
+                        LegacyTexturedRenderMode.LIGHTMAP_ONLY_CUTOUT_NO_CULL,
+                        LegacyWavefrontModel.UvTransform.DEFAULT));
         poseStack.popPose();
     }
 

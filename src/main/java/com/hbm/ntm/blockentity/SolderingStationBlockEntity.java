@@ -115,7 +115,8 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(AccessibleItemHandler::new);
 
     private long consumption = DEFAULT_CONSUMPTION;
     private int progress;
@@ -553,8 +554,57 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public CompoundTag getUpdateTag() {
-        return new CompoundTag();
-}
+        return getClientSyncTag();
+    }
+
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong("power", energy.getPower());
+        tag.putLong("maxPower", energy.getMaxPower());
+        tag.putLong("consumption", consumption);
+        tag.putInt("progress", progress);
+        tag.putInt("processTime", processTime);
+        tag.putBoolean("collisionPrevention", collisionPrevention);
+        tag.putBoolean("isOn", isOn);
+        tank.writeToNbt(tag, "t");
+        if (!displayStack.isEmpty()) {
+            tag.put(TAG_DISPLAY, displayStack.save(new CompoundTag()));
+        }
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("power")) {
+            energy.setPower(tag.getLong("power"));
+        }
+        if (tag.contains("maxPower")) {
+            setDynamicMaxPower(tag.getLong("maxPower"));
+        }
+        if (tag.contains("consumption")) {
+            consumption = Math.max(1L, tag.getLong("consumption"));
+        }
+        if (tag.contains("progress")) {
+            progress = tag.getInt("progress");
+        }
+        if (tag.contains("processTime")) {
+            processTime = Math.max(1, tag.getInt("processTime"));
+        }
+        if (tag.contains("collisionPrevention")) {
+            collisionPrevention = tag.getBoolean("collisionPrevention");
+        }
+        if (tag.contains("isOn")) {
+            isOn = tag.getBoolean("isOn");
+        }
+        if (tag.contains("t") || tag.contains("t_type") || tag.contains("t_type_id")) {
+            tank.readFromNbt(tag, "t");
+        }
+        displayStack = tag.contains(TAG_DISPLAY)
+                ? ItemStack.of(tag.getCompound(TAG_DISPLAY))
+                : ItemStack.EMPTY;
+    }
 
     @Nullable
     @Override
@@ -566,12 +616,13 @@ public class SolderingStationBlockEntity extends HbmEnergyAndFluidBlockEntity
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? itemHandler : externalItemHandler).cast();
         }
         return super.getCapability(capability, side);
     }

@@ -15,6 +15,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -33,6 +34,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @SuppressWarnings("deprecation")
 public class CraneLogisticsBlock extends Block implements EntityBlock, IEnterableBlock, Toolable {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
@@ -46,6 +49,20 @@ public class CraneLogisticsBlock extends Block implements EntityBlock, IEnterabl
 
     public CraneLogisticsBlockEntity.Kind kind() {
         return kind;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable net.minecraft.world.level.BlockGetter level,
+            List<net.minecraft.network.chat.Component> tooltip, TooltipFlag flag) {
+        LegacyStandardInfoTooltip.append(tooltip, switch (kind) {
+            case EXTRACTOR -> "crane_extractor";
+            case INSERTER -> "crane_inserter";
+            case GRABBER -> "crane_grabber";
+            case ROUTER -> "crane_router";
+            case BOXER -> "crane_boxer";
+            case UNBOXER -> "crane_unboxer";
+            case PARTITIONER -> "crane_partitioner";
+        });
     }
 
     @Override
@@ -77,7 +94,14 @@ public class CraneLogisticsBlock extends Block implements EntityBlock, IEnterabl
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
             BlockHitResult hit) {
-        if (!player.isShiftKeyDown() && !level.isClientSide && player instanceof ServerPlayer serverPlayer
+        // CranePartitioner is a plain BlockContainer in 1.7.10: it has no
+        // activation override or IGUIProvider.  The remaining crane blocks
+        // only open when not sneaking; their legacy sneaking branch returns
+        // false so held-item interactions remain available.
+        if (kind == CraneLogisticsBlockEntity.Kind.PARTITIONER || player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof CraneLogisticsBlockEntity crane) {
             NetworkHooks.openScreen(serverPlayer, crane, pos);
         }

@@ -41,7 +41,6 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
-        int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         ItemStack stack = blockEntity.getRenderStack();
         double progress = normalizedPress(blockEntity.getInterpolatedPress(partialTick),
                 BasicMachineBlockEntity.MAX_PRESS);
@@ -56,7 +55,7 @@ public class BasicMachineRenderer implements BlockEntityRenderer<BasicMachineBlo
                 poseStack.scale(0.99F, 1.0F, 0.99F);
                 poseStack.translate(0.0D, headTranslateY, 0.0D);
                 ObjMachineModels.PRESS_HEAD_LEGACY.renderAll(ObjMachineModels.PRESS_HEAD_TEXTURE, poseStack, buffer,
-                        modelLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+                        packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
                 poseStack.popPose();
             }
         }

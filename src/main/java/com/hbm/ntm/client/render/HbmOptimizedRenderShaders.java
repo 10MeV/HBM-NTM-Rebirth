@@ -21,12 +21,18 @@ public final class HbmOptimizedRenderShaders {
             new ResourceLocation(HbmNtm.MOD_ID, "block_lit_static");
     private static final ResourceLocation LEGACY_STANDARD_ITEM_LIT_STATIC =
             new ResourceLocation(HbmNtm.MOD_ID, "legacy_standard_item_lit_static");
+    private static final ResourceLocation LEGACY_STANDARD_ITEM_LIT_SOLID =
+            new ResourceLocation(HbmNtm.MOD_ID, "legacy_standard_item_lit_solid");
+    private static final ResourceLocation LEGACY_TEXTURED_ADDITIVE =
+            new ResourceLocation(HbmNtm.MOD_ID, "legacy_textured_additive");
     private static final ResourceLocation BLOCK_UNTEXTURED_INSTANCED =
             new ResourceLocation(HbmNtm.MOD_ID, "block_untextured_instanced");
 
     private static ShaderInstance blockLitInstancedShader;
     private static ShaderInstance blockLitStaticShader;
     private static ShaderInstance legacyStandardItemLitStaticShader;
+    private static ShaderInstance legacyStandardItemLitSolidShader;
+    private static ShaderInstance legacyTexturedAdditiveShader;
     private static ShaderInstance blockUntexturedInstancedShader;
 
     private HbmOptimizedRenderShaders() {
@@ -36,6 +42,8 @@ public final class HbmOptimizedRenderShaders {
         blockLitInstancedShader = null;
         blockLitStaticShader = null;
         legacyStandardItemLitStaticShader = null;
+        legacyStandardItemLitSolidShader = null;
+        legacyTexturedAdditiveShader = null;
         blockUntexturedInstancedShader = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(), BLOCK_LIT_INSTANCED,
                 blockLitInstancedFormat()), shader -> {
@@ -51,6 +59,16 @@ public final class HbmOptimizedRenderShaders {
                 DefaultVertexFormat.NEW_ENTITY), shader -> {
             legacyStandardItemLitStaticShader = shader;
             HbmNtm.LOGGER.info("Registered HBM legacy standard-item-light static shader.");
+        });
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), LEGACY_STANDARD_ITEM_LIT_SOLID,
+                DefaultVertexFormat.NEW_ENTITY), shader -> {
+            legacyStandardItemLitSolidShader = shader;
+            HbmNtm.LOGGER.info("Registered HBM legacy standard-item-light solid shader.");
+        });
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), LEGACY_TEXTURED_ADDITIVE,
+                DefaultVertexFormat.NEW_ENTITY), shader -> {
+            legacyTexturedAdditiveShader = shader;
+            HbmNtm.LOGGER.info("Registered HBM legacy textured additive shader.");
         });
         event.registerShader(new ShaderInstance(event.getResourceProvider(), BLOCK_UNTEXTURED_INSTANCED,
                 blockLitInstancedFormat()), shader -> {
@@ -72,6 +90,19 @@ public final class HbmOptimizedRenderShaders {
      */
     public static ShaderInstance legacyStandardItemLitStaticShader() {
         return legacyStandardItemLitStaticShader;
+    }
+
+    /** Solid-item variant matching vanilla entity-solid's no-alpha-test contract. */
+    public static ShaderInstance legacyStandardItemLitSolidShader() {
+        return legacyStandardItemLitSolidShader;
+    }
+
+    /**
+     * NEW_ENTITY-compatible shader whose program blend is SRC_ALPHA/ONE.  The shader program must own the same
+     * blend function as the RenderType because ShaderInstance#apply runs after RenderType state setup.
+     */
+    public static ShaderInstance legacyTexturedAdditiveShader() {
+        return legacyTexturedAdditiveShader;
     }
 
     public static ShaderInstance blockUntexturedInstancedShader() {

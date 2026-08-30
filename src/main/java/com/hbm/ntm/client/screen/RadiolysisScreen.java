@@ -3,6 +3,8 @@ package com.hbm.ntm.client.screen;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.menu.RadiolysisMenu;
+import com.hbm.ntm.util.RtgPelletRuntime;
+import java.util.Arrays;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -52,29 +54,38 @@ public class RadiolysisScreen extends AbstractContainerScreen<RadiolysisMenu> {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (isHovering(61, 17, 8, 52, mouseX, mouseY)) {
+        if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 61, 17, 8, 52)) {
             renderTankTooltip(graphics, menu.getInputTank(), mouseX, mouseY);
-        } else if (isHovering(87, 17, 12, 16, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 87, 17, 12, 16)) {
             renderTankTooltip(graphics, menu.getOutputTank1(), mouseX, mouseY);
-        } else if (isHovering(87, 53, 12, 16, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 87, 53, 12, 16)) {
             renderTankTooltip(graphics, menu.getOutputTank2(), mouseX, mouseY);
-        } else if (isHovering(8, 17, 16, 34, mouseX, mouseY)) {
+        } else if (LegacyGuiElements.checkClick(mouseX, mouseY, leftPos, topPos, 8, 17, 16, 34)) {
             LegacyGuiElements.renderElectricityTooltip(graphics, font, mouseX, mouseY,
                     leftPos + 8, topPos + 17, 16, 34, menu.getPower(), menu.getMaxPower());
         } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 16, 16, 16)) {
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(
-                    Component.translatableWithFallback("desc.gui.radiolysis.desc",
-                            "Splits compatible fluids using RTG heat.")), mouseX, mouseY);
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 16, 16, 16, leftPos - 8, topPos + 32,
+                    splitLegacyInfo(Component.translatableWithFallback("desc.gui.radiolysis.desc",
+                            "\u00a79Description\u00a7r$This RTG is more efficient then others, and$"
+                                    + "comes equipped with a radiolysis chamber for$cracking and sterilization.")));
         } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 34, 16, 16)) {
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 34, 16, 16, leftPos - 8, topPos + 50,
                     Component.translatableWithFallback("desc.gui.rtg.heat",
-                            "Heat: " + menu.getHeat(), menu.getHeat()),
-                    Component.literal(menu.getProduction() + " HE/t")), mouseX, mouseY);
+                            "\u00a7eCurrent heat level: %s", menu.getHeat()));
         } else if (LegacyGuiElements.isMouseOver(mouseX, mouseY, leftPos - 16, topPos + 52, 16, 16)) {
-            LegacyGuiElements.renderTooltip(graphics, font, List.of(
-                    Component.translatableWithFallback("desc.gui.rtg.pellets", "RTG pellets")), mouseX, mouseY);
+            LegacyGuiElements.renderCustomInfoTooltip(graphics, font, mouseX, mouseY,
+                    leftPos - 16, topPos + 52, 16, 16, leftPos - 8, topPos + 68,
+                    RtgPelletRuntime.acceptedPelletTooltip(10));
         }
         renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    private static List<Component> splitLegacyInfo(Component text) {
+        return Arrays.stream(text.getString().split("\\$"))
+                .map(line -> (Component) Component.literal(line))
+                .toList();
     }
 
     private void renderTankTooltip(GuiGraphics graphics, HbmFluidGuiHelper.TankData tank, int mouseX, int mouseY) {

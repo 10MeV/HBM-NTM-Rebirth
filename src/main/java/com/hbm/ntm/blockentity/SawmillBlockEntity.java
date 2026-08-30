@@ -6,10 +6,13 @@ import com.hbm.ntm.api.block.LegacyLookOverlayLines;
 import com.hbm.ntm.api.block.LegacyLookOverlayProvider;
 import com.hbm.ntm.api.tile.HeatSource;
 import com.hbm.ntm.block.LegacyVisibleMultiblockMachineBlock;
+import com.hbm.ntm.damage.EntityDamageUtil;
 import com.hbm.ntm.entity.projectile.MachinePartProjectileEntity;
 import com.hbm.ntm.entity.projectile.SawbladeEntity;
 import com.hbm.ntm.network.HbmLegacyLoadedTile;
 import com.hbm.ntm.network.HbmLegacyLoadedTileState;
+import com.hbm.ntm.particle.ParticleUtil;
+import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import com.hbm.ntm.sound.LegacySoundPlayer;
@@ -43,6 +46,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -75,6 +79,7 @@ public class SawmillBlockEntity extends BlockEntity
     private static final String TAG_SPIN = "spin";
     private static final String TAG_LAST_SPIN = "lastSpin";
     private static final String TAG_MISSING_BLADE = "missingBlade";
+    private static final String TAG_SYNC_SLOT_PREFIX = "syncSlot";
     private static final TagKey<Item> WOODEN_RODS =
             ItemTags.create(new ResourceLocation("forge", "rods/wooden"));
 
@@ -121,6 +126,7 @@ public class SawmillBlockEntity extends BlockEntity
             }
             if (sawmill.heat >= MIN_HEAT) {
                 sawmill.processInput(level);
+                sawmill.damageEntitiesInBladePath(level, pos);
             } else {
                 sawmill.progress = 0;
             }
@@ -454,13 +460,65 @@ public class SawmillBlockEntity extends BlockEntity
 
     @Override
     public CompoundTag getClientSyncTag() {
-        return new CompoundTag();
+        // TileEntitySawmill#serialize has no TileEntityMachineBase prefix: its
+        // complete client contract is heat, progress, blade state and three slots.
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(TAG_HEAT, heat);
+        tag.putInt(TAG_PROGRESS, progress);
+        tag.putBoolean(TAG_HAS_BLADE, hasBlade);
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            ItemStack stack = items.getStackInSlot(slot);
+            if (!stack.isEmpty()) {
+                tag.put(TAG_SYNC_SLOT_PREFIX + slot, stack.save(new CompoundTag()));
+            }
+        }
+        return tag;
+    }
+
+    /**
+     * {@code TileEntitySawmill#updateEntity()} damages every living target in
+     * the narrow, facing-rotated blade strip while the saw is hot enough to
+     * operate.  This is intentionally separate from the visible multiblock
+     * collision boxes: the legacy strip is the blade's damage path, not a
+     * generic machine-volume attack.
+     */
+    private void damageEntitiesInBladePath(Level level, BlockPos pos) {
+        AABB bladePath = rotateLegacyBladePath(getFacing())
+                .move(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+        for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, bladePath,
+                LivingEntity::isAlive)) {
+            if (!EntityDamageUtil.attackEntityFromNt(living,
+                    ModDamageSources.source(level, ModDamageSources.BLENDER), 100.0F)) {
+                continue;
+            }
+            LegacySoundPlayer.playSoundAtEntity(living, "mob.zombie.woodbreak", SoundSource.HOSTILE,
+                    2.0F, 0.95F + level.random.nextFloat() * 0.2F);
+            int count = Math.min((int) Math.ceil(living.getMaxHealth() / 4.0F), 250);
+            ParticleUtil.spawnVanillaRedstoneBlockDustBurst(level, living.getX(),
+                    living.getY() + living.getBbHeight() * 0.5D, living.getZ(), count * 4, 0.1D);
+        }
+    }
+
+    private static AABB rotateLegacyBladePath(Direction facing) {
+        // MachineSawmill rotates the legacy strip by dir.getRotation(UP).
+        // These mappings also match the source-backed Sawmill collision
+        // orientation in ModBlocks.
+        AABB box = new AABB(-1.0D, 0.375D, -1.0D, -0.875D, 2.375D, 1.0D);
+        return switch (facing) {
+            case NORTH -> new AABB(-box.maxZ, box.minY, box.minX,
+                    -box.minZ, box.maxY, box.maxX);
+            case EAST -> new AABB(-box.maxX, box.minY, -box.maxZ,
+                    -box.minX, box.maxY, -box.minZ);
+            case SOUTH -> new AABB(box.minZ, box.minY, -box.maxX,
+                    box.maxZ, box.maxY, -box.minX);
+            default -> box;
+        };
     }
 
     @Override
     public CompoundTag getUpdateTag() {
         return getClientSyncTag();
-}
+    }
 
     @Nullable
     @Override
@@ -470,12 +528,28 @@ public class SawmillBlockEntity extends BlockEntity
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        CompoundTag tag = packet.getTag();
+        if (tag != null) {
+            handleClientSyncTag(tag);
+        }
     }
 
     @Override
     public void handleClientSyncTag(CompoundTag tag) {
-        load(tag);
+        heat = Math.max(0, tag.getInt(TAG_HEAT));
+        progress = Math.max(0, tag.getInt(TAG_PROGRESS));
+        hasBlade = !tag.contains(TAG_HAS_BLADE) || tag.getBoolean(TAG_HAS_BLADE);
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            String key = TAG_SYNC_SLOT_PREFIX + slot;
+            items.setStackInSlot(slot, tag.contains(key, Tag.TAG_COMPOUND)
+                    ? ItemStack.of(tag.getCompound(key))
+                    : ItemStack.EMPTY);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag) {
+        handleClientSyncTag(tag);
     }
 
     @Override
