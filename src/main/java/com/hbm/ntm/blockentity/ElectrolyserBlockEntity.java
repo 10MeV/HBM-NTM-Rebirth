@@ -816,9 +816,11 @@ public class ElectrolyserBlockEntity extends HbmEnergyAndFluidBlockEntity
         // input or its two product buffers across a mode switch; the metal page's nitric
         // acid reagent is deliberately retained.
         clearFluidModeBuffers();
-        player.closeContainer();
-        net.minecraftforge.network.NetworkHooks.openScreen(player, this, worldPosition);
         setChanged();
+        if (level != null) {
+            BlockState state = getBlockState();
+            level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_CLIENTS);
+        }
     }
 
     private void clearFluidModeBuffers() {

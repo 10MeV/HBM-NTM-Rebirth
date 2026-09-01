@@ -76,6 +76,10 @@ public class RBMKControlState {
         tick(poweredControlRod, settings.controlSpeedModifier());
     }
 
+    public void clientTick() {
+        lastLevel = level;
+    }
+
     public void load(CompoundTag tag) {
         setLevel(tag.getDouble(TAG_LEVEL));
         setTargetLevel(tag.getDouble(TAG_TARGET_LEVEL));

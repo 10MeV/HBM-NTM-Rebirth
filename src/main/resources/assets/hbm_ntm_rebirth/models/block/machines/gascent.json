@@ -6,5 +6,5 @@
   "model": "hbm_ntm_rebirth:models/block/machines/gascent.obj",
   "automatic_culling": false,
   "flip_v": true,
-  "textures": { "particle": "hbm_ntm_rebirth:block/machines/gascent", "default": "hbm_ntm_rebirth:block/machines/gascent" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/machines/gascent", "default": "hbm_ntm_rebirth:models/machines/gascent" }
 }

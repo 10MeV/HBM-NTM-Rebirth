@@ -6,5 +6,5 @@
   "model": "hbm_ntm_rebirth:models/particleaccelerator/source.obj",
   "automatic_culling": false,
   "flip_v": true,
-  "textures": { "particle": "hbm_ntm_rebirth:block/particleaccelerator/source", "default": "hbm_ntm_rebirth:block/particleaccelerator/source" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/particleaccelerator/source", "default": "hbm_ntm_rebirth:models/particleaccelerator/source" }
 }

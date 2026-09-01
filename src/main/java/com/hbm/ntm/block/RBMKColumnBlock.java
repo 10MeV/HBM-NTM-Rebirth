@@ -608,11 +608,13 @@ public class RBMKColumnBlock extends BaseEntityBlock
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
             BlockEntityType<T> type) {
         // TileEntityRBMKBase#updateEntity only advanced the reactor on the
-        // logical server.  The client receives its column state through the
-        // existing sync packet; running the full thermal/neutron/fluid tick
-        // locally would mutate a second, unsynchronised reactor simulation.
+        // logical server. TileEntityRBMKControl kept one narrow client branch
+        // that copied level into lastLevel for render interpolation; preserve
+        // that snapshot without running thermal/neutron/fluid simulation.
         if (level.isClientSide) {
-            return null;
+            return kind.control()
+                    ? createTickerHelper(type, ModBlockEntities.RBMK_COLUMN.get(), RBMKColumnBlockEntity::clientTick)
+                    : null;
         }
         return createTickerHelper(type, ModBlockEntities.RBMK_COLUMN.get(), RBMKColumnBlockEntity::serverTick);
     }

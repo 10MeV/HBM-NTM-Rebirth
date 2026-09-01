@@ -5,6 +5,7 @@ import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.client.render.HbmOverheadMarkers;
 import com.hbm.ntm.particle.LegacyCasingEjectors;
 import com.hbm.ntm.particle.LegacyBlockStateMappings;
+import com.hbm.ntm.particle.ClientParticleBridge;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.client.sound.HbmDelayedSounds;
 import com.hbm.ntm.registry.ModBlocks;
@@ -217,6 +218,14 @@ public final class HbmParticleEffects {
             return false;
         }
         return player.distanceToSqr(x, y, z) < range * range;
+    }
+
+    public static boolean isLocalPlayerWithinInclusive(double x, double y, double z, double range) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return false;
+        }
+        return ClientParticleBridge.isDistanceWithinInclusive(player.distanceToSqr(x, y, z), range);
     }
 
     public static boolean isLocalPlayerWearing(Item item, EquipmentSlot slot) {

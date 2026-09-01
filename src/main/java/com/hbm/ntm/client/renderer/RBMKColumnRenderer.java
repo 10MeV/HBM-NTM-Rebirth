@@ -35,8 +35,8 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
     private static final double PIPE_PAD_MAX_LOW = 0.4375D;
     private static final double PIPE_PAD_MIN_HIGH = 0.5625D;
     private static final double PIPE_PAD_MAX_HIGH = 0.9375D;
-    private static final double PIPE_PAD_MIN_Y = 1.0D;
-    private static final double PIPE_PAD_MAX_Y = 1.125D;
+    private static final double PIPE_PAD_MIN_Y = 0.0D;
+    private static final double PIPE_PAD_MAX_Y = 0.125D;
     private static final FuelChannelSprites RBMK_ELEMENT_TEXTURES = fuelChannelSprites("rbmk_element");
     private static final FuelChannelSprites RBMK_ELEMENT_MOD_TEXTURES = fuelChannelSprites("rbmk_element_mod");
     private static final FuelChannelSprites RBMK_ELEMENT_REASIM_TEXTURES = fuelChannelSprites("rbmk_element_reasim");
@@ -328,6 +328,12 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
         if (sprites == null) {
             return;
         }
+        // RenderBlocks drew these bounds in the air block above the column. Keep
+        // the same local Y range so cropped side UVs select pixels 14..16 instead
+        // of treating 1..1.125 as out-of-block bounds and sampling the transparent
+        // remainder of the legacy icon.
+        poseStack.pushPose();
+        poseStack.translate(0.0D, 1.0D, 0.0D);
         LegacyTexturedQuadRenderer.SpriteQuadBatch batch = LegacyTexturedQuadRenderer.spriteQuadBatch(poseStack,
                 buffer, LegacyTexturedRenderMode.CUTOUT_NO_CULL, 255);
         renderPipePad(sprites.top(), sprites.side(), batch, packedLight,
@@ -338,6 +344,7 @@ public class RBMKColumnRenderer implements BlockEntityRenderer<RBMKColumnBlockEn
                 PIPE_PAD_MIN_HIGH, PIPE_PAD_MIN_HIGH, PIPE_PAD_MAX_HIGH, PIPE_PAD_MAX_HIGH);
         renderPipePad(sprites.top(), sprites.side(), batch, packedLight,
                 PIPE_PAD_MIN_HIGH, PIPE_PAD_MIN_LOW, PIPE_PAD_MAX_HIGH, PIPE_PAD_MAX_LOW);
+        poseStack.popPose();
     }
 
     private static void renderPipePad(TextureAtlasSprite top, TextureAtlasSprite side,

@@ -20,6 +20,6 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/chemical_factory",
-    "default": "hbm_ntm_rebirth:block/machines/chemical_factory"
+    "default": "hbm_ntm_rebirth:models/machines/chemical_factory"
   }
 }

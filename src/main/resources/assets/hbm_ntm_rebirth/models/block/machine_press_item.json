@@ -11,7 +11,7 @@
   "automatic_culling": false,
       "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
       "textures": {
-        "default": "hbm_ntm_rebirth:block/press/press_body"
+        "default": "hbm_ntm_rebirth:models/press_body"
       }
     },
     "head": {
@@ -24,13 +24,13 @@
   "automatic_culling": false,
       "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
       "textures": {
-        "default": "hbm_ntm_rebirth:block/press/press_head"
+        "default": "hbm_ntm_rebirth:models/press_head"
       }
     }
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/press/press_body",
-    "default": "hbm_ntm_rebirth:block/press/press_body"
+    "default": "hbm_ntm_rebirth:models/press_body"
   },
   "display": {
     "gui": {

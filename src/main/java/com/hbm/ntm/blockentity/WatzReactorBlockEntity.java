@@ -109,7 +109,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     private double fluxDisplay;
     private boolean on;
     private boolean locked;
-    private boolean suppressCoreDropsOnRemoval;
 
     public WatzReactorBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.COOLANT, TANK_CAPACITY),
@@ -221,10 +220,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         if ((RORInfo.PREFIX_VALUE + "coolant_hot").equals(name)) return Integer.toString(hotCoolantTank.getFill());
         if ((RORInfo.PREFIX_VALUE + "coolant_cold").equals(name)) return Integer.toString(coolantTank.getFill());
         return null;
-    }
-
-    public boolean suppressCoreDropsOnRemoval() {
-        return suppressCoreDropsOnRemoval;
     }
 
     public List<ItemStack> getDrops() {
@@ -489,7 +484,7 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
     private boolean tickTopSegment(Level level) {
         List<WatzReactorBlockEntity> segments = collectSegments(level);
         boolean turnedOn = level.getBlockState(worldPosition.above(3)).is(ModBlocks.WATZ_PUMP.get())
-                && level.hasNeighborSignal(worldPosition.above(5));
+                && level.getSignal(worldPosition.above(5), Direction.DOWN) > 0;
         SharedTanks shared = assembleSharedTanks(segments);
 
         for (int i = segments.size() - 1; i >= 0; i--) {
@@ -522,7 +517,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     private void explodeOnMudOverflow(Level level) {
         on = false;
-        clearAllPellets();
         clearUpperStructure(level);
         disassembleToMud(level);
         ChunkRadiationManager.proxy.incrementRad(level, worldPosition.above(), 1_000.0F);
@@ -542,16 +536,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
         }
     }
 
-    private void clearAllPellets() {
-        for (int slot = 0; slot < SLOT_COUNT; slot++) {
-            items.setStackInSlot(slot, ItemStack.EMPTY);
-        }
-        for (int slot = 0; slot < locks.length; slot++) {
-            locks[slot] = ItemStack.EMPTY;
-        }
-        locked = false;
-    }
-
     private void clearUpperStructure(Level level) {
         for (int x = -3; x <= 3; x++) {
             for (int y = 3; y < 6; y++) {
@@ -564,7 +548,6 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
 
     private void disassembleToMud(Level level) {
         spawnWatzShrapnel(level);
-        suppressCoreDropsOnRemoval = true;
         level.setBlock(worldPosition, ModBlocks.MUD_BLOCK.get().defaultBlockState(), Block.UPDATE_ALL);
 
         setMud(worldPosition.above());
@@ -609,10 +592,10 @@ public class WatzReactorBlockEntity extends HbmFluidNetworkBlockEntity
             ShrapnelEntity shrapnel = new ShrapnelEntity(level);
             shrapnel.setPos(worldPosition.getX() + 0.5D, worldPosition.getY() + 3.0D, worldPosition.getZ() + 0.5D);
             double motionY = ((level.random.nextFloat() * 0.5D) + 0.5D)
-                    * (1.0D + count / (15.0D + level.random.nextInt(21)))
+                    * (1.0D + count / (15 + level.random.nextInt(21)))
                     + (level.random.nextFloat() / 50.0D * count);
-            double motionX = level.random.nextGaussian() * (1.0D + count / 100.0D);
-            double motionZ = level.random.nextGaussian() * (1.0D + count / 100.0D);
+            double motionX = level.random.nextGaussian() * (1.0D + count / 100);
+            double motionZ = level.random.nextGaussian() * (1.0D + count / 100);
             shrapnel.setDeltaMovement(motionX, motionY, motionZ);
             shrapnel.setWatz(true);
             level.addFreshEntity(shrapnel);

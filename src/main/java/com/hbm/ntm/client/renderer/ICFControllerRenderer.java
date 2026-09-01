@@ -53,7 +53,7 @@ public class ICFControllerRenderer implements BlockEntityRenderer<ICFControllerB
             poseStack.translate(0.5D, 0.5D, 0.5D);
             double beamX = facing.getStepX() * (double) laserLength;
             double beamZ = facing.getStepZ() * (double) laserLength;
-            LegacyMachineEffectPresenter.enqueueSolidBeam(PresentStage.AFTER_BLOCK_ENTITIES, poseStack,
+            LegacyMachineEffectPresenter.enqueueSolidBeam(PresentStage.AFTER_LEVEL, poseStack,
                     buffer, false, beamX, 0.0D, beamZ,
                     LegacyBeamRenderer.WaveType.SPIRAL,
                     LegacyTileRenderPlans.ICF_LASER_OUTER_COLOR,

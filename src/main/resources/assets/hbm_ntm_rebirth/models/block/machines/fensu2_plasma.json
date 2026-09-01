@@ -7,5 +7,5 @@
   "automatic_culling": false,
   "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
   "visibility": { "Wheel": false, "Lights": false, "Plasma": true, "Base": false },
-  "textures": { "particle": "hbm_ntm_rebirth:block/machines/fensu2", "default": "hbm_ntm_rebirth:block/machines/fensu2" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/machines/fensu2", "default": "hbm_ntm_rebirth:models/machines/fensu2" }
 }

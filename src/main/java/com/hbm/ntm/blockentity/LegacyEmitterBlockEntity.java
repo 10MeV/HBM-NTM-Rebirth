@@ -1,7 +1,6 @@
 package com.hbm.ntm.blockentity;
 
 import com.hbm.ntm.block.LegacyEmitterBlock;
-import com.hbm.ntm.client.obj.LegacyEmitterBeamRenderer;
 import com.hbm.ntm.network.HbmLegacyBufPacketReceiver;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -15,6 +14,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import java.awt.Color;
 
 public class LegacyEmitterBlockEntity extends BlockEntity implements HbmLegacyBufPacketReceiver {
     private static final String TAG_BEAM = "beam";
@@ -74,8 +75,11 @@ public class LegacyEmitterBlockEntity extends BlockEntity implements HbmLegacyBu
         int y = (int) (direction.getStepY() * step % beam);
         int z = (int) (direction.getStepZ() * step % beam);
         Vec3 position = Vec3.atCenterOf(pos.offset(x, y, z));
+        int particleColor = color != 0
+                ? color & 0xFFFFFF
+                : Color.HSBtoRGB(level.getGameTime() / 50.0F, 0.5F, 0.25F) & 0xFFFFFF;
         ParticleUtil.spawnEmitterPlasmaBlast(level, position,
-                LegacyEmitterBeamRenderer.emitterColor(level.getGameTime(), color), direction, girth);
+                particleColor, direction, girth);
     }
 
     public int getColor() {
@@ -116,7 +120,7 @@ public class LegacyEmitterBlockEntity extends BlockEntity implements HbmLegacyBu
         if (!state.hasProperty(LegacyEmitterBlock.FACING)) {
             return box.inflate(1.0D);
         }
-        int renderRange = LegacyEmitterBeamRenderer.range(beam);
+        int renderRange = beam - 1;
         if (renderRange <= 0) {
             return box.inflate(1.0D);
         }

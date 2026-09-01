@@ -81,7 +81,7 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
                         MAIN, LegacyTexturedRenderMode.CUTOUT_NO_CULL);
             }
             enqueueFluid(fluidHeight, fluidColor, poseStack, buffer, packedLight, packedOverlay);
-            enqueueGlass(poseStack, buffer, packedLight, packedOverlay);
+            enqueueGlass(poseStack, buffer, modelLight, packedOverlay);
         }
 
         poseStack.popPose();
@@ -107,7 +107,7 @@ public class SolidifierRenderer implements BlockEntityRenderer<SolidifierBlockEn
     private static void enqueueGlass(PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         LegacyMachineEffectPresenter.enqueueTexturedObjPartGroup(PresentStage.AFTER_BLOCK_ENTITIES,
-                poseStack, buffer, parts -> parts.add(MODEL, GLASS, MODEL.textureLocation(), packedLight,
+                poseStack, buffer, parts -> parts.add(MODEL, GLASS, WHITE_TEXTURE, packedLight,
                         packedOverlay, GLASS_RED, GLASS_GREEN, GLASS_BLUE, GLASS_ALPHA, false,
                         LegacyTexturedRenderMode.TRANSLUCENT_NO_DEPTH_WRITE,
                         LegacyWavefrontModel.UvTransform.DEFAULT));

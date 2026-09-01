@@ -22,6 +22,7 @@ import com.hbm.ntm.item.BedrockOreItem.BedrockOreType;
 import com.hbm.ntm.item.ItemMachineUpgrade;
 import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.menu.OreSlopperMenu;
+import com.hbm.ntm.particle.ClientParticleBridge;
 import com.hbm.ntm.particle.ParticleUtil;
 import com.hbm.ntm.radiation.ModDamageSources;
 import com.hbm.ntm.recipe.LegacyMachineUpgradeManager;
@@ -32,6 +33,7 @@ import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -211,7 +213,9 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
             slopper.fan -= 360.0F;
             slopper.prevFan -= 360.0F;
         }
-        if (slopper.animation == SlopperAnimation.DUMPING) {
+        if (slopper.animation == SlopperAnimation.DUMPING
+                && ClientParticleBridge.isLocalPlayerWithinInclusive(
+                        pos.getX() + 0.5D, pos.getY() + 4.0D, pos.getZ() + 0.5D, 50.0D)) {
             Direction dir = slopper.facing();
             ParticleUtil.spawnVanillaExtBlockDust(level,
                     pos.getX() + 0.5D + dir.getStepX() + level.random.nextGaussian() * 0.25D,
@@ -252,7 +256,6 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
             case MOVE_BUCKET -> {
                 slopper.slider -= 1.0F / 50.0F;
                 if (slopper.slider <= 0.0F) {
-                    slopper.slider = 0.0F;
                     slopper.animation = SlopperAnimation.LOWERING;
                     slopper.delay = 10;
                 }
@@ -432,7 +435,7 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     @Override
     public HbmFluidTank getTankToPasteFluidSettings() {
-        return null;
+        return waterTank;
     }
 
     @Override
@@ -540,6 +543,31 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     @Override
+    public boolean canProvideInfo(UpgradeType type, int level, boolean extendedInfo) {
+        return type == UpgradeType.SPEED || type == UpgradeType.EFFECT;
+    }
+
+    @Override
+    public void provideInfo(UpgradeType type, int level, List<Component> info, boolean extendedInfo) {
+        info.add(Component.literal(">>> ")
+                .append(Component.translatable(getBlockState().getBlock().getDescriptionId()))
+                .append(" <<<")
+                .withStyle(ChatFormatting.YELLOW));
+        if (type == UpgradeType.SPEED) {
+            info.add(Component.translatableWithFallback(KEY_DELAY, "Process time %s", "-" + (level * 25) + "%")
+                    .withStyle(ChatFormatting.GREEN));
+            info.add(Component.translatableWithFallback(KEY_CONSUMPTION, "Consumption %s",
+                    "+" + (level * 50) + "%").withStyle(ChatFormatting.RED));
+        }
+        if (type == UpgradeType.EFFECT) {
+            info.add(Component.translatableWithFallback(KEY_EFFICIENCY, "Efficiency %s",
+                    "+" + (level * 10) + "%").withStyle(ChatFormatting.GREEN));
+            info.add(Component.translatableWithFallback(KEY_CONSUMPTION, "Consumption %s",
+                    "+" + (level * 100) + "%").withStyle(ChatFormatting.RED));
+        }
+    }
+
+    @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         HbmInventoryMenuHelper.saveLegacyItemsToTag(tag, items);
@@ -550,14 +578,6 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
         tag.putFloat("progress", progress);
         waterTank.writeToNbt(tag, "water");
         slopTank.writeToNbt(tag, "slop");
-        tag.putLong("consumption", consumption);
-        tag.putBoolean("processing", processing);
-        tag.putString("animation", animation.name());
-        tag.putFloat("slider", slider);
-        tag.putFloat("bucket", bucket);
-        tag.putFloat("blades", blades);
-        tag.putFloat("fan", fan);
-        tag.putInt("delay", delay);
     }
 
     @Override
@@ -576,18 +596,6 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (hasTankTag(tag, "slop")) {
             slopTank.readFromNbt(tag, "slop");
         }
-        consumption = tag.contains("consumption") ? tag.getLong("consumption") : BASE_CONSUMPTION;
-        processing = tag.getBoolean("processing");
-        animation = parseAnimation(tag.getString("animation"));
-        slider = tag.getFloat("slider");
-        prevSlider = slider;
-        bucket = tag.getFloat("bucket");
-        prevBucket = bucket;
-        blades = tag.getFloat("blades");
-        prevBlades = blades;
-        fan = tag.getFloat("fan");
-        prevFan = fan;
-        delay = tag.getInt("delay");
     }
 
     private LegacyMachineUpgradeManager.Levels upgradeLevels() {
@@ -606,14 +614,6 @@ public class OreSlopperBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private static boolean hasTankTag(CompoundTag tag, String key) {
         return tag.contains(key) || tag.contains(key + "_type") || tag.contains(key + "_type_id");
-    }
-
-    private static SlopperAnimation parseAnimation(String name) {
-        try {
-            return SlopperAnimation.valueOf(name);
-        } catch (IllegalArgumentException ignored) {
-            return SlopperAnimation.LOWERING;
-        }
     }
 
     @Override

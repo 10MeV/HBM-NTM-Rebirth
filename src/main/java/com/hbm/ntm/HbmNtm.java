@@ -52,6 +52,7 @@ import com.hbm.ntm.gametest.Mk2PileGameTests;
 import com.hbm.ntm.gametest.LegacySurfacePlantGameTests;
 import com.hbm.ntm.gametest.RuntimeLifecycleGameTests;
 import com.hbm.ntm.gametest.RBMKConsoleGameTests;
+import com.hbm.ntm.gametest.ICFGameTests;
 import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModBlocks;
 import com.hbm.ntm.registry.ModCreativeTabs;
@@ -133,6 +134,12 @@ public class HbmNtm {
      * game or default GameTest behaviour.
      */
     private void registerGameTests(RegisterGameTestsEvent event) {
+        if (Boolean.getBoolean("hbm_ntm.gametest.icfOnly")) {
+            ICFGameTests.register(event);
+            LOGGER.info("Registered only ICF linkage GameTests for this opt-in verification run.");
+            return;
+        }
+
         if (Boolean.getBoolean("hbm_ntm.gametest.materialOnly")) {
             MaterialGameTests.register(event);
             LOGGER.info("Registered only material GameTest batches for this opt-in verification run.");
@@ -156,6 +163,15 @@ public class HbmNtm {
             return;
         }
 
+        if (Boolean.getBoolean("hbm_ntm.gametest.oreSlopperOnly")) {
+            Arrays.stream(EnergyMk2GameTests.class.getDeclaredMethods())
+                    .filter(method -> method.getAnnotation(GameTest.class) != null
+                            && method.getName().toLowerCase(java.util.Locale.ROOT).contains("oreslopper"))
+                    .forEach(event::register);
+            LOGGER.info("Registered only Ore Slopper GameTests for this opt-in verification run.");
+            return;
+        }
+
         EnergyMk2GameTests.register(event);
         MaterialGameTests.register(event);
         LemegetonGameTests.register(event);
@@ -167,6 +183,7 @@ public class HbmNtm {
         LegacySurfacePlantGameTests.register(event);
         RuntimeLifecycleGameTests.register(event);
         RBMKConsoleGameTests.register(event);
+        ICFGameTests.register(event);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

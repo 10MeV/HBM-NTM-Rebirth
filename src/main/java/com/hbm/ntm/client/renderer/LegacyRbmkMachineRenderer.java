@@ -4,6 +4,7 @@ import com.hbm.ntm.client.obj.LegacyRenderColor;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.ObjRbmkModels;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
+import com.hbm.ntm.neutron.RBMKCranePlanner;
 import com.hbm.ntm.neutron.RBMKPanelPlanner;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.Font;
@@ -167,14 +168,15 @@ public final class LegacyRbmkMachineRenderer {
     }
 
     public static void renderCraneConsole(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            int packedOverlay, CraneConsoleState state, float partialTick, long currentMillis) {
+            int packedOverlay, RBMKCranePlanner.CraneConsoleRenderState state, float partialTick, long currentMillis) {
         renderCraneConsole(poseStack, buffer, packedLight, packedOverlay, state, partialTick, currentMillis, true);
     }
 
     public static void renderCraneConsole(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            int packedOverlay, CraneConsoleState state, float partialTick, long currentMillis,
+            int packedOverlay, RBMKCranePlanner.CraneConsoleRenderState state, float partialTick, long currentMillis,
             boolean renderStaticBody) {
-        CraneConsoleState safe = state == null ? CraneConsoleState.EMPTY : state;
+        RBMKCranePlanner.CraneConsoleRenderState safe =
+                state == null ? RBMKCranePlanner.CraneConsoleRenderState.EMPTY : state;
         double joystickFront = interpolate(safe.lastTiltFront(), safe.tiltFront(), partialTick);
         double joystickLeft = interpolate(safe.lastTiltLeft(), safe.tiltLeft(), partialTick);
         double wobble = Math.sin((currentMillis * CRANE_METER_WOBBLE_SPEED) % 360.0D) * CRANE_METER_WOBBLE_SCALE;
@@ -303,7 +305,7 @@ public final class LegacyRbmkMachineRenderer {
     }
 
     public static void renderCrane(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
-            CraneState state, float partialTick) {
+            RBMKCranePlanner.CraneRenderState state, float partialTick) {
         if (state == null || !state.setUp()) {
             return;
         }
@@ -314,7 +316,7 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.pushPose();
         poseStack.translate(-posFront, 0.0D, posLeft);
         LegacyPoseRotations.rotateYDegrees(poseStack, normalizedCraneRotation(state.craneRotationOffset()));
-        renderCraneGirder(poseStack, buffer, packedLight, packedOverlay, state.spans(), posFront, posLeft,
+        renderCraneGirder(poseStack, buffer, packedLight, packedOverlay, state.bounds(), posFront, posLeft,
                 state.craneRotationOffset());
         ObjRbmkModels.renderCranePart("Main", poseStack, buffer, packedLight, packedOverlay,
                 LegacyTexturedRenderMode.CUTOUT_NO_CULL);
@@ -326,8 +328,9 @@ public final class LegacyRbmkMachineRenderer {
     }
 
     public static void renderCraneGirder(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            int packedOverlay, CraneSpans spans, double posFront, double posLeft, int craneRotationOffset) {
-        CraneSpans safe = spans == null ? CraneSpans.ZERO : spans;
+            int packedOverlay, RBMKCranePlanner.CraneBounds bounds, double posFront, double posLeft,
+            int craneRotationOffset) {
+        RBMKCranePlanner.CraneBounds safe = bounds == null ? RBMKCranePlanner.CraneBounds.ZERO : bounds;
         GirderPlan plan = girderPlan(safe, posFront, posLeft, craneRotationOffset);
         poseStack.pushPose();
         LegacyPoseRotations.rotateYDegrees(poseStack, -normalizedCraneRotation(craneRotationOffset));
@@ -356,8 +359,9 @@ public final class LegacyRbmkMachineRenderer {
         poseStack.popPose();
     }
 
-    public static GirderPlan girderPlan(CraneSpans spans, double posFront, double posLeft, int craneRotationOffset) {
-        CraneSpans safe = spans == null ? CraneSpans.ZERO : spans;
+    public static GirderPlan girderPlan(RBMKCranePlanner.CraneBounds bounds, double posFront, double posLeft,
+            int craneRotationOffset) {
+        RBMKCranePlanner.CraneBounds safe = bounds == null ? RBMKCranePlanner.CraneBounds.ZERO : bounds;
         return switch (normalizedCraneRotation(craneRotationOffset)) {
             case 90 -> new GirderPlan(safe.spanLeft() + safe.spanRight() + 1, 0.0D, -posLeft - safe.spanRight());
             case 180 -> new GirderPlan(safe.spanFront() + safe.spanBack() + 1, posFront - safe.spanFront(), 0.0D);
@@ -464,37 +468,6 @@ public final class LegacyRbmkMachineRenderer {
     }
 
     public record TerminalLine(String text, int color, int index) {
-    }
-
-    public record CraneConsoleState(
-            double lastTiltFront,
-            double tiltFront,
-            double lastTiltLeft,
-            double tiltLeft,
-            double loadedHeat,
-            double loadedEnrichment,
-            boolean loading,
-            boolean loaded,
-            boolean validTarget) {
-        public static final CraneConsoleState EMPTY =
-                new CraneConsoleState(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, false, false, false);
-    }
-
-    public record CraneState(
-            boolean setUp,
-            int height,
-            CraneSpans spans,
-            double lastPosFront,
-            double posFront,
-            double lastPosLeft,
-            double posLeft,
-            double lastProgress,
-            double progress,
-            int craneRotationOffset) {
-    }
-
-    public record CraneSpans(int spanFront, int spanBack, int spanLeft, int spanRight) {
-        public static final CraneSpans ZERO = new CraneSpans(0, 0, 0, 0);
     }
 
     public record GirderPlan(int span, double translateX, double translateZ) {

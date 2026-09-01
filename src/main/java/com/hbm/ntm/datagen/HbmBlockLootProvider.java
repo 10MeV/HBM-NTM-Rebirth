@@ -97,6 +97,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .filter(block -> block != ModBlocks.FLUID_DUCT_NEO
                         && block != ModBlocks.FLUID_DUCT_BOX
                         && block != ModBlocks.FLUID_DUCT_EXHAUST)
+                .filter(block -> block != ModBlocks.WATZ)
                 .forEach(block -> dropSelf(block.get()));
         ModBlocks.TURRET_TAB_BLOCKS.stream()
                 .filter(block -> block != ModBlocks.TURRET_HOWARD_DAMAGED
@@ -104,6 +105,7 @@ public class HbmBlockLootProvider extends BlockLootSubProvider {
                 .forEach(block -> dropSelf(block.get()));
         addNoDrop(ModBlocks.TURRET_HOWARD_DAMAGED.get());
         addNoDrop(ModBlocks.TURRET_SENTRY_DAMAGED.get());
+        addNoDrop(ModBlocks.WATZ.get());
         dropSelf(ModBlocks.RAIL_NARROW_STRAIGHT.get());
         dropSelf(ModBlocks.RAIL_LARGE_STRAIGHT.get());
         dropSelf(ModBlocks.RAIL_LARGE_STRAIGHT_SHORT.get());

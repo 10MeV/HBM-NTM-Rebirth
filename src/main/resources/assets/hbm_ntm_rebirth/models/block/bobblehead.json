@@ -9,8 +9,8 @@
   "render_type": "hbm_ntm_rebirth:legacy_lit_solid",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/trinkets/socket",
-    "default": "hbm_ntm_rebirth:block/trinkets/socket",
-    "texture0": "hbm_ntm_rebirth:block/trinkets/socket"
+    "default": "hbm_ntm_rebirth:models/trinkets/socket",
+    "texture0": "hbm_ntm_rebirth:models/trinkets/socket"
   },
   "display": {
     "gui": {

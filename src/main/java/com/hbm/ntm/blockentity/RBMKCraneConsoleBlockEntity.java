@@ -206,12 +206,11 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
                 new RBMKCranePlanner.CranePosition(posFront, posLeft));
     }
 
-    public com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneConsoleState consoleRenderState() {
+    public RBMKCranePlanner.CraneConsoleRenderState consoleRenderState() {
         if (!hasCompleteLayout()) {
-            return new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneConsoleState(
-                    0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, false, false, false);
+            return RBMKCranePlanner.CraneConsoleRenderState.EMPTY;
         }
-        return new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneConsoleState(
+        return new RBMKCranePlanner.CraneConsoleRenderState(
                 lastTiltFront,
                 tiltFront,
                 lastTiltLeft,
@@ -223,17 +222,16 @@ public class RBMKCraneConsoleBlockEntity extends BlockEntity implements HbmLegac
                 isAboveValidTarget());
     }
 
-    public com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneState craneRenderState() {
+    public RBMKCranePlanner.CraneRenderState craneRenderState() {
         if (!hasCompleteLayout()) {
-            return new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneState(
-                    false, 0,
-                    new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneSpans(0, 0, 0, 0),
+            return new RBMKCranePlanner.CraneRenderState(
+                    false, 0, RBMKCranePlanner.CraneBounds.ZERO,
                     0.0D, 0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 0);
         }
-        return new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneState(
+        return new RBMKCranePlanner.CraneRenderState(
                 setUpCrane,
                 height,
-                new com.hbm.ntm.client.renderer.LegacyRbmkMachineRenderer.CraneSpans(spanF, spanB, spanL, spanR),
+                new RBMKCranePlanner.CraneBounds(spanF, spanB, spanL, spanR),
                 lastPosFront,
                 posFront,
                 lastPosLeft,

@@ -22,5 +22,5 @@
       "Jet": false,
       "Body": false
   },
-  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/plasma_glow", "default": "hbm_ntm_rebirth:block/fusion/plasma_glow" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/plasma_glow", "default": "hbm_ntm_rebirth:models/fusion/plasma_glow" }
 }

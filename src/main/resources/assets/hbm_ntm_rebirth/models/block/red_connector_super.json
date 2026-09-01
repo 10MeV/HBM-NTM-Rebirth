@@ -16,7 +16,7 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/network/connector_super",
-    "default": "hbm_ntm_rebirth:block/network/connector_super",
-    "texture0": "hbm_ntm_rebirth:block/network/connector_super"
+    "default": "hbm_ntm_rebirth:models/network/connector_super",
+    "texture0": "hbm_ntm_rebirth:models/network/connector_super"
   }
 }

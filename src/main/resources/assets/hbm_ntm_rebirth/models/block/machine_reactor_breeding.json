@@ -13,6 +13,6 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/reactors/breeder",
-    "default": "hbm_ntm_rebirth:block/reactors/breeder"
+    "default": "hbm_ntm_rebirth:models/machines/breeder"
   }
 }

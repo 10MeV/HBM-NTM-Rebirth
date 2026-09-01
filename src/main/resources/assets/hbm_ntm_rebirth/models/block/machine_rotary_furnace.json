@@ -18,6 +18,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/rotary_furnace",
-    "default": "hbm_ntm_rebirth:block/machines/rotary_furnace"
+    "default": "hbm_ntm_rebirth:models/machines/rotary_furnace"
   }
 }

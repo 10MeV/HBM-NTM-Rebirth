@@ -1,6 +1,7 @@
 package com.hbm.ntm.menu;
 
 import com.hbm.ntm.api.fluid.IFluidIdentifierItem;
+import com.hbm.ntm.api.tile.LegacyUpgradeInfoProvider;
 import com.hbm.ntm.blockentity.OreSlopperBlockEntity;
 import com.hbm.ntm.fluid.HbmFluidGuiHelper;
 import com.hbm.ntm.item.ItemMachineUpgrade;
@@ -11,6 +12,7 @@ import com.hbm.ntm.registry.ModMenuTypes;
 import com.hbm.ntm.util.HbmInventoryMenuHelper;
 import com.hbm.ntm.util.HbmMenuDataSlots;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -21,7 +23,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-public class OreSlopperMenu extends AbstractContainerMenu {
+public class OreSlopperMenu extends AbstractContainerMenu implements LegacyUpgradeInfoProvider {
     private static final int MACHINE_SLOT_COUNT = OreSlopperBlockEntity.SLOT_COUNT;
     private static final int PLAYER_INVENTORY_START = MACHINE_SLOT_COUNT;
     private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
@@ -126,6 +128,21 @@ public class OreSlopperMenu extends AbstractContainerMenu {
 
     public List<Component> slopTooltip(boolean showHidden) {
         return slopTank.tooltip(showHidden);
+    }
+
+    @Override
+    public boolean canProvideInfo(UpgradeType type, int level, boolean extendedInfo) {
+        return blockEntity.canProvideInfo(type, level, extendedInfo);
+    }
+
+    @Override
+    public void provideInfo(UpgradeType type, int level, List<Component> info, boolean extendedInfo) {
+        blockEntity.provideInfo(type, level, info, extendedInfo);
+    }
+
+    @Override
+    public Map<UpgradeType, Integer> getValidUpgrades() {
+        return blockEntity.getValidUpgrades();
     }
 
     @Override

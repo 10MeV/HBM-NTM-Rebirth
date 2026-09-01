@@ -1,6 +1,5 @@
 package com.hbm.ntm.client.renderer;
 
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.blockentity.WatzReactorBlockEntity;
 import com.hbm.ntm.client.obj.ObjReactorModels;
 import com.hbm.ntm.client.render.shader.HbmShaderCompatibilityDetector;
@@ -21,8 +20,7 @@ public class WatzReactorRenderer implements BlockEntityRenderer<WatzReactorBlock
 
     @Override
     public boolean shouldRender(WatzReactorBlockEntity blockEntity, Vec3 cameraPos) {
-        return LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()
-                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
                 && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
@@ -34,9 +32,6 @@ public class WatzReactorRenderer implements BlockEntityRenderer<WatzReactorBlock
     @Override
     public void render(WatzReactorBlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        if (!LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-            return;
-        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }

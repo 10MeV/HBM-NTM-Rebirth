@@ -17,6 +17,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/combination_oven",
-    "default": "hbm_ntm_rebirth:block/machines/combination_oven"
+    "default": "hbm_ntm_rebirth:models/machines/combination_oven"
   }
 }

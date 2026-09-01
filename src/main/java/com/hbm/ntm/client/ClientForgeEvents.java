@@ -421,11 +421,15 @@ public final class ClientForgeEvents {
         }
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+            LegacyMachineEffectPresenter.present(PresentStage.AFTER_BLOCK_ENTITIES);
             LegacyWavefrontModel.flushRenderBackend(RenderBackendFlushStage.AFTER_BLOCK_ENTITIES,
                     event.getProjectionMatrix());
-            LegacyMachineEffectPresenter.present(PresentStage.AFTER_BLOCK_ENTITIES);
             LegacyLightSampleCache.endBlockEntityPass();
             LegacyRenderLighting.endBlockEntityPass();
+        }
+
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+            LegacyMachineEffectPresenter.captureLateWorldDepth();
         }
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER) {

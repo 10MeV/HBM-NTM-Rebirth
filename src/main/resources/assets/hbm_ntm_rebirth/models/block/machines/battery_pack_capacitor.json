@@ -3,6 +3,8 @@
   "shade_quads": false,
   "emissive_ambient": false,
   "model": "hbm_ntm_rebirth:models/block/machines/battery.obj",
+  "mtl_override": "hbm_ntm_rebirth:models/block/machines/hbm_default.mtl",
+  "legacy_default_material": "default",
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",

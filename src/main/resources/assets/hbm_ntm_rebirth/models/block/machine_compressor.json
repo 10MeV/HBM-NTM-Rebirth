@@ -18,6 +18,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/compressor",
-    "default": "hbm_ntm_rebirth:block/machines/compressor"
+    "default": "hbm_ntm_rebirth:models/machines/compressor"
   }
 }

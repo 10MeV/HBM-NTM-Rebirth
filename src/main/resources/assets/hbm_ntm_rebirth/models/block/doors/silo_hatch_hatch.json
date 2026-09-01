@@ -12,6 +12,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/doors/silo_hatch",
-    "default": "hbm_ntm_rebirth:block/doors/silo_hatch"
+    "default": "hbm_ntm_rebirth:models/doors/silo_hatch"
   }
 }

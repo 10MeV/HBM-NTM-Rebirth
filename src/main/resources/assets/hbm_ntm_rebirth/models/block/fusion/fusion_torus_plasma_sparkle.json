@@ -15,5 +15,5 @@
       "Magnet": false,
       "Torus": false
   },
-  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/plasma_sparkle", "default": "hbm_ntm_rebirth:block/fusion/plasma_sparkle" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/plasma_sparkle", "default": "hbm_ntm_rebirth:models/fusion/plasma_sparkle" }
 }

@@ -18,7 +18,7 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/turbine",
-    "default": "hbm_ntm_rebirth:block/machines/turbine",
-    "texture0": "hbm_ntm_rebirth:block/machines/turbine"
+    "default": "hbm_ntm_rebirth:models/machines/turbine",
+    "texture0": "hbm_ntm_rebirth:models/machines/turbine"
   }
 }

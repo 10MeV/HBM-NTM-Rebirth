@@ -4,7 +4,9 @@ import com.hbm.ntm.recipe.WatzFuelRuntime;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -40,28 +42,24 @@ public class WatzPelletItem extends Item {
                 + String.format(Locale.US, "%.1f", depletionFraction(stack) * 100.0D) + "%")
                 .withStyle(ChatFormatting.GREEN));
         if (type.passive() > 0.0D) {
-            tooltip.add(Component.literal("Base fission rate: " + type.passive()).withStyle(ChatFormatting.GOLD));
+            tooltip.add(legacyValueLine("Base fission rate: ", Double.toString(type.passive())));
             tooltip.add(Component.literal("Self-igniting!").withStyle(ChatFormatting.RED));
         }
         if (type.heatEmission() > 0.0D) {
-            tooltip.add(Component.literal("Heat per flux: " + type.heatEmission() + " TU")
-                    .withStyle(ChatFormatting.GOLD));
+            tooltip.add(legacyValueLine("Heat per flux: ", type.heatEmission() + " TU"));
         }
         if (type.burnFunc() != null) {
-            tooltip.add(Component.literal("Reaction function: ").withStyle(ChatFormatting.GOLD)
-                    .append(Component.literal(type.burnFunc().fuelLabel()).withStyle(ChatFormatting.RESET)));
-            tooltip.add(Component.literal("Fuel type: ").withStyle(ChatFormatting.GOLD)
+            tooltip.add(legacyValueLine("Reaction function: ", type.burnFunc().fuelLabel()));
+            tooltip.add(Component.empty()
+                    .append(Component.literal("Fuel type: ").withStyle(ChatFormatting.GOLD))
                     .append(Component.literal(type.burnFunc().dangerLabel())
                             .withStyle(type.burnFunc().dangerous() ? ChatFormatting.RED : ChatFormatting.YELLOW)));
         }
         if (type.heatDiv() != null) {
-            tooltip.add(Component.literal("Thermal multiplier: ").withStyle(ChatFormatting.GOLD)
-                    .append(Component.literal(type.heatDiv().fuelLabel() + " TU\u207b\u00b9")
-                            .withStyle(ChatFormatting.RESET)));
+            tooltip.add(legacyValueLine("Thermal multiplier: ", type.heatDiv().fuelLabel() + " TU\u207b\u00b9"));
         }
         if (type.absorbFunc() != null) {
-            tooltip.add(Component.literal("Flux capture: ").withStyle(ChatFormatting.GOLD)
-                    .append(Component.literal(type.absorbFunc().fuelLabel()).withStyle(ChatFormatting.RESET)));
+            tooltip.add(legacyValueLine("Flux capture: ", type.absorbFunc().fuelLabel()));
         }
     }
 
@@ -73,6 +71,20 @@ public class WatzPelletItem extends Item {
     @Override
     public int getBarWidth(ItemStack stack) {
         return Math.round(13.0F - (float) depletionFraction(stack) * 13.0F);
+    }
+
+    @Override
+    public int getBarColor(ItemStack stack) {
+        int green = (int) Math.round(255.0D - depletionFraction(stack) * 255.0D);
+        return (255 - green) << 16 | green << 8;
+    }
+
+    @Override
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        super.onCraftedBy(stack, level, player);
+        if (!depleted) {
+            setNBTDefaults(stack);
+        }
     }
 
     @Override
@@ -91,11 +103,11 @@ public class WatzPelletItem extends Item {
         if (!(stack.getItem() instanceof WatzPelletItem pellet) || pellet.depleted()) {
             return 0.0D;
         }
-        return 1.0D - Math.max(0.0D, Math.min(1.0D, getEnrichment(stack)));
+        return 1.0D - getEnrichment(stack);
     }
 
     public static double getYield(ItemStack stack) {
-        if (!stack.hasTag() || !stack.getTag().contains(LEGACY_YIELD_KEY)) {
+        if (!stack.hasTag()) {
             setNBTDefaults(stack);
         }
         return stack.getOrCreateTag().getDouble(LEGACY_YIELD_KEY);
@@ -109,8 +121,16 @@ public class WatzPelletItem extends Item {
     }
 
     private static void setNBTDefaults(ItemStack stack) {
-        if (stack.getItem() instanceof WatzPelletItem pellet && !pellet.depleted()) {
-            stack.getOrCreateTag().putDouble(LEGACY_YIELD_KEY, WatzFuelRuntime.INITIAL_YIELD);
+        if (stack.getItem() instanceof WatzPelletItem) {
+            CompoundTag tag = new CompoundTag();
+            tag.putDouble(LEGACY_YIELD_KEY, WatzFuelRuntime.INITIAL_YIELD);
+            stack.setTag(tag);
         }
+    }
+
+    private static Component legacyValueLine(String label, String value) {
+        return Component.empty()
+                .append(Component.literal(label).withStyle(ChatFormatting.GOLD))
+                .append(Component.literal(value).withStyle(ChatFormatting.WHITE));
     }
 }

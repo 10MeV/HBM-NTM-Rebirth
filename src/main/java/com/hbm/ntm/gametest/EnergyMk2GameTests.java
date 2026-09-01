@@ -32,6 +32,11 @@ import com.hbm.ntm.entity.projectile.BurningFoeqEntity;
 import com.hbm.ntm.entity.projectile.TomProjectileEntity;
 import com.hbm.ntm.explosion.ExplosionChaos;
 import com.hbm.ntm.explosion.CustomMissileExplosion;
+import com.hbm.ntm.item.BedrockOreBaseItem;
+import com.hbm.ntm.item.BedrockOreItem;
+import com.hbm.ntm.item.BedrockOreItem.BedrockOreGrade;
+import com.hbm.ntm.item.BedrockOreItem.BedrockOreType;
+import com.hbm.ntm.item.ItemMachineUpgrade.UpgradeType;
 import com.hbm.ntm.item.LaserWavelength;
 import com.hbm.ntm.api.entity.RadarScanner;
 import com.hbm.ntm.block.CableDiodeBlock;
@@ -128,6 +133,7 @@ import com.hbm.ntm.blockentity.ICFControllerBlockEntity;
 import com.hbm.ntm.blockentity.ICFReactorBlockEntity;
 import com.hbm.ntm.blockentity.IndustrialSteamTurbineBlockEntity;
 import com.hbm.ntm.blockentity.ICFPressBlockEntity;
+import com.hbm.ntm.blockentity.BedrockOreDepositBlockEntity;
 import com.hbm.ntm.blockentity.ExcavatorBlockEntity;
 import com.hbm.ntm.blockentity.IntakeBlockEntity;
 import com.hbm.ntm.blockentity.LargeLaunchPadBlockEntity;
@@ -402,6 +408,9 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -10243,6 +10252,118 @@ public final class EnergyMk2GameTests {
                 "Energy ports at " + machinePos.toShortString(), "total=8", "networked=");
 
         helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "excavatorBedrockMining")
+    public static void excavatorMinesNewBedrockOreThroughGeneratedDepthCover(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos anchor = helper.absolutePos(new BlockPos(1, 2, 1));
+        int chunkStartX = anchor.getX() & ~15;
+        int chunkStartZ = anchor.getZ() & ~15;
+        int minY = level.getMinBuildHeight();
+        BlockPos machinePos = new BlockPos(chunkStartX + 8, minY + 10, chunkStartZ + 260_000);
+        BlockPos depositPos = new BlockPos(machinePos.getX(), minY, machinePos.getZ());
+        forceLoadedChunks(level, machinePos.offset(-8, -12, -8), machinePos.offset(8, 8, 8));
+        clearBox(level, machinePos.offset(-8, -10, -8), machinePos.offset(8, 8, 8));
+
+        BlockState machineState = ModBlocks.MACHINE_EXCAVATOR.get().defaultBlockState()
+                .setValue(LegacyVisibleMultiblockMachineBlock.FACING, Direction.SOUTH);
+        level.setBlock(machinePos, machineState, Block.UPDATE_ALL);
+        ExcavatorBlockEntity excavator = requireBlockEntity(level, machinePos, ExcavatorBlockEntity.class,
+                "excavator bedrock-production fixture creates its machine core");
+
+        level.setBlock(depositPos, ModBlocks.ORE_BEDROCK.get().defaultBlockState(), Block.UPDATE_ALL);
+        BedrockOreDepositBlockEntity deposit = requireBlockEntity(level, depositPos,
+                BedrockOreDepositBlockEntity.class,
+                "excavator bedrock-production fixture creates its new-bedrock deposit");
+        deposit.configure(new ItemStack(ModItems.BEDROCK_ORE_BASE.get()), HbmFluids.WATER, 1_000, 4,
+                0xD78A16, 3);
+
+        Block depthRock = ModBlocks.legacyBlock("stone_depth").get();
+        for (int y = minY + 1; y <= minY + 6; y++) {
+            for (int x = depositPos.getX() - 3; x <= depositPos.getX() + 3; x++) {
+                for (int z = depositPos.getZ() - 3; z <= depositPos.getZ() + 3; z++) {
+                    level.setBlock(new BlockPos(x, y, z), depthRock.defaultBlockState(), Block.UPDATE_ALL);
+                }
+            }
+        }
+
+        ItemStack rejectedUpgrade = excavator.getItems().insertItem(ExcavatorBlockEntity.SLOT_DRILLBIT,
+                new ItemStack(ModItems.UPGRADE_SPEED_3.get()), false);
+        assertTrue(!rejectedUpgrade.isEmpty(), "excavator slot 4 rejects machine upgrades and remains drill-only");
+        ItemStack rejectedDrill = excavator.getItems().insertItem(ExcavatorBlockEntity.SLOT_UPGRADE_START,
+                new ItemStack(ModItems.DRILLBIT_STEEL.get()), false);
+        assertTrue(!rejectedDrill.isEmpty(), "excavator upgrade slots 2..3 reject drillbits");
+
+        excavator.getItems().setStackInSlot(ExcavatorBlockEntity.SLOT_BATTERY,
+                new ItemStack(ModItems.BATTERY_CREATIVE.get()));
+        excavator.getItems().setStackInSlot(ExcavatorBlockEntity.SLOT_UPGRADE_START,
+                new ItemStack(ModItems.UPGRADE_SPEED_3.get()));
+        excavator.getItems().setStackInSlot(ExcavatorBlockEntity.SLOT_DRILLBIT,
+                new ItemStack(ModItems.DRILLBIT_STEEL.get()));
+        CompoundTag drillToggle = new CompoundTag();
+        drillToggle.putBoolean("drill", true);
+        excavator.receiveControl(drillToggle);
+
+        tickExcavator(level, machinePos, excavator, 2_406);
+        assertEquals(6, excavator.getTargetDepth(),
+                "excavator crosses all six source-backed stone_depth cover layers above a real deposit");
+        assertTrue(findExcavatorOutput(excavator).isEmpty(),
+                "tier-1 steel drill cannot extract the tier-4 bedrock deposit");
+        assertTrue(excavator.isDrillEnabled(),
+                "tier rejection holds the drill at bedrock instead of retracting through the cover");
+
+        excavator.getItems().setStackInSlot(ExcavatorBlockEntity.SLOT_DRILLBIT,
+                new ItemStack(ModItems.DRILLBIT_FERRO_DIAMOND.get()));
+        tickExcavator(level, machinePos, excavator, 960);
+        assertTrue(findExcavatorOutput(excavator).isEmpty(),
+                "tier-5 drill still waits when the deposit's water requirement is missing");
+
+        excavator.getTank().setTankType(HbmFluids.WATER);
+        excavator.getTank().setFill(1_000);
+        tickExcavator(level, machinePos, excavator, 960);
+        ItemStack output = findExcavatorOutput(excavator);
+        assertTrue(output.is(ModItems.BEDROCK_ORE_BASE.get()),
+                "tier-5 drill produces the new bedrock_ore_base item into the internal buffer");
+        assertEquals(0, excavator.getTank().getFill(),
+                "successful extraction consumes the deposit's exact 1000 mB water requirement");
+        assertTrue(level.getBlockState(depositPos).is(ModBlocks.ORE_BEDROCK.get()),
+                "new bedrock deposit remains in place for the legacy repeatable extraction contract");
+        assertEquals(40, excavator.getChuteTimer(),
+                "successful buffered extraction activates the source-backed chute effect");
+
+        for (com.hbm.ntm.item.BedrockOreItem.BedrockOreType type
+                : com.hbm.ntm.item.BedrockOreItem.BedrockOreType.values()) {
+            double expected = BedrockOreBaseItem.getOreLevel(depositPos.getX(), depositPos.getZ(), type) * 1.4D;
+            double actual = BedrockOreBaseItem.getOreAmount(output, type);
+            assertTrue(Math.abs(expected - actual) < 1.0E-9D,
+                    "diamond ferrouranium drill applies legacy fortune-4 multiplier for " + type);
+        }
+
+        level.setBlock(depositPos, depthRock.defaultBlockState(), Block.UPDATE_ALL);
+        tickExcavator(level, machinePos, excavator, 1);
+        assertTrue(!excavator.isDrillEnabled(),
+                "ordinary depth rock disables the excavator again when no real bedrock deposit remains below");
+
+        clearBox(level, machinePos.offset(-8, -10, -8), machinePos.offset(8, 8, 8));
+        helper.succeed();
+    }
+
+    private static void tickExcavator(ServerLevel level, BlockPos pos, ExcavatorBlockEntity excavator, int ticks) {
+        for (int i = 0; i < ticks; i++) {
+            ExcavatorBlockEntity.serverTick(level, pos, level.getBlockState(pos), excavator);
+        }
+    }
+
+    private static ItemStack findExcavatorOutput(ExcavatorBlockEntity excavator) {
+        for (int slot = ExcavatorBlockEntity.SLOT_OUTPUT_START;
+                slot <= ExcavatorBlockEntity.SLOT_OUTPUT_END; slot++) {
+            ItemStack stack = excavator.getItems().getStackInSlot(slot);
+            if (!stack.isEmpty()) {
+                return stack;
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2PlayerPlacedFixedMachinePorts")
@@ -22158,6 +22279,281 @@ public final class EnergyMk2GameTests {
         helper.succeed();
     }
 
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "oreSlopperRuntime")
+    public static void oreSlopperCompletesLegacyBedrockOreProcessingCycle(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(4, 2, 4));
+        level.removeBlock(pos, false);
+        level.setBlock(pos, ModBlocks.MACHINE_ORE_SLOPPER.get().defaultBlockState(), Block.UPDATE_ALL);
+        OreSlopperBlockEntity slopper = requireBlockEntity(level, pos, OreSlopperBlockEntity.class,
+                "ore slopper processing fixture");
+
+        int[] copiedFluidIds = slopper.getFluidIdsToCopy();
+        assertEquals(2, copiedFluidIds.length, "ore slopper copies both non-NONE legacy tank types");
+        assertEquals(HbmFluids.WATER.getId(), copiedFluidIds[0], "ore slopper copies WATER first");
+        assertEquals(HbmFluids.SLOP.getId(), copiedFluidIds[1], "ore slopper copies SLOP second");
+        assertSame(slopper.getWaterTank(), slopper.getTankToPasteFluidSettings(),
+                "ore slopper pastes fluid settings into its first receiving tank");
+
+        slopper.getWaterTank().setTankType(HbmFluids.NONE);
+        slopper.getSlopTank().setTankType(HbmFluids.NONE);
+        CompoundTag copiedWater = new CompoundTag();
+        copiedWater.putIntArray(com.hbm.ntm.fluid.HbmFluidCopiable.TAG_FLUID_IDS,
+                new int[] { HbmFluids.WATER.getId() });
+        assertTrue(slopper.pasteFluidSettings(copiedWater, 0, null, false),
+                "ore slopper accepts the copied WATER setting");
+        assertSame(HbmFluids.WATER, slopper.getWaterTank().getTankType(),
+                "ore slopper copied setting retargets the water input tank");
+        OreSlopperBlockEntity.serverTick(level, pos, level.getBlockState(pos), slopper);
+        assertSame(HbmFluids.SLOP, slopper.getSlopTank().getTankType(),
+                "ore slopper next server tick restores the WATER to SLOP conversion tank type");
+
+        ItemStack input = new ItemStack(ModItems.BEDROCK_ORE_BASE.get());
+        for (BedrockOreType type : BedrockOreType.values()) {
+            BedrockOreBaseItem.setOreAmount(input, type, 0.8D);
+        }
+        slopper.getItems().setStackInSlot(OreSlopperBlockEntity.SLOT_BATTERY,
+                new ItemStack(ModItems.BATTERY_CREATIVE.get()));
+        slopper.getItems().setStackInSlot(OreSlopperBlockEntity.SLOT_INPUT, input);
+        slopper.getItems().setStackInSlot(OreSlopperBlockEntity.SLOT_UPGRADE_1,
+                new ItemStack(ModItems.UPGRADE_SPEED_3.get()));
+        slopper.getItems().setStackInSlot(OreSlopperBlockEntity.SLOT_UPGRADE_2,
+                new ItemStack(ModItems.UPGRADE_EFFECT_3.get()));
+        slopper.getWaterTank().setFill(1_000);
+
+        // Java float accumulation needs the same 151 ticks as the 1.7.10 machine
+        // at speed level 3 (nominal denominator 150).
+        for (int tick = 0; tick < 151; tick++) {
+            OreSlopperBlockEntity.serverTick(level, pos, level.getBlockState(pos), slopper);
+        }
+
+        assertEquals(1_100L, slopper.getConsumption(), "ore slopper speed/effect level 3 consumption");
+        assertTrue(slopper.getItems().getStackInSlot(OreSlopperBlockEntity.SLOT_INPUT).isEmpty(),
+                "ore slopper consumes one bedrock_ore_base after its legacy cycle");
+        assertEquals(0, slopper.getWaterTank().getFill(), "ore slopper consumes 1000 mB water");
+        assertEquals(1_000, slopper.getSlopTank().getFill(), "ore slopper produces 1000 mB slop");
+
+        Set<BedrockOreType> outputTypes = new LinkedHashSet<>();
+        for (int slot = OreSlopperBlockEntity.SLOT_OUTPUT_START;
+                slot <= OreSlopperBlockEntity.SLOT_OUTPUT_END; slot++) {
+            ItemStack output = slopper.getItems().getStackInSlot(slot);
+            assertTrue(output.is(ModItems.BEDROCK_ORE.get()),
+                    "ore slopper output slot " + slot + " contains the new bedrock_ore chain item");
+            assertEquals(1, output.getCount(), "ore slopper effect level 3 output count in slot " + slot);
+            assertTrue(BedrockOreItem.getGrade(output) == BedrockOreGrade.BASE,
+                    "ore slopper output slot " + slot + " keeps BASE grade");
+            outputTypes.add(BedrockOreItem.getType(output));
+        }
+        assertEquals(BedrockOreType.values().length, outputTypes.size(),
+                "ore slopper emits all six ore fractions from 0.8 * 1.3");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "oreSlopperRuntime")
+    public static void oreSlopperKeepsLegacySaveAndClientSyncBoundary(GameTestHelper helper) {
+        BlockPos pos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState state = ModBlocks.MACHINE_ORE_SLOPPER.get().defaultBlockState();
+        OreSlopperBlockEntity slopper = new OreSlopperBlockEntity(pos, state);
+        slopper.getWaterTank().setFill(1_234);
+        slopper.getSlopTank().setFill(5_678);
+
+        assertEquals(3, slopper.getValidUpgrades().get(UpgradeType.SPEED).intValue(),
+                "ore slopper accepts three speed levels");
+        assertEquals(3, slopper.getValidUpgrades().get(UpgradeType.EFFECT).intValue(),
+                "ore slopper accepts three effect levels");
+        assertTrue(slopper.canProvideInfo(UpgradeType.SPEED, 3, false),
+                "ore slopper provides speed-3 upgrade info");
+        assertTrue(slopper.canProvideInfo(UpgradeType.EFFECT, 3, false),
+                "ore slopper provides effect-3 upgrade info");
+
+        List<Component> speedInfo = new ArrayList<>();
+        slopper.provideInfo(UpgradeType.SPEED, 3, speedInfo, false);
+        assertEquals(3, speedInfo.size(), "ore slopper speed tooltip has label and two legacy lines");
+        assertEquals("Process time -75%", speedInfo.get(1).getString(),
+                "ore slopper speed tooltip keeps the legacy process-time label");
+        assertEquals("Consumption +150%", speedInfo.get(2).getString(),
+                "ore slopper speed tooltip keeps the legacy consumption multiplier");
+        assertTrue(speedInfo.get(1).getStyle().getColor() != null
+                        && speedInfo.get(1).getStyle().getColor().getValue() == 0x55FF55,
+                "ore slopper speed benefit remains green");
+        assertTrue(speedInfo.get(2).getStyle().getColor() != null
+                        && speedInfo.get(2).getStyle().getColor().getValue() == 0xFF5555,
+                "ore slopper speed cost remains red");
+
+        List<Component> effectInfo = new ArrayList<>();
+        slopper.provideInfo(UpgradeType.EFFECT, 3, effectInfo, false);
+        assertEquals(3, effectInfo.size(), "ore slopper effect tooltip has label and two legacy lines");
+        assertEquals("Efficiency +30%", effectInfo.get(1).getString(),
+                "ore slopper effect tooltip keeps the legacy efficiency multiplier");
+        assertEquals("Consumption +300%", effectInfo.get(2).getString(),
+                "ore slopper effect tooltip keeps the legacy consumption multiplier");
+        assertTrue(effectInfo.get(1).getStyle().getColor() != null
+                        && effectInfo.get(1).getStyle().getColor().getValue() == 0x55FF55,
+                "ore slopper effect benefit remains green");
+        assertTrue(effectInfo.get(2).getStyle().getColor() != null
+                        && effectInfo.get(2).getStyle().getColor().getValue() == 0xFF5555,
+                "ore slopper effect cost remains red");
+
+        assertTrue(com.hbm.ntm.particle.ClientParticleBridge.isDistanceWithinInclusive(2_500.0D, 50.0D),
+                "ore slopper DUMPING particles include the exact legacy 50-block boundary");
+        assertFalse(com.hbm.ntm.particle.ClientParticleBridge
+                        .isDistanceWithinInclusive(Math.nextUp(2_500.0D), 50.0D),
+                "ore slopper DUMPING particles exclude positions beyond 50 blocks");
+
+        CompoundTag runtime = new CompoundTag();
+        runtime.putLong("consumption", 1_100L);
+        runtime.putFloat("progress", 0.75F);
+        runtime.putBoolean("processing", true);
+        runtime.putLong("power", 42_000L);
+        slopper.handleClientSyncTag(runtime);
+        OreSlopperBlockEntity.clientTick(helper.getLevel(), pos, state, slopper);
+
+        CompoundTag saved = slopper.saveWithoutMetadata();
+        assertTrue(saved.contains("power"), "ore slopper legacy save contains top-level power");
+        assertTrue(saved.contains("progress"), "ore slopper legacy save contains progress");
+        assertTrue(saved.contains("water"), "ore slopper legacy save contains water");
+        assertTrue(saved.contains("slop"), "ore slopper legacy save contains slop");
+        for (String runtimeOnly : List.of("consumption", "processing", "animation", "slider", "bucket",
+                "blades", "fan", "delay")) {
+            assertFalse(saved.contains(runtimeOnly),
+                    "ore slopper chunk save excludes runtime-only field " + runtimeOnly);
+        }
+
+        CompoundTag sync = slopper.getClientSyncTag();
+        for (String synchronizedField : List.of("power", "consumption", "progress", "processing", "water", "slop")) {
+            assertTrue(sync.contains(synchronizedField),
+                    "ore slopper client sync contains " + synchronizedField);
+        }
+        for (String localAnimation : List.of("animation", "slider", "bucket", "blades", "fan", "delay")) {
+            assertFalse(sync.contains(localAnimation),
+                    "ore slopper client sync leaves animation field client-local: " + localAnimation);
+        }
+
+        OreSlopperBlockEntity loaded = new OreSlopperBlockEntity(pos, state);
+        loaded.load(saved);
+        assertEquals(200L, loaded.getConsumption(), "ore slopper reload resets runtime consumption");
+        assertFalse(loaded.isProcessing(), "ore slopper reload resets processing runtime flag");
+        assertTrue(loaded.getAnimation() == OreSlopperBlockEntity.SlopperAnimation.LOWERING,
+                "ore slopper reload starts the client-local animation at LOWERING");
+        assertNear(0.0D, loaded.getSlider(1.0F), 0.000_001D, "ore slopper reload resets slider");
+        assertNear(0.0D, loaded.getBucket(1.0F), 0.000_001D, "ore slopper reload resets bucket");
+        assertNear(0.0D, loaded.getBlades(1.0F), 0.000_001D, "ore slopper reload resets blades");
+        assertNear(0.0D, loaded.getFan(1.0F), 0.000_001D, "ore slopper reload resets fan");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "oreSlopperRuntime")
+    public static void oreSlopperAnimationMatchesLegacyStateMachine(GameTestHelper helper) {
+        BlockPos pos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState state = ModBlocks.MACHINE_ORE_SLOPPER.get().defaultBlockState();
+        OreSlopperBlockEntity slopper = new OreSlopperBlockEntity(pos, state);
+        CompoundTag processing = new CompoundTag();
+        processing.putBoolean("processing", true);
+        slopper.handleClientSyncTag(processing);
+
+        tickOreSlopperAnimation(helper.getLevel(), pos, state, slopper, 41);
+        assertTrue(slopper.getAnimation() == OreSlopperBlockEntity.SlopperAnimation.LIFTING,
+                "ore slopper lowering reaches LIFTING after legacy float cadence");
+        assertNear(1.0D, slopper.getBucket(1.0F), 0.000_001D, "ore slopper lowering clamps bucket at 1");
+
+        tickOreSlopperAnimation(helper.getLevel(), pos, state, slopper, 20);
+        assertNear(1.0D, slopper.getBucket(1.0F), 0.000_001D, "ore slopper keeps the 20 tick lift delay");
+        tickOreSlopperAnimation(helper.getLevel(), pos, state, slopper, 41);
+        assertTrue(slopper.getAnimation() == OreSlopperBlockEntity.SlopperAnimation.MOVE_SHREDDER,
+                "ore slopper lifting reaches MOVE_SHREDDER after legacy float cadence");
+        assertNear(0.0D, slopper.getBucket(1.0F), 0.000_001D, "ore slopper lifting clamps bucket at 0");
+
+        tickOreSlopperAnimation(helper.getLevel(), pos, state, slopper, 10);
+        tickOreSlopperAnimation(helper.getLevel(), pos, state, slopper, 51);
+        assertTrue(slopper.getAnimation() == OreSlopperBlockEntity.SlopperAnimation.DUMPING,
+                "ore slopper slider reaches DUMPING after legacy float cadence");
+        assertNear(1.0D, slopper.getSlider(1.0F), 0.000_001D, "ore slopper shredder move clamps slider at 1");
+
+        tickOreSlopperAnimation(helper.getLevel(), pos, state, slopper, 60);
+        assertTrue(slopper.getAnimation() == OreSlopperBlockEntity.SlopperAnimation.DUMPING,
+                "ore slopper keeps the 60 tick dumping delay");
+        tickOreSlopperAnimation(helper.getLevel(), pos, state, slopper, 1);
+        assertTrue(slopper.getAnimation() == OreSlopperBlockEntity.SlopperAnimation.MOVE_BUCKET,
+                "ore slopper dumping advances to MOVE_BUCKET");
+        tickOreSlopperAnimation(helper.getLevel(), pos, state, slopper, 51);
+        assertTrue(slopper.getAnimation() == OreSlopperBlockEntity.SlopperAnimation.LOWERING,
+                "ore slopper return move advances to LOWERING");
+        assertTrue(slopper.getSlider(1.0F) < 0.0D && slopper.getSlider(1.0F) > -0.021D,
+                "ore slopper preserves the 1.7.10 slider float underflow instead of forcing zero");
+
+        double stoppedSlider = slopper.getSlider(1.0F);
+        double stoppedBucket = slopper.getBucket(1.0F);
+        double stoppedBlades = slopper.getBlades(1.0F);
+        double stoppedFan = slopper.getFan(1.0F);
+        CompoundTag stopped = new CompoundTag();
+        stopped.putBoolean("processing", false);
+        slopper.handleClientSyncTag(stopped);
+        OreSlopperBlockEntity.clientTick(helper.getLevel(), pos, state, slopper);
+        assertNear(stoppedSlider, slopper.getSlider(1.0F), 0.000_001D,
+                "ore slopper stopped state freezes slider");
+        assertNear(stoppedBucket, slopper.getBucket(1.0F), 0.000_001D,
+                "ore slopper stopped state freezes bucket");
+        assertNear(stoppedBlades, slopper.getBlades(1.0F), 0.000_001D,
+                "ore slopper stopped state freezes blades");
+        assertNear(stoppedFan, slopper.getFan(1.0F), 0.000_001D,
+                "ore slopper stopped state freezes fan");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "oreSlopperRuntime")
+    public static void oreSlopperDefinitionMatchesLegacyStructureInEveryFacing(GameTestHelper helper) {
+        var definition = ((LegacyVisibleMultiblockMachineBlock) ModBlocks.MACHINE_ORE_SLOPPER.get()).definition();
+        int[] dimensions = definition.legacyXrDimensions();
+        assertTrue(dimensions.length == 6
+                        && dimensions[0] == 3 && dimensions[1] == 0
+                        && dimensions[2] == 3 && dimensions[3] == 3
+                        && dimensions[4] == 1 && dimensions[5] == 1,
+                "ore slopper keeps the 1.7.10 {3,0,3,3,1,1} XR dimensions");
+        assertEquals(3, definition.legacyOffset(), "ore slopper keeps the 1.7.10 structure offset");
+
+        BlockPos core = new BlockPos(10, 20, 30);
+        Map<Direction, Integer> rotations = Map.of(
+                Direction.NORTH, 0,
+                Direction.WEST, 90,
+                Direction.SOUTH, 180,
+                Direction.EAST, 270);
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            BlockState state = ModBlocks.MACHINE_ORE_SLOPPER.get().defaultBlockState()
+                    .setValue(LegacyVisibleMultiblockMachineBlock.FACING, facing);
+            var layout = definition.layout(state);
+            assertEquals(84, layout.offsets().size(), "ore slopper structure cell count facing " + facing);
+            assertEquals(83, (int) layout.offsets().stream().filter(offset -> !offset.equals(BlockPos.ZERO)).count(),
+                    "ore slopper dummy count facing " + facing);
+            assertEquals(8, (int) layout.offsets().stream().filter(layout::isProxyOffset).count(),
+                    "ore slopper proxy count facing " + facing);
+            assertEquals(8, (int) layout.offsets().stream().filter(layout::isLegacyExtraOffset).count(),
+                    "ore slopper legacy extra count facing " + facing);
+            for (BlockPos offset : layout.offsets()) {
+                if (!layout.isProxyOffset(offset)) {
+                    continue;
+                }
+                var mode = layout.proxyMode(offset);
+                assertTrue(mode.inventory() && mode.power() && mode.fluid()
+                                && !mode.conductor() && !mode.heat() && !mode.moltenMetal(),
+                        "ore slopper proxy keeps inventory/power/fluid-only mode at " + facing + " " + offset);
+            }
+
+            AABB renderBounds = definition.renderBoundingBox(state, core);
+            assertNear(7.0D, renderBounds.minX, 0.0D, "ore slopper render minX facing " + facing);
+            assertNear(20.0D, renderBounds.minY, 0.0D, "ore slopper render minY facing " + facing);
+            assertNear(27.0D, renderBounds.minZ, 0.0D, "ore slopper render minZ facing " + facing);
+            assertNear(14.0D, renderBounds.maxX, 0.0D, "ore slopper render maxX facing " + facing);
+            assertNear(27.0D, renderBounds.maxY, 0.0D, "ore slopper render maxY facing " + facing);
+            assertNear(34.0D, renderBounds.maxZ, 0.0D, "ore slopper render maxZ facing " + facing);
+            assertFalse(Shapes.joinIsNotEmpty(definition.collisionShape(state),
+                            expectedOreSlopperCollision(facing), BooleanOp.NOT_SAME),
+                    "ore slopper collision union exactly matches all eight 1.7.10 boxes facing " + facing);
+            assertNear(rotations.get(facing), definition.yRotation(state), 0.0D,
+                    "ore slopper model rotation facing " + facing);
+        }
+        helper.succeed();
+    }
+
     @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty")
     public static void multiDetonatorKeepsLegacyCoordinateArraysAndClearContract(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -26883,6 +27279,48 @@ public final class EnergyMk2GameTests {
             }
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError("Unable to force HbmPowerNet " + fieldName + " timestamps", exception);
+        }
+    }
+
+    private static void tickOreSlopperAnimation(Level level, BlockPos pos, BlockState state,
+            OreSlopperBlockEntity slopper, int ticks) {
+        for (int tick = 0; tick < ticks; tick++) {
+            OreSlopperBlockEntity.clientTick(level, pos, state, slopper);
+        }
+    }
+
+    private static VoxelShape expectedOreSlopperCollision(Direction facing) {
+        List<AABB> legacyBoxes = List.of(
+                new AABB(-3.5D, 0.0D, -1.5D, 3.5D, 1.0D, 1.5D),
+                new AABB(0.5D, 1.0D, -1.5D, 3.5D, 3.25D, 1.5D),
+                new AABB(-2.25D, 1.0D, -1.5D, 0.25D, 3.25D, -0.75D),
+                new AABB(-2.25D, 1.0D, 0.75D, 0.25D, 3.25D, 1.5D),
+                new AABB(-2.25D, 1.0D, -1.5D, -2.0D, 3.25D, 1.5D),
+                new AABB(0.0D, 1.0D, -1.5D, 0.25D, 3.25D, 1.5D),
+                new AABB(-2.0D, 1.0D, -0.75D, 0.0D, 2.0D, 0.75D),
+                new AABB(-3.25D, 1.0D, -1.0D, -2.25D, 3.0D, 1.0D));
+        VoxelShape expected = Shapes.empty();
+        for (AABB legacyBox : legacyBoxes) {
+            AABB rotated = rotateExpectedOreSlopperBox(legacyBox, facing);
+            expected = Shapes.or(expected, Shapes.box(
+                    rotated.minX + 0.5D, rotated.minY, rotated.minZ + 0.5D,
+                    rotated.maxX + 0.5D, rotated.maxY, rotated.maxZ + 0.5D));
+        }
+        return expected;
+    }
+
+    private static AABB rotateExpectedOreSlopperBox(AABB box, Direction facing) {
+        return switch (facing) {
+            case NORTH -> new AABB(-box.maxZ, box.minY, box.minX, -box.minZ, box.maxY, box.maxX);
+            case SOUTH -> new AABB(box.minZ, box.minY, -box.maxX, box.maxZ, box.maxY, -box.minX);
+            case EAST -> new AABB(-box.maxX, box.minY, -box.maxZ, -box.minX, box.maxY, -box.minZ);
+            default -> box;
+        };
+    }
+
+    private static void assertNear(double expected, double actual, double tolerance, String label) {
+        if (Math.abs(expected - actual) > tolerance) {
+            throw new AssertionError(label + ": expected " + expected + " +/- " + tolerance + " but got " + actual);
         }
     }
 

@@ -11,5 +11,5 @@
       "Rotor": true,
       "Klystron": false
   },
-  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/klystron_creative", "default": "hbm_ntm_rebirth:block/fusion/klystron_creative" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/klystron_creative", "default": "hbm_ntm_rebirth:models/fusion/klystron_creative" }
 }

@@ -37,6 +37,10 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
         implements LegacyLookOverlayProvider, IInfoProviderEC {
     public static final int CAPACITOR_POWER = 2_500_000;
     public static final int TURBO_POWER = 5_000_000;
+    private static final int LASER_RANGE = 50;
+    private static final float LASER_ENTITY_DAMAGE = 50.0F;
+    private static final int LASER_FIRE_SECONDS = 5;
+    private static final float LASER_BLOCK_RESISTANCE_LIMIT = 6000.0F;
     private static final String TAG_POWER = "power";
     private static final String TAG_CAPACITOR_COUNT = "capacitorCount";
     private static final String TAG_TURBOCHARGER_COUNT = "turbochargerCount";
@@ -309,7 +313,10 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
             HbmEnergyUtil.unsubscribeReceiverFromPorts(level, pos, getEnergyPorts(), energy);
         }
         if (receiverActive) {
-            subscribeEnergyReceiverToPorts(getEnergyPorts(), energy);
+            // The legacy controller calls trySubscribe for every assembled port face
+            // every tick. Bypass HbmEnergyBlockEntity's generic 20-tick retry cache so
+            // a cable attached after assembly is usable on the very next controller tick.
+            HbmEnergyUtil.subscribeReceiverToPorts(level, pos, getEnergyPorts(), energy);
         }
         energyReceiverSubscribed = receiverActive;
         lastEnergyPortSignature = energyPortSignature(getEnergyPorts());
@@ -521,7 +528,7 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
 
     private void fireLaser(Level level, BlockState state) {
         Direction dir = state.getValue(com.hbm.ntm.block.HorizontalMachineBlock.FACING);
-        for (int i = 1; i < 50; i++) {
+        for (int i = 1; i < LASER_RANGE; i++) {
             laserLength = i;
             BlockPos scan = worldPosition.relative(dir, i);
             BlockState scanState = level.getBlockState(scan);
@@ -537,16 +544,19 @@ public class ICFControllerBlockEntity extends HbmEnergyBlockEntity
                 break;
             }
             if (!scanState.isAir()) {
-                if (scanState.getBlock().getExplosionResistance() < 6000.0F) {
+                if (scanState.getBlock().getExplosionResistance() < LASER_BLOCK_RESISTANCE_LIMIT) {
                     level.destroyBlock(scan, false);
                 }
                 break;
             }
         }
-        AABB beam = beamAabb(dir, laserLength);
-        for (Entity entity : level.getEntities(null, beam)) {
-            entity.hurt(level.damageSources().inFire(), 50.0F);
-            entity.setSecondsOnFire(5);
+        damageEntitiesInBeam(level, dir);
+    }
+
+    private void damageEntitiesInBeam(Level level, Direction dir) {
+        for (Entity entity : level.getEntities(null, beamAabb(dir, laserLength))) {
+            entity.hurt(level.damageSources().inFire(), LASER_ENTITY_DAMAGE);
+            entity.setSecondsOnFire(LASER_FIRE_SECONDS);
         }
     }
 

@@ -16,6 +16,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/arc_welder",
-    "default": "hbm_ntm_rebirth:block/machines/arc_welder"
+    "default": "hbm_ntm_rebirth:models/machines/arc_welder"
   }
 }

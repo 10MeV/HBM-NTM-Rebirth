@@ -3393,7 +3393,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("upgrade.gui.centrifuge", " * §bCentrifuge§r");
         add("upgrade.gui.crystallizer", " * §dCrystallizer§r");
         add("upgrade.consumption", "Consumption %s");
-        add("upgrade.delay", "Delay %s");
+        add("upgrade.delay", "Process time %s");
+        add("upgrade.efficiency", "Efficiency %s");
         add("upgrade.fortune", "Fortune %s");
         add("upgrade.range", "Range %s");
         add("repair.hbm.unresolved.ducttape", "Duct Tape");

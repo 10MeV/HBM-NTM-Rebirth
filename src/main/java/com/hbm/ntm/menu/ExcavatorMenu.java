@@ -46,6 +46,7 @@ public class ExcavatorMenu extends AbstractContainerMenu {
         for (int slot = ExcavatorBlockEntity.SLOT_UPGRADE_START; slot <= ExcavatorBlockEntity.SLOT_UPGRADE_END; slot++) {
             addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, slot, 136 + (slot - ExcavatorBlockEntity.SLOT_UPGRADE_START) * 18, 75));
         }
+        addSlot(HbmInventoryMenuHelper.legacyMachineSlot(items, ExcavatorBlockEntity.SLOT_DRILLBIT, 172, 75));
         HbmInventoryMenuHelper.addTakeOnlySlots(this::addSlot, items, ExcavatorBlockEntity.SLOT_OUTPUT_START,
                 136, 5, 3, 3);
         HbmInventoryMenuHelper.addPlayerInventoryAndHotbar(this::addSlot, playerInventory, 41, 122, 180);

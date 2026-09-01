@@ -8,8 +8,8 @@
   "automatic_culling": false,
     "model":  "hbm_ntm_rebirth:models/block/trinkets/bobble_socket.obj",
     "textures":  {
-                     "default":  "hbm_ntm_rebirth:block/trinkets/socket",
-                     "texture0":  "hbm_ntm_rebirth:block/trinkets/socket",
+                     "default":  "hbm_ntm_rebirth:models/trinkets/socket",
+                     "texture0":  "hbm_ntm_rebirth:models/trinkets/socket",
                      "particle":  "hbm_ntm_rebirth:block/trinkets/socket"
                  }
 }

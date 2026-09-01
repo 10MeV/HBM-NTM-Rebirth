@@ -7,8 +7,8 @@
   "automatic_culling": false,
     "model":  "hbm_ntm_rebirth:models/block/trinkets/snowglobe_glass.obj",
     "textures":  {
-                     "default":  "hbm_ntm_rebirth:block/trinkets/snowglobe_glass",
-                     "texture0":  "hbm_ntm_rebirth:block/trinkets/snowglobe_glass",
+                     "default":  "hbm_ntm_rebirth:models/trinkets/snowglobe_glass",
+                     "texture0":  "hbm_ntm_rebirth:models/trinkets/snowglobe_glass",
                      "particle":  "hbm_ntm_rebirth:block/trinkets/snowglobe_glass"
                  }
 }

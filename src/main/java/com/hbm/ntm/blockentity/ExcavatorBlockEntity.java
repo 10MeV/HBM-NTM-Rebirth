@@ -85,7 +85,7 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
     public static final int SLOT_BATTERY = 0;
     public static final int SLOT_FLUID_ID = 1;
     public static final int SLOT_UPGRADE_START = 2;
-    public static final int SLOT_UPGRADE_END = 4;
+    public static final int SLOT_UPGRADE_END = 3;
     public static final int SLOT_DRILLBIT = 4;
     public static final int SLOT_OUTPUT_START = 5;
     public static final int SLOT_OUTPUT_END = 13;
@@ -132,8 +132,10 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
                 return stack.getItem() instanceof IFluidIdentifierItem;
             }
             if (slot >= SLOT_UPGRADE_START && slot <= SLOT_UPGRADE_END) {
-                return stack.getItem() instanceof ItemMachineUpgrade
-                        || slot == SLOT_DRILLBIT && stack.getItem() instanceof DrillbitItem;
+                return stack.getItem() instanceof ItemMachineUpgrade;
+            }
+            if (slot == SLOT_DRILLBIT) {
+                return stack.getItem() instanceof DrillbitItem;
             }
             return false;
         }
@@ -275,6 +277,7 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (targetDepth == 0 || y <= level.getMinBuildHeight()) {
             radius = 1;
         }
+        boolean bedrockDepositInBottomDrillArea = hasBedrockDepositInBottomDrillArea(level, worldPosition, 1);
 
         for (int ring = 1; ring <= radius; ring++) {
             boolean ignoreAll = true;
@@ -298,7 +301,11 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
                         break;
                     }
                     if (state.getBlock() instanceof LegacyDepthBlock) {
-                        enableDrill = false;
+                        if (bedrockDepositInBottomDrillArea) {
+                            bedrockDrilling = true;
+                        } else {
+                            enableDrill = false;
+                        }
                     }
                     if (shouldIgnoreBlock(level, target, state)) {
                         continue;
@@ -976,6 +983,19 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
             setPower(tag.getLong("p"));
         }
         updateUpgrades();
+    }
+
+    private static boolean hasBedrockDepositInBottomDrillArea(ServerLevel level, BlockPos center, int radius) {
+        int y = level.getMinBuildHeight();
+        for (int x = center.getX() - radius; x <= center.getX() + radius; x++) {
+            for (int z = center.getZ() - radius; z <= center.getZ() + radius; z++) {
+                BlockState bottom = level.getBlockState(new BlockPos(x, y, z));
+                if (bottom.is(ModBlocks.ORE_BEDROCK.get()) || bottom.is(ModBlocks.ORE_BEDROCK_COLTAN.get())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override

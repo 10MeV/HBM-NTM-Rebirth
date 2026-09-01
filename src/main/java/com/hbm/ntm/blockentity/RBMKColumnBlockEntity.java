@@ -368,6 +368,12 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
                 : new RBMKColumnBlockEntity(pos, state);
     }
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, RBMKColumnBlockEntity blockEntity) {
+        if (blockEntity.kind().control()) {
+            blockEntity.controlState.clientTick();
+        }
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, RBMKColumnBlockEntity blockEntity) {
         if (!blockEntity.ensureColumnLayout(level, pos)) {
             blockEntity.removeNeutronNodesForColumn(level);

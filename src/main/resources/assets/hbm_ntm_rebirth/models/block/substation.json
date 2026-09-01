@@ -16,7 +16,7 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/network/substation",
-    "default": "hbm_ntm_rebirth:block/network/substation",
-    "texture0": "hbm_ntm_rebirth:block/network/substation"
+    "default": "hbm_ntm_rebirth:models/network/substation",
+    "texture0": "hbm_ntm_rebirth:models/network/substation"
   }
 }

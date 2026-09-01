@@ -64,6 +64,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
@@ -8043,7 +8044,7 @@ public final class LegacyWavefrontModel {
                 return;
             }
             try {
-                MemoryUtil.memFree(scratch);
+                MemoryUtil.memFree((Buffer) scratch);
             } catch (RuntimeException exception) {
                 HbmNtm.LOGGER.debug("Failed to free {}", context, exception);
             }
@@ -10320,7 +10321,7 @@ public final class LegacyWavefrontModel {
                     lightmapShortView = null;
                 }
                 if (scratch != null) {
-                    MemoryUtil.memFree(scratch);
+                    MemoryUtil.memFree((Buffer) scratch);
                 }
             }
 
@@ -10811,7 +10812,7 @@ public final class LegacyWavefrontModel {
                 } finally {
                     guard.restoreAfterDeleting(deletedVao, deletedVbo, deletedLightmapVbo, deletedStagingVbo);
                     if (scratchToFree != null) {
-                        MemoryUtil.memFree(scratchToFree);
+                        MemoryUtil.memFree((Buffer) scratchToFree);
                     }
                 }
                 if (failure != null) {

@@ -17,7 +17,7 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/network/pylon_medium_steel",
-    "default": "hbm_ntm_rebirth:block/network/pylon_medium_steel",
-    "texture0": "hbm_ntm_rebirth:block/network/pylon_medium_steel"
+    "default": "hbm_ntm_rebirth:models/network/pylon_medium_steel",
+    "texture0": "hbm_ntm_rebirth:models/network/pylon_medium_steel"
   }
 }

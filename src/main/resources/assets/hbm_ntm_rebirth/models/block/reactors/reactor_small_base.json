@@ -14,6 +14,6 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/reactors/reactor_small_base",
-    "default": "hbm_ntm_rebirth:block/reactors/reactor_small_base"
+    "default": "hbm_ntm_rebirth:models/reactor_small_base"
   }
 }

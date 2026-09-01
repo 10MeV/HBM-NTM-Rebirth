@@ -17,6 +17,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/furnace_steel",
-    "default": "hbm_ntm_rebirth:block/machines/furnace_steel"
+    "default": "hbm_ntm_rebirth:models/machines/furnace_steel"
   }
 }

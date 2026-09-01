@@ -18,6 +18,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/annihilator",
-    "default": "hbm_ntm_rebirth:block/machines/annihilator"
+    "default": "hbm_ntm_rebirth:models/machines/annihilator"
   }
 }

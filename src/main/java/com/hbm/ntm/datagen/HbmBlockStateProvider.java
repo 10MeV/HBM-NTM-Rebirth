@@ -414,7 +414,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 HbmBlockStateProvider::centrifugeRotation);
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_GASCENT, "machine_gascent",
                 HbmBlockStateProvider::gasCentRotation);
-        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ORE_SLOPPER, "machines/ore_slopper");
+        oreSlopperWithItemRenderer();
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_SAWMILL, "machines/sawmill");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CRUCIBLE, "machines/crucible_heat");
         gasFlareWithItemRenderer();
@@ -1303,6 +1303,25 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         ModelFile model = particleOnlyModel(block.getId().getPath(), modelName);
         horizontalBlock(block.get(), model);
         customBlockItem(block);
+    }
+
+    private void oreSlopperWithItemRenderer() {
+        ModelFile model = particleOnlyModel("machine_ore_slopper", "machines/ore_slopper");
+        getVariantBuilder(ModBlocks.MACHINE_ORE_SLOPPER.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        // BlockModelRotation's JSON Y convention is opposite to the legacy
+                        // GL/PoseStack yaw used by OreSlopperRenderer at the quarter turns.
+                        // Negate only the baked Base yaw so Base and the six BER parts share
+                        // the same world orientation in EAST/WEST; 0/180 remain unchanged.
+                        .rotationY(switch (state.getValue(HorizontalMachineBlock.FACING)) {
+                            case EAST -> 90;
+                            case SOUTH -> 180;
+                            case WEST -> 270;
+                            default -> 0;
+                        })
+                        .build());
+        customBlockItem(ModBlocks.MACHINE_ORE_SLOPPER);
     }
 
     private void arcFurnaceWithItemRenderer() {

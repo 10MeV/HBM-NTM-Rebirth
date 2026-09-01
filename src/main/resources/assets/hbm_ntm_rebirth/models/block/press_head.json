@@ -9,6 +9,6 @@
   "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/press/press_head",
-    "default": "hbm_ntm_rebirth:block/press/press_head"
+    "default": "hbm_ntm_rebirth:models/press_head"
   }
 }

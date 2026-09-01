@@ -3,15 +3,19 @@ package com.hbm.ntm.block;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 
 public final class LegacyStandardInfoTooltip {
     private LegacyStandardInfoTooltip() {
     }
 
     public static void append(List<Component> tooltip, String id) {
-        if (Screen.hasShiftDown()) {
+        boolean hasShiftDown = DistExecutor.unsafeRunForDist(
+                () -> () -> com.hbm.ntm.client.ClientTooltipState.hasShiftDown(),
+                () -> () -> false);
+        if (hasShiftDown) {
             appendDescriptionLines(tooltip, id);
             return;
         }

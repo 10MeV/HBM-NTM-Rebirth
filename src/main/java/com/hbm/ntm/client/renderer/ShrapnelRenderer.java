@@ -16,9 +16,14 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 public class ShrapnelRenderer extends EntityRenderer<ShrapnelEntity> {
     public static final ResourceLocation TEXTURE = new ResourceLocation(HbmNtm.MOD_ID, "textures/entity/shrapnel.png");
+    private static final Vector3f LEGACY_ROTATION_AXIS = new Vector3f(1.0F, 1.0F, 1.0F).normalize();
+    private static final ThreadLocal<Quaternionf> ROTATION_SCRATCH = ThreadLocal.withInitial(Quaternionf::new);
     private final ModelPart cube;
 
     public ShrapnelRenderer(EntityRendererProvider.Context context) {
@@ -32,7 +37,8 @@ public class ShrapnelRenderer extends EntityRenderer<ShrapnelEntity> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild("cube", CubeListBuilder.create()
                 .texOffs(0, 0)
-                .addBox(-2.0F, -2.0F, -2.0F, 4.0F, 4.0F, 4.0F), PartPose.ZERO);
+                .addBox(0.0F, 0.0F, 0.0F, 4.0F, 4.0F, 4.0F),
+                PartPose.offset(1.0F, -0.5F, -0.5F));
         return LayerDefinition.create(mesh, 16, 8);
     }
 
@@ -41,10 +47,9 @@ public class ShrapnelRenderer extends EntityRenderer<ShrapnelEntity> {
             MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         LegacyPoseRotations.rotateXDegrees(poseStack, 180.0F);
-        LegacyPoseRotations.rotateXDegrees(poseStack, (entity.tickCount + partialTick) * 10.0F);
-        LegacyPoseRotations.rotateYDegrees(poseStack, (entity.tickCount + partialTick) * 10.0F);
-        LegacyPoseRotations.rotateZDegrees(poseStack, (entity.tickCount + partialTick) * 10.0F);
-        float scale = entity.isLargeRenderMode() ? 0.1875F : 0.0625F;
+        float rotation = (entity.tickCount % 360) * 10.0F + partialTick;
+        poseStack.mulPose(legacyRotation(rotation));
+        float scale = entity.isLargeRenderMode() ? 3.0F : 1.0F;
         poseStack.scale(scale, scale, scale);
         cube.render(poseStack, buffer.getBuffer(RenderType.entityCutout(TEXTURE)), packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
@@ -54,5 +59,9 @@ public class ShrapnelRenderer extends EntityRenderer<ShrapnelEntity> {
     @Override
     public ResourceLocation getTextureLocation(ShrapnelEntity entity) {
         return TEXTURE;
+    }
+
+    private static Quaternionf legacyRotation(float degrees) {
+        return ROTATION_SCRATCH.get().rotationAxis(degrees * Mth.DEG_TO_RAD, LEGACY_ROTATION_AXIS);
     }
 }

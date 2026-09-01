@@ -275,6 +275,406 @@
                     {
                         "type": "single",
                         "resource": "hbm_ntm_rebirth:models/zirnox_destroyed"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/core_emitter"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/core_injector"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/core_receiver"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/core_stabilizer"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/doors/silo_hatch"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/doors/silo_hatch_large"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/forcefield_base"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/plasma"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/plasma_forge"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/plasma_glow"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/plasma_sparkle"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/fusion/torus"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/acidizer"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/ammo_press"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/annihilator"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/arc_furnace"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/arc_welder"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/assembly_factory"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/assembly_machine"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/battery_socket"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/blast_furnace"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/breeder"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/chemical_factory"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/chemical_plant"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/chungus"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/coker"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/combination_oven"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/combustion_engine"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/compressor"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/compressor_compact"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/condenser"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/crane_console"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/crucible_heat"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/demon_lamp"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/dieselgen"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/drum_gray"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/elevator"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/exposure_chamber"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/fensu"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/fensu2"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/firebox"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/flare_stack"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/floodlight"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/fracking_tower"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/furnace_iron"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/furnace_steel"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/heating_oven"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/hephaestus"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/icf"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/industrial_turbine"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/intake"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/liquefactor"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/mixer"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/orbus"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/ore_slopper"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/precass"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/pumpjack"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/purex"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/pyrooven"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/radar_base"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/radar_large"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/radgen"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/rbmk_autoloader"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/rotary_furnace"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/rtg"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/sawmill"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/solar_mirror"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/soldering_station"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/solidifier"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/steam_engine"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/strand_caster"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/turbine"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/turbofan"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/machines/vending_machine"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/missile_parts/launch_table_large_scaffold_base"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/missile_parts/launch_table_small_scaffold_base"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/missile_parts/launch_table_small_scaffold_connector"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/network/connector"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/network/connector_super"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/network/fluid_diode"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/network/pylon_large"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/network/pylon_medium"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/network/pylon_medium_steel"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/network/substation"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/press_body"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/press_head"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/reactor_small_base"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/refinery"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/soyuz_capsule/soyuz_lander"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/soyuz_capsule/soyuz_lander_rust"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/tesla"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/trinkets/derg"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/trinkets/drillgon200"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/trinkets/lantern"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/trinkets/pellet"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/trinkets/snowglobe"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/trinkets/snowglobe_glass"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/trinkets/socket"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/trinkets/yomi"
+                    },
+                    {
+                        "type": "single",
+                        "resource": "hbm_ntm_rebirth:models/zirnox"
                     }
                 ]
 }

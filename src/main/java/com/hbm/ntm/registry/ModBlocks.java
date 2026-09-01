@@ -4169,7 +4169,7 @@ public final class ModBlocks {
                 name,
                 () -> new WatzReactorBlock(BlockBehaviour.Properties.of()
                         .mapColor(MapColor.METAL)
-                        .strength(5.0F, 30.0F)
+                        .strength(5.0F, 10.0F)
                         .sound(SoundType.METAL)
                         .requiresCorrectToolForDrops()
                         .noOcclusion(), definition),
@@ -5349,6 +5349,11 @@ public final class ModBlocks {
                 .withExtraProxyOffsets(electrolyserProxyOffsets(facing), proxyInventoryPowerFluid()))
                 .legacyItemScale(2.5D, 0.5D)
                 .yRotation(ModBlocks::pyroOvenRotation)
+                // 1.7.10 RenderElectrolyser explicitly disables GL_CULL_FACE before
+                // rendering the whole model.  Keep this machine-specific contract
+                // explicit so a future builder default change cannot reopen the
+                // large missing-face seams in the legacy OBJ.
+                .renderMode(LegacyMachinePartRenderMode.CUTOUT_NO_CULL)
                 .renderBoundingBox(pos -> new AABB(pos.offset(-5, -3, -7), pos.offset(7, 5, 7)))
                 .build();
     }
@@ -5509,7 +5514,7 @@ public final class ModBlocks {
                         new AABB(0.0D, 1.0D, -1.5D, 0.25D, 3.25D, 1.5D),
                         new AABB(-2.0D, 1.0D, -0.75D, 0.0D, 2.0D, 0.75D),
                         new AABB(-3.25D, 1.0D, -1.0D, -2.25D, 3.0D, 1.0D)))
-                .renderBoundingBox(pos -> new AABB(pos.offset(-4, 0, -4), pos.offset(5, 7, 5)))
+                .renderBoundingBox(pos -> new AABB(pos.offset(-3, 0, -3), pos.offset(4, 7, 4)))
                 .build();
     }
 

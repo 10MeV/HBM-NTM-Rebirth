@@ -8,8 +8,8 @@
   "render_type": "hbm_ntm_rebirth:legacy_lit_solid",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/trinkets/snowglobe",
-    "default": "hbm_ntm_rebirth:block/trinkets/snowglobe",
-    "texture0": "hbm_ntm_rebirth:block/trinkets/snowglobe"
+    "default": "hbm_ntm_rebirth:models/trinkets/snowglobe",
+    "texture0": "hbm_ntm_rebirth:models/trinkets/snowglobe"
   },
   "display": {
     "gui": {

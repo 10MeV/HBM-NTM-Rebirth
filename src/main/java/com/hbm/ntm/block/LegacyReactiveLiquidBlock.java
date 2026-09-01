@@ -28,6 +28,7 @@ import net.minecraft.world.phys.Vec3;
 @SuppressWarnings("deprecation")
 public class LegacyReactiveLiquidBlock extends LiquidBlock {
     private static final Vec3 LEGACY_STUCK_SPEED = new Vec3(0.25D, 0.05D, 0.25D);
+    private static final int LEGACY_MUD_TICK_DELAY = 15;
 
     private final Kind kind;
 
@@ -68,6 +69,7 @@ public class LegacyReactiveLiquidBlock extends LiquidBlock {
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean moving) {
         super.onPlace(state, level, pos, oldState, moving);
         reactToNeighbors(level, pos, state);
+        scheduleMudTick(level, pos);
     }
 
     @Override
@@ -75,6 +77,7 @@ public class LegacyReactiveLiquidBlock extends LiquidBlock {
             boolean moving) {
         super.neighborChanged(state, level, pos, block, fromPos, moving);
         reactToNeighbors(level, pos, state);
+        scheduleMudTick(level, pos);
     }
 
     @Override
@@ -92,6 +95,7 @@ public class LegacyReactiveLiquidBlock extends LiquidBlock {
         reactToNeighbors(level, pos, state);
         if (kind == Kind.MUD) {
             erodeNeighbors(level, pos, random);
+            scheduleMudTick(level, pos);
         }
     }
 
@@ -182,6 +186,12 @@ public class LegacyReactiveLiquidBlock extends LiquidBlock {
                 || state.is(Blocks.PACKED_ICE) || state.is(Blocks.GLASS) || state.is(Blocks.GLASS_PANE)
                 || state.is(Blocks.COBWEB) || state.getExplosionResistance(level, pos, null) < 1.2F) {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        }
+    }
+
+    private void scheduleMudTick(Level level, BlockPos pos) {
+        if (!level.isClientSide && kind == Kind.MUD && level.getBlockState(pos).getBlock() == this) {
+            level.scheduleTick(pos, this, LEGACY_MUD_TICK_DELAY);
         }
     }
 

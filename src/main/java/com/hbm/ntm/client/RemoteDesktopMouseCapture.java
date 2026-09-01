@@ -11,6 +11,7 @@ import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
@@ -129,7 +130,7 @@ public final class RemoteDesktopMouseCapture {
             return GLFW.glfwCreateCursor(image, 0, 0);
         } finally {
             image.free();
-            MemoryUtil.memFree(pixels);
+            MemoryUtil.memFree((Buffer) pixels);
         }
     }
 

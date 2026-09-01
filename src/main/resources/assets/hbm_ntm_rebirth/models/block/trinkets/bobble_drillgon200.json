@@ -8,8 +8,8 @@
   "automatic_culling": false,
     "model":  "hbm_ntm_rebirth:models/block/trinkets/bobble.obj",
     "textures":  {
-                     "default":  "hbm_ntm_rebirth:block/trinkets/drillgon200",
-                     "texture0":  "hbm_ntm_rebirth:block/trinkets/drillgon200",
+                     "default":  "hbm_ntm_rebirth:models/trinkets/drillgon200",
+                     "texture0":  "hbm_ntm_rebirth:models/trinkets/drillgon200",
                      "particle":  "hbm_ntm_rebirth:block/trinkets/drillgon200"
                  }
 }

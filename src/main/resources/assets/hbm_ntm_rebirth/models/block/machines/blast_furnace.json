@@ -13,7 +13,7 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/blast_furnace",
-    "default": "hbm_ntm_rebirth:block/machines/blast_furnace",
-    "texture0": "hbm_ntm_rebirth:block/machines/blast_furnace"
+    "default": "hbm_ntm_rebirth:models/machines/blast_furnace",
+    "texture0": "hbm_ntm_rebirth:models/machines/blast_furnace"
   }
 }

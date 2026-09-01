@@ -18,6 +18,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/exposure_chamber",
-    "default": "hbm_ntm_rebirth:block/machines/exposure_chamber"
+    "default": "hbm_ntm_rebirth:models/machines/exposure_chamber"
   }
 }

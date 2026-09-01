@@ -7,8 +7,8 @@
   "automatic_culling": false,
     "model":  "hbm_ntm_rebirth:models/block/trinkets/yomi.obj",
     "textures":  {
-                     "default":  "hbm_ntm_rebirth:block/trinkets/yomi",
-                     "texture0":  "hbm_ntm_rebirth:block/trinkets/yomi",
+                     "default":  "hbm_ntm_rebirth:models/trinkets/yomi",
+                     "texture0":  "hbm_ntm_rebirth:models/trinkets/yomi",
                      "particle":  "hbm_ntm_rebirth:block/trinkets/yomi"
                  }
 }

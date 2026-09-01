@@ -3704,7 +3704,8 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("upgrade.gui.centrifuge", "* \u00a7b\u81ea\u52a8\u79bb\u5fc3\u00a7r");
         add("upgrade.gui.crystallizer", "* \u00a7d\u81ea\u52a8\u7ed3\u6676\u00a7r");
         add("upgrade.consumption", "\u6d88\u8017 %s");
-        add("upgrade.delay", "\u5ef6\u8fdf %s");
+        add("upgrade.delay", "\u5de5\u4f5c\u65f6\u95f4 %s");
+        add("upgrade.efficiency", "\u6548\u7387 %s");
         add("upgrade.fortune", "\u65f6\u8fd0 %s");
         add("upgrade.range", "\u8303\u56f4 %s");
         add("repair.hbm.unresolved.ducttape", "\u80f6\u5e26");

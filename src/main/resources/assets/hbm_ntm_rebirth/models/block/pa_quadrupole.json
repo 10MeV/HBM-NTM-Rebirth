@@ -6,5 +6,5 @@
   "model": "hbm_ntm_rebirth:models/particleaccelerator/quadrupole.obj",
   "automatic_culling": false,
   "flip_v": true,
-  "textures": { "particle": "hbm_ntm_rebirth:block/particleaccelerator/quadrupole", "default": "hbm_ntm_rebirth:block/particleaccelerator/quadrupole" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/particleaccelerator/quadrupole", "default": "hbm_ntm_rebirth:models/particleaccelerator/quadrupole" }
 }

@@ -6,5 +6,5 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
-  "textures": { "particle": "hbm_ntm_rebirth:block/machines/fracking_tower", "default": "hbm_ntm_rebirth:block/machines/fracking_tower" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/machines/fracking_tower", "default": "hbm_ntm_rebirth:models/machines/fracking_tower" }
 }

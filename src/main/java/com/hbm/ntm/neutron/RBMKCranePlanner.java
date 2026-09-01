@@ -386,6 +386,36 @@ public final class RBMKCranePlanner {
     public record CraneClientTickPlan(CraneClientState state) {
     }
 
+    public record CraneConsoleRenderState(
+            double lastTiltFront,
+            double tiltFront,
+            double lastTiltLeft,
+            double tiltLeft,
+            double loadedHeat,
+            double loadedEnrichment,
+            boolean loading,
+            boolean loaded,
+            boolean validTarget) {
+        public static final CraneConsoleRenderState EMPTY =
+                new CraneConsoleRenderState(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D, false, false, false);
+    }
+
+    public record CraneRenderState(
+            boolean setUp,
+            int height,
+            CraneBounds bounds,
+            double lastPosFront,
+            double posFront,
+            double lastPosLeft,
+            double posLeft,
+            double lastProgress,
+            double progress,
+            int craneRotationOffset) {
+        public CraneRenderState {
+            bounds = bounds == null ? CraneBounds.ZERO : bounds;
+        }
+    }
+
     public record CraneOperationBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
     }
 

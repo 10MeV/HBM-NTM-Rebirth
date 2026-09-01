@@ -27,6 +27,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/precass",
-    "default": "hbm_ntm_rebirth:block/machines/precass"
+    "default": "hbm_ntm_rebirth:models/machines/precass"
   }
 }

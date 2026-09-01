@@ -13,6 +13,6 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/refinery",
-    "default": "hbm_ntm_rebirth:block/machines/refinery"
+    "default": "hbm_ntm_rebirth:models/refinery"
   }
 }

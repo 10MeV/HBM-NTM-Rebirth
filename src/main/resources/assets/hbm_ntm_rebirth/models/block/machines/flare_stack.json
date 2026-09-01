@@ -11,5 +11,5 @@
     "rotation": [0, 0, 0],
     "scale": 1.0
   },
-  "textures": { "particle": "hbm_ntm_rebirth:block/machines/flare_stack", "default": "hbm_ntm_rebirth:block/machines/flare_stack" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/machines/flare_stack", "default": "hbm_ntm_rebirth:models/machines/flare_stack" }
 }

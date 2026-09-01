@@ -7,5 +7,5 @@
   "automatic_culling": false,
   "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
   "visibility": { "InnerEmpty": false, "InnerBurning": false, "Door": false, "Main": true },
-  "textures": { "particle": "hbm_ntm_rebirth:block/machines/firebox", "default": "hbm_ntm_rebirth:block/machines/firebox" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/machines/firebox", "default": "hbm_ntm_rebirth:models/machines/firebox" }
 }

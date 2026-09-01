@@ -8,8 +8,8 @@
   "automatic_culling": false,
     "model":  "hbm_ntm_rebirth:models/block/trinkets/bobble_pellet.obj",
     "textures":  {
-                     "default":  "hbm_ntm_rebirth:block/trinkets/pellet",
-                     "texture0":  "hbm_ntm_rebirth:block/trinkets/pellet",
+                     "default":  "hbm_ntm_rebirth:models/trinkets/pellet",
+                     "texture0":  "hbm_ntm_rebirth:models/trinkets/pellet",
                      "particle":  "hbm_ntm_rebirth:block/trinkets/pellet"
                  }
 }

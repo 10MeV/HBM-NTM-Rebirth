@@ -15,5 +15,5 @@
       "Magnet": false,
       "Torus": true
   },
-  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/torus", "default": "hbm_ntm_rebirth:block/fusion/torus" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/torus", "default": "hbm_ntm_rebirth:models/fusion/torus" }
 }

@@ -7,5 +7,5 @@
   "model": "hbm_ntm_rebirth:models/block/machines/sawmill.obj",
   "automatic_culling": false,
   "flip_v": true,
-  "textures": { "particle": "hbm_ntm_rebirth:block/machines/sawmill", "default": "hbm_ntm_rebirth:block/machines/sawmill" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/machines/sawmill", "default": "hbm_ntm_rebirth:models/machines/sawmill" }
 }

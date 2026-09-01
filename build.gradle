@@ -159,9 +159,7 @@ minecraft {
 
         server {
             // Keep dedicated-server verification isolated from an interactive client.
-            if (project.hasProperty('serverRunDir')) {
-                workingDirectory project.file(project.property('serverRunDir'))
-            }
+            workingDirectory project.file(project.findProperty('serverRunDir') ?: 'run-server')
             property 'forge.enabledGameTestNamespaces', gameTestNamespaces
             args '--nogui'
         }
@@ -187,6 +185,9 @@ minecraft {
             if (project.hasProperty('surfacePlantsGameTestOnly')) {
                 property 'hbm_ntm.gametest.surfacePlantsOnly', 'true'
             }
+            if (project.hasProperty('oreSlopperGameTestOnly')) {
+                property 'hbm_ntm.gametest.oreSlopperOnly', 'true'
+            }
         }
 
         data {
@@ -206,12 +207,11 @@ repositories {
 }
 
 // LWJGL 3.3.4+ embeds GLFW 3.4+, which fixes disabled-cursor input in Windows RDP
-// sessions. Minecraft 1.20.1 is compiled against the old stb_image_resize API,
-// which was removed in LWJGL 3.3.6, so STB must remain on Minecraft's 3.3.1
-// Java/native pair. The remaining modules may use the newer GLFW-compatible set.
+// sessions. Keep every LWJGL Java/native module on one version: mixing 3.3.1 STB
+// with the 3.3.6 core has incompatible struct/JNI contracts during early display.
 configurations.configureEach {
     resolutionStrategy.eachDependency { details ->
-        if (details.requested.group == 'org.lwjgl' && details.requested.name != 'lwjgl-stb') {
+        if (details.requested.group == 'org.lwjgl') {
             details.useVersion lwjgl_version
             details.because 'Use GLFW 3.4 RDP input handling while preserving Minecraft MouseHandler behavior'
         }

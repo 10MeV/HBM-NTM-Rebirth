@@ -39,6 +39,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/assembly_factory",
-    "default": "hbm_ntm_rebirth:block/machines/assembly_factory"
+    "default": "hbm_ntm_rebirth:models/machines/assembly_factory"
   }
 }

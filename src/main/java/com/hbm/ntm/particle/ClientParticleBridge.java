@@ -25,6 +25,18 @@ public final class ClientParticleBridge {
                 () -> () -> false);
     }
 
+    /** Inclusive distance gate used by legacy callers whose source contract is {@code distance <= range}. */
+    public static boolean isLocalPlayerWithinInclusive(double x, double y, double z, double range) {
+        return DistExecutor.unsafeRunForDist(
+                () -> () -> com.hbm.ntm.client.particle.HbmParticleEffects
+                        .isLocalPlayerWithinInclusive(x, y, z, range),
+                () -> () -> false);
+    }
+
+    public static boolean isDistanceWithinInclusive(double distanceSquared, double range) {
+        return distanceSquared <= range * range;
+    }
+
     public static boolean isLocalPlayerWearing(Item item, EquipmentSlot slot) {
         return DistExecutor.unsafeRunForDist(
                 () -> () -> com.hbm.ntm.client.particle.HbmParticleEffects.isLocalPlayerWearing(item, slot),

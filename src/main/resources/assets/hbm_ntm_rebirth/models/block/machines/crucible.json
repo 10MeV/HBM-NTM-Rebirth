@@ -9,7 +9,7 @@
   "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/crucible_heat",
-    "default": "hbm_ntm_rebirth:block/machines/crucible_heat",
-    "texture0": "hbm_ntm_rebirth:block/machines/crucible_heat"
+    "default": "hbm_ntm_rebirth:models/machines/crucible_heat",
+    "texture0": "hbm_ntm_rebirth:models/machines/crucible_heat"
   }
 }

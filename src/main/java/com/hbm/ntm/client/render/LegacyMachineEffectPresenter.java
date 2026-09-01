@@ -13,8 +13,14 @@ import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.renderer.LegacyTileRenderPlans;
 import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling;
 import com.hbm.ntm.client.render.culling.HbmRenderFrameCulling.MachineRendererSubmissionScope;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.platform.GlConst;
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
@@ -50,6 +56,8 @@ public final class LegacyMachineEffectPresenter {
     private static final Map<PresentStage, List<QueuedTask>> PRESENTING = new EnumMap<>(PresentStage.class);
     private static final List<QueuedTask> TASK_POOL = new ArrayList<>();
     private static final PresentContext PRESENT_CONTEXT = new PresentContext();
+    private static TextureTarget lateWorldEffectTarget;
+    private static boolean lateWorldDepthCaptured;
     private static long frameGeneration;
     private static long presentCalls;
     private static long afterBlockEntitiesPresents;
@@ -79,7 +87,27 @@ public final class LegacyMachineEffectPresenter {
         lastFramePresentedTasks = currentFramePresentedTasks;
         currentFramePresentCalls = 0L;
         currentFramePresentedTasks = 0L;
+        lateWorldDepthCaptured = false;
         frameGeneration++;
+    }
+
+    /**
+     * Saves the terrain/block-entity depth after particles but before clouds write into the main depth buffer.
+     * AFTER_LEVEL effects can then remain occluded by world geometry without being punched out by clouds.
+     */
+    public static void captureLateWorldDepth() {
+        if (QUEUES.get(PresentStage.AFTER_LEVEL).isEmpty()) {
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        RenderTarget mainTarget = minecraft.getMainRenderTarget();
+        ensureLateWorldEffectTarget(mainTarget);
+        blit(mainTarget, lateWorldEffectTarget, GlConst.GL_DEPTH_BUFFER_BIT);
+        RenderTarget restoreTarget = Minecraft.useShaderTransparency()
+                ? minecraft.levelRenderer.getParticlesTarget()
+                : mainTarget;
+        (restoreTarget == null ? mainTarget : restoreTarget).bindWrite(false);
+        lateWorldDepthCaptured = true;
     }
 
     public static void enqueue(PresentStage stage, Runnable task) {
@@ -830,7 +858,9 @@ public final class LegacyMachineEffectPresenter {
         queue.clear();
         PresentContext context = PRESENT_CONTEXT;
         context.clear();
+        boolean lateWorldTargetBound = false;
         try {
+            lateWorldTargetBound = resolvedStage == PresentStage.AFTER_LEVEL && beginLateWorldEffects();
             for (QueuedTask task : tasks) {
                 try {
                     task.run(context);
@@ -841,12 +871,21 @@ public final class LegacyMachineEffectPresenter {
                     throw exception;
                 }
             }
-        } finally {
-            context.clear();
-            for (QueuedTask task : tasks) {
-                releaseTask(task);
+            if (resolvedStage == PresentStage.AFTER_LEVEL) {
+                context.flushUntexturedBatches();
             }
-            tasks.clear();
+        } finally {
+            try {
+                if (lateWorldTargetBound) {
+                    finishLateWorldEffects();
+                }
+            } finally {
+                context.clear();
+                for (QueuedTask task : tasks) {
+                    releaseTask(task);
+                }
+                tasks.clear();
+            }
         }
     }
 
@@ -859,7 +898,51 @@ public final class LegacyMachineEffectPresenter {
             releaseTasks(queue);
             queue.clear();
         }
+        if (lateWorldEffectTarget != null) {
+            lateWorldEffectTarget.destroyBuffers();
+            lateWorldEffectTarget = null;
+        }
+        lateWorldDepthCaptured = false;
         clears++;
+    }
+
+    private static boolean beginLateWorldEffects() {
+        if (!lateWorldDepthCaptured || lateWorldEffectTarget == null) {
+            return false;
+        }
+        RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
+        if (mainTarget.width != lateWorldEffectTarget.width || mainTarget.height != lateWorldEffectTarget.height) {
+            lateWorldDepthCaptured = false;
+            return false;
+        }
+        blit(mainTarget, lateWorldEffectTarget, GlConst.GL_COLOR_BUFFER_BIT);
+        lateWorldEffectTarget.bindWrite(false);
+        RenderSystem.viewport(0, 0, lateWorldEffectTarget.viewWidth, lateWorldEffectTarget.viewHeight);
+        return true;
+    }
+
+    private static void finishLateWorldEffects() {
+        RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
+        blit(lateWorldEffectTarget, mainTarget, GlConst.GL_COLOR_BUFFER_BIT);
+        mainTarget.bindWrite(false);
+        RenderSystem.viewport(0, 0, mainTarget.viewWidth, mainTarget.viewHeight);
+        lateWorldDepthCaptured = false;
+    }
+
+    private static void ensureLateWorldEffectTarget(RenderTarget mainTarget) {
+        if (lateWorldEffectTarget == null) {
+            lateWorldEffectTarget = new TextureTarget(mainTarget.width, mainTarget.height, true, Minecraft.ON_OSX);
+        } else if (lateWorldEffectTarget.width != mainTarget.width
+                || lateWorldEffectTarget.height != mainTarget.height) {
+            lateWorldEffectTarget.resize(mainTarget.width, mainTarget.height, Minecraft.ON_OSX);
+        }
+    }
+
+    private static void blit(RenderTarget source, RenderTarget destination, int mask) {
+        GlStateManager._glBindFramebuffer(GlConst.GL_READ_FRAMEBUFFER, source.frameBufferId);
+        GlStateManager._glBindFramebuffer(GlConst.GL_DRAW_FRAMEBUFFER, destination.frameBufferId);
+        GlStateManager._glBlitFrameBuffer(0, 0, source.width, source.height,
+                0, 0, destination.width, destination.height, mask, GlConst.GL_NEAREST);
     }
 
     private static QueuedTask obtainTask() {
@@ -1089,6 +1172,27 @@ public final class LegacyMachineEffectPresenter {
                 return new AtlasSpriteConsumerEntry();
             }
             return atlasSpriteConsumerPool.remove(lastIndex);
+        }
+
+        private void flushUntexturedBatches() {
+            float[] shaderColor = RenderSystem.getShaderColor();
+            float red = shaderColor[0];
+            float green = shaderColor[1];
+            float blue = shaderColor[2];
+            float alpha = shaderColor[3];
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            try {
+                for (UntexturedConsumerEntry entry : untexturedConsumers) {
+                    if (entry.buffer instanceof MultiBufferSource.BufferSource bufferSource) {
+                        // Re-synchronize Blaze3D's cached blend flag with the actual GL state before the
+                        // RenderType setup enables additive/alpha blending for this late batch.
+                        RenderSystem.disableBlend();
+                        bufferSource.endBatch(LegacyUntexturedQuadRenderer.type(entry.renderMode, entry.alpha));
+                    }
+                }
+            } finally {
+                RenderSystem.setShaderColor(red, green, blue, alpha);
+            }
         }
 
         private void clear() {

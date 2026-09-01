@@ -18,6 +18,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/combustion_engine",
-    "default": "hbm_ntm_rebirth:block/machines/combustion_engine"
+    "default": "hbm_ntm_rebirth:models/machines/combustion_engine"
   }
 }

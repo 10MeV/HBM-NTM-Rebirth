@@ -19,6 +19,6 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/ammo_press",
-    "default": "hbm_ntm_rebirth:block/machines/ammo_press"
+    "default": "hbm_ntm_rebirth:models/machines/ammo_press"
   }
 }

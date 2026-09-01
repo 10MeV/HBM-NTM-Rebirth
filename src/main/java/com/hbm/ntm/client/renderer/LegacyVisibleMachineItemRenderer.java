@@ -61,6 +61,7 @@ import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.obj.ObjParticleAcceleratorModels;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
+import com.hbm.ntm.neutron.RBMKCranePlanner;
 import com.hbm.ntm.neutron.RBMKStructureDimensions;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -995,7 +996,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, yaw);
         LegacyRbmkMachineRenderer.renderCraneConsole(poseStack, buffer, packedLight, packedOverlay,
-                LegacyRbmkMachineRenderer.CraneConsoleState.EMPTY, 0.0F, System.currentTimeMillis());
+                RBMKCranePlanner.CraneConsoleRenderState.EMPTY,
+                0.0F, System.currentTimeMillis());
         poseStack.popPose();
     }
 

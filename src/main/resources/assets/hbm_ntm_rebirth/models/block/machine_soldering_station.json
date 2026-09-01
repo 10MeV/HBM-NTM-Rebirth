@@ -13,6 +13,6 @@
   },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/soldering_station",
-    "default": "hbm_ntm_rebirth:block/machines/soldering_station"
+    "default": "hbm_ntm_rebirth:models/machines/soldering_station"
   }
 }

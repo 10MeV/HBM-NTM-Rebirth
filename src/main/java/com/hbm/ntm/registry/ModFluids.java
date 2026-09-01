@@ -100,7 +100,8 @@ public final class ModFluids {
     static {
         MUD_PROPERTIES[0] = new ForgeFlowingFluid.Properties(MUD_FLUID_TYPE, MUD_FLUID, MUD_FLUID_FLOWING)
                 .slopeFindDistance(2)
-                .levelDecreasePerBlock(2);
+                .levelDecreasePerBlock(2)
+                .tickRate(15);
         TOXIC_PROPERTIES[0] = new ForgeFlowingFluid.Properties(TOXIC_FLUID_TYPE, TOXIC_FLUID, TOXIC_FLUID_FLOWING)
                 .slopeFindDistance(2)
                 .levelDecreasePerBlock(2);

@@ -17,7 +17,7 @@
     },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/radar_large",
-    "default": "hbm_ntm_rebirth:block/machines/radar_large",
-    "texture0": "hbm_ntm_rebirth:block/machines/radar_large"
+    "default": "hbm_ntm_rebirth:models/machines/radar_large",
+    "texture0": "hbm_ntm_rebirth:models/machines/radar_large"
   }
 }

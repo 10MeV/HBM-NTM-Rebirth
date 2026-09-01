@@ -8,6 +8,6 @@
   "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/machines/condenser",
-    "default": "hbm_ntm_rebirth:block/machines/condenser"
+    "default": "hbm_ntm_rebirth:models/machines/condenser"
   }
 }

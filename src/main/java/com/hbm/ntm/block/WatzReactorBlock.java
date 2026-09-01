@@ -34,7 +34,7 @@ public class WatzReactorBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
@@ -45,7 +45,7 @@ public class WatzReactorBlock extends LegacyVisibleMultiblockMachineBlock {
             return InteractionResult.PASS;
         }
         if (player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             NetworkHooks.openScreen(serverPlayer, watz, watz.getBlockPos());
@@ -68,9 +68,6 @@ public class WatzReactorBlock extends LegacyVisibleMultiblockMachineBlock {
     @Override
     protected void onCoreRemoved(Level level, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof WatzReactorBlockEntity watz) {
-            if (watz.suppressCoreDropsOnRemoval()) {
-                return;
-            }
             for (ItemStack stack : watz.getDrops()) {
                 Block.popResource(level, pos, stack);
             }

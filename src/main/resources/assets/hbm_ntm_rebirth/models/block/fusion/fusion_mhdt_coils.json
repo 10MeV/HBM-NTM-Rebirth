@@ -10,5 +10,5 @@
       "Coils": true,
       "Turbine": false
   },
-  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/mhdt", "default": "hbm_ntm_rebirth:block/fusion/mhdt" }
+  "textures": { "particle": "hbm_ntm_rebirth:block/fusion/mhdt", "default": "hbm_ntm_rebirth:models/fusion/mhdt" }
 }

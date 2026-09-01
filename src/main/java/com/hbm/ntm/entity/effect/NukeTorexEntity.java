@@ -1,13 +1,9 @@
 package com.hbm.ntm.entity.effect;
 
-import com.hbm.ntm.client.NukeHudEffects;
-import com.hbm.ntm.client.render.HbmRenderEffects;
 import com.hbm.ntm.entity.logic.ExplosionChunkLoadingEntity;
 import com.hbm.ntm.registry.ModEntityTypes;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.hbm.ntm.world.WorldUtil;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
@@ -21,8 +17,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkHooks;
 
 import java.awt.Color;
@@ -228,7 +224,6 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
         clientVisualTick(spawnSound, false);
     }
 
-    @OnlyIn(Dist.CLIENT)
     private void warmStartClientSimulation(int visualAge) {
         int age = Mth.clamp(visualAge, 0, Math.max(0, getMaxAge()));
         cloudlets.clear();
@@ -265,17 +260,13 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
         }
 
         if (!warmStart && tickCount < 100) {
-            int flashTime = level() instanceof ClientLevel clientLevel
-                    ? Math.max(clientLevel.getSkyFlashTime(), 4)
-                    : 4;
-            level().setSkyFlashTime(flashTime);
-            if (tickCount < 10) {
-                NukeHudEffects.triggerFlash();
-            }
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                    com.hbm.ntm.client.NukeTorexClientEffects.updateFlash(level(), tickCount));
         }
 
         if (!warmStart && !didSpawnWarpShockwave) {
-            HbmRenderEffects.spawnTorexWarpShockwave(x, y, z, tickCount);
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                    com.hbm.ntm.client.NukeTorexClientEffects.spawnWarpShockwave(x, y, z, tickCount));
             didSpawnWarpShockwave = true;
         }
 
@@ -379,9 +370,8 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
         return (int) (45.0D * 20.0D * getCloudScale());
     }
 
-    @OnlyIn(Dist.CLIENT)
     private void tryPlayClientSound(double x, double y, double z) {
-        Player player = Minecraft.getInstance().player;
+        Player player = localClientPlayer();
         if (player == null) {
             return;
         }
@@ -394,9 +384,8 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     private boolean hasShockwaveReachedClientPlayer(int age) {
-        Player player = Minecraft.getInstance().player;
+        Player player = localClientPlayer();
         if (player == null) {
             return false;
         }
@@ -404,18 +393,19 @@ public class NukeTorexEntity extends ExplosionChunkLoadingEntity implements IEnt
         return player.distanceToSqr(getX(), getY(), getZ()) < soundRange * soundRange;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public void applyClientShockwaveShake(Player player) {
         if (didShake || player == null) {
             return;
         }
-        if (!NukeHudEffects.triggerShake()) {
-            return;
-        }
-        player.animateHurt(0.0F);
-        player.hurtTime = 15;
-        player.hurtDuration = 15;
-        didShake = true;
+        didShake = DistExecutor.unsafeRunForDist(
+                () -> () -> com.hbm.ntm.client.NukeTorexClientEffects.applyShockwaveShake(player),
+                () -> () -> false);
+    }
+
+    private static Player localClientPlayer() {
+        return DistExecutor.unsafeRunForDist(
+                () -> () -> com.hbm.ntm.client.NukeTorexClientEffects.localPlayer(),
+                () -> () -> null);
     }
 
     @Override

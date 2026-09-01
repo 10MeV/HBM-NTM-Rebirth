@@ -9,8 +9,8 @@
   "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
   "textures": {
     "particle": "hbm_ntm_rebirth:block/trinkets/lantern",
-    "default": "hbm_ntm_rebirth:block/trinkets/lantern",
-    "texture0": "hbm_ntm_rebirth:block/trinkets/lantern"
+    "default": "hbm_ntm_rebirth:models/trinkets/lantern",
+    "texture0": "hbm_ntm_rebirth:models/trinkets/lantern"
   },
   "display": {
     "gui": { "rotation": [30, 45, 0], "translation": [0, -10, 0], "scale": [0.22, 0.22, 0.22] },
