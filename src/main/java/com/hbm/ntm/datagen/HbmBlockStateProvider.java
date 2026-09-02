@@ -424,7 +424,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 HbmBlockStateProvider::fixed180Rotation);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_INTAKE, "machines/intake");
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_DRAIN, "machine_drain",
-                HbmBlockStateProvider::solidifierRotation);
+                HbmBlockStateProvider::drainStaticRotation);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHUNGUS, "machines/chungus");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_HEPHAESTUS, "machines/hephaestus");
         heatBoilerWithItemRenderer();
@@ -514,7 +514,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_MINING_LASER, "machine_mining_laser",
                 HbmBlockStateProvider::noRotation);
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_EXCAVATOR, "machine_excavator",
-                HbmBlockStateProvider::southZeroRotation);
+                HbmBlockStateProvider::excavatorStaticRotation);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_STRAND_CASTER, "machines/strand_caster");
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_WOOD_BURNER, "machine_wood_burner",
                 HbmBlockStateProvider::southZeroRotation);
@@ -1102,6 +1102,21 @@ public class HbmBlockStateProvider extends BlockStateProvider {
     }
 
     /**
+     * Static drain blockstates are baked with Forge's BlockModelRotation, whose
+     * quarter-turn Y sign is opposite to the legacy GL/PoseStack yaw used by
+     * 1.7.10 RenderDrain. Keep the dynamic BER mapping in {@link #solidifierRotation}
+     * and invert only the 90/270 turns for the chunk-baked drain shell.
+     */
+    private static int drainStaticRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 270;
+            case WEST -> 180;
+            case SOUTH -> 90;
+            default -> 0;
+        };
+    }
+
+    /**
      * Forge blockstate Y rotations use the opposite 90-degree sign from the
      * PoseStack/JOML rotation used by the legacy radar-screen BER.  The fixed
      * shell is chunk baked while its CRT overlay remains in the BER, so the
@@ -1213,6 +1228,22 @@ public class HbmBlockStateProvider extends BlockStateProvider {
             case EAST -> 90;
             case NORTH -> 180;
             case WEST -> 270;
+            default -> 0;
+        };
+    }
+
+    /**
+     * The excavator's fixed Main is baked through Forge's BlockModelRotation,
+     * while Crusher/Drillbit/Shaft use the legacy PoseStack yaw at runtime.
+     * Invert only the quarter turns so the chunk-baked Main shares the
+     * 1.7.10 RenderExcavator orientation with its animated parts.
+     */
+    private static int excavatorStaticRotation(Direction facing) {
+        return switch (facing) {
+            case SOUTH -> 0;
+            case EAST -> 270;
+            case NORTH -> 180;
+            case WEST -> 90;
             default -> 0;
         };
     }

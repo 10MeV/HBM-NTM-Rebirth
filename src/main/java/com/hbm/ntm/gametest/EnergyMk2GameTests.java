@@ -10262,7 +10262,7 @@ public final class EnergyMk2GameTests {
         int chunkStartZ = anchor.getZ() & ~15;
         int minY = level.getMinBuildHeight();
         BlockPos machinePos = new BlockPos(chunkStartX + 8, minY + 10, chunkStartZ + 260_000);
-        BlockPos depositPos = new BlockPos(machinePos.getX(), minY, machinePos.getZ());
+        BlockPos depositPos = new BlockPos(machinePos.getX() + 2, minY, machinePos.getZ());
         forceLoadedChunks(level, machinePos.offset(-8, -12, -8), machinePos.offset(8, 8, 8));
         clearBox(level, machinePos.offset(-8, -10, -8), machinePos.offset(8, 8, 8));
 
@@ -10298,6 +10298,8 @@ public final class EnergyMk2GameTests {
         excavator.getItems().setStackInSlot(ExcavatorBlockEntity.SLOT_BATTERY,
                 new ItemStack(ModItems.BATTERY_CREATIVE.get()));
         excavator.getItems().setStackInSlot(ExcavatorBlockEntity.SLOT_UPGRADE_START,
+                new ItemStack(ModItems.UPGRADE_EFFECT_1.get()));
+        excavator.getItems().setStackInSlot(ExcavatorBlockEntity.SLOT_UPGRADE_END,
                 new ItemStack(ModItems.UPGRADE_SPEED_3.get()));
         excavator.getItems().setStackInSlot(ExcavatorBlockEntity.SLOT_DRILLBIT,
                 new ItemStack(ModItems.DRILLBIT_STEEL.get()));
@@ -10307,7 +10309,7 @@ public final class EnergyMk2GameTests {
 
         tickExcavator(level, machinePos, excavator, 2_406);
         assertEquals(6, excavator.getTargetDepth(),
-                "excavator crosses all six source-backed stone_depth cover layers above a real deposit");
+                "radius-upgraded excavator crosses all six stone_depth cover layers above an offset deposit");
         assertTrue(findExcavatorOutput(excavator).isEmpty(),
                 "tier-1 steel drill cannot extract the tier-4 bedrock deposit");
         assertTrue(excavator.isDrillEnabled(),

@@ -28,6 +28,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public final class TomImpactWorldEffects {
     private static final float ENTITY_BURN_DUST_LIMIT = 0.75F;
@@ -212,10 +213,14 @@ public final class TomImpactWorldEffects {
 
     private static Method findChunkMapGetChunks() {
         try {
-            Method method = net.minecraft.server.level.ChunkMap.class.getDeclaredMethod("getChunks");
+            // Reflection string literals are not reobfuscated with the mod jar.
+            // Resolve the SRG name so Forge maps it to getChunks in development
+            // while retaining m_140416_ in a production launcher.
+            Method method = ObfuscationReflectionHelper.findMethod(
+                    net.minecraft.server.level.ChunkMap.class, "m_140416_");
             method.setAccessible(true);
             return method;
-        } catch (ReflectiveOperationException | RuntimeException exception) {
+        } catch (RuntimeException exception) {
             warnMissingLoadedChunkCarrier(exception);
             return null;
         }

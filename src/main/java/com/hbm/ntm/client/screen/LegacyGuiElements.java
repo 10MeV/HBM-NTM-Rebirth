@@ -196,8 +196,10 @@ public final class LegacyGuiElements {
         if (addons >= 1) {
             drawTexturedTriangle(pose, x, y, textureX, textureY,
                     x + midX, y + midY, textureX + midX, textureY + midY,
-                    x + targetX + midX, y - targetY + midY,
-                    textureX + targetX + midX, textureY - targetY + midY, textureWidth, textureHeight);
+                    addons == 2 ? x + width : x + targetX + midX,
+                    addons == 2 ? y : y - targetY + midY,
+                    addons == 2 ? textureX + width : textureX + targetX + midX,
+                    addons == 2 ? textureY : textureY - targetY + midY, textureWidth, textureHeight);
         }
         if (addons == 2) {
             drawTexturedTriangle(pose, x + width, y, textureX + width, textureY,

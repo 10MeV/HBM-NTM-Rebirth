@@ -9,6 +9,10 @@ import com.hbm.ntm.item.HbmAbilitySwordItem;
 import com.hbm.ntm.item.HbmAbilityToolItem;
 import com.hbm.ntm.item.HbmFluidContainerItem;
 import com.hbm.ntm.item.HbmInfiniteFluidItem;
+import com.hbm.ntm.item.BedrockOreFragmentItem;
+import com.hbm.ntm.item.BedrockOreItem;
+import com.hbm.ntm.item.BedrockOreItem.BedrockOreGrade;
+import com.hbm.ntm.item.BedrockOreItem.BedrockOreType;
 import com.hbm.ntm.item.LegacyArtilleryAmmoItem;
 import com.hbm.ntm.item.LegacyBigSwordItem;
 import com.hbm.ntm.item.LegacyCrayonItem;
@@ -37,6 +41,8 @@ public class HbmItemModelProvider extends ItemModelProvider {
 
     @Override
     protected void registerModels() {
+        bedrockOreModels();
+        bedrockOreFragmentModels();
         ModItems.PARTS_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONTROL_TAB_ITEMS.forEach(item -> itemModel(item.get()));
         ModItems.CONTROL_FLUID_ITEMS.forEach(item -> itemModel(item.get()));
@@ -50,6 +56,56 @@ public class HbmItemModelProvider extends ItemModelProvider {
         itemModel(ModItems.CONVEYOR_WAND.get());
         itemModel(ModItems.MEMORY.get());
         fluidDuctVariantItemModels();
+    }
+
+    private void bedrockOreModels() {
+        var root = bedrockOreVariantModel("bedrock_ore", BedrockOreGrade.BASE, BedrockOreType.LIGHT_METAL);
+        for (BedrockOreGrade grade : BedrockOreGrade.values()) {
+            for (BedrockOreType type : BedrockOreType.values()) {
+                int variant = grade.ordinal() * BedrockOreType.values().length + type.ordinal();
+                if (variant == 0) {
+                    continue;
+                }
+                root.override()
+                        .predicate(BedrockOreItem.VARIANT_PROPERTY, variant)
+                        .model(bedrockOreVariantModel("bedrock_ore_variant_" + variant, grade, type))
+                        .end();
+            }
+        }
+    }
+
+    private net.minecraftforge.client.model.generators.ItemModelBuilder bedrockOreVariantModel(
+            String path, BedrockOreGrade grade, BedrockOreType type) {
+        var builder = getBuilder(path)
+                .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                .texture("layer0", modLoc("item/bedrock_ore_" + grade.texturePrefix() + "_" + type.suffix()));
+        int layer = 1;
+        for (BedrockOreItem.ProcessingTrait trait : grade.traits()) {
+            builder.texture("layer" + layer++,
+                    modLoc("item/bedrock_ore_overlay." + trait.name().toLowerCase(java.util.Locale.ROOT)));
+        }
+        return builder;
+    }
+
+    private void bedrockOreFragmentModels() {
+        var root = bedrockOreFragmentVariantModel("bedrock_ore_fragment", null);
+        int variant = 1;
+        for (var material : BedrockOreFragmentItem.fragmentMaterials()) {
+            root.override()
+                    .predicate(BedrockOreFragmentItem.VARIANT_PROPERTY, variant)
+                    .model(bedrockOreFragmentVariantModel("bedrock_ore_fragment_variant_" + variant, material))
+                    .end();
+            variant++;
+        }
+    }
+
+    private net.minecraftforge.client.model.generators.ItemModelBuilder bedrockOreFragmentVariantModel(
+            String path, @Nullable com.hbm.inventory.material.NTMMaterial material) {
+        String texture = material == com.hbm.inventory.material.Mats.MAT_BISMUTH
+                ? "bedrock_ore_fragment_bismuth" : "bedrock_ore_fragment";
+        return getBuilder(path)
+                .parent(new ModelFile.UncheckedModelFile("minecraft:item/generated"))
+                .texture("layer0", modLoc("item/" + texture));
     }
 
     private void itemModel(Item item) {

@@ -14,7 +14,7 @@ Current target:
 
 - Minecraft `1.20.1`
 - Minecraft Forge `47.2.32`
-- Java `17`
+- Java `21` for Gradle and Forge client/server runs (`--release 17` for published bytecode)
 - Gradle / ForgeGradle project layout
 
 ## Building
@@ -36,8 +36,15 @@ Useful development commands:
 ```bat
 gradlew.bat compileJava processResources --no-daemon
 gradlew.bat runData --no-daemon
-gradlew.bat runClient --no-daemon
+run-client.bat
 ```
+
+The project pins Minecraft run tasks to the JDK 21 toolchain. Do not launch
+the client with an external JDK 17.0.8 runtime; that combination can terminate
+inside `jvm.dll` with `EXCEPTION_ACCESS_VIOLATION` during world creation.
+The mod also rejects Java runtimes older than 21 during loading, before world
+generation can reach that native-crash path. Gradle settings cannot change the
+JVM already selected by PCL or another external launcher.
 
 Build outputs are written to `build/libs`.
 

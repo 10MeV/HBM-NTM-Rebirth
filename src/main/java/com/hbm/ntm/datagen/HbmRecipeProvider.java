@@ -153,6 +153,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         legacySlabRecipes(consumer);
 
         circuitStarComponentRecipes(consumer);
+        bedrockOreFragmentRecipes(consumer);
 
         ShapedRecipeBuilder.shaped(RecipeCategory.FOOD, ModItems.LEMON.get())
                 .pattern(" D ")
@@ -4012,6 +4013,65 @@ public final class HbmRecipeProvider extends RecipeProvider {
                         HbmItemOutput.of(new ItemStack(item("plate_steel"), 16))),
                 "recycling", HbmIngredient.of(ModBlocks.MACHINE_BAT9000.get(), 1));
         legacyAnvilSmithingRecipes(consumer);
+    }
+
+    /** Source-backed 1.7.10 compression recipes for every material fragment emitted by new bedrock ore. */
+    private static void bedrockOreFragmentRecipes(Consumer<FinishedRecipe> consumer) {
+        bedrockOreFragmentRecipe(consumer, "coal", Mats.MAT_COAL, item("powder_coal"));
+        bedrockOreFragmentRecipe(consumer, "lignite", Mats.MAT_LIGNITE, item("powder_lignite"));
+        bedrockOreFragmentRecipe(consumer, "diamond", Mats.MAT_DIAMOND, item("powder_diamond"));
+        bedrockOreFragmentRecipe(consumer, "iron", Mats.MAT_IRON, item("powder_iron"));
+        bedrockOreFragmentRecipe(consumer, "gold", Mats.MAT_GOLD, item("powder_gold"));
+        bedrockOreFragmentRecipe(consumer, "redstone", Mats.MAT_REDSTONE, Items.REDSTONE);
+        bedrockOreFragmentRecipe(consumer, "titanium", Mats.MAT_TITANIUM, item("powder_titanium"));
+        bedrockOreFragmentRecipe(consumer, "copper", Mats.MAT_COPPER, item("powder_copper"));
+        bedrockOreFragmentRecipe(consumer, "bauxite", Mats.MAT_BAUXITE, block("stone_resource_bauxite"));
+        bedrockOreFragmentRecipe(consumer, "cryolite", Mats.MAT_CRYOLITE, item("chunk_ore_cryolite"));
+        bedrockOreFragmentRecipe(consumer, "tungsten", Mats.MAT_TUNGSTEN, item("powder_tungsten"));
+        bedrockOreFragmentRecipe(consumer, "aluminium", Mats.MAT_ALUMINIUM, item("powder_aluminium"));
+        bedrockOreFragmentRecipe(consumer, "lead", Mats.MAT_LEAD, item("powder_lead"));
+        bedrockOreFragmentRecipe(consumer, "bismuth", Mats.MAT_BISMUTH, item("powder_bismuth"));
+        bedrockOreFragmentRecipe(consumer, "tantalium", Mats.MAT_TANTALIUM, item("powder_tantalium"));
+        bedrockOreFragmentRecipe(consumer, "neodymium", Mats.MAT_NEODYMIUM, item("powder_neodymium"));
+        bedrockOreFragmentRecipe(consumer, "niobium", Mats.MAT_NIOBIUM, item("powder_niobium"));
+        bedrockOreFragmentRecipe(consumer, "beryllium", Mats.MAT_BERYLLIUM, item("powder_beryllium"));
+        bedrockOreFragmentRecipe(consumer, "emerald", Mats.MAT_EMERALD, item("powder_emerald"));
+        bedrockOreFragmentRecipe(consumer, "cobalt", Mats.MAT_COBALT, item("powder_cobalt"));
+        bedrockOreFragmentRecipe(consumer, "boron", Mats.MAT_BORON, item("powder_boron"));
+        bedrockOreFragmentRecipe(consumer, "borax", Mats.MAT_BORAX, item("powder_borax"));
+        bedrockOreFragmentRecipe(consumer, "lanthanium", Mats.MAT_LANTHANIUM, item("powder_lanthanium"));
+        bedrockOreFragmentRecipe(consumer, "zirconium", Mats.MAT_ZIRCONIUM, item("powder_zirconium"));
+        bedrockOreFragmentRecipe(consumer, "sodalite", Mats.MAT_SODALITE, item("gem_sodalite"));
+        bedrockOreFragmentRecipe(consumer, "lithium", Mats.MAT_LITHIUM, item("powder_lithium"));
+        bedrockOreFragmentRecipe(consumer, "sulfur", Mats.MAT_SULFUR, item("sulfur"));
+        bedrockOreFragmentRecipe(consumer, "saltpeter", Mats.MAT_KNO, item("niter"));
+        bedrockOreFragmentRecipe(consumer, "fluorite", Mats.MAT_FLUORITE, item("fluorite"));
+        bedrockOreFragmentRecipe(consumer, "red_phosphorus", Mats.MAT_PHOSPHORUS, item("powder_fire"));
+        bedrockOreFragmentRecipe(consumer, "chlorocalcite", Mats.MAT_CHLOROCALCITE, item("powder_chlorocalcite"));
+        bedrockOreFragmentRecipe(consumer, "molysite", Mats.MAT_MOLYSITE, item("powder_molysite"));
+        bedrockOreFragmentRecipe(consumer, "cinnabar", Mats.MAT_CINNABAR, item("cinnebar"));
+        bedrockOreFragmentRecipe(consumer, "asbestos", Mats.MAT_ASBESTOS, item("powder_asbestos"));
+        bedrockOreFragmentRecipe(consumer, "silicon", Mats.MAT_SILICON, item("ingot_silicon"));
+        bedrockOreFragmentRecipe(consumer, "uranium", Mats.MAT_URANIUM, item("powder_uranium"));
+        bedrockOreFragmentRecipe(consumer, "u238", Mats.MAT_U238, item("ingot_u238"));
+        bedrockOreFragmentRecipe(consumer, "thorium232", Mats.MAT_THORIUM, item("powder_thorium"));
+        bedrockOreFragmentRecipe(consumer, "polonium210", Mats.MAT_POLONIUM, item("powder_polonium"));
+        bedrockOreFragmentRecipe(consumer, "tc99", Mats.MAT_TECHNETIUM, item("ingot_technetium"));
+        bedrockOreFragmentRecipe(consumer, "radium226", Mats.MAT_RADIUM, item("powder_ra226"));
+        bedrockOreFragmentRecipe(consumer, "strontium", Mats.MAT_STRONTIUM, item("powder_strontium"));
+        bedrockOreFragmentRecipe(consumer, "sodium", Mats.MAT_SODIUM, item("powder_sodium"));
+        bedrockOreFragmentRecipe(consumer, "rare_earth", Mats.MAT_RAREEARTH, item("chunk_ore_rare"));
+    }
+
+    private static void bedrockOreFragmentRecipe(Consumer<FinishedRecipe> consumer, String name,
+            NTMMaterial material, ItemLike output) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, output)
+                .pattern("FFF")
+                .pattern("FFF")
+                .pattern("FFF")
+                .define('F', StrictNBTIngredient.of(BedrockOreFragmentItem.make(material, 1)))
+                .unlockedBy("has_bedrock_ore_fragment", has(ModItems.BEDROCK_ORE_FRAGMENT.get()))
+                .save(consumer, id("material/bedrock_ore_fragment_" + name));
     }
 
     /**

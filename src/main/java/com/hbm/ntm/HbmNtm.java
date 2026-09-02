@@ -95,8 +95,10 @@ import org.slf4j.Logger;
 public class HbmNtm {
     public static final String MOD_ID = "hbm_ntm_rebirth";
     public static final Logger LOGGER = LogUtils.getLogger();
+    private static final int MINIMUM_RUNTIME_JAVA_FEATURE = 21;
 
     public HbmNtm() {
+        requireSupportedJavaRuntime();
         // 1.7.10 MainRegistry chose the process-local polaroid ID during
         // PreLoad, before it registered ItemCustomLore consumers.
         LegacyPolaroidVariant.bootstrap();
@@ -126,6 +128,20 @@ public class HbmNtm {
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, HbmCommonConfig.SPEC, "hbm_ntm_rebirth-common.toml");
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, HbmClientConfig.SPEC, "hbm_ntm_rebirth-client.toml");
+    }
+
+    private static void requireSupportedJavaRuntime() {
+        Runtime.Version runtimeVersion = Runtime.version();
+        if (runtimeVersion.feature() >= MINIMUM_RUNTIME_JAVA_FEATURE) {
+            return;
+        }
+
+        String vendor = System.getProperty("java.vendor", "unknown vendor");
+        String javaHome = System.getProperty("java.home", "unknown java.home");
+        throw new IllegalStateException("HBM-NTM: Rebirth requires Java 21 or newer for the Minecraft "
+                + "client/server runtime. Detected Java " + runtimeVersion + " from " + vendor + " at " + javaHome
+                + ". Change this Minecraft instance's Java executable; a Gradle toolchain cannot replace the JVM "
+                + "already selected by an external launcher.");
     }
 
     /**

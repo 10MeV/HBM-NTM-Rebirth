@@ -197,6 +197,21 @@ minecraft {
     }
 }
 
+// ForgeGradle's MinecraftRunTask is a JavaExec and does not inherit the
+// Java toolchain used by JavaCompile automatically.  Without this explicit
+// launcher, an IDE or a direct `gradlew runClient` invocation can start the
+// game with an older JAVA_HOME even though the project compiles with JDK 21.
+// The supplied log used Microsoft JDK 17.0.8 and ended in
+// EXCEPTION_ACCESS_VIOLATION inside jvm.dll.
+def hbmRuntimeJavaLauncher = javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(21)
+}
+tasks.withType(JavaExec).configureEach {
+    if (name.startsWith('run')) {
+        javaLauncher.set(hbmRuntimeJavaLauncher)
+    }
+}
+
 repositories {
     maven { url = 'https://maven.aliyun.com/repository/public' }
     maven { url = 'https://maven.blamejared.com' }

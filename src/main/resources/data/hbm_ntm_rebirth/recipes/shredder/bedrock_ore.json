@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:shredder",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:bedrock_ore"
+    }
+  },
+  "output": {
+    "item": "minecraft:gravel"
+  },
+  "source_order": 286
+}

@@ -38,6 +38,15 @@ public class ExcavatorRenderer implements BlockEntityRenderer<ExcavatorBlockEnti
     }
 
     @Override
+    public boolean shouldRenderOffScreen(ExcavatorBlockEntity blockEntity) {
+        // The 1.7.10 TESR used a render AABB extending from world bottom to the
+        // machine. The drill bit can be far below the owning block, so keeping
+        // this BER in its RenderChunk would make it disappear when the player
+        // enters the shaft and looks away from the machine head.
+        return true;
+    }
+
+    @Override
     public int getViewDistance() {
         return LegacyBlockEntityRenderDistances.machine();
     }

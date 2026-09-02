@@ -258,9 +258,10 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
         previousCrusherRotation = crusherRotation;
         if (operational) {
             drillRotation += 15.0F;
-            if (enableCrusher) {
-                crusherRotation += 15.0F;
-            }
+            // The two Crusher wheels are part of the excavator's drive train.
+            // Keep their visual motion tied to the machine running state;
+            // enableCrusher still controls drop processing and chute output.
+            crusherRotation += 15.0F;
         }
         if (drillRotation >= 360.0F) {
             drillRotation -= 360.0F;
@@ -274,10 +275,15 @@ public class ExcavatorBlockEntity extends HbmEnergyAndFluidBlockEntity
 
     private boolean tryDrill(ServerLevel level, int radius) {
         int y = drillY(level);
-        if (targetDepth == 0 || y <= level.getMinBuildHeight()) {
+        int requestedRadius = radius;
+        if (targetDepth == 0) {
             radius = 1;
         }
-        boolean bedrockDepositInBottomDrillArea = hasBedrockDepositInBottomDrillArea(level, worldPosition, 1);
+        boolean bedrockDepositInBottomDrillArea =
+                hasBedrockDepositInBottomDrillArea(level, worldPosition, requestedRadius);
+        if (y <= level.getMinBuildHeight() && !bedrockDepositInBottomDrillArea) {
+            radius = 1;
+        }
 
         for (int ring = 1; ring <= radius; ring++) {
             boolean ignoreAll = true;

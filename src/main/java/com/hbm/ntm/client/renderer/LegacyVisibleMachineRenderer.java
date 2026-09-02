@@ -30,7 +30,6 @@ import com.hbm.ntm.block.RefineryBlock;
 import com.hbm.ntm.block.SatelliteDockBlock;
 import com.hbm.ntm.block.SilexBlock;
 import com.hbm.ntm.block.SolarBoilerBlock;
-import com.hbm.ntm.block.WatzPumpBlock;
 import com.hbm.ntm.block.WoodBurnerBlock;
 import com.hbm.ntm.blockentity.BoilerBlockEntity;
 import com.hbm.ntm.blockentity.CombustionEngineBlockEntity;
@@ -341,6 +340,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
         return LegacyBlockEntityRenderDistances.machine();
     }
 
+    protected int resolveModelLight(T blockEntity, BlockState state, LegacyMachineDefinition definition,
+            int packedLight) {
+        return LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
+    }
+
     @Override
     public void render(T blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
@@ -355,7 +359,7 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
             return;
         }
 
-        int modelLight = LegacyRenderLighting.resolveMachineLight(blockEntity, state, definition, packedLight);
+        int modelLight = resolveModelLight(blockEntity, state, definition, packedLight);
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
                 LegacyVisibleMachineRenderer::createModel);
 
@@ -937,7 +941,6 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
                         && machine.usesChunkBakedStaticModel())
                 || state.getBlock() instanceof FractionSpacerBlock
                 || state.getBlock() instanceof SatelliteDockBlock
-                || state.getBlock() instanceof WatzPumpBlock
                 || (state.getBlock() instanceof ProcessingMachineBlock machine
                         && machine.usesChunkBakedStaticModel())
                 || (state.getBlock() instanceof OilDrillBlock drill

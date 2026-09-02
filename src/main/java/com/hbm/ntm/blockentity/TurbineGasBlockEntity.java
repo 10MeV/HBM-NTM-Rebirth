@@ -222,8 +222,8 @@ public class TurbineGasBlockEntity extends HbmEnergyAndFluidBlockEntity
         }
         float pitch = (float) (0.55D + 0.1D * turbine.rpm / 10.0D);
         turbine.audioLoop = LegacyMachineAudioBridge.updateLoop(turbine.audioLoop, turbine,
-                "hbm:block.turbinegasRunning", turbine.rpm >= 10 && turbine.state != -1, 1.0D, 20.0F,
-                2.0F, pitch);
+                "hbm:block.turbinegasRunning", turbine.rpm >= 10 && turbine.state != -1, 20.0D, 20.0F,
+                turbine.getVolume(1.0F), pitch);
     }
 
     private void applyIdentifierSlot() {

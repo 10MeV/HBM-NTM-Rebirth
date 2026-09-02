@@ -6,6 +6,8 @@ import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -13,6 +15,8 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 public class BedrockOreItem extends Item {
+    public static final ResourceLocation VARIANT_PROPERTY =
+            new ResourceLocation("hbm_ntm_rebirth", "bedrock_ore_variant");
     private static final String TAG_GRADE = "grade";
     private static final String TAG_TYPE = "type";
 
@@ -55,14 +59,34 @@ public class BedrockOreItem extends Item {
         stack.getOrCreateTag().putString(TAG_TYPE, (type == null ? BedrockOreType.LIGHT_METAL : type).suffix());
     }
 
+    public static float modelVariant(ItemStack stack) {
+        return getGrade(stack).ordinal() * BedrockOreType.values().length + getType(stack).ordinal();
+    }
+
+    public static void addCreativeStacks(CreativeModeTab.Output output) {
+        // Keep the 1.7.10 ItemBedrockOreNew#getSubItems order: type first,
+        // then all processing grades for that type.
+        for (BedrockOreType type : BedrockOreType.values()) {
+            for (BedrockOreGrade grade : BedrockOreGrade.values()) {
+                output.accept(make(grade, type));
+            }
+        }
+    }
+
     public static int tint(ItemStack stack, int tintIndex) {
         if (tintIndex == 0) {
-            return getType(stack).lightColor();
-        }
-        if (tintIndex == 1) {
-            return getGrade(stack).tint();
+            int typeColor = getType(stack).lightColor();
+            int gradeColor = getGrade(stack).tint();
+            return multiply(typeColor, gradeColor);
         }
         return 0xFFFFFF;
+    }
+
+    private static int multiply(int first, int second) {
+        int red = ((first >> 16) & 0xFF) * ((second >> 16) & 0xFF) / 0xFF;
+        int green = ((first >> 8) & 0xFF) * ((second >> 8) & 0xFF) / 0xFF;
+        int blue = (first & 0xFF) * (second & 0xFF) / 0xFF;
+        return (red << 16) | (green << 8) | blue;
     }
 
     @Override
@@ -175,6 +199,10 @@ public class BedrockOreItem extends Item {
 
         public int tint() {
             return tint;
+        }
+
+        public String texturePrefix() {
+            return prefix;
         }
 
         public String serializedName() {

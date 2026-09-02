@@ -651,6 +651,10 @@ public final class ClientModEvents {
                     (stack, level, entity, seed) -> FoundryMoldItem.modelVariant(stack));
             ItemProperties.register(ModItems.FOUNDRY_SCRAPS.get(), new ResourceLocation(HbmNtm.MOD_ID, "scraps"),
                     (stack, level, entity, seed) -> FoundryScrapsItem.modelVariant(stack));
+            ItemProperties.register(ModItems.BEDROCK_ORE.get(), BedrockOreItem.VARIANT_PROPERTY,
+                    (stack, level, entity, seed) -> BedrockOreItem.modelVariant(stack));
+            ItemProperties.register(ModItems.BEDROCK_ORE_FRAGMENT.get(), BedrockOreFragmentItem.VARIANT_PROPERTY,
+                    (stack, level, entity, seed) -> BedrockOreFragmentItem.modelVariant(stack));
             ItemProperties.register(ModBlocks.BLOCK_COKE.get().asItem(), new ResourceLocation(HbmNtm.MOD_ID, "legacy_variant"),
                     (stack, level, entity, seed) -> stack.getTag() == null
                             ? 0.0F

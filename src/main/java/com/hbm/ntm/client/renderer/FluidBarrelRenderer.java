@@ -1,9 +1,9 @@
 package com.hbm.ntm.client.renderer;
 
+import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.FluidBarrelBlock;
 import com.hbm.ntm.blockentity.FluidBarrelBlockEntity;
 import com.hbm.ntm.client.obj.LegacyBarrelObjRenderer;
-import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.fluid.FluidType;
 import com.hbm.ntm.fluid.HbmFluidPortLayouts;
 import com.hbm.ntm.fluid.HbmFluidUtil;
@@ -19,11 +19,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlockEntity> {
-    private static final ResourceLocation BARREL_PLASTIC = ObjBlockModels.texture("barrel_plastic");
-    private static final ResourceLocation BARREL_CORRODED = ObjBlockModels.texture("barrel_corroded");
-    private static final ResourceLocation BARREL_STEEL = ObjBlockModels.texture("barrel_steel");
-    private static final ResourceLocation BARREL_TCALLOY = ObjBlockModels.texture("barrel_tcalloy");
-    private static final ResourceLocation BARREL_ANTIMATTER = ObjBlockModels.texture("barrel_antimatter");
+    private static final ResourceLocation BARREL_PLASTIC = barrelSprite("barrel_plastic");
+    private static final ResourceLocation BARREL_CORRODED = barrelSprite("barrel_corroded");
+    private static final ResourceLocation BARREL_STEEL = barrelSprite("barrel_steel");
+    private static final ResourceLocation BARREL_TCALLOY = barrelSprite("barrel_tcalloy");
+    private static final ResourceLocation BARREL_ANTIMATTER = barrelSprite("barrel_antimatter");
 
     public FluidBarrelRenderer(BlockEntityRendererProvider.Context context) {
     }
@@ -103,5 +103,9 @@ public class FluidBarrelRenderer implements BlockEntityRenderer<FluidBarrelBlock
             case TCALLOY -> BARREL_TCALLOY;
             case ANTIMATTER -> BARREL_ANTIMATTER;
         };
+    }
+
+    private static ResourceLocation barrelSprite(String name) {
+        return new ResourceLocation(HbmNtm.MOD_ID, "block/legacy_blocks/" + name);
     }
 }

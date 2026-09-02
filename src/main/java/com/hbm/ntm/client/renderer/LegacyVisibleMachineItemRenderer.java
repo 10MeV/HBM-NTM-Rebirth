@@ -479,7 +479,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             Vec3 translation = definition.legacyInventoryTranslation();
             poseStack.translate(translation.x, translation.y, translation.z);
         }
-        renderMachine(definition, state, model, poseStack, buffer, packedLight, packedOverlay);
+        renderMachine(definition, state, model, displayContext, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 
@@ -767,14 +767,15 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         }
         String modelPath = definition.modelLocation().getPath();
         if (("models/machines/furnace_iron.obj".equals(modelPath)
-                || "models/machines/furnace_steel.obj".equals(modelPath))
+                || "models/machines/furnace_steel.obj".equals(modelPath)
+                || "models/machines/soldering_station.obj".equals(modelPath))
                 && renderMode == LegacyTexturedRenderMode.CUTOUT_CULL) {
             /*
              * GuiGraphics contributes a (1,-1,1) carrier reflection. The shared OBJ backend
              * normally reverses culling for a reflected pose, but 1.7.10 ItemRenderBase's
              * inventory projection and local (-1,-1,-1) transform already form the matching
              * front-face convention. Request the paired mode so the determinant resolver emits
-             * ordinary CUTOUT_CULL instead of exposing the inside of these closed furnaces.
+             * ordinary CUTOUT_CULL instead of exposing the inside of these closed legacy models.
              */
             return LegacyTexturedRenderMode.CUTOUT_REVERSED_CULL;
         }
@@ -1483,31 +1484,31 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     }
 
     private static void renderMachine(LegacyMachineDefinition definition, BlockState state, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+            ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            int packedOverlay) {
         poseStack.pushPose();
         poseStack.translate(0.5D, 0.0D, 0.5D);
         LegacyPoseRotations.rotateYDegrees(poseStack, definition.yRotation(state));
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
         LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
+        LegacyTexturedRenderMode renderMode = legacyVisibleItemCullMode(definition, displayContext);
 
         if (definition.renderProfile() == LegacyMachineRenderProfile.DEFAULT) {
             if (definition.itemRenderAll()) {
-                model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
-                        LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
+                model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
             } else {
-                renderMachineParts(definition, model, poseStack, buffer, packedLight, packedOverlay);
+                renderMachineParts(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode);
             }
         } else {
-            if (renderMachineProfileDirect(definition, model, poseStack, buffer, packedLight, packedOverlay)) {
+            if (renderMachineProfileDirect(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode)) {
                 poseStack.popPose();
                 return;
             }
             if (definition.itemRenderAll()) {
-                model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
-                        LegacyMachinePartRenderContexts.renderMode(definition.renderMode()));
+                model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay, renderMode);
             } else {
-                renderMachineParts(definition, model, poseStack, buffer, packedLight, packedOverlay);
+                renderMachineParts(definition, model, poseStack, buffer, packedLight, packedOverlay, renderMode);
             }
         }
 
@@ -1515,8 +1516,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     }
 
     private static boolean renderMachineProfileDirect(LegacyMachineDefinition definition, LegacyWavefrontModel model,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
+            LegacyTexturedRenderMode renderMode) {
         long currentMillis = System.currentTimeMillis();
         if (definition.renderProfile() == LegacyMachineRenderProfile.STEAM_ENGINE_ITEM_PREVIEW) {
             SteamEngineRenderer.renderPlan(model,

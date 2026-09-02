@@ -3,6 +3,8 @@ package com.hbm.ntm.registry;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.energy.HbmBatteryItem;
 import com.hbm.ntm.item.ConveyorWandItem;
+import com.hbm.ntm.item.BedrockOreFragmentItem;
+import com.hbm.ntm.item.BedrockOreItem;
 import com.hbm.ntm.item.DroneItem;
 import com.hbm.ntm.item.DepletedFuelItem;
 import com.hbm.ntm.item.FluidIdentifierItem;
@@ -55,6 +57,10 @@ public final class ModCreativeTabs {
                                 NuclearWasteItem.addCreativeStacks(dedupedOutput, waste);
                             } else if (item.get() instanceof FoundryScrapsItem scraps) {
                                 FoundryScrapsItem.addCreativeStacks(dedupedOutput, scraps);
+                            } else if (item.get() instanceof BedrockOreItem) {
+                                BedrockOreItem.addCreativeStacks(dedupedOutput);
+                            } else if (item.get() instanceof BedrockOreFragmentItem) {
+                                BedrockOreFragmentItem.addCreativeStacks(dedupedOutput);
                             } else {
                                 dedupedOutput.accept(item.get());
                             }

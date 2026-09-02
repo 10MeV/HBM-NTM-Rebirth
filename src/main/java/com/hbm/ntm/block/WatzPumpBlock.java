@@ -25,7 +25,7 @@ public class WatzPumpBlock extends LegacyVisibleMultiblockMachineBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override

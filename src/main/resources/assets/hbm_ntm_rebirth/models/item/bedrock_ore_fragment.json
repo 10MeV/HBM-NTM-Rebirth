@@ -1,5 +1,271 @@
 {
   "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_1",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 1.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_2",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 2.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_3",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 3.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_4",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 4.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_5",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 5.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_6",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 6.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_7",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 7.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_8",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 8.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_9",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 9.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_10",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 10.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_11",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 11.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_12",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 12.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_13",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 13.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_14",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 14.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_15",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 15.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_16",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 16.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_17",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 17.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_18",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 18.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_19",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 19.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_20",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 20.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_21",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 21.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_22",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 22.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_23",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 23.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_24",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 24.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_25",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 25.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_26",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 26.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_27",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 27.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_28",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 28.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_29",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 29.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_30",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 30.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_31",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 31.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_32",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 32.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_33",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 33.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_34",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 34.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_35",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 35.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_36",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 36.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_37",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 37.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_38",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 38.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_39",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 39.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_40",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 40.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_41",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 41.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_42",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 42.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_43",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 43.0
+      }
+    },
+    {
+      "model": "hbm_ntm_rebirth:item/bedrock_ore_fragment_variant_44",
+      "predicate": {
+        "hbm_ntm_rebirth:bedrock_ore_fragment_variant": 44.0
+      }
+    }
+  ],
   "textures": {
     "layer0": "hbm_ntm_rebirth:item/bedrock_ore_fragment"
   }
